@@ -1,0 +1,635 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		This class wcfAdvancedSearchDialog implements an advanced search dialog by extending {@link wcfDialog}.
+	-->
+	<class name="wcfAdvancedSearchDialog" title="${foundationResources.advancedSearchDialogTitle.string}" extends="wcfDialog" contentPaddingLeftSize="0" contentPaddingRightSize="0">
+		<!---
+			Reference to the Business object editor where this advanced search dialog is launched.
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			Search widget that launched this advanced search dialog.
+		-->
+		<attribute name="searchWidget"/>
+		<!---
+			Array of advanced search definitions.
+		-->
+		<attribute name="searchDefinitions" value="null"/>
+		<!---
+			Indicates that the shortcut keys have been registered for this widget.
+		-->
+		<attribute name="shortcutsRegistered" type="boolean" value="false"/>
+		
+		<event name="onopen"/>
+
+		<!---
+			Activate the advanced search request.
+		-->
+		<method name="doSearch">
+			<![CDATA[
+			this.searchWidget.doSearch(this.searchOptionsArea.searchOptions.searchDefinition, this.searchOptionsArea.searchOptions.getSearchOptions());
+			this.closeWindow();
+			]]>
+		</method>
+		
+		<!---
+			Open the advanced search dialog.
+		-->
+		<method name="openWindow">
+			<![CDATA[
+			super.openWindow();
+			if (!this.searchOptionsArea["searchOptions"] && this.searchDefinitions != null) {
+				var v = new lz.wcfAdvancedSearchTabs(this.searchOptionsArea, {
+					name: "searchOptions",
+					searchDefinitions: this.searchDefinitions,
+					oEditor: this.oEditor,
+					advancedSearchDialog:this
+				});
+				this.moveToNextTabDel = new lz.Delegate(v, "moveToNextTab");
+				this.moveToPreviousTabDel = new lz.Delegate(v, "moveToPreviousTab");
+			}
+			this.registerShortcutKeys();
+			onopen.sendEvent();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.searchOptionsArea.searchOptions.activeTab, false);
+			]]>
+		</method>
+		
+		<!---
+			Close the advanced search dialog.
+		-->
+        <method name="closeWindow">
+			<![CDATA[
+			this.unregisterShortcutKeys();
+			super.closeWindow();
+            ]]>
+        </method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if(this["moveToNextTabDel"]){
+				this.moveToNextTabDel.unregisterAll();
+				delete this.moveToNextTabDel;						
+			}
+
+			if(this["moveToPreviousTabDel"]){
+				this.moveToPreviousTabDel.unregisterAll();
+				delete this.moveToPreviousTabDel;						
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Registers the shortcut keys for this widget.
+		-->
+		<method name="registerShortcutKeys">
+			<![CDATA[
+			if(this.shortcutsRegistered){
+				return;
+			}
+			lz.Keys.callOnKeyCombo(this.moveToNextTabDel, ["Control", "Pagedown"]);
+			lz.Keys.callOnKeyCombo(this.moveToPreviousTabDel, ["Control", "Pageup"]);
+			this.shortcutsRegistered = true;
+			]]>
+		</method>
+		
+		<!---
+			Unregisters the shortcut keys for this widget.
+		-->
+		<method name="unregisterShortcutKeys">
+			<![CDATA[
+			lz.Keys.removeKeyComboCall(this.moveToNextTabDel, ["Control", "Pagedown"]);
+			lz.Keys.removeKeyComboCall(this.moveToPreviousTabDel, ["Control", "Pageup"]);
+			this.shortcutsRegistered = false;
+			]]>
+		</method>
+
+		<handler name="onsearchDefinitions">
+			<![CDATA[
+			if (this["searchOptionsArea"] && this.searchOptionsArea["searchOptions"]) {
+				this.searchOptionsArea.searchOptions.setAttribute("searchDefinitions", this.searchDefinitions);
+			}
+			]]>
+		</handler>
+
+		<simplelayout spacing="8"/>
+		<view name="searchOptionsArea"/>
+		<view name="buttonArea" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton text="${foundationResources.advancedSearchDialogSearch.string}" onclick="classroot.doSearch()" isdefault="true"/>
+			<wcfButton text="${foundationResources.advancedSearchDialogCancel.string}" onclick="classroot.closeWindow()"/>
+		</view>
+ 	</class>
+ 	
+ 	<!---
+		@keywords private
+ 		Advanced search tabs. This class is used when there are multiple advanced search content panels.
+ 	-->
+ 	<class name="wcfAdvancedSearchTabs">
+ 		<!---
+			Reference to the Business object editor where advanced search dialog is launched.
+		-->
+		<attribute name="oEditor" value="null"/>
+ 		<!---
+ 			Array of advanced search definitions.
+ 		-->
+ 		<attribute name="searchDefinitions"/>
+		<!---
+			Current search definition within this advanced search dialog.
+		-->
+		<attribute name="searchDefinition" value="null"/>
+		<!---
+			The current active tab.
+		-->
+		<attribute name="activeTab" value="null" setter="this.setActiveTab(activeTab)"/>
+		<!---
+			Advanced search tabs.
+		-->
+		<attribute name="tabs" value="${[]}"/>
+		<!---
+			Reference to Advanced Search Dialog.
+		-->
+		<attribute name="advancedSearchDialog" value="null"/>
+
+		<!---
+			Left Margin for the content area
+		-->	
+		<attribute name="contentLeftMargin" type="number" value="18"/>
+
+		<!---
+			Right Margin for the content area
+		-->	
+		<attribute name="contentRightMargin" type="number" value="18"/>
+
+		<!---
+			Move to the next tab.
+		-->
+		<method name="moveToNextTab" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				var currentIndex = this.searchDefinitions.indexOf(this.searchDefinition);
+				var nextIndex = (currentIndex+1)%this.searchDefinitions.length;				
+				this.header.tabs[this.searchDefinitions[nextIndex].searchType].onclick.sendEvent();
+			}
+			]]>
+		</method>
+
+		<!---
+			Move to the previous tab.
+		-->
+		<method name="moveToPreviousTab" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				var currentIndex = this.searchDefinitions.indexOf(this.searchDefinition);
+				var nextIndex = ((currentIndex-1)+this.searchDefinitions.length)%this.searchDefinitions.length;		
+				this.header.tabs[this.searchDefinitions[nextIndex].searchType].onclick.sendEvent();
+			}
+			]]>
+		</method>
+ 		
+		<!--- @keywords private -->
+ 		<method name="init">
+			<![CDATA[
+			this.checkContentSizeDel = new lz.Delegate(this, "checkContentSize");
+			this.updateTabs();
+ 			super.init();
+			]]>
+ 		</method>
+ 		
+		<!--- @keywords private -->
+ 		<method name="destroy">
+			<![CDATA[
+			this.checkContentSizeDel.unregisterAll();
+			delete this.checkContentSizeDel;
+			]]>
+ 		</method>
+
+		<!---
+			Update the tabs to match the current list of search definitions.
+		-->
+		<method name="updateTabs">
+			<![CDATA[
+			var defaultTab = null;
+			for (var i = 0; i < this.tabs.length; i++) {
+				this.tabs[i].setAttribute("visible",false);
+			}
+			for (var i = 0; i < this.searchDefinitions.length; i++) {
+				var def = this.searchDefinitions[i];
+				if (!this.header.tabs[def.searchType]) {
+					var tab = new lz.wcfAdvancedSearchTab(this.header.tabs, {
+						name: def.searchType,
+						tabs: this,
+						searchDefinition: def,
+						advancedSearchDialog: this.advancedSearchDialog
+					});
+					this.tabs.push(tab);
+					this.checkContentSizeDel.register(tab, "onwidth");
+					this.checkContentSizeDel.register(tab, "onheight");
+					var tabContent = new lz[def.advancedSearchContentClass](this.container.content, {
+						oEditor: this.oEditor,
+						advancedSearchDialog: this.advancedSearchDialog
+					});
+					tab.tabContent = tabContent;
+				}else{
+					this.header.tabs[def.searchType].setAttribute("visible",true);
+				}
+				if (def.isDefault) {
+					defaultTab = this.header.tabs[def.searchType];
+				}
+			}
+			if (defaultTab == null) {
+				defaultTab = this.header.tabs[this.searchDefinitions[0].searchType];
+			}
+			if (this.activeTab == null || !this.activeTab.visible) {
+				this.setActiveTab(defaultTab);
+			}
+			]]>
+ 		</method>
+
+ 		
+ 		<!---
+ 			Check the size of the content area.
+ 		-->
+ 		<method name="checkContentSize" args="e=null">
+			<![CDATA[
+			var contentWidth = 0;
+			var contentHeight = 0;
+			var tabsWidth = 0;
+			for (var i = 0; i < this.tabs.length; i++) {
+				var tabContent = this.tabs[i].tabContent;
+				if (tabContent.width > contentWidth) {
+					contentWidth = tabContent.width;
+				}
+				if (tabContent.height > contentHeight) {
+					contentHeight = tabContent.height;
+				}
+				tabsWidth += this.tabs[i].width;
+			}
+			if (contentWidth < tabsWidth) {
+				contentWidth = tabsWidth;
+			}
+			if (contentWidth != this.container.content.width) {
+				this.container.content.setAttribute("width", contentWidth);
+			}
+			if (contentHeight != this.container.content.height) {
+				this.container.content.setAttribute("height", contentHeight);
+			}
+			]]>
+ 		</method>
+ 		
+ 		<!---
+ 			Activate the specified tab.
+ 			@param wcfAdvancedSearchTab tab: the advanced search tab
+		-->
+		<method name="setActiveTab" args="tab">
+			<![CDATA[
+			if (typeof(this["activeTab"]) == "undefined" || this.activeTab != tab) {
+				if (this["activeTab"] != null) {
+					this.activeTab.setAttribute("active", false);
+				}
+				this.activeTab = tab;
+				if (tab) {
+					tab.setAttribute("active", true);
+					this.searchDefinition = tab.searchDefinition;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Return the search options for the search request.
+			@return object: map of search request parameters
+		-->
+		<method name="getSearchOptions">
+			<![CDATA[
+			return this.activeTab.tabContent.getSearchOptions();
+			]]>
+		</method>
+		
+		<handler name="onsearchDefinitions">
+			<![CDATA[
+			this.updateTabs();
+			]]>
+		</handler>
+
+		<simplelayout/>
+		<view name="header">
+			<simplelayout axis="x" spacing="0"/>
+			<view name="headerLeftSpacing"
+					resource="resources/property_tab_bg.png"
+					stretches="width"
+					x="0"
+					width="${classroot.contentLeftMargin}"/>
+			<view name="tabs">
+				<simplelayout axis="x"/>
+			</view>
+			<view name="headerRightSpacing"
+					resource="resources/property_tab_bg.png"
+					stretches="width"
+					x="${parent.tabs.width}"
+					width="${Math.max(0,classroot.container.width - parent.tabs.width - classroot.contentLeftMargin)}"/>
+		</view>
+		<view name="container">
+			<simplelayout axis="x" spacing="0"/>
+			<view name="containerLeftSpacing" height="${classroot.container.content.height}" width="${classroot.contentLeftMargin}"/>
+			<view name="content"/>
+			<view name="containerRightSpacing" height="${classroot.container.content.height}" width="${classroot.contentRightMargin}"/>
+		</view>
+ 	</class>
+ 	
+ 	<!---
+		@keywords private
+ 		Advanced search tab.
+ 	-->
+	<class name="wcfAdvancedSearchTab" extends="basecomponent">
+		<!---
+			Reference to the advanced search tabs instance.
+		-->
+		<attribute name="tabs"/>
+		<!---
+			The search content pane for this tab.
+		-->
+		<attribute name="tabContent"/>
+		<!---
+			Indicates that this tab is active.
+		-->
+		<attribute name="active" type="boolean" value="false"/>
+		<!---
+			Indicates that the mouse is currently hovering over this tab.
+		-->
+		<attribute name="hover" type="boolean" value="false"/>
+		<!---
+			Indicates that this tab can accept focus.
+		-->
+		<attribute name="focusable" value="true"/>
+		<!---
+			Tab margin.
+		-->
+		<attribute name="margin" value="10" type="number"/>
+		<!---
+			Tab width.
+		-->
+		<attribute name="width" value="${txt.width + this.margin * 2}"/>
+		<!---
+			Advanced search definition.
+		-->
+		<attribute name="searchDefinition"/>
+		<!---
+			Text for this search tab.
+		-->
+		<attribute name="text" type="string" value="${this.searchDefinition.displayName}"/>
+		<!---
+			Reference to Advanced Search Dialog.
+		-->
+		<attribute name="advancedSearchDialog" value="null"/>
+		
+		<command onselect="classroot.activateTab();" key="['Enter']" />
+		<command onselect="classroot.activateTab();" key="['Spacebar']" />
+		
+		<method name="activateTab">
+			if(lz.Focus.getFocus()==this){
+				this.onclick.sendEvent();
+			}
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="onactive">
+			<![CDATA[
+			if (this.active) {
+				this.tabContent.setAttribute("visible", true);
+				this.tabContent.bringToFront();
+			}
+			else {
+				this.tabContent.setAttribute("visible", false);
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onmouseover">
+			this.setAttribute("hover", true);
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onmouseout">
+			this.setAttribute("hover", false);
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onclick">
+			this.tabs.setActiveTab(this);
+			lz.Focus.setFocus(this);
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onfocus">
+			<![CDATA[
+			if(!this["indicator"]){
+		    	new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this,
+			    	offset: 1
+			    });
+		    }
+			]]>
+		</handler>			
+		
+		<view visible="${parent.active}" width="${parent.width}" y="2">
+			<view name="left" resource="resources/property_tab_left_active.png"/>
+			<view name="center" resource="resources/property_tab_center_active.png" stretches="width" x="${parent.left.width}" width="${parent.right.x - parent.left.width}"/>
+			<view name="right" resource="resources/property_tab_right_active.png" x="${parent.width - this.width}"/>
+		</view>
+		<view visible="${!parent.active &amp;&amp; !parent.hover}" resource="resources/property_tab_bg.png" stretches="width" width="${parent.width}"/>
+		<view visible="${!parent.active &amp;&amp; parent.hover}" resource="resources/property_tab_hover_bg.swf" stretches="width" width="${parent.width}"/>
+		<text name="txt" x="${parent.margin}" y="4" text="${classroot.text}" resize="true"/>
+	</class>
+ 	
+ 	<!---
+ 		@keywords abstract
+ 		
+ 		This class is an advanced search content base class. Search definitions that declare {@link wcfSearchDefinition#advancedSearchContentClass}
+ 		can only specify a class that extends this abstract class.
+ 		
+ 		<p>Advanced search content class is a free form view that is used to capture all user input for performing an advanced search.
+ 		Feel free to use any of the Open Laszlo functionality to create this view for collecting user input. It is also possible to
+ 		use widgets such as {@link wcfBaseCheckbox}, {@link wcfBaseRadioGroup}, {@link wcfBaseComboBox}, and many more if you prefer
+ 		to pick up the Management Center styling of widgets.
+ 		
+ 		<p>All instances of this class must implement the setSearchOptions method which is in charge of creating the
+ 		searchOptions map. The searchOptions map is used to determine the name/value pairs that gets passed to the search service
+ 		request URL. For example, a searchOptions map of <code>{"param1" : "a", "param2" : "true"}</code> results in the following
+ 		parameters being passed to the service request URL <code>searchURL?param1=a&param2=true</code>
+ 		
+ 		<p>This class triggers an <code>onload</code> event whenever the advanced search dialog is opened by the business user.
+ 		
+ 		<p>This class is an abstract class and should not be used directly nor should instances of it be created. Instead, create
+ 		an extension class and use the class as the {@link wcfSearchDefinition#advancedSearchContentClass} attribute of a
+ 		{@link wcfSearchDefinition}.
+ 	-->
+	<class name="wcfAdvancedSearchContent" visible="false">
+		<!---
+			Reference to the business object editor where this search content is currently being shown.
+			@type wcfBusinessObjectEditor
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			The search options map for this search content panel that holds all the parameters that will be passed to the
+			{@link wcfSearchService} URL defined in the {@link wcfSearchDefinition}.
+			@type Map
+		-->
+		<attribute name="searchOptions" value="{}"/>
+		<!---
+			The search definition that corresponds to this search panel.
+			@type wcfSearchDefinition
+		-->
+		<attribute name="searchDefinition"/>
+		<!---
+			@keywords private
+			Reference to Advanced Search Dialog.
+		-->
+		<attribute name="advancedSearchDialog" value="null"/>
+		
+		<!---
+			This <code>onload</code> is triggered whenever the advanced search dialog is opened by the business user.
+		-->
+		<event name="onload"/>
+		
+		<!--- @keywords private -->
+ 		<method name="init">
+			<![CDATA[
+ 			super.init();
+ 			this.dialogOpenDel = new lz.Delegate(this, "open", this.advancedSearchDialog, "onopen");
+			]]>
+ 		</method>
+ 		
+ 		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if(this["dialogOpenDel"]){
+				this.dialogOpenDel.unregisterAll();
+				delete this.dialogOpenDel;						
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+ 		<!---
+ 			@keywords private
+ 			@event onload
+ 		-->
+ 		<method name="open" args="e=null">
+			<![CDATA[
+ 			onload.sendEvent();
+			]]>
+ 		</method>
+ 		
+ 		<!---
+			Construct the search options map for the search request. The implementing class has full control of the contents
+			of this map. The contents of the map will determine the name/value pairs that are placed in the service request URL.
+			
+			<p>This method is called when the OK button is clicked in the advanced search dialog. Its job is to collect all the
+			input from the content pane and placed them into the local searchOptions map attribute. The map should be build in
+			such a way that it contains the parameters that are expected by the search service request. Once this method is
+			completed its execution, then the search service request will be called.
+			
+			<p>The default implementation does nothing.
+		-->
+		<method name="setSearchOptions">
+			
+		</method>
+		
+		<!---
+			Return the search options map that is used for creating the URL parameters for the search request.
+			@return object: map of search request parameters
+		-->
+		<method name="getSearchOptions">
+			<![CDATA[
+			this.setSearchOptions();
+			return this.searchOptions;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		Advanced search action definition. This class is used by the search widget as
+		the advanced search action.
+	-->
+	<class name="wcfAdvancedSearchActionDefinition" extends="node">
+		<!---
+			Reference to the Business object editor.
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			Advanced search dialog.
+		-->
+		<attribute name="dialog" value="null"/>
+		<!---
+			An array of advanced search definitions.
+		-->
+		<attribute name="searchDefinitions" value="null"/>
+		<!---
+			Display name for the advanced search action. This value is set to title of the advanced search dialog.
+		-->
+		<attribute name="displayName" type="string" value="${foundationResources.advancedSearchDialogTitle.string}"/>
+		<!---
+			Declares whether this action can be selected to stay as a current default selection.
+		-->
+		<attribute name="selectableAsDefaultDefinition" type="boolean" value="false"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.dialog = new lz.wcfAdvancedSearchDialog(canvas, {
+				searchWidget: this.parent,
+				searchDefinitions: this.searchDefinitions,
+				oEditor: this.oEditor
+			});
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this.dialog != null) {
+				this.dialog.destroy();
+				this.dialog = null;
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the list of search definitions.
+		-->
+		<handler name="onsearchDefinitions">
+			<![CDATA[
+			if (this.searchDefinitions != null && this.dialog != null) {
+				this.dialog.setAttribute("searchDefinitions", this.searchDefinitions);
+			}
+			]]>
+		</handler>
+	</class>
+</library>

@@ -1,0 +1,81 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		<p>Use this class to declare a property definition for a {@link wcfModelProperty property} that represents a 
+		language in a {@link stoStorePrimaryObjectDefinition object}. Do not explicitly include instances of {@link wcfPropertyValue} 
+		with this class. An instance of {@link wcfPropertyValue} is implicitly created for each supported language in the selected store. 
+		The attribute value of each instance of {@link wcfPropertyValue} can be the language ID (for example, -1), 
+		or the locale (for example, en_US). This is controlled by the <code>{@link wcfLanguagePropertyDefinition#useLanguageId useLanguageId}</code>
+		attribute.</p>
+		
+		<p>Instances of this class can only be declared as immediate sub-nodes of {@link wcfObjectDefinition}.</p>
+		
+		<p>The following example shows how to declare a property used to manage the supported language of a store.
+		@START_CODE	
+			<LanguagePropertyDefinition package="sto" propertyName="supportedLanguage" displayName="Supported language"/>
+		@END_CODE
+		</p>
+	-->
+	<class name="stoLanguagePropertyDefinition" extends="wcfLanguagePropertyDefinition">
+
+		<!---
+			@keywords private
+			Returns the property values for the given property
+			@param wcfModelObject o The model object that contains the property.
+			@param lz.Delegate del: An optional parameter, to register a delegate if the property 
+									values change.
+			@return Array: An array of property values
+		-->
+		<method name="getPropertyValues" args="o=null, del=null, all=false">
+			<![CDATA[
+			var supportedLanguages = [];
+			supportedLanguages = super.getPropertyValues(o, del);
+			var parentObject = o ? o.getParentPrimaryObject() : null;
+			//If the parent store object is an EsiteStore, then use the corresponding Asset stores supported languages.
+			if (parentObject && parentObject['objectType'] == "EsiteStore") {
+				var id = parentObject.getProperty("assetStoreId").value;
+				var assetStore = wcfStoreUtil.getStore(id);
+				if (!assetStore.configurationLoaded) {
+					supportedLanguages = [];
+					assetStore.loadConfiguration();
+				}
+				else {
+					for (var i = 0; i < supportedLanguages.length;) {
+						var foundLanguage = false;
+						for (var s = 0; s < assetStore.supportedLanguages.length; s++) {
+							if (supportedLanguages[i].value == assetStore.supportedLanguages[s].languageId) {
+								foundLanguage = true;
+								break;
+							}
+						}
+						if (!foundLanguage) {
+							supportedLanguages.splice(i, 1);
+						}
+						else {
+							i++;
+						}
+					}
+				}
+				if (del) {
+					del.register(assetStore, "onconfigurationLoaded");
+				}
+			}
+			return supportedLanguages;
+			]]>
+		</method>
+	</class>
+	
+</library>
+

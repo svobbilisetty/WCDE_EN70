@@ -1,0 +1,111 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		Compare view. 
+	-->
+	<class name="wcfCompareView" extends="wcfSplitView" width="${immediateparent.width}"
+		height="${immediateparent.height}" visible="false" axis="x"
+		ignoreSplittable="true">
+
+		<!--
+			@keywords private The title of the view.
+		-->
+		<attribute name="title" type="string" value="${foundationResources.compareViewTree.string}" />
+
+		<handler name="onwidth"> 
+			<![CDATA[ 
+			this.setAttribute("xSplitSize", this.width/2); 
+			if (this.axis == "x") { 
+				this.splitViewLayout.update(); 
+			} 
+			]]>
+		</handler>
+
+		<handler name="onheight"> 
+			<![CDATA[ 
+			this.setAttribute("ySplitSize", this.height/2); 
+			if (this.axis == "y") { 
+				this.splitViewLayout.update(); 
+			} 
+         	]]>
+         </handler> 
+                
+		<wcfActiveViewContainer name="compareArea1" addRightSpacing="false" maximizable="false" closable="false" 
+			defaultTitle="${foundationResources.compareViewTitle.string}" 
+			defaultTitleMessage="${foundationResources.compareViewAdditionalMessage.string}"> 
+						
+			<method name="isDropEnabled" args="sources">
+				<![CDATA[
+				var dropEnabled = false;
+				if (sources.length == 1 && this.activeView == null) {
+					var o = wcfModelUtil.findObjectForView(sources[0]);
+					if (o && o.getReferencedObject().objectDefinition.propertiesClass != null) {
+						dropEnabled = true;
+					}
+				}
+				return dropEnabled;
+				]]>
+			</method>
+
+			<method name="droppedInTarget" args="sources">
+				<![CDATA[
+				if (sources.length == 1) {
+					var o = wcfModelUtil.findObjectForView(sources[0]);
+					if (o != null) {
+						o = o.getReferencedObject();
+						
+						var compareViewTreeNode = o.model.oEditor.navigationTree.compareViewTree;
+						compareViewTreeNode.setAttribute("compareObject1Cache", o);
+					}
+				}
+				]]>
+			</method>
+		</wcfActiveViewContainer>
+
+		<wcfActiveViewContainer name="compareArea2" addRightSpacing="true" maximizable="false" closable="false"  
+			defaultTitle="${foundationResources.compareViewTitle.string}" 
+			defaultTitleMessage="${foundationResources.compareViewAdditionalMessage.string}">
+
+			<method name="isDropEnabled" args="sources">
+				<![CDATA[
+				var dropEnabled = false;
+				if (sources.length == 1 && this.activeView == null) {
+					var o = wcfModelUtil.findObjectForView(sources[0]);
+					if (o && o.getReferencedObject().objectDefinition.propertiesClass != null) {
+						dropEnabled = true;
+					}
+				}
+				return dropEnabled;
+				]]>
+			</method>
+
+			<method name="droppedInTarget" args="sources">
+				<![CDATA[
+				if (sources.length == 1) {
+					var o = wcfModelUtil.findObjectForView(sources[0]);
+					if (o) {
+						o = o.getReferencedObject();
+						
+						var compareViewTreeNode = o.model.oEditor.navigationTree.compareViewTree;
+						compareViewTreeNode.setAttribute("compareObject2Cache", o);
+					}
+				}
+				]]>
+			</method>
+		</wcfActiveViewContainer>
+	</class>
+
+</library>

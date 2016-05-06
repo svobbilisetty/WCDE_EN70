@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+    <ObjectProperties definitionName="catProductProperties">
+        <!-- This is the set of tabs to display on the Product properties view -->
+        <PropertyTabs name="tabs">
+            <!-- Tab: Manage Product. This tab contains general information about the selected product such as name and description. -->
+            <PropertyTabPane name="manageProductTab" text="${catalogResources.manageProductTab}">
+                <!-- Property Pane: Manage Product. This is an instantiation of the property pane which contains general product details. -->
+                <PropertyPane baseDefinitionName="catManageProduct"/>
+            </PropertyTabPane>
+            <!-- Tab: Product Search Engine Optimization (SEO) properties. This tab contains SEO properties of the selected product. -->
+            <PropertyTabPane name="searchEngineOptimizationTab" text="${catalogResources.searchEngineOptimizationTab}">
+            	<EnablementAndCondition>
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition conditionId="seoEnabledCondition" contextName="seoEnabled" enablementValue="true"/>
+				</EnablementAndCondition>
+                <!-- Property Pane: SEO properties. This is an instantiation of the property pane which contains product SEO properties. -->
+                <PropertyPane baseDefinitionName="catSearchEngineOptimization"/>
+            </PropertyTabPane>
+            <!-- Tab: Product Descriptive Attributes. This tab contains descriptive attributes of the selected product. -->
+            <PropertyTabPane name="productDescriptiveAttributesTab" text="${catalogResources.descriptiveAttributesTab}">
+                <!-- Property Pane: Product Attributes. This is an instantiation of the property pane which contains product attribute details. -->
+                <PropertyPane baseDefinitionName="catCatalogEntryDescriptiveAttributes"/>
+            </PropertyTabPane>
+            <!-- Tab: Product Defining Attributes. This tab contains defining attributes of the selected product. -->
+            <PropertyTabPane name="productDefiningAttributesTab" text="${catalogResources.definingAttributesTab}">
+                <!-- Property Pane: Product Attributes. This is an instantiation of the property pane which contains product attribute details. -->
+                <PropertyPane baseDefinitionName="catCatalogEntryDefiningAttributes"/>
+            </PropertyTabPane>
+            <!-- Tab: Merchandising Associations. This tab contains the merchandising associations of the selected product. -->
+            <PropertyTabPane name="productMerchandisingAssociationsTab" text="${catalogResources.productMerchandisingAssociationsTab}">
+				<!-- Property Pane: Merchandising Associations. This is an instantiation of the property pane which contains merchandising associations details. -->
+                <PropertyPane baseDefinitionName="catProductMerchandisingAssociations"/>
+            </PropertyTabPane>
+            <!-- Tab: Inventory. This tab contains inventory related information of the selected product. -->
+			<!-- This tag is disabled by default. To enable it, uncomment the tag below. For non-inventory store (The value in INVENTORYSYSTEM column of STORE table is -3), it should not be enabled. -->
+			<!-- <PropertyTabPane name="catalogEntryInventoryTab" text="${catalogResources.catalogEntryInventoryTab}"> -->
+                <!-- Property Pane: Catalog Entry Inventory. This is an instantiation of the property pane which contains inventory related details. -->
+                <!-- <PropertyPane baseDefinitionName="catCatalogEntryInventoryPane"/>
+           </PropertyTabPane> -->
+           
+           <!-- Tab: the attachment references for the current catalog entry -->
+					<PropertyTabPane name="manageAttachmentTab" text="${catalogResources.manageAttachmentTab}">
+						<!-- Property Pane: Manage Attachment Reference . This is an instantiation of the property pane which contains attachment reference of this catalog entry. -->
+						<PropertyPane baseDefinitionName="catManageAttachment"/>
+					</PropertyTabPane>
+
+            <!-- This is for supporting version reference of a product -->
+			<PropertyTabPane name="manageVersionTab" text="${foundationResources.manageVersionTab}">
+                	<!-- Only show this tab if the object type is Product, Content Version is enabled and not new object -->
+                	<EnablementAndCondition conditionId="productManageVersionTabCondition">
+                		<EnablementOrCondition conditionId="productManageVersionObjectTypeCondition">
+							<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="Product" conditionId="productManageVersionObjectTypeCondition"/>
+							<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="InheritedProduct" conditionId="productManageVersionObjectTypeCondition1"/>
+						</EnablementOrCondition>
+                	
+         				<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+        				<EnablementCondition contextName="contentVersionEnabled" enablementValue="true" conditionId="productContentVersionContextValueCondition"/>
+        				<EnablementCondition checkNewObject="true" enablementValue="false" conditionId="productContentVersionNewObjectCondition"/>
+                	</EnablementAndCondition>
+                	<!-- Property Pane: Manage Version. This is an instantiation of the property pane definition which contains versions. -->
+                	<PropertyPane baseDefinitionName="wcfManageContentVersion"/>
+            </PropertyTabPane>
+
+            <!-- Tab: References. This tab contains various types of references to the selected product. For example a list of products that have the selected product as a merchandising association. -->
+            <PropertyTabPane name="productReferenceTab" text="${catalogResources.productReferenceTab}">
+                	<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+                	<!-- Property Pane: References. This is an instantiation of the property pane which contains references properties. -->
+                	<PropertyPane name="productReference">
+        				<!-- Property Group: Merchandising association Reference. A properties group that displays any merchandising association references to the catalog entry.  -->
+        				<PropertyGroup groupTitle="${catalogResources.merchandisingAssociationReference}" name="productReferenceMerchandisingAssociations" open="true">
+            
+                			<!-- Reference List: A table to display merchandising associations that this product is a part of. -->
+                			<PropertyReferenceList listDefinitionName="catBackReferenceAssociationGrid" name="merchandisingAssociationsRefList" promptText="${catalogResources.merchandisingAssociationsSection}" referenceObjectPaths="CatalogEntry/MerchandisingAssociationReferencedCatalogEntries,CatalogEntry/MerchandisingAssociationReferencedInheritedCatalogEntries,CatalogEntry/InheritedMerchandisingAssociationReferencedInheritedCatalogEntries"/>
+                    	 				 
+        				</PropertyGroup>
+        				
+        				<!-- Property Group: Bundle Reference. A properties group that displays any bundle references to the catalog entry.  -->
+        				<PropertyGroup groupTitle="${catalogResources.bundleReference}" name="productReferenceBundles" open="false">
+            
+                			<!-- Reference List: A table to display bundles that this catalog entry is a component of. -->
+                			<PropertyReferenceList listDefinitionName="catBundleReferenceGrid" name="bundlesRefList" promptText="${catalogResources.bundleReference}" referenceObjectPaths="Bundle/BundleComponent,Bundle/InheritedBundleComponent,InheritedBundle/InheritedBundleComponent"/>
+            
+        				</PropertyGroup>
+						
+								<!-- Property Group: sales catalog group Reference. A properties group that displays any sales catalog group references to the catalog entry.  -->
+								<PropertyGroup baseDefinitionName="catReferenceSalesCatalogGroup"/>
+        				
+        				<!-- Property Group: Activity Reference. A properties group that displays any marketing activity references to the catalog entry. -->
+        				<PropertyGroup groupTitle="${catalogResources.marketingActivityReferencesSection}" name="productReferenceActivities" open="false">
+                			<!-- Reference List: A table to display activities from which this catalog entry is referenced. -->
+											<PropertyReferenceList listDefinitionName="catMarketingActivityReferenceGrid" name="catMarketingActivityProductCatalogEntryReferenceList" promptText="${catalogResources.marketingActivityReferences}" referenceObjectPaths="*/ChildCatentryGroup"/>
+											<!-- do not display in catalog asset store because it does not refer to storefront asset store -->
+											<EnablementCondition conditionId="casCondition" contextName="storeType" enablementValue="CPS" negate="true"/>											
+        				</PropertyGroup> 
+        				
+        			</PropertyPane>
+ 
+            </PropertyTabPane>
+            
+        </PropertyTabs>
+    </ObjectProperties>
+</Definitions>

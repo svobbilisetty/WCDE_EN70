@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--
+		<p>This is the primary object definition for a contributor (Person) object. This object
+		is read-only and can not be updated or deleted.</p>
+	-->
+	<PrimaryObjectDefinition creatable="false" definitionName="Contributor" objectType="Contributor" displayName="${wspWorkspaceResources.contributorDisplayName}" 
+		displayNameProperty="logonId" icon="contributorIcon" idProperty="memberId" searchType="FindContributors" />
+	
+	<!---
+		@keywords private
+	-->
+	<SearchDefinition definitionName="FindContributors" displayName="${wspWorkspaceResources.contributorDisplayName}" icon="contributorIcon" isDefault="false" 
+		listTitle="FindContributors" searchType="FindContributors" utilitiesListDefinitionName="wspPersonSearchGrid" >
+		<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+		<SearchService name="findContributors" url="/cmc/FindContributors" >
+			<ServiceParam name="storeId"/>
+		</SearchService>
+	</SearchDefinition>
+	
+</Definitions>

@@ -1,0 +1,50 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktViewEMarketingSpotElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktViewEMarketingSpotElementObject} object:
+		<ul>
+			<li>ChildEMarketingSpot/EMarketingSpot[name]</li>
+		</ul>
+	-->
+	<class name="mktViewEMarketingSpotSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="espotName" objectPath="ChildSpot/EMarketingSpotGroup" propertyName="name"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerViewsEMarketingSpot, "onstring");
+			]]>
+		</handler>
+				
+		<!---
+			Sets the summary text for the {@link mktViewEMarketingSpotElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				
+				var espots = this.getValuesList("espotName");
+				if(espots != "") {
+					summary = mktMarketingResources.replaceValues("summaryCustomerViewsEMarketingSpot", [espots]);
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+</library>

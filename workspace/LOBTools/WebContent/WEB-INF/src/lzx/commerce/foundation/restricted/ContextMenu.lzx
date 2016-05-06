@@ -1,0 +1,2464 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<wcfContextMenu id="wcfCanvasMenu" />
+	
+	<!--- @keywords private -->
+	<class name="wcfContextMenu" extends="node">
+		<attribute name="menu" value="null"/>
+
+		<!---
+			@keywords private
+			
+			Thie flag controls whether a visual separator will appear before menu items that are created by
+			{@link wcfContextMenu#addMenuItem}.
+		 -->
+		<attribute name="addSeparatorBefore" type="boolean" value="false" />
+
+		<method name="init">
+			<![CDATA[
+			this.menu = new lz.contextmenu();
+			this.menu.hideBuiltInItems();
+			this.menu.setAttribute('delegate', new lz.Delegate(this, "openMenu"));
+			super.init();
+			]]>
+		</method>
+		
+		<handler name="ondestroy">
+			if (this.menu) {
+				this.menu.destroy();
+				this.menu = null;
+			}
+		</handler>
+
+		<method name="addView" args="v, recurse=true">
+			<![CDATA[
+			if (v) {
+				v.setAttribute('contextmenu', this.menu);
+				if (recurse) {
+					this.addSubViews(v.subviews);
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="addSubViews" args="views">
+			<![CDATA[
+			for (var i = 0; i < views.length; i++) {
+				var v = views[i];
+				if (!v["contextmenu"]) {
+					v.setAttribute('contextmenu', this.menu);
+				}
+				this.addSubViews(v.subviews);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			This method perform any necessary initializations when a context menu is opened.
+			It clears any existing menu items and resets {@link wcfContextMenu#addSeparatorBefore} to <code>false</code>
+		 -->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			this.menu.clearItems();
+			this.addSeparatorBefore = false;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			This method adds menu items to the {@link wcfContextMenu#menu current context menu}.
+			When this method is called, if {@link wcfContextMenu#addSeparatorBefore} is <code>true</code>, a separator
+			will appear before the newly created menu item. The addSeparatorBefore flag is always set to <code>false</code>
+			after this method completes.
+		 -->
+		<method name="addMenuItem" args="menuText, callbackObject, callbackMethod, args=undefined, enabled=undefined">
+			<![CDATA[
+			var menuItem = null;
+			if(wcfViewUtil.containedInModalView(this)){
+				if(typeof(enabled) != "boolean") {
+					enabled = true;
+				}
+				menuItem = this.menu.makeMenuItem(menuText, new lz.Delegate(this, "doMenuItem"));
+				menuItem.setAttribute('caption', menuText);
+				menuItem.setAttribute("name", menuText);
+				if (typeof(args) != "undefined" && args != null) {
+					menuItem.setAttribute("args", args);
+				}
+				menuItem.setAttribute("callbackObject", callbackObject);
+				menuItem.setAttribute("callbackMethod", callbackMethod);
+				if (typeof(enabled) != "undefined") {
+					menuItem.setAttribute('enabled', enabled);
+				}
+				menuItem.setAttribute('separatorbefore', this.addSeparatorBefore);
+				this.menu.addItem(menuItem);
+				this.addSeparatorBefore = false;
+			}
+			return menuItem;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			This method effectively adds a visual separator <b>after</b> the latest menu item already in the menu
+			by setting the {@link wcfContextMenu#addSeparatorBefore} flag to <code>true</code>. This causes the <b>next</b> menu item
+			created using {@link wcfContextMenu#addMenuItem} to display a visual separator before rendering said menu item.
+			<p>
+		 -->
+		<method name="addSeparator">
+			<![CDATA[
+			this.addSeparatorBefore = true;
+			]]>
+		</method>
+				
+		<method name="doMenuItem" args="menuItem">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfContextMenu", "doclick", "Start for Menuitem " + menuItem.name);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfContextMenu doMenuItem: " + menuItem.name);
+			if ("args" in menuItem) {
+				menuItem.callbackObject[menuItem.callbackMethod](menuItem["args"]);
+			} else {
+				menuItem.callbackObject[menuItem.callbackMethod]();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfContextMenu", "doclick", "End for Menuitem " + menuItem.name);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		wcfContextMenuUtil sets or restores default context menu
+	 -->	
+	<node id="wcfContextMenuUtil">
+	
+		<!---
+			@keywords private
+			
+			The {@link wcfContextMenu} that will be set as default context menu
+		 -->
+		<attribute name="defaultMenu" value="null" />
+		
+		<!---
+			@keywords private
+			
+			Current context menu before a new {@link wcfContextMenu} is set
+		 -->
+		<attribute name="restoreMenu" value="null" />
+		
+		<!--- @keywords private -->
+		<method name="setAsDefault" args="menu">
+			<![CDATA[
+			if (this.defaultMenu != null) {
+				this.resetDefault(this.defaultMenu);
+			}
+			this.defaultMenu = menu;
+			this.restoreMenu = canvas.contextmenu;
+			canvas.setDefaultContextMenu(menu.menu);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="resetDefault" args="menu">
+			<![CDATA[
+			if (menu == this.defaultMenu) {
+				canvas.setDefaultContextMenu(this.restoreMenu);
+				this.defaultMenu = null;
+				this.restoreMenu = null;
+			}
+			]]>
+		</method>
+	</node>
+
+	<!--- @keywords private -->
+	<class name="wcfTreeMenu" extends="wcfContextMenu">
+		<attribute name="tree" value="null"/>
+
+		<!---
+			Open and populate the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			super.openMenu(e);
+			//this.tree.setAttribute('selected',true);
+			this.tree.changeFocus(this.tree);
+			this.createMenuItems();
+		</method>
+		
+		<method name="createMenuItems">
+			<![CDATA[
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Context menu for the search results node in the navigation view.
+	-->
+	<class name="wcfSearchResultTreeMenu" extends="wcfTreeMenu">
+		<!--- Array of search definitions. -->
+		<attribute name="searchDefinitions" value="null"/>
+
+		<!---
+			Show the search results view.
+		-->
+		<method name="showSearchResults" args="args">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			this.tree.setAttribute("searchDefinition", args.definition);
+			]]>
+		</method>
+	</class>	
+
+	<!---
+		@keywords private
+		
+		Context menu for the active work node in the navigation view.
+	-->
+	<class name="wcfActiveWorkTreeMenu" extends="wcfTreeMenu">
+		<!---
+			Populate the context menu.
+	 	-->
+		<method name="createMenuItems">
+			<![CDATA[
+			if (this.tree.oEditor.model.openObjects.length > 0) {
+				this.addMenuItem(foundationResources.contextMenuCloseAll.string, this, "doCloseAll");
+			}
+			if (this.tree.isPasteEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuPaste.string, this, "doPaste");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Invoke the close all action.
+		-->
+		<method name="doCloseAll">
+			<![CDATA[
+			this.tree.oEditor.model.closeOpenObjects(true);
+			]]>
+		</method>
+		
+		<method name="doPaste">
+			<![CDATA[
+			this.tree.setAttribute("selected", true);
+			this.tree.doPaste();
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Base context menu for an object tree node in the navigation view.
+	-->
+	<class name="wcfObjectTreeMenu" extends="wcfTreeMenu">
+
+		<!---
+			Create the new object menu items.
+		-->
+		<method name="createNewMenuItems">
+			<![CDATA[
+			var treeRef = this.tree.o.getReferencedObject();
+			var defs = treeRef.objectDefinition.parentReferenceObjectDefinitions;
+			defs = defs.concat(treeRef.objectDefinition.collectionReferenceObjectDefinitions);
+			var separatorRequired = false;
+			for (var i = 0; i < defs.length; i++) {
+				if(defs[i].isCreatable(treeRef)) {
+					for (var j = 0; j < defs[i].referencedDefinitions.length; j++) {
+						var newDef = defs[i].referencedDefinitions[j];
+						if (newDef.isCreatable(treeRef)) {
+							this.addMenuItem(newDef.getNewObjectMenuItemText(), this, "doCreateObject", {definition: newDef});
+							separatorRequired = true;
+						}
+					}
+				}
+			}
+			var objDef = this.tree.o.objectDefinition;
+			if (objDef["organizedObjectTypes"] && objDef["addNewActionsToExplorerContextMenu"]) {
+				var organizedObjectDefinitions = objDef.organizedObjectDefinitions;
+				for (var i = 0; i < organizedObjectDefinitions.length; i++) {
+					if(organizedObjectDefinitions[i].isCreatable()) {
+						this.addMenuItem(organizedObjectDefinitions[i].getNewObjectMenuItemText(), this, "doCreateObject", {definition: organizedObjectDefinitions[i]});
+						separatorRequired = true;
+					}
+				}
+			}
+			if(separatorRequired) {
+				this.addSeparator();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the open menu item.
+			
+		-->
+		<method name="createOpenMenuItem">
+			<![CDATA[
+			if (this.tree.o.isOpenEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuOpen.string, this, "doOpen");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the refresh menu item.
+		-->
+		<method name="createRefreshMenuItem">
+			<![CDATA[
+			var referencedObject = this.tree.o.getReferencedObject();
+			if (!referencedObject.newObject &&
+				(referencedObject.objectDefinition.primary || referencedObject.objectDefinition.organizational) &&
+				(this.tree.parent != this.tree.oEditor.navigationTree.activeWorkTree || 
+				 referencedObject.objectDefinition.refreshService != null ||
+				 this.tree.navigationListDefinition != null)) {
+				 
+				this.addMenuItem(foundationResources.contextMenuRefresh.string, this, "doRefresh");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the copy menu item.
+		-->
+		<method name="createCopyMenuItem">
+			<![CDATA[
+			var oDef = this.tree.o.getReferencedObject().objectDefinition;
+			if (!oDef.organizational) {
+				this.addMenuItem(foundationResources.contextMenuCopy.string, this, "doCopy");
+			}
+			]]>
+		</method>
+
+		<!---
+			Create the copy to clipboard menu item.
+		-->
+		<method name="createCopyToClipboardMenuItem">
+			<![CDATA[
+				var oDef = this.tree.o.getReferencedObject().objectDefinition;
+				if (oDef.primary && this.tree.oEditor.showUtilitiesView) {
+					this.addMenuItem(foundationResources.contextMenuCopyToClipboard.string, this, "doCopyToClipboard");
+				}
+			]]>
+		</method>
+
+		<!---
+			Create the delete menu item.
+		-->
+		<method name="createDeleteMenuItem">
+			<![CDATA[
+			var o = this.tree.o;
+			if (o.objectDefinition.parentReference || o.objectDefinition.collectionReference) {
+				o = o.getReferencedObject();
+			}
+			if (o.isDeletable() || this.tree.o.objectDefinition.collectionReference && this.tree.o.isDeletable()) {
+				this.addMenuItem(foundationResources.contextMenuDelete.string, this, "doDelete");
+			}
+			]]>
+		</method>
+
+		<!---
+			Create the custom service menu items.
+		-->
+		<method name="createCustomServiceMenuItems" args="fromUtilitiesView=false">
+			<![CDATA[
+			var oDef = this.tree.o.getReferencedObject().objectDefinition;
+			if (oDef.customServices) {
+				var po = this.tree.o.getReferencedObject();
+				for (var i = 0; i < oDef.customServices.length; i++) {
+					if ((oDef.customServices[i].isEnabled(po)) &&
+						((!fromUtilitiesView && oDef.customServices[i].addToExplorerContextMenu) ||
+						(fromUtilitiesView && oDef.customServices[i].addToUtilitiesContextMenu))) {
+						this.addMenuItem(oDef.customServices[i].getMenuDisplayName(), this, "invokeCustomService", {customService: oDef.customServices[i]});
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the client action menu items.
+		-->
+		<method name="createClientActionMenuItems" args="fromUtilitiesView=false">
+			<![CDATA[
+			var oDef = this.tree.o.objectDefinition;
+			if (oDef.clientActions) {
+				var o = this.tree.o;
+				for (var i = 0; i < oDef.clientActions.length; i++) {
+					if ((oDef.clientActions[i].isEnabled(o)) &&
+						((!fromUtilitiesView && oDef.clientActions[i].addToExplorerContextMenu)
+						|| (fromUtilitiesView && oDef.clientActions[i].addToUtilitiesContextMenu))) {
+						this.addMenuItem(oDef.clientActions[i].getMenuDisplayName(), this, "invokeClientAction", {clientAction: oDef.clientActions[i], useReferencedObject: false});
+					}
+				}
+			}
+			if (oDef != this.tree.o.getReferencedObject().objectDefinition) {
+				oDef = this.tree.o.getReferencedObject().objectDefinition;
+				if (oDef.clientActions) {
+					var po = this.tree.o.getReferencedObject();
+					for (var i = 0; i < oDef.clientActions.length; i++) {
+						if ((oDef.clientActions[i].isEnabled(po)) &&
+							((!fromUtilitiesView && oDef.clientActions[i].addToExplorerContextMenu)
+							|| (fromUtilitiesView && oDef.clientActions[i].addToUtilitiesContextMenu))) {
+							this.addMenuItem(oDef.clientActions[i].getMenuDisplayName(), this, "invokeClientAction", {clientAction: oDef.clientActions[i], useReferencedObject: true});
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the navigation list menu items.
+			@param boolean suppressSingleMenuItem: true indicates that a single navigation list menu item should be suppressed
+			@param boolean open: true indicates the object will be opened when showing the navigation list
+		-->
+		<method name="createNavigationListMenuItems" args="supressSingleMenuItem=false, open=false">
+			<![CDATA[
+			var o = this.tree.o.getReferencedObject();
+			var defs = [];
+			for (var i = 0; i < o.objectDefinition.navigationListDefinitions.length; i++) {
+				if (o.objectDefinition.navigationListDefinitions[i].isEnabled(o)) {
+					defs.push(o.objectDefinition.navigationListDefinitions[i]);
+				}
+			}
+			var currentView = this.tree.navigationListDefinition;
+			if (!supressSingleMenuItem || defs.length > 1) {
+				for (var i = 0; i < defs.length; i++) {
+					var navigationListDef = defs[i];
+					var enable = (currentView != navigationListDef) || !this.tree.selected;
+					var item = this.addMenuItem(foundationResources.replaceValues("menuShowNavigationList", [navigationListDef.displayName]), this, "showNavigationList", {definition: navigationListDef, open: open}, enable);
+					if (i == 0 && item != null) {
+						item.setAttribute('separatorbefore', true);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the object trace menu item.
+		-->
+		<method name="createObjectTraceMenuItem">
+			<![CDATA[
+			if (wcfLogger.display) {
+				this.addMenuItem(foundationResources.contextMenuLogObject.string, this, "doShowObjectInfo");
+				this.addMenuItem(foundationResources.contextMenuLogDefinition.string, this, "doShowDefinitionInfo");
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			var list = this.tree["oList"];
+			if (list && list.statusObject != null) {
+				if (list.statusObject.lastPageNum > list.statusObject.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			var list = this.tree["oList"];
+			if (list != null && list.statusObject != null && list.statusObject.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Open the selected object.
+		-->
+		<method name="doOpen">
+			<![CDATA[
+			this.tree.o.doOpen();
+			]]>
+		</method>
+		
+		<!---
+			Create a new object.
+		-->
+		<method name="doCreateObject" args="args">
+			<![CDATA[
+			var po = this.tree.o.getReferencedObject();
+			args.definition.doCreate({contextObject: po});
+			]]>
+		</method>
+		
+		<!---
+			Refresh the selected object.
+		-->
+		<method name="doRefresh">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			var po = this.tree.o.getReferencedObject();
+			po.model.refreshDescendants(po, true);
+			]]>
+		</method>
+		
+		<!---
+			Copy the selected object.
+		-->
+		<method name="doCopy">
+			<![CDATA[
+			this.tree.oEditor.model.setClipboardObjects([this.tree.o]);
+			]]>
+		</method>
+
+		<!---
+			Copy the selected object to the utilities clipboard.
+		-->
+		<method name="doCopyToClipboard">
+			<![CDATA[
+				this.tree.oEditor.model.setClipboardObjects([this.tree.o]);
+				if (!this.tree.oEditor.utilitiesViewVisible) {
+					this.tree.oEditor.utilities.open();
+				}
+				this.tree.oEditor.utilities.setAttribute("activePane", this.tree.oEditor.utilities.panes.clipboardPane);
+				this.tree.oEditor.utilities.panes.clipboardPane.doPaste();
+			]]>
+		</method>
+
+		<!---
+			Delete the selected object.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+			var o = this.tree.o;
+			if (this.tree.o.objectDefinition.parentReference) {
+				o.getReferencedObject().deleteObject(true);
+			}
+			else if (this.tree.o.objectDefinition.collectionReference) {
+				if (o.isDeletable() && o.getReferencedObject().isDeletable()) {
+					wcfCollectionReferenceObjectDeleteConfirmationDialog.openCollectionReferenceObjectDeleteConfirmationDialog(o);
+				}
+				else if (o.isDeletable()) {
+					wcfCollectionReferenceObjectRemoveConfirmationDialog.openCollectionReferenceObjectRemoveConfirmationDialog(o);
+				}
+				else {
+					o.getReferencedObject().deleteObject(true);
+				}
+			}
+			else {
+				o.deleteObject(true);
+			}
+			]]>
+		</method>
+		
+		<method name="doShowObjectInfo">
+			var o = this.tree.o.getReferencedObject();
+			o.logObjectGroup();
+		</method>
+		
+		<method name="doShowDefinitionInfo">
+			var o = this.tree.o.getReferencedObject();
+			o.objectDefinition.logDefinition();
+		</method>
+		
+		<!---
+			Invoke the custom service.
+		-->
+		<method name="invokeCustomService" args="args">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			var o = this.tree.o.getReferencedObject();
+			if(o.isOpenGroupDirty(true)){
+				wcfCustomServiceUnsavedDialog.openCustomServiceUnsavedDialog(args.customService);
+			}else{
+				args.customService.doRequest(o);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Invoke the client action.
+		-->
+		<method name="invokeClientAction" args="args">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			var o = args.useReferencedObject ? this.tree.o.getReferencedObject() : this.tree.o;
+			args.clientAction.performAction([o]);
+			]]>
+		</method>
+		
+		<!---
+			Show the navigation list view.
+		-->
+		<method name="showNavigationList" args="args">
+			<![CDATA[
+			if (args.open) {
+				var o = this.tree.o.getReferencedObject();
+				if (o != null) {
+					o.openGroupObject.setAttribute("open", true);
+					o.model.oEditor.selectOpenObject(o.openGroupObject, args.definition);
+				}
+			} else {
+				this.tree.setAttribute('selected',true);
+				this.tree.setAttribute("navigationListDefinition", args.definition);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			var o = this.tree.parentO;
+			var oDefs = this.tree.oList.getChildObjectDefinitions();
+			o.model.refreshDescendants(o, true, oDefs, pageNum);
+			]]>
+		</method>
+		
+		<!---
+			Create the open in compare view menu item.
+		-->
+		<method name="createOpenInCompareViewMenuItem">
+			<![CDATA[
+				if (this.tree.oEditor.showCompareView) {
+					if (this.tree.o.isOpenInCompareViewEnabled()) {
+						this.addMenuItem(foundationResources.contextMenuOpenInCompareView.string, this, "doOpenInCompareView");
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			Open the selected object in compare view.
+		-->
+		<method name="doOpenInCompareView">
+			<![CDATA[
+			var po = this.tree.o.getReferencedObject();
+			this.tree.oEditor.openObjectsInCompareView(po);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Open object navigation node menu item.
+	-->
+	<class name="wcfOpenObjectTreeMenu" extends="wcfObjectTreeMenu">
+		<!---
+			Populate the menu.
+		-->
+		<method name="createMenuItems">
+			<![CDATA[
+			this.createNewMenuItems();
+			//this.createOpenMenuItem();
+			this.addMenuItem(foundationResources.contextMenuClose.string, this, "doClose");
+			if (this.tree.o.openGroupObject.openGroupDirty) {
+				this.addMenuItem(foundationResources.contextMenuSave.string, this, "doSave");
+			}
+			this.createRefreshMenuItem();
+			this.createCopyMenuItem();
+			this.createCopyToClipboardMenuItem();
+			this.createDeleteMenuItem();
+			this.createOpenInCompareViewMenuItem();
+			this.createCustomServiceMenuItems();
+			this.createClientActionMenuItems();
+			this.createNavigationListMenuItems();
+			
+			var o = this.tree.o.getReferencedObject();
+			var defs = [];
+			for (var i = 0; i < o.objectDefinition.navigationListDefinitions.length; i++) {
+				if (o.objectDefinition.navigationListDefinitions[i].isEnabled(o)) {
+					defs.push(o.objectDefinition.navigationListDefinitions[i]);
+				}
+			}
+			if((this.tree.o.objectDefinition.propertiesClass != null) && (defs.length > 0)) {
+				var enable = (this.tree.navigationListDefinition != null);
+				this.addMenuItem(foundationResources.contextMenuProperties.string, this, "displayProperties", null, enable);
+			}
+			this.createObjectTraceMenuItem();	
+			]]>
+		</method>
+		
+		<!---
+			Close the selected object.
+		-->
+		<method name="doClose">
+			<![CDATA[
+			this.tree.o.closeObject(true);
+			]]>
+		</method>
+		
+		<!---
+			Save the selected object.
+		-->
+		<method name="doSave">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			this.tree.o.saveObject();
+			]]>
+		</method>
+		
+		<!---
+			Show the properties view.
+		-->
+		<method name="displayProperties">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			this.tree.setAttribute("navigationListDefinition", null);
+			]]>
+		</method>
+		
+		<!---
+			Refresh the selected object.
+		-->
+		<method name="doRefresh">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			var po = this.tree.o.getReferencedObject();
+			if (this.tree.navigationListDefinition == null) {
+				po.refreshObject(true);
+			}
+			else {
+				po.model.refreshDescendants(po, true);
+			}
+			]]>
+		</method>
+
+	</class>	
+
+	<!---
+		@keywords private
+		
+		Browse object navigation node context menu.
+	-->
+	<class name="wcfBrowseObjectTreeMenu" extends="wcfObjectTreeMenu">
+		<!---
+			Populate the menu.
+		-->
+		<method name="createMenuItems">
+			<![CDATA[
+			if (this.tree.navigationEnabled) {
+				this.createNewMenuItems();
+			}
+			this.createOpenMenuItem();
+			if (this.tree.navigationEnabled) {
+				this.createRefreshMenuItem();
+			}
+			this.createCopyMenuItem();
+			this.createCopyToClipboardMenuItem();
+			if (this.tree.isPasteEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuPaste.string, this, "doPaste");
+			}
+			this.createDeleteMenuItem();
+			this.createOpenInCompareViewMenuItem();
+
+			this.createNavigationListMenuItems(true, !this.tree.navigationEnabled);
+			this.createClientActionMenuItems();
+			this.createCustomServiceMenuItems();
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			this.createObjectTraceMenuItem();
+			]]>
+		</method>
+		
+		<method name="doPaste">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			this.tree.doPaste();
+			]]>
+		</method>
+		
+		<method name="doRefresh">
+			<![CDATA[
+			this.tree.setAttribute('selected',true);
+			var po = this.tree.o.getReferencedObject();
+			if (this.tree.navigationListDefinition == null) {
+				po.refreshObject(true);
+			}
+			else {
+				po.model.refreshDescendants(po, true);
+			}
+			]]>
+		</method>
+		
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfUtilitiesBrowseObjectTreeMenu" extends="wcfObjectTreeMenu">
+		<!---
+			Populate the menu.
+		-->
+		<method name="createMenuItems">
+			<![CDATA[
+			this.createOpenMenuItem();
+			this.createRefreshMenuItem();
+			this.createCopyMenuItem();
+			this.createCopyToClipboardMenuItem();
+			this.createOpenInCompareViewMenuItem();
+			this.createClientActionMenuItems(true);
+			this.createCustomServiceMenuItems(true);
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			this.createObjectTraceMenuItem();
+			]]>
+		</method>
+	</class>
+	<!--- 
+		@keywords private
+		The context menu for {@link wcfPropertyBrowseObjectTree}
+	-->
+	<class name="wcfPropertyBrowseObjectTreeMenu" extends="wcfObjectTreeMenu">
+		<!---
+			Populate the menu.
+		-->
+		<method name="createMenuItems">
+			<![CDATA[
+			this.createOpenMenuItem();
+			this.createRefreshMenuItem();
+			this.createCopyMenuItem();
+			this.createCopyToClipboardMenuItem();
+			this.createOpenInCompareViewMenuItem();
+			this.createObjectTraceMenuItem();
+			if (this.tree.getRoot().parent.enabled) {
+				var actions = this.tree.getRoot().parent.propertyTree.actions;
+				var o = this.tree.getRoot().parent.o;
+				for (var i = 0; i < actions.length; i++) {
+					if (actions[i].isEnabled(o, this.tree.o)) {
+						this.addMenuItem(actions[i].getMenuDisplayName(), this, "invokeTreeAction", {action: actions[i], o: o, treeNodeObject: this.tree.o});
+					}
+				}
+			}
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="invokeTreeAction" args="args">
+			<![CDATA[
+			args.action.performAction(args.o, args.treeNodeObject);
+			this.tree.setAttribute('selected',false);
+			this.tree.setAttribute('selected',true);
+			]]>
+		</method>
+	</class>
+	
+	
+	<!---
+		@keywords private
+		Base class for a grid row context menu.
+	-->
+	<class name="wcfGridRowMenu" extends="wcfContextMenu">
+		<!---
+			The parent row for this context menu.
+		-->
+		<attribute name="row" value="null"/>
+		<!---
+			The parent cell for this context menu.
+		-->
+		<attribute name="cell" value="null"/>
+
+		<!---
+			Populate and open the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			if (this.row.parent.panel != null) {
+				this.row.parent.model.setAttribute("activeSelectionView", this.row.parent);
+			}
+			lz.Focus.setFocus(this.row);
+			if (!this.row.selected) {
+				this.row.select();
+			}
+			var selectedObjects = this.row.parent.getSelectedObjects();
+			this.createMenuItems(selectedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Create the context menu items.
+			@param array selectedObjects: array of wcfModelObject instances
+		-->
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createOpenMenuItem(selectedObjects);
+			this.createCopyMenuItem(selectedObjects);
+			this.createCopyToClipboardMenuItem(selectedObjects);
+			this.createOpenInCompareViewMenuItem(selectedObjects);
+			this.createSelectAllMenuItem(selectedObjects);
+			this.createDeselectAllMenuItem(selectedObjects);
+			this.createEditColumnMenuItem();
+			this.createCustomServiceMenuItems(selectedObjects);
+			this.createClientActionMenuItems(selectedObjects);
+			this.createObjectTraceMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the open menu item.
+		-->
+		<method name="createOpenMenuItem" args="selectedObjects">
+			<![CDATA[
+			var openable = selectedObjects.length > 0;
+			for (var i = 0; i < selectedObjects.length; i++) {
+				if (!selectedObjects[i].isOpenEnabled()) {
+					openable = false;
+					break;
+				}
+			}
+			if (openable) {
+				this.addMenuItem(foundationResources.contextMenuOpen.string, this, "doOpen");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the copy menu item.
+		-->
+		<method name="createCopyMenuItem" args="selectedObjects">
+			<![CDATA[
+			this.addMenuItem(foundationResources.contextMenuCopy.string, this, "doCopy");
+			]]>
+		</method>
+
+		<!---
+			Create the copy to clipboard menu item.
+		-->
+		<method name="createCopyToClipboardMenuItem" args="selectedObjects">
+			<![CDATA[
+				if (selectedObjects.length > 0 && selectedObjects[0].model.oEditor.showUtilitiesView) {
+					for (var i=0; i<selectedObjects.length; i++) {
+						if (!selectedObjects[i].getReferencedObject().objectDefinition.primary) {
+							return;
+						}
+					}
+					this.addMenuItem(foundationResources.contextMenuCopyToClipboard.string, this, "doCopyToClipboard");
+				}
+			]]>
+		</method>
+
+		<!---
+			Create the paste menu item.
+		-->
+		<method name="createPasteMenuItem" args="selectedObjects">
+			<![CDATA[
+			this.addMenuItem(foundationResources.contextMenuPaste.string, this, "doPaste");			
+			]]>
+		</method>
+		
+		<!---
+			Create the delete menu item.
+		-->
+		<method name="createDeleteMenuItem" args="selectedObjects">
+			<![CDATA[
+			this.addMenuItem(foundationResources.contextMenuDelete.string, this, "doDelete");
+			]]>
+		</method>
+		
+		<!---
+			Create the edit column menu item.
+		-->
+		<method name="createEditColumnMenuItem">
+			<![CDATA[
+			if (this.row.parent.isEditColumnEnabled(null)) {
+				this.addMenuItem(foundationResources.contextMenuEditColumn.string, this, "doEditColumn");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the select all menu item.
+		-->
+		<method name="createSelectAllMenuItem" args="selectedObjects">
+			<![CDATA[
+			this.addMenuItem(foundationResources.menuSelectAll.string, this, "doSelectAll");
+			]]>
+		</method>
+		
+		<!---
+			Create the deselect all menu item.
+		-->
+		<method name="createDeselectAllMenuItem" args="selectedObjects">
+			<![CDATA[
+			if(selectedObjects.length > 0) {
+				this.addMenuItem(foundationResources.menuDeselectAll.string, this, "doDeselectAll");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the custom service menu items.
+		-->
+		<method name="createCustomServiceMenuItems" args="selectedObjects, fromUtilitiesView=false">
+			<![CDATA[
+			if (selectedObjects.length > 0) {
+				var oDef = selectedObjects[0].getReferencedObject().objectDefinition;
+				for (var i = 0; i < oDef.customServices.length; i++) {
+					var customService = oDef.customServices[i];
+					if ((customService.allowMultipleSelection || selectedObjects.length == 1) &&
+						((!fromUtilitiesView && customService.addToListContextMenu) || (fromUtilitiesView && customService.addToUtilitiesContextMenu))) {
+						var serviceEnabled = true;
+						for (var j = 0; j < selectedObjects.length; j++) {
+							var po = selectedObjects[j].getReferencedObject();
+							if (!po.objectDefinition.isCustomServiceDefined(customService) || !customService.isEnabled(po)) {
+								serviceEnabled = false;
+								break;
+							}
+						}
+						if (serviceEnabled) {
+							this.addMenuItem(customService.getMenuDisplayName(), this, "invokeCustomService", {customService: customService});
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the client action menu items.
+		-->
+		<method name="createClientActionMenuItems" args="selectedObjects, fromUtilitiesView=false">
+			<![CDATA[
+			if (selectedObjects.length > 0) {
+				var oDef = selectedObjects[0].objectDefinition;
+				for (var i = 0; i < oDef.clientActions.length; i++) {
+					var clientAction = oDef.clientActions[i];
+					if ((clientAction.allowMultipleSelection || selectedObjects.length == 1) &&
+						((!fromUtilitiesView && clientAction.addToListContextMenu) || (fromUtilitiesView && clientAction.addToUtilitiesContextMenu))) {
+						var clientActionEnabled = true;
+						for (var j = 0; j < selectedObjects.length; j++) {
+							var o = selectedObjects[j];
+							if (!o.objectDefinition.isClientActionDefined(clientAction) || !clientAction.isEnabled(o)) {
+								clientActionEnabled = false;
+								break;
+							}
+						}
+						if (clientActionEnabled) {
+							this.addMenuItem(clientAction.getMenuDisplayName(), this, "invokeClientAction", {clientAction: clientAction, useReferencedObject: false});
+						}
+					}
+				}
+				
+				if (oDef != selectedObjects[0].getReferencedObject().objectDefinition) {
+					oDef = selectedObjects[0].getReferencedObject().objectDefinition;
+					for (var i = 0; i < oDef.clientActions.length; i++) {
+						var clientAction = oDef.clientActions[i];
+						if ((clientAction.allowMultipleSelection || selectedObjects.length == 1) &&
+							((!fromUtilitiesView && clientAction.addToListContextMenu) || (fromUtilitiesView && clientAction.addToUtilitiesContextMenu))) {
+							var clientActionEnabled = true;
+							for (var j = 0; j < selectedObjects.length; j++) {
+								var po = selectedObjects[j].getReferencedObject();
+								if (!po.objectDefinition.isClientActionDefined(clientAction) || !clientAction.isEnabled(po)) {
+									clientActionEnabled = false;
+									break;
+								}
+							}
+							if (clientActionEnabled) {
+								this.addMenuItem(clientAction.getMenuDisplayName(), this, "invokeClientAction", {clientAction: clientAction, useReferencedObject: true});
+							}
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the open menu item.
+		-->
+		<method name="createNavigationListMenuItems" args="selectedObjects">
+			<![CDATA[
+			if (selectedObjects.length == 1) {
+				var o = selectedObjects[0].getReferencedObject();
+				var oDef = o.objectDefinition;
+				var defs = [];
+				for (var i = 0; i < oDef.navigationListDefinitions.length; i++) {
+					if (oDef.navigationListDefinitions[i].isEnabled(o)) {
+						defs.push(oDef.navigationListDefinitions[i]);
+					}
+				}
+				for (var i = 0; i < defs.length; i++) {
+					var navigationListDef = defs[i];
+					var item = this.addMenuItem(foundationResources.replaceValues("menuShowNavigationList", [navigationListDef.displayName]), this, "doShowNavigationList", {navigationListDefinition: navigationListDef});
+					if (i == 0 && item != null) {
+						item.setAttribute('separatorbefore', true);
+					}
+				}
+			}
+			]]>
+		</method>
+						
+		<!---
+			Create the object trace menu item.
+		-->
+		<method name="createObjectTraceMenuItem">
+			<![CDATA[
+			if (wcfLogger.display) {
+				this.addMenuItem(foundationResources.contextMenuLogObject.string, this, "doShowObjectInfo");
+				this.addMenuItem(foundationResources.contextMenuLogDefinition.string, this, "doShowDefinitionInfo");
+			}			
+			]]>
+		</method>
+
+		<!---
+			Open the selected object.
+		-->
+		<method name="doOpen">
+			<![CDATA[
+			var selectedObjects = this.row.parent.getSelectedObjects();
+			for (var i = 0; i < selectedObjects.length; i++) {
+				selectedObjects[i].doOpen(i == (selectedObjects.length - 1));
+			}
+			]]>
+		</method>
+		
+		<!---
+			Show the navigation list view.
+		-->
+		<method name="doShowNavigationList" args="args">
+			<![CDATA[
+			var selectedObjects = this.row.parent.getSelectedObjects();
+			var po = null;
+			for (var i = 0; i < selectedObjects.length; i++) {
+				po = selectedObjects[i].getReferencedObject();
+				po.openGroupObject.setAttribute("open", true);
+			}
+			if (po != null) {
+				po.model.oEditor.selectOpenObject(po.openGroupObject, args.navigationListDefinition);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Copy the selected objects.
+		-->
+		<method name="doCopy">
+			<![CDATA[
+			var selectedObjects = this.row.parent.getSelectedObjects();
+			if (selectedObjects.length > 0) {
+				selectedObjects[0].model.setClipboardObjects(selectedObjects);
+			}
+			]]>
+		</method>
+
+		<!---
+			Copy the selected object to the utilities clipboard.
+		-->
+		<method name="doCopyToClipboard">
+			<![CDATA[
+				var selectedObjects = this.row.parent.getSelectedObjects();
+				if (selectedObjects.length > 0) {
+					selectedObjects[0].model.setClipboardObjects(selectedObjects);
+					if (!selectedObjects[0].model.oEditor.utilitiesViewVisible) {
+						selectedObjects[0].model.oEditor.utilities.open();
+					}
+					selectedObjects[0].model.oEditor.utilities.setAttribute("activePane", selectedObjects[0].model.oEditor.utilities.panes.clipboardPane);
+					selectedObjects[0].model.oEditor.utilities.panes.clipboardPane.doPaste();
+				}
+			]]>
+		</method>
+
+		<!---
+			Paste the selected objects.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			
+
+			]]>
+		</method>
+
+		<!---
+			Delete the selected objects.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+				var objects = this.row.parent.getSelectedObjects();
+				var selectedObjects = [];
+				for (var i = 0; i < objects.length; i++) {
+					selectedObjects[i] = objects[i];
+				}
+
+				var deleteObjects = [];
+				var isCollectionReferenceObjects = true;
+				for (var i = 0; i < selectedObjects.length; i++) {
+					var o = selectedObjects[i];
+					var oDef = o.objectDefinition;
+					if (oDef.openGroupTop) {
+						deleteObjects.push(o);
+					}
+					else if (oDef.parentReference || oDef.collectionReference) {
+						deleteObjects.push(o.getReferencedObject());
+					}
+					else if (!oDef.organizational) {
+						o.deleteObject();
+					}
+					if (isCollectionReferenceObjects && !oDef.collectionReference) {
+						isCollectionReferenceObjects = false;
+					}
+				}
+
+				if (isCollectionReferenceObjects) {
+					var deleteCollectionReferencedObjectEnabled = true;
+					var deleteCollectionReferenceEnabled = true;
+					for (var i = 0; i < selectedObjects.length; i++) {
+						var o = selectedObjects[i];
+						if (!o.getReferencedObject().isDeletable()) {
+							deleteCollectionReferencedObjectEnabled = false;
+							break;
+						}
+						if (!o.isDeletable()) {
+							deleteCollectionReferenceEnabled = false;
+							break;
+						}
+					}
+					if (deleteObjects.length == 1) {
+						if (deleteCollectionReferencedObjectEnabled && deleteCollectionReferenceEnabled) {
+							wcfCollectionReferenceObjectDeleteConfirmationDialog.openCollectionReferenceObjectDeleteConfirmationDialog(selectedObjects[0]);
+						}
+						else if (deleteCollectionReferencedObjectEnabled) {
+							deleteObjects[0].deleteObject(true);
+						}
+						else if (deleteCollectionReferenceEnabled) {
+							wcfCollectionReferenceObjectRemoveConfirmationDialog.openCollectionReferenceObjectRemoveConfirmationDialog(selectedObjects[0]);
+						}
+					}
+					else if (deleteObjects.length > 0) {
+						if (deleteCollectionReferencedObjectEnabled && deleteCollectionReferenceEnabled) {
+							wcfMultipleCollectionReferenceObjectDeleteConfirmationDialog.openMultipleCollectionReferenceObjectDeleteConfirmationDialog(selectedObjects);
+						}
+						else if (deleteCollectionReferencedObjectEnabled) {
+							wcfMultipleDeleteConfirmationDialog.openMultipleDeleteConfirmationDialog(deleteObjects);
+						}
+						else if (deleteCollectionReferenceEnabled) {
+							wcfMultipleCollectionReferenceObjectRemoveConfirmationDialog.openMultipleCollectionReferenceObjectRemoveConfirmationDialog(selectedObjects);
+						}
+					}
+				}
+				else {
+					if (deleteObjects.length == 1) {
+						deleteObjects[0].deleteObject(true);
+					}
+					else if (deleteObjects.length > 0) {
+						wcfMultipleDeleteConfirmationDialog.openMultipleDeleteConfirmationDialog(deleteObjects);
+					}
+				}
+			]]>
+		</method>
+		
+		<method name="doEditColumn">
+			<![CDATA[
+			wcfEditColumnDialog.openEditColumnDialog(this.row.parent);
+			]]>
+		</method>
+
+		<!---
+			Select all objects.
+		-->
+		<method name="doSelectAll">
+			<![CDATA[
+			this.row.parent.selectAll();
+			]]>
+		</method>
+		
+		<!---
+			Deselect all objects.
+		-->
+		<method name="doDeselectAll">
+			<![CDATA[
+			this.row.parent.deselectAll();
+			]]>
+		</method>
+		
+		<!---
+			Invoke a custom service for all of the selected objects.
+			@param object args: argument map
+		-->
+		<method name="invokeCustomService" args="args">
+			<![CDATA[
+			var selectedObjects = this.row.parent.getSelectedObjects();
+			var unSaved=false;
+			for (var i = 0; i < selectedObjects.length; i++) {
+				var o = selectedObjects[i].getReferencedObject();
+				if(o.isOpenGroupDirty(true)){
+					unSaved=true;
+				}
+			}
+			if (unSaved) {
+				wcfCustomServiceUnsavedDialog.openCustomServiceUnsavedDialog(args.customService);
+			}
+			else {
+	 			for (var i = 0; i < selectedObjects.length; i++) {
+					var o = selectedObjects[i].getReferencedObject();
+					args.customService.doRequest(o);
+ 				}
+ 			}
+			]]>
+		</method>		
+						
+		<!---
+			Invoke a client action for all of the selected objects.
+			@param object args: argument map
+		-->
+		<method name="invokeClientAction" args="args">
+			<![CDATA[
+			var selectedObjects = this.row.parent.getSelectedObjects();
+ 			var objects = [];
+			for (var i = 0; i < selectedObjects.length; i++) {
+				objects.push(args.useReferencedObject ? selectedObjects[i].getReferencedObject() : selectedObjects[i]);
+			}
+			args.clientAction.performAction(objects);
+			]]>
+		</method>		
+						
+		<method name="doShowObjectInfo">
+			<![CDATA[
+			this.row.o.getReferencedObject().logObjectGroup();
+			]]>
+		</method>
+						
+		<method name="doShowDefinitionInfo">
+			<![CDATA[
+			this.row.o.getReferencedObject().objectDefinition.logDefinition();
+			]]>
+		</method>
+		
+		<!---
+			Create the open in compare view menu item.
+		-->
+		<method name="createOpenInCompareViewMenuItem" args="selectedObjects">
+			<![CDATA[
+				if (selectedObjects.length > 0 && selectedObjects.length < 3 && selectedObjects[0].model.oEditor.showCompareView) {
+					for (var i=0; i<selectedObjects.length; i++) {
+						if (!selectedObjects[i].isOpenInCompareViewEnabled()) {
+							return;
+						}
+					}
+					this.addMenuItem(foundationResources.contextMenuOpenInCompareView.string, this, "doOpenInCompareView");
+				}
+			]]>
+		</method>
+		
+		<method name="doOpenInCompareView">
+			<![CDATA[
+			var selectedObjects = this.row.parent.getSelectedObjects();	
+			if (selectedObjects.length == 1 || selectedObjects.length == 2) {
+				var o1 = selectedObjects[0];
+				o1 = o1.getReferencedObject();
+				var o2 = null;
+				if (selectedObjects.length == 2) {		
+					o2 = selectedObjects[1];
+					o2 = o2.getReferencedObject();
+				}
+				o1.model.oEditor.openObjectsInCompareView(o1, o2);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfSearchResultsMenu" extends="wcfGridRowMenu">
+		<attribute name="searchResultsView" value="${this.row.parent.parent}" />
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			super.createMenuItems(selectedObjects);
+			if (this.searchResultsView.isDeleteEnabled()) {
+				this.createDeleteMenuItem(selectedObjects);
+			}
+			this.createCustomServiceMenuItems(selectedObjects);
+			this.createClientActionMenuItems(selectedObjects);
+			this.createNavigationListMenuItems(selectedObjects);
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null) {
+				if (this.searchResultsView.searchResults.lastPageNum > this.searchResultsView.searchResults.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null && this.searchResultsView.searchResults.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			this.searchResultsView.searchResults.loadByPageNum(pageNum);
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfSearchResultsBackgroundMenu" extends="wcfContextMenu">
+		<attribute name="grid" value="null"/>
+		<attribute name="searchResultsView" value="${this.grid.parent}" />
+		<!---
+			Populate and open the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			if (this.grid.panel != null) {
+				this.grid.model.setAttribute("activeSelectionView", this.grid);
+			}
+			var selectedObjects = this.grid.getSelectedObjects();
+			this.createMenuItems(selectedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Create the context menu items.
+			@param array selectedObjects: array of wcfModelObject instances
+		-->
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null) {
+				if (this.searchResultsView.searchResults.lastPageNum > this.searchResultsView.searchResults.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null && this.searchResultsView.searchResults.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			this.searchResultsView.searchResults.loadByPageNum(pageNum);
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfChildListMenu" extends="wcfGridRowMenu">
+		<attribute name="childListEditor" value="${this.row.parent.parent}" />
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createOpenMenuItem(selectedObjects);
+			this.createCopyMenuItem(selectedObjects);
+			this.createCopyToClipboardMenuItem(selectedObjects);
+			if (this.childListEditor.isPasteEnabled()) {
+				this.createPasteMenuItem(selectedObjects);
+			}
+			if (this.childListEditor.isDeleteEnabled()) {
+				this.createDeleteMenuItem(selectedObjects);
+			}
+			this.createOpenInCompareViewMenuItem(selectedObjects);
+			this.createSequenceUpMenuItem();
+			this.createSequenceDownMenuItem();
+			this.createEditColumnMenuItem();
+			this.createSelectAllMenuItem(selectedObjects);
+			this.createDeselectAllMenuItem(selectedObjects);
+			this.createCustomServiceMenuItems(selectedObjects);
+			this.createClientActionMenuItems(selectedObjects);
+			this.createNavigationListMenuItems(selectedObjects);
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			this.createObjectTraceMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			var list = this.row.parent.oList;
+			if (list && list.statusObject != null) {
+				if (list.statusObject.lastPageNum > list.statusObject.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			var list = this.row.parent.oList;
+			if (list != null && list.statusObject != null && list.statusObject.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			var o = this.row.parent.parentO;
+			var oDefs = this.row.parent.oList.getChildObjectDefinitions();
+			o.model.refreshDescendants(o, true, oDefs, pageNum);
+			]]>
+		</method>		
+		
+		<!---
+			Create the menu item for moving the list item up in sequence.
+		-->
+		<method name="createSequenceUpMenuItem">
+			<![CDATA[		
+			if (this.childListEditor.isSequenceUpEnabled()){
+				this.addMenuItem(foundationResources.contextMenuSequenceUp.string, this.childListEditor, "doSequenceUp");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the menu item for moving the list item down in sequence.
+		-->
+		<method name="createSequenceDownMenuItem">
+			<![CDATA[
+			if (this.childListEditor.isSequenceDownEnabled()){
+				this.addMenuItem(foundationResources.contextMenuSequenceDown.string, this.childListEditor, "doSequenceDown");
+			}
+			]]>
+		</method>
+		
+		<method name="doPaste">
+			<![CDATA[
+			this.childListEditor.doPaste();
+			]]>
+		</method>
+				
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfReferenceListMenu" extends="wcfGridRowMenu">
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createOpenMenuItem(selectedObjects);
+			]]>
+		</method>		
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfReferenceMenu" extends="wcfContextMenu">
+		<!---
+			Populate and open the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			this.createMenuItems();
+			]]>
+		</method>
+		
+		<!---
+			Create the context menu items.
+		-->
+		<method name="createMenuItems">
+			<![CDATA[			
+			this.createPasteMenuItem();
+			this.createDeleteMenuItem();
+			this.createOpenMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the paste menu item.
+		-->
+		<method name="createPasteMenuItem">
+			<![CDATA[
+			if (parent.isPasteEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuPaste.string, parent, "doPaste");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the delete menu item.
+		-->
+		<method name="createDeleteMenuItem">
+			<![CDATA[
+			if (parent.isDeleteEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuDelete.string, parent, "doDelete");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the open menu item.
+		-->
+		<method name="createOpenMenuItem">
+			<![CDATA[
+			if (parent.isOpenEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuOpen.string, parent, "doOpen");
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Menu for the search results grid in the utilities Pane
+	 -->
+	<class name="wcfUtilitiesSearchResultsMenu" extends="wcfGridRowMenu">
+		<attribute name="searchResultsView" value="${this.row.parent.parent.parent}" />
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createOpenMenuItem(selectedObjects);
+			this.createCopyMenuItem(selectedObjects);
+			this.createCopyToClipboardMenuItem(selectedObjects);
+			this.createOpenInCompareViewMenuItem(selectedObjects);
+			this.createSelectAllMenuItem(selectedObjects);
+			this.createDeselectAllMenuItem(selectedObjects);			
+			this.createClientActionMenuItems(selectedObjects, true);
+			this.createCustomServiceMenuItems(selectedObjects, true);
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null) {
+				if (this.searchResultsView.searchResults.lastPageNum > this.searchResultsView.searchResults.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null && this.searchResultsView.searchResults.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			this.searchResultsView.searchResults.loadByPageNum(pageNum);
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfUtilitiesSearchResultsBackgroundMenu" extends="wcfSearchResultsBackgroundMenu">
+		<attribute name="searchResultsView" value="${this.grid.parent.parent}" />
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Menu for the details grid on the browse tab in the utilities pane
+	 -->
+	<class name="wcfUtilitiesDetailsMenu" extends="wcfGridRowMenu">
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createOpenMenuItem(selectedObjects);
+			this.createCopyMenuItem(selectedObjects);
+			this.createCopyToClipboardMenuItem(selectedObjects);
+			this.createOpenInCompareViewMenuItem(selectedObjects);
+			this.createNavigationListMenuItems(selectedObjects);
+			this.createSelectAllMenuItem(selectedObjects);
+			this.createDeselectAllMenuItem(selectedObjects);
+			this.createClientActionMenuItems(selectedObjects, true);
+			this.createCustomServiceMenuItems(selectedObjects, true);
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			var list = this.row.parent.oList;
+			if (list && list.statusObject != null) {
+				if (list.statusObject.lastPageNum > list.statusObject.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			var list = this.row.parent.oList;
+			if (list != null && list.statusObject != null && list.statusObject.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			var o = this.row.parent.parentO;
+			var oDefs = this.row.parent.oList.getChildObjectDefinitions();
+			o.model.refreshDescendants(o, true, oDefs, pageNum);
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfUtilitiesClipboardMenuRow" extends="wcfGridRowMenu">
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createOpenMenuItem(selectedObjects);
+			this.createCopyMenuItem(selectedObjects);
+			if (this.row.parent.parent.isPasteEnabled()) {
+				this.createPasteMenuItem(selectedObjects);
+			}
+			this.createDeleteMenuItem(selectedObjects);
+			this.createOpenInCompareViewMenuItem(selectedObjects);
+			this.createSelectAllMenuItem(selectedObjects);
+			this.createDeselectAllMenuItem(selectedObjects);			
+			this.createClientActionMenuItems(selectedObjects, true);
+			this.createCustomServiceMenuItems(selectedObjects, true);
+			]]>
+		</method>
+		
+		<!---
+			Create the delete menu item.
+		-->
+		<method name="createDeleteMenuItem" args="selectedObjects">
+			<![CDATA[
+			this.addMenuItem(foundationResources.clipboardClear.string, this, "doDelete");
+			]]>
+		</method>
+		
+		<!---
+			Remove objects from clipboard.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+			this.row.parent.parent.doDelete();
+			]]>
+		</method>
+		
+		<!---
+			Paste CMC clipboard objects into the utilities clipboard.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			this.row.parent.parent.doPaste();
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Grid column header context menu.
+	-->
+	<class name="wcfGridColumnMenu" extends="wcfContextMenu">
+		<!--- The column. -->
+		<attribute name="column" value="null"/>
+		<!---
+			@keywords private
+			Indicates that the column is only filler and can not be hidden or selected
+		 -->
+		<attribute name="dummyColumn" type="boolean" value="false"/>
+
+		<!---
+			Open and populate the context menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			if (this.column.parent.isConfigurable) {
+				if(!dummyColumn){
+					lz.Focus.setFocus(this.column);
+					if (!this.column.required && !this.column.parent.isOnlyColumnVisible(this.column)) {
+						this.addMenuItem(foundationResources.contextMenuHide.string, this, "doHide");
+					}
+				}			
+				this.addMenuItem(foundationResources.contextMenuConfigureColumns.string, this, "doConfigureColumns");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Hide the column.
+		-->
+		<method name="doHide">
+			<![CDATA[
+			this.column.setAttribute("visible", false);
+			this.column.parent.savePreferences();
+			]]>
+		</method>
+		
+		<!---
+			Configure columns.
+		-->
+		<method name="doConfigureColumns">
+			<![CDATA[
+			this.column.parent.configure();
+			]]>
+		</method>
+	</class>
+			
+	<!--- @keywords private -->
+	<class name="wcfChildListBackgroundMenu" extends="wcfContextMenu">
+		<attribute name="grid" value="null"/>
+		<!---
+			Populate and open the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			if (this.grid.panel != null) {
+				this.grid.model.setAttribute("activeSelectionView", this.grid);
+			}
+			var selectedObjects = this.grid.getSelectedObjects();
+			this.createMenuItems(selectedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Create the context menu items.
+			@param array selectedObjects: array of wcfModelObject instances
+		-->
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[			
+			this.createPasteMenuItem(selectedObjects);
+			this.addSeparator();
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the paste menu item.
+		-->
+		<method name="createPasteMenuItem" args="selectedObjects">
+			<![CDATA[
+			if (this.grid.isPasteEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuPaste.string, this, "doPaste");
+			}
+			]]>
+		</method>
+
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			var list = this.grid.oList;
+			if (list && list.statusObject != null) {
+				if (list.statusObject.lastPageNum > list.statusObject.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			var list = this.grid.oList;
+			if (list != null && list.statusObject != null && list.statusObject.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", list.statusObject.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Paste the clipboard objects into the child list editor.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			this.grid.doPaste();
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			var o = this.grid.parentO;
+			var oDefs = this.grid.oList.getChildObjectDefinitions();
+			o.model.refreshDescendants(o, true, oDefs, pageNum);
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfUtilitiesClipboardMenu" extends="wcfContextMenu">
+		<attribute name="grid" value="null"/>
+		<!---
+			Populate and open the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			if (this.grid.panel != null) {
+				this.grid.model.setAttribute("activeSelectionView", this.grid);
+			}
+			var selectedObjects = this.grid.getSelectedObjects();
+			this.createMenuItems(selectedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Create the context menu items.
+			@param array selectedObjects: array of wcfModelObject instances
+		-->
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[			
+			this.createPasteMenuItem(selectedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Create the paste menu item.
+			@param array selectedObjects: array of wcfModelObject instances
+		-->
+		<method name="createPasteMenuItem" args="selectedObjects">
+			<![CDATA[
+			if (this.grid.parent.isPasteEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuPaste.string, this, "doPaste");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Paste the CMC clipboard objects into the utilities clipboard.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			this.grid.parent.doPaste();
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfChildListViewerMenu" extends="wcfGridRowMenu">
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createOpenMenuItem(selectedObjects);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Text editor context menu
+	-->
+	<class name="wcfTextEditorMenu" extends="wcfContextMenu">
+		<!--- The editor. -->
+		<attribute name="editor" value="null"/>
+
+		<!---
+			Open and populate the context menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			if (this.editor["property"]) {
+				if (this.editor["storeValuePending"]) {
+					this.editor.storeValue();
+				}
+				var enable = false;
+				var propertyDef = this.editor.property.propertyDefinition;
+				if (propertyDef == null || propertyDef.type == "string") {
+					enable = (this.editor.enabled && this.editor.property.value != "");
+					this.addMenuItem(foundationResources.spellCheckContextMenu.string, this, "doSpellCheck", null, enable);
+				}
+				enable = this.editor.property.dirty && !this.editor.property.redoable;
+				this.addMenuItem(foundationResources.contextMenuUndo.string, this, "doUndo", null, enable);	
+				
+				enable = this.editor.property.redoable;					
+				this.addMenuItem(foundationResources.contextMenuRedo.string, this, "doRedo", null, enable);		
+	
+				if (propertyDef == null || propertyDef.type == "string") {
+					var langObject = this.getLanguageObject();
+					if (langObject != null && wcfLangUtil.isBiDiLanguage(langObject.language)) {
+						this.addMenuItem(foundationResources.contextMenuRightToLeftEdit.string, this, "doRTLDialog", null, true);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return the language from the editor if it is language sensitive or the store default locale if not
+		-->
+		<method name="getLanguageObject">
+			<![CDATA[
+			var langObject = null;
+			var storeConfig = wcfContextUtil.findStoreConfig(this.editor.property.o);
+			if (storeConfig != null) {
+				if (this.editor.property.o.objectDefinition.languageSensitive) {
+					langObject = storeConfig.getLanguageById(this.editor.property.o.getPropertyValue("languageId"));
+				} else if (storeConfig != null && storeConfig.defaultLanguage != null) {
+					langObject = storeConfig.defaultLanguage;
+				}
+			}
+			return langObject;
+			]]>
+		</method>
+		
+		<!---
+			Open the spell check dialog
+		-->
+		<method name="doSpellCheck">
+			<![CDATA[
+			wcfSpellCheckDialog.openSpellCheckDialog(this.editor,
+				this.editor.inputText,
+				this.getLanguageObject(),
+				this.editor.inputText.getSelectionPosition(),
+				this.editor.inputText.getSelectionSize());
+			]]>
+		</method>
+		
+		<!---
+			Reset the value of the property to the one returned by the server.
+		-->
+		<method name="doUndo">
+			<![CDATA[
+			this.editor.property.undo();
+			]]>
+		</method>
+		<!---
+			Restores the value of the property to what it was before the Undo happened.
+		-->
+		<method name="doRedo">
+			this.editor.property.redo();
+		</method>
+		<!---
+			Open the input editor for bi-directional languages.
+		-->
+		<method name="doRTLDialog">
+			<![CDATA[
+				// register delegate to canvas' oncallbackvalue event
+				this.setRTLValueDel = new lz.Delegate(this, "setRTLValue");
+				this.setRTLValueDel.register(canvas, "oncallbackvalue");
+
+				// set dialog attributes and call javascript method in CMC wrapper to open the dialog
+				var newWindowArguments = new Object();
+				newWindowArguments.inputTextPrompt = this.editor.property.propertyDefinition.getDisplayName();
+				newWindowArguments.inputTextValue = this.editor.property.value;
+				var newWindowObj = new Object();
+				newWindowObj.URL = "InputTextDialog?locale=" + wcfContextUtil.findContextValue(null, "locale").value;
+				newWindowObj.windowName = "InputTextDialogWindow";
+				newWindowObj.windowArguments = newWindowArguments;
+				newWindowObj.windowWidth = 500;
+				newWindowObj.windowHeight = 168;
+				callJSFunction("launchModalDialog", newWindowObj);
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Sets the value of the property based on the value entered in the Right-to-Left input dialog.
+		-->
+		<method name="setRTLValue" args="e=null">
+			<![CDATA[
+				// update the value of this property
+				if (canvas.externalCallbackValue != null) {
+					this.editor.property.change(canvas.externalCallbackValue);
+				}
+
+				// unregister events for the delegate and delete it
+				this.setRTLValueDel.unregisterAll();
+				delete this.setRTLValueDel;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private		
+		Rich text editor context menu
+	-->
+	<class name="wcfRichTextEditorMenu" extends="wcfTextEditorMenu">
+		
+		<!---
+			Open the spell check dialog
+		-->
+		<method name="doSpellCheck">
+			<![CDATA[
+			wcfSpellCheckDialog.openSpellCheckDialog(this.editor,
+				this.editor.richInputText,
+				this.getLanguageObject(),
+				this.editor.richInputText.getSelectionPosition(),
+				this.editor.richInputText.getSelectionSize());
+			]]>
+		</method>
+				
+	</class>
+
+	<!---
+		@keywords private
+		Context menu for the grid in collection list editor.
+	-->
+	<class name="wcfCollectionListMenu" extends="wcfGridRowMenu">
+		<!---
+			The collection list editor.
+		-->
+		<attribute name="collectionListEditor" value="${this.row.parent.parent}" />
+
+		<!---
+			@keywords private
+		-->
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+				this.createOpenMenuItem(selectedObjects);
+				this.createCopyMenuItem(selectedObjects);
+				this.createCopyToClipboardMenuItem(selectedObjects);
+				if (this.collectionListEditor.isPasteEnabled()) {
+					this.createPasteMenuItem(selectedObjects);
+				}
+				if (this.collectionListEditor.isDeleteEnabled()) {
+					this.createDeleteMenuItem(selectedObjects);
+				}
+				this.createOpenInCompareViewMenuItem(selectedObjects);
+				this.createSelectAllMenuItem(selectedObjects);
+				this.createDeselectAllMenuItem(selectedObjects);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="doDelete">
+			<![CDATA[
+				this.collectionListEditor.doDeleteObjects(this.row.parent.getSelectedObjects());
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="doPaste">
+			<![CDATA[
+				this.collectionListEditor.doPaste();
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Collection list editor context menu.
+	-->
+	<class name="wcfCollectionListBackgroundMenu" extends="wcfContextMenu">
+		<!---
+			Collection list editor grid.
+		-->
+		<attribute name="grid" value="null"/>
+
+		<!---
+			Populate and open the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+				super.openMenu(e);
+				if (this.grid.panel != null) {
+					this.grid.model.setAttribute("activeSelectionView", this.grid);
+				}
+				var selectedObjects = this.grid.getSelectedObjects();
+				this.createMenuItems(selectedObjects);
+			]]>
+		</method>
+
+		<!---
+			Create the context menu items.
+			@param array selectedObjects: array of wcfModelObject instances
+		-->
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+				this.createPasteMenuItem(selectedObjects);
+			]]>
+		</method>
+
+		<!---
+			Create the paste menu item.
+		-->
+		<method name="createPasteMenuItem" args="selectedObjects">
+			<![CDATA[
+				if (this.grid.parent.isPasteEnabled()) {
+					this.addMenuItem(foundationResources.contextMenuPaste.string, this, "doPaste");
+				}
+			]]>
+		</method>
+
+		<!---
+			Paste the clipboard objects into the collection list editor.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+				this.grid.parent.doPaste();
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Menu for the template picker search results grid.
+	 -->
+	<class name="wcfTemplatePickerSearchResultsMenu" extends="wcfGridRowMenu">
+		<attribute name="searchResultsView" value="${this.row.parent.templatePicker}" />
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null) {
+				if (this.searchResultsView.searchResults.lastPageNum > this.searchResultsView.searchResults.currPageNum) {
+					this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum+1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			if (this.searchResultsView.searchResults != null && this.searchResultsView.searchResults.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", this.searchResultsView.searchResults.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			this.searchResultsView.searchResults.loadByPageNum(pageNum);
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfTemplatePickerSearchResultsBackgroundMenu" extends="wcfSearchResultsBackgroundMenu">
+		<attribute name="searchResultsView" value="${this.grid.templatePicker}" />
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfTemplatePickerListMenu" extends="wcfGridRowMenu">
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createLoadNextPageMenuItem();
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+		
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			var templatePicker = this.row.parent.templatePicker;
+			if (templatePicker.lastPageNum > templatePicker.currPageNum) {
+				this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", templatePicker.currPageNum+1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			if (this.row.parent.templatePicker.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", this.row.parent.templatePicker.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			this.row.parent.templatePicker.loadByPageNum(pageNum);
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfTemplatePickerListBackgroundMenu" extends="wcfContextMenu">
+		<attribute name="grid" value="null"/>
+		<!---
+			Populate and open the menu.
+		-->
+		<method name="openMenu" args="e=null">
+			<![CDATA[
+			super.openMenu(e);
+			var selectedObjects = this.grid.getSelectedObjects();
+			this.createMenuItems(selectedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Create the context menu items.
+			@param array selectedObjects: array of wcfModelObject instances
+		-->
+		<method name="createMenuItems" args="selectedObjects">
+			<![CDATA[
+			this.createLoadNextPageMenuItem();			
+			this.createLoadPreviousPageMenuItem();
+			]]>
+		</method>
+
+		<!---
+			Create the load next page menu item.
+		-->
+		<method name="createLoadNextPageMenuItem">
+			<![CDATA[
+			var templatePicker = this.grid.templatePicker;
+			if (templatePicker.lastPageNum > templatePicker.currPageNum) {
+				this.addMenuItem(foundationResources.contextMenuLoadNextPage.string, this, "doLoadByPageNum", templatePicker.currPageNum+1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Create the load previous page menu item.
+		-->
+		<method name="createLoadPreviousPageMenuItem">
+			<![CDATA[
+			if (this.grid.templatePicker.currPageNum > 1) {
+				this.addMenuItem(foundationResources.contextMenuLoadPreviousPage.string, this, "doLoadByPageNum", this.grid.templatePicker.currPageNum-1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Load the page of child objects by page number.
+		-->
+		<method name="doLoadByPageNum" args="pageNum=1">
+			<![CDATA[
+			this.grid.templatePicker.loadByPageNum(pageNum);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Context menu for the compare view in the navigation view.
+	-->
+	<class name="wcfCompareViewTreeMenu" extends="wcfTreeMenu">
+		<!---
+			Populate the context menu.
+	 	-->
+		<method name="createMenuItems">
+			<![CDATA[
+			if (this.tree.isPasteEnabled()) {
+				this.addMenuItem(foundationResources.contextMenuPaste.string, this, "doPaste");
+			}
+			]]>
+		</method>
+		
+		<method name="doPaste">
+			<![CDATA[
+			this.tree.setAttribute("selected", true);
+			this.tree.doPaste();
+			]]>
+		</method>
+	</class>
+</library>

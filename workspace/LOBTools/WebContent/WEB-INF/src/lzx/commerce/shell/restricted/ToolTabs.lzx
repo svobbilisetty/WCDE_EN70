@@ -1,0 +1,165 @@
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation.
+ *     2007, 2008
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		
+		This class implements all the tabs in the work area in Management Center. When a tool is
+		opened, its associated tab will be displayed in the tab section of the area above the tool
+		pane, and users can access the tool by clicking on the tab.
+	-->
+	<class name="wcfToolTabs">
+		<simplelayout axis="x" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.bringToFront();
+			]]>
+		</handler>
+
+		<!---
+			This method opens the tab for the specified tool in the work area in Management Center.
+			@param string objectId: identifier of the tool
+			@param BusinessObjectEditor tool: an instance of a BusinessObjectEditor
+			@param string activeIconSrc: icon image to be shown when the tool is active
+			@param string inactiveIconSrc: icon image to be shown when the tool is inactive
+		-->
+		<method name="openTab" args="objectId, tool, activeIconSrc, inactiveIconSrc">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "openTab(objectId,tool,activeIconSrc,inactiveIconSrc)", [objectId, tool, activeIconSrc, inactiveIconSrc]);
+				}
+				var tabViewIndex = findTab(objectId);
+				if (tabViewIndex >= 0) {
+					focusTab(objectId);
+				}
+				else {
+					createTab(objectId, tool, activeIconSrc, inactiveIconSrc);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "openTab(objectId,tool,activeIconSrc,inactiveIconSrc)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="createTab" args="objectId, tool, activeIconSrc, inactiveIconSrc">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "createTab(objectId,tool,activeIconSrc,inactiveIconSrc)", [objectId, tool, activeIconSrc, inactiveIconSrc]);
+				}
+				new lz.wcfToolTab(this, {objectId: objectId, tool: tool, activeIconSrc: activeIconSrc, inactiveIconSrc: inactiveIconSrc, active: true});
+				focusTab(objectId);
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "createTab(objectId,tool,activeIconSrc,inactiveIconSrc)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="findTab" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "findTab(objectId)", [objectId]);
+				}
+				for (var i=0; i<this.subviews.length; i++) {
+					if (this.subviews[i].objectId == objectId) {
+						if (wcfLogger.enabled) {
+							wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "findTab(objectId)", i);
+						}
+						return i;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfToolTabs", "findTab(objectId)", "Unable to find the tab for the following tool: " + objectId);
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "findTab(objectId)", -1);
+				}
+				return -1;
+			]]>
+		</method>
+
+		<!---
+			This method returns the identifier of the tool that is currently being focused on in
+			the work area.
+			@returns string: identifier of the tool that is currently being focused
+		-->
+		<method name="getCurrentTab">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "getCurrentTab");
+				}
+				for (var i=0; i<this.subviews.length; i++) {
+					if (this.subviews[i].active) {
+						if (wcfLogger.enabled) {
+							wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "getCurrentTab", this.subviews[i].objectId);
+						}
+						return this.subviews[i].objectId;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfToolTabs", "getCurrentTab", "Unable to resolve the tool tab that is currently focused on.");
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "getCurrentTab", null);
+				}
+				return null;
+			]]>
+		</method>
+
+		<!---
+			This method brings the tab of the specified tool into focus.
+			@param string objectId: identifier of the tool that will be focused
+		-->
+		<method name="focusTab" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "focusTab(objectId)", [objectId]);
+				}
+				for (var i=0; i<this.subviews.length; i++) {
+					if (this.subviews[i].objectId == objectId) {
+						this.subviews[i].focus();
+					}
+					else {
+						this.subviews[i].unfocus();
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "focusTab(objectId)");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method closes the tab of the specified tool in the work area in Management Center.
+			@param string objectId: identifier of the tool that will be closed
+		-->
+		<method name="closeTab" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "closeTab(objectId)", [objectId]);
+				}
+				var tabViewIndex = findTab(objectId);
+				if (tabViewIndex >= 0) {
+					this.subviews[tabViewIndex].destroy();
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolTabs", "closeTab(objectId)");
+				}
+			]]>
+		</method>
+	</class>
+
+</library>

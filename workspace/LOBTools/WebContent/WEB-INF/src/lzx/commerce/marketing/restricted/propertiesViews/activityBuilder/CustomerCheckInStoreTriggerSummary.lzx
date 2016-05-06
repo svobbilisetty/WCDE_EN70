@@ -1,0 +1,153 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktCustomerCheckInStoreTriggerElementObject} flow element.
+		The generated text is shown beneath the element on the Activity Builder flow diagram.
+	-->
+	<class name="mktCustomerCheckInStoreTriggerSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="daysOperator" propertyName="daysOperator"/>
+		<wcfFlowSummaryParam name="days" propertyName="days"/>
+		<wcfFlowSummaryParam name="date1" propertyName="date1"/>
+		<wcfFlowSummaryParam name="date2" propertyName="date2"/>
+		<wcfFlowSummaryParam name="beforeDate" propertyName="beforeDate"/>
+		<wcfFlowSummaryParam name="beforeAfterOnDate" propertyName="beforeAfterOnDate"/>
+		<wcfFlowSummaryParam name="numberOfTimesOperator" propertyName="numberOfTimesOperator"/>
+		<wcfFlowSummaryParam name="numberOfTimes" propertyName="numberOfTimes"/>
+		<wcfFlowSummaryParam name="poiNames" objectPath="ReferencePOI/LocationPOI"       propertyName="name"/>
+		<wcfFlowSummaryParam name="regNames" objectPath="ReferenceRegion/LocationRegion" propertyName="name"/>
+		<wcfFlowSummaryParam name="locType" propertyName="locationType"/>
+		
+			
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWithinLastXDays, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedAtLeastXDaysAgo, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedBeforeXDate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedAfterXDate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedBetweenXandYDates, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedOnXDate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCheckInLessThan, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCheckInAtLeast, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCheckInRegion, "onstring");
+	        this.updateSummaryDel.register(mktMarketingResources.summaryCheckInPOI, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.region, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.pointOfInterest, "onstring");
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				
+				var poiNames = this.getValuesList("poiNames");
+				var regNames = this.getValuesList("regNames");
+                var locType = this.resolvedParams["locType"];
+				
+				if( (locType=="pointOfInterest" && poiNames!="")  ||  (locType=="region" && regNames!="") ) {
+                    if (locType == "region"){
+                        summaryText = mktMarketingResources.replaceValues("summaryCheckInRegion" , [regNames])
+                    } else {
+                        summaryText = mktMarketingResources.replaceValues("summaryCheckInPOI" , [poiNames])
+                    }
+                    
+				    var numberAndActivityText = this.getNumberAndActivitySummary();
+				    if (numberAndActivityText != ""){
+					    summaryText += "\n" + numberAndActivityText;
+					}
+					
+					var dateText = this.getDateSummary();
+					if (dateText != "") {
+						summaryText += "\n" + dateText;
+					}
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		
+		<!--- @keywords private -->
+		<method name="getDateSummary">
+			<![CDATA[
+				var summary = "";
+
+				if (this.resolvedParams["daysOperator"] == "<=") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryPerformedWithinLastXDays", [days]);
+					}
+				}
+				else if (this.resolvedParams["daysOperator"] == ">") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryPerformedAtLeastXDaysAgo", [days]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "<") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"], wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedBeforeXDate", [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedAfterXDate", [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">=" && this.resolvedParams["beforeDate"] == "<=") {
+					if(this.resolvedParams["date1"] != "" && this.resolvedParams["date2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedBetweenXandYDates", [date1, date2]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "=") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedOnXDate", [date1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getNumberAndActivitySummary">
+			<![CDATA[
+				var summary = "";
+				
+				if(this.resolvedParams["numberOfTimes"] && (this.resolvedParams["numberOfTimes"] != "")) {
+					if (this.resolvedParams["numberOfTimesOperator"] == "<") {
+						var numberOfTimes = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfTimes"]);
+                        summary = mktMarketingResources.replaceValues("summaryCheckInLessThan" , [numberOfTimes]);
+					}
+					else if (this.resolvedParams["numberOfTimesOperator"] == ">=") {
+						var numberOfTimes = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfTimes"]);
+						summary = mktMarketingResources.replaceValues("summaryCheckInAtLeast" , [numberOfTimes]);
+					}
+				}
+								
+				return summary;
+			]]>
+		</method>
+		
+	</class>
+</library>

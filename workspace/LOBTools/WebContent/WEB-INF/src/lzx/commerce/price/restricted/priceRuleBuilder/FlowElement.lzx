@@ -1,0 +1,31 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<class name="prcFlowElement" extends="wcfFlowElement" contextMenuClass="prcFlowElementContextMenu">
+
+		<!--- @keywords private -->
+		<method name="isBranch" args="obj=null">
+			<![CDATA[
+				if (obj == null) {
+					obj = this.o;
+				}
+				return (super.isBranch(obj)
+					|| obj.objectDefinition.objectType == "coordinatorBranch"
+					|| obj.objectDefinition.objectType == "dynamicKitBranch");
+			]]>
+		</method>
+		
+	</class>
+</library>

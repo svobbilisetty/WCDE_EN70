@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the flow element object definition for the Display Promotion action. Defined as part of this
+		object is the following:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_promotionId and PROPERTY_collateralIdList as parameters</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_promotionId and PROPERTY_collateralIdList as parameters</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildPromotion type which references the Promotion object type</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedPromotion type which references the InheritedPromotion object type</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator wcfRequiredChildObjectValidator} to ensure one promotion is selected</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildMarketingContent type which references the MarketingContent object type</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedMarketingContent type which references the InheritedMarketingContent object type</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator wcfRequiredChildObjectValidator} to ensure at least one piece of content is selected</li>
+			<li>instance of {@link mktDisplayPromotionValidator} to ensure the promotion redemption method and content click action are valid</li>
+		</ul>
+	-->
+	<FlowElementObjectDefinition definitionName="mktDisplayPromotionElementObject" displayName="${mktMarketingResources.displayPromotionName}" elemTemplateType="Action" flowIcon="displayPromotionIcon" headerIcon="displayPromotionHeaderIcon" helpLink="concepts/csbactrecpromo.htm" objectType="displayPromotion" package="mkt" paletteIcon="displayPromotionPaletteIcon" propertiesDefinitionName="mktDisplayPromotionProperties" summaryClass="mktDisplayPromotionSummary">
+		
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_promotionId" objectPath="ChildPromotion/PromotionGroup" optional="true" propertyName="promotionId"/>			
+			<ServiceParam name="PROPERTY_collateralIdList" objectPath="ChildContent/MarketingContentGroup" optional="true" propertyName="uniqueId"/>		
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_promotionId" objectPath="ChildPromotion/PromotionGroup" optional="true" propertyName="promotionId"/>
+			<ServiceParam name="PROPERTY_collateralIdList" objectPath="ChildContent/MarketingContentGroup" optional="true" propertyName="uniqueId"/>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>displayPromotion</elemTemplateName>
+		</Xml>
+		
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childPromotionId" objectGroups="ChildPromotion" objectType="ChildPromotion" referencedTypes="Promotion"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childPromotionId" objectGroups="ChildPromotion" objectType="ChildInheritedPromotion" referencedTypes="InheritedPromotion"/>
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noPromotionsSelected}" objectPath="ChildPromotion" validatorId="reqPromotionObject" validatorType="noPromotionsSelected"/>
+		
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childMarketingContentId" objectGroups="ChildContent" objectType="ChildMarketingContent" referencedTypes="MarketingContent"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childMarketingContentId" objectGroups="ChildContent" objectType="ChildInheritedMarketingContent" referencedTypes="InheritedMarketingContent"/>
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noMarketingContentSelected}" objectPath="ChildContent" validatorId="reqContentObject" validatorType="noMarketingContentSelected"/>
+		<DisplayPromotionValidator package="mkt" validatorId="reqPromotionContentTypesObject"/>
+	</FlowElementObjectDefinition>
+	
+</Definitions>

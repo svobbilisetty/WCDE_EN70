@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the promotion element object definition for the Reward element sub type. The Reward element 
+		is used to define the requirements of a category that is discounted in a promotion.	
+	-->
+	<PromotionElementObjectDefinition definitionName="proMultipleItemsRewardElementObjectDefinition" idProperty="elementName" objectType="MultipleItemsRewardElement" package="pro">
+		
+		<CreateService baseDefinitionName="proPromotionElementCreateService"/>	
+		<UpdateService baseDefinitionName="proPromotionElementUpdateService"/>
+					
+		<!--- Targeted categories for the reward. -->
+		<PromotionElementReferenceObjectDefinition baseDefinitionName="proIdentifierCategoryObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>IncludeCategoryIdentifier</elementType>
+			</Xml>
+		</PromotionElementReferenceObjectDefinition>		
+		<!--- Targeted inherited categories for the reward. -->	
+		<PromotionElementReferenceObjectDefinition baseDefinitionName="proIdentifierInheritedCategoryObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>IncludeCategoryIdentifier</elementType>
+			</Xml>
+		</PromotionElementReferenceObjectDefinition>
+		
+		<!--- Catalog entries to exclude from the reward. -->		
+		<PromotionElementReferenceObjectDefinition baseDefinitionName="proIdentifierCatalogEntryObjectDefinition" objectType="Identifier_ExcludeCatalogEntry" package="pro"> 
+			<Xml name="template">
+				<elementType>ExcludeCatalogEntryIdentifier</elementType>
+			</Xml>
+		</PromotionElementReferenceObjectDefinition>	
+		<!--- Inherited catalog entries to exclude from the reward. -->	
+		<PromotionElementReferenceObjectDefinition baseDefinitionName="proIdentifierInheritedCatalogEntryObjectDefinition" objectType="Identifier_InheritedExcludeCatalogEntry" package="pro"> 
+			<Xml name="template">
+				<elementType>ExcludeCatalogEntryIdentifier</elementType>
+			</Xml>
+		</PromotionElementReferenceObjectDefinition>
+		
+		<!--- Filter attributes of the targeted catalog entries in the promotion. -->
+		<PromotionElementObjectDefinition baseDefinitionName="proCatalogEntryAttributeRuleObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>CatalogEntryAttributeRule</elementType>
+				<DataType>Text</DataType>
+				<MatchingType>EqualTo</MatchingType>			
+			</Xml>
+		</PromotionElementObjectDefinition>		
+
+		<!--- Used to specify the number of Y that must be purchased for the promotion.  -->
+		<PropertyDefinition displayName="${promotionResources.promotion_PWP_Quantity_of_Y}" minValue="1" propertyName="Quantity" required="true"/>
+
+		<PropertyDefinition propertyName="elementType">
+			<PropertyValue value="MultipleItemsRewardElement"/>
+		</PropertyDefinition>
+		
+		<RequiredChildObjectValidator objectPath="Identifier_CategoryGroup" errorMessage="${promotionResources.promotion_error_AtLeastOneCategoryForY}" validatorType="reqCatValidator"/>
+
+	</PromotionElementObjectDefinition>
+</Definitions>

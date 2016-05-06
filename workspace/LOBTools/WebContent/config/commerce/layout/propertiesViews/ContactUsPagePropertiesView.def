@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglContactUsPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.contactUsPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="ContactUsPageReferenceDefaultContactUsPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="ContactUsPageReferenceDefaultContactUsPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="ContactUsPageReferenceDefaultContactUsPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display contact us page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglContactUsPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localContactUsPageCondition" enablementValue="InheritedContactUsPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglContactUsPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited contact us page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedContactUsPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedContactUsPageCondition" enablementValue="InheritedContactUsPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedContactUsPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglContactUsPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglContactUsPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_contactUsPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="ContactUsPageLayoutAssociationReferencedContactUsPageLayouts,ContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglContactUsPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_contactUsPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="ContactUsPageLayoutAssociationReferencedContactUsPageLayouts,ContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedContactUsPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_contactUsPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>    
+	
+	<!--- This definition defines the base object from which CatalogGroup and Inherited CatalogGroup are derived.
+		It uses the noun CatalogGroup from the file wc-catalog-clientobjects.xml 
+		which contains information on how the parameters in the Create, Update or Delete services 
+	 	are mapped to create the appropriate BOD for the Web services.
+	-->
+	<PrimaryObjectDefinition compatibleObjectTypes="SalesCatalogGroup" definitionName="catBaseCatalogGroupPrimaryObjectDefinition" detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}" displayName="${catalogResources.masterCategory_DisplayName}" displayNameProperty="identifier" helpLink="tasks/tpnadcat.htm" idProperty="catgroupId" isBaseDefinition="true" newDisplayName="${catalogResources.masterCategory_NewDisplayName}" newObjectMenuItemText="${catalogResources.contextMenuNewMasterCategory}" objectGroups="CatalogGroupAlias" propertiesDefinitionName="catCategoryProperties" searchType="FindCategories" utilitiesListDefinitionName="catUtilitiesBrowseGrid" writeUsage="IBM_ManageCatalogGroup">
+
+		<!--- Property Definition for the identifier property of the category -->
+		<PropertyDefinition displayName="${catalogResources.categoryCode_DisplayName}" maximumSize="254" propertyName="identifier" required="true" type="string"/>
+		<!--- Property Definition for the field1 property of the category -->
+		<PropertyDefinition displayName="${catalogResources.categoryField1_DisplayName}" maximumSize="254" propertyName="xattr_field1" type="string"/>
+		<!--- Property Definition for the field2 property of the category -->
+		<PropertyDefinition displayName="${catalogResources.categoryField2_DisplayName}" maximumSize="254" propertyName="xattr_field2" type="string"/>
+
+		<!--- Refresh Service to refresh this category. Calling this will fetch the category's details again from the server. 
+		-->
+		<RefreshService url="/cmc/GetCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogStoreId"/>
+			<ServiceParam name="catalogId" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>
+			<ServiceParam name="catalogIdentifier" parentProperty="true" parentType="CatalogAlias" propertyName="identifier"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+		</RefreshService>
+		
+		<!---  
+			Retrieves the SEO URL for the category.
+		-->				
+		<GetPreviewURLService url="/cmc/GetCatalogGroupPageSeoUrl">
+			<ServiceParam name="catalogId" contextName="masterCatalogId"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+		</GetPreviewURLService>
+			
+		<!---
+		Retrieves the {@link catCatalogGroupDescription} child objects.
+		 -->
+		<GetChildrenService objectTypes="CatalogGroupDescription" url="/cmc/GetCatalogGroupChildren-LanguageDescriptions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catalogId" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>
+		</GetChildrenService>
+			
+		<!--- Retrieves the {@link catChildCatalogGroup} child objects.
+		-->
+		<GetChildrenService objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" url="/cmc/GetCatalogGroupChildren-CatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+			<ServiceParam name="catalogId" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>
+			<ServiceParam name="catalogIdentifier" parentProperty="true" parentType="CatalogAlias" propertyName="identifier"/>
+		</GetChildrenService>
+			
+		<!--- Retrieves the {@link catChildProduct},
+		    {@link catChildCatalogGroupSKU},
+			{@link catChildBundle} and 
+			{@link catChildKit} child objects.
+		-->
+		<GetChildrenService objectTypes="ChildProduct,ChildInheritedProduct,    ChildCatalogGroupSKU,ChildInheritedCatalogGroupSKU,    ChildBundle,ChildInheritedBundle,    ChildKit,ChildInheritedKit" url="/cmc/GetCatalogGroupChildren-CatalogEntry">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+			<ServiceParam name="catalogId" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>
+		</GetChildrenService>
+		
+		<!--- 
+			Retrieves the {@link catChildCatalogGroupFacet} child objects.
+		-->
+		<GetChildrenService url="/cmc/GetCatalogGroupChildren-Facets"
+			objectTypes="ChildCatalogGroupFacet">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catalogId" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>			
+			<ServiceParam name="defaultLanguageId"/>
+			<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+		</GetChildrenService>
+				
+		<!---
+		    Retrieves the {@link catChildCatalogGroup} object that refer to this object.
+		 -->
+		<GetReferencesService url="/cmc/GetMasterCatalogGroupParent-ReferenceCatalogGroup">
+	        <ServiceParam name="storeId"/>
+	        <ServiceParam name="masterCatalogId"/>
+	        <ServiceParam name="masterCatalogStoreId"/>
+	        <ServiceParam name="catgroupId" propertyName="catgroupId"/>
+       	</GetReferencesService>
+       		
+		<!---
+			Service defined to retrieve the {@link WebActivity},
+			{@link InheritedWebActivity}, {@link DialogActivity} and 
+			{@link InheritedDialogActivity} marketing activities 
+			that are referenced to the catalog group.
+		-->
+		<GetReferencesService primaryObjectTypes="WebActivity,InheritedWebActivity,DialogActivity,InheritedDialogActivity" referenceObjectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" url="/cmc/GetCatalogGroupReferences-MarketingActivities">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+		</GetReferencesService>
+		       		
+       	<!---
+		   	Retrieves the {@link catAttachmentReference} objects that refer to this object.
+		-->	
+		
+		<GetChildrenService objectTypes="AttachmentReference,BusinessObjectToInheritedAttachment,InheritedBusinessObjectToInheritedAttachment" url="/cmc/GetAttachmentReferencesForCatalogGroup">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="catgroupId" propertyName="catgroupId"/>         		
+        </GetChildrenService>             
+        
+		<!---  
+			Retrieves the {@link catBaseCatalogGroupSeoAttributes}, and
+			{@link catBaseCatalogGroupSeoURL} child objects for a catalog group.
+		-->
+		<GetChildrenService objectTypes="CatalogGroupBaseSeoAttributes,InheritedCatalogGroupBaseSeoAttributes,CatalogGroupBaseSeoURL,InheritedCatalogGroupBaseSeoURL" url="/cmc/GetCatalogGroupSeoProperties">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catalogId" contextName="masterCatalogId"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>                   
+		
+		<!---
+			Object filter used to select the object types that will be displayed in the utilities view details view when
+			an object of this object type is selected in the utilities browse view.
+		-->
+		<ObjectTypeFilter filterType="utilitiesViewFilter" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup,ChildProduct,ChildBundle,ChildKit,ChildCatalogGroupSKU,ChildInheritedProduct,ChildInheritedBundle,ChildInheritedKit,ChildInheritedCatalogGroupSKU"/>
+					
+		<!---
+			Update service to update a category. 
+		-->
+		<UpdateService sendDefaultLanguageProperties="true" url="/cmc/UpdateCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId" parameterName="languageId"/>
+			<ServiceParam name="catalogId" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+			<ServiceParam name="owningStoreId" optional="false" propertyName="objectStoreId"/>
+			<ServiceParam name="isTopCategoryTrue" optional="false" parameterName="isTopCategory" value="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="CatalogAlias" parentProperty="true" propertyName="objectGroups"/>
+			</ServiceParam>
+			<ServiceParam name="isTopCategoryFalse" optional="false" parameterName="isTopCategory" value="false">
+				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="CatalogAlias" negate="true" parentProperty="true" propertyName="objectGroups"/>
+			</ServiceParam>
+		</UpdateService>
+		
+		<!---
+			Delete service to delete a category. 
+		-->
+		<DeleteService url="/cmc/DeleteCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catalogId" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+			<ServiceParam name="owningStoreId" optional="false" propertyName="objectStoreId"/>
+		</DeleteService>
+		
+		<!--- 
+			Validator to check and pass the warning message when there is no parent specified for the product 
+		-->
+		<RequiredParentValidator errorMessage="${catalogResources.missingRequiredCategoryParent}" validatorId="parentExistsCheck" validatorType="requiredParentCatalogValidator">
+			<EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId"/>
+		</RequiredParentValidator>
+		
+		<RequiredParentValidator errorMessage="${catalogResources.missingRequiredVersionedCategoryParent}" validatorId="versionedParentExistsCheck" validatorType="requiredParentVersionedCatalogValidator">
+			<EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId" negate="true"/>
+		</RequiredParentValidator>
+		
+		<!---
+			Child object definition for the description related fields of a category.
+			This is object is  language sensitive.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogGroupDescription"/>
+		
+		<!--- 
+			An instantiation of the child object {@link catCatalogGroupBaseSeoAttributes} representing the Search Engine Optimization properties for this catalog group.
+		 -->
+		<ChildObjectDefinition baseDefinitionName="catCatalogGroupBaseSeoAttributes"/>
+
+		<!--- 
+			An instantiation of the child object {@link catInheritedCatalogGroupBaseSeoAttributes} representing the Search Engine Optimization properties for this catalog group which is inherited.
+		 -->
+		<ChildObjectDefinition baseDefinitionName="catInheritedCatalogGroupBaseSeoAttributes"/>
+
+		<!--- 
+			An instantiation of the child object {@link catCatalogGroupBaseSeoURL} representing the Search Engine Optimization URL properties for this catalog group.
+		 -->
+		<ChildObjectDefinition baseDefinitionName="catCatalogGroupBaseSeoURL"/>		
+
+		<!--- 
+			An instantiation of the child object {@link catInheritedCatalogGroupBaseSeoURL} representing the Search Engine Optimization URL properties for this catalog group which is inherited.
+		 -->
+		<ChildObjectDefinition baseDefinitionName="catInheritedCatalogGroupBaseSeoURL"/>
+				
+				
+        <!--- This navigation list definition is used to display {@link catChildProduct}, {@link catChildCatalogGroupSKU}, 
+        	{@link catChildKit} and {@link catChildBundle}.  
+        -->	
+		<NavigationListDefinition displayName="${catalogResources.catalogEntriesListDisplayName}" isDefault="true" listDefinitionName="catCatalogEntryChildList" listTitle="${catalogResources.catalogEntriesList}" name="childCatEntriesNavList" toolbarIcon="catalogEntriesListToolbarIcon" helpLink="tasks/tpn_topcatentry.htm"/>
+
+        <!--- This navigation list definition is used to display {@link catChildCatalogGroup}. -->
+		<NavigationListDefinition displayName="${catalogResources.subCategoriesListDisplayName}" listDefinitionName="catCategoryChildList" listTitle="${catalogResources.categoriesList}" name="CategoryChildList" toolbarIcon="categoryListToolbarIcon" helpLink="tasks/tpn_topcategories.htm"/>
+		
+		<!--- 
+			This navigation list definition is used to display {@link catCatalogGroupFacet}, {@link catCatalogGroupFacet}.
+		-->							
+		<NavigationListDefinition 
+			displayName="${catalogResources.facetList}"
+			isDefault="false" 
+			listDefinitionName="catCategoryFacetList"
+			listTitle="${catalogResources.facetList}" 
+			name="CategoryFacetNavigationList" 
+			toolbarIcon="categoryFacetsListToolbarIcon" 
+			helpLink="tasks/tpn_topsalescatalog.htm">
+			<EnablementAndCondition conditionId="showFacetsListCondition">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+				<EnablementOrCondition conditionId="storeTypeCondition">
+					<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+					<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+					<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+					<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+				</EnablementOrCondition>
+				<!-- 
+				<EnablementCondition contextName="workspaceTask" enablementValue="" conditionId="inAWorkspaceTaskContextValueCondition"/>
+				 -->
+			</EnablementAndCondition>
+		</NavigationListDefinition>
+
+		<!---  
+		    Parent Reference object definition between the category and a child facet.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildCatalogGroupFacet"/>
+	
+		<!---  
+		    Parent Reference object definition between the category and another child category.
+		    This indicates that a category can be a parent of another category.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildCatalogGroup"/>
+				
+		<!---  
+		    Parent Reference object definition between the category and a child product.
+		    This indicates that a category can be a parent of a product.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildProduct"/>
+				
+        <!---  
+		    Parent Reference object definition between the catalog group and its child SKUs.
+   		    This indicates that a category can be a parent of a SKU.
+		-->
+        <ParentReferenceObjectDefinition baseDefinitionName="catChildCatalogGroupSKU"/>
+        		
+		<!---  
+		    Parent Reference object definition between the category and a child bundle.
+		    This indicates that a category can be a parent of a bundle.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildBundle"/>
+		
+		<!---  
+		    Parent Reference object definition between the category and a child kit.
+		    This indicates that a category can be a parent of a kit.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildKit"/>
+			
+		<OpenCoremetricsReportClientAction displayName="${catalogResources.viewCategoriesReport}" reportUri="report:/merchandising/hierarchy.ftl"/>
+   	</PrimaryObjectDefinition>
+
+	
+	<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogGroupPrimaryObjectDefinition" definitionName="CatalogGroup" headerIcon="catalogGroupHeaderIcon" icon="catalogGroupIcon" objectType="CatalogGroup">
+		
+		<!--- Condition to disable the object creation in certain store types. -->
+		<EnablementOrCondition baseDefinitionName="catStoreTypeCatalogObjectCreationRestriction"/>
+		
+		<!---
+			Create service to create a new category. 
+		 -->
+		<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreateCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="defaultLanguageId" parameterName="languageId"/>
+			<ServiceParam name="isTopCategoryTrue" optional="false" parameterName="isTopCategory" value="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="CatalogAlias" parentProperty="true" propertyName="objectGroups"/>
+			</ServiceParam>
+			<ServiceParam name="isTopCategoryFalse" optional="false" parameterName="isTopCategory" value="false">
+				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="CatalogAlias" negate="true" parentProperty="true" propertyName="objectGroups"/>
+			</ServiceParam>
+			<ServiceParam name="catalogId" optional="false" parentProperty="true" parentType="CatalogAlias" propertyName="catalogId"/>
+			<ServiceParam name="catalogIdentifier" optional="true" parentProperty="true" parentType="CatalogAlias" propertyName="identifier"/>
+		</CreateService>
+		
+		<GetChildrenService objectTypes="ContentVersion" url="/cmc/GetContentVersions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectId" propertyName="catgroupId"/>
+			<ServiceParam name="objectType" value="CatalogGroup"/>
+		</GetChildrenService>
+				
+		<!---  
+		    Reference object definition for the attachment of the catalog group
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogGroupAttachmentReference"/>
+		
+		<!---  
+		    Reference object definition for the versioned catalog group
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="wcfBaseContentVersion" referencedType="CatalogGroup"/>
+		
+		<!---  
+		    Reference object definition for the asset store attachment of the catalog group
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogGroupInheritedAttachmentReference"/>	
+
+		<!---
+			Create Content Version Client Action
+		-->
+		<CreateContentVersionClientAction>
+			<EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/> 
+		</CreateContentVersionClientAction>
+		
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogGroupPrimaryObjectDefinition" compatibleObjectTypes="CatalogGroup,SalesCatalogGroup" definitionName="InheritedCatalogGroup" displayName="${catalogResources.inheritedMasterCategory_DisplayName}" headerIcon="inheritedCatalogGroupHeaderIcon" icon="inheritedCatalogGroupIcon" objectType="InheritedCatalogGroup">
+	
+        <!---  
+		    Parent Reference object definition between the catalog group and its inherited child SKUs.
+   		    This indicates that a category can be a parent of a SKU.
+		-->
+        <ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedCatalogGroupSKU"/>
+        		
+		<!---  
+		    Parent Reference object definition between an inherited category and another inherited child category.
+		    This indicates that an inherited category can be a parent of another inherited category.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedCatalogGroup"/>
+	
+		<!---  
+		    Parent Reference object definition between the category and a child inherited product.
+		    This indicates that a category can be a parent of a product.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedProduct"/>
+					
+		<!---  
+		    Parent Reference object definition between the category and a child bundle.
+		    This indicates that a category can be a parent of a bundle.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedBundle"/>
+		
+		<!---  
+		    Parent Reference object definition between the category and an inherited child kit.
+		    This indicates that a category can be a parent of a kit.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedKit"/>
+		
+		<!---  
+		   	Reference object definition for the asset store attachment of the catalog group
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedCatalogGroupInheritedAttachmentReference"/>	
+	</PrimaryObjectDefinition>
+
+</Definitions>

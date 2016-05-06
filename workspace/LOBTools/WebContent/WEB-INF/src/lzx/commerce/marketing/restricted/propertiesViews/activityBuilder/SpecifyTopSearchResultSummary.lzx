@@ -1,0 +1,52 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktSpecifyTopSearchResultElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktSpecifyTopSearchResultElementObject} object:
+		<ul>
+			<li>ChildCatentry/CatalogEntry/CatalogEntryDescription[name]</li>
+		</ul>
+	-->
+	<class name="mktSpecifyTopSearchResultSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="productNames" objectPath="ChildCatentry/CatalogEntry/CatalogEntryDescription" propertyName="name"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summary_SpecifyTopSearchResult_listCatEntries, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktSpecifyTopSearchResultElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				
+				var products = this.getValuesList("productNames");
+				if(products != "") {
+					products = wcfStringUtil.escapeText(products);
+					
+					summary = mktMarketingResources.replaceValues("summary_SpecifyTopSearchResult_listCatEntries", [products]);
+				}
+				
+				this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+</library>

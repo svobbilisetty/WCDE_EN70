@@ -1,0 +1,62 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!---
+		Client action definition that enables users to preview a store and have the user
+		belong to a specific customer segment.
+	-->
+	<class name="mktCustomerSegmentPreviewClientAction" extends="wcfClientAction" displayName="${mktMarketingResources.previewInSegment.string}" allowMultipleSelection="true" addToUtilitiesContextMenu="true">
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			if (objects.length > 0) {
+			    var paramHash = {};
+				var nameStr = "";
+				var idStr = "";
+				
+				// pass in all the memberGroupNames for display
+				for (var i = 0; i < objects.length; i++) {
+					if (i == 0) {
+						nameStr += objects[i].objectDisplayName;
+					} else {
+						nameStr += ', ' + objects[i].objectDisplayName;
+					}
+				}
+
+				// pass in all memberGroupIds
+				for (var i = 0; i < objects.length; i++) {
+					if (i == 0) {
+						idStr += objects[i].objectId;
+					} else {
+						idStr += ',' + objects[i].objectId;
+					}				
+				}
+				
+				paramHash.Names=nameStr;
+				paramHash.Ids=idStr;
+
+				// pass in the values to the preview dialog
+				objects[0].getBusinessObjectEditor().openStorePreviewDialog({memberGroupsIncluded: paramHash});
+			}
+			]]>
+		</method>
+
+	</class>
+</library>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Wait trigger. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService}</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService}</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li>
+				<b>durationUnits</b>: An required property specifying the units of the amount of time that should pass before
+				this trigger is sent to the activity and the customer should move past this trigger. The character code for each unit is: 
+				minutes = MIN, hours = H, days = D, weeks = W, months = M,
+			</li>
+			<li><b>durationValue</b>: An required value of the amount of time to wait.</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktWaitElementObject" displayName="${mktMarketingResources.waitName}" elemTemplateType="Trigger" flowIcon="waitTriggerIcon" headerIcon="waitTriggerHeaderIcon" helpLink="concepts/csbtriwait.htm" objectType="wait" package="mkt" paletteIcon="waitTriggerPaletteIcon" propertiesDefinitionName="mktWaitProperties" summaryClass="mktWaitSummary">
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService"/>
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService"/>
+
+		<Xml name="template">
+			<elemTemplateName>wait</elemTemplateName>
+			<durationUnits>D</durationUnits>
+		</Xml>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.durationValue}" propertyName="durationValue" required="true" type="number"/>
+		<PropertyDefinition propertyName="durationUnits" required="true">
+			<PropertyValue displayName="${mktMarketingResources.unitMinutes}" value="MIN"/>
+			<PropertyValue displayName="${mktMarketingResources.unitHours}" value="H"/>
+			<PropertyValue displayName="${mktMarketingResources.unitDays}" value="D"/>
+			<PropertyValue displayName="${mktMarketingResources.unitWeeks}" value="W"/>
+			<PropertyValue displayName="${mktMarketingResources.unitMonths}" value="M"/>
+		</PropertyDefinition>
+
+	</FlowElementObjectDefinition>
+</Definitions>

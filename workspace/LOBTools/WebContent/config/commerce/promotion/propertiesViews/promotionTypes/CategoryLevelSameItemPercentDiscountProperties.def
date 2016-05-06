@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="proCategoryLevelSameItemPercentDiscountProperties">
+		<EnablementCondition conditionId="promotionType" enablementValue="CategoryLevelSameItemPercentDiscount" propertyName="promotionType"/>
+		
+		<PropertyGroup groupTitle="${promotionResources.promotion_purchaseConditionAndRewardTitle}" name="purchaseConditionAndRewardGroup" open="true">
+			<PropertyCombobox objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition/Identifier_PaymentType" promptText="${promotionResources.promotion_paymentType}" propertyName="PaymentType"/>
+
+			<PropertyCheckbox objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" propertyName="siteWide" promptText="${promotionResources.promotion_siteWide}"
+				helpText="${promotionResources.promotion_siteWideCategoryX_helpText}"/>
+				
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Target_Category_helpText}" listDefinitionName="proCategoryElementTypeGrid" name="catalogGroup" objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" objectTypes="Identifier_Category,Identifier_InheritedCategory" promptText="${promotionResources.promotion_Select_Category_X}" required="true"
+				validatorTypes="reqCatValidator,reqIncCatValidator,reqNoIncCatValidator"/>
+
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule_helpText}" listDefinitionName="proCatalogEntryAttributeRuleGrid" name="AttributesRule" objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" objectTypes="CatalogEntryAttributeRule" promptText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule_For_X}"/>
+
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Exclude_CatalogEntries_helpText}" listDefinitionName="proProductGrid" name="excludedCatalogEntry" objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" objectTypes="Identifier_CatalogEntry,Identifier_InheritedCatalogEntry" promptText="${promotionResources.promotion_Select_Exclude_Catalog_Entry}"/>
+			
+			<PropertyStepper minimumValue="1" objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotion_BOGO_Quantity_of_X_category}" propertyName="BaseQuantity" required="true"/>		
+
+			<PropertyStepper minimumValue="1" objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotion_BOGO_Quantity_for_additional_items_category}" propertyName="RewardQuantity" required="true"/>
+			
+			<PropertyNumericText objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotion_BOGO_Discount_for_additional_items_category}" propertyName="Percentage" required="true"/> 
+				
+			<PropertyCombobox objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotionElement_Currency}" propertyName="Currency" required="true"/>
+
+			<PropertyCurrencyValueEditor appendCurrencyCodeToPrompt="false" currencyPropertyName="Currency" helpText="${promotionResources.promotion_BOGO_Discount_Max_Amount_for_additional_items_from_catX_helpText}" objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotion_BOGO_Discount_Max_Amount_for_additional_items_from_catX}" propertyName="MaxAmount" required="false"/>
+							
+			<PropertyCombobox objectPath="CategoryLevelSameItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotion_Select_PriceAdjustmentBase}" propertyName="PriceAdjustmentBase" required="true" helpText="${promotionResources.promotion_priceAdjustmentBase_helpText}"/>								
+		</PropertyGroup>
+		
+	</PropertyGroup>
+</Definitions>

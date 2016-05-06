@@ -1,0 +1,106 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		A service that will get the SEO URL of a business object. A get preview URL service may only be declared
+		as an immediate child of an instance of wcfObjectDefinition. A get preview URL service must return the SEO
+		URL of the object from the server.
+		
+		<p> When the store preview action is triggered by the user, the framework will issue the get preview URL
+		service. 
+		
+		<p>Get preview URL services can expect an implicit parameter named "storeId". The service must return
+		URLs that match the specified store.
+		
+		<p>Get preview URL services can expect an implicit parameter named "dataLanguageIds". This value of "dataLanguageIds"
+		is a comma separated list of language IDs. If the get preview URL service returns language specific URLs,
+		then it must return all of the existing language URLs that match the specified language IDs. If there are no URLs that match the
+		specified list of languages, then the service must return the URL that matches the default language of the store.
+		
+		<p>The following example demonstrates the declaration of a get Preview URL service
+		that gets the SEO URL of the catalog group object.
+		
+		@START_CODE
+		<GetPreviewURLService url="/cmc/GetPreviewURL">
+			<ServiceParam name="catgroupId" propertyName="catgroupId" />
+		</GetPreviewURLService>
+		@END_CODE
+				
+		<p>The following sample demonstrates the expected format
+		for a successful response. It includes URL property values
+		
+		@START_CODE
+		<objects>
+			
+			<object>
+					<alias>Aurora - table</alias>
+					<url>http://samplestore.com/shop/en/electronics</url>
+			</object>
+		
+		</objects>
+		@END_CODE
+		
+		<p>If an exception occurs while processing a get preview URL service, the response must be an XML document that
+		has a root element named "errors". The "errors" element must include one child element named "exception".
+		The "exception" element includes a message suitable for display to the user. The following example demonstrates
+		a valid error response for a refresh service.
+
+		@START_CODE
+		<errors>
+			<exception>You do not have the required access rights to perform this operation.</exception>
+		</errors>
+		@END_CODE
+	-->
+	<class name="wcfGetPreviewURLService" extends="wcfService" getService="true" sendInputLanguageIds="true" retryOnError="true">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();			
+			parent.getPreviewURLService = this;
+			]]>
+		</method>
+		
+		<!---
+			Parse the store objects.
+		-->
+		<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+			<![CDATA[
+			var objectURLList = [];
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+				var e = dataElement.childNodes[i];
+				if (e.nodeName == "object") {
+					var url = {};
+					for (var j = 0; j < e.childNodes.length; j++) {
+						var childElement = e.childNodes[j];
+						if (childElement.nodeName == "url") {
+							url.text = wcfStringUtil.trim(wcfXMLUtil.getNodeValue(childElement), wcfStringUtil.trimWhiteSpaceAndLineFeed);
+						}
+						else if (childElement.nodeName == "alias") {
+							url.alias = wcfXMLUtil.getNodeValue(childElement);
+						}
+					}
+					objectURLList.push(url);
+				}
+			}
+			
+			if (wcfStoreSearchUrlResultDisplayDialog.storeUrlDisplayDialogActive) {
+				wcfStoreSearchUrlResultDisplayDialog.addUrl(objectURLList);
+			} else {
+				wcfStorePreviewDialog.populateObjectURLList(objectURLList);
+			}
+         	]]>
+		</method>
+		
+	</class>
+</library>

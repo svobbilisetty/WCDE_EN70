@@ -1,0 +1,60 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for a price rule braching element(Simple Branch or 
+		Coordinator Branch). This validator ensures that the provided path names 
+		are unique and not empty within the branching elements.
+	-->
+	<class name="prcBranchingValidator" extends="wcfValidator">
+
+		<!--- Warning message to show when path names are duplicated or empty. -->
+		<attribute name="errorMessage" value="" type="string"/>
+
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o){
+				return; // nothing to validate
+			}
+			
+			var pathNameError = false;
+			var pathNameMap = {};
+			
+			// loop through child paths to get the names
+			var childPaths = o.getObjects("path");
+			for(var i = 0; i < childPaths.length; i++) {
+
+				var name = childPaths[i].getPropertyValue("name");
+				if(name != "") {
+					if(pathNameMap[name]) {
+						pathNameError = true;
+					}
+					else {
+						pathNameMap[name] = true;
+					}
+				} else {
+					pathNameError = true;
+				}
+			}
+			
+			o.clearValidationError(this);
+			
+			if(pathNameError) {
+				o.addValidationError(this, this.errorMessage);
+			}
+			]]>
+		</method>
+	</class>
+</library>

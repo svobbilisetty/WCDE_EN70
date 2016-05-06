@@ -1,0 +1,858 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ********************************************************************* -->
+<!-- *  Licensed Materials - Property of IBM				  * -->
+<!-- *  WebSphere Commerce							  * -->
+<!-- *  (C) Copyright 1998, 2000 IBM Corporation			  * -->
+<!-- *									  * -->
+<!-- *  US Government Users Restricted Rights - Use, duplication or	  * -->
+<!-- * disclousure restricted by GSA ADP Schedule Contract with IBM Corp.* -->
+<!-- *									  * -->
+<!-- * Change History:                                                   * -->
+<!-- * Defect     Date    Who    Decscription                            * -->
+<!-- * 38247    03/22/01  wsa    Approval Expiration - added new payment * -->
+<!-- *                           state                                   * -->
+<!-- ********************************************************************* -->
+
+<!--
+**************************************************************************
+* Payment Server Class Definitions                                       *
+**************************************************************************
+ -->
+
+<!-- PSApiResult Class -->
+<!--
+* Every Payment Server API call returns a PSApiResult document.  The
+* primary and secondary return code attributes will always be filled in.
+* Additionally, depending upon the Payment Server call, more information
+* may be returned.  Either:
+* - no additional information (this is the case for most Payment API calls.
+* - one packaged content element may contain additional return data
+* - one OrderCollection or OrderKeys may be returned by QUERYORDERS
+* - one PaymentCollection or PaymentKeys may be returned by QUERYPAYMENTS
+* - one CreditCollection or CreditKeys may be returned by QUERYCREDITS
+* - one BatchCollection or BatchKeys may be returned by QUERYBATCHES
+* - zero or more MerchantCollection, CassetteCollection,
+*   MerchantCassetteSettingsCollection or  MerchantAccountCollection
+*   may be returned by QUERYMERCHANTS, QUERYCASSETTES,
+*   QUERYPAYSYSTEMS or QUERYACCOUNTS respectively.
+* - one PSPaymentServer may be returned by QUERYPAYMENTSERVER
+* - zero or one PSAbout may be returned by ABOUT
+-->
+<!ELEMENT PSApiResult
+  (
+     PackagedContent                     |
+
+     OrderCollection                     |
+     OrderKeyCollection                  |
+     PaymentCollection                   |
+     PaymentKeyCollection                |
+     CreditCollection                    |
+     CreditKeyCollection                 |
+     BatchCollection                     |
+     BatchKeyCollection                  |
+
+     PSAbout                             |
+     PSPaymentServer                     |
+     PSSysplex                           |
+     MerchantCollection                  |
+     CassetteCollection                  |
+     MerchantCassetteSettingsCollection  |
+     MerchantAccountCollection           |
+     EventListenerCollection             |
+     UserCollection
+  )?
+>
+<!ATTLIST PSApiResult
+  primaryRC          NMTOKEN #REQUIRED
+  secondaryRC        NMTOKEN #REQUIRED
+  objectCount        NMTOKEN #REQUIRED
+  buyerMessage       CDATA   #IMPLIED
+  merchantMessage    CDATA   #IMPLIED
+>
+
+<!--
+*
+* Common Elements
+*
+ -->
+
+<!--
+* PackagedContent is a container for text or binary data.  Binary
+* data will be "encoded" using the HTTP-like escape sequence "%xx",
+* where 'xx' is the character representation of two hexadecimal
+* digits.  For example, 0x0A would be encoded "%0A"
+-->
+<!ELEMENT PackagedContent   (#PCDATA) >
+<!ATTLIST PackagedContent
+  content            CDATA              #REQUIRED
+  transform          (none|URLEncoded)  #IMPLIED
+  contentType        CDATA              #IMPLIED
+>
+
+<!--
+*
+* Cassette-specific Elements
+*
+ -->
+
+<!--
+* CassetteExtensionObject contains payment protocol-specific information
+* that extends the standard information provided by a generic object. Each
+* cassette extension object may contain one or more properties (you may think
+* of these as attributes of the object).
+-->
+<!ELEMENT CassetteExtensionObject (CassetteProperty*) >
+<!ATTLIST CassetteExtensionObject>
+
+<!--
+* CassetteObject contains payment protocol-specific information
+* that is directly related to one generic object.  Each cassette
+* object may contain one or more properties (you may think
+* of these as attributes of the object), or it may contain a
+* PackagedContent.
+*
+* The difference between a CassetteObject and a CassetteExtensionObject
+* is that a generic object may contain at most one CassetteExtensionObject
+* but zero or more CassetteObjects.  CassetteObjects must specify
+* an objectId to identify the type of object and a key to uniquely
+* identify an object within its type.
+-->
+<!ELEMENT CassetteObject
+  (
+    PackagedContent?  |
+    CassetteProperty*
+  )
+>
+<!ATTLIST CassetteObject
+  objectId          CDATA   #REQUIRED
+  key               CDATA   #REQUIRED
+>
+
+<!--
+* CassetteConfigObject contains payment protocol-specific information
+* that is directly related to one generic admin object.  Each cassette
+* configuration object may contain one or more properties.
+-->
+<!ELEMENT CassetteConfigObject (CassetteProperty*) >
+<!ATTLIST CassetteConfigObject
+  objectId          CDATA   #REQUIRED
+  key               CDATA   #REQUIRED
+  changesPending    (0|1)   #REQUIRED
+  enabled           (0|1)   #REQUIRED
+  active            (0|1)   #REQUIRED
+  valid             (0|1)   #REQUIRED
+  cassetteMsgs      CDATA   #IMPLIED
+>
+
+<!--
+* CassetteProperty contains one attribute of a cassette object.
+* The attribute may optionally specify an override that informs the
+* XDM client application that the attribute is either
+*  - readonly - it cannot be changed by an admin API call
+*  - hidden - the attribute is currently inappropriate
+*             for use by the XDM client.
+* Note that hidden attributes are by nature also readonly.
+-->
+<!ELEMENT CassetteProperty EMPTY>
+<!ATTLIST CassetteProperty
+  propertyId  CDATA                             #REQUIRED
+  value       CDATA                             #REQUIRED
+  displayType ( readWrite | readOnly | hidden ) #IMPLIED
+  displayName        CDATA                      #IMPLIED
+  displayLength      NMTOKEN                    #IMPLIED
+  displayDescription CDATA                      #IMPLIED
+  displayMode        (basic | advanced | both)  #IMPLIED
+  displayHelp        CDATA                      #IMPLIED
+  required           (0|1)                      #IMPLIED
+>
+
+<!--
+*
+* Payment Server Fundamental Objects
+*
+ -->
+
+<!-- PSOrder Class -->
+<!--
+* Payment Server Order objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The ID attribute is used to cross-reference objects within
+*     the XML document. Order IDs are in the form:
+*         "O:merchantNumber:orderNumber"
+*   - The merchantOriginated attribute indicates whether the order
+*     was created as a result of a consumer flow (0) or completely
+*     within the merchant (1).
+*   - numberOfPayments indicates the number of payment objects that
+*     belong to the order.  This attribute is set regardless of the
+*     value of WITHPAYMENTS.
+*   - numberOfCredits indicates the number of credit objects that
+*     belong to the order.  This attribute is set regardless of the
+*     value of WITHCREDITS.
+* - If WITHPAYMENTS was set to '1', all of the payments belonging to
+*   this order are contained in PaymentCollection element.
+* - If WITHCREDITS was set to '1', all of the credits belonging to
+*   this order are contained in CreditCollection element.
+* - If the cassette has protocol-specific information that needs to
+*   be returned with the object, then that information is contained
+*   in a CassetteObject element.  Additionally, if this element is
+*   returned, then an internal DTD subset describing the protocol-
+*   specific information will be included in the !DOCUMENT declaration.
+-->
+<!ELEMENT PSOrder
+  (
+    PaymentCollection?,
+    CreditCollection?,
+    CassetteExtensionObject?,
+    CassetteObject*
+  )
+>
+<!ATTLIST PSOrder
+ ID                 ID      #REQUIRED
+ merchantNumber     NMTOKEN #REQUIRED
+ orderNumber        NMTOKEN #REQUIRED
+ merchantOriginated (0|1)   #REQUIRED
+ amount             NMTOKEN #REQUIRED
+ amountExp10        NMTOKEN #REQUIRED
+ currency           NMTOKEN #REQUIRED
+ paymentType        CDATA   #REQUIRED
+ timeStampCreated   CDATA   #REQUIRED
+ timeStampModified  CDATA   #REQUIRED
+ state
+   (
+     order_requested |
+     order_ordered |
+     order_refundable |
+     order_rejected |
+     order_pending |
+     order_canceled |
+     order_closed
+   )                        #REQUIRED
+ approvesAllowed    (0|1)   #REQUIRED
+ unapprovedAmount   NMTOKEN #REQUIRED
+ numberOfPayments   NMTOKEN #REQUIRED
+ numberOfCredits    NMTOKEN #REQUIRED
+
+ brand              CDATA   #IMPLIED
+ orderURL           CDATA   #IMPLIED
+ merchantAccount    NMTOKEN #IMPLIED
+ transactionID      CDATA   #IMPLIED
+ orderData1         CDATA   #IMPLIED
+ orderData2         CDATA   #IMPLIED
+ orderData3         CDATA   #IMPLIED
+ orderData4         CDATA   #IMPLIED
+ orderData5         CDATA   #IMPLIED
+>
+
+<!-- PSPayment Class -->
+<!--
+* Payment Server Payment objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The ID attribute is used to cross-reference objects within
+*     the XML document. Payment IDs are in the form:
+*         "P:merchantNumber:orderNumber:paymentNumber"
+*   - If WITHORDERS was set to '1', the order attribute contains a
+*     reference to the PSOrder object in this document which owns
+*     this payment.
+* - If the cassette has protocol-specific information that needs to
+*   be returned with the object, then that information is contained
+*   in a CassetteObject element.  Additionally, if this element is
+*   returned, then an internal DTD subset describing the protocol-
+*   specific information will be included in the !DOCUMENT declaration.
+-->
+<!ELEMENT PSPayment
+   (
+     CassetteExtensionObject?,
+     CassetteObject*
+   )
+>
+<!ATTLIST PSPayment
+ ID                 ID      #REQUIRED
+ merchantNumber     NMTOKEN #REQUIRED
+ orderNumber        NMTOKEN #REQUIRED
+ paymentNumber      NMTOKEN #REQUIRED
+ paymentType        NMTOKEN #REQUIRED
+ approveAmount      NMTOKEN #REQUIRED
+ amountExp10        NMTOKEN #REQUIRED
+ currency           NMTOKEN #REQUIRED
+ timeStampCreated   CDATA   #REQUIRED
+ timeStampModified  CDATA   #REQUIRED
+ state
+   (
+     payment_reset |
+     payment_approved |
+     payment_deposited |
+     payment_closed |
+     payment_declined |
+     payment_void |
+     payment_pending |
+     payment_approvalexpired
+   )                        #REQUIRED
+ batchNumber        NMTOKEN #IMPLIED
+ referenceNumber    CDATA   #IMPLIED
+ depositAmount      NMTOKEN #IMPLIED
+ merchantAccount    NMTOKEN #IMPLIED
+ order              IDREF   #IMPLIED
+ approveTime        CDATA   #IMPLIED
+ approvalExpiry     CDATA   #IMPLIED
+>
+
+<!-- PSCredit Class -->
+<!--
+* Payment Server Credit objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The ID attribute is used to cross-reference objects within
+*     the XML document. Payment IDs are in the form:
+*         "C:merchantNumber:orderNumber:creditNumber"
+*   - If WITHORDERS was set to '1', the order attribute contains a
+*     reference to the PSOrder object in this document which owns
+*     this credit.
+* - If the cassette has protocol-specific information that needs to
+*   be returned with the object, then that information is contained
+*   in a CassetteObject element.  Additionally, if this element is
+*   returned, then an internal DTD subset describing the protocol-
+*   specific information will be included in the !DOCUMENT declaration.
+-->
+<!ELEMENT PSCredit
+  (
+    CassetteExtensionObject?,
+    CassetteObject*
+  )
+>
+<!ATTLIST PSCredit
+ ID                 ID      #REQUIRED
+ merchantNumber     NMTOKEN #REQUIRED
+ orderNumber        NMTOKEN #REQUIRED
+ creditNumber       NMTOKEN #REQUIRED
+ paymentType        NMTOKEN #REQUIRED
+ amount             NMTOKEN #REQUIRED
+ amountExp10        NMTOKEN #REQUIRED
+ currency           NMTOKEN #REQUIRED
+ timeStampCreated   CDATA   #REQUIRED
+ timeStampModified  CDATA   #REQUIRED
+ state
+   (
+     credit_reset |
+     credit_refunded |
+     credit_closed |
+     credit_declined |
+     credit_void |
+     credit_pending
+   )                        #REQUIRED
+ batchNumber        NMTOKEN #IMPLIED
+ referenceNumber    CDATA   #IMPLIED
+ merchantAccount    NMTOKEN #IMPLIED
+ order              IDREF   #IMPLIED
+>
+
+<!-- PSBatch Class -->
+<!--
+* Payment Server Batch objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The ID attribute is used to cross-reference objects within
+*     the XML document. Batch IDs are in the form:
+*         "B:merchantNumber:batchNumber"
+*   - numberOfPayments indicates the number of payment objects that
+*     belong to the batch  This attribute is set regardless of the
+*     value of WITHPAYMENTS.
+*   - numberOfCredits indicates the number of credit objects that
+*     belong to the batch.  This attribute is set regardless of the
+*     value of WITHCREDITS.
+* - If WITHPAYMENTS was set to '1', all of the payments (zero or more
+*   belonging to this batch are returned.
+* - If WITHCREDITS was set to '1', all of the credits (zero or more
+*   belonging to this batch are returned.
+* - If the cassette has protocol-specific information that needs to
+*   be returned with the object, then that information is contained
+*   in a CassetteObject element.  Additionally, if this element is
+*   returned, then an internal DTD subset describing the protocol-
+*   specific information will be included in the !DOCUMENT declaration.
+-->
+<!ELEMENT PSBatch
+  (
+    BatchTotalCollection?,
+    PaymentCollection?,
+    CreditCollection?,
+    CassetteExtensionObject?,
+    CassetteObject*
+  )
+>
+<!ATTLIST PSBatch
+ ID                    ID      #REQUIRED
+ merchantNumber        NMTOKEN #REQUIRED
+ merchantAccount       NMTOKEN #REQUIRED
+ batchNumber           NMTOKEN #REQUIRED
+ paymentType           CDATA   #REQUIRED
+ merchantControl       (0|1)   #REQUIRED
+ purgeAllowed          (0|1)   #REQUIRED
+ timeStampOpened       CDATA   #REQUIRED
+ timeStampClosed       CDATA   #REQUIRED
+ timeStampModified     CDATA   #REQUIRED
+ state
+   (
+     batch_opening |
+     batch_open |
+     batch_closing |
+     batch_closed
+   )                           #REQUIRED
+ batchStatus
+   (
+     batch_not_yet_balanced |
+     batch_balanced |
+     batch_out_of_balance
+   )                           #REQUIRED
+ forceAllowed          (0|1)   #IMPLIED
+>
+
+<!ELEMENT BatchTotalCollection (PSBatchTotal*) >
+<!ATTLIST BatchTotalCollection
+  size               NMTOKEN #REQUIRED
+>
+
+<!ELEMENT PSBatchTotal EMPTY>
+<!ATTLIST PSBatchTotal
+ amountExp10        NMTOKEN #REQUIRED
+ currency           NMTOKEN #REQUIRED
+ numberOfPayments   NMTOKEN #REQUIRED
+ paymentAmount      NMTOKEN #REQUIRED
+ numberOfCredits    NMTOKEN #REQUIRED
+ creditAmount       NMTOKEN #REQUIRED
+>
+
+<!-- OrderCollection Class -->
+<!--
+* Payment Server Order Collection objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The size attribute indicates the number of order objects in this
+*     collection.
+*   - The withPayments and withCredits flags indicate whether the
+*     corresponding objects have been returned with their respective
+*     orders.
+* - A set of PSOrder objects
+-->
+<!ELEMENT OrderCollection   (PSOrder*)>
+<!ATTLIST OrderCollection
+  size               NMTOKEN #REQUIRED
+  withPayments       (0|1)   #REQUIRED
+  withCredits        (0|1)   #REQUIRED
+>
+
+<!-- PaymentCollection Class -->
+<!--
+* Payment Server Payment Collection objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The size attribute indicates the number of payment objects in this
+*     collection.
+* - A set of PSPayment objects
+* - If withOrders is set to '1', the a set of PSOrder objects that own
+*   the returned payment objects.
+-->
+<!ELEMENT PaymentCollection
+  (
+    PSPayment*,
+    OrderCollection?
+  )
+>
+<!ATTLIST PaymentCollection
+  size               NMTOKEN #REQUIRED
+  withOrders         (0|1)   #REQUIRED
+>
+
+<!-- CreditCollection Class -->
+<!--
+* Payment Server Credit Collection objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The size attribute indicates the number of credit objects in this
+*     collection.
+* - A set of PSPayment objects
+* - If withOrders is set to '1', the a set of PSOrder objects that own
+*   the returned credit objects.
+-->
+<!ELEMENT CreditCollection
+  (
+    PSCredit*,
+    OrderCollection?
+  )
+>
+<!ATTLIST CreditCollection
+  size               NMTOKEN #REQUIRED
+  withOrders         (0|1)   #REQUIRED
+>
+
+<!-- BatchCollection Class -->
+<!--
+* Payment Server Batch Collection objects contain the following:
+* - Attributes as described in the !ATTLIST below. Of special note:
+*   - The size attribute indicates the number of batch objects in this
+*     collection.
+*   - The withPayments and withCredits flags indicate whether the
+*     corresponding objects have been returned with their respective
+*     batches.
+* - A set of PSBatch objects
+-->
+<!ELEMENT BatchCollection  (PSBatch*) >
+<!ATTLIST BatchCollection
+  size               NMTOKEN #REQUIRED
+  withPayments       (0|1)   #REQUIRED
+  withCredits        (0|1)   #REQUIRED
+>
+
+
+<!-- OrderKeyCollection Class -->
+<!--
+* A OrderKeyCollection object contains a collection of keys to
+* PSOrder objects.  It also identifies the number of order key
+* objects in the collection and the total number of objects in the
+* Payment Server database that matched the search criteria.
+-->
+<!ELEMENT OrderKeyCollection  (OrderKey)*>
+<!ATTLIST OrderKeyCollection
+ size               NMTOKEN #REQUIRED
+>
+
+<!ELEMENT OrderKey EMPTY>
+<!ATTLIST OrderKey
+ merchantNumber     NMTOKEN #REQUIRED
+ orderNumber        NMTOKEN #REQUIRED
+>
+
+
+
+<!-- PaymentKeyCollection Class -->
+<!--
+* A PaymentKeyCollection object contains a collection of keys to
+* PSPayment objects.  It also identifies the number of payment key
+* objects in the collection and the total number of objects in the
+* Payment Server database that matched the search criteria.
+-->
+<!ELEMENT PaymentKeyCollection       (PaymentKey)*>
+<!ATTLIST PaymentKeyCollection
+ size               NMTOKEN #REQUIRED
+>
+
+<!ELEMENT PaymentKey EMPTY>
+<!ATTLIST PaymentKey
+  merchantNumber     NMTOKEN #REQUIRED
+  orderNumber        NMTOKEN #REQUIRED
+  paymentNumber      NMTOKEN #REQUIRED
+>
+
+
+
+<!-- CreditKeyCollection Class -->
+<!--
+* A CreditKeyCollection object contains a collection of keys to
+* PSCredit objects.  It also identifies the number of credit key
+* objects in the collection and the total number of objects in the
+* Payment Server database that matched the search criteria.
+-->
+<!ELEMENT CreditKeyCollection        (CreditKey)*>
+<!ATTLIST CreditKeyCollection
+  size               NMTOKEN #REQUIRED
+>
+
+<!ELEMENT CreditKey EMPTY>
+<!ATTLIST CreditKey
+  merchantNumber     NMTOKEN #REQUIRED
+  orderNumber        NMTOKEN #REQUIRED
+  creditNumber       NMTOKEN #REQUIRED
+>
+
+
+
+<!-- BatchKeyCollection Class -->
+<!--
+* A BatchKeyCollection object contains a collection of keys to
+* PSCredit objects.  It also identifies the number of batch key
+* objects in the collection and the total number of objects in the
+* Payment Server database that matched the search criteria.
+-->
+<!ELEMENT BatchKeyCollection         (BatchKey)*>
+<!ATTLIST BatchKeyCollection
+  size               NMTOKEN #REQUIRED
+>
+
+<!ELEMENT BatchKey EMPTY>
+<!ATTLIST BatchKey
+  merchantNumber     NMTOKEN #REQUIRED
+  batchNumber        NMTOKEN #REQUIRED
+>
+
+<!-- PSCassette -->
+<!--
+* A PSCassette object describes the state of a cassette that is
+* installed in the Payment Server.  The attributes of
+* a cassette are
+*   cassette - the name of the cassette
+*   companyPkgName - the name of the company that developed the
+*       cassette (used to identify the cassette's Java package name)
+*   traceSetting - the current trace setting of the cassette
+*   cassetteMsgs - a comma-separated list of message codes generated
+*       by the cassette that indentify error, warning or information
+*       messages related to the cassette to the XDM client application.
+*   paymentServerMsgs - a comma-separated list of message codes generated
+*       by the Payment Server that indentify error, warning or information
+*       messages related to the cassette to the XDM client application.
+*   changesPending - an indication of whether or not changes have been
+*       applied to the cassette but will not take effect until the cassette
+*       is restarted.
+*   enabled - an indication of whether the cassette is enabled or not
+*   active - an indication of whether the cassette is active or not
+*   valid - an indication of whether the cassette is valid or not
+-->
+<!ELEMENT CassetteCollection (PSCassette)* >
+
+<!ELEMENT PSCassette
+  (
+    CassetteExtensionObject?,
+    CassetteConfigObject*
+  )
+>
+<!ATTLIST PSCassette
+  cassette          NMTOKEN #REQUIRED
+  companyPkgName    CDATA   #REQUIRED
+  traceSetting      CDATA   #REQUIRED
+  changesPending    (0|1)   #REQUIRED
+  enabled           (0|1)   #REQUIRED
+  active            (0|1)   #REQUIRED
+  valid             (0|1)   #REQUIRED
+  cassetteMsgs      CDATA   #IMPLIED
+  paymentServerMsgs CDATA   #IMPLIED
+>
+
+
+<!-- PSMerchantCassetteSettings -->
+<!--
+* A PSMerchantCassetteSettings object describes the settings that a merchant
+* has made for a cassette.  The attributes of
+* a merchant's cassette settings are
+*   cassette - the name of the cassette
+*   merchantNumber - the id of the merchant
+*   cassetteMsgs - a comma-separated list of message codes generated
+*       by the cassette that identify error, warning or information
+*       messages related to the merchant's cassette settings to the
+*       XDM client application.
+*   paymentServerMsgs - a comma-separated list of message codes generated
+*       by the Payment Server that indentify error, warning or information
+*       messages related to the merchant's cassette settings to the
+*       XDM client application.
+*   changesPending - an indication of whether or not changes have been
+*       applied to the cassette but will not take effect until the cassette
+*       is restarted for this merchant.
+*   enabled - an indication of whether the cassette is enabled or not
+*   active - an indication of whether the cassette is active or not
+*   valid - an indication of whether the cassette is valid or not
+-->
+<!ELEMENT MerchantCassetteSettingsCollection (PSMerchantCassetteSettings)* >
+
+<!ELEMENT PSMerchantCassetteSettings
+  (
+    CassetteExtensionObject?,
+    CassetteConfigObject*
+  )
+>
+<!ATTLIST PSMerchantCassetteSettings
+  cassette          NMTOKEN #REQUIRED
+  merchantNumber    NMTOKEN #REQUIRED
+  changesPending    (0|1)   #REQUIRED
+  enabled           (0|1)   #REQUIRED
+  active            (0|1)   #REQUIRED
+  valid             (0|1)   #REQUIRED
+  cassetteMsgs      CDATA   #IMPLIED
+  paymentServerMsgs CDATA   #IMPLIED
+>
+
+
+<!-- PSMerchantAccount -->
+<!--
+* A PSMerchantAccount object describes the state of an account
+* that a merchant holds with a financial institution.  The attributes of
+* an account are
+*   cassette - the name of the cassette
+*   merchantNumber - the id of the merchant
+*   merchantAccountNumber - the id of the account
+*   merchantAccountName - the name of the account
+*   financialInstName - the name of the financial institution
+*   cassetteMsgs - a comma-separated list of message codes generated
+*       by the cassette that indentify error, warning or information
+*       messages related to the account to the XDM client application.
+*   paymentServerMsgs - a comma-separated list of message codes generated
+*       by the Payment Server that indentify error, warning or information
+*       messages related to the account to the XDM client application.
+*   changesPending - an indication of whether or not changes have been
+*       applied to the cassette but will not take effect until the account
+*       is restarted.
+*   enabled - an indication of whether the cassette is enabled or not
+*   active - an indication of whether the cassette is active or not
+*   valid - an indication of whether the cassette is valid or not
+-->
+<!ELEMENT MerchantAccountCollection (PSMerchantAccount)* >
+
+<!ELEMENT PSMerchantAccount
+  (
+    CassetteExtensionObject?,
+    CassetteConfigObject*
+  )
+>
+<!ATTLIST PSMerchantAccount
+  cassette                  NMTOKEN #REQUIRED
+  merchantNumber            NMTOKEN #REQUIRED
+  merchantAccount           NMTOKEN #REQUIRED
+  changesPending            (0|1)   #REQUIRED
+  enabled                   (0|1)   #REQUIRED
+  active                    (0|1)   #REQUIRED
+  valid                     (0|1)   #REQUIRED
+  cassetteMsgs              CDATA   #IMPLIED
+  paymentServerMsgs         CDATA   #IMPLIED
+  merchantAccountName       CDATA   #IMPLIED
+  financialInstName         CDATA   #IMPLIED
+  apApproveFlag             NMTOKEN #IMPLIED
+  apDepositFlag             (0|1)   #IMPLIED
+  rpApproveFlag             NMTOKEN #IMPLIED
+  rpDepositFlag             (0|1)   #IMPLIED
+  approvalExpiration        NMTOKEN #IMPLIED
+>
+
+
+<!-- PSMerchant Class -->
+<!--
+* A PSMerchant object describes the state of a merchant
+* who is defined to use the Payment Server.
+*   merchantNumber - the id of the merchant
+*   merchantName - the name of the merchant
+*   paymentServerMsgs - a comma-separated list of message codes generated
+*       by the Payment Server that indentify error, warning or information
+*       messages related to the merchant to the XDM client application.
+*   changesPending - an indication of whether or not changes have been
+*       applied to the cassette but will not take effect until the merchant
+*       is re-enabled.
+*   enabled - an indication of whether the cassette is enabled or not
+*   active - an indication of whether the cassette is active or not
+*   valid - an indication of whether the cassette is valid or not
+-->
+
+<!ELEMENT MerchantCollection (PSMerchant)* >
+
+<!ELEMENT PSMerchant EMPTY >
+<!ATTLIST PSMerchant
+  merchantNumber    NMTOKEN #REQUIRED
+  changesPending    (0|1)   #REQUIRED
+  enabled           (0|1)   #REQUIRED
+  active            (0|1)   #REQUIRED
+  valid             (0|1)   #REQUIRED
+  paymentServerMsgs CDATA   #IMPLIED
+  merchantName      CDATA   #IMPLIED
+>
+
+
+<!-- PSPaymentServer Class -->
+<!--
+* A PSPaymentServer object describes the state of the Payment Server
+*   paymentServerHostname - the hostname of the computer where the
+*       Payment Server is installed.
+*   logPath - the directory the Payment Server uses to record trace
+*       and error logs.
+*   traceFileSize - the maximum size in bytes of the trace file
+*   traceSetting - the current trace setting used by the Payment Server
+*   paymentServerMsgs - a comma-separated list of message codes generated
+*       by the Payment Server that indentify error, warning or information
+*       messages related to the cassette to the XDM client application.
+*   changesPending - an indication of whether or not changes have been
+*       applied to the cassette but will not take effect until the cassette
+*       is restarted.
+*   enabled - an indication of whether the cassette is enabled or not
+*   active - an indication of whether the cassette is active or not
+*   valid - an indication of whether the cassette is valid or not
+-->
+<!ELEMENT PSPaymentServer EMPTY>
+<!ATTLIST PSPaymentServer
+  paymentServerHostname     CDATA   #REQUIRED
+  realm                     CDATA   #REQUIRED
+  logPath                   CDATA   #REQUIRED
+  traceFileSize             CDATA   #REQUIRED
+  traceSetting              NMTOKEN #REQUIRED
+  numberOfOrderCommands     NMTOKEN #REQUIRED
+  numberOfPaymentCommands   NMTOKEN #REQUIRED
+  numberOfAdminCommands     NMTOKEN #REQUIRED
+  numberOfQueryCommands     NMTOKEN #REQUIRED
+  changesPending            (0|1)   #REQUIRED
+  enabled                   (0|1)   #REQUIRED
+  active                    (0|1)   #REQUIRED
+  valid                     (0|1)   #REQUIRED
+  paymentServerMsgs         CDATA   #IMPLIED
+>
+
+
+<!-- PSAbout Class -->
+<!--
+* A PSAbout object gives version information on the Payment Manager
+*   version  - Version of the Payment Manager product
+*   userName - Name of the user running the ABOUT command
+-->
+<!ELEMENT PSAbout (PSCassetteAbout)*>
+<!ATTLIST PSAbout
+  version              CDATA   #REQUIRED
+  userName             CDATA   #REQUIRED
+>
+
+
+<!-- PSCassetteAbout Class -->
+<!--
+* A PSCassetteAbout object gives version information on a specific installed cassette
+*   cassette - Name of the cassette
+*   version  - Version of the named cassette
+-->
+<!ELEMENT PSCassetteAbout EMPTY>
+<!ATTLIST PSCassetteAbout
+  cassette          NMTOKEN #REQUIRED
+  version           CDATA   #REQUIRED
+>
+
+
+<!-- PSEventListener Class -->
+<!ELEMENT EventListenerCollection (PSEventListener*)>
+
+<!ELEMENT PSEventListener EMPTY>
+<!ATTLIST PSEventListener
+  eventType            NMTOKEN #REQUIRED
+  listenerURL          CDATA   #REQUIRED
+  timeRegistered       CDATA   #REQUIRED
+  changesPending       (0|1)   #REQUIRED
+  enabled              NMTOKEN #REQUIRED
+  active               (0|1)   #REQUIRED
+  valid                (0|1)   #REQUIRED
+  paymentServerMsgs    CDATA   #IMPLIED
+  merchantNumber       NMTOKEN #IMPLIED
+  cassette             NMTOKEN #IMPLIED
+  socksHost            CDATA   #IMPLIED
+  socksPort            NMTOKEN #IMPLIED
+>
+
+
+<!-- PSUser Class -->
+<!ELEMENT PSUser EMPTY>
+<!ATTLIST PSUser
+  userName             CDATA   #REQUIRED
+  configuration        NMTOKEN #REQUIRED
+  enabled              NMTOKEN #REQUIRED
+  changesPending       (0|1)   #REQUIRED
+  active               (0|1)   #REQUIRED
+  valid                (0|1)   #REQUIRED
+  paymentServerMsgs    CDATA   #IMPLIED
+  merchantNumber       CDATA   #IMPLIED
+  roleIDs              CDATA   #IMPLIED
+>
+
+<!-- UserCollection Class -->
+<!ELEMENT UserCollection (PSUser*)>
+
+<!-- PSSysplex -->
+<!ELEMENT PSSysplex EMPTY>
+<!ATTLIST PSSysplex
+  sysplexFlag               CDATA   #REQUIRED
+  commType                  CDATA   #IMPLIED
+  paymentGroupName          CDATA   #IMPLIED
+  adminHostName             CDATA   #IMPLIED
+  ndHostName                CDATA   #IMPLIED
+  plexName                  CDATA   #IMPLIED
+>

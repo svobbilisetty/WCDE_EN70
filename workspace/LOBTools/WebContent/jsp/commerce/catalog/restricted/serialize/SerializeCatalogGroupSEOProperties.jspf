@@ -1,0 +1,156 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<c:forEach var="templateSEOProperties" items="${onlineStoreSEO.SEOPageDefinitions}">
+
+ <c:if test="${templateSEOProperties.resolved == true && templateSEOProperties.language != null}">
+  <c:set var="inherited" value=""/>
+  <c:if test="${templateSEOProperties.parentStoreIdentifier.uniqueID != param.storeId }">
+   <c:set var="inherited" value="Inherited"/>
+  </c:if>
+  
+  <c:set var="useDefaultTitle" value="0"/>
+  <c:set var="useDefaultMetaDesc" value="0"/>
+  <c:set var="useDefaultImageAltDesc" value="0"/>
+  
+  <object objectType="${inherited}CatalogGroupBaseSeoAttributes">
+   <objectStoreId><wcf:cdata data="${templateSEOProperties.parentStoreIdentifier.uniqueID}"/></objectStoreId>
+   <object objectType="CatalogGroupSeoAttributes">
+    <languageId><wcf:cdata data="${templateSEOProperties.language}"/></languageId>
+    <objectStoreId><wcf:cdata data="${templateSEOProperties.parentStoreIdentifier.uniqueID}"/></objectStoreId>
+    
+    <c:if test="${templateSEOProperties.title != null}">
+     <seo_templatetitle readonly="true"><wcf:cdata data="${templateSEOProperties.title}"/></seo_templatetitle>
+    </c:if>
+    <c:if test="${templateSEOProperties.metaDescription != null}">
+     <seo_templatemetadesc readonly="true"><wcf:cdata data="${templateSEOProperties.metaDescription}"/></seo_templatemetadesc>
+    </c:if>
+    <c:if test="${templateSEOProperties.fullImageAltDescription != null}">
+     <seo_templateimagealtdesc readonly="true"><wcf:cdata data="${templateSEOProperties.fullImageAltDescription}"/></seo_templateimagealtdesc>
+    </c:if>
+    
+    <c:forEach var="seoProperties" items="${catalogGroup.SEOProperties}">
+     <c:if test="${seoProperties.resolved == true && seoProperties.language != null && seoProperties.language == templateSEOProperties.language && templateSEOProperties.parentStoreIdentifier.uniqueID == seoProperties.parentStoreIdentifier.uniqueID}">
+      <c:if test="${seoProperties.title != null && seoProperties.title != ''}">
+       <c:set var="useDefaultTitle" value="1"/>
+       <seo_title><wcf:cdata data="${seoProperties.title}"/></seo_title>
+      </c:if>
+      <c:if test="${seoProperties.metaDescription != null && seoProperties.metaDescription != ''}">
+       <c:set var="useDefaultMetaDesc" value="1"/>
+       <seo_metadesc><wcf:cdata data="${seoProperties.metaDescription}"/></seo_metadesc>
+      </c:if>
+      <c:if test="${seoProperties.fullImageAltDescription != null && seoProperties.fullImageAltDescription != ''}">
+       <c:set var="useDefaultImageAltDesc" value="1"/>
+       <seo_imagealtdesc><wcf:cdata data="${seoProperties.fullImageAltDescription}"/></seo_imagealtdesc>
+      </c:if>
+     </c:if>
+    </c:forEach>
+    
+    <seo_useTitleDefault>${useDefaultTitle}</seo_useTitleDefault>
+    <seo_useMetaDescDefault>${useDefaultMetaDesc}</seo_useMetaDescDefault>
+    <seo_useImageAltDescDefault>${useDefaultImageAltDesc}</seo_useImageAltDescDefault>
+    
+   </object>
+  </object>
+  
+ </c:if>
+</c:forEach>
+  
+  
+
+<jsp:useBean id="foundESiteURLList" class="java.util.HashMap" type="java.util.Map"/>
+<jsp:useBean id="foundAssetStoreURLList" class="java.util.HashMap" type="java.util.Map"/>
+
+<jsp:useBean id="missingESiteURLList" class="java.util.HashMap" type="java.util.Map"/>
+<jsp:useBean id="missingAssetStoreURLList" class="java.util.HashMap" type="java.util.Map"/>
+
+
+<c:forEach var="seoURL" items="${catalogGroup.SEOURL}">
+ <c:set var="inherited" value=""/>
+ 
+ 	<c:if test="${seoURL.parentStoreIdentifier.uniqueID != param.storeId }">
+ 		<c:set var="inherited" value="Inherited"/>
+ 	</c:if>
+		
+
+ <c:forEach var="seoURLKeyword" items="${seoURL.URLKeyword}">
+  <c:if test="${seoURLKeyword.language != null}">  
+  
+  <object objectType="${inherited}CatalogGroupBaseSeoURL">
+   <objectStoreId><wcf:cdata data="${seoURL.parentStoreIdentifier.uniqueID}"/></objectStoreId>
+   <object objectType="CatalogGroupSeoURL">
+   <c:choose>
+	   <c:when test="${inherited == 'Inherited'}">
+	   		<c:set target="${foundAssetStoreURLList}" property="${seoURLKeyword.language}" value="${seoURLKeyword.language}"/>
+	   </c:when>
+	   <c:otherwise>
+	   		<c:set target="${foundESiteURLList}" property="${seoURLKeyword.language}" value="${seoURLKeyword.language}"/>
+	   </c:otherwise>
+   </c:choose>
+     <languageId><wcf:cdata data="${seoURLKeyword.language}"/></languageId>
+     <objectStoreId><wcf:cdata data="${seoURL.parentStoreIdentifier.uniqueID}"/></objectStoreId>
+     <c:if test="${seoURLKeyword.keyword != null && seoURLKeyword.keyword != ''}">
+      <seo_urlkeyword><wcf:cdata data="${seoURLKeyword.keyword}"/></seo_urlkeyword>
+     </c:if>
+     <c:if test="${seoURLKeyword.URLPrefix != null && seoURLKeyword.URLPrefix != ''}">
+      <seo_prefixurl><wcf:cdata data="${seoURLKeyword.URLPrefix}"/></seo_prefixurl>
+     </c:if>
+    
+    </object>
+   </object>
+  </c:if>
+ </c:forEach>
+</c:forEach>
+
+
+
+<c:forEach var="language" items="${param.dataLanguageIds}">
+	 <c:if test="${empty foundESiteURLList[language]}">
+	
+	 	<c:set target="${missingESiteURLList}" property="${language}" value="${language}"/>
+	 </c:if>
+	 
+	  <c:if test="${empty foundAssetStoreURLList[language]}">
+	 	<c:set target="${missingAssetStoreURLList}" property="${language}" value="${language}"/>
+	 </c:if>
+</c:forEach>
+
+
+<c:if test="${!empty missingAssetStoreURLList }">
+	<c:if test="${catalogGroup.catalogGroupIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+	  <object objectType="InheritedCatalogGroupBaseSeoURL">
+		  <objectStoreId><wcf:cdata data="${catalogGroup.catalogGroupIdentifier.externalIdentifier.storeIdentifier.uniqueID}"/></objectStoreId>
+		  <c:forEach var="language" items="${missingAssetStoreURLList}">
+			  <object objectType="CatalogGroupSeoURL">
+			     <languageId><wcf:cdata data="${language.value}"/></languageId>
+			     <objectStoreId><wcf:cdata data="${catalogGroup.catalogGroupIdentifier.externalIdentifier.storeIdentifier.uniqueID}"/></objectStoreId>
+			 </object>
+		 </c:forEach>
+		 </object>
+	</c:if>
+</c:if>
+
+
+<c:if test="${!empty missingESiteURLList}">
+	 <object objectType="CatalogGroupBaseSeoURL">
+	 	<objectStoreId><wcf:cdata data="${param.storeId}"/></objectStoreId>
+	 	 <c:forEach var="language" items="${missingESiteURLList}">
+		 	 <object objectType="CatalogGroupSeoURL">
+			     <languageId><wcf:cdata data="${language.value}"/></languageId>
+			     <objectStoreId><wcf:cdata data="${param.storeId}"/></objectStoreId>
+			 </object>
+		</c:forEach>
+	 </object>
+</c:if>
+

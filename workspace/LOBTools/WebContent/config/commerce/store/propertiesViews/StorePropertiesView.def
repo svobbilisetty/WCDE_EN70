@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<ObjectProperties definitionName="stoStoreProperties" >
+		<PropertyPane name="pane" baseDefinitionName="stoStorePropertiesPane" />
+	</ObjectProperties>
+	
+	<PropertyPane definitionName="stoStorePropertiesPane" >
+		<PropertyGroup name="group" groupTitle="${stoStoreResources.storeProfile}" open="true" collapsable="true" >
+			<PropertyViewLongText name="storeIdentifier" promptText="${stoStoreResources.storeIdentifierLabel}" propertyName="storeIdentifier" />
+			<PropertyViewLongText name="storeState" promptText="${stoStoreResources.stateLabel}" propertyName="state" />
+			<PropertyViewLongText name="storeId" promptText="${stoStoreResources.uniqueIDLabel}" propertyName="storeId" />
+			<PropertyViewLongText name="storeCategory" promptText="${stoStoreResources.categoryLabel}" propertyName="storeCategory" />
+			<PropertyInputText name="storeDisplayName" promptText="${stoStoreResources.displayNameLabel}" objectPath="StoreDescription" propertyName="displayName"/>
+			<PropertyInputMultiLineText name="storeDescription" promptText="${stoStoreResources.descriptionLabel}" objectPath="StoreDescription" propertyName="description"/>
+			<PropertyChildListEditor name="storeCurrency" listDefinitionName="stoCurrencyPropertiesGrid" objectTypes="StoreCurrency" promptText="${stoStoreResources.currencyLabel}" hideEditColumnAction="true"/>
+			<PropertyChildListEditor name="storeLanguage" listDefinitionName="stoLanguagePropertiesGrid" objectTypes="StoreLanguage" promptText="${stoStoreResources.languageLabel}" hideEditColumnAction="true"/>
+		</PropertyGroup>
+		<PropertyGroup name="group2" groupTitle="${stoStoreResources.storeLocation}" open="false" collapsable="true" >
+			<PropertyInputText name="locationAddress1" promptText="${stoStoreResources.address1Label}" objectPath="StoreLocationInformation" propertyName="addressLine.0"/>
+			<PropertyInputText name="locationAddress2" promptText="${stoStoreResources.address2Label}" objectPath="StoreLocationInformation" propertyName="addressLine.1"/>
+			<PropertyInputText name="city1" promptText="${stoStoreResources.cityLabel}" objectPath="StoreLocationInformation" propertyName="city"/>
+			<PropertyCombobox name="stateOrProvinceName1" promptText="${stoStoreResources.stateProvinceLabel}" objectPath="StoreLocationInformation" propertyName="stateOrProvinceName"/>
+			<PropertyCombobox name="country1" promptText="${stoStoreResources.countryLabel}" objectPath="StoreLocationInformation" propertyName="country"/>
+			<PropertyInputText name="postalCode1" promptText="${stoStoreResources.postalCodeLabel}" objectPath="StoreLocationInformation" propertyName="postalCode"/>
+		</PropertyGroup>
+		<PropertyGroup name="group3" groupTitle="${stoStoreResources.storeContact}" open="false" collapsable="true" >
+			<PropertyInputText name="contactAddress1" promptText="${stoStoreResources.address1Label}" objectPath="StoreContactInformation" propertyName="addressLine.0"/>
+			<PropertyInputText name="contactAddress2" promptText="${stoStoreResources.address2Label}" objectPath="StoreContactInformation" propertyName="addressLine.1"/>
+			<PropertyInputText name="city2" promptText="${stoStoreResources.cityLabel}" objectPath="StoreContactInformation" propertyName="city"/>
+			<PropertyCombobox name="stateOrProvinceName2" promptText="${stoStoreResources.stateProvinceLabel}" objectPath="StoreContactInformation" propertyName="stateOrProvinceName"/>
+			<PropertyCombobox name="country2" promptText="${stoStoreResources.countryLabel}" objectPath="StoreContactInformation" propertyName="country"/>
+			<PropertyInputText name="postalCode2" promptText="${stoStoreResources.postalCodeLabel}" objectPath="StoreContactInformation" propertyName="postalCode"/>
+			<PropertyInputText name="telephone" promptText="${stoStoreResources.phoneLabel}" objectPath="StoreContactInformation" propertyName="telephone1"/>
+			<PropertyInputText name="fax" promptText="${stoStoreResources.faxLabel}" objectPath="StoreContactInformation" propertyName="fax1"/>
+			<PropertyInputText name="email" promptText="${stoStoreResources.emailLabel}" objectPath="StoreContactInformation" propertyName="email1"/>
+		</PropertyGroup>
+	</PropertyPane>
+		
+	<PropertyPane definitionName="stoSearchEngineOptimizationPane">    
+	    <PropertyGroup name="staticPageList" collapsable="false">
+			<ChildListViewer baseDefinitionName="stoStaticPagesList" objectTypes="StoreStaticPages" selectedObjectName="selectedStaticPage"/>
+	    </PropertyGroup>
+	    
+	    <PropertyGroup name="objectHeaderSection" collapsable="false" componentObjectName="selectedStaticPage">
+			<EnablementCondition enablementValue="" propertyName="staticPageName" negate="true"/>
+			<PropertyObjectHeader name="objectHeader" componentObjectName="selectedStaticPage" propertyName="staticPageName"/>
+		</PropertyGroup>
+		
+		<PropertyGroup name="staticPageLocalUrlKeywordSection" collapsable="false" componentObjectName="selectedStaticPage" displayObjectStoreName="false" displayStoreName="false">
+			<EnablementAndCondition conditionId="localUrlkeywordConditionId">
+				<EnablementOrCondition conditionId="storeTypeCondition1">
+					<EnablementCondition conditionId="assetStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="AssetStore" parentProperty="true"/>
+					<EnablementCondition conditionId="directStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="DirectStore" parentProperty="true"/>
+				</EnablementOrCondition>
+				<EnablementCondition enablementValue="" propertyName="staticPageName" negate="true"/>
+			</EnablementAndCondition>
+			<PropertyUrlPreview name="desktopUrlKeyword1" componentObjectName="selectedStaticPage" helpText="${stoStoreResources.seoStaticPageUrl_helpText}" objectPath="StoreStaticPageDetails" package="sto" promptText="${stoStoreResources.seoStaticPageUrlLabel}" propertyName="staticPageUrlkeyword"/>
+	    </PropertyGroup>
+	    
+		<PropertyGroup name="staticPageInheritedUrlKeywordSection" componentObjectName="selectedStaticPage" displayObjectStoreName="true" displayStoreName="false">	
+			<EnablementAndCondition conditionId="inheritedUrlKeywordConditionId">
+				<EnablementCondition conditionId="esiteStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="EsiteStore" parentProperty="true"/>
+				<EnablementCondition enablementValue="" propertyName="staticPageName" negate="true"/>
+			</EnablementAndCondition>
+			<PropertyUrlPreview name="desktopUrlKeyword3" componentObjectName="selectedStaticPage" helpText="${stoStoreResources.seoStaticPageUrl_helpText}" objectPath="InheritedStoreStaticPageDetails" package="sto" promptText="${stoStoreResources.seoStaticPageUrlLabel}" propertyName="staticPageUrlkeyword"/>
+	    </PropertyGroup>  	
+	     
+	    <PropertyGroup name="staticPageESiteUrlKeywordSection" componentObjectName="selectedStaticPage">
+			<PropertyGroupTitle parentProperty="true" propertyName="storeIdentifier"/>
+			<EnablementAndCondition conditionId="urlKeywordConditionId">
+				<EnablementOrCondition conditionId="storeTypeCondition2" negate="true">
+					<EnablementCondition conditionId="assetStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="AssetStore" parentProperty="true"/>
+					<EnablementCondition conditionId="directStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="DirectStore" parentProperty="true"/>
+				</EnablementOrCondition>
+				<EnablementCondition enablementValue="" propertyName="staticPageName" negate="true"/>
+			</EnablementAndCondition>
+			<PropertyUrlPreview name="desktopUrlKeyword2" componentObjectName="selectedStaticPage" helpText="${stoStoreResources.seoStaticPageUrlEsite_helpText}" objectPath="StoreStaticPageDetails" package="sto" promptText="${stoStoreResources.seoStaticPageUrlLabel}" propertyName="staticPageUrlkeyword"/>
+	    </PropertyGroup>	    
+	</PropertyPane>
+	
+</Definitions>

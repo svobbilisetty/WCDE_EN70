@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE menu SYSTEM "Menu.dtd">
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2003
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+
+
+<!-- Commerce Accelerator menus for Reseller Profile Store
+Note: user roles are defeined in Roles.xml
+-->
+
+<menu resourceBundle="common.mccNLS"
+      frameset="common.MerchantCenterFrameset"
+      helpMap="common.MerchantCenterHelpMap"
+      arrowGif="$wcs_accelerator$images/tools/mcc/arrow.gif"
+      startPos="20"
+      space="20"
+      homepage="$webapp_accelerator$tools/common/AcceleratorHomeRPS.jsp"
+      bannerTitle=""
+      logoutPage="$webapp_accelerator$Logoff?URL=$wcs_accelerator$tools/common/blank.html&amp;storeId=0"
+      storeGif="$wcs_accelerator$images/tools/mcc/store_icon.jpg"
+      storeSelectionPage="$webapp_accelerator$StoreLanguageSelection?mcurl=MerchantCenterView?XMLFile=common.merchantCenter" >
+   <menuitem name="store"
+             enabled="true"
+             users="logMgr makMgr seller">
+
+      <node  name="preview"
+             taskUsages="all"
+             keepBCT="true"
+             url="$webapp_accelerator$DialogView?XMLFile=preview.PreviewDialog"
+             users="makMgr"/>
+
+      <node  name="separator"
+             url=""/>
+
+      <node  name="contentSpot"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=campaigns.ContentSpotList&amp;cmd=ContentSpotListView"
+             taskUsages="all"
+             users="makMgr"/>
+
+      <node  name="collateral"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=campaigns.CampaignCollateralList&amp;cmd=CampaignCollateralListView"
+             taskUsages="all"
+             users="makMgr"/>
+
+      <node  name="separator"
+             url=""/>
+
+      <node  name="changeShipping"
+             url="$webapp_accelerator$ShippingMenuView"
+             users="logMgr seller"/>
+
+   </menuitem>             
+
+   <menuitem name="sales"
+             enabled="true"
+             users="actRep salesMgr seller">
+
+      <node  name="accounts"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=contract.AccountList&amp;cmd=AccountListView"
+             users="actRep salesMgr seller"/>
+  
+   </menuitem>
+  
+   <menuitem name="marketing"
+             enabled="true"
+             taskUsages="all"
+             users="makMgr">
+
+      <node  name="customerProfiles"
+             url="$webapp_accelerator$SegmentsView?ActionXMLFile=segmentation.SegmentList&amp;cmd=SegmentListView&amp;orderby=name"
+             taskUsages="all"
+             users="makMgr"/>
+
+      <node  name="campaigns"
+             url="$webapp_accelerator$CampaignsView?ActionXMLFile=campaigns.CampaignList&amp;cmd=CampaignListView&amp;orderby=name"
+             taskUsages="all"
+             users="makMgr"/>
+
+      <node  name="campaignInitiatives"
+             url="$webapp_accelerator$CampaignInitiativesView?ActionXMLFile=campaigns.InitiativeList&amp;cmd=CampaignInitiativeListView&amp;orderby=name"
+             taskUsages="all"
+             users="makMgr"/>
+
+      <node  name="promotions"
+             component="RulesBasedDiscount"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=RLPromotion.RLPromotionList&amp;cmd=RLDiscountListView"
+             taskUsages="all"
+             users="makMgr"/>          
+
+      <node  name="ems"
+             url="$webapp_accelerator$CampaignsEmsView?ActionXMLFile=campaigns.CampaignEmsList&amp;cmd=CampaignEmsListView"
+             taskUsages="all"
+             users="makMgr"/>
+
+      <node  name="collateral"
+             url="$webapp_accelerator$CampaignsCollateralView?ActionXMLFile=campaigns.CampaignCollateralList&amp;cmd=CampaignCollateralListView"
+             taskUsages="all"
+             users="makMgr"/>
+
+   </menuitem>
+
+   <menuitem name="tasks"
+             component="WorkspaceTaskList"
+             taskUsages="all"
+             enabled="true"
+             users="wsMgr wsTGApprover wsCtntContributor podMgr makMgr catMgr">
+
+      <node  name="viewTasks"
+             component="WorkspaceTaskList"
+             taskUsages="all"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=workspaceadmin.TaskListActions&amp;cmd=TaskListView"
+             users="wsMgr wsTGApprover wsCtntContributor podMgr makMgr catMgr"/>
+             
+   </menuitem>
+   <menuitem name="help"
+             enabled="true"
+             type="help"
+             taskUsages="all"
+             users="all"/>
+
+</menu>   
+                             

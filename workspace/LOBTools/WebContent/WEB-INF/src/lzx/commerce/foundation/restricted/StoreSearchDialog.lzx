@@ -1,0 +1,535 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>	
+	<!---
+		@keywords private
+		
+		Store search result list item.
+	-->
+	<class name="wcfStoreSearchListItem" extends="textlistitem">
+		<!---
+			Handle double click event.
+		-->
+		<handler name="ondblclick">
+			<![CDATA[
+			this.parentDialog.setAttribute("selectedStore", this.value);
+			this.parentDialog.handleOk();
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		Base store search dialog class.
+		@keywords private
+	-->	
+	<class extends="wcfDialog" name="wcfStoreSearchDialogBase" title="${foundationResources.storeSearchDialog_title.string}" >
+		<!---
+			The delegate to call when a store is selected.
+		-->
+		<attribute name="setStoreDelegate" value="null"/>
+		<!---
+			Store "usage". This is used to restrict the stores returned by the search to those that match the specified usage.
+		-->
+		<attribute name="usage" type="string" value=""/>
+		<!---
+			Indicates that search is currently enabled.
+		-->
+		<attribute name="searchEnabled" type="boolean" value="true"/>
+		<!---
+			Indicates thta the OK action is currently enabled.
+		-->
+		<attribute name="okEnabled" type="boolean" value="false"/>
+		<!---
+			Indicates that there is currently an active search request.
+		-->
+		<attribute name="searchActive" type="boolean" value="false"/>
+		<!---
+			Array of list items.
+		-->
+		<attribute name="listItems" value="${[]}"/>
+		<!---
+			Array of items that are already created that can be used from the list.
+		-->
+		<attribute name="listItemsPool" value="${[]}"/>
+		<!---
+			The currently selected store.
+		-->
+		<attribute name="selectedStore" value="null"/>
+		<!---
+			Check the search action enablement.
+		-->
+		<method name="checkSearchEnabled">
+			<![CDATA[
+			this.setAttribute("searchEnabled", !this.searchActive);
+			]]>
+		</method>
+
+		<!---
+			Handle search active changed event.
+		-->
+		<handler name="onsearchActive">
+			<![CDATA[
+			this.checkSearchEnabled();
+			]]>
+		</handler>
+		
+		<!---
+			Check the OK button enablement.
+		-->
+		<method name="checkOkEnabled">
+			<![CDATA[
+			this.setAttribute("okEnabled", this.selectedStore != null);		
+			]]>
+		</method>
+		
+		<!---
+			Handle store selected event.
+		-->
+		<handler name="onselectedStore">
+			<![CDATA[
+			this.checkOkEnabled();
+			]]>
+		</handler>
+
+		<!---
+			Indicates setDefaultStore check box not visible
+		-->
+		<attribute name="setDefaultVisible" type="boolean" value="false"/>
+
+		<!---
+			Handle OK.
+		-->
+		<method name="handleOk">
+			<![CDATA[
+			if (this.okEnabled) {
+				if (this.setDefaultVisible && this.setDefaultStore.value) {
+					preferenceManager.setPreference("CMCDefaultStore", this.selectedStore.storeName );
+				}
+				this.setStoreDelegate.execute(this.selectedStore);
+				this.closeWindow();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Trigger a new search.
+		-->
+		<method name="doSearch">
+			<![CDATA[
+			if (this.searchEnabled) {
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfStoreSearchDialog doSearch: " + this.searchView.searchFieldView.searchTextView.searchText.getText());
+				this.clearStores();
+				var searchText = wcfStringUtil.trim(this.searchView.searchFieldView.searchTextView.searchText.getText());
+				if (searchText != "") {
+					this.setAttribute("searchActive", true);
+					wcfStoreSearchDialogService.doRequest(this, {
+						searchText: searchText,
+						usage: this.usage
+					});
+				} else {
+					this.updateResultsMessage();
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			]]>
+		</method>
+
+		<!---
+			Use this method to open the Store Search Dialog.
+			@param lz.Delegate setStoreDelegate: the callback delegate that will be called when the new store is selected
+			@param string searchText: default search text
+			@param string usage: optional store usage
+			@param array stores: initial list of stores
+		 -->
+		<method name="openStoreSearchDialog" args="setStoreDelegate, searchText, usage, stores=null">
+			<![CDATA[
+			this.openWindow();
+			this.clearStores();
+			this.setStoreDelegate = setStoreDelegate;
+			if (typeof(usage) != "undefined") {
+				this.usage = usage;
+			}
+			else {
+				this.usage = "";
+			}
+			this.searchView.searchFieldView.searchTextView.searchText.setText(searchText);
+			if(stores!= null){
+				this.appendStores(stores);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Reset the values in the dialog for things that should not be persisted when the dialog is closed.
+		-->
+		<method name="closeWindow">
+			super.closeWindow();
+			this.searchView.searchFieldView.searchTextView.searchText.setText("");
+			this.setAttribute("selectedStore", null);
+			this.setAttribute("okEnabled", false);
+		</method>
+
+		<!---
+			Add the specified stores to the current list of stores.
+			@param array stores: array of wcfStore instances
+		-->
+		<method name="appendStores" args="stores">
+			<![CDATA[
+			for (var i = 0; i < stores.length; i++) {
+				var store = stores[i];
+				var item = null;
+				if (this.listItemsPool.length > 0) {
+					item = this.listItemsPool.shift();
+					item.setAttribute("value", store);
+					item.setAttribute("text", store.storeName);
+					item.setAttribute("visible", true);
+				} else {
+					item = new lz.wcfStoreSearchListItem(this.searchView.storeSearchResults, {
+						value: store,
+						text: store.storeName,
+						parentDialog:this
+					});
+				}
+				this.listItems.push(item);
+			}
+			if (stores.length > 0 && this.listItems.length == stores.length) {
+				this.searchView.storeSearchResults.select(this.listItems[0]);
+				lz.Focus.setFocus(this.searchView.storeSearchResults, false);
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Clear the list of stores.
+		-->
+		<method name="clearStores">
+			<![CDATA[
+			this.searchView.storeSearchResults.clearSelection();
+			this.setAttribute("selectedStore", null);			
+			this.checkOkEnabled();
+			while (listItems.length > 0) {
+				var curItem = this.listItems.shift();
+				curItem.setAttribute("visible", false);
+				curItem.setAttribute("value", null);
+				this.listItemsPool.push(curItem);
+				
+			}
+			this.searchView.resultsMessage.setAttribute("text", "");
+			this.searchView.resultsMessage.setAttribute("visible", false);
+			this.searchView.resultsMessagePadding.setAttribute("visible", false);
+			]]>
+		</method>
+
+		<!---
+			Show status message about the search results to the user.
+			@param array stores: array of wcfStore instances
+			@param string message: the exception message
+		-->
+		<method name="updateResultsMessage" args="stores=null, message=null">
+			<![CDATA[
+			var statusMessage = "";
+			if (stores && stores != null) {
+				if (this.listItems.length == 0) {
+					statusMessage = foundationResources.replaceValues("searchResultsNoResultsMsg", [this.searchView.searchFieldView.searchTextView.searchText.getText()]);
+				} else {
+					statusMessage = foundationResources.replaceValues("searchResultsSuccessMsg", [this.listItems.length, this.searchView.searchFieldView.searchTextView.searchText.getText()]);
+				}
+			} else {
+				if (message) {
+					//exception message
+					statusMessage = message;
+				} else {
+					//must be empty search
+					statusMessage = foundationResources.searchResultsNoCriteriaMsg.string;
+				}
+			}
+			if (statusMessage != "") {
+				this.searchView.resultsMessage.setAttribute("text", statusMessage);
+				this.searchView.resultsMessage.setAttribute("visible", true);
+				this.searchView.resultsMessagePadding.setAttribute("visible", true);
+			}
+			]]>
+		</method>
+
+		<!---
+			Set initial focus to search criteria entry field.
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+				if(this.selectedStore == null){
+					lz.Focus.setFocus(this.searchView.searchFieldView.searchTextView.searchText, false);
+				}
+			]]>
+		</method>
+
+		<view name="searchView">
+			<view name="searchFieldView">
+				<view name="searchTextView">
+					<text text="${foundationResources.storeSearchDialog_textboxLabel.string}"/>
+					<wcfInputText name="searchText" width="230" doesenter="true">
+						<handler name="onkeydown" args="code">
+							<![CDATA[
+							if (code == 13) { // enter key
+								parent.parent.parent.parent.doSearch();
+							}
+							]]>
+						</handler>
+					</wcfInputText>
+					<simplelayout axis="y" spacing="2" />
+				</view>
+				<wcfFocusableBaseButton name="storeSearchButton" enabled="${parent.parent.parent.searchEnabled}" resource="searchDialogButtonIcon" valign="bottom" doesenter="true">
+					<handler name="onclick">
+						parent.parent.parent.doSearch();
+					</handler>
+					<wcfTooltip text="${foundationResources.storeSearchDialog_searchBtnName.string}" />
+				</wcfFocusableBaseButton>
+				<simplelayout axis="x" spacing="5" />
+			</view>
+
+			<view height="5" />
+			
+			<text name="resultsMessage" text="" multiline="true" width="${this.parent.width}" visible="false"/>
+			<view name="resultsMessagePadding" height="5" visible="false"/>
+			
+			<text text="${foundationResources.storeSearchDialog_resultsLabel.string}" />
+
+			<list name="storeSearchResults" height="210" width="350" shownitems="10" scrollbarclassname="wcfVerticalScrollbar" >
+				<handler name="onselect">
+					var s = this.getSelection();
+					if (s) {
+						parent.parent.setAttribute("selectedStore", s.value);
+					}
+					else {
+						parent.parent.setAttribute("selectedStore", null);
+					}
+					this.setAttribute("doesenter", true);
+				</handler>
+				
+				<!--- @keywords private 
+					  This list does not have a hilite - only a select.
+				-->
+		        <method name="_dokeydown" args="kc">
+		            <![CDATA[
+		             /* select item on 'space' key */
+		            if (kc == 32 && this._hiliteview && this._hiliteview.enabled) {
+		               this._hiliteview.setAttribute('selected', true);		              
+		               return;
+		            }
+		            /* handle arrow key navigation		            	
+		                37 = left arrow, 38 = up arrow
+		                39 = right arrow, 40 = down arrow
+		            */
+		            else if (kc >= 37 && kc <= 40) {
+		                if (kc == 39  || kc == 40) {		                  
+		                   this.selectNext();
+		                }
+		                if (kc == 37  || kc == 38) {		                    
+		                    this.selectPrev();
+		                }
+		            }
+		           	/* handle home/end key navigation		          	
+		      			35 = end key, 36 = home key
+		           	*/
+		            else if (kc == 35 || kc == 36) {
+		                var visibleItems = this.getVisibleItems();
+		                if (kc == 35 && visibleItems.length > 0) {
+		                	this.select(visibleItems[visibleItems.length-1]);
+		                }
+		                if (kc == 36 && visibleItems.length > 0) {
+		                	this.select(visibleItems[0]);
+		                }		               
+		                         
+		             }  
+		             /* Handle first character matching in the list */
+		             else {								
+						var key = String.fromCharCode(kc).toUpperCase();		    	
+						var startIndex = 0;				
+						var numItems = this.getNumItems();
+											
+						for (var i = 0; i < numItems; i++) {
+							var item = this.getItemAt(i);			
+							if (item.selected == true && item.text.toUpperCase().indexOf(key) == 0) {
+								startIndex = i+1;
+								break;								
+							}
+						}
+						for (var i = 0; i < numItems; i++) {
+							if (startIndex >= numItems) {
+								startIndex = 0;
+							}
+							
+							var item = this.getItemAt(startIndex);										
+							if (item.text.toUpperCase().indexOf(key) == 0 && item.visible) {
+								this.select(item);	
+								break;
+							}						
+							startIndex++;				
+						}
+					}						
+		            ]]>
+		        </method>
+		        <!---
+		        	@keywords private		       
+					Move the selection to the next or previous view.
+					@param Number dir: -1 to move up or 1 to move down
+				-->
+				<method name="moveSelection" args="dir">
+					<![CDATA[
+					if (!dir) {
+						dir = 1;
+					}
+					var next = null;
+					var visibleItems = this.getVisibleItems();
+					if (visibleItems.length > 0) {
+						next = this.getSelection();
+						if (next == null) {
+							next = visibleItems[0];
+						}
+						else {
+							for (var i = 0; i < visibleItems.length; i++) {
+								if (next == visibleItems[i]) {
+									if (dir < 0) {
+										if (i > 0) {
+											next = visibleItems[i - 1];
+										}
+									}
+									else {
+										if (i < visibleItems.length - 1) {
+											next = visibleItems[i + 1];
+										}
+									}
+									break;
+								}
+							}
+						}
+					}
+					this.select(next);
+					]]>
+				</method>
+				<!--- 
+					@keywords private 
+				-->
+				<method name="doEnterDown">
+					<![CDATA[									
+					parent.parent.handleOk();
+					]]>
+				</method>
+				<!--- 
+					@keywords private 
+					returns array of visible items in list
+				-->
+				<method name="getVisibleItems">
+					<![CDATA[
+					var visibleItems = [];
+		            var items = this._selector.immediateparent.subviews;
+		            for(var i = 0; i < items.length; i++){
+		            	var item = items[i];
+		            	if(item.visible) visibleItems.push(item);
+		            }
+		            return visibleItems;
+					]]>
+				</method>
+				
+				<!--- @keywords private -->
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this["indicator"]){
+				    	new lz.wcfFocusIndicator(this, {
+					    	name: "indicator",
+					    	focusableView: this,
+					    	indicatorView: this,
+					    	offset: 1,
+					    	placement: "list"
+					    });
+				    }
+					]]>
+				</handler>
+			</list>
+			
+			<simplelayout axis="y" spacing="2" />
+		</view>
+		<wcfBaseCheckbox name="setDefaultStore" text="${foundationResources.storeSearchDialog_setDefaultStoreLabel.string}"  value="true" visible= "${parent.setDefaultVisible}" />
+		
+		<view placement="footer" name="buttonSection">
+			<wcfButton name="storeSearchOkButton" text="${foundationResources.storeSearchDialog_addBtnName.string}" enabled="${parent.parent.okEnabled}">
+				<handler name="onclick">
+					parent.parent.handleOk();
+				</handler>
+			</wcfButton>
+			<wcfButton name="storeSearchCancelButton" text="${foundationResources.storeSearchDialog_cancelBtnName.string}">
+				<handler name="onclick">
+					parent.parent.closeWindow();
+				</handler>
+			</wcfButton>
+			<simplelayout axis="x"/>
+		</view>
+
+		<simplelayout axis="y" spacing="10" />
+	</class>
+	
+	<!---
+		Store search dialog.
+	-->
+	<wcfStoreSearchDialogBase  id="wcfStoreSearchDialog" >
+	</wcfStoreSearchDialogBase>
+	
+	<wcfStoreSearchDialogBase  id="wcfStoreSelectDialog"  title="${foundationResources.storeSelectDialog_title.string}" setDefaultVisible="true" >
+	</wcfStoreSearchDialogBase>
+	
+
+	<!-- Store search dialog service. -->
+	<wcfService name="wcfStoreSearchDialogService" url="/cmc/FindStores" sendMaxItems="true" sendWorkspaceContext="false" retryOnError="true">
+		<!---
+			Parse the store objects.
+		-->
+		<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+			<![CDATA[
+			var stores = wcfStoreUtil.parseStores(dataElement);
+			requestParent.appendStores(stores);
+			requestParent.updateResultsMessage(stores);
+			var moreStores = dataElement.attributes["recordSetCompleteIndicator"] && dataElement.attributes.recordSetCompleteIndicator == "false";
+			requestParent.setAttribute("searchActive", false);
+			]]>
+		</method>
+		
+		<!---
+			Handle exception.
+			@param wcfServiceDataset ds: dataset
+			@param string message: the exception message
+			@param string code: the exception code
+		-->
+		<method name="handleException" args="ds, message, code=null">
+			<![CDATA[
+			ds.requestParent.setAttribute("searchActive", false);
+			ds.requestParent.updateResultsMessage(null, message);
+			super.handleException(ds, message, code);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle results set over the UI limit.
+			@param wcfServiceDataset ds: dataset
+			@param XML e: "values" data element
+		-->
+		<method name="handleResultsOverLimit" args="ds,e">
+			<![CDATA[
+			super.handleResultsOverLimit(ds,e);
+			var statusMessage = foundationResources.storeSearchDialogResultsOverServerLimitMsg.string;
+			ds.requestParent.setAttribute("searchActive", false);
+			ds.requestParent.updateResultsMessage(null, statusMessage);		
+			]]>
+		</method>
+	</wcfService>
+</library>

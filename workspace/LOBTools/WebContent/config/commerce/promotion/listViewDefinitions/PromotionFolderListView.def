@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--- This grid displays the contents and characteristics of a list of {@link PromotionFolder Promotion folders}. -->
+	<ObjectGrid definitionName="proPromotionFolderGrid" preferenceKey="proPromotionFolderGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${promotionResources.promotionFolderType}" width="60"/>
+		<GridStoreName name="store" objectPath="PromotionFolderGroup" propertyName="objectStoreId" text="${promotionResources.promotionFolderStore}" width="125"/>	
+		<GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId" objectPath="PromotionFolderGroup" text="${promotionResources.promotionFolderList_uniqueID}" visible="false" width="90"/>
+		<GridText editable="true" name="folderName" propertyName="identifier" objectPath="PromotionFolderGroup" required="true" text="${promotionResources.promotionFolderList_identifier}" visible="true" width="180"/>
+		<GridText editable="true"  name="folderDescription" propertyName="description" objectPath="PromotionFolderGroup" text="${promotionResources.promotionFolderList_description}" visible="true" width="350"/>		
+	</ObjectGrid>
+	
+	<!-- This child list editor shows a list of promotion folders that are children of a promotion folder. -->
+	<ChildListEditor definitionName="proPromotionFolderGridEditor" listDefinitionName="proPromotionFolderGrid" objectTypes="PromotionFolderReference,InheritedPromotionFolderReference"/>
+	
+	<!--- This navigation list definition is used to display {@link PromotionFolder Promotion Folders}. -->
+	<NavigationListDefinition definitionName="proPromotionFolderGridChildList" displayName="${promotionResources.promotionFolderListMenuTitle}" listDefinitionName="proPromotionFolderGridEditor" listTitle="${promotionResources.promotionFolderListTitle}" toolbarIcon="listToolbarIcon"/>		
+	
+	<!--- This grid displays the contents and characteristics of a list of top level {@link PromotionFolder Promotion folders}. -->
+	<ObjectGrid definitionName="proTopPromotionFolderGrid" preferenceKey="proPromotionFolderGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${promotionResources.promotionFolderType}" width="60"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${promotionResources.promotionFolderStore}" width="125"/>	
+		<GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId"  text="${promotionResources.promotionFolderList_uniqueID}" visible="false" width="90"/>
+		<GridText editable="true" name="folderName" propertyName="identifier" required="true" text="${promotionResources.promotionFolderList_identifier}" visible="true" width="180"/>
+		<GridText editable="true"  name="folderDescription" propertyName="description" text="${promotionResources.promotionFolderList_description}" visible="true" width="350"/>		
+	</ObjectGrid>
+	
+	<!-- This child list editor shows a list of top level folders when the 'Promotion Folders' organizational node is selected in the navigation view. -->
+	<ChildListEditor definitionName="proTopPromotionFolderGridEditor" listDefinitionName="proTopPromotionFolderGrid" objectTypes="PromotionFolder,InheritedPromotionFolder"/>
+	
+	<!--- This navigation list definition is used to display top level {@link PromotionFolder Promotion Folders}. -->
+	<NavigationListDefinition definitionName="proTopPromotionFolderGridChildList" displayName="${promotionResources.promotionFolderListMenuTitle}" listDefinitionName="proTopPromotionFolderGridEditor" listTitle="${promotionResources.promotionFolderListTitle}" toolbarIcon="folderListToolbarIcon"/>
+	
+	<!--- 
+		This list displays the contents and characteristics of a list of {@link PromotionFolderItemReference Promotions}. 
+	-->
+ 	<ObjectGrid definitionName="proPromotionFolderItemGrid" preferenceKey="proPromotionFolderItemGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${promotionResources.promotionType}" width="60"/>
+		<GridPropertyImage objectPath="PromotionGroup" editable="false" enableFilter="true" name="status" propertyName="status" text="${promotionResources.promotionList_status}" visible="true" width="80"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${promotionResources.promotionStore}" width="125" objectPath="PromotionGroup"/>
+		<GridText objectPath="PromotionGroup" datatype="number" editable="false" name="uniqueID" propertyName="promotionId" text="${promotionResources.promotionList_uniqueID}" visible="false" width="90"/>
+		<GridText objectPath="PromotionGroup" editable="false" name="identifier" propertyName="identifier" text="${promotionResources.promotionList_identifier}" visible="false" width="180"/>
+		<GridText objectPath="PromotionGroup" editable="true" name="administrativeName" propertyName="adminName" required="true" text="${promotionResources.promotionList_adminName}" visible="true" width="180"/>
+		<GridComboBox objectPath="PromotionGroup" editable="false" enableFilter="true" name="promoType" propertyName="promotionType" text="${promotionResources.promotionList_promoType}" width="200"/> 
+		<GridStepper objectPath="PromotionGroup" datatype="number" editable="true" maximumValue="400" minimumValue="0" name="priority" propertyName="priority" text="${promotionResources.promotionList_priority}" visible="true" width="70"/>
+		<GridDateTime objectPath="PromotionGroup" editable="true" name="startDate" propertyName="startDate" text="${promotionResources.promotionList_startDate}" visible="true" width="125"/>
+		<GridDateTime objectPath="PromotionGroup" editable="true" endOfDay="true" name="endDate" propertyName="endDate" text="${promotionResources.promotionList_endDate}" visible="true" width="125"/>		
+		<GridText objectPath="PromotionGroup" editable="true" name="adminDesc" propertyName="adminDescription" text="${promotionResources.promotionList_adminDesc}" visible="true" width="350"/>
+		<GridText objectPath="PromotionGroup/PromotionDescription" editable="true" name="shortDescription" propertyName="shortDescription" text="${promotionResources.promotionList_shortDesc}" visible="false" width="350"/>
+		<GridRichText objectPath="PromotionGroup/PromotionDescription" editable="true" name="longDescription" propertyName="longDescription" text="${promotionResources.promotionList_longDesc}" visible="false" width="350"/>
+		<GridComboBox objectPath="PromotionGroup" editable="false" enableFilter="true" name="promotionCodePopulationStatus" propertyName="promotionCodePopulationStatus" text="${promotionResources.promotion_codePopulationStatus}" width="200" visible="false"/>
+	</ObjectGrid>
+	
+	<!-- Child list editor to display promotions in a folder. -->
+	<ChildListEditor definitionName="proPromotionFolderItemGridEditor" listDefinitionName="proPromotionFolderItemGrid" objectTypes="PromotionFolderItemReference,PromotionFolderInheritedItemReference,InheritedPromotionFolderInheritedItemReference"/>
+    
+    <!--- This navigation list definition is used to display {@link PromotionFolderItemReference Promotion Folder Item References} -->
+	<NavigationListDefinition definitionName="proPromotionFolderItemGridChildList" displayName="${promotionResources.promotionListMenuTitle}" helpLink="tasks/tprlocpromo.htm" listDefinitionName="proPromotionFolderItemGridEditor" listTitle="${promotionResources.promotionListInFolderTitle}" toolbarIcon="listToolbarIcon"/>
+	
+	
+</Definitions>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the object definition which is the parent for the customer segment e-mail address domain condition. This definition provides
+		a {@link wcfObjectDefinition#templateTypeProperty template property} with the name <code>template</code> which may have
+		the following {@link wcfObjectTemplate object templates}:
+		<ul>
+			<li><code>ignore</code> - used when the customer segment should ignore the e-mail address domain of a customer</li>
+			<li><code>any</code> - used to target customers that has an e-mail address domain that matches with any of the specified values</li>
+			<li><code>notAny</code> - used to target customers that does not have an e-mail address domain that matches with any of the specified values</li>
+		</ul>
+		</p>
+		
+		<p>An instance of {@link mktEmailListObjectDefinition} is defined as a child object.</p>
+	-->
+	<ChildObjectDefinition definitionName="mktEmailObjectDefinition" idProperty="elementName" objectType="Email" singleInstance="true" templateTypeProperty="template">
+		<Xml name="template">
+			<elementName>Email</elementName>
+			<template>ignore</template>
+		</Xml>
+		
+   		<ChildObjectDefinition baseDefinitionName="mktEmailListObjectDefinition"/>
+   		
+   		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_email_Ignore}" templateType="ignore">
+			<Xml name="template"/>
+		</ObjectTemplate>
+		
+		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_email_AtLeastOne}" templateType="any">
+			<Xml name="template">
+				<object objectType="EmailList">
+					<elementName>eMail</elementName>
+					<conditionUsage>orListCondition</conditionUsage>
+				</object>
+			</Xml>	
+		</ObjectTemplate>
+		
+		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_email_NotAny}" templateType="notAny">
+			<Xml name="template">
+				<object objectType="EmailList">
+					<elementName>eMail</elementName>
+					<conditionUsage>andListCondition</conditionUsage>
+				</object>
+			</Xml>	
+		</ObjectTemplate>
+	</ChildObjectDefinition>
+
+	<!---
+		<p>This is the wrapper andList/orList for the customer segment e-mail address condition.</p>
+		
+		<p>This definition defines a {@link wcfChildObjectDefinition child object} with objectType
+		<code>EmailEndsWithOption</code> that represents the e-mail address simple condition that
+		should match. It has the following properties:
+		<ul>
+			<li><code>conditionVariable</code> - always has the value <code>eMail</code></li>
+			<li><code>conditionOperator</code> - always has the value <code>endsWith</code></li>
+			<li><code>conditionValue</code> - required string that represents the target e-mail address domain with an maximum length of 254 characters</li>
+		</ul>
+		</p>
+		
+		<p>This definition defines a {@link wcfChildObjectDefinition child object} with objectType
+		<code>EmailDoesNotEndWithOption</code> that represents the e-mail address simple condition that
+		should not match. It has the following properties:
+		<ul>
+			<li><code>conditionVariable</code> - always has the value <code>eMail</code></li>
+			<li><code>conditionOperator</code> - always has the value <code>doesNotEndWith</code></li>
+			<li><code>conditionValue</code> - required string that represents the target e-mail address domain with an maximum length of 254 characters</li>
+		</ul>
+		</p>
+	-->
+	<ChildObjectDefinition baseDefinitionName="mktCSElementAndOrListConditionObjectDefinition" definitionName="mktEmailListObjectDefinition" objectType="EmailList">
+		<ChildObjectDefinition baseType="mktCSElementSimpleConditionObjectDefinition" displayName="${mktMarketingResources.cspEmail}" objectType="EmailEndsWithOption">
+			<Xml name="template">
+				<conditionVariable>eMail</conditionVariable>
+				<conditionOperator>endsWith</conditionOperator>
+			</Xml>
+			<PropertyDefinition displayName="${mktMarketingResources.customerSegment_email_Specified}" maximumSize="254" propertyName="conditionValue" required="true" trim="true"/>
+		</ChildObjectDefinition>
+		<ChildObjectDefinition baseType="mktCSElementSimpleConditionObjectDefinition" displayName="${mktMarketingResources.cspEmail}" objectType="EmailDoesNotEndWithOption">
+			<Xml name="template">
+				<conditionVariable>eMail</conditionVariable>
+				<conditionOperator>doesNotEndWith</conditionOperator>
+			</Xml>
+			<PropertyDefinition displayName="${mktMarketingResources.customerSegment_email_Specified}" maximumSize="254" propertyName="conditionValue" required="true" trim="true"/>
+		</ChildObjectDefinition>
+	</ChildObjectDefinition>
+
+</Definitions>

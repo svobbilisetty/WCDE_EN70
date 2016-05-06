@@ -1,0 +1,226 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!---
+		@keywords private
+		
+		This class overrides the <code>updateValue</code> method in the {@link wcfTextViewer} class.
+	-->
+	<class name="wcfAssetPropertiesStoreName" extends="wcfTextViewer">  
+		<!---	
+			@keywords private
+		-->
+		<attribute name="storeId" type="string" value=""/>
+		
+		<!--- 
+			Updates and refreshes the storeId with a new {@link wcfModelProperty} value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			var storeId = this.property.value;
+			if (storeId != this.storeId) {
+				this.storeId = storeId;
+				this.updateStoreName();
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			Updates and refreshes the text value by resolving the store name with a new storeId.
+		-->
+		<method name="updateStoreName" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateStoreNameDel) == "undefined") {
+				this.updateStoreNameDel = new lz.Delegate(this, "updateStoreName");
+			}
+			this.updateStoreNameDel.unregisterAll();
+			if(this.storeId == ''){
+				this.setAttribute('text', '');
+			}else{
+				var store = wcfStoreUtil.storeMap[this.storeId];
+				if(store != null){
+					this.setAttribute('text', store.displayName);
+				}else{
+					this.updateStoreNameDel.register(wcfStoreUtil,"storeLoaded");
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set the {@link wcfModelProperty} to be associated with this widget.
+			@param wcfModelProperty newProperty: New Property associated with this widget
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			super.setProperty(newProperty);
+			if (this.property == null) {
+				this.storeId = "";
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateStoreNameDel"]) {
+				this.updateStoreNameDel.unregisterAll();
+				delete this.updateStoreNameDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		@keywords private
+		
+		Instances of wcfAssetPropertiesStore determine the name of a store for a given store ID. The store ID
+		is retrieved from the property <code>objectStoreId</code> in the current model object.
+		
+		<p>This class doesn't allow the property to be edited, it only displays the resolved value as read only text. 
+		Instances of this class may only be declared as children of {@link wcfPropertyPane} or {@link wcfPropertyGroup}.  
+		This class is final, to create a new properties widget extend {@link wcfPropertyEditor}.
+		
+		Sample usage of this widget:
+		@START_CODE
+			<PropertyGroup groupTitle="Store Information">
+				<AssetPropertiesStore/>		
+			</PropertyGroup>
+		@END_CODE
+	-->
+	<class name="wcfAssetPropertiesStore" extends="wcfPropertyEditor" promptText="${foundationResources.objectProperties_assetProperties_associatedStorePrompt.string}" propertyName="objectStoreId" sizeToAvailableWidth="true">
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.wcfAssetPropertiesStoreName(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				width: availableWidth,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		An enablement condition used by the asset information property group that checks the enablement conditions of the child property groups.
+		This enablement condition iterates through all the enablement conditions of the child property groups and if a enablement condition
+		returns true then this enablement condition returns true and false if all the enablement conditions return false.
+	-->
+	<class name="wcfDisplayPropertyAssetInformationCondition" extends="node">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			parent["enablementCondition"] = this;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getEnablementConditions">
+			<![CDATA[
+			var enablementConditions = [];
+			for (var i = 0; i < immediateparent.subnodes.length; i++){
+				var subnode = immediateparent.subnodes[i];
+				if (subnode instanceof lz.wcfPropertyGroup) {
+					subnode.forceInstantiation("force");
+					if (subnode["enablementCondition"]) {
+						enablementConditions.push(subnode.enablementCondition);
+					}
+					else {
+						enablementConditions = null;
+						break;
+					}
+				}
+				else if (subnode instanceof lz.view) {
+					enablementConditions = null;
+					break;
+				}
+			}
+			return enablementConditions;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var enablementConditions = this.getEnablementConditions();
+			var enabled = enablementConditions == null;
+			if (!enabled) {
+				for (var i = 0; i < enablementConditions.length; i++){
+					if (enablementConditions[i].isEnabled(o)) {
+						enabled = true;
+						break;
+					}
+				}
+			}
+			return enabled;
+			]]>
+
+		</method>
+
+		<!---
+			@keywords private
+			Register a delegate to be executed when the resolved value changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerDelegate" args="o, del">
+			<![CDATA[
+			var enablementConditions = this.getEnablementConditions();
+			if (enablementConditions != null) {
+				for (var i = 0; i < enablementConditions.length; i++) {
+					enablementConditions[i].registerDelegate(o, del);
+				}
+			}
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		@keywords private
+		This enablement condition will return true if the object context is read only.
+	-->
+	<class name="wcfContextReadOnlyEnablementCondition" extends="wcfEnablementCondition">
+	
+		<!---
+		    @keywords private
+		    Check if the context is read only for the object.
+			@param wcfModelObject o the model object that is to be enabled/disabled.
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			if (this.negate) {
+				return !o.isContextReadOnly();
+			}
+			else {
+				return o.isContextReadOnly();
+			}
+			]]>
+		</method>
+	</class>
+</library>

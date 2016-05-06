@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Search Criteria And Result target. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_catalogEntryIdList as parameters</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_catalogEntryIdList as parameters</li>
+			<li>{@link wcfChildObjectDefinition mktBaseSearchFilterChildObjectDefinition} that defines a new product Facetable property filters</li>
+			<li>{@link wcfReferenceObjectDefinition mktBaseSearchFilterChildAttributeWithAllowedValues} that defines a new Facetable AD attribute filters</li>
+			<li>{@link wcfReferenceObjectDefinition mktBaseSearchFilterCatalogGroup} that defines a new ChildCatentry type which references the catalog entry object types</li>
+			<li>{@link wcfReferenceObjectDefinition mktBaseSearchFilterCatalogGroup} that defines a new ChildInheritedCatentry type which references the inherited catalog entry object types</li>
+			<li>{@link wcfChildObjectDefinition wcfChildObjectDefinition} that defines a searchActionFilter type that defines search filter</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>elemTemplateName</b>: required flow element template name with value searchResult</li>
+			<li><b>topResult</b>: required field with a default of "false"</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktSearchCriteriaAndResultElementObjectV7FEP6" 
+		displayName="${mktMarketingResources.searchCriteriaAndResultName}" 
+		elemTemplateType="Target" 
+		flowIcon="searchCriteriaAndResultIcon" 
+		headerIcon="searchCriteriaAndResultHeaderIcon" 
+		helpLink="concepts/csbsearchtarcriteria.htm" 
+		objectType="searchCriteriaAndResultV7FEP6" 
+		package="mkt" 
+		paletteIcon="searchCriteriaAndResultPaletteIcon" 
+		propertiesDefinitionName="mktSearchCriteriaAndResultPropertiesV7FEP6" 
+		summaryClass="mktSearchCriteriaAndResultV7FEP6Summary"
+		templateTypeProperty="elemTemplateName">
+
+		<EnablementAndCondition conditionId="creatableCondition">
+			<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+			<EnablementCondition checkReadOnly="true" enablementValue="false" conditionId="notReadOnly"/>
+		</EnablementAndCondition>
+		
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_expectedProductList" objectPath="ChildCatentryGroup/CatalogEntry" optional="true" propertyName="catentryId">
+				<EnablementCondition conditionId="searchTemplate" enablementValue="searchResult" propertyName="elemTemplateName"/>
+			</ServiceParam>
+		</CreateService>
+
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_expectedProductList" objectPath="ChildCatentryGroup/CatalogEntry" optional="true" propertyName="catentryId">
+				<EnablementCondition conditionId="searchTemplate" enablementValue="searchResult" propertyName="elemTemplateName"/>
+			</ServiceParam>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>searchResult</elemTemplateName>
+			<included>true</included>
+			<topResult>false</topResult>
+		</Xml>
+
+		<ObjectTemplate displayName="${mktMarketingResources.searchResult_Products}" templateType="searchResult" deleteObjectTypes="filterGroup"/>
+		<ObjectTemplate displayName="${mktMarketingResources.searchResult_Criteria}" templateType="searchCriteriaV7FEP6" deleteObjectTypes="ChildCatentryGroup"/>
+
+		<PropertyDefinition propertyName="included" required="true">
+			<PropertyValue displayName="${mktMarketingResources.searchCriteriaAndResult_contains}" value="true"/>
+			<PropertyValue displayName="${mktMarketingResources.searchCriteriaAndResult_doesNotContain}" value="false"/>
+		</PropertyDefinition>
+
+		<PropertyDefinition displayName="${mktMarketingResources.searchResult_topResult}" propertyName="topResult">
+			<EnablementCondition conditionId="topResult" enablementValue="searchResult" propertyName="elemTemplateName"/>
+		</PropertyDefinition>
+
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate,SearchActivity,SearchActivityTemplate" derivedId="true" idProperty="childCatentryId" objectGroups="ChildCatentryGroup" objectType="ChildCatentry" referencedTypes="Product,Bundle,CatalogGroupSKU,ProductSKU,Kit"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCatentryId" objectGroups="ChildCatentryGroup" objectType="ChildInheritedCatentry" referencedTypes="InheritedProduct,InheritedBundle,InheritedCatalogGroupSKU,InheritedProductSKU,InheritedKit"/>
+
+		
+		<!--- Product Facet Property -->
+		<ChildObjectDefinition baseDefinitionName="mktBaseSearchFilterChildObjectDefinition"
+			objectType="catalogEntryPropertySearchFilter"
+			displayName="${mktMarketingResources.searchCriteriaAndResult_FacetableProperty}"
+			icon="propertyAttributeIcon">					
+			
+			<!--- This property is for the name of the property -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterFilterProperties}" propertyName="filterName" required="true">
+				<PropertyValueTypeService package="mkt" url="/cmc/GetSearchRuleFacetProperties">
+ 					<ServiceParam name="storeId"/>
+		  		 </PropertyValueTypeService>
+			</PropertyDefinition>
+			
+			<!--- This property is for the datatype of the property -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterFilterType}" propertyName="filterDataType" required="true">
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_searchFilterFilterExactStringType}" value="EXACTSTRING"/>
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_searchFilterFilterAnyStringType}" value="ANYSTRING"/>
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_searchFilterFilterNumberType}" value="NUMERIC"/>
+			</PropertyDefinition>
+			
+			<!--- This property is for exact string type operators and is not send to the server -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" propertyName="filterOperatorExactString" required="true" send="false">
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_matchesOneOf}" value="=" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_doesNotMatchAny}" value="!="/>
+			</PropertyDefinition>
+			
+			<!--- This property is for any string type operators and is not send to the server -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" propertyName="filterOperatorAnyString" required="true" send="false">
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_contains}" value="contain" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_doesNotContain}" value="NotContain"/>
+			</PropertyDefinition>
+			
+			<!--- This property is for numeric type operators and is not send to the server -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" propertyName="filterOperatorNumeric" required="true" send="false">
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_equals}" value="=" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_notEquals}" value="!="/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_greaterThan}" value="&gt;"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_lessThan}" value="&lt;"/>
+			</PropertyDefinition>
+			
+			<!--- This property is for property value in the case of a single value -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterValue}" propertyName="filterValue" type="number">
+				<RequiredPropertyValidator validatorId="requiredPropertyValidator">
+					<EnablementCondition propertyName="filterDataType" enablementValue="NUMERIC"/>
+				</RequiredPropertyValidator>
+			</PropertyDefinition>
+			
+			<!--- These child objects are used to hold values in the case of multiple values -->
+			<ChildObjectDefinition idProperty="filterValue" objectType="filterValue">
+				<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterValue}" propertyName="filterValue" forceParentValidation="true"/>
+			</ChildObjectDefinition>
+			
+			<RequiredChildObjectValidator objectPath="filterValue" propertyName="filterValue" validatorId="reqValueValidator" validatorType="noFilterValue">
+				<EnablementOrCondition>
+					<EnablementCondition conditionId="ExactStringValueCondition" enablementValue="EXACTSTRING" propertyName="filterDataType"/>
+					<EnablementCondition conditionId="AnyStringValueCondition" enablementValue="ANYSTRING" propertyName="filterDataType"/>
+				</EnablementOrCondition>	
+			</RequiredChildObjectValidator>
+			
+			<!--- This is the property identifier  -->
+			<Xml name="template">
+				<filterType>catalogEntryProperty</filterType>
+			</Xml>
+		</ChildObjectDefinition>
+
+		<!--- Product Facet AD Attribute -->
+		<!---  This reference object definition is for an attribute dictionary attribute with allowed values for search filter. -->
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterChildAttributeWithAllowedValues" 
+			objectType="ChildAttributeWithAllowedValues"
+			allowDuplicates="false" 
+			allowedParentTypes="SearchActivity,SearchActivityTemplate,WebActivity,WebActivityTemplate"
+			referencedTypes="AttributeDictionaryAttributeWithAllowedValues">
+			
+	 		<Xml name="template">				
+			 	<filterType>facetableAttributeType</filterType>
+			</Xml> 
+			
+			<!--- Attributes must be defined as facetable -->
+			<EnablementCondition conditionType="childObjectCondition" propertyName="facetable" enablementValue="true"/>
+			
+		</ReferenceObjectDefinition>
+		
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterChildAttributeWithAllowedValues" 
+			objectType="ChildInheritedAttributeWithAllowedValues"
+			allowDuplicates="false" 
+			referencedTypes="InheritedAttributeDictionaryAttributeWithAllowedValues">
+			
+	 		<Xml name="template">				
+			 	<filterType>facetableAttributeType</filterType>
+			</Xml> 
+			
+			<!--- Attributes must be defined as facetable -->
+			<EnablementCondition conditionType="childObjectCondition" propertyName="facetable" enablementValue="true"/>
+			
+		</ReferenceObjectDefinition>
+		
+		<!--- Filter by: Catgroup -->
+		<!---  These reference object definitions define a category for search filter. -->		
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterCatalogGroup" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate,SearchActivity,SearchActivityTemplate" objectType="ChildCatalogGroup" referencedTypes="CatalogGroup,SalesCatalogGroup">
+			<Xml name="template">
+				<filterType>catgroupType</filterType>			
+			</Xml>
+		</ReferenceObjectDefinition>
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterCatalogGroup" objectType="ChildInheritedCatalogGroup" referencedTypes="InheritedCatalogGroup,InheritedSalesCatalogGroup">
+			<Xml name="template">
+				<filterType>catgroupType</filterType>			
+			</Xml>
+		</ReferenceObjectDefinition>
+
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noProductsSelected}" objectPath="ChildCatentryGroup" validatorId="reqProductValidator" validatorType="noProductsSelected">
+			<EnablementCondition conditionId="searchResult" enablementValue="searchResult" propertyName="elemTemplateName"/>
+		</RequiredChildObjectValidator>
+		
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noSearchFilterSelected}" objectPath="filterGroup" validatorId="reqFilterValidator" validatorType="noFiltersSelected">
+			<EnablementCondition conditionId="searchCriteria" enablementValue="searchCriteriaV7FEP6" propertyName="elemTemplateName"/>
+		</RequiredChildObjectValidator>
+
+	</FlowElementObjectDefinition>
+</Definitions>

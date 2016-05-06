@@ -1,0 +1,429 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		This class extends {@OLlink inputtext} and is used by the various input widgets in the code.
+		It should not be used directly.
+	-->
+	<class name="wcfEditText" extends="inputtext">
+	
+			<!--- @keywords private -->
+			<method name="construct" args="parent, args">
+				<![CDATA[
+				if(parent["multiline"] != null) {
+					args.multiline = parent.multiline;
+				}
+				if(parent["password"] != null) {
+					args.password = parent.password;
+				}
+				super.construct(parent, args);
+
+				if (!canvas["isCtrl"]) {
+					canvas.setAttribute('isCtrl', false);
+				}
+				]]>
+			</method>
+
+			
+			<!--- @keywords private -->
+			<method name="replaceText" args="start, end, replacementText">
+				<![CDATA[
+				var oldString = this.getText();
+				var newString = oldString.slice(0, start) + replacementText + oldString.slice(end, oldString.length);
+				this.setText(newString);
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Set selected content on clipboard when Ctrl-C is pressed.  This is a work
+				around for Ctrl-C problem in fireFox (d166124)
+			 -->
+			<handler name="onkeydown" reference="lz.Keys" args="k">
+				<![CDATA[				
+			    if (k == 17) {
+			        canvas.setAttribute('isCtrl', true);
+			    } else if (canvas.isCtrl && k==67 && this.getSelectionSize() != 0) {
+			        var start = this.getSelectionPosition();
+			        var end = this.getSelectionSize();
+			        lz.Browser.setClipboard(this.getText().substr(start, end));
+			    }
+				]]>
+			</handler>
+
+			<!--- @keywords private -->
+			<handler name="onkeyup" reference="lz.Keys" args="k">
+			    if (k == 17) {
+			    	canvas.setAttribute('isCtrl',false);
+			    }
+			</handler>
+
+	</class>
+	
+	<!---
+		This class can be used to create a simple text editor. Use the "getText" method to
+		retrieve the text.
+		
+		Sample usage:
+		@START_CODE
+			<InputText name="sampleInputText" width="280"/>
+		@END_CODE
+	-->
+	<class name="wcfInputText" extends="basecomponent" focusable="false">
+		<!---
+			@keywords private
+			This is a boolean attribute that indicates whether the text in the input text field is plain text, or
+			password text (all asterisks).
+			
+			The default value for this attribute is "false" which is normal text.
+		-->
+		<attribute name="password" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			The border color used when the input text box is disabled.
+		-->
+		<attribute name="disabledBorderColor" type="color" value="${this.style['disabledbordercolor'] || 0xcfd3db}"/>
+		<!---
+			@keywords private
+			The border color used when the input text box is enabled.
+		-->
+		<attribute name="enabledBorderColor" type="color" value="${this.style['bordercolor'] || 0xafb1b3}"/>
+		<!---
+			@keywords private
+			The background color used when the input text box is disabled.
+		-->
+		<attribute name="disabledBGColor" type="color" value="${this.style['forminputdisabledbgcolor'] || 0xF4F4F4}"/>
+		<!---
+			@keywords private
+			The background color used when the input text box is enabled.
+		-->
+		<attribute name="enabledBGColor" type="color" value="${this.style['forminputbgcolor'] || 0xFFFFFF}"/>
+		<!---
+			@keywords private
+			The borderSize attribute is a number which indicates the desired width of the input text field's border in
+			pixels. It will use the value of {@link wcfStyle#forminputbordersize}, and 1 if no value is provided.
+		-->
+		<attribute name="borderSize" type="number" value="${this.style['forminputbordersize'] || 1}"/>
+		<!---
+			@keywords private
+			The borderColor attribute indicates which color to use as the border for the input text field.
+		-->
+		<attribute name="borderColor" type="color"  value="${this._enabled ? this.enabledBorderColor : this.disabledBorderColor}"/>
+		<!---
+			@keywords private
+			This attribute specifies the background color to use for the input text field.
+		-->
+		<attribute name="bgcolor" type="color" value="${this._enabled ? this.enabledBGColor : this.disabledBGColor}"/>
+		<!---
+			This is a boolean indicator as to whether this text input field is multi-line. The default value for this attribute
+			is "false".
+		-->
+		<attribute name="multiline" type="boolean" value="false"/>
+        <!---
+			@keywords private
+        	This attribute lets a user provide a regexp describing set of characters allowed in this field.
+        	This ability is inherited from {@OLlink text#pattern}. The default pattern is the empty string, which allows all characters.
+        -->
+		<attribute name="pattern" type="string" value=""/>
+		<!---
+			@keywords private
+			This attribute provides the value for the height of the input field.
+		-->
+		<attribute name="height" value="20"/>
+		<!---
+			This attribute provides the value for the width of the input field. The default value is 230.
+			@type int
+		-->
+		<attribute name="width" value="230"/>
+		<!---
+			@keywords private
+			This attribute provides a minimum text area height. The default value is 100.
+		-->
+		<attribute name="textAreaHeight" type="number" value="100"/>
+		<!---
+			@keywords private
+			The size of the padding for the input text widget. The default value is 5.
+		-->
+		<attribute name="inputTextPadding" type="number" value="5"/>
+		<!---
+			@keywords private
+			This is a boolean variable that indicates if the instance allows the avalible height of text area to grow as needed.
+			The default value of this attribute is "true."
+		-->
+		<attribute name="expandingHeight" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			This attribute provides a maximum text area height.
+		-->
+		<attribute name="maximumHeight" value="${null}" />
+		<!---
+			@keywords private
+			The initial text used before the intialization of this component is completed. The default value is the empty string.
+       	-->
+        <attribute name="initialText" type="string" value=""/>
+
+        <!--- @keywords private -->
+		<event name="onblur"/>
+        <!--- @keywords private -->
+		<event name="onfocus"/>
+        <!--- @keywords private -->
+		<event name="ontext"/>
+	<!--- @keywords private -->
+		<event name="onmousedown"/>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" reference="inputText">
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this.inputText,
+			    	indicatorView: this,
+			    	offset: 1
+			    });
+		    }
+			]]>
+		</handler>
+		
+		<view name="border" x="0" y="0" bgcolor="${parent.borderColor}" width="${parent.width}" height="${parent.height}"/>
+		
+		<wcfEditText name="inputText" x="${parent.borderSize}" y="${parent.borderSize}"
+			width="${parent.width - 2 * parent.borderSize}"
+			height="${parent.height - 2 * parent.borderSize}"
+			bgcolor="${parent.bgcolor}"
+			onblur="parent.onblur.sendEvent()"
+			pattern="${parent.pattern}"
+			onfocus="parent.onfocus.sendEvent()"
+			onmousedown="parent.onmousedown.sendEvent()">
+						
+			<method name="init">
+				<![CDATA[
+				super.init();
+				if(parent.expandingHeight && this.multiline) {
+					this.setAttribute("scrollevents", true);
+				}
+				this.updateInputTextHeight();
+				]]>
+			</method>
+			
+			<handler name="ontext">
+				<![CDATA[
+				//Fix a defect with sprite, where text is reverted to original value
+				if ($as3) {
+					this.tsprite.textfield.text = this.getText();
+				} else {
+					this.sprite.text = this.getText();
+				}
+				if (parent["ontext"]) {
+					parent.ontext.sendEvent();
+				}
+				this.updateInputTextHeight();
+				]]>
+			</handler>
+
+			<handler name="onkeyup" args="kc">
+				<![CDATA[
+				if (parent["onkeyup"]) {
+					parent.onkeyup.sendEvent(kc);
+				}
+				]]>
+			</handler>
+
+			<handler name="onkeydown" args="kc">
+				<![CDATA[
+				if (parent["onkeydown"]) {
+					parent.onkeydown.sendEvent(kc);
+				}
+				]]>
+			</handler>
+
+			<handler name="onwidth">
+				<![CDATA[
+				this.updateInputTextHeight();
+				]]>
+			</handler>
+
+			<!--
+			    This method is used in basefocusview to determine which rectangle are
+				should be highlighted for accessibility. We should highlight
+				wcfInputText instance only once. Therefore,
+			 -->
+			<method name="getFocusRect"><![CDATA[
+				return parent.getFocusRect();
+				]]>
+			</method>
+			
+			<!---
+				Update the height to match the current text size.
+			-->
+			<method name="updateInputTextHeight">
+				<![CDATA[
+				if (parent.expandingHeight && this.multiline) {
+					var newHeight = (this.lineheight * this.tsprite.textfield.numLines) + parent.inputTextPadding;
+					if (newHeight <= parent.textAreaHeight) {
+						newHeight = parent.textAreaHeight;
+					}
+					if (parent.maximumHeight != null && newHeight > parent.maximumHeight){
+						newHeight = parent.maximumHeight;
+					}
+					if (this.height != newHeight) {
+						this.setAttribute("height", newHeight);
+					}
+				}
+				]]>
+			</method>
+			
+			<handler name="onmaxscroll" args="m">
+				<![CDATA[
+				if(parent.expandingHeight && this.multiline) {
+					if(this.getSelectionPosition() >= 0) {
+						var maxLinesInView = Math.floor(this.height / this.lineheight);
+						var totalLines = this.tsprite.textfield.numLines;
+						var currentLine = this.tsprite.textfield.getLineIndexOfChar(this.getSelectionPosition()) + 1;
+						if(currentLine == 0) {
+							// textfield.getLineIndexOfChar() returns -1 if cursor is at the end of the text, ie: on the last line
+							currentLine = totalLines;
+						}
+						
+						// if there are more lines than we can show, may need to adjust scrolling based on cursor
+						if(totalLines > maxLinesInView) {
+							var scrollLine = currentLine - maxLinesInView + 1;
+
+							// update scroll only if we're outside the currently viewable lines
+							if(scrollLine > 0 && (this.scroll < scrollLine || this.scroll > currentLine)) {
+								this.setAttribute("scroll", scrollLine);
+							}
+						}
+					}
+				}
+				]]>
+			</handler>
+		</wcfEditText>
+
+		<view x="${parent.borderSize}" y="${parent.height-parent.borderSize}" resource="shadow_stroke_bottom" width="${parent.width-2*parent.borderSize}" stretches="width" visible="${parent.inputText.enabled}"/>
+		<view x="${parent.borderSize}" y="${parent.borderSize}" resource="shadow_left" height="${parent.height-2*parent.borderSize}" stretches="height" visible="${parent.inputText.enabled}"/>
+		<view x="${parent.width-parent.borderSize-this.width}" y="${parent.borderSize}" resource="shadow_right" height="${parent.height-2*parent.borderSize}" stretches="height" visible="${parent.inputText.enabled}"/>
+		<view x="${parent.borderSize}" y="${parent.borderSize}" resource="shadow_top" width="${parent.width-2*parent.borderSize}" stretches="width" visible="${parent.inputText.enabled}"/>
+		<view x="${parent.borderSize}" y="${parent.height-parent.borderSize-this.height}" resource="shadow_bottom" width="${parent.width-2*parent.borderSize}" stretches="width" visible="${parent.inputText.enabled}"/>
+		<view resource="shadow_stroke_top" width="${parent.width}" stretches="width" visible="${parent.inputText.enabled}"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit"><![CDATA[
+			this.setText(this.initialText);
+			if (this.expandingHeight) {
+				this.updateEditorHeightDel = new lz.Delegate(this, "updateEditorHeight");
+				this.updateEditorHeightDel.register(this.inputText, "onheight");
+			}
+			this.updateEditorHeight();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateEditorHeightDel"]) {
+				this.updateEditorHeightDel.unregisterAll();
+				delete this.updateEditorHeightDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getFocusRect"><![CDATA[
+			return [
+           			this.getAttributeRelative("x",canvas),
+           			this.getAttributeRelative("y",canvas),
+           			this.getAttributeRelative("width",canvas),
+           			this.getAttributeRelative("height",canvas)
+           		  ];
+
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the height. It is only used if the editor has {@link wcfInputText#expandingHeight} is true.
+		-->
+		<method name="updateEditorHeight" args="e=null">
+			<![CDATA[
+			var newHeight = this.inputText.height + 2 * this.borderSize;
+			if (newHeight != this.height) {
+				this.setAttribute("height", newHeight);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the enablement of the editor.
+		-->
+		<method name="_showEnabled"><![CDATA[
+			this.inputText.setAttribute('enabled', this._enabled);			
+			this.inputText.setAttribute("fgcolor", this._enabled? 0x000000: this.style.textdisabledcolor);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method sets the HTML flag on the widget. For more information please see {@OLlink text#setHTML}
+			@param String htmlp The HTML string to set as the content of the input field.
+		-->
+		<method name="setHTML" args="htmlp"><![CDATA[
+			this.inputText.setHTML(htmlp);
+			]]>
+		</method>
+		
+		<!---
+			This method sets the value of the text for this input field.
+			
+			@param string t The text to set as the value for the input field. This method is used as the setter for {@link wcfInputText#text}.
+		-->
+		<method name="setText" args="t"><![CDATA[
+			if(this._initcomplete){
+				this.inputText.setAttribute('text', t);
+			}else{
+				this.initialText = t;
+			}
+
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			See OpenLaszlo method {@OLlink LZInputText#updateData}
+		-->
+		<method name="updateData"><![CDATA[
+			this.inputText.updateData();
+			]]>
+		</method>
+		
+		<!--- 	
+			This method returns the text that is in this input field.
+			@return string The text that is contained in this input field.
+		-->
+		<method name="getText"><![CDATA[
+			if(this._initcomplete){
+				return this.inputText.getText();
+			}
+			
+			return this.initialText;
+			]]>
+		</method>
+	</class>
+	
+</library>

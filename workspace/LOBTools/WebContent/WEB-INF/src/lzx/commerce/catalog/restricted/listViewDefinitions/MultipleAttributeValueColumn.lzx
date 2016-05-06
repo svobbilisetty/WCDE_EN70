@@ -1,0 +1,92 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+	-->
+	<class name="catMutipleAttributeValueEditor" extends="wcfGridChildObjectCheckboxEditor">	
+		<!---
+			Get the list of property values.
+			@keywords private		
+		-->
+		<method name="getPropertyValues" args="del=null">
+			<![CDATA[
+			var propertyValues = [];
+			if (this.o != null) {
+				var attributeObject = this.o.getObject("AttributeDictionaryAttributes");
+				var attributeValueDefs = attributeObject.objectDefinition.getChildDefinitions("AttributeDictionaryAttributeValueAlias");
+				attributeObject.loadChildren(attributeValueDefs);
+				
+				var attributeAllowedValueType = null;
+	
+				// Get attribute dictionary attributes type to construct path
+				var attributeDataType = attributeObject.getPropertyValue("attrDataType");
+				// Get the attribute allowed values from the registered attribute object
+				if (attributeDataType == "String") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeStringValueAlias";
+				}
+				else if (attributeDataType == "Integer") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeIntegerValueAlias";
+				}
+				else if (attributeDataType == "Float") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeFloatValueAlias";
+				}
+				
+				// Get the array of allowed values
+				if (attributeAllowedValueType != null) {
+					var allowedValues = attributeObject.getObjects(attributeAllowedValueType, del);
+					for (var i = 0; i < allowedValues.length; i++) {
+						var allowedValue = allowedValues[i];
+						var attrValId = allowedValue.getPropertyValue("attrValId");
+						if(attrValId && attrValId.length > 0) {
+							var displayNameProperty = allowedValue.getProperty("value", "AttributeDictionaryAttributeValueDescription");
+							if (displayNameProperty == null) {
+								if (del != null) {
+									del.register(allowedValue, "onchildObjects");
+								}
+							}
+							else {
+								if (del != null) {
+									del.register(displayNameProperty, "onvalue");
+								}
+								var displayName = displayNameProperty.value;
+								displayName = wcfStringUtil.escapeText(displayName);
+								propertyValues.push({value: attrValId, displayName: displayName});
+							}
+						}
+					}
+					if(attributeDataType == "String") {
+						wcfSortUtil.sort(propertyValues, catStringValuesComparator);
+					}
+					else {
+						wcfSortUtil.sort(propertyValues, catNumericValuesComparator);
+					}
+				}
+			}
+			return propertyValues;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+	-->
+	<class name="catMultipleAttributeValueCellDescriptor" extends="wcfGridChildObjectCheckboxCellDescriptor">
+		<!---
+			@keywords private
+			Use {@link wcfGridTextEditor} to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="catMutipleAttributeValueEditor"/>		
+	</class>	
+</library>

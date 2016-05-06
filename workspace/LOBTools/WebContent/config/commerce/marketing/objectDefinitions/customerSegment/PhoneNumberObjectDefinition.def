@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the object definition is the parent for the customer segment phone number condition. This definition provides
+		a {@link wcfObjectDefinition#templateTypeProperty template property} with the name <code>template</code> which may have
+		the following {@link wcfObjectTemplate object templates}:
+		<ul>
+			<li><code>ignore</code> - used when the customer segment should ignore the phone number of a customer</li>
+			<li><code>any</code> - used to target customers that has a phone number that starts with any of the specified values</li>
+			<li><code>notAny</code> - used to target customers that does not have a phone number that starts with any of the specified values</li>
+		</ul>
+		</p>
+		
+		<p>An instance of {@link mktPhoneNumberListObjectDefinition} is defined as a child object.</p>
+	-->
+	<ChildObjectDefinition definitionName="mktPhoneNumberObjectDefinition" idProperty="elementName" objectType="PhoneNumber" singleInstance="true" templateTypeProperty="template">
+		<Xml name="template">
+			<elementName>PhoneNumber</elementName>
+			<template>ignore</template>
+		</Xml>
+		
+   		<ChildObjectDefinition baseDefinitionName="mktPhoneNumberListObjectDefinition"/>
+   		
+   		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_phoneNumber_Ignore}" templateType="ignore">
+			<Xml name="template"/>
+		</ObjectTemplate>
+		
+		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_phoneNumber_AtLeastOne}" templateType="any">
+			<Xml name="template">
+				<object objectType="PhoneNumberList">
+					<elementName>phone</elementName>
+					<conditionUsage>orListCondition</conditionUsage>
+				</object>
+			</Xml>	
+		</ObjectTemplate>
+		
+		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_phoneNumber_NotAny}" templateType="notAny">
+			<Xml name="template">
+				<object objectType="PhoneNumberList">
+					<elementName>phone</elementName>
+					<conditionUsage>andListCondition</conditionUsage>
+				</object>
+			</Xml>	
+		</ObjectTemplate>
+	</ChildObjectDefinition>
+
+	<!---
+		<p>This is the wrapper andList/orList for the customer segment phone number condition.</p>
+		
+		<p>This definition defines a {@link wcfChildObjectDefinition child object} with objectType
+		<code>PhoneNumberStartsWithOption</code> that represents the phone number simple condition that
+		should match. It has the following properties:
+		<ul>
+			<li><code>conditionVariable</code> - always has the value <code>phone</code></li>
+			<li><code>conditionOperator</code> - always has the value <code>startsWith</code></li>
+			<li><code>conditionValue</code> - required string that represents the target phone number prefix with an maximum length of 254 characters</li>
+		</ul>
+		</p>
+		
+		<p>This definition defines a {@link wcfChildObjectDefinition child object} with objectType
+		<code>PhoneNumberNotStartsWithOption</code> that represents the phone number simple condition that
+		should not match. It has the following properties:
+		<ul>
+			<li><code>conditionVariable</code> - always has the value <code>phone</code></li>
+			<li><code>conditionOperator</code> - always has the value <code>doesNotStartWith</code></li>
+			<li><code>conditionValue</code> - required string that represents the target phone number prefix with an maximum length of 254 characters</li>
+		</ul>
+		</p>
+	-->
+	<ChildObjectDefinition baseDefinitionName="mktCSElementAndOrListConditionObjectDefinition" definitionName="mktPhoneNumberListObjectDefinition" objectType="PhoneNumberList">
+		<ChildObjectDefinition baseType="mktCSElementSimpleConditionObjectDefinition" displayName="${mktMarketingResources.cspPhoneNumber}" objectType="PhoneNumberStartsWithOption">
+			<Xml name="template">
+				<conditionVariable>phone</conditionVariable>
+				<conditionOperator>startsWith</conditionOperator>
+			</Xml>
+			<PropertyDefinition displayName="${mktMarketingResources.customerSegment_phoneNumber_Specified}" maximumSize="254" propertyName="conditionValue" required="true" trim="true"/>
+		</ChildObjectDefinition>
+		<ChildObjectDefinition baseType="mktCSElementSimpleConditionObjectDefinition" displayName="${mktMarketingResources.cspPhoneNumber}" objectType="PhoneNumberNotStartsWithOption">
+			<Xml name="template">
+				<conditionVariable>phone</conditionVariable>
+				<conditionOperator>doesNotStartWith</conditionOperator>
+			</Xml>
+			<PropertyDefinition displayName="${mktMarketingResources.customerSegment_phoneNumber_Specified}" maximumSize="254" propertyName="conditionValue" required="true" trim="true"/>
+		</ChildObjectDefinition>
+	</ChildObjectDefinition>
+
+</Definitions>

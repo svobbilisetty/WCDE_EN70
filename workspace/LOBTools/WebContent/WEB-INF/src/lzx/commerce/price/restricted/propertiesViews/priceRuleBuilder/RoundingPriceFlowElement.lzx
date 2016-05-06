@@ -1,0 +1,143 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		<p>
+		This validator checks whether a child object with non-empty value exists.
+		</p>
+	-->	 
+	<class name="prcRequiredChildObjectPropertyValidator" extends="wcfValidator">
+		<!--- 
+			The object path that describes required child objects. 
+		 -->
+		<attribute name="objectPath" type="string"/>
+		<!--- 
+			The property name that is required by child object . 
+		 -->
+		<attribute name="propertyName" type="string" value=""/>
+		<!--- 
+			The error message that is to be displayed when error happens. 
+		 -->
+		<attribute name="errorMessage" value="" type="string"/>
+		<!--- 
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(this.isEnabled(o)) {
+				var childObjects = o.getObjects(this.objectPath);			
+				for(var i = 0; i < childObjects.length; ++i){
+					var childObject = childObjects[i];
+					var property = childObject.getProperty(this.propertyName);
+					if(typeof(property.value) != 'undefined' && !wcfStringUtil.isBlankString(property.value) ){
+						o.clearValidationError(this);
+						return;
+					}
+				}
+				o.addValidationError(this, this.errorMessage);
+			}
+			else {
+				o.clearValidationError(this);
+			}
+			]]>
+		</method>
+	</class>
+	<!---
+		<p>
+		Validator for {@link prcRoundingRulePatternObject Rounding Element in Price Rule Builder}. This ensures that the input rounding patterns are lexer correct.
+		However,they might still be valid or invalid depending on the currency used.
+		</p>
+		
+		<p>This should only be child of PropertyDefinition.</p>
+	-->	 
+	<class name="prcRoundingPatternValidator" extends="wcfValidator">
+		<!---@keywords private-->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+			if(!o || !changedProperty){
+				return; // nothing to validate
+			}
+			
+			if(this.isEnabled(o)){
+				var message = null;
+				var patternString = changedProperty.value;
+				
+				if( !patternString || wcfStringUtil.isBlankString(patternString) || patternString.indexOf("-")==0 || !wcfStringUtil.isNumber(wcfStringUtil.replace("*"+patternString+"*","*","1"))){
+					message = prcPriceResources.roundingPatternCharacterWaring.string;
+				}
+				if( !message && (patternString.indexOf("**")==0 )){
+					message = prcPriceResources.roundingPatternLexerWaring_asterisk.string;
+				}
+				if (!message && (patternString.indexOf(".")==0 )){
+					message = prcPriceResources.roundingPatternLexerWaring_decimalPoint_start.string;
+				}
+				if (!message && (patternString.indexOf(".")== (patternString.length-1) )){
+					message = prcPriceResources.roundingPatternLexerWaring_decimalPoint_end.string;
+				}
+				if (message == null){
+					changedProperty.clearValidationError(this);
+				}
+				else {
+					changedProperty.addValidationError(this, message);
+				}
+			}
+			else {
+				changedProperty.clearValidationError(this);
+			}	
+			]]>
+		</method>
+	</class>
+	
+	<class name="prcRoundingElementSummary" extends="wcfFlowElementSummary">
+		<!--- @keywords private -->
+		<wcfFlowSummaryParam name="currencies" objectPath="prcRoundingRuleCurrencyObject" propertyName="definingCurrencyCodes"/>
+		<!--- @keywords private -->
+		<wcfFlowSummaryParam name="patterns" objectPath="prcRoundingRulePatternObject" propertyName="pattern"/>
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(prcPriceResources.roundingPatternCharacterWaring, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.roundingPatternLexerWaring_asterisk, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.roundingPatternLexerWaring_decimalPoint, "onstring");
+			]]>
+		</handler>
+		<!--- @keywords private -->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				
+				var patterns = this.getValuesList("patterns").split(", ");
+				if(this.getValuesList("patterns").length>0&&patterns.length>0){
+					if (patterns.length <= 3){
+						summaryText = summaryText+prcPriceResources.replaceValues("full_roundingSummeryPattern", [patterns.join(", ")]);
+					}else{
+						summaryText = summaryText+prcPriceResources.replaceValues("roundingSummeryPattern", patterns);	
+					}
+				}
+				
+				var currencies = this.getValuesList("currencies").split(",");
+				if(summaryText.length>0&&this.getValuesList("currencies").length>0&&currencies.length>0){
+					if (currencies.length <= 3){
+						summaryText = summaryText+prcPriceResources.replaceValues("full_roundingSummeryCurrency", [currencies.join(", ")]);
+					}else{
+						summaryText = summaryText+prcPriceResources.replaceValues("roundingSummeryCurrency", currencies);
+					}
+					
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+	</class>		
+</library>

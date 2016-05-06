@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!--- This definition defines the base object from which Product and Inherited Product are derived.
+		It uses the noun CatalogEntry from the file wc-catalog-clientobjects.xml
+		which contains information on how the parameters in the Create services 
+	 	are mapped to create the appropriate BOD for the Web services.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogEntryPrimaryObjectDefinition" definitionName="catBaseProductPrimaryObjectDefinition" detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}" displayName="${catalogResources.product_DisplayName}" displayNameProperty="partnumber" helpLink="tasks/tpnaddpr.htm" idProperty="catentryId" isBaseDefinition="true" newDisplayName="${catalogResources.product_NewDisplayName}" newObjectMenuItemText="${catalogResources.contextMenuNewProduct}" objectGroups="CatalogEntry,Products,CatalogEntriesNotASKU" propertiesDefinitionName="catProductProperties" searchType="FindAllCatalogEntries">
+
+		<!---
+			Retrieves the {@link catCatalogEntryOffer} and
+			{@link catInheritedCatalogEntryOffer} child objects.
+		-->
+		<GetChildrenService objectTypes="CatalogEntryOffer,InheritedCatalogEntryOffer" url="/cmc/GetCatalogEntryChildren-Offer">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+		</GetChildrenService>
+
+		<!---
+ 			Retrieves the {@link catChildSalesCatalogEntry} and {@link catChildSalesInheritedCatalogEntry}
+ 			reference objects for this catalog entry.
+		-->
+		<GetReferencesService primaryObjectTypes="SalesCatalogGroup,InheritedSalesCatalogGroup" referenceObjectTypes="ChildSalesCatalogEntry,ChildSalesInheritedCatalogEntry" url="/cmc/GetCatalogEntryReferences-SalesCatalogGroups">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="masterCatalogId"/>
+		</GetReferencesService>
+		
+		<!---
+			Retrieves the {@link catBundleComponent} and
+			{@link catInheritedBundleComponent} objects that refer to this object.
+		-->
+		<GetReferencesService primaryObjectTypes="Bundle,InheritedBundle" referenceObjectTypes="BundleComponent,InheritedBundleComponent" url="/cmc/GetCatalogEntryReferences-ReferenceBundles">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="catenttypeId" value="ProductBean"/>
+		</GetReferencesService>
+
+		<!--- Retrieves the {@link catCatalogEntryInventory} child objects. -->
+		<!--- This service is disabled by default. Uncomment this section to enable the service -->
+		<!--
+			<GetChildrenService url="/cmc/GetCatalogEntryChildren-CatalogEntryInventory" objectTypes="CatalogEntryInventory">
+				<ServiceParam name="storeId"/>
+			</GetChildrenService>
+		-->
+		
+		<!--- 
+			Retrieves the {@link catChildProductSKU}
+			and the {@link catChildInheritedProductSKU} child objects.
+		-->
+		<GetChildrenService objectTypes="ProductChildSKU,ProductChildInheritedSKU" url="/cmc/GetProductChildren-ProductSKUs">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="parentId" propertyName="catentryId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+		
+		<!--- 
+			Retrieves the {@link catCatalogEntryDefiningAttribute}
+			child objects for a catalog entry.
+		-->
+		<GetChildrenService objectTypes="CatalogEntryDefiningAttribute" url="/cmc/GetCatalogEntryChildren-DefiningAttributes">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+		
+		<!--- 
+			Retrieves the
+			{@link catCatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues},
+			{@link catCatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues} and
+			{@link catCatalogEntryAttributeDictionaryDefiningAttributeProperties}
+			child objects for a catalog entry.
+		-->
+		<GetChildrenService objectTypes="CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues,CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues,CatalogEntryAttributeDictionaryDefiningAttributeProperties"
+			url="/cmc/GetCatalogEntryChildren-AttrDictDefiningAttributes">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+		
+		<!--- Property definition for the part number of the product -->
+		<PropertyDefinition displayName="${catalogResources.productPartnumber_DisplayName}" maximumSize="64" propertyName="partnumber" required="true" type="string"/>
+
+		<Xml name="template">
+			<object objectType="CatalogEntryListPrice"/>
+		</Xml>
+
+		<!--- This navigation list definition is used to display {@link catChildProductSKU}
+		and the {@link catChildInheritedProductSKU} child objects. 
+		-->
+		<NavigationListDefinition displayName="${catalogResources.skusList}" isDefault="true" listDefinitionName="catProductChildSKUList" listTitle="${catalogResources.skusList}" name="ProductChildSKUList" toolbarIcon="skuListToolbarIcon" helpLink="tasks/tpn_topskus.htm"/>
+
+		<!--- 
+			Validator to check and pass the warning message when there is no parent specified for the product 
+		-->
+		<RequiredParentValidator errorMessage="${catalogResources.parentCategoryValidator}" validatorId="parentExistsCheck" validatorType="requiredParentCategoryValidator">
+			<EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId"/>
+		</RequiredParentValidator>
+		
+		<RequiredParentValidator errorMessage="${catalogResources.missingRequiredVersionedCategoryParent}" validatorId="versionedParentExistsCheck" validatorType="requiredParentVersionedCategoryValidator">
+			<EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId" negate="true"/>
+		</RequiredParentValidator>
+
+		<!---  
+			Child object definition for the inventory related data for this product.
+		-->
+		<!-- This is disabled by default. Uncomment this section to enable it -->
+		<!-- <ChildObjectDefinition baseDefinitionName="catCatalogEntryInventory"/> -->
+
+		<!---  
+			Child object definition for the list price of the product.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogEntryListPrice"/>
+		
+		<!---  
+			An instantiation of the child object {@link catCatalogEntryOffer} representing
+			the offer and offer prices for this catalog entry.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogEntryOffer"/>
+				
+		<!---  
+			Child object definition for the defining attributes of the catalog entry.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogEntryDefiningAttribute"/>  
+		
+		<!---  
+			Reference object definition for the defining attribute dictionary attributes of the catalog entry.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues"/>	
+		
+		<!---  
+			Reference object definition for the inherited defining attribute dictionary attributes of the catalog entry.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues"/>
+		
+		<!--- 
+			This child object will contain a flag indicating whether the product has defining 
+			attributes from the attribute dictionary, and display the property group
+			'catCatalogEntryDefiningDictionaryAttributesPropertyGroup' if it does.
+
+			The code for this object is not customizable and should not be extended as it will
+			be removed in future releases.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogEntryAttributeDictionaryDefiningAttributeProperties"/>
+		
+	</PrimaryObjectDefinition>
+	
+  	<!---		
+		This definition represents the primary object definition describing a Product as a business object.
+	-->	
+	<PrimaryObjectDefinition baseDefinitionName="catBaseProductPrimaryObjectDefinition" definitionName="Product" headerIcon="productHeaderIcon" icon="productIcon" objectType="Product">	
+        
+        <!--- Condition to disable the object creation in certain store types. -->
+		<EnablementOrCondition baseDefinitionName="catStoreTypeCatalogObjectCreationRestriction"/>
+		
+		<!---
+			Create service to create a product. 
+		-->
+		<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreateCatalogEntry">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="defaultLanguageId" parameterName="descriptionLanguageId"/>
+			<ServiceParam name="catenttypeId" value="ProductBean"/>
+		</CreateService>
+			           
+		<!---
+			Retrieves the {@link catChildProduct} objects that refer to this object.
+		-->
+		<GetReferencesService url="/cmc/GetCatalogEntryParent-MasterCatalogCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="childType" value="ChildProduct"/>
+		</GetReferencesService>
+		
+		<!---  
+		    Reference object definition for SKUs belonging to this catalog entry.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildProductSKU"/>
+				
+		<!---  
+		    Reference object definition for the attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryAttachmentReference"/>
+		
+		<!---  
+		    Reference object definition for the asset store attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryInheritedAttachmentReference"/>
+		
+		<!---
+			Client action used to generate SKUs for a product.
+		-->
+		<GenerateProductSKUClientAction package="cat">
+			<EnablementAndCondition>
+				<EnablementCondition conditionId="notVersionObjectCondition" enablementValue="" propertyName="objectVersionId"/>
+				<EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/> 
+			</EnablementAndCondition>	
+		</GenerateProductSKUClientAction>
+
+		<!--- 
+			Retrieves the content version object for this object
+		-->		
+		<GetChildrenService objectTypes="ContentVersion" url="/cmc/GetContentVersions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectId" propertyName="catentryId"/>
+			<ServiceParam name="objectType" value="Product"/>
+		</GetChildrenService>
+	
+		<!---
+		    Reference object definition for this object
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="wcfBaseContentVersion" referencedType="Product"/>
+	
+		<!---
+			Create Content Version Client Action
+		-->
+		<CreateContentVersionClientAction>
+			<EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/>			 
+		</CreateContentVersionClientAction>
+
+	</PrimaryObjectDefinition>
+
+	<PrimaryObjectDefinition baseDefinitionName="catBaseProductPrimaryObjectDefinition" compatibleObjectTypes="Product" definitionName="InheritedProduct" displayName="${catalogResources.inheritedProduct_DisplayName}" headerIcon="inheritedProductHeaderIcon" icon="inheritedProductIcon" objectType="InheritedProduct">
+	  		
+		<!---
+			Retrieves the {@link catChildInheritedProduct} objects that refer to this object.
+		-->
+		<GetReferencesService url="/cmc/GetCatalogEntryParent-MasterCatalogCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="childType" value="ChildInheritedProduct"/>
+		</GetReferencesService>
+
+		<!---
+		    Reference object definition for SKUs belonging to this catalog entry.
+		-->	
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedProductSKU"/>
+								
+		<!---  
+		    Reference object definition for the asset store attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedCatalogEntryInheritedAttachmentReference"/>
+		
+		<!---  
+			Child object definition for the inherited offer and offer prices for this product.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catInheritedCatalogEntryOffer"/>
+		
+		<!--- 
+		Retrieves the content version object for this object
+		-->		
+		<GetChildrenService objectTypes="ContentVersion" url="/cmc/GetContentVersions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectId" propertyName="catentryId"/>
+			<ServiceParam name="objectType" value="InheritedProduct"/>
+			<ServiceParam name="basedOnVersionNumber" propertyName="basedOnVersionNumber"/>
+		</GetChildrenService>
+		<!---  
+	    Reference object definition for the versioned catalog group
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="wcfBaseContentVersion" referencedType="InheritedProduct"/>		
+		<!---
+			Create Content Version Client Action
+		-->
+		<CreateContentVersionClientAction>
+		</CreateContentVersionClientAction>
+		
+	</PrimaryObjectDefinition>
+</Definitions>

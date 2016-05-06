@@ -1,0 +1,442 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private	
+		The proBasicCodePatternPropertyBuilder is a property editor and is used to 
+		create an instance of the {@link proBasicCodePatternBuilder} class that binds to a property 
+		value {@link wcfModelProperty}. 
+	-->
+	<class name="proBasicCodePatternPropertyBuilder" extends="wcfPropertyEditor" sizeToAvailableWidth="true">
+		<!---
+			This attribute specifies the name of the {@link wcfModelProperty property} of the current object that 
+			this property editor should bind to.				
+		-->
+		<attribute name="propertyName" type="string"/>
+		<!---
+			This attribute specifies the name of the {@link wcfModelProperty property} that determines whether 
+			basic or advanced code generation option is chosen.			
+		-->	
+		<attribute name="codeGenerationProperty" type="string"/>		
+		<!---
+			The {@link wcfModelProperty} instance that this property editor is editing.
+			@type wcfModelProperty
+		-->
+		<attribute name="property"/>
+		
+		<!---
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertyEditor} class.
+			@param wcfPropertyEditor parentComponent The parent property editor from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.proBasicCodePatternBuilder(parentComponent, {
+				o: parentComponent.o,
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				codeGenerationProperty: this.codeGenerationProperty,
+				width: availableWidth,
+				enabled: parentComponent.enabled				
+			});
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		@keywords private
+		The proBasicCodePatternBuilder will bind a {@link wcfModelProperty} with 
+		two {@link proCodeStepper} widgets and one {@link proCodeInputText} widget. This is used to associate one 
+		property definition with the values of three widgets. The relationship is bi-directional.  This means that 
+		the widgets text will be refreshed to represent the value of the property and the new property 
+		value will be stored when a user changes the widget text.	
+	-->
+	<class name="proBasicCodePatternBuilder">	
+		<!--- 
+			Reference to {@link wcfModelProperty} object that is being edited. 
+		-->
+		<attribute name="property" setter="this.setProperty(property)"/>	
+		<!---
+			This attribute specifies the name of the {@link wcfModelProperty property} that determines whether 
+			basic or advanced code generation option is chosen.			
+		-->	
+		<attribute name="codeGenerationProperty" type="string" value=""/>		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[	
+			this._initcomplete = true;			
+			this.updateValue();	
+			]]>
+		</handler>
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			if (this["storeValueDel"]) {
+				this.storeValueDel.unregisterAll();
+				delete this.storeValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>		
+		<!--- @keywords private -->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				if (typeof(this.storeValueDel) == "undefined") {
+					this.storeValueDel = new lz.Delegate(this, "storeValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.storeValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this["property"]) {
+					this.updateValueDel.register(this.property, "onvalue");			
+					var codeGeneration = this.property.o.getProperty(this.codeGenerationProperty);
+					if(codeGeneration != null) {
+						this.storeValueDel.register(codeGeneration, "onvalue");
+					}										
+					this.updateValue();
+				}
+			}
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<method name="updateValue" args="e=null">
+			<![CDATA[			
+			if(this["property"] && this["_initcomplete"]){
+				this._updateValueLock = true;
+				var value = this.property.value;
+				if(value == null || value == ""){
+					this.codeSpecifics.prefix.setValue("");
+					this.codeSpecifics.suffix.setValue("");				
+					this.codeSpecifics.codeLength.setValue("");	
+				} else if(this.property.o.getPropertyValue(this.codeGenerationProperty) == "BasicGeneratedCode"){
+					var positionOfOpenBracket = value.indexOf("[");
+					var positionOfCloseBracket = value.indexOf("]");
+					this.codeSpecifics.prefix.setValue(value.substring(0, positionOfOpenBracket));
+					this.codeSpecifics.suffix.setValue(value.substring(positionOfCloseBracket + 1));
+					var codeLengthValue = value.substring(positionOfOpenBracket + 1, positionOfCloseBracket).length;	
+					this.codeSpecifics.codeLength.setValue(codeLengthValue);						
+				}
+				this._updateValueLock = false;					
+			}													
+			]]>
+		</method>
+		<!--- @keywords private -->		
+		<method name="storeValue" args="e=null">
+			<![CDATA[		
+				var pattern = "";
+				if(!this["_updateValueLock"] && this["property"] && this["_initcomplete"] && 
+					this.property.o.getPropertyValue(this.codeGenerationProperty) == "BasicGeneratedCode"){
+					var prefix = this.codeSpecifics.prefix.getValue();
+					var codeLength = Number(this.codeSpecifics.codeLength.getValue());
+					var suffix = this.codeSpecifics.suffix.getValue();
+					pattern = pattern + "[";								
+					for(var i=0; i < codeLength; i++){
+						pattern = pattern + "X";				
+					}					
+					pattern = pattern + "]";			
+					pattern = prefix + pattern + suffix;									
+								
+					this.property.change(pattern);						
+				}								
+			]]>
+		</method>
+				
+		<view name="codeSpecifics" x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing}">
+			<simplelayout axis="y" spacing="13" inset="13"/>
+			<proCodeInputText name="prefix" promptText="${promotionResources['promotion_codePrefix'].string}" helpText="${promotionResources['promotion_codePrefix_helpText'].string}" pattern="[^\[\]]*">
+				<handler name="onvalue">
+					classroot.storeValue();
+				</handler>
+			</proCodeInputText>			
+			<proCodeStepper name="codeLength" required="true" minimumValue="1" maximumValue="126" promptText="${promotionResources['promotion_codeLength'].string}" helpText="${promotionResources['promotion_codeLength_helpText'].string}">
+				<handler name="onvalue">
+					classroot.storeValue();
+				</handler>
+			</proCodeStepper>							
+			<proCodeInputText name="suffix" promptText="${promotionResources['promotion_codeSuffix'].string}" helpText="${promotionResources['promotion_codeSuffix_helpText'].string}" pattern="[^\[\]]*">
+				<handler name="onvalue">
+					classroot.storeValue();
+				</handler>
+			</proCodeInputText>	
+		</view>		
+	 </class>	
+	
+	<!---
+		Stepper widget that is similar to {@link wcfPropertyStepper} but does not understand the object model.
+		@keywords private
+	-->
+	<class name="proCodeStepper" extends="basecomponent" width="235" focusable="false">
+		<!---
+			Indicates that this properties view component is required.
+			@keywords private
+		-->
+		<attribute name="required" value="false" type="boolean" />
+		<!---
+			The prompt text for this properties view component.
+			@keywords private
+		-->
+		<attribute name="promptText" value="${null}" type="string"/>
+		<!---
+			The help text for this properties view component. 
+			@keywords private 
+		-->
+		<attribute name="helpText" value="${null}" type="string"/>
+		<!---
+			Input text value
+			@keywords private
+		-->
+		<attribute name="value" type="string" value=""/>		
+		<!--- 
+			Colour of the label text
+			@keywords private
+		-->
+		<attribute name="labelColor" value="${this.style.texthilitecolor}"/>
+		<!--- 
+			The smallest allowable value for this input 
+		-->
+		<attribute name="minimumValue" type="number" value="0"/>
+		<!--- 
+			The largest allowable value for this input 
+		-->
+		<attribute name="maximumValue" type="number" value="10000"/>		
+		<handler name="oninit">
+			<![CDATA[				
+				this.createPrompt();				
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			This handler recreates the prompt if the user changes their tool-tip preference.
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCEnableExtendedHelp preference
+				if (preference == "CMCEnableExtendedHelp") {
+					//destroy the extendedHelpIcon
+					if (this.prompt["extendedHelpIcon"]) {
+						this.prompt.extendedHelpIcon.destroy();
+					}
+
+					//destroy the prompt
+					this.prompt.prompt.destroy();
+
+					//re-create the prompt
+					this.createPrompt();
+				}
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			Creates the prompt.
+		-->
+		<method name="createPrompt">
+		<![CDATA[
+			var indent = 0;
+			var promptWidth = 177;
+			var totalWidth = 0;
+			new lz.proPropertiesComponentPrompt(this.prompt, {
+				name: "prompt",
+				width: 100,
+				multiline: true,
+				fgcolor: this.labelColor,
+				resize: true,
+				x: indent,
+				y: this.style.forminputbordersize,
+				required: this.required
+			});
+
+			if ((preferenceManager.getPreference("CMCEnableExtendedHelp") == "true") && (this.helpText != null && this.helpText != "")) {
+				new lz.wcfExtendedHelpIcon(this.prompt, {
+					name: "extendedHelpIcon",
+					helpText: this.helpText,
+					x: indent + this.prompt.prompt.width,
+					y: this.style.forminputbordersize
+				});
+				totalWidth += this.prompt.extendedHelpIcon.width;
+			}
+			this.prompt.prompt.setAttribute('width', promptWidth-totalWidth);
+			if(this.prompt["extendedHelpIcon"]){
+				this.prompt.extendedHelpIcon.setAttribute('x',(this.prompt.prompt.x+this.prompt.prompt.width));
+			}
+			]]>
+		</method>		
+		<!---
+			Sets the string value of this input field
+			@param string v The text to store and show to the user
+		-->
+		<method name="setValue" args="v">
+			<![CDATA[			
+			if(this.value != v) {
+				this.inputbox.textInput.setText(v);
+			}
+			]]>
+		</method>		
+		<!---
+			Returns the text set in the input box.
+		-->
+		<method name="getValue">
+			<![CDATA[				
+			return this.value;
+			]]>
+		</method>
+
+		<view name="prompt"/>
+		<wcfStepper name="inputbox" minimumValue="${parent.minimumValue}"  maximumValue="${parent.maximumValue}" width="230" x="${parent.prompt.x + parent.prompt.width + 6}">
+			<handler name="onvalue">
+				classroot.setAttribute("value", this.textInput.getText());
+			</handler>
+		</wcfStepper>
+	</class>
+	
+	<!---
+		Input text widget that is similar to {@link wcfPropertyInputText} but does not understand the object model.
+		@keywords private
+	-->
+	<class name="proCodeInputText" extends="basecomponent" width="235" focusable="false">
+		<!---
+			Indicates that this properties view component is a required.
+			@keywords private
+		-->
+		<attribute name="required" value="false" type="boolean" />
+		<!---
+			The prompt text for this properties view component.
+			@keywords private
+		-->
+		<attribute name="promptText" value="${null}" type="string"/>
+		<!---
+			The help text for this properties view component. 
+			@keywords private 
+		-->
+		<attribute name="helpText" value="${null}" type="string"/>
+		<!--- 
+			A regular expression describing the set of characters allowed in this field.
+        	The default pattern is the empty string, which allows all characters.
+        -->
+		<attribute name="pattern" type="string" value=""/>
+		<!---
+			Input text value.
+			@keywords private
+		-->
+		<attribute name="value" type="string" value=""/>		
+		<!--- Colour of the label text -->
+		<attribute name="labelColor" value="${this.style.texthilitecolor}"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+				this.createPrompt();
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			This handler recreates the prompt if the user changes their tooltip preference
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCEnableExtendedHelp preference
+				if (preference == "CMCEnableExtendedHelp") {
+					//destroy the extendedHelpIcon
+					if (this.prompt["extendedHelpIcon"]) {
+						this.prompt.extendedHelpIcon.destroy();
+					}
+
+					//destroy the prompt
+					this.prompt.prompt.destroy();
+
+					//re-create the prompt
+					this.createPrompt();
+				}
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			Creates the prompt.
+		-->
+		<method name="createPrompt">
+		<![CDATA[
+			var indent = 0;
+			var promptWidth = 177;
+			var totalWidth = 0;
+			new lz.proPropertiesComponentPrompt(this.prompt, {
+				name: "prompt",
+				width: 100,
+				multiline: true,
+				fgcolor: this.labelColor,
+				resize: true,
+				x: indent,
+				y: this.style.forminputbordersize,
+				required: this.required
+			});
+
+			if ((preferenceManager.getPreference("CMCEnableExtendedHelp") == "true") && (this.helpText != null && this.helpText != "")) {
+				new lz.wcfExtendedHelpIcon(this.prompt, {
+					name: "extendedHelpIcon",
+					helpText: this.helpText,
+					x: indent + this.prompt.prompt.width,
+					y: this.style.forminputbordersize
+				});
+				totalWidth += this.prompt.extendedHelpIcon.width;
+			}
+			this.prompt.prompt.setAttribute('width', promptWidth-totalWidth);
+			if(this.prompt["extendedHelpIcon"]){
+				this.prompt.extendedHelpIcon.setAttribute('x',(this.prompt.prompt.x+this.prompt.prompt.width));
+			}
+			]]>
+		</method>		
+		<!---
+			Sets the string value of this input field.
+			@param string v The text to store and show to the user
+		-->
+		<method name="setValue" args="v">
+			<![CDATA[
+			if(this.value != v) {
+				this.inputbox.setText(v);
+			}
+			]]>
+		</method>
+		<!---
+			Returns the text set in the input box. 
+		-->
+		<method name="getValue">
+			<![CDATA[			
+			return this.value;
+			]]>
+		</method>
+
+		<view name="prompt"/>
+		<wcfInputText name="inputbox" x="${parent.prompt.x + parent.prompt.width + 6}" pattern="${parent.pattern}">
+			<handler name="ontext">
+				classroot.setAttribute("value", this.getText());
+			</handler>
+		</wcfInputText>
+	</class>
+		
+	<!---		
+		@keywords private
+	 -->
+	<class name="proPropertiesComponentPrompt" extends="wcfPropertiesComponentPrompt" text="${this.getPromptText(this.parent.parent.promptText)}"/>	
+	
+</library>

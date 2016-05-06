@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+	<action-mappings>
+		<action path="/SerializeStore" include="/jsp/commerce/store/restricted/SerializeStore.jsp" />
+		<action path="/SerializeStoreDescription" include="/jsp/commerce/store/restricted/SerializeStoreDescription.jsp" />
+		<action path="/SerializeStoreContact" include="/jsp/commerce/store/restricted/SerializeStoreContact.jsp" />
+		
+		<action path="/RefreshStoreById" forward="/jsp/commerce/store/restricted/GetStoreById.jsp" />
+		<action path="/GetStores" forward="/jsp/commerce/store/restricted/GetStores.jsp" />
+		<action path="/GetStoreChildren-LanguageDescriptions" forward="/jsp/commerce/store/restricted/GetStoreChildren-LanguageDescriptions.jsp" />
+		<action path="/GetStoreChildren-Flow" forward="/jsp/commerce/store/restricted/GetStoreChildren-Flow.jsp" />
+		<action path="/GetStoreChildren-FileRefs" forward="/jsp/commerce/store/restricted/GetStoreChildren-FileRefs.jsp" />
+		<action path="/GetStoreChildren-Currencies" forward="/jsp/commerce/store/restricted/GetStoreChildren-Currencies.jsp" />
+		<action path="/GetStoreChildren-Languages" forward="/jsp/commerce/store/restricted/GetStoreChildren-Languages.jsp" />
+		<action path="/GetStoreChildren-ContactInfo" forward="/jsp/commerce/store/restricted/GetStoreChildren-ContactInfo.jsp" />
+		<action path="/GetStoreChildren-LocationInfo" forward="/jsp/commerce/store/restricted/GetStoreChildren-LocationInfo.jsp" />
+		<action path="/GetStoreChildren-StaticPages" forward="/jsp/commerce/store/restricted/GetStoreChildren-StaticPages.jsp" />
+		<action path="/GetStoreChildren-SEO" forward="/jsp/commerce/store/restricted/GetStoreChildren-SEO.jsp" />
+		<action path="/FindStoresByName" forward="/jsp/commerce/store/restricted/FindStores.jsp" />
+		
+		<action path="/UpdateStoreChildren-ContactInfo" parameter="OnlineStoreContactInfo"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		
+		<action path="/CreateStoreChildren-ContactInfo" parameter="OnlineStoreContactInfo"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="info" />
+			<forward name="success" path="/jsp/commerce/store/restricted/RespondContactInfo.jsp"/>
+		</action>
+		
+		<action path="/DeleteStoreChildren-ContactInfo" parameter="OnlineStoreContactInfo"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/UpdateStoreChildren-LocationInfo" parameter="OnlineStoreLocationInfo"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		
+		<action path="/CreateStoreChildren-LocationInfo" parameter="OnlineStoreLocationInfo"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="info" />
+			<forward name="success" path="/jsp/commerce/store/restricted/RespondLocationInfo.jsp"/>
+		</action>
+		
+		<action path="/DeleteStoreChildren-LocationInfo" parameter="OnlineStoreLocationInfo"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/CreateStoreChildren-LanguageDescription" parameter="OnlineStoreDescription"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		
+		<action path="/UpdateStoreChildren-LanguageDescription" parameter="OnlineStoreDescription"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+		<action path="/CreateStoreChildren-DefaultCatalog" parameter="DefaultCatalog"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="stores" />
+			<forward name="success" path="/jsp/commerce/store/restricted/RespondDefaultCatalog.jsp"/>
+		</action>
+
+		<action path="/UpdateStoreChildren-DefaultCatalog" parameter="DefaultCatalog"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+		<action path="/DeleteStoreChildren-DefaultCatalog" parameter="DefaultCatalog"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/UpdateStore" parameter="OnlineStore"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		
+		<action path="/OpenStore" parameter="OnlineStore"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processOnlineStore" />
+			<set-property property="actionCode" value="Open"/>
+			<set-property property="var" value="stores" />
+			<forward name="success" path="/jsp/commerce/store/restricted/RespondOpenCloseStore.jsp"/>
+		</action>
+		
+		<action path="/CloseStore" parameter="OnlineStore"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processOnlineStore" />
+			<set-property property="actionCode" value="Close"/>
+			<set-property property="var" value="stores" />
+			<forward name="success" path="/jsp/commerce/store/restricted/RespondOpenCloseStore.jsp"/>
+		</action>
+		
+		<action path="/CreateStoreChildren-StaticPages" parameter="SEOContentURLs"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		
+		<action path="/UpdateStoreChildren-StaticPages" parameter="SEOContentURLs"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeOnlineStore" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		
+		<action path="/SaveChangeFlow" parameter="DefaultContent"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeFlow" />
+			<set-property property="actionCode" value="Change"/>
+			<set-property property="var" value="marketingSpots" />
+		</action>
+	</action-mappings>
+
+	<plug-in className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentPlugInImpl">
+		<set-property property="config" value="/WEB-INF/config/com.ibm.commerce.infrastructure/wc-infrastructure-clientobjects.xml" />
+	</plug-in>
+</struts-config>

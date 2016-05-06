@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Create Customer BOD Mapping for Websphere Commerce Telesales -->
+	<TemplateDocument>
+		<DocumentType version="8.1">CreateCustomer</DocumentType>
+		<StartElement>CreateCustomer</StartElement>
+		<TemplateTagName>CreateCustomer81Map</TemplateTagName>
+		<CommandMapping>
+			<Command CommandName="com.ibm.commerce.usermanagement.commands.UserRegistrationAdminAddCmd"
+					     Condition='profileType="B"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="registrationType">BuyerRegistration</Constant>
+				<Constant Field="profileType">B</Constant>
+				<Constant Field="disableExtendedChecking">true</Constant>				
+			</Command>
+			<Command CommandName="com.ibm.commerce.usermanagement.commands.UserRegistrationAdminAddCmd"
+					     Condition='profileType="C"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="profileType">C</Constant>
+				<Constant Field="disableExtendedChecking">true</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.usermanagement.commands.UserRegistrationAdminAddCmd"
+					     Condition='GuestUserRegisterConditiion'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="profileType">C</Constant>
+				<Constant Field="disableExtendedChecking">true</Constant>
+			</Command>
+		</CommandMapping>
+	</TemplateDocument>
+	<TemplateTag name="CreateCustomer81Map">
+		<!-- Command Parameters -->
+		<Tag XPath="DataArea/Customer/UserAccount/Authorization/UserId" Field="logonId" FieldInfo="DATA"/>
+		<Tag XPath="DataArea/Customer/UserAccount/Authorization/Password" Field="logonPassword"/>
+		<Tag XPath="DataArea/Customer/UserAccount/Authorization/VerifyPassword" Field="logonPasswordVerify"/>
+		<Tag XPath="DataArea/Customer/UserAccount/Authorization/Status/Code" Field="userStatus"/>
+		<Tag XPath="x" Field="passwordExpired"/>
+		<Tag XPath="DataArea/Customer/UserAccount/Authorization/ChallengeQuestion" Field="challengeQuestion"/>
+		<Tag XPath="DataArea/Customer/UserAccount/Authorization/ChallengeAnswer" Field="challengeAnswer"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/AddressId" Field="addressId"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/AddressNickName" Field="nickName"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address@type" Field="addressType"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Person/PersonName/Salutation" Field="personTitle"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Person/PersonName/FamilyName" Field="lastName"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Person/PersonName/GivenName" Field="firstName"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Person/PersonName/MiddleName" Field="middleName"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/AddressLine" XPathType="REPEAT"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/AddressLine[1]" Field="address1"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/AddressLine[2]" Field="address2"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/AddressLine[3]" Field="address3"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/City" Field="city"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/StateOrProvinceCode" Field="state"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/PostalCode" Field="zipCode"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/CountryCode" Field="country"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Addresses/Address/UserData/UserDataField" XPathType="USERDATA"/>
+		<Tag XPath="x" Field="primary"/>
+		<Tag XPath="x" Field="selfAddress"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Telephone" XPathType="REPEAT"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Telephone[1]" Field="phone1"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Telephone[1]@type" Field="phone1Type"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Telephone[1]@publish" Field="publishPhone1"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Telephone[2]" Field="phone2"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Telephone[2]@type" Field="phone2Type"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Telephone[2]@publish" Field="publishPhone2"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/BestCallTime" Field="bestCallingTime"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Fax" XPathType="REPEAT"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Fax[1]" Field="fax1"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Fax[2]" Field="fax2"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/EMailAddress" XPathType="REPEAT"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/EMailAddress[1]" Field="email1"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/EMailAddress[2]" Field="email2"/>
+		<Tag XPath="x" Field="billingCode"/>
+		<Tag XPath="x" Field="billingCodeType"/>
+		<Tag XPath="x" Field="packageSuppression"/>
+		<Tag XPath="x" XPathType="REPEAT"/>
+		<Tag XPath="x" Field="distinguishedName"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Currency" Field="preferredCurrency"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/CorrespondenceLanguage" Field="preferredLanguage"/>
+		<Tag XPath="x" XPathType="REPEAT"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Contacts/Contact/Person/PersonName/FormattedName" Field="displayName"/>
+		<Tag XPath="x" Field="photo"/>
+		<Tag XPath="x" Field="preferredMeasure"/>
+		<Tag XPath="x" Field="preferredCommunication"/>
+		<Tag XPath="x" Field="preferredDelivery"/>
+		<Tag XPath="x" Field="description"/>
+		<Tag XPath="x" XPathType="REPEAT"/>
+		<Tag XPath="x" Field="businessTitle"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Business/Id" Field="organizationId"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Business/Name" Field="organizationName"/>
+		<Tag XPath="x" Field="organizationUnitId"/>
+		<Tag XPath="x" Field="organizationUnitName"/>
+		<Tag XPath="x" Field="employeeId"/>
+		<Tag XPath="x" Field="alternateId"/>
+		<Tag XPath="x" Field="employeeType"/>
+		<Tag XPath="x" Field="officeAddress"/>
+		<Tag XPath="x" Field="departmentNumber"/>
+		<Tag XPath="x" Field="manager"/>
+		<Tag XPath="x" Field="secretary"/>
+        <Tag XPath="DataArea/Customer/GuestCustomer/MigrateGuestCustomer" Field='GuestUserRegisterConditiion' FieldInfo='COMMAND' />
+        <Tag XPath="DataArea/Customer/GuestCustomer/CustomerParty/PartyId/Id" Field="userId"/>
+
+		<Tag XPath="DataArea/Customer/CustomerDemographics/Age" Field="age"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/Gender" Field="gender"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/AnnualIncome" Field="income"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/AnnualIncome@currency" Field="incomeCurrency"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/MaritalStatus" Field="maritalStatus"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/NumberOfChildren" Field="children"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/NumberInHousehold" Field="household"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/Employer" Field="companyName"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/Department" Field="departmentNumber"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/BusinessTitle" Field="businessTitle"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/InterestHobby" Field="hobbies"/>
+		<Tag XPath="x" Field="orderBefore"/>
+		<Tag XPath="x" Field="timeZone"/>
+		<Tag XPath="DataArea/Customer/Profile/Demographics/DemographicField" XPathType="REPEAT"/>
+		<Tag XPath="DataArea/Customer/CustomerParty/Business/RelatedUnit/Unit/Id" Field="parentMemberId"/>
+		<Tag XPath="DataArea/Customer/CustomerDemographics/ProfileType" Field="profileType" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Customer/CommerceArea/StoreId" Field="storeId"/>
+		<Tag XPath="DataArea/Customer/UserData/UserDataField" XPathType="USERDATA"/>
+	</TemplateTag>
+

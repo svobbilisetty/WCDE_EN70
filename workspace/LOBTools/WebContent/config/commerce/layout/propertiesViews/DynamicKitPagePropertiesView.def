@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="pglDynamicKitPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.dynamicKitPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="DynamicKitPageReferenceDefaultDynamicKitPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="DynamicKitPageReferenceDefaultDynamicKitPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="DynamicKitPageReferenceDefaultDynamicKitPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display dynamic kit page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglDynamicKitPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localDynamicKitPageCondition" enablementValue="InheritedDynamicKitPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglDynamicKitPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited dynamic kit page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedDynamicKitPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedDynamicKitPageCondition" enablementValue="InheritedDynamicKitPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedDynamicKitPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglDynamicKitPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglDynamicKitPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_dynamicKitPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="DynamicKitPageLayoutAssociationReferencedDynamicKitPageLayouts,DynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglDynamicKitPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_dynamicKitPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="DynamicKitPageLayoutAssociationReferencedDynamicKitPageLayouts,DynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedDynamicKitPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_dynamicKitPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

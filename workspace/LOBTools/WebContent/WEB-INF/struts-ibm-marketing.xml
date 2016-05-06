@@ -1,0 +1,831 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+	<action-mappings>
+
+		<!-- Campaigns -->
+		<!-- ========= -->
+		<action path="/GetCampaign" forward="/jsp/commerce/marketing/restricted/GetCampaignsById.jsp" />
+		<action path="/GetCampaigns" forward="/jsp/commerce/marketing/restricted/GetCampaigns.jsp" />
+		<action path="/GetCampaignChildren" forward="/jsp/commerce/marketing/restricted/GetCampaignChildren.jsp" />
+		<action path="/FindCampaigns" forward="/jsp/commerce/marketing/restricted/FindCampaigns.jsp" />
+
+		<action path="/CreateCampaign" parameter="Campaign"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processCampaign" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="campaigns" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateCampaign.jsp"/>
+		</action>
+		<action path="/DeleteCampaign" parameter="Campaign"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processCampaign" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/SaveCampaign" parameter="Campaign"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeCampaign" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+        <!-- Location based services -->
+		<!-- ======================= -->
+		<action path="/GetLocationRegions" forward="/jsp/commerce/marketing/restricted/GetLocationRegions.jsp" />
+		<action path="/GetLocationPOIs" forward="/jsp/commerce/marketing/restricted/GetLocationPOIsByRegionId.jsp" />
+
+		<!-- Activity -->
+		<!-- ======== -->
+		<action path="/GetActivity" forward="/jsp/commerce/marketing/restricted/GetActivitiesById.jsp" />
+		<action path="/GetActivities" forward="/jsp/commerce/marketing/restricted/GetActivities.jsp" />
+		<action path="/GetSearchActivities" forward="/jsp/commerce/marketing/restricted/GetSearchActivities.jsp" />
+		<action path="/GetEmailActivitySendTime" forward="/jsp/commerce/marketing/restricted/GetEmailActivitySendTime.jsp" />
+		<action path="/GetWebActivityTemplates" forward="/jsp/commerce/marketing/restricted/GetWebActivityTemplates.jsp" />
+		<action path="/GetDialogActivityTemplates" forward="/jsp/commerce/marketing/restricted/GetDialogActivityTemplates.jsp" />
+		<action path="/GetSearchActivityTemplates" forward="/jsp/commerce/marketing/restricted/GetSearchActivityTemplates.jsp" />
+		<action path="/FindActivities" forward="/jsp/commerce/marketing/restricted/FindActivities.jsp" />
+		<action path="/FindSearchActivities" forward="/jsp/commerce/marketing/restricted/FindSearchActivities.jsp" />
+		<action path="/FindActivityTemplates" forward="/jsp/commerce/marketing/restricted/FindActivityTemplates.jsp" />
+		<action path="/FindWebActivityTemplates" forward="/jsp/commerce/marketing/restricted/FindWebActivityTemplates.jsp" />
+		<action path="/FindDialogActivityTemplates" forward="/jsp/commerce/marketing/restricted/FindDialogActivityTemplates.jsp" />
+		<action path="/FindSearchActivityTemplates" forward="/jsp/commerce/marketing/restricted/FindSearchActivityTemplates.jsp" />		
+		<action path="/FindLocationPOIs" forward="/jsp/commerce/marketing/restricted/FindLocationPOIs.jsp" />
+		<action path="/FindLocationRegions" forward="/jsp/commerce/marketing/restricted/FindLocationRegions.jsp" />
+		<action path="/GetFamilyActivities" forward="/jsp/commerce/marketing/restricted/GetFamilyActivities.jsp" />
+		<action path="/GetSearchFamilyActivities" forward="/jsp/commerce/marketing/restricted/GetSearchFamilyActivities.jsp" />
+		<action path="/GetActivityCampaignReference" forward="/jsp/commerce/marketing/restricted/GetActivityCampaignReference.jsp" />
+		<action path="/GetActivityChildren" forward="/jsp/commerce/marketing/restricted/GetActivityChildren.jsp" />
+		<action path="/PopulateNewWebActivity" forward="/jsp/commerce/marketing/restricted/PopulateNewWebActivity.jsp" />
+		<action path="/PopulateNewSearchActivity" forward="/jsp/commerce/marketing/restricted/PopulateNewSearchActivity.jsp" />
+
+		<action path="/SerializeActivityElement-branch" include="/jsp/commerce/marketing/restricted/SerializeActivitybranch.jsp" />
+		<action path="/SerializeActivityElement-currentCustomerBehaviorCategoryBrowsing" include="/jsp/commerce/marketing/restricted/SerializeActivitycurrentPage.jsp" />
+		<action path="/SerializeActivityElement-currentCustomerBehaviorCookieContents" include="/jsp/commerce/marketing/restricted/SerializeActivitycookieContents.jsp" />
+		<action path="/SerializeActivityElement-currentCustomerBehaviorProductBrowsing" include="/jsp/commerce/marketing/restricted/SerializeActivitycurrentPage.jsp" />
+		<action path="/SerializeActivityElement-currentCustomerBehaviorProductInCategoryBrowsing" include="/jsp/commerce/marketing/restricted/SerializeActivitycurrentPage.jsp" />
+		<action path="/SerializeActivityElement-currentCustomerBehaviorSearching" include="/jsp/commerce/marketing/restricted/SerializeActivitycurrentPage.jsp" />
+		<action path="/SerializeActivityElement-currentCustomerBehaviorURLContents" include="/jsp/commerce/marketing/restricted/SerializeActivitycurrentPage.jsp" />
+		<action path="/SerializeActivityElement-currentCustomerBehaviorURLContentsFromDomain" include="/jsp/commerce/marketing/restricted/SerializeActivityexternalSiteReferral.jsp" />
+		<action path="/SerializeActivityElement-customerSegmentIdList" include="/jsp/commerce/marketing/restricted/SerializeActivitycustomerSegmentIdList.jsp" />
+		<action path="/SerializeActivityElement-displayAssociation" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayAssociation.jsp" />
+		<action path="/SerializeActivityElement-displayCategory" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayCategory.jsp" />
+		<action path="/SerializeActivityElement-displayContent" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayContent.jsp" />
+		<action path="/SerializeActivityElement-displayProduct" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayProductCombined.jsp" />
+		<action path="/SerializeActivityElement-displayProductStandardSearchCombined" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayProductCombined.jsp" />
+		<action path="/SerializeActivityElement-displayProductStandardSearch" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayProduct.jsp" />
+		<action path="/SerializeActivityElement-displayProductAdvancedSearch" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayProduct.jsp" />
+		<action path="/SerializeActivityElement-displayPromotion" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayPromotion.jsp" />
+		<action path="/SerializeActivityElement-displayExternalRecommendation" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayExternalRecommendation.jsp" />
+		<action path="/SerializeActivityElement-displayCoremetricsRecommendation" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayCoremetricsRecommendation.jsp" />
+		<action path="/SerializeActivityElement-issueCoupon" include="/jsp/commerce/marketing/restricted/SerializeActivityissueCoupon.jsp" />
+		<action path="/SerializeActivityElement-addToRemoveFromCustomerSegment" include="/jsp/commerce/marketing/restricted/SerializeActivityAddToRemoveFromCustomerSegment.jsp" />
+		<action path="/SerializeActivityElement-purchaseHistoryTotals" include="/jsp/commerce/marketing/restricted/SerializeActivitypurchaseHistory.jsp" />
+		<action path="/SerializeActivityElement-purchaseHistoryProductContents" include="/jsp/commerce/marketing/restricted/SerializeActivitypurchaseHistory.jsp" />
+		<action path="/SerializeActivityElement-purchaseHistoryCategoryContents" include="/jsp/commerce/marketing/restricted/SerializeActivitypurchaseHistory.jsp" />
+		<action path="/SerializeActivityElement-recentlyViewedProducts" include="/jsp/commerce/marketing/restricted/SerializeActivityrecentlyViewed.jsp" />
+		<action path="/SerializeActivityElement-recentlyViewedCategories" include="/jsp/commerce/marketing/restricted/SerializeActivityrecentlyViewed.jsp" />
+		<action path="/SerializeActivityElement-recordedCustomerBehaviorCategoryBrowsed" include="/jsp/commerce/marketing/restricted/SerializeActivitycatalogBrowsingBehavior.jsp" />
+		<action path="/SerializeActivityElement-recordedCustomerBehaviorProductBrowsed" include="/jsp/commerce/marketing/restricted/SerializeActivitycatalogBrowsingBehavior.jsp" />
+		<action path="/SerializeActivityElement-recordedCustomerBehaviorProductInCategoryBrowsed" include="/jsp/commerce/marketing/restricted/SerializeActivitycatalogBrowsingBehavior.jsp" />
+		<action path="/SerializeActivityElement-recordedCustomerBehaviorURLContents" include="/jsp/commerce/marketing/restricted/SerializeActivityonlineBehavior.jsp" />
+		<action path="/SerializeActivityElement-recordedCustomerBehaviorSearched" include="/jsp/commerce/marketing/restricted/SerializeActivityonlineBehavior.jsp" />
+		<action path="/SerializeActivityElement-sendBulkEmail" include="/jsp/commerce/marketing/restricted/SerializeActivitysendBulkEmail.jsp" />
+		<action path="/SerializeActivityElement-sendIndividualEmail" include="/jsp/commerce/marketing/restricted/SerializeActivitysendMessage.jsp" />
+		<action path="/SerializeActivityElement-sendSMS" include="/jsp/commerce/marketing/restricted/SerializeActivitysendMessage.jsp" />
+		<action path="/SerializeActivityElement-shoppingCartTotals" include="/jsp/commerce/marketing/restricted/SerializeActivityshoppingCart.jsp" />
+		<action path="/SerializeActivityElement-shoppingCartProductContents" include="/jsp/commerce/marketing/restricted/SerializeActivityshoppingCart.jsp" />
+		<action path="/SerializeActivityElement-shoppingCartCategoryContents" include="/jsp/commerce/marketing/restricted/SerializeActivityshoppingCart.jsp" />
+		<action path="/SerializeActivityElement-simpleBranch" include="/jsp/commerce/marketing/restricted/SerializeActivitybranch.jsp" />
+		<action path="/SerializeActivityElement-socialCommerceParticipation" include="/jsp/commerce/marketing/restricted/SerializeActivitysocialCommerceParticipation.jsp" />
+		<action path="/SerializeActivityElement-displayTitle" include="/jsp/commerce/marketing/restricted/SerializeActivityDisplayTitle.jsp" />
+		<action path="/SerializeActivityElement-viewEMarketingSpot" include="/jsp/commerce/marketing/restricted/SerializeActivityviewEMarketingSpot.jsp" />
+
+		<action path="/SerializeActivityElement-replaceOrAddSearchCriteriaAction" include="/jsp/commerce/marketing/restricted/SerializeActivityreplaceOrAddSearchCriteria.jsp" />
+		<action path="/SerializeActivityElement-replaceOrAddSearchCriteriaActionV7FEP6" include="/jsp/commerce/marketing/restricted/SerializeActivityreplaceOrAddSearchCriteriaV7FEP6.jsp" />
+		
+		<action path="/SerializeActivityElement-ranking_MostBrowsed" include="/jsp/commerce/marketing/restricted/SerializeActivityRankingMostBrowsed.jsp" />
+		<action path="/SerializeActivityElement-ranking_MostSold" include="/jsp/commerce/marketing/restricted/SerializeActivityRankingMostSold.jsp" />
+		<action path="/SerializeActivityElement-promotionChecker" include="/jsp/commerce/marketing/restricted/SerializeActivitypromotionChecker.jsp" />
+		<action path="/SerializeActivityElement-displayProductPromotionalPrice" include="/jsp/commerce/marketing/restricted/SerializeActivitydisplayProductPromotionalPrice.jsp" />
+
+		<action path="/SerializeActivityElement-customerAbandonsShoppingCart" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-customerIsInSegment" include="/jsp/commerce/marketing/restricted/SerializeActivitycustomerIsInSegment.jsp" />
+		<action path="/SerializeActivityElement-customerParticipatesInSocialCommerce" include="/jsp/commerce/marketing/restricted/SerializeActivitycustomerParticipatesInSocialCommerce.jsp" />
+		<action path="/SerializeActivityElement-registers" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-path" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-purchases" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-time" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-wait" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-birthdayTrigger" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-eventAndParametersTrigger" include="/jsp/commerce/marketing/restricted/SerializeActivityeventAndParametersTrigger.jsp" />
+		<action path="/SerializeActivityElement-CustomerSearchesTrigger" include="/jsp/commerce/marketing/restricted/SerializeActivityCustomerSearchesTrigger.jsp" />
+		<action path="/SerializeActivityElement-searchActionOrderBy" include="/jsp/commerce/marketing/restricted/SerializeActivitySortElements.jsp" />
+		<action path="/SerializeActivityElement-searchActionFilter" include="/jsp/commerce/marketing/restricted/SerializeActivitysearchActionFilter.jsp" />
+		<action path="/SerializeActivityElement-searchActionFacetExclusion" include="/jsp/commerce/marketing/restricted/SerializeActivitySearchActionFacetExclusion.jsp" />
+		<action path="/SerializeActivityElement-viewSearchEMarketingSpot" include="/jsp/commerce/marketing/restricted/SerializeActivityviewSearchEMarketingSpot.jsp" />
+		<action path="/SerializeActivityElement-orderSearchResultAction" include="/jsp/commerce/marketing/restricted/SerializeActivityorderSearchResult.jsp" />
+		<action path="/SerializeActivityElement-orderSearchResultActionV7FEP6" include="/jsp/commerce/marketing/restricted/SerializeActivityorderSearchResultV7FEP6.jsp" />
+		<action path="/SerializeActivityElement-RecurringOrderTrigger" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		<action path="/SerializeActivityElement-SubscriptionTrigger" include="/jsp/commerce/marketing/restricted/SerializeActivitySubscriptionTrigger.jsp" />
+		<action path="/SerializeActivityElement-specifyTopSearchResultAction" include="/jsp/commerce/marketing/restricted/SerializeActivityspecifyTopSearchResult.jsp" />
+		<action path="/SerializeActivityElement-searchCriteria" include="/jsp/commerce/marketing/restricted/SerializeActivitysearchCriteria.jsp" />
+		<action path="/SerializeActivityElement-searchCriteriaV7FEP6" include="/jsp/commerce/marketing/restricted/SerializeActivitysearchCriteriaV7FEP6.jsp" />
+		<action path="/SerializeActivityElement-searchResult" include="/jsp/commerce/marketing/restricted/SerializeActivitysearchResult.jsp" />
+		<action path="/SerializeActivityElement-searchCatEntryList" include="/jsp/commerce/marketing/restricted/SerializeActivitysearchCatEntryList.jsp" />
+		<action path="/SerializeActivityElement-customerUsesPromotion" include="/jsp/commerce/marketing/restricted/SerializeActivitycustomerUsesPromotionTrigger.jsp" />
+		<action path="/SerializeActivityElement-socialActivityFilter" include="/jsp/commerce/marketing/restricted/SerializeActivitysocialActivityFilter.jsp" />
+		<action path="/SerializeActivityElement-returnNvpData" include="/jsp/commerce/marketing/restricted/SerializeActivityreturnNvpData.jsp" />
+		<action path="/SerializeActivityElement-returnNvpDataEntry" include="/jsp/commerce/marketing/restricted/SerializeActivityreturnNvpDataEntry.jsp" />
+
+		<action path="/SerializeActivityElement-customerCheckInStoreTrigger" include="/jsp/commerce/marketing/restricted/SerializeActivitycustomerCheckInStoreTrigger.jsp" />
+		<action path="/SerializeActivityElement-displayLocationBasedContent" include="/jsp/commerce/marketing/restricted/SerializeActivitygenericElement.jsp" />
+		
+		<action path="/CreateActivity" parameter="Activity"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processActivity" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="activities" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateActivity.jsp"/>
+		</action>
+		<action path="/DeleteActivity" parameter="Activity"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processActivity" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/SaveActivity" parameter="Activity"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeActivity" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/ActivateActivity" parameter="Activity"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processActivity" />
+			<set-property property="actionCode" value="Activate"/>
+			<set-property property="var" value="activities" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondActivateActivity.jsp"/>
+		</action>
+		<action path="/DeactivateActivity" parameter="Activity"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processActivity" />
+			<set-property property="actionCode" value="Deactivate"/>
+			<set-property property="var" value="activities" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondDeactivateActivity.jsp"/>
+		</action>
+
+		<action path="/ActivityProcessWinner" parameter="Activity"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processActivity" />
+			<set-property property="actionCode" value="ProcessWinner"/>
+			<set-property property="var" value="activities" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondProcessWinner.jsp"/>
+		</action>
+
+		<!-- EMarketing Spots -->
+		<!-- ================ -->
+		<action path="/GetEMarketingSpot" forward="/jsp/commerce/marketing/restricted/GetEMarketingSpotsById.jsp" />
+		<action path="/GetEMarketingSpots" forward="/jsp/commerce/marketing/restricted/GetEMarketingSpots.jsp" />
+		<action path="/GetEMarketingSpotReferences" forward="/jsp/commerce/marketing/restricted/GetEMarketingSpotReferences.jsp" />
+		<action path="/FindEMarketingSpots" forward="/jsp/commerce/marketing/restricted/FindEMarketingSpots.jsp" />
+		<action path="/PopulateNewEMarketingSpot" forward="/jsp/commerce/marketing/restricted/PopulateNewEMarketingSpot.jsp" />
+
+		<action path="/GetEMarketingSpotDefaultContent" forward="/jsp/commerce/marketing/restricted/GetEMarketingSpotDefaultContent.jsp" />
+		<action path="/CreateEMarketingSpot" parameter="MarketingSpot"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processMarketingSpot" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="marketingSpots" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateEMarketingSpot.jsp"/>
+		</action>
+		<action path="/DeleteEMarketingSpot" parameter="MarketingSpot"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processMarketingSpot" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/SaveEMarketingSpot" parameter="MarketingSpot"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingSpot" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/CreateDefaultEMarketingSpotContent" parameter="DefaultContent"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingSpot" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="marketingSpots" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateEMarketingSpotDefaultContent.jsp"/>
+		</action>
+		<action path="/SaveDefaultEMarketingSpotContent" parameter="DefaultContent"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingSpot" />
+			<set-property property="actionCode" value="Change"/>
+			<set-property property="var" value="marketingSpots" />
+		</action>
+		<action path="/DeleteDefaultEMarketingSpotContent" parameter="DefaultContent"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingSpot" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/CreateDefaultEMarketingSpotTitleContent" parameter="DefaultMarketingSpotTitle"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingSpot" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="marketingSpots" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateEMarketingSpotDefaultTitleContent.jsp"/>
+		</action>
+		<action path="/UpdateDefaultEMarketingSpotTitleContent" parameter="DefaultMarketingSpotTitle"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingSpot" />
+			<set-property property="actionCode" value="Change"/>
+			<set-property property="var" value="marketingSpots" />
+		</action>
+		<action path="/DeleteDefaultEMarketingSpotTitleContent" parameter="DefaultMarketingSpotTitle"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingSpot" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/FindMarketingContentSpots" forward="/jsp/commerce/marketing/restricted/FindMarketingContentSpots.jsp" />
+		<action path="/FindCustomerSegments" forward="/jsp/commerce/marketing/restricted/FindCustomerSegments.jsp" />
+
+
+		<!-- Customer Segment  -->
+		<!-- ================= -->
+		<action path="/GetCustomerSegments" forward="/jsp/commerce/marketing/restricted/GetCustomerSegments.jsp" />
+		<action path="/GetCustomerSegment" forward="/jsp/commerce/marketing/restricted/GetCustomerSegment.jsp" />
+		<action path="/GetCustomerSegmentChildren" forward="/jsp/commerce/marketing/restricted/GetCustomerSegmentChildren.jsp" />
+		<action path="/GetCountries" forward="/jsp/commerce/marketing/restricted/GetCountries.jsp" />
+		<action path="/GetStateProvinces" forward="/jsp/commerce/marketing/restricted/GetStateProvinces.jsp" />
+
+		<action path="/SerializeCustomerSegment-topAndList" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentTopAndList.jsp" />
+		<action path="/SerializeCustomerSegment-children" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentChildren.jsp" />
+		<action path="/SerializeCustomerSegment-gender" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentGender.jsp" />
+		<action path="/SerializeCustomerSegment-marketingPopulates" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentMarketingPopulates.jsp" />
+		<action path="/SerializeCustomerSegment-registrationStatus" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentRegStatus.jsp" />
+		<action path="/SerializeCustomerSegment-phone" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentPhone.jsp" />
+		<action path="/SerializeCustomerSegment-segment" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentTargetSegment.jsp" />
+		<action path="/SerializeCustomerSegment-registrationDate" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentRegDate.jsp" />
+		<action path="/SerializeCustomerSegment-daysSinceRegistration" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentRegDate.jsp" />
+		<action path="/SerializeCustomerSegment-registrationChangeDate" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentLastRegUpdate.jsp" />
+		<action path="/SerializeCustomerSegment-daysSinceRegistrationChange" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentLastRegUpdate.jsp" />
+		<action path="/SerializeCustomerSegment-eMail" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentEmail.jsp" />
+		<action path="/SerializeCustomerSegment-zipCode" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentZipCode.jsp" />
+		<action path="/SerializeCustomerSegment-country" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentCountryRegion.jsp" />
+		<action path="/SerializeCustomerSegment-state" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentStateProvince.jsp" />
+		<action path="/SerializeCustomerSegment-city" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentCity.jsp" />
+		<action path="/SerializeCustomerSegment-daysSinceLastPurchase" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentLastPurchase.jsp" />
+		<action path="/SerializeCustomerSegment-lastPurchaseDate" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentLastPurchase.jsp" />
+		<action path="/SerializeCustomerSegment-orders" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentOrderFulfilled.jsp" />
+		<action path="/SerializeCustomerSegment-amountSpent" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAmountSpent.jsp" />
+		<action path="/SerializeCustomerSegment-ageGroup" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAgeGroup.jsp" />
+		<action path="/SerializeCustomerSegment-incomeGroup" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentIncomeGroup.jsp" />
+		<action path="/SerializeCustomerSegment-maritalStatus" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentMaritalStatus.jsp" />
+		<action path="/SerializeCustomerSegment-household" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentHousehold.jsp" />
+		<action path="/SerializeCustomerSegment-accountAmountSpent" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAcctAmountSpent.jsp" />
+		<action path="/SerializeCustomerSegment-accountBusiness" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAcctBusiness.jsp" />
+		<action path="/SerializeCustomerSegment-accountIndustry" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAcctIndustry.jsp" />
+		<action path="/SerializeCustomerSegment-accountSize" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAcctSize.jsp" />
+		<action path="/SerializeCustomerSegment-accountCountry" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAcctCountry.jsp" />
+		<action path="/SerializeCustomerSegment-accountLocation" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAcctLocation.jsp" />
+		<action path="/SerializeCustomerSegment-accountCredit" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentAcctCredit.jsp" />
+		<action path="/SerializeCustomerSegment-account" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentTargetAccount.jsp" />
+		<action path="/SerializeCustomerSegment-daysSinceLastVisit" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentLastVisit.jsp" />
+		<action path="/SerializeCustomerSegment-lastVisitDate" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentLastVisit.jsp" />
+		<action path="/SerializeCustomerSegment-jobFunction" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentJobFunction.jsp" />
+		<action path="/SerializeCustomerSegment-preferredCommunication" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentComMethod.jsp" />
+		<action path="/SerializeCustomerSegment-interests" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentInterests.jsp" />
+		<action path="/SerializeCustomerSegment-company" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentCompany.jsp" />
+		<action path="/SerializeCustomerSegment-currency" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentCurrency.jsp" />
+		<action path="/SerializeCustomerSegment-locale" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentLanguage.jsp" />
+		<action path="/SerializeCustomerSegment-ageRange" include="/jsp/commerce/marketing/restricted/SerializeCustomerSegmentCurrentAge.jsp" />
+
+		<action path="/DeleteCustomerSegment" parameter="CustomerSegment"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processMemberGroup" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+
+		<action path="/CreateCustomerSegment" parameter="CustomerSegment"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processMemberGroup" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="mbrgrps" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateCustomerSegment.jsp"/>
+		</action>
+
+		<action path="/SaveCustomerSegment" parameter="CustomerSegment"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+		<action path="/ActivateCustomerSegment" parameter="CustomerSegment"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processMemberGroup" />
+			<set-property property="actionCode" value="Activate"/>
+			<set-property property="var" value="mbrgrps" />
+		</action>
+
+		<action path="/CreateCustomerSegmentDescription" parameter="CustomerSegmentDescription"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,languageId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+
+		<action path="/SaveCustomerSegmentDescription" parameter="CustomerSegmentDescription"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,languageId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+		<action path="/CreateCSElement" parameter="CustomerSegmentElement"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="mbrgrps"/>
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateCustomerSegmentElement.jsp"/>
+		</action>
+
+		<action path="/SaveCSElement" parameter="CustomerSegmentElement"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+		<action path="/DeleteCSElement" parameter="CustomerSegmentElement"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+
+		<!-- Customer -->
+		<!-- ======== -->
+
+		<action path="/FindCustomers" forward="/jsp/commerce/marketing/restricted/FindCustomers.jsp" />
+
+		<action path="/DeleteIncludedCustomerAssociation" parameter="IncludedCustomer"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+
+		<action path="/CreateIncludedCustomerAssociation" parameter="IncludedCustomer"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="mbrgrps"/>
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateIncludedCustomer.jsp"/>
+		</action>
+
+		<action path="/DeleteExcludedCustomerAssociation" parameter="ExcludedCustomer"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+
+		<action path="/CreateExcludedCustomerAssociation" parameter="ExcludedCustomer"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,uniqueId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.member.facade.datatypes.MemberFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMemberGroup" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="mbrgrps"/>
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateExcludedCustomer.jsp"/>
+		</action>
+
+
+
+		<!-- Business Account -->
+		<!-- ================ -->
+		<action path="/FindBusinessAccounts" forward="/jsp/commerce/marketing/restricted/FindBusinessAccounts.jsp" />
+
+
+		<!-- Marketing Content -->
+		<!-- ================= -->
+		<action path="/GetMarketingContent" forward="/jsp/commerce/marketing/restricted/GetMarketingContent.jsp" />
+		<action path="/GetMarketingContentById" forward="/jsp/commerce/marketing/restricted/GetMarketingContentById.jsp" />
+		<action path="/GetMarketingContentDescriptions" forward="/jsp/commerce/marketing/restricted/GetMarketingContentDescriptions.jsp" />
+		<action path="/GetMarketingContentImageMap" forward="/jsp/commerce/marketing/restricted/GetMarketingContentImageMap.jsp" />		
+		<action path="/GetMarketingContentChildren" forward="/jsp/commerce/marketing/restricted/GetMarketingContentChildren.jsp" />
+		<action path="/FindMarketingContent" forward="/jsp/commerce/marketing/restricted/FindMarketingContent.jsp" />
+		<action path="/CreateMarketingContent" parameter="MarketingContent"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processMarketingContent" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="content" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateMarketingContent.jsp"/>
+		</action>
+		<action path="/DeleteMarketingContent" parameter="MarketingContent"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processMarketingContent" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/SaveMarketingContent" parameter="MarketingContent"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/CreateMarketingContentDescription" parameter="MarketingContentDescription"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/SaveMarketingContentDescription" parameter="MarketingContentDescription"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/CreateMarketingContentAttachment" parameter="AttachmentReference"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/DeleteMarketingContentAttachment" parameter="AttachmentReference"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/CreateMarketingContentImageMap" parameter="MarketingContentImageMap"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/UpdateMarketingContentImageMap" parameter="MarketingContentImageMap"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/CreateMarketingContentImageMapArea" parameter="MarketingContentImageMapArea"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="marketingContent" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateEMarketingContentImageMapArea.jsp"/>
+		</action>
+		<action path="/UpdateMarketingContentImageMapArea" parameter="MarketingContentImageMapArea"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/DeleteMarketingContentImageMapArea" parameter="MarketingContentImageMapArea"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeMarketingContent" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<!-- Campaign Elements -->
+		<!-- ================= -->
+		<action path="/CreateCampaignElement" parameter="CampaignElement"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeActivity" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="activities"/>
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateCampaignElement.jsp"/>
+		</action>
+		<action path="/DeleteCampaignElement" parameter="CampaignElement"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeActivity" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/SaveCampaignElement" parameter="CampaignElement"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeActivity" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+		<!-- Email Template -->
+		<!-- ============== -->
+		<action path="/GetEmailTemplate" forward="/jsp/commerce/marketing/restricted/GetEmailTemplatesById.jsp" />
+		<action path="/GetEmailTemplates" forward="/jsp/commerce/marketing/restricted/GetEmailTemplates.jsp" />
+		<action path="/FindEmailTemplates" forward="/jsp/commerce/marketing/restricted/FindEmailTemplates.jsp" />
+
+		<action path="/CreateEmailTemplate" parameter="EmailTemplate"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processMarketingEmailTemplate" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="emailTemplates" />
+			<forward name="success" path="/jsp/commerce/marketing/restricted/RespondCreateEmailTemplate.jsp"/>
+		</action>
+		<action path="/DeleteEmailTemplate" parameter="EmailTemplate"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId,catalogId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processMarketingEmailTemplate" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/SaveEmailTemplate" parameter="EmailTemplate"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.marketing.facade.datatypes.MarketingFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.marketing.facade.client.MarketingFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeMarketingEmailTemplate" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+
+		<!-- Marketing Folders-->
+		<action path="/GetMarketingFolderItems" forward="/jsp/commerce/marketing/restricted/GetMarketingFolderItems.jsp" />
+		
+		<action path="/FindFilterAttributes" include="/jsp/commerce/marketing/restricted/FindFilterAttributes.jsp" />
+		<action path="/GetMerchandisableAttributes" include="/jsp/commerce/marketing/restricted/GetMerchandisableAttributes.jsp" />
+		<action path="/GetFacetableAttributes" include="/jsp/commerce/marketing/restricted/GetFacetableAttributes.jsp" />
+		
+	</action-mappings>
+
+</struts-config>

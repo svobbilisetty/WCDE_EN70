@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the flow element object definition for the Send Message action. Defined as part of this
+		object is the following:
+		<ul>
+			<li>{@link mktFlowElementCreateService} with PROPERTY_contentId and PROPERTY_emailMessageId as parameters</li>
+			<li>{@link mktFlowElementUpdateService} with PROPERTY_contentId and PROPERTY_emailMessageId as parameters</li>
+			<li>{@link wcfPropertyDefinition} elemTemplateName which defines the message type to send. It is one of 'sendIndividualEmail' or 'sendSMS'.</li>
+			<li>{@link wcfReferenceObjectDefinition} that defines a new ChildMessageTemplate type which references the EmailTemplate and EmailJSPTemplate object types</li>
+			<li>{@link wcfReferenceObjectDefinition} that defines a new InheritedChildMessageTemplate type which references the InheritedEmailTemplate and InheritedEmailJSPTemplate object types</li>
+			<li>{@link wcfReferenceObjectDefinition} that defines a new ChildMarketingContent type which references the MarketingContent object type</li>
+			<li>{@link wcfReferenceObjectDefinition} that defines a new InheritedChildMarketingContent type which references the InheritedMarketingContent object type</li>
+			<li>instance of {@link mktSendMessageValidator} to ensure an e-mail template or marketing content is selected</li>
+		</ul>
+	-->
+	<FlowElementObjectDefinition definitionName="mktSendMessageElementObject" displayName="${mktMarketingResources.sendMessageName}" elemTemplateType="Action" flowIcon="sendMessageIcon" headerIcon="sendMessageHeaderIcon" helpLink="concepts/csbactsendemail.htm" objectType="sendMessage" package="mkt" paletteIcon="sendMessagePaletteIcon" propertiesDefinitionName="mktSendMessageProperties" summaryClass="mktSendMessageSummary">
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_contentId" objectPath="ChildContent/MarketingContentGroup" optional="true" propertyName="uniqueId">
+				<EnablementCondition conditionId="messageSMS" enablementValue="sendSMS" propertyName="elemTemplateName"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_emailMessageId" objectPath="ChildEmailTemplate/EmailTemplateGroup" optional="true" propertyName="templateId">
+				<EnablementCondition conditionId="messageEmail" enablementValue="sendIndividualEmail" propertyName="elemTemplateName"/>
+			</ServiceParam>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_contentId" objectPath="ChildContent/MarketingContentGroup" optional="true" propertyName="uniqueId">
+				<EnablementCondition conditionId="messageSMS" enablementValue="sendSMS" propertyName="elemTemplateName"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_emailMessageId" objectPath="ChildEmailTemplate/EmailTemplateGroup" optional="true" propertyName="templateId">
+				<EnablementCondition conditionId="messageEmail" enablementValue="sendIndividualEmail" propertyName="elemTemplateName"/>
+			</ServiceParam>
+		</UpdateService>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.replyToEmailAddress}" maximumSize="254" propertyName="replyTo" type="email"/>
+
+		<Xml name="template">
+			<elemTemplateName>sendIndividualEmail</elemTemplateName>
+			<sendImmediate>false</sendImmediate>
+		</Xml>
+
+		<PropertyDefinition propertyName="elemTemplateName" required="true">
+			<PropertyValue displayName="${mktMarketingResources.email}" value="sendIndividualEmail"/>
+			<PropertyValue displayName="${mktMarketingResources.sms}" value="sendSMS"/>
+		</PropertyDefinition>
+
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childEmailTemplateId" objectGroups="ChildEmailTemplate" objectType="ChildEmailTemplate" referencedTypes="EmailTemplate,EmailJSPTemplate"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childEmailTemplateId" objectGroups="ChildEmailTemplate" objectType="ChildInheritedEmailTemplate" referencedTypes="InheritedEmailTemplate,InheritedEmailJSPTemplate"/>
+
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childMarketingContentId" objectGroups="ChildContent" objectType="ChildMarketingContent" referencedTypes="MarketingContent"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childMarketingContentId" objectGroups="ChildContent" objectType="ChildInheritedMarketingContent" referencedTypes="InheritedMarketingContent"/>
+
+		<SendMessageValidator package="mkt"/>
+	</FlowElementObjectDefinition>
+	
+</Definitions>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktRecurringOrderTriggerTriggerElementObject Recurring Order trigger}.
+	-->
+	<FlowElementProperties definitionName="mktRecurringOrderTriggerProperties">
+		<PropertyGroup collapsable="false" name="container">
+			<PropertyCombobox name="repeatScheduleSelection" promptText="${mktMarketingResources.recurringOrderRepeatSchedule}" propertyName="repeatSchedule" helpText="${mktMarketingResources.help_recurringorder_repeatSchedule}"/>
+			
+			<PropertyGroup collapsable="false" name="runDailyOptions">
+				<EnablementCondition conditionId="21" enablementValue="runDaily" propertyName="repeatSchedule"/>
+				<PropertyCombobox name="recurringOrderTriggerTypeSelection" promptText="${mktMarketingResources.recurringOrderTriggerType}" propertyName="recurringOrderTriggerType" helpText="${mktMarketingResources.help_recurringorder_recurringOrderTriggerType}"/>
+				<PropertyStepper name="numberOfDays" promptText="${mktMarketingResources.recurringOrderNumberOfDays}" propertyName="numberOfDays" maximumValue="365" minimumValue="0" required="true" helpText="${mktMarketingResources.help_recurringorder_numberOfDays}"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" displayGrouping="true" name="startDateFilterGroup">
+				<PropertyRadioGroup propertyName="startsBetweenDateRange" promptText="${mktMarketingResources.recurringOrderStartsBetweenDateRange}" helpText="${mktMarketingResources.help_recurringorder_startsBetweenDateRange}"/>
+				
+				<PropertyGroup collapsable="false" name="startDateFilterDates">
+					<EnablementCondition conditionId="31" enablementValue="true" propertyName="startsBetweenDateRange"/>
+					<PropertyDateTimePicker promptText="${mktMarketingResources.recurringOrderDate}" propertyName="startDate"/>
+					<PropertyDateTimePicker promptText="${mktMarketingResources.recurringOrderDate2}" propertyName="startDate2"/>
+				</PropertyGroup>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" displayGrouping="true" name="endDateFilterGroup">
+				<PropertyRadioGroup propertyName="endsBetweenDateRange" promptText="${mktMarketingResources.recurringOrderEndsBetweenDateRange}" helpText="${mktMarketingResources.help_recurringorder_endsBetweenDateRange}"/>
+				
+				<PropertyGroup collapsable="false" name="endDateFilterDates">
+					<EnablementCondition conditionId="41" enablementValue="true" propertyName="endsBetweenDateRange"/>
+					<PropertyDateTimePicker promptText="${mktMarketingResources.recurringOrderDate}" propertyName="endDate"/>
+					<PropertyDateTimePicker promptText="${mktMarketingResources.recurringOrderDate2}" propertyName="endDate2"/>
+				</PropertyGroup>
+			</PropertyGroup>
+					
+			<ShopCartPurchHistBaseValueProperties package="mkt" usage="Orders"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

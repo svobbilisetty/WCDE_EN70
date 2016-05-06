@@ -1,0 +1,41 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktDisplayCategoryElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktDisplayCategoryElementObject} object:
+		<ul>
+			<li>ChildCatalogGroup/CatalogGroupAlias/CatalogGroupDescription[name]</li>
+		</ul>
+	-->
+	<class name="mktDisplayCategorySummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="categoryNames" objectPath="ChildCatalogGroup/CatalogGroupAlias/CatalogGroupDescription" propertyName="name" sequencePropertyName="sequence" sequencePropertyPath="ChildCatalogGroup" />
+
+		<!---
+			Sets the summary text for the {@link mktDisplayCategoryElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var categories = this.getValuesList("categoryNames");
+				if(categories != "") {
+					categories = wcfStringUtil.escapeText(categories);
+				}
+
+				this.setSummaryText(categories);
+			]]>
+		</method>
+	</class>
+</library>

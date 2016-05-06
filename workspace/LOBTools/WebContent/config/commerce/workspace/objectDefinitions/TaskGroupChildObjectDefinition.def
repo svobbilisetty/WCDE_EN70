@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		@keywords private
+		Task group history object definition
+		referenced to catalog, price, promotion, marketing...
+	-->
+	<ChildObjectDefinition definitionName="wspTaskGroupHistory" displayName="${wspWorkspaceResources.history}" objectType="TaskGroupHistory" idProperty="taskGroupHistoryId" 
+			copyProtected="true">
+	
+		<!--- Prevent object creation in UI -->
+		<FalseEnablementCondition conditionId="preventCreate"/>
+	
+		<!---
+			Undo history entry action
+		-->
+		<UndoHistoryClientAction package="wsp">
+			<EnablementAndCondition>
+				<EnablementAndCondition>
+					<EnablementCondition contextName="workspaceApprover" enablementValue="true"/>
+					<EnablementOrCondition>
+						<LogonIdEnablementCondition package="wsp" parentProperty="true" parentType="TaskGroup" objectPath="ApproverAssociation/Approver" propertyName="logonId" conditionId="approverIdCondition1"/>
+						<LogonIdEnablementCondition package="wsp" objectPath="ApproverAssociation/Approver" propertyName="logonId" conditionId="approverIdCondition2"/>
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+				<EnablementOrCondition baseDefinitionName="wspAllowHistoryChangeCondition"/>
+			</EnablementAndCondition>
+		</UndoHistoryClientAction>	
+	
+	 <!--- The type icon of the change history object. -->
+		<PropertyDefinition propertyName="objectType" copyProtected="true" displayName="${wspWorkspaceResources.type)">
+			<PropertyValue value="Catalog" displayName="${catalogResources.catalog_DisplayName}" icon="catalogIcon"/>
+			<PropertyValue value="InheritedCatalog" displayName="${catalogResources.inheritedCatalog_DisplayName}" icon="inheritedCatalogIcon"/>
+			<PropertyValue value="Product" displayName="${catalogResources.product_DisplayName}" icon="productIcon"/>
+			<PropertyValue value="InheritedProduct" displayName="${catalogResources.inheritedProduct_DisplayName}" icon="inheritedProductIcon"/>
+			<PropertyValue value="Kit" displayName="${catalogResources.kit_DisplayName}" icon="kitIcon"/>
+			<PropertyValue value="InheritedKit" displayName="${catalogResources.inheritedKit_DisplayName}" icon="inheritedKitIcon"/>				
+			<PropertyValue value="ProductSKU" displayName="${catalogResources.displayNameProductLevelSKU}" icon="skuIcon"/>
+			<PropertyValue value="InheritedProductSKU" displayName="${catalogResources.displayNameInheritedProductLevelSKU}" icon="inheritedSkuIcon"/>
+			<PropertyValue value="Bundle" displayName="${catalogResources.bundle_DisplayName}" icon="bundleIcon"/>
+			<PropertyValue value="InheritedBundle" displayName="${catalogResources.inheritedBundle_DisplayName}" icon="inheritedBundleIcon"/>
+			<PropertyValue value="CatalogGroupSKU" displayName="${catalogResources.displayNameCategoryLevelSKU}" icon="skuIcon"/>
+			<PropertyValue value="InheritedCatalogGroupSKU" displayName="${catalogResources.displayNameInheritedCategoryLevelSKU}" icon="inheritedSkuIcon"/>
+			<PropertyValue value="CatalogGroup" displayName="${catalogResources.masterCategory_DisplayName}" icon="catalogGroupIcon"/>
+			<PropertyValue value="InheritedCatalogGroup" displayName="${catalogResources.inheritedMasterCategory_DisplayName}" icon="inheritedCatalogGroupIcon"/>
+			<PropertyValue value="SalesCatalogGroup" displayName="${catalogResources.salesCategory_DisplayName}" icon="salesCatalogGroupIcon"/>
+			<PropertyValue value="InheritedSalesCatalogGroup" displayName="${catalogResources.inheritedSalesCategory_DisplayName}" icon="inheritedSalesCatalogGroupIcon"/>
+			<PropertyValue value="SalesCatalog" displayName="${catalogResources.salesCatalog_DisplayName}" icon="salesCatalogIcon"/>
+			<PropertyValue value="InheritedSalesCatalog" displayName="${catalogResources.inheritedSalesCatalog_DisplayName}" icon="inheritedSalesCatalogIcon"/>
+			<PropertyValue value="DefaultCatalog" displayName="${catalogResources.defaultCatalog_DisplayName}" icon="defaultCatalogIcon"/>
+						
+			<PropertyValue value="Promotion" displayName="${promotionResources.promotionObjectName}" icon="promotionIcon"/>
+			<PropertyValue value="InheritedPromotion" displayName="${wspWorkspaceResources.inheritedPromotion}" icon="promotionInheritedIcon"/>
+
+			<PropertyValue value="Attachment" displayName="${attachmentResources.attachmentObjectName}" icon="AttachmentIcon"/>
+			<PropertyValue value="InheritedAttachment" displayName="${wspWorkspaceResources.inheritedAttachment}" icon="InheritedAttachmentIcon"/>
+			<PropertyValue value="ManagedFile" displayName="${attachmentResources.managedFileObjectName}" icon="ManagedFileIcon"/>
+			<PropertyValue value="InheritedManagedFile" displayName="${wspWorkspaceResources.inheritedManagedFile}" icon="InheritedManagedFileIcon"/>
+			
+			<PropertyValue value="InstallmentRule" displayName="${istInstallmentResources.displayName}" icon="installmentRuleIcon"/>
+			<PropertyValue value="InheritedInstallmentRule" displayName="${wspWorkspaceResources.inheritedInstallmentRule}" icon="installmentRuleInheritedIcon"/>
+			 
+			<PropertyValue value="SearchTermAssociations" displayName="${catalogResources.SearchTermAssociations}" icon="searchTermAssociationsIcon"/>
+			<PropertyValue value="InheritedSearchTermAssociations" displayName="${wspWorkspaceResources.inheritedSearchTermAssociations}" icon="inheritedSearchTermAssociationsIcon"/>
+
+			<PropertyValue value="PriceList" displayName="${prcPriceResources.priceListPrimaryObject_DisplayName}" icon="priceListIcon"/>
+			<PropertyValue value="InheritedPriceList" displayName="${wspWorkspaceResources.inheritedPriceList}" icon="inheritedPriceListIcon"/>
+			<PropertyValue value="RefInheritedPriceList" displayName="${prcPriceResources.priceListPrimaryObject_DisplayName}" icon="priceListIcon"/>
+			
+			<PropertyValue value="Campaign" displayName="${mktMarketingResources.campaign}" icon="campaignIcon"/>
+			<PropertyValue value="InheritedCampaign" displayName="${wspWorkspaceResources.inheritedCampaign}" icon="campaignInheritedIcon"/>
+			<PropertyValue value="EmailTemplate" displayName="${mktMarketingResources.emailTemplate}" icon="emailTemplateIcon"/>
+			<PropertyValue value="InheritedEmailTemplate" displayName="${wspWorkspaceResources.inheritedEmailTemplate}" icon="emailTemplateInheritedIcon"/>
+			<PropertyValue value="EMarketingSpot" displayName="${mktMarketingResources.eMarketingSpot}" icon="emarketingSpotIcon"/>			
+			<PropertyValue value="InheritedEMarketingSpot" displayName="${wspWorkspaceResources.InheritedEMarketingSpot}" icon="emarketingSpotInheritedIcon"/>			
+			<PropertyValue value="MarketingContent" displayName="${mktMarketingResources.content}" icon="contentIcon"/>
+			<PropertyValue value="InheritedMarketingContent" displayName="${wspWorkspaceResources.inheritedMarketingContent}" icon="contentInheritedIcon"/>			
+			<PropertyValue value="SearchActivity" displayName="${mktMarketingResources.searchActivity}" icon="searchActivityIcon"/>
+			<PropertyValue value="InheritedSearchActivity" displayName="${wspWorkspaceResources.inheritedSearchActivity}" icon="searchActivityInheritedIcon"/>			
+			<PropertyValue value="SearchActivityTemplate" displayName="${mktMarketingResources.searchActivityTemplate}" icon="searchActivityTemplateIcon"/>
+			<PropertyValue value="InheritedSearchActivityTemplate" displayName="${wspWorkspaceResources.inheritedSearchActivityTemplate}" icon="searchActivityTemplateInheritedIcon"/>
+			<PropertyValue value="UnknownObject" displayName="${wspWorkspaceResources.unknownObject}" icon="unknownObjectIcon"/>				
+			
+			<PropertyValue value="CustomerSegment" displayName="${mktMarketingResources.customerSegment}" icon="customerSegmentIcon"/>
+			<PropertyValue value="InheritedCustomerSegment" displayName="${wspWorkspaceResources.inheritedCustomerSegment}" icon="customerSegmentInheritedIcon"/>
+			
+			<PropertyValue value="DialogActivity" displayName="${mktMarketingResources.dialogActivity}" icon="dialogActivityIcon"/>
+			<PropertyValue value="InheritedDialogActivity" displayName="${wspWorkspaceResources.inheritedDialogActivity}" icon="dialogActivityInheritedIcon"/>
+			<PropertyValue value="DialogActivityTemplate" displayName="${mktMarketingResources.dialogActivityTemplate}" icon="dialogActivityTemplateIcon"/>
+			<PropertyValue value="InheritedDialogActivityTemplate" displayName="${wspWorkspaceResources.inheritedDialogActivityTemplate}" icon="dialogActivityTemplateInheritedIcon"/>
+			<PropertyValue value="EmailActivity" displayName="${mktMarketingResources.emailActivity}" icon="emailActivityIcon"/>
+			<PropertyValue value="InheritedEmailActivity" displayName="${wspWorkspaceResources.inheritedEmailActivity}" icon="emailActivityInheritedIcon"/>
+			<PropertyValue value="WebActivity" displayName="${mktMarketingResources.webActivity}" icon="webActivityIcon"/>
+			<PropertyValue value="InheritedWebActivity" displayName="${wspWorkspaceResources.inheritedWebActivity}" icon="webActivityInheritedIcon"/>
+			<PropertyValue value="WebActivityTemplate" displayName="${mktMarketingResources.webActivityTemplate}" icon="webActivityTemplateIcon"/>
+			<PropertyValue value="InheritedWebActivityTemplate" displayName="${wspWorkspaceResources.inheritedWebActivityTemplate}" icon="webActivityTemplateInheritedIcon"/>	
+			
+			<PropertyValue value="AttributeDictionaryAttributeWithAllowedValues" displayName="${catalogResources.attributeDictionaryAttributeAllowedValues}" icon="attributeDictionaryAttributeWithAllowedValuesIcon"/>	
+			<PropertyValue value="InheritedAttributeDictionaryAttributeWithAllowedValues" displayName="${catalogResources.inheritedAttributeDictionaryAttributeAllowedValues}" icon="inheritedAttributeDictionaryAttributeWithAllowedValuesIcon"/>	
+			<PropertyValue value="AttributeDictionaryAttributeWithAssignedValues" displayName="${catalogResources.attributeDictionaryAttributeAssignedValues}" icon="attributeDictionaryAttributeWithAssignedValuesIcon"/>	
+			<PropertyValue value="InheritedAttributeDictionaryAttributeWithAssignedValues" displayName="${catalogResources.inheritedAttributeDictionaryAttributeAssignedValues}" icon="inheritedAttributeDictionaryAttributeWithAssignedValuesIcon"/>	
+			
+			<PropertyValue value="TopCatalogGroupPage" displayName="${wspWorkspaceResources.TopCategoryPage}" icon="catalogGroupPageIcon"/>
+			<PropertyValue value="InheritedTopCatalogGroupPage" displayName="${wspWorkspaceResources.InheritedTopCategoryPage}" icon="inheritedCatalogGroupPageIcon"/>
+			<PropertyValue value="CatalogGroupPage" displayName="${wspWorkspaceResources.CategoryPage}" icon="catalogGroupPageIcon"/>
+			<PropertyValue value="InheritedCatalogGroupPage" displayName="${wspWorkspaceResources.InheritedCategoryPage}" icon="inheritedCatalogGroupPageIcon"/>
+			<PropertyValue value="CatalogGroupSKUPage" displayName="${wspWorkspaceResources.ItemPage}" icon="skuPageIcon"/>
+			<PropertyValue value="InheritedCatalogGroupSKUPage" displayName="${wspWorkspaceResources.InheritedItemPage}" icon="inheritedSKUPageIcon"/>
+			<PropertyValue value="ProductPage" displayName="${wspWorkspaceResources.ProductPage}" icon="productPageIcon"/>
+			<PropertyValue value="InheritedProductPage" displayName="${wspWorkspaceResources.InheritedProductPage}" icon="inheritedProductPageIcon"/>
+			<PropertyValue value="ProductSKUPage" displayName="${wspWorkspaceResources.ItemPage}" icon="skuPageIcon"/>
+			<PropertyValue value="InheritedProductSKUPage" displayName="${wspWorkspaceResources.InheritedItemPage}" icon="inheritedSKUPageIcon"/>
+			<PropertyValue value="BundlePage" displayName="${wspWorkspaceResources.BundlePage}" icon="bundlePageIcon"/>
+			<PropertyValue value="InheritedBundlePage" displayName="${wspWorkspaceResources.InheritedBundlePage}" icon="inheritedBundlePageIcon"/>
+			<PropertyValue value="KitPage" displayName="${wspWorkspaceResources.StaticKitPage}" icon="kitPageIcon"/>
+			<PropertyValue value="InheritedKitPage" displayName="${wspWorkspaceResources.InheritedStaticKitPage}" icon="inheritedKitPageIcon"/>
+			<PropertyValue value="DynamicKitPage" displayName="${wspWorkspaceResources.DynamicKitPage}" icon="kitPageIcon"/>
+			<PropertyValue value="InheritedDynamicKitPage" displayName="${wspWorkspaceResources.InheritedDynamicKitPage}" icon="inheritedKitPageIcon"/>
+			<PropertyValue value="TopSalesCatalogGroupPage" displayName="${wspWorkspaceResources.TopCategoryPage}" icon="catalogGroupPageIcon"/>
+			<PropertyValue value="InheritedTopSalesCatalogGroupPage" displayName="${wspWorkspaceResources.InheritedTopCategoryPage}" icon="inheritedCatalogGroupPageIcon"/>
+			<PropertyValue value="SalesCatalogGroupPage" displayName="${wspWorkspaceResources.CategoryPage}" icon="catalogGroupPageIcon"/>
+			<PropertyValue value="InheritedSalesCatalogGroupPage" displayName="${wspWorkspaceResources.InheritedCategoryPage}" icon="inheritedCatalogGroupPageIcon"/>			
+			<PropertyValue value="HomePage" displayName="${wspWorkspaceResources.HomePage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedHomePage" displayName="${wspWorkspaceResources.InheritedHomePage}" icon="inheritedStorePageIcon"/>
+			<PropertyValue value="HelpPage" displayName="${wspWorkspaceResources.HelpPage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedHelpPage" displayName="${wspWorkspaceResources.InheritedHelpPage}" icon="inheritedStorePageIcon"/>
+			<PropertyValue value="ContactUsPage" displayName="${wspWorkspaceResources.ContactUsPage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedContactUsPage" displayName="${wspWorkspaceResources.InheritedContactUsPage}" icon="inheritedStorePageIcon"/>
+			<PropertyValue value="ReturnPolicyPage" displayName="${wspWorkspaceResources.InheritedContactUsPage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedReturnPolicyPage" displayName="${wspWorkspaceResources.InheritedReturnPolicyPage}" icon="inheritedStorePageIcon"/>
+			<PropertyValue value="PrivacyPolicyPage" displayName="${wspWorkspaceResources.PrivacyPolicyPage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedPrivacyPolicyPage" displayName="${wspWorkspaceResources.InheritedPrivacyPolicyPage}" icon="inheritedStorePageIcon"/>
+			<PropertyValue value="CorporateInfoPage" displayName="${wspWorkspaceResources.CorporateInfoPage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedCorporateInfoPage" displayName="${wspWorkspaceResources.InheritedCorporateInfoPage}" icon="inheritedStorePageIcon"/>
+			<PropertyValue value="CorporateContactUsPage" displayName="${wspWorkspaceResources.CorporateContactUsPage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedCorporateContactUsPage" displayName="${wspWorkspaceResources.InheritedCorporateContactUsPage}" icon="inheritedStorePageIcon"/>
+			<PropertyValue value="SiteMapPage" displayName="${wspWorkspaceResources.SiteMapPage}" icon="storePageIcon"/>
+			<PropertyValue value="InheritedSiteMapPage" displayName="${wspWorkspaceResources.InheritedSiteMapPage}" icon="inheritedStorePageIcon"/>
+		</PropertyDefinition>
+		
+				
+		<PropertyDefinition propertyName="action" displayName="${wspWorkspaceResources.action}">
+			<PropertyValue value="Create" displayName="${wspWorkspaceResources.changehistory_action_Create}" />
+			<PropertyValue value="Modify" displayName="${wspWorkspaceResources.changehistory_action_Modify}" />
+			<PropertyValue value="Delete" displayName="${wspWorkspaceResources.changehistory_action_Delete}" />
+		</PropertyDefinition>
+		
+		
+		
+		<TaskGroupHistoryOpenHandler package="wsp">
+			<EnablementOrCondition>
+				<EnablementCondition contextName="workspaceApprover" conditionId="approverCondition" enablementValue="true"/>
+				<EnablementCondition contextName="workspaceContributor" conditionId="contributorCondition" enablementValue="true"/>
+			</EnablementOrCondition>
+		</TaskGroupHistoryOpenHandler>
+		
+		<TaskGroupCompareHistoryAction package="wsp">
+			<EnablementAndCondition>
+				<EnablementOrCondition>
+					<EnablementCondition contextName="workspaceApprover" conditionId="approverCondition" enablementValue="true"/>
+					<EnablementCondition contextName="workspaceContributor" conditionId="contributorCondition" enablementValue="true"/>
+				</EnablementOrCondition>
+				<EnablementCondition propertyName="action" conditionId="modifyActionCondition" enablementValue="Modify"/>
+			</EnablementAndCondition>
+		</TaskGroupCompareHistoryAction>
+		
+	</ChildObjectDefinition>
+						
+</Definitions>

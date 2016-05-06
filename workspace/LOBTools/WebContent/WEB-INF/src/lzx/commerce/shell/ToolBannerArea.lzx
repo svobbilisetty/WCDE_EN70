@@ -1,0 +1,46 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		This class defines the banner area in Management Center. It consists of the main
+		application menu on the left, and welcome text, link to log out of the application
+		and the branding logo on the right.
+		<P/>
+		You can re-arrange the areas by changing the order within the source LZX file. 
+	-->
+	<class name="wcfBannerArea" extends="basecomponent" width="100%" focusable="false">
+		<view name="applicationSelectionView" width="${applicationMenu.width}" height="${parent.height}">
+			<view name="backgroundView" width="${parent.width}" resource="bannerBackground" stretches="width" options="ignorelayout" />
+			<wcfApplicationMenu id="applicationMenu" valign="top" />
+		</view>
+		<view name="bannerHeaderView" width="${parent.width - applicationMenu.width}" height="${parent.height}">
+			<view name="headerBackgroundView" width="${parent.width}" resource="bannerBackground" stretches="width" options="ignorelayout" />
+			<view name="bannerRightView" height="${parent.height}" align="right">
+				<wcfWorkspaceIndicator id="workspaceIndicator" y="5" />
+				<view name="blank1" width="15" />
+				<wcfWelcomeText name="welcomeText" y="4" fontsize="12" fgcolor="${classroot.style.titletextcolor}" />
+				<view name="divider1" resource="iconDivider" y="5" />
+				<wcfLogoutLink name="logoutLink" />
+				<view name="blank2" width="5" />
+				<view name="headerLogo" y="5" resource="resources/ibm_logo.png" />
+				<view name="blank3" width="5" />
+				<simplelayout axis="x" spacing="5" />
+			</view>
+		</view>
+		<simplelayout axis="x" spacing="0" />
+	</class>
+
+</library>

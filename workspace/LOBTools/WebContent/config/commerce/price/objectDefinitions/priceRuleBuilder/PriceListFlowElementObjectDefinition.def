@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcPriceListElementObject" displayName="${prcPriceResources.priceList_DisplayName}" elemTemplateType="Action" flowIcon="priceListElementIcon" headerIcon="priceListElementHeaderIcon" helpLink="concepts/cpiactpricelist.htm" objectType="priceList" package="prc" paletteIcon="priceListPaletteIcon" propertiesDefinitionName="prcPriceListElementProperties" summaryClass="prcPriceListElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_priceListId" objectPath="RefPriceListGroup" propertyName="priceListId"/>
+		</CreateService>
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_priceListId" objectPath="RefPriceListGroup" propertyName="priceListId"/>
+		</UpdateService>
+	
+		<Xml name="template">
+			<elemTemplateName>priceList</elemTemplateName>
+		</Xml>
+	
+		<ReferenceObjectDefinition objectGroups="RefPriceListGroup" allowDuplicates="false" derivedId="true" idProperty="priceListId" objectType="RefPriceList" referencedType="PriceList" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="RefPriceListGroup" allowDuplicates="false" derivedId="true" idProperty="priceListId" objectType="RefInheritedPriceList" referencedType="InheritedPriceList"/>
+	
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceList}" objectPath="RefPriceListGroup" validatorId="reqPriceListInConditionValidator" validatorType="noPriceListProvided"/>
+		
+	</FlowElementObjectDefinition>
+
+</Definitions>

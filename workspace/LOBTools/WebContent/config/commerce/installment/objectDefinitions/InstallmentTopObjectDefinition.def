@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<OrganizationalObjectDefinition definitionName="InstallmentRulesTop" displayName="${istInstallmentResources.installmentRules}" objectType="InstallmentRulesTop" organizedObjectTypes="InstallmentRule">
+		
+		<GetChildrenService url="/cmc/GetAllInstallmentRules">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+
+		<NavigationListDefinition baseDefinitionName="istInstallmentRuleGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="istInstallmentRuleGanttChartChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<TopObjectDefinition definitionName="istInstallmentRuleTopObjectDefinition">
+		<Xml name="template">
+			<object objectType="InstallmentRulesTop"/>
+		</Xml>
+		<!--- Retrieves the {@link catCatalogPrimaryObjectDefinition master catalog} for the store. -->
+		<GetChildrenService url="/cmc/GetMasterCatalogObject">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService> 
+		<!--- Retrieves the {@link catSalesCatalogPrimaryObjectDefinition sales catalogs} for the store. -->
+		<GetChildrenService url="/cmc/GetSalesCatalogs">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+	</TopObjectDefinition>
+	
+</Definitions>

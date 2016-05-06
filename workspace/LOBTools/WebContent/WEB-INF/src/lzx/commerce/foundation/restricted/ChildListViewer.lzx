@@ -1,0 +1,522 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		This class defines the base child list viewer widget. This class is similar to a {@link wcfChildListEditor} in that it
+		shows the list of children of an object. The difference is that this class does not allow you to add to or delete from the 
+		list. However, editing the children displayed is permitted - which items are in the list cannot be changed. 
+		
+		The class needs to be provided the value for {@link wcfObjectDefinition#objectType} of the child objects to be displayed, as well
+		as the name of the class to use for viewing the child list. 
+		
+		Copy/Paste and Drag/Drop is not enabled on the wcfBaseChildListViewer.
+		
+		This class is an abstract class and should not be used directly nor should instances of it be created. Instead, see
+		{@link wcfChildListViewer}. 
+	-->
+	<class name="wcfBaseChildListViewer">
+		<!---
+			@keywords private
+			The style, derived by parent properties component
+		-->
+		<attribute name="style" value="${parent.style}"/>
+		<!---
+			The name of the class to use for viewing this list. This is often a class that extends {@link wcfObjectGrid}.
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The name of the definition to use for viewing this list. 
+			This is often a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			A comma separated list of {@link wcfObjectDefinition#objectType object types} to be displayed in this child object list.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string"/>
+		<!---
+			@keywords private
+			The base filter used when we bind view to children.
+		-->
+		<attribute name="baseFilter" value="null"/>
+		<!---
+			@keywords private
+			
+			Reference to the instance of wcfModelObject that is being modified by the
+			properties view that contains this child list viewer.
+		-->
+		<attribute name="o" setter="this.setModelObject(o)"/>
+		<!---
+			@keywords private
+			
+			The closest ancestor view that defines an "availableHeight" attribute. This
+			is used to calculate the list view's available height.
+		-->
+		<attribute name="availableHeightView" value="${wcfViewUtil.getAvailableHeightView(this)}" when="once"/>
+		<!---
+			@keywords private
+			
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the list view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		<!---
+			@keywords private
+			Comma separated client action types. Client actions associated with the current object that have a matching action type will be displayed in the toolbar of the child list viewer.
+		-->
+		<attribute name="clientActionTypes" value="" type="string"/>
+		<!---
+			@keywords private
+			Array of client actions that will be added to the child list viewer toolbar for the current parent object.
+		-->
+		<attribute name="parentObjectClientActions"/>
+		<!---
+			@keywords private
+			Indicates that this child list viewer is embedded in a properties view.
+		-->
+		<attribute name="embedded" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			The fraction of available height allocated for this editor. When one or more editors share the same available
+			space, this is used to determine the fraction of space allocated for each individual one.
+		-->
+		<attribute name="fractionOfAvailableHeight" type="number" value="1"/>
+		<!---
+			@keywords private
+			An ancestor view that will be updated with the currently selected object.
+		-->
+		<attribute name="selectedObjectView" value="null"/>
+		<!---
+			@keywords private
+			The name of the attribute of the selectedObjectVIew that will be updated with the currently selected object.
+		-->
+		<attribute name="selectedObjectName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Child list message.
+		-->
+		<attribute name="messageText" type="string" value=""/>
+		<!---
+			@keywords private
+			Source of the child list message.
+		-->
+		<attribute name="messageSource" value="${null}"/>
+					
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			if (this.listClass == null) {
+				this.listClass = this.listDefinitionName;
+			}
+			if (this.availableHeightView != null) {
+				this.updateAvailableHeightDel = new lz.Delegate(this, "updateAvailableHeight");
+				this.updateAvailableHeightDel.register(this.availableHeightView, "onavailableHeight");
+				this.updateAvailableHeightDel.register(this.actionArea, "onheight");
+				this.updateAvailableHeight();
+			}
+			if (this.availableWidthView != null) {
+				this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+				this.updateAvailableWidthDel.register(this.availableWidthView, "onavailableWidth");
+				this.updateAvailableWidth();
+			}
+			if (this.messageSource != null) {
+				this.updateMessageDel = new lz.Delegate(this, "updateMessage");
+				this.updateMessageDel.register(this.messageSource, "onmessageText");
+				this.updateMessage();
+			}
+				
+			if (lz[this.listClass]) {
+				new lz[this.listClass](this, {
+					name: "list",
+					placement: "content",
+					rowMenuClass: "wcfChildListViewerMenu",
+					menuClass: null,
+					fitExistingRows: this.embedded,
+					listBorderSize: this.embedded ? 1 : 0,
+					filterLeftPadding: this.embedded ? 0 : 3,
+					selectedObjectName: selectedObjectName,
+					selectedObjectView: selectedObjectView
+				});
+			} else {
+				wcfDefinitionLoader.getDefinition(this.listClass, this, {
+					name: "list",
+					placement: "content",
+					rowMenuClass: "wcfChildListViewerMenu",
+					menuClass: null,
+					fitExistingRows: this.embedded,
+					listBorderSize: this.embedded ? 1 : 0,
+					filterLeftPadding: this.embedded ? 0 : 3,
+					selectedObjectName: selectedObjectName,
+					selectedObjectView: selectedObjectView
+				});
+			}
+
+			if (this["o"]) {
+				this.o.bindViewToChildren(this.list, this.baseFilter, this.objectTypes);
+			}
+			if (this.list["filters"] && this.list.filters.length > 0){
+				if (this.embedded){
+					this.list.setAttribute("padding", 5);
+				}
+			}else{
+				this.list.setAttribute("padding", 0);
+			}
+			
+			if (this.embedded) {
+				this.createActions();
+				this.updateActions();
+			}
+			]]>			
+		</handler>
+		
+		<handler name="onbaseFilter">
+			<![CDATA[
+			if (this["list"] && this.list["oList"]) {
+				this.list.oList.setAttribute("baseFilter", this.baseFilter);
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["o"]) {
+				this.o.releaseViewFromChildren(this.list);
+			}
+			this.updateActionsDel.unregisterAll();
+			delete this.updateActionsDel;
+			if (this["updateMessageDel"]) {
+				this.updateMessageDel.unregisterAll();
+				delete this.updateMessageDel;
+			}	
+			if (this["updateAvailableHeightDel"]) {
+				this.updateAvailableHeightDel.unregisterAll();
+				delete this.updateAvailableHeightDel;
+			}
+			if (this["updateAvailableWidthDel"]) {
+				this.updateAvailableWidthDel.unregisterAll();
+				delete this.updateAvailableWidthDel;
+			}
+			super.destroy();
+			]]>
+		</method>		
+
+		<!---
+			@keywords private
+			Update the message.
+		-->
+		<method name="updateMessage" args="e=null">
+			<![CDATA[
+			this.setAttribute("messageText", this.messageSource.messageText);
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			Update the available height.
+		-->
+		<method name="updateAvailableHeight" args="e=null">
+			<![CDATA[
+			var newHeight = this.availableHeightView.availableHeight * this.fractionOfAvailableHeight - this.content.y;
+			if (this.embedded) {
+				newHeight -= 2;
+			}
+			if (this.content["availableHeight"] != newHeight) {
+				this.content.setAttribute("availableHeight", newHeight);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the available width.
+		-->
+		<method name="updateAvailableWidth" args="e=null">
+			<![CDATA[
+			var newWidth = this.availableWidthView.availableWidth;
+			if (this.embedded) {
+				newWidth -= 2;
+			}
+			if (this.content["availableWidth"] != newWidth) {
+				this.content.setAttribute("availableWidth", newWidth);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+			this.updateActionsDel = new lz.Delegate(this, "updateActions");
+			this.parentObjectClientActions = [];			
+			this.childClientActionButtons = [];
+			this.o = null;
+			super.construct(args, parent);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method will update the toolbar actions with the new object object definition.
+		-->
+		<method name="updateActions" args="e=null">
+			<![CDATA[
+				this.updateActionsDel.unregisterAll();
+				if (this["actionArea"]) {
+					this.updateActionsDel.register(this.list, "onselect");
+					this.updateChildClientActionButtons();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="updateChildClientActionButtons">
+			<![CDATA[
+			var buttonIndex = 0;
+			for (var i = 0; i < this.parentObjectClientActions.length; i++) {
+				var clientAction = this.parentObjectClientActions[i];
+				var button = this.childClientActionButtons[buttonIndex];
+				button.setAttribute("clientAction", clientAction);
+				button.setAttribute("parentObjectAction", true);
+				button.setAttribute("referencedObjectAction", false);
+				button.updateButton();
+				buttonIndex++;
+			}
+			if (this.actionArea.visible != buttonIndex > 0) {
+				this.actionArea.setAttribute("visible", buttonIndex > 0);
+			}
+			while (buttonIndex < this.childClientActionButtons.length) {
+				var button = this.childClientActionButtons[buttonIndex];
+				button.setAttribute("clientAction", null);
+				button.updateButton();
+				buttonIndex++;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates the toolbar actions for this list.
+		-->
+		<method name="createActions">
+			<![CDATA[
+				if (this["actionArea"]) {
+					var totalClientActionButtons = this.parentObjectClientActions.length;
+					while (this.childClientActionButtons.length < totalClientActionButtons) {
+						this.childClientActionButtons.push(new lz.wcfChildClientActionButton(this.actionArea, {
+							editor: this,
+							enabled: false
+						}));
+					}
+				}
+			]]>
+		</method>
+							
+		<!---
+			@keywords private
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBaseChildListViewer", "setModelObject(newObject)",[newObject]);
+			}					
+			if (this["o"] !== newObject) {
+				if (this["o"]) {
+					if (this["list"]) {
+						this.o.releaseViewFromChildren(this.list);
+					}
+					this.parentObjectClientActions = [];
+				}
+				this.o = newObject;
+				if (this.o) {
+					if (this["list"]) {
+						this.o.bindViewToChildren(this.list, this.baseFilter, this.objectTypes);
+					}
+					if (this.embedded) {
+						var actionTypes = wcfStringUtil.splitAndTrim(this.clientActionTypes, ",");
+						if (actionTypes.length > 0) {
+							for (var i = 0; i < this.o.objectDefinition.clientActions.length; i++) {
+								if (actionTypes.indexOf(this.o.objectDefinition.clientActions[i].actionType) != -1) {
+									this.parentObjectClientActions.push(this.o.objectDefinition.clientActions[i]);
+								}
+							}
+						}
+					}
+				}
+				if (this["ono"]) {
+					this.ono.sendEvent(o);
+				}
+			}
+			if (this.embedded) {
+				this.createActions();
+				this.updateActions();
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBaseChildListViewer", "setModelObject");
+			}			
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="5"/>
+
+		<view name="actionArea" visible="false">
+			<simplelayout axis="x" spacing="3"/>
+		</view>
+		<view name="content" />
+		<text name="message" text="${classroot.messageText}" multiline="true" width="${parent.content.width}" visible="${classroot.embedded &amp;&amp; classroot.messageText != ''}"/>
+	</class>
+
+	<!---
+		@keywords final
+		This class defines the base child list viewer widget. This class is similar to a {@link wcfChildListEditor} in that it
+		shows the list of children of an object. The difference is that the child list viewer class does not allow you to add 
+		to or delete child objects from the list. However, editing the children displayed is permitted - which items are in the 
+		list cannot be changed. 
+		
+		The class needs to be provided the value for {@link wcfObjectDefinition#objectType} of the child objects to be displayed, as well
+		as the name of the class to use for viewing the child list. 
+		
+		This class extends {@link wcfPropertiesComponent} and should be used in properties views. 
+		
+		Sample usage:
+		@START_CODE
+			<wcfChildListViewer objectTypes="SampleObject" listClass="SampleObjectGrid"/>
+		@END_CODE
+
+		A child list viewer can also be declared as a definition:
+
+		@START_CODE
+			<ChildListViewer objectTypes="SampleObject" listDefinitionName="SampleObjectGrid"/>
+		@END_CODE
+	-->
+	<class name="wcfChildListViewer" extends="wcfPropertiesComponent">
+		<!---
+			A comma separated list of {@link wcfObjectDefinition#objectType object types} to be displayed in this child object list.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string"/>
+		<!---
+			The name of the class to use for viewing this list. This is often a class that extends {@link wcfObjectGrid}.
+			@type string, must be a class that extendes wcfObjectGrid
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The name of the definition to use for viewing this list. 
+			This is often a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			The types of client action.
+		-->
+		<attribute name="clientActionTypes" value="" type="string"/>
+		<!---
+			The name of the currently selected object. This name must match one of the names declared
+			in the containing {@link wcfObjectProperties properties view} with the componentObjectNames
+			attribute. Other {@link wcfPropertiesComponent properties components} can be configured to
+			use this selected object as their component object by specifying the same name with the
+			componentObjectName attribute.
+		-->
+		<attribute name="selectedObjectName" type="string" value="${null}" />
+		<!---
+			The fraction of the available vertical space that will be allocated to this component. This can be used to prevent the component from
+			consuming all of the visible space in a properties view. When multiple components share the same properties view,
+			they can each be assigned a fraction of the available height so that they are all visible at the same time. For example,
+			to ensure that a component only takes up half the available vertical space, set this attribute to "0.5".
+		-->
+		<attribute name="fractionOfAvailableHeight" type="number" value="1"/>
+		<!---
+			@keywords private
+			Child list message.
+		-->
+		<attribute name="messageText" type="string" value=""/>
+				
+		<!---
+			@keywords private
+			Child list viewer should determine their enablement on its own.  Overwrites the 
+			{@link wcfPropertiesComponent#updateEnablement} method to do nothing.
+		-->
+		<method name="updateEnablement" args="e=null"/>
+
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var objectView = null;
+			var objectName = null;
+			if (this.selectedObjectName != null ) {
+				objectName = "o_" + this.selectedObjectName;
+				objectView = wcfModelUtil.findObjectView(this.parent, objectName);
+			}
+			new lz.wcfBaseChildListViewer(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o,
+				objectTypes: this.objectTypes,
+				embedded: true,
+				listClass: this.listClass,
+				listDefinitionName: this.listDefinitionName,
+				fractionOfAvailableHeight: this.fractionOfAvailableHeight,
+				selectedObjectView: objectView,
+				selectedObjectName: objectName,
+				clientActionTypes: this.clientActionTypes,
+				messageSource: this
+			});
+			if (parentComponent["prompt"]) {
+				parentComponent.prompt.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+			}
+			
+			if (parentComponent["extendedHelpIcon"]) {			
+				parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			super.createPrompt(parentComponent);
+			
+			if (parentComponent["editor"]) {
+				if (parentComponent["prompt"]) {
+					parentComponent.prompt.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+				}
+				
+				if (parentComponent["extendedHelpIcon"]) {			
+					parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+				}
+			}
+			]]>
+		</method>
+
+	</class>
+</library>

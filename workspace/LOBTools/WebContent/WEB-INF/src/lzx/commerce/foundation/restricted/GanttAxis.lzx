@@ -1,0 +1,197 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+<!--- @keywords private -->
+<class name="wcfGanttAxisText" >
+	<attribute name="text" value="" type="string"/>
+	<attribute name="availableWidth" type="number" value="0" />
+	<attribute name="grid" />
+	<!---
+		@keywords private
+		The text used to truncate the Gantt Grid column header when the width of a column is smaller than the header text.
+		The default string used is retrieved from a {@link wcfResourceBundle} class.
+	-->
+	<attribute name="truncationText" value="${foundationResources.gridTruncationText.string}" type="string"/>
+	<!---
+		@keywords private
+		A boolean variable which indicates whether or not the header text currently is truncated.
+ 	-->
+	<attribute name="truncated" value="false" type="boolean"/>
+	
+	<handler name="onavailableWidth">
+		this.updateTruncated();
+	</handler>
+	
+	<method name="updateTruncated">
+		<![CDATA[
+		this.setAttribute("truncated", this.txtView.txt.fullTxt.width > this.availableWidth);
+		
+		if (this.availableWidth > 0) {
+			this.txtView.truncatedText.setAttribute("visible", this.truncated);
+			var newTextWidth = this.availableWidth - (this.truncated ? this.txtView.truncatedText.width : 0);
+			if (newTextWidth > 0) {
+				this.txtView.txt.setAttribute('width', newTextWidth);
+			}
+			else {
+				this.txtView.txt.setAttribute('width', 0);
+				this.txtView.truncatedText.setAttribute("visible", false);
+			}
+		}
+		]]>
+	</method>
+
+	<view name="txtView" y="2" height="21" clickable="true">
+		<simplelayout axis="x"/>
+		<view name="txt" clip="true" >
+			<text name="fullTxt" text="${classroot.text}" >
+				<handler name="onwidth">
+					classroot.updateTruncated();
+				</handler>
+			</text>
+		</view>
+		<text name="truncatedText" text="${classroot.truncationText}" />
+		
+		<handler name="onmousedown">
+			classroot.grid.model.setAttribute("activeSelectionView", classroot.grid);
+		</handler>
+	</view>
+	
+	<wcfTooltip name="tooltipInfo" text="${parent.text}" enabled="${classroot.truncated}"/>
+</class>
+
+<!--- @keywords private -->
+<class name="wcfGanttAxis" >
+	<attribute name="startDate" value="null"/>
+	<attribute name="endDate" value="null"/>
+	<attribute name="widthPerDay" value="30" type="number" />
+	<attribute name="marginWidth" value="0" type="number" />
+
+	<!--- @keywords private -->
+	<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+		<![CDATA[
+		// update if the UI date format changes
+		if(preference == "CMCDateFormat") {
+			this.render();
+		}
+		]]>
+	</handler>
+	
+	<drawview name="background" width="${parent.width}" height="${parent.height}" />
+	<view name="header" />
+	
+	<handler name="onwidth">
+		this.render();
+	</handler>
+	
+	<handler name="onheight">
+		this.render();
+	</handler>
+	
+	<method name="render">
+		<![CDATA[
+		if (this.startDate) {
+			this.widthPerDay = this.width/(wcfDateUtil.datedaysdiff(this.endDate, this.startDate)+1);
+		
+			this.background.clear();
+			
+			//Number of tickmarks
+			var timeAxisLabels = getTimeAxisLabels();
+			
+			//Fill the distance array
+			var totalPosition = 0;
+			
+			for(var i = 0; i < timeAxisLabels.length; i++) {
+				var text = null;
+				if (i >= this.header.subviews.length) {
+					text = new lz.wcfGanttAxisText(this.header, {grid: parent} );
+					parent.ganttBar.menu.addView(text);
+				}
+				else {
+					text = this.header.subviews[i];
+				}
+				
+				text.setAttribute("visible", true);
+				text.setAttribute('clickable', true);
+				text.setAttribute('y', 0);
+				text.setAttribute('x', totalPosition);
+				text.setAttribute("availableWidth", timeAxisLabels[i].days * this.widthPerDay);
+				text.setAttribute("text", timeAxisLabels[i].dateText);
+				                  
+				if (totalPosition > marginWidth && totalPosition < (this.width-marginWidth) ) {
+					renderLine(totalPosition, 0, this.height);
+				}
+				
+				totalPosition += timeAxisLabels[i].days * this.widthPerDay;                  
+			}
+			
+			for (var i = timeAxisLabels.length; i < this.header.subviews.length; i++) {
+				this.header.subviews[i].setAttribute("availableWidth", 0);
+				this.header.subviews[i].setAttribute("visible", false);
+				this.header.subviews[i].setAttribute("truncated", false);
+				this.header.subviews[i].setAttribute("text", "");
+			}
+		}
+		]]>
+	</method>
+    
+	<method name="renderLine" args="pX, pY, pHeight">
+		<![CDATA[
+		var strokeHeight = wcfGanttChartStyle.ganttaxislineheight;
+		var strokeSpacing = wcfGanttChartStyle.ganttaxislinespacing;
+		var strokeCount = Math.round(pHeight / (strokeHeight+strokeSpacing));
+		
+		for (var i = 0; i  < strokeCount; i++) {
+			this.background.beginPath();
+			this.background.moveTo(pX, pY+(i*(strokeHeight+strokeSpacing)));
+			this.background.lineTo(pX, pY+(i*(strokeHeight+strokeSpacing))+strokeHeight);
+			this.background.strokeStyle = wcfGanttChartStyle.ganttaxislinecolor;
+			this.background.lineWidth = 1;
+			this.background.stroke();
+		}
+		]]>
+	</method>
+    	
+	<method name="getTimeAxisLabels">
+    	<![CDATA[
+		var labels = new Array();
+		var iDate = wcfDateUtil.copydate(this.startDate);
+
+		if (this.widthPerDay >= 55) {
+			var endDateBoundary = wcfDateUtil.copydate(this.endDate);
+			wcfDateUtil.adddays(endDateBoundary, 1);
+			while (iDate <= endDateBoundary) {
+				var dateText = wcfDateUtil.formatUI(iDate, wcfDateUtil.UI_DATE_FORMAT);
+				labels.push({"days": 1, "dateText": dateText});
+				wcfDateUtil.adddays(iDate, 1);
+			}				
+		}
+		else {
+			var endDateBoundary = wcfDateUtil.copydate(this.endDate);
+			wcfDateUtil.adddays(endDateBoundary, 31);
+			while (iDate <= endDateBoundary) {
+				var daysLeftInMonth = wcfDateUtil.daysleftinmonth(iDate);
+				var dateText = wcfDateUtil.formatUI(iDate, wcfDateUtil.UI_DATE_FORMAT);
+				labels.push({"days": daysLeftInMonth, "dateText": dateText});
+				wcfDateUtil.adddays(iDate, daysLeftInMonth);
+			}	
+		}
+		
+		return labels;
+        ]]>
+	</method>
+
+</class>
+
+</library>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions> 
+	<!---
+            This definition defines the base object from which EMarketingSpotFolder and InheritedEMarketingSpotFolderare derived.
+            An E-Marketing Spot folder is an object used to organize E-Marketing Spots so that they can be found easily.
+            An E-MarketingSpot can be in multiple folders at the same time which is why this class uses a reference object
+            definition to define the relationship between folders and E-Marketing Spots.
+            E-Marketing folders use the Folder noun from the file wc-infrastructure-clientobjects.xml
+            which contains information on how the parameters in the services
+            are mapped to create the appropriate BOD for the Web services.
+	-->
+
+      <PrimaryObjectDefinition
+            definitionName="mktBaseEMarketingSpotFolderPrimaryObjectDefinition"
+            displayName="${mktMarketingResources.EmarketingSpotFolderObjectName}"
+            displayNameProperty="identifier"
+            idProperty="folderId"
+            isBaseDefinition="true"
+            newDisplayName="${mktMarketingResources.EmarketingSpotFolder_newEMarketingSpotFolderDisplayName}"
+            newObjectMenuItemText="${mktMarketingResources.contextMenuNewEMarketingSpotFolder}"
+            objectGroups="EMarketingSpotFolderGroup"
+            propertiesDefinitionName="mktEMarketingSpotFolderProperties"
+            writeUsage="IBM_ManageMarketingTool"> 
+           
+            <!--- This service retrieves all the child folders.  -->
+            <GetChildrenService objectTypes="EMarketingSpotFolderReference,InheritedEMarketingSpotFolderReference" url="/cmc/GetChildFolders">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="folderObjectType" value="EMarketingSpotFolder"/>
+            </GetChildrenService>
+           
+            <!--- This service retrieves all the folder items that belong to this folder. -->
+            <GetChildrenService objectTypes="EMarketingSpotFolderItemReference,EMarketingSpotFolderInheritedItemReference,InheritedEMarketingSpotFolderInheritedItemReference" url="/cmc/GetMarketingFolderItems">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="defaultLanguageId"/>
+            </GetChildrenService>
+			
+			<ObjectTypeFilter filterType="utilitiesViewFilter" objectTypes="EMarketingSpotFolderReference,InheritedEMarketingSpotFolderReference,EMarketingSpotFolderItemReference,EMarketingSpotFolderInheritedItemReference,InheritedEMarketingSpotFolderInheritedItemReference"/>
+			
+           	<!--- Update service to update a folder. -->
+            <UpdateService url="/cmc/UpdateFolder">
+                  <ServiceParam name="storeId" />
+                  <ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="parentFolderId" optional="true" parameterName="parentFolderId" parentProperty="true" propertyName="folderId"/>
+            </UpdateService>
+           
+            <!---
+                  Retrieves the mktBaseEMarketingSpotFolderPrimaryObjectDefinition object that is the parent to this object.
+            -->
+            <GetReferencesService url="/cmc/GetParentFolder">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="parentFolderId" propertyName="parentFolderId"/>
+                  <ServiceParam name="folderObjectType" value="EMarketingSpotFolder"/>
+            </GetReferencesService>
+           
+            <!-- Refresh Service to reload the properties of the folder -->
+            <RefreshService url="/cmc/GetFolderById">
+            <ServiceParam name="storeId"/>
+            <ServiceParam name="folderId" propertyName="folderId"/>
+            <ServiceParam name="folderObjectType" value="EMarketingSpotFolder"/>
+            </RefreshService>
+           
+            <!--- This is the folder_id defined in the FOLDER table, which indicates the primary key of this folder. -->
+            <PropertyDefinition copyProtected="true" propertyName="folderId"/>
+           
+            <!--- This is the identifier of the folder. -->
+            <PropertyDefinition displayName="${mktMarketingResources.EMarketingSpotFolder_name}" maximumSize="256" propertyName="identifier" required="true" trim="true"/>
+           
+            <!--- This is the description of the folder. -->
+            <PropertyDefinition displayName="${mktMarketingResources.EMarketingSpotFolder_description}" maximumSize="256" propertyName="description" type="string"/>
+                 
+            <Xml name="template">
+                  <folderType>IBM_EMarketingSpotFolder</folderType>              
+            </Xml>
+            
+            <!--- Reference to the parent of the folder. -->
+            <ParentReferenceObjectDefinition cascadeDelete="true" baseDefinitionName="mktEMarketingSpotFolderReferenceObjectDefinition"/>
+            
+            <!--- Navigation list definition for navigating from the folder item to the E-Marketing Spot. -->
+            <NavigationListDefinition baseDefinitionName="mktEMarketingSpotFolderItemGridChildList" isDefault="true"/>
+           
+            <!--- Navigation list definition for navigating from the folder to its child items. -->
+            <NavigationListDefinition baseDefinitionName="mktEMarketingSpotFolderGridChildList" toolbarIcon="folderListToolbarIcon"/>  
+                                                     
+      </PrimaryObjectDefinition>
+      
+      <!--
+            Defines the object to be used to represent folders owned by the local store.
+       -->
+      <PrimaryObjectDefinition baseDefinitionName="mktBaseEMarketingSpotFolderPrimaryObjectDefinition" creatable="true" definitionName="EMarketingSpotFolder" objectType="EMarketingSpotFolder" headerIcon="GenericFolderHeaderIcon" icon="GenericFolderIcon">
+      		<!--- Create service to create a folder and its relationship to a parent folder.. -->
+            <CreateService url="/cmc/CreateFolder">
+                  <ServiceParam name="storeId" />
+                  <ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+                  <ServiceParam name="parentFolderId" optional="false" parameterName="parentFolderId" parentProperty="true" propertyName="folderId">
+                  		<EnablementCondition conditionId="enableParentFolderId" negate="true" enablementValue="" propertyName="identifier" parentProperty="true"/>
+                  </ServiceParam>
+            </CreateService>
+      		
+      		<!--- Delete service to delete a folder. -->
+            <DeleteService url="/cmc/DeleteFolder">
+                  <ServiceParam name="storeId" />
+                  <ServiceParam name="folderId" propertyName="folderId"/> 
+            </DeleteService>
+      		
+            <TrueEnablementCondition /> 
+      		
+            <!--- Reference to the items that belong to the folder and are owned by the local store. -->
+            <ReferenceObjectDefinition baseDefinitionName="mktEMarketingSpotFolderItemReferenceObjectDefinition"/>
+           
+            <!--- Reference to the items that belong to the folder and are owned by the asset store. -->
+            <ReferenceObjectDefinition baseDefinitionName="mktEMarketingSpotFolderInheritedItemReferenceObjectDefinition"/>
+      </PrimaryObjectDefinition>
+      
+      <!--
+            Defines the object to be used to represent folders owned by the asset store.
+       -->
+      <PrimaryObjectDefinition baseDefinitionName="mktBaseEMarketingSpotFolderPrimaryObjectDefinition" compatibleObjectTypes="EMarketingSpotFolder" creatable="false" definitionName="InheritedEMarketingSpotFolder" objectType="InheritedEMarketingSpotFolder" headerIcon="InheritedGenericFolderHeaderIcon" icon="InheritedGenericFolderIcon">
+            <!--- Reference to the parent of the folder. -->
+            <ParentReferenceObjectDefinition baseDefinitionName="mktInheritedEMarketingSpotFolderReferenceObjectDefinition"/>
+ 
+            <!--- Reference to the items that belong to the folder and are owned by the asset store. -->
+            <ReferenceObjectDefinition baseDefinitionName="mktInheritedEMarketingSpotFolderInheritedItemReferenceObjectDefinition"/>
+      </PrimaryObjectDefinition>
+      
+      <!-- The relationship between this folder and its local parent -->           
+      <ParentReferenceObjectDefinition definitionName="mktEMarketingSpotFolderReferenceObjectDefinition" derivedId="true" idProperty="folderReferenceId" objectGroups="EMarketingSpotFolderReferenceGroup" objectType="EMarketingSpotFolderReference" referencedType="EMarketingSpotFolder" cascadeDelete="true"/>
+      
+      <!-- The relationship between this folder and its asset store parent -->
+      <ParentReferenceObjectDefinition definitionName="mktInheritedEMarketingSpotFolderReferenceObjectDefinition" derivedId="true" idProperty="folderReferenceId" objectGroups="EMarketingSpotFolderReferenceGroup" objectType="InheritedEMarketingSpotFolderReference" referencedType="InheritedEMarketingSpotFolder" cascadeDelete="true"/>
+      
+      <!-- The relationship between a folder and local E-Marketing Spots in this folder. -->
+      <ReferenceObjectDefinition allowDuplicates="false" baseDefinitionName="mktBaseEMarketingSpotFolderItemReferenceObjectDefinition" initializeObjectStoreId="true"  objectGroups="EMarketingSpotFolderItemReferenceGroup" definitionName="mktEMarketingSpotFolderItemReferenceObjectDefinition" objectType="EMarketingSpotFolderItemReference" referencedTypes="EMarketingSpot">
+            <TrueEnablementCondition  conditionType="childObjectCondition"/>
+      </ReferenceObjectDefinition>
+      
+      <!-- The relationship between this folder and asset store E-Marketing Spots in this folder. -->
+      <ReferenceObjectDefinition allowDuplicates="false" baseDefinitionName="mktBaseEMarketingSpotFolderItemReferenceObjectDefinition" initializeObjectStoreId="true" objectGroups="EMarketingSpotFolderItemReferenceGroup" definitionName="mktEMarketingSpotFolderInheritedItemReferenceObjectDefinition" objectType="EMarketingSpotFolderInheritedItemReference" referencedTypes="InheritedEMarketingSpot">
+            <TrueEnablementCondition conditionType="childObjectCondition"/>
+      </ReferenceObjectDefinition>
+      
+      <!-- The relationship between an inherited folder and an inherited E-Marketing Spot in this folder. -->
+      <ReferenceObjectDefinition allowDuplicates="false" baseDefinitionName="mktBaseEMarketingSpotFolderItemReferenceObjectDefinition" objectGroups="EMarketingSpotFolderItemReferenceGroup" definitionName="mktInheritedEMarketingSpotFolderInheritedItemReferenceObjectDefinition" objectType="InheritedEMarketingSpotFolderInheritedItemReference" referencedTypes="InheritedEMarketingSpot">
+            <TrueEnablementCondition conditionType="childObjectCondition"/>
+      </ReferenceObjectDefinition>
+     
+      <!-- The class to represent relationships between folders and E-Marketing Spots. These relationships are called folder items. -->
+      <ReferenceObjectDefinition definitionName="mktBaseEMarketingSpotFolderItemReferenceObjectDefinition" isBaseDefinition="true" idProperty="folderItemID">
+            <!--- Create service to create the relationship between the parent folder and folder item reference. -->
+            <CreateService url="/cmc/CreateFolderItemReference">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="objectStoreId" parentProperty="true" propertyName="objectStoreId"/>
+                  <ServiceParam name="folderItemStoreId" parameterName="folderItemStoreId" propertyName="objectStoreId" objectPath="EMarketingSpotGroup"/>
+                  <ServiceParam name="folderId" parentProperty="true" propertyName="folderId"/>
+                  <ServiceParam name="folderItemReferenceId" objectPath="EMarketingSpotGroup" propertyName="uniqueId"/>
+            </CreateService>
+            
+            <!--- Delete service to delete the relationship between the parent folder and folder item reference. -->
+            <DeleteService url="/cmc/DeleteFolderItemReference">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="folderItemStoreId" parameterName="folderItemStoreId" propertyName="objectStoreId" objectPath="EMarketingSpotGroup"/>
+                  <ServiceParam name="folderId" parentProperty="true" propertyName="folderId"/>
+                  <ServiceParam name="folderItemReferenceId" objectPath="EMarketingSpotGroup" propertyName="uniqueId"/>
+                  <ServiceParam name="folderItemType" propertyName="folderItemType"/>
+            </DeleteService> 
+ 
+            <TrueEnablementCondition conditionId="objectTypeFolderCondition" conditionType="childObjectCondition"/>
+            
+            <Xml name="template">
+                  <folderItemType>MarketingSpotType</folderItemType>
+            </Xml>           
+      </ReferenceObjectDefinition>
+
+</Definitions>

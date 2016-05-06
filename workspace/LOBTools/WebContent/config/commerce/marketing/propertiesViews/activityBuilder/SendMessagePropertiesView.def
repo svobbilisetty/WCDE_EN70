@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktSendMessageElementObject Send Message action}.
+	-->
+	<FlowElementProperties definitionName="mktSendMessageProperties">
+		<PropertyGroup collapsable="false" name="group">
+	
+			<PropertyCombobox promptText="${mktMarketingResources.messageType}" propertyName="elemTemplateName"/>
+		
+			<PropertyGroup collapsable="false" name="groupEmail">
+				<EnablementCondition conditionId="emailMessageElement" enablementValue="sendIndividualEmail" propertyName="elemTemplateName"/>
+	
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_email_template}" listDefinitionName="mktActivityEmailTemplateGrid" name="emailTemplateEditor" objectTypes="ChildEmailTemplate,ChildInheritedEmailTemplate" promptText="${mktMarketingResources.emailTemplateLabel}" required="true" singleChild="true"/>
+				<PropertyInputText helpText="${mktMarketingResources.help_email_replyTo}" promptText="${mktMarketingResources.replyToEmailAddress}" propertyName="replyTo"/>
+				<PropertyCheckbox falseValue="false" helpText="${mktMarketingResources.help_email_sendImmediately}" promptText="${mktMarketingResources.sendImmediately}" propertyName="sendImmediate" trueValue="true"/>			
+			</PropertyGroup>			
+	
+			<PropertyGroup collapsable="false" name="groupSMS">
+				<EnablementCondition conditionId="SMSMessageElement" enablementValue="sendSMS" propertyName="elemTemplateName"/>
+	
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_sms_content}" listDefinitionName="mktContentGrid" name="SMSTemplateEditor" objectTypes="ChildMarketingContent,ChildInheritedMarketingContent" promptText="${mktMarketingResources.content}" required="true" singleChild="true"/>
+			</PropertyGroup>			
+
+		</PropertyGroup>			
+	</FlowElementProperties>
+</Definitions>

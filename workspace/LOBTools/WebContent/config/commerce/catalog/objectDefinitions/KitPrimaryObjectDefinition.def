@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!--- This definition defines the base object from which Kit and Inherited Kit are derived.
+		It uses the noun CatalogEntry from the file wc-catalog-clientobjects.xml
+		which contains information on how the parameters in the Create, Update or Delete services 
+	 	are mapped to create the appropriate BOD for the Web services.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogEntryPrimaryObjectDefinition" definitionName="catBaseKitPrimaryObjectDefinition" detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}" displayName="${catalogResources.kit_DisplayName}" displayNameProperty="partnumber" helpLink="tasks/tpngrnew.htm" idProperty="catentryId" isBaseDefinition="true" newDisplayName="${catalogResources.kit_NewDisplayName}" newObjectMenuItemText="${catalogResources.contextMenuNewKit}" objectGroups="CatalogEntry,Kits,CatalogEntriesNotASKU" propertiesDefinitionName="catKitProperties" searchType="FindAllCatalogEntries">
+		
+		<!---
+			Retrieves the {@link catCatalogEntryOffer} and
+			{@link catInheritedCatalogEntryOffer} child objects.
+		-->
+		<GetChildrenService objectTypes="CatalogEntryOffer,InheritedCatalogEntryOffer" url="/cmc/GetCatalogEntryChildren-Offer">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+			<ServiceParam name="sterlingConfigEnabled" contextName="sterlingConfigEnabled" />
+			<ServiceParam name="catenttypeId" propertyName="catenttypeId"/>
+		</GetChildrenService>
+
+		<!---
+			Retrieves the {@link catKitComponent} and
+			{@link catInheritedKitComponent} child objects.
+		-->
+		<GetChildrenService objectTypes="KitComponent,SterlingDynamicKitComponent,BundleComponent,InheritedKitComponent,InheritedSterlingDynamicKitComponent,InheritedBundleComponent" url="/cmc/GetCatalogEntryChildren-Components">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+			<ServiceParam name="componentType" value="Kit"/>
+			<ServiceParam name="sterlingConfigEnabled" contextName="sterlingConfigEnabled" />
+		</GetChildrenService>
+
+		<!--- Retrieves the {@link catCatalogEntryInventory} child objects. -->
+		<!--- This service is disabled by default. Uncomment this section to enable the service -->
+		<!--
+			<GetChildrenService url="/cmc/GetCatalogEntryChildren-CatalogEntryInventory" objectTypes="CatalogEntryInventory">
+				<ServiceParam name="storeId"/>
+			</GetChildrenService>
+		-->
+
+		<!---
+ 			Retrieves the {@link catChildSalesCatalogEntry} and {@link catChildSalesInheritedCatalogEntry}
+ 			reference objects for this catalog entry.
+		-->
+		<GetReferencesService primaryObjectTypes="SalesCatalogGroup,InheritedSalesCatalogGroup" referenceObjectTypes="ChildSalesCatalogEntry,ChildSalesInheritedCatalogEntry" url="/cmc/GetCatalogEntryReferences-SalesCatalogGroups">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="masterCatalogId"/>
+		</GetReferencesService>
+		
+		<!--- Property definition for the type of the kit. -->
+		<PropertyDefinition displayName="${catalogResources.kitTypeTitle}" propertyName="catenttypeId" required="true">
+			<PropertyValue displayName="${catalogResources.kit}" value="PackageBean"/>
+			<PropertyValue displayName="${catalogResources.dynamicKit}" value="DynamicKitBean"/>
+		</PropertyDefinition>
+
+		<!--- Property definition for the partnumber of the kit -->
+		<PropertyDefinition displayName="${catalogResources.kitPartnumber_DisplayName}" maximumSize="64" propertyName="partnumber" required="true" type="string"/>
+
+		<!--- Data set that holds the template of the properties or sub objects of this object definition -->
+		<Xml name="template">
+			<object objectType="CatalogEntryListPrice"/>
+		</Xml>
+
+		<!--- 
+			Validator to check and pass the warning message when there is no parent specified for the product 
+		-->
+		<RequiredParentValidator errorMessage="${catalogResources.parentCategoryValidator}" validatorId="parentExistsCheck" validatorType="requiredParentCategoryValidator">
+			<EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId"/>
+		</RequiredParentValidator>
+		
+		<RequiredParentValidator errorMessage="${catalogResources.missingRequiredVersionedCategoryParent}" validatorId="versionedParentExistsCheck" validatorType="requiredParentVersionedCategoryValidator">
+			<EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId" negate="true"/>
+		</RequiredParentValidator>
+
+		<!---  
+			Child object definition for the list price of the kit.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogEntryListPrice"/>
+		<!---  
+			Child object definition for the offer and offer prices for this kit.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogEntryOffer"/>
+		<!---
+			Child object definition for the config model for this kit.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogEntryConfigModel"/>
+
+		<!--- Child object definition which holds the inventory details of this kit. -->
+		<!--- This is disabled by default. Uncomment this section to enable it -->
+		<!-- <ChildObjectDefinition baseDefinitionName="catCatalogEntryInventory"/> -->
+		
+		
+		<LaunchConfiguratorClientAction actionType="Configurator">
+			<EnablementAndCondition>
+				<EnablementCondition propertyName="fullPath" objectPath="CatalogEntryConfigModel/KitConfigModelAssociationGroup/ConfigModelGroup" enablementValue="" conditionId="launchConfiguratorClientActionCondition" negate="true"/>
+				<EnablementCondition checkReadOnly="true" conditionId="checkReadOnlyCondition" enablementValue="false"/> 
+			</EnablementAndCondition>
+		</LaunchConfiguratorClientAction>
+		<DeletePreconfigClientAction actionType="Configurator">
+		    <EnablementAndCondition> 
+				<EnablementCondition propertyName="catentrelId" objectPath="SterlingDynamicKitComponentGroup" enablementValue="" conditionId="deletePreconfigClientActionCondition" negate="true"/>
+				<EnablementCondition checkReadOnly="true" conditionId="checkReadOnlyCondition" enablementValue="false"/> 
+			</EnablementAndCondition>	
+		</DeletePreconfigClientAction>
+				
+	</PrimaryObjectDefinition>
+
+    <PrimaryObjectDefinition baseDefinitionName="catBaseKitPrimaryObjectDefinition" definitionName="Kit" headerIcon="kitHeaderIcon" icon="kitIcon" objectType="Kit">
+     	
+    	<!--- Condition to disable the object creation in certain store types. -->
+		<EnablementOrCondition baseDefinitionName="catStoreTypeCatalogObjectCreationRestriction"/>
+		
+		<!---
+			Create service to create a kit. 
+		-->
+		<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreateCatalogEntry">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="defaultLanguageId" parameterName="descriptionLanguageId"/>
+		</CreateService>
+				
+		<!---
+			Retrieves the {@link catChildKit} objects that refer to this object.
+		-->
+		<GetReferencesService url="/cmc/GetCatalogEntryParent-MasterCatalogCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="childType" value="ChildKit"/>
+		</GetReferencesService>
+		
+		<!---  
+		    Reference object definition for the attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryAttachmentReference"/>
+		
+		<!--- Reference object definition for the components of the kit. -->
+		<ReferenceObjectDefinition baseDefinitionName="catKitComponent"/>
+		
+		<!--- Reference object definition for the components of the dynamic kit if Sterling configuration is enabled. -->
+		<ReferenceObjectDefinition baseDefinitionName="catSterlingDynamicKitComponent"/>
+				
+		<!---  
+		    Reference object definition for the asset store attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryInheritedAttachmentReference"/>				
+		
+		<!--- 
+			Retrieves the content version object for this object
+		-->		
+		<GetChildrenService objectTypes="ContentVersion" url="/cmc/GetContentVersions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectId" propertyName="catentryId"/>
+			<ServiceParam name="objectType" value="Kit"/>
+		</GetChildrenService>
+	
+		<!---
+		    Reference object definition for this object
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="wcfBaseContentVersion" referencedType="Kit"/>
+	
+		<!---
+			Create Content Version Client Action
+		-->
+		<CreateContentVersionClientAction>
+			<EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/> 
+		</CreateContentVersionClientAction>
+
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Kit as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="catBaseKitPrimaryObjectDefinition" compatibleObjectTypes="Kit" definitionName="InheritedKit" displayName="${catalogResources.inheritedKit_DisplayName}" headerIcon="inheritedKitHeaderIcon" icon="inheritedKitIcon" objectType="InheritedKit">	
+		
+		<!---
+			Retrieves the {@link catChildInheritedKit} objects that refer to this object.
+		-->
+		<GetReferencesService url="/cmc/GetCatalogEntryParent-MasterCatalogCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="childType" value="ChildInheritedKit"/>
+		</GetReferencesService>
+		
+		<!---
+			Reference object definition for the kit components in the Asset store.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedKitComponent"/>
+		
+		<!---
+			Reference object definition for the dynamic kit components in the Asset store when Sterling Configuration is enabled.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedSterlingDynamicKitComponent"/>
+				
+		<!---  
+		    Reference object definition for the asset store attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedCatalogEntryInheritedAttachmentReference"/>	
+		
+		<!---  
+			Child object definition for the offer and offer prices for this kit.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catInheritedCatalogEntryOffer"/>
+
+		<!--- 
+		Retrieves the content version object for this object
+		-->		
+		<GetChildrenService objectTypes="ContentVersion" url="/cmc/GetContentVersions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectId" propertyName="catentryId"/>
+			<ServiceParam name="objectType" value="InheritedKit"/>
+			<ServiceParam name="basedOnVersionNumber" propertyName="basedOnVersionNumber"/>
+		</GetChildrenService>
+		<!---  
+	    Reference object definition for the versioned catalog group
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="wcfBaseContentVersion" referencedType="InheritedKit"/>		
+		<!---
+			Create Content Version Client Action
+		-->
+		<CreateContentVersionClientAction />	
+		
+
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition defines the base object from which ConfigModel and InheritedConfigModel are derived.
+	-->
+	<PrimaryObjectDefinition
+		definitionName="catBaseConfigModelPrimaryObjectDefinition"
+		isBaseDefinition="true"
+		detailsViewHeaderText="${catalogResources.kitConfigModelName}" 
+		displayName="${catalogResources.kitConfigModel}" 
+		displayNameProperty="modelName" 
+		helpLink="tasks/tpngrkit.htm" 
+		idProperty="fullPath"
+		creatable="false"
+		objectGroups="ConfigModelGroup"
+		searchType="FindConfigModels"
+		browseFilterType="ConfigModelFilter"
+		utilitiesListDefinitionName="catConfigModelUtilitiesBrowseGrid"
+		writeUsage="IBM_ManageCatalogEntry">				
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing a Configuration Model as a business object.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="catBaseConfigModelPrimaryObjectDefinition" definitionName="ConfigModel" headerIcon="configModelHeaderIcon" icon="configModelIcon" objectType="ConfigModel"/>			
+	
+	<!---		
+		This definition represents the primary object definition describing an inherited Configuration Model as a business object.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="catBaseConfigModelPrimaryObjectDefinition"	definitionName="InheritedConfigModel" headerIcon="inheritedConfigModelHeaderIcon" icon="inheritedConfigModelIcon" objectType="InheritedConfigModel"/>
+
+	<!---		
+		This definition defines the base object from which ConfigModelDirectory and InheritedConfigModelDirectory are derived.
+	-->
+	<PrimaryObjectDefinition
+		definitionName="catBaseConfigModelDirectoryPrimaryObjectDefinition"
+		isBaseDefinition="true"
+		detailsViewHeaderText="${catalogResources.kitConfigModelName}" 
+		displayName="${catalogResources.kitConfigModel}" 
+		displayNameProperty="modelName" 
+		helpLink="tasks/tpngrkit.htm" 
+		idProperty="fullPath"
+		creatable="false"
+		objectGroups="ConfigModelDirectoryGroup"
+		browseFilterType="ConfigModelFilter"
+		utilitiesListDefinitionName="catConfigModelUtilitiesBrowseGrid"
+		writeUsage="IBM_ManageCatalogEntry">
+		
+		<ObjectTypeFilter baseDefinitionName="catConfigModelDetailFilter"/>
+		
+		<GetChildrenService objectTypes="ChildConfigModelDirectory,ChildInheritedConfigModelDirectory,ChildConfigModel,ChildInheritedConfigModel" url="/cmc/GetDynamicKitModelDirectory">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="path" propertyName="path"/>
+			<ServiceParam name="defaultLanguageLocale" contextName="defaultLanguageLocale"/>
+		</GetChildrenService>
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Configuration Model Directory as a business object.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="catBaseConfigModelDirectoryPrimaryObjectDefinition" definitionName="ConfigModelDirectory" headerIcon="ManagedDirectoryHeaderIcon" icon="ManagedDirectoryIcon" objectType="ConfigModelDirectory">
+		<ParentReferenceObjectDefinition derivedId="true" idProperty="fullPath" name="catChildConfigModelDirectory" objectType="ChildConfigModelDirectory" referencedType="ConfigModelDirectory"/>
+		<ParentReferenceObjectDefinition derivedId="true" idProperty="fullPath" name="catChildConfigModel" objectType="ChildConfigModel" referencedType="ConfigModel"/> 
+	</PrimaryObjectDefinition>			
+	
+	<!---		
+		This definition represents the primary object definition describing an inherited Configuration Model Directory as a business object.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="catBaseConfigModelDirectoryPrimaryObjectDefinition" definitionName="InheritedConfigModelDirectory" headerIcon="InheritedManagedDirectoryHeaderIcon" icon="InheritedManagedDirectoryIcon" objectType="InheritedConfigModelDirectory">
+		<ParentReferenceObjectDefinition derivedId="true" idProperty="fullPath" name="catChildInheritedConfigModelDirectory" objectType="ChildInheritedConfigModelDirectory" referencedType="InheritedConfigModelDirectory"/>
+		<ParentReferenceObjectDefinition derivedId="true" idProperty="fullPath" name="catChildInheritedConfigModel" objectType="ChildInheritedConfigModel" referencedType="InheritedConfigModel"/>
+	</PrimaryObjectDefinition>
+	
+    <ChildObjectDefinition definitionName="catCatalogEntryConfigModel" displayName="${catalogResources.kitConfigProperties_DisplayName}" idProperty="configModelId" objectType="CatalogEntryConfigModel" singleInstance="true">
+        <!--- Create service for the user data fields of the catalog entry configurator properties. -->
+        <CreateService url="/cmc/CreateCatalogEntryConfigModel">
+            <ServiceParam name="storeId"/>
+            <ServiceParam name="masterCatalogId"/>
+            <ServiceParam name="catentryId" parentProperty="true"/>
+            <ServiceParam name="xprop_dynamicKitModelReference" propertyName="fullPath" objectPath="KitConfigModelAssociationGroup/ConfigModelGroup" optional="true"/>
+        </CreateService>
+        <!--- Update service for the user data fields of the catalog entry configurator properties. -->
+        <UpdateService url="/cmc/UpdateCatalogEntryConfigModel">
+            <ServiceParam name="storeId"/>
+            <ServiceParam name="catentryId" parentProperty="true"/>
+            <ServiceParam name="xprop_dynamicKitModelReference" propertyName="fullPath" objectPath="KitConfigModelAssociationGroup/ConfigModelGroup" optional="true"/>
+        </UpdateService>
+        
+		<ReferenceObjectDefinition derivedId="true" idProperty="fullPath" objectType="KitConfigModelAssociation" referencedTypes="ConfigModel" objectGroups="KitConfigModelAssociationGroup" allowedParentTypes="Kit"/>
+		<ReferenceObjectDefinition derivedId="true" idProperty="fullPath" objectType="InheritedKitConfigModelAssociation" referencedTypes="InheritedConfigModel" objectGroups="KitConfigModelAssociationGroup"/>
+		<LaunchVisualModelerClientAction actionType="VisualModeler">
+			<EnablementCondition checkReadOnly="true" conditionId="checkReadOnlyCondition" enablementValue="false"/> 
+		</LaunchVisualModelerClientAction>
+	</ChildObjectDefinition>
+</Definitions>

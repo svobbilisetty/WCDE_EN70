@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Display Recently Viewed action. This object defines the following child elements:
+			<ul>
+				<li>{@link mktFlowElementCreateService mktFlowElementCreateService}</li>
+				<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService}</li>
+			</ul>
+		</p>
+		
+		<p>This object also has the following pre-defined properties and restrictions:
+			<ul>
+				<li><b>numberOfTimes</b>: An required value of the maximum number of recently viewed objects to return. This value must be greater than zero.</li>
+			</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktRecentlyViewedElementObject" displayName="${mktMarketingResources.recentlyViewedName}" elemTemplateType="Action" flowIcon="recentlyViewedIcon" headerIcon="recentlyViewedHeaderIcon" helpLink="concepts/csbactdisrv.htm" objectType="recentlyViewed" package="mkt" paletteIcon="recentlyViewedPaletteIcon" propertiesDefinitionName="mktRecentlyViewedProperties" summaryClass="mktRecentlyViewedSummary">
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService"/>
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService"/>
+
+		<Xml name="template">
+			<elemTemplateName>recentlyViewedProducts</elemTemplateName>
+			<numberOfTimes>1</numberOfTimes>
+		</Xml>
+
+		<PropertyDefinition propertyName="elemTemplateName">
+			<PropertyValue displayName="${mktMarketingResources.recentlyViewedProducts}" value="recentlyViewedProducts"/>
+			<PropertyValue displayName="${mktMarketingResources.recentlyViewedCategories}" value="recentlyViewedCategories"/>
+		</PropertyDefinition>
+
+		<PropertyDefinition displayName="${mktMarketingResources.maximumNumberToDisplay}" minValue="1" propertyName="numberOfTimes" required="true" type="number"/>
+
+	</FlowElementObjectDefinition>
+</Definitions>

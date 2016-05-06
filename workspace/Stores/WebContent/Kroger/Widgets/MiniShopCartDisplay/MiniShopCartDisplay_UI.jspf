@@ -1,0 +1,125 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<%-- START MiniShopCartDisplay_UI.jsp --%>
+
+<c:set var="search" value='"'/>
+<c:set var="replaceStr" value="'"/>
+
+<div id="widget_minishopcart" role="button" tabindex="0"
+	onclick="javascript:showMiniShopCartDropDown('widget_minishopcart','quick_cart_container','orderItemsListAutoClose');"
+	onKeyPress="javascript:showMiniShopCartDropDownEvent(event,'widget_minishopcart','quick_cart_container','orderItemsList');" >
+	<div id="miniShopCartLeftCorner" class="left_border"></div>
+	<div id="miniShopCartBody" class="content">
+		<div id="miniShopCartOverlay" class="content_overlay" alt="Aurora" ></div>
+		<div class="info">
+			<div class="subtotal"><span id="minishopcart_subtotal_text"><fmt:message key="MSC_SUBTOTAL"/></span> <span id="minishopcart_subtotal">
+				<c:if test="${!anonymousUser && (cookie[cookieOrderIdKey] == null ) || WCParam.deleteCartCookie == true}">
+				<c:out value="${orderSubTotal}" escapeXml="false"/>
+				</c:if></span></div>
+			<div class="cart"><span id="cart_text"><fmt:message key="MSC_SHOPPING_CART"/> </span>
+				<span id="minishopcart_total">
+					<c:if test="${!anonymousUser && (cookie[cookieOrderIdKey] == null ) || WCParam.deleteCartCookie == true}">
+						<fmt:message key="MSC_ITEMS">
+							<fmt:param value="${orderQuantity}"/>
+						</fmt:message>
+					</c:if>
+				</span>
+			</div>
+		</div>
+		<div class="cart_icon"></div>
+		<div class="arrow"></div>
+	</div>
+	<div id="miniShopCartRightCorner" class="right_border"></div>
+	<div class="clear_float"></div>												
+</div>
+
+<div id="placeHolder"></div>
+
+<div id = "MiniShopCartProductAdded">
+	<div id = "MiniShopCartProductAddedWrapper" style="display:none;">
+		<div id="widget_minishopcart_popup_1">
+			<div class="top">
+				<div class="left_border"></div>
+				<div class="middle_tile"></div>
+				<div class="right_border"></div>
+			</div>
+			<div class="middle">
+				<div class="left_border">
+					<div class="right_border">
+						<div class="content">
+							<a id="MiniShopCartCloseButton_2" href="javascript:dijit.byId('MiniShopCartProductAdded').hide();" class="close_control tlignore">
+								<div class="icon"></div>
+								<span class="close"><fmt:message key="CLOSE"/></span>
+							</a>
+							<div class="notification"><fmt:message key="MSC_ITEM_ADDED"/></div>
+							<div class="products added">
+								<c:forEach var="orderItemRecentlyAddedMap" items="${orderItemsRecentlyAddedList}">
+									<div class="product">
+										<div class="product_image">
+											<a id="MiniShopCartAddedProdImg_${orderItemRecentlyAddedMap['catEntryId']}" href="${orderItemRecentlyAddedMap['productURL']}" title="${orderItemRecentlyAddedMap['productName']}">
+												
+												<c:set var="altImgText">
+													<c:out value="${fn:replace(orderItemRecentlyAddedMap['productName'], search, replaceStr)}" escapeXml="false"/>
+												</c:set>
+
+												<img id="MiniShopCartAddedProdImgSrc_${orderItemRecentlyAddedMap['catEntryId']}" src="<c:out value='${jspStoreImgDir}'/>images/NoImageIcon_sm.jpg" alt="${altImgText}">
+											</a>
+										</div>
+										<div class="product_name">
+											<a id="MiniShopCartAddedProdName_${orderItemRecentlyAddedMap['catEntryId']}" href="${orderItemRecentlyAddedMap['productURL']}">${orderItemRecentlyAddedMap['productName']}</a>
+										</div>
+										<div class="item_spacer_7px"></div>
+										<div id="MiniShopCartAddedProdAttr_${orderItemRecentlyAddedMap['catEntryId']}" class="product_color">
+										<c:forEach var="attribute" items="${orderItemRecentlyAddedMap['productAttributes']}">
+											<div>
+											<fmt:message key="ATTRNAMEKEY">
+												<fmt:param value="${attribute['attributeName']}"/>
+											</fmt:message>
+											${attribute['attributeValue']}</div>
+										</c:forEach>
+										</div>
+										<div class="item_spacer_3px"></div>
+										<span class="product_quantity"><fmt:message key="MSC_QTY"/> <span id="MiniShopCartAddedProdQty_${orderItemRecentlyAddedMap['catEntryId']}">${orderItemRecentlyAddedMap['productQty']}</span></span>
+										<span id="MiniShopCartAddedProdPrice_${orderItemRecentlyAddedMap['catEntryId']}" class="product_price">${orderItemRecentlyAddedMap['productPrice']}</span>
+									</div>
+								</c:forEach>
+							</div>
+							<div class="go_to_cart">
+								<a id="GotoCartButton2" href="<c:out value="${ShoppingCartURL}" escapeXml="false"/>" class="button_primary" tabindex="0">
+									<div class="left_border"></div>
+									<div class="button_text"><fmt:message key="MSC_GO_TO_CART"/></div>
+									<div class="right_border"></div>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="bottom">
+				<div class="left_border"></div>
+				<div class="middle_tile"></div>
+				<div class="right_border"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<input type="hidden" id="currentOrderQuantity" value="<c:out value='${orderQuantity}'/>"/>
+<input type="hidden" id="currentOrderAmount" value="<c:out value='${orderAmountValue}'/>"/>
+<input type="hidden" id="currentOrderCurrency" value="<c:out value='${orderAmountCurrency}'/>"/>
+<input type="hidden" id="currentOrderLanguage" value="<c:out value='${langId}'/>"/>
+<input type="hidden" id="currentOrderId" value="<c:out value='${orderInCart.orderIdentifier.uniqueID}'/>"/>
+											
+<%-- END MiniShopCartDisplay_UI.jsp --%>

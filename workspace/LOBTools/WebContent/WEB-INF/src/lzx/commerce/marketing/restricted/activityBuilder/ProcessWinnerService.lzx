@@ -1,0 +1,67 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		<p>This custom service to the URL /cmc/ActivityProcessWinner is used to process a winner.</p>
+	-->
+	<class name="mktProcessWinnerService" extends="wcfCustomService" displayName="${mktMarketingResources.createNewActivityFromWinner.string}" url="/cmc/ActivityProcessWinner">
+		<!--- The object type of the family that the activity belongs to. -->
+		<attribute name="familyObjectType" type="string" value="WebActivityFamily"/>
+		
+		<wcfFalseEnablementCondition conditionId="falseCondition"/>
+
+		<!---
+			@keywords private
+			Parse the specified data element and apply the properties to the
+			specified object. This method is called when an element named "object"
+			is found in the service response XML.
+			@param wcfModelObject o: the model object
+			@param XML e: "object" data element
+			@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+		-->
+		<method name="parseObject" args="o,e,reqIdentifier">
+			<![CDATA[
+			var model = o.model;
+			
+			var newActivityIdNode = wcfXMLUtil.getFirstElement(e, "newActivityId");
+			var activityId = newActivityIdNode.firstChild.nodeValue;
+			newActivityIdNode.removeNode();
+			
+			var familyIdNode = wcfXMLUtil.getFirstElement(e, "familyId");
+			var familyId = familyIdNode.firstChild.nodeValue;
+			familyIdNode.removeNode();
+			
+			super.parseObject(o, e, reqIdentifier);
+
+			var familyObject = model.findObject(null, model.getObjectDefinition(null, this.familyObjectType), familyId);
+			if (familyObject) {
+				familyObject.setGetChildrenServicesStale(null);
+				if (familyObject.childModelObjectLists.length > 0) {
+					familyObject.loadChildren();
+				}
+			}
+			
+			var newO = model.loadObject(null, model.getObjectDefinition(null, o.objectType), activityId);
+			newO.getProperty(newO.objectDefinition.idProperty).setAttribute("value", activityId);
+			newO.refreshObject(false);
+
+			newO.openGroupObject.setAttribute("open", true);
+			model.oEditor.selectOpenObject(newO.openGroupObject);
+			]]>
+		</method>
+		
+	</class>
+		
+</library>

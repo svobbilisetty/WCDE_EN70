@@ -1,0 +1,106 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for {@link mktEmailActivityPrimaryObjectDefinition E-mail Activities}. This ensures that
+		the sendTime property is marked as readOnly as it is only a display value to the user and configured
+		on the server by IT staff.
+	-->
+	<class name="mktEmailActivityValidator" extends="wcfValidator">
+		<!--- The property name containing the configured value of e-mail activity send time. -->
+		<attribute name="sendTimePropertyName" value="sendtime" type="string"/>
+		
+		<!--- @keywords private -->
+		<attribute name="unsetProperties" value="${[]}"/>
+		
+		<!--- @keywords private -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if (!this["updatePropertyValuesDel"]) {
+				this.updatePropertyValuesDel = new lz.Delegate(this, "updatePropertyValues");
+			}
+			else {
+				this.updatePropertyValuesDel.unregisterAll();
+			}
+			
+			var sendTimeProp = o.getProperty(this.sendTimePropertyName);
+			
+			// make sure the property is readOnly
+			if(sendTimeProp.propertyReadOnly != "true") {
+				sendTimeProp.setAttribute("propertyReadOnly", "true");
+			}
+			
+			var propertyValues = sendTimeProp.propertyDefinition.getPropertyValues(o, this.updatePropertyValuesDel);
+			if ((propertyValues.length > 0) && (propertyValues[0].value != sendTimeProp.value)) {
+				sendTimeProp.setAttribute("value", propertyValues[0].value);
+			}
+			else if (propertyValues.length == 0) {
+				// the service did not complete yet so save ourselves for processing later
+				this.unsetProperties.push(sendTimeProp);
+				
+				if (this["releaseModelObjectDel"]) {
+					this.releaseModelObjectDel.unregisterAll();
+				}
+				else {
+					this.releaseModelObjectDel = new lz.Delegate(this, "releasedModelObject");
+				}
+				this.releaseModelObjectDel.register(o, "beingDestroyed");
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updatePropertyValues" args="e=null">
+			<![CDATA[
+			for (var i = 0; i < this.unsetProperties.length; i++) {
+				var sendTimeProp = this.unsetProperties[i];
+				var propertyValues = sendTimeProp.propertyDefinition.getPropertyValues(sendTimeProp.o);
+				if ((propertyValues.length > 0) && (propertyValues[0].value != sendTimeProp.value)) {
+					sendTimeProp.setAttribute("value", propertyValues[0].value);
+				}
+			}
+			this.unsetProperties = [];
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="releasedModelObject" args="e=null">
+			<![CDATA[
+			// if, by chance, the object gets destroyed before our service comes back, remove it
+			for (var i = 0; i < this.unsetProperties.length; i++) {
+				if(this.unsetProperties[i].o == null) {
+					this.unsetProperties.splice(i, 1);
+					break;
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updatePropertyValuesDel"]) {
+				this.updatePropertyValuesDel.unregisterAll();
+				delete this.updatePropertyValuesDel;
+			}
+			if (this["releaseModelObjectDel"]) {
+				this.releaseModelObjectDel.unregisterAll();
+				delete this.releaseModelObjectDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+	</class>
+</library>

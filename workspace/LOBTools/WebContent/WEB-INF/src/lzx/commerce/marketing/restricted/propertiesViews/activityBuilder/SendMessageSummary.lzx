@@ -1,0 +1,81 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktSendMessageElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text.
+		If the message type is E-mail, it looks at the following property names of 
+		the {@link mktSendMessageElementObject} object:
+		<ul>
+			<li>ChildEmailTemplate/EmailTemplateGroup[name]</li>
+			<li>sendImmediate</li>
+		</ul>
+		If the message type is Text Message (SMS), it looks at the following property names of 
+		the {@link mktSendMessageElementObject} object:
+		<ul>
+			<li>ChildContent/MarketingContentGroup[name]</li>
+		</ul>
+	-->
+	<class name="mktSendMessageSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="templateName" objectPath="ChildEmailTemplate/EmailTemplateGroup" propertyName="name"/>
+		<wcfFlowSummaryParam name="sendImmediate" propertyName="sendImmediate"/>
+		<wcfFlowSummaryParam name="contentName" objectPath="ChildContent/MarketingContentGroup" propertyName="name"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryEmailActionEmailTemplate, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktSendMessageElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+			var summary = "";
+			var msg_type = this.resolvedParams["elemTemplateName"];
+			
+			if(msg_type == "sendIndividualEmail") {
+				summary = mktMarketingResources.replaceValues("summaryMessageType", [mktMarketingResources.email.string]);
+
+				var template_name = this.resolvedParams["templateName"];
+				if(template_name != null && template_name != "") {
+					summary += "\n" + mktMarketingResources.replaceValues("summaryEmailActionEmailTemplate", [template_name]);
+					
+					var sendImmediateText = this.resolvedParams["sendImmediate"];
+					if (sendImmediateText == "false") {
+						summary += "\n" + mktMarketingResources.summaryEmailActionSendDailySchedule.string;
+					}
+					else {
+						summary += "\n" + mktMarketingResources.summaryEmailActionSendImmediately.string;
+					}
+				}
+			}
+			else if(msg_type == "sendSMS") {
+				summary = mktMarketingResources.replaceValues("summaryMessageType", [mktMarketingResources.sms.string]);
+
+				var content = this.getValuesList("contentName");
+				if(content != "") {
+					summary += "\n" + mktMarketingResources.replaceValues("summaryContent", [content]);
+				}
+			}
+			
+			this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+</library>

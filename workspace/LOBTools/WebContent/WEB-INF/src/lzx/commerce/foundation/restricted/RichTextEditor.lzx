@@ -1,0 +1,2250 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		@keywords flash-only
+		
+		The wcfRichTextEditor class will bind a {@link wcfModelProperty} with the {@link wcfRichInputText} widget. The relationship 
+		is bi-directional.  This means that the rich inputbox text will be refreshed to represent the value of the property and 
+		the new property value will be stored when a user changes the rich inputbox text.
+		
+		This text field is for internal use by both the properties and grid implementations. {@link wcfPropertyRichTextEditor}, 
+		will create an wcfRichTextEditor for use in the properties view. {@link wcfGridRichText} creates wcfRichTextEditor 
+		for use inside {@link wcfGrid}.
+	-->
+	<class name="wcfRichTextEditor" bgcolor="0xA5B1C7" defaultplacement="extensionArea">
+		<!---
+			Height of the text area for the rich input text.
+		-->
+		<attribute name="textAreaHeight" type="number" value="18"/>
+		<!--- 
+			Reference to {@link wcfModelProperty} object that is being edited. 
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		<!---
+			Controls the enablement of the rich text editor.
+		-->
+		<attribute name="enabled" type="boolean" value="true"/>
+		<!---
+			@keywords private 
+			Indicates that this rich text editor is currently in rich text mode or HTML mode.
+		-->
+		<attribute name="richTextMode" type="boolean" value="true"/>
+		<!---
+			@keywords private 
+			Locks the stored value from being updated.
+		-->
+		<attribute name="storeValueLock" type="boolean" value="false"/>
+		<!---
+			@keywords private 
+			Delay used in the delayStoreValue method, will wait this amount before calling storeValue
+		-->
+		<attribute name="storeValueDelay" value="500"/> <!-- 1000ms = 1 second -->
+		<!---
+			@keywords private 
+			keeps track of the store value timer, when true the timer is already set
+		-->
+		<attribute name="storeValuePending" type="boolean" value="false"/>
+		<!---
+			@keywords private 
+			Skip storing value of the property.
+		-->
+		<attribute name="skipStoringValue" type="boolean" value="false"/>
+		<!--- 
+			Amount of padding to add to the sides of the rich text editor. The default value is "0". 
+		-->
+		<attribute name="editorPadding" type="number" value="0"/>
+		<!---
+			@keywords private
+			Indicates whether the the <code>font-size</code> CSS attribute should be specified
+			in percentage values. If <code>false</code>, keyword values such as 'xx-small', x-small',
+			'small, 'medium', 'large', 'x-large' and 'xx-large' will be used instead.
+		-->
+		<attribute name="usePercentageFontSizes" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Context menu class for the background of the text editor.
+		-->
+		<attribute name="menuClass" type="string" value="wcfRichTextEditorMenu"/>	
+		<!---
+			@keywords private
+			The raw html text value for this rich text editor. This attribute is only used when no property is specified.
+		-->
+		<attribute name="value" type="string" value=""/>
+		<!---
+			@keywords private
+			Indicates the default mode for this editor. When a new value is set externally, this attribute
+			will control which mode is used to display the new text. The default mode will be overridden if
+			it is set to rich text and there are tags that the rich text mode cannot understand. The default
+			is true.
+		-->
+		<attribute name="defaultToRichTextMode" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			This attribute provides a maximum text area height.
+		-->
+		<attribute name="maximumHeight" value="${null}" />
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.updateEnabledDel = new lz.Delegate(this, "updateEnabled");
+			this.updateEnabledDel.register(this, "onenabled");
+			this.updateEnabled();
+			super.init();
+			this.updateValue();
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			new lz[this.menuClass](this, {
+			name: "menu",
+			editor: this
+			});
+			this.menu.addView(this);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			this.updateEnabledDel.unregisterAll();
+			delete this.updateEnabledDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Reset the rich input text field.
+		-->
+		<method name="resetRichInputText">
+			<![CDATA[			
+			var resetFocus = false;
+			if (this["richInputText"]) {					
+				this.richInputText.updateText(".")					
+				var curFormat = this.richInputText.getFlashTextFormat(0, 1);				
+				if (!wcfRichTextEditorUtil.areFormatsEqual(curFormat, this.defaultFormat)) {					
+					if (lz.Focus.getFocus() == this.richInputText) {
+						resetFocus = true;					
+					}	
+					this.richInputText.destroy();
+					this.richInputText = null;									
+				} else {
+					this.richInputText.updateText("");
+				}
+			} 
+			
+			if (!this["richInputText"]) {				
+				this.richInputText = new lz.wcfRichInputText(this.richBorder.richTextEditorArea, {
+					name: "richInputText",
+					enabled: this.enabled,
+					textAreaHeight: this.textAreaHeight,
+					parentTextEditor: this
+				});
+				if (this["menu"]) {
+					this.menu.addView(this.richInputText);
+				}
+			}
+			if (!this["defaultFormat"]) {
+				this.richInputText.updateText(".")
+				this.defaultFormat = this.richInputText.getFlashTextFormat(0,1);
+				this.richInputText.updateText("");			
+			}
+			
+			if (resetFocus) {
+				lz.Focus.setFocus(this.richInputText);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return the language object from the rich text editor if it is language sensitive or the store default locale if not
+		-->
+		<method name="getLanguageObject">
+			<![CDATA[
+			var langObject = null;
+			var storeConfig = wcfContextUtil.findStoreConfig(this.property.o);
+			if (storeConfig != null) {
+				if (this.property.o.objectDefinition.languageSensitive) {
+					langObject = storeConfig.getLanguageById(this.property.o.getPropertyValue("languageId"));
+				}
+				else {
+					langObject = storeConfig.defaultLanguage;
+				}
+			}
+			return langObject;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the enablemenent of the rich text editor.
+		-->
+		<method name="updateEnabled" args="e=null">
+			<![CDATA[
+			if (this["richInputText"]) {
+				this.richInputText.setAttribute('enabled', this.enabled);
+			}
+			]]>
+		</method>
+
+		<!---
+			Set the {@link wcfModelProperty} to be associated with this rich input box. Listeners are created to
+			watch the property value. If the property changes at anytime, the updateValue method will be called.
+			@param wcfModelProperty newProperty: New Property associated with this input box.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (!this.isinited || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				if (this["property"] && this.storeValuePending) {
+					this.storeValue();
+				}
+				this.property = newProperty;
+				if (this["property"]) {
+					this.updateValueDel.register(this.property, "onvalue");
+				}
+				else {
+					this.updateValueDel.register(this, "onvalue");
+				}
+				this.setAttribute("richTextMode", this.defaultToRichTextMode);				
+				if (this.isinited) {					
+					this.updateValue();
+				}
+				if(this["onproperty"]){
+					this.onproperty.sendEvent();
+				}
+			}
+			]]>
+		</method>
+
+		<!--- 
+			Update and refresh the wcfRichTextEditor value with a new {@link wcfModelProperty} value. 
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if(!this.storeValueLock){
+				var value = this.property == null ? this.value : this.property.value;
+				if (typeof(this["richInputText"]) == "undefined" || value != this.getValueString()) {
+					this.skipStoringValue = true;
+					this.setValueString(value, true);
+					this.skipStoringValue = false;
+				}
+			}
+			]]>
+		</method>
+
+		<!--- 
+			Set the {@link wcfModelProperty} to represent the wcfRichTextEditor value. This method is called when the input box
+			value is changed.
+		-->
+		<method name="storeValue" args="e=null">
+			<![CDATA[
+			if (this.storeValuePending) {
+				this.storeValueDel.unregisterAll();
+				lz.Timer.removeTimer(this.storeValueDel);
+			}
+			if (this["richInputText"]) {
+				this.storeValuePending = false;
+				this.storeValueLock = true;
+				var newValue = this.getValueString();
+				if (this.property) {
+					this.property.change(newValue);
+					if(wcfLogger.enabled){
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfRichTextEditor", "storeValue", "updates the model property " + this.property.propertyName + " with new value " + newValue + this.property.o.logString());
+					}
+				}else{
+					this.setAttribute("value", newValue);
+				}
+				this.storeValueLock = false;
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Calls storeValue on a 2.5 second delay
+		-->
+		<method name="delayedStoreValue">
+			<![CDATA[
+			if (!this.skipStoringValue && !this.storeValuePending){
+				this.storeValuePending = true;
+				if (typeof(this.storeValueDel) == "undefined") {
+					this.storeValueDel = new lz.Delegate(this, "storeValue");
+				}
+				this.storeValueDel.unregisterAll();
+				if(this.property){
+					this.storeValueDel.register(this.property.o.openGroupObject, "beingSaved");
+				}
+				lz.Timer.addTimer(this.storeValueDel, this.storeValueDelay);
+			}
+			]]>
+		</method>
+
+		<!---
+			Insert the specified text at the current selection point.
+			@param string normalText: the raw text
+		-->
+		<method name="insertTextAtSelection" args="normalText">
+			<![CDATA[
+			this.richInputText.insertTextAtSelection(normalText);
+			]]>
+		</method>
+		<!---
+			Get the text in a format suitable for storing in the model.
+			@return string: the html text
+		-->
+		<method name="getValueString">
+			<![CDATA[
+			var text = "";
+			if (this["richInputText"]) {
+				if(this.richTextMode){
+					text = this.postFilter(this.richInputText.getHTMLText());
+				}else{
+					text = this.richInputText.getText();
+				}
+			}
+			return text;
+			]]>
+		</method>
+		
+		<!---
+			Set the text from the model.
+			@param string str: the HTML text
+			@param boolean overrideRTMode: When this flag is set to true, the editor mode will be forced to HTML mode if the new string contains tags that are incompatible with rich text mode.
+		-->
+		<method name="setValueString" args="str, overrideRTMode">
+			<![CDATA[			
+			this.resetRichInputText();
+			var filteredString = this.preFilter(str);
+			if (overrideRTMode && this.richTextMode && !wcfRichTextEditorUtil.validHTMLText(wcfRichTextEditorUtil.tagTextToLower(filteredString))) {							
+				this.setAttribute("richTextMode", false);			
+			}
+			if(this.richTextMode){
+				this.richInputText.setHTMLText(filteredString);
+			}else{
+				this.richInputText.updateText(str);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Switches rich text editor between HTML mode and rich text mode.
+			@param boolean prompt: display confirmation dialog if the mode switch will discard unrecognized HTML tags
+		-->
+		<method name="switchModes" args="prompt">
+			<![CDATA[
+			var filteredText = this.preFilter(this.richInputText.getText());
+			if(prompt && !this.richTextMode && !wcfRichTextEditorUtil.validHTMLText(wcfRichTextEditorUtil.tagTextToLower(filteredText))){
+				wcfRichTextAlertDialog.openRichTextAlertDialog(foundationResources.richTextAlertDialogMessage.string, this);
+			}else{	
+				if (this.storeValuePending) {
+					this.storeValue();
+				}
+				this.setAttribute("richTextMode", !this.richTextMode);
+				
+				this.setValueString(this.property != null ? this.property.value : this.value, false);
+				if (!prompt && this.richTextMode && !wcfRichTextEditorUtil.validHTMLText(wcfRichTextEditorUtil.tagTextToLower(filteredText))){
+					this.storeValue();
+				}
+				this.richInputText.setSelection(0, 0);
+			}	
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Override to unescape xml tags such as <e-mail/> before it is sent to the service or mode is changed.
+			@param string text: the escaped text from the rich text editor.
+			@returns string: The input text with unescaped tags such as &lt;e-mail/&gt;.
+		-->
+		<method name="preFilter" args="text">
+			return text;
+		</method>
+		
+		<!---
+			@keywords private
+			Override to escape tags such as &lt;e-mail/&gt; so the rich text editor displays them properly.
+			@param string text: the original text from the server.
+			@returns string: The input text with escaped tags such as &lt;e-mail/&gt;.
+		-->
+		<method name="postFilter" args="text">
+			return text;
+		</method>
+		
+		
+		<view name="background" bgcolor="0xF5FAFA" x="1" y="1" width="${parent.width - 2}"
+				height="${parent.bottomBorder.y - 1}"/>
+		<view name="toolbarView" x="1" y="1" width="${parent.width - 2}" height="${visible ? background.height : 0}" clip="true" focusable="true">
+			
+			<!--- @keywords private -->
+			<handler name="onfocus" >
+			    <![CDATA[				
+			    if(!this["indicator"]){
+				    new lz.wcfFocusIndicator(this, {
+				    	name: "indicator",
+				    	focusableView: this,
+				    	indicatorView: this
+				    });
+			    }
+				]]>
+			</handler>
+			
+			<!--- @keywords private -->
+			<handler name="onkeydown" args="k">
+			    <![CDATA[
+			   if(k == 39){  //right
+			    	var nextView = lz.Focus.getNext(this);
+			    	lz.Focus.setFocus(nextView);
+			    }
+				]]>
+			</handler>
+			
+			<!--- @keywords private -->
+			<method name="getNextSelection">
+				<![CDATA[
+			    return parent.richInputText;
+				]]>
+			</method>
+			
+			<view name="background" resource="rteToolbar" stretches="width" width="${parent.width}"/>
+			<view name="buttons">
+				<simplelayout axis="x" inset="4" spacing="6"/>
+				<wcfCenterLayout axis="y"/>				
+				<wcfRichTextToolBarButton  name="boldButton" buttonResource="fontboldButton1" onclick="classroot.richInputText.applyTextFormat('bold',null)" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextBold.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextToolBarButton  name="italicButton" buttonResource="fontitalicButton1" onclick="classroot.richInputText.applyTextFormat('italic',null)" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextItalics.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextToolBarButton  name="underlineButton" buttonResource="fontunderLineButton1" onclick="classroot.richInputText.applyTextFormat('underline',null)" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextUnderline.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextEditorSeparator/>
+				
+				<wcfRichTextEditorFontButton  name="fontButton" buttonResource="fonttypeButton1" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextFont.string}"/>
+				</wcfRichTextEditorFontButton>
+				
+				<wcfRichTextEditorSizeButton  name="sizeButton" buttonResource="fontsizeButton1" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextFontSize.string}"/>
+				</wcfRichTextEditorSizeButton>
+				
+				<wcfRichTextEditorColorButton  name="colorButton" buttonResource="fontcolorButton1" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextFontColor.string}"/>
+				</wcfRichTextEditorColorButton>
+				
+				<wcfRichTextEditorSeparator/>
+				
+				<wcfRichTextToolBarButton  name="leftButton" buttonResource="fontleftButton1" onclick="classroot.richInputText.applyLineFormat('align','left')" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextAlignLeft.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextToolBarButton  name="centerButton" buttonResource="fontcenterButton1" onclick="classroot.richInputText.applyLineFormat('align','center')" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextAlignCenter.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextToolBarButton  name="rightButton" buttonResource="fontrightButton1" onclick="classroot.richInputText.applyLineFormat('align','right')" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextAlignRight.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextEditorSeparator/>
+				
+				<wcfRichTextToolBarButton  name="moreButton" buttonResource="fontmoreindentButton1" onclick="classroot.richInputText.applyLineFormat('indent',10)" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextIncreaseIndent.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextToolBarButton  name="lessButton" buttonResource="fontlessindentButton1" onclick="classroot.richInputText.applyLineFormat('indent',-10)" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextDecreaseIndent.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextToolBarButton  name="bulletButton" buttonResource="fontbulletButton1" onclick="classroot.richInputText.applyLineFormat('bullet',null)" enabled="${classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${foundationResources.richTextBullets.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextEditorSeparator visible="${parent.spellCheckButton.visible}"/>
+				
+				<wcfRichTextToolBarButton  name="spellCheckButton" buttonResource="spellCheckButton" visible="${classroot.property != null}" parentTextEditor="${classroot}">
+					<handler name="onclick">
+						<![CDATA[
+						if (wcfEventTimer.enabled) wcfEventTimer.start("wcfRichTextEditor spellCheckButton");
+						wcfSpellCheckDialog.openSpellCheckDialog(classroot, classroot.richInputText, classroot.getLanguageObject(), classroot.richInputText.cachedSelectionPosition, classroot.richInputText.cachedSelectionSize);
+						if (wcfEventTimer.enabled) wcfEventTimer.end();
+						]]>
+					</handler>
+					<wcfTooltip text="${foundationResources.richTextSpellCheck.string}"/>
+				</wcfRichTextToolBarButton>
+				
+				<wcfRichTextEditorSeparator />
+				
+				<wcfRichTextToolBarButton name="htmlModeButton" buttonResource="htmlMode" onclick="classroot.switchModes(true)" showSelected="${!classroot.richTextMode}" parentTextEditor="${classroot}">
+					<wcfTooltip text="${classroot.richTextMode ? foundationResources.richToHtmlMode.string : foundationResources.htmlToRichMode.string}"/>
+				</wcfRichTextToolBarButton>
+			</view>
+		</view>
+		<view name="richBorder" bgcolor="0xA5B1C7" x="${classroot.editorPadding}" width="${parent.width - (2 * classroot.editorPadding)}"
+				y="${(parent.toolbarView.visible) ? parent.toolbarView.y + parent.toolbarView.height : classroot.editorPadding}" height="${richTextEditorArea.height + 3}">
+			
+			<view name="richTextEditorArea" x="1" y="2" width="${parent.width-2}" />
+			<view x="1" y="${parent.height-1}" resource="shadow_stroke_bottom" width="${parent.width-2}" stretches="width" visible="${classroot.enabled}"/>
+			<view x="1" y="1" resource="shadow_left" height="${parent.height-2}" stretches="height" visible="${classroot.enabled}"/>
+			<view x="${parent.width-2}" y="1" resource="shadow_right" height="${parent.height-2}" stretches="height" visible="${classroot.enabled}"/>
+			<view x="1" y="1" resource="shadow_top" width="${parent.width-2}" stretches="width" visible="${classroot.enabled}"/>
+			<view x="1" y="${parent.height-2}" resource="shadow_bottom" width="${parent.width-2}" stretches="width" visible="${classroot.enabled}"/>
+			<view resource="shadow_stroke_top" width="${parent.width}" stretches="width" visible="${classroot.enabled}"/>
+ 
+		</view>
+		<view name="extensionArea" x="${classroot.editorPadding}" width="${parent.width - (2 * classroot.editorPadding)}"
+				y="${parent.richBorder.y + parent.richBorder.height}"/>
+		<view name="bottomBorder" bgcolor="0xA5B1C7" width="${parent.width}" height="${parent.extensionArea.height == 0 ? 0 : 1}" y="${parent.extensionArea.y + parent.extensionArea.height}"/>
+	</class>
+	
+	<!---
+		@keywords private
+		@keywords flash-only
+		
+		Rich text entry field. Instances of wcfRichInputText are created by wcfRichTextEditor.
+	-->
+	<class name="wcfRichInputText" extends="inputtext" multiline="true" width="${parent.width}" >		 
+		<switch>
+			<when property="$as3">
+				<passthrough>
+					import flash.text.TextFormat;
+				</passthrough>
+			</when>
+		</switch>
+     			 
+		<!---
+			Ensure that the background color is white.
+		-->
+		<attribute name="bgcolor" value="${this.enabled ? 0xFFFFFF : 0xEDEFF4}"/>
+		<!---
+			Initialize the height to the parent's "textAreaHeight" attribute.
+		-->
+		<attribute name="height" value="${this.textAreaHeight}" when="once"/>
+		<!---
+			Reference to the parent {@link wcfRichTextEditor}
+		-->
+		<attribute name="parentTextEditor" value="${null}"/>
+		<!---
+			@keywords private
+			Cached selection position. When the input text loses focus, the selection is also lost.
+			This attribute is used to save the last selected position.
+		-->
+		<attribute name="cachedSelectionPosition" value="0"/>
+		<!---
+			@keywords private
+			Cached selection size. When the input text loses focus, the selection is also lost.
+			This attribute is used to save the last seleciton size.
+		-->
+		<attribute name="cachedSelectionSize" value="0"/>
+		<!---
+			@keywords private
+			Saved text. This is used to determine if the text has changed as the result of a keystroke.
+		-->
+		<attribute name="savedText" value="null"/>
+		<!---
+			@keywords private
+			New text format to be used with the next change.
+		-->
+		<attribute name="newTextFormat" value="null"/>
+		
+		<!---
+			Height of the text area for the rich input text.
+		-->
+		<attribute name="textAreaHeight" type="number" value="18"/>
+		<!---
+			@keywords private 
+			The size of the padding for the rich input text widget.
+		-->
+		<attribute name="inputTextPadding" type="number" value="5"/>
+		<!---
+			@keywords private
+			This is used to restrict the ontext handlers while text is being loaded from the setHTMLText method.
+		-->
+		<attribute name="settingText" type="boolean" value="false"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.setAttribute("scrollevents", true);
+			this.updateInputTextHeight();
+			this.mouseDownDel = new lz.Delegate(this, "doMouseDown");
+			this.mouseDownDel.register(this, "onmousedown");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.mouseDownDel.unregisterAll();
+			delete this.mouseDownDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the height to match the current text size.
+		-->
+		<method name="updateInputTextHeight">
+			<![CDATA[
+			var newHeight = (this.lineheight * this.tsprite.textfield.numLines) + this.inputTextPadding;
+			if (newHeight <= this.textAreaHeight) {
+				newHeight = this.textAreaHeight;
+			}
+			if (this.parentTextEditor.maximumHeight != null && newHeight > this.parentTextEditor.maximumHeight){
+				newHeight = this.parentTextEditor.maximumHeight;
+			}
+			if (this.height != newHeight) {
+				this.setAttribute("height", newHeight);
+			}
+			]]>
+		</method>
+		
+		<handler name="onmaxscroll" args="m">
+			<![CDATA[
+			if(this.getSelectionPosition() >= 0) {
+				var maxLinesInView = Math.floor(this.height / this.lineheight);
+				var totalLines = this.tsprite.textfield.numLines;
+				var currentLine = this.tsprite.textfield.getLineIndexOfChar(this.getSelectionPosition()) + 1;
+				if(currentLine == 0) {
+					// textfield.getLineIndexOfChar() returns -1 if cursor is at the end of the text, ie: on the last line
+					currentLine = totalLines;
+				}
+				
+				// if there are more lines than we can show, may need to adjust scrolling based on cursor
+				if(totalLines > maxLinesInView) {
+					var scrollLine = currentLine - maxLinesInView + 1;
+
+					// update scroll only if we're outside the currently viewable lines
+					if(scrollLine > 0 && (this.scroll < scrollLine || this.scroll > currentLine)) {
+						this.setAttribute("scroll", scrollLine);
+					}
+				}
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Set new text format. This text format will be stored when a business user selects a different format, 
+			then applied to the next character entered.
+			@param textformat textFormat: new text format
+		-->
+		<method name="setNewTextFormat" args="textFormat">
+			<![CDATA[
+			this.newTextFormat = textFormat;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Apply the specified format value to the current selection. If there is no selection, then the format will 
+			be applied to the next text entered.
+			@param string attr: the attribute to be changed
+			@param object value: the new value
+		-->
+		<method name="applyTextFormat" args="attr, value">
+			<![CDATA[
+			if (this.cachedSelectionPosition != null) {
+				var oldScroll = this.scroll;
+				var pos = this.cachedSelectionPosition;
+				var size = this.cachedSelectionSize;
+				if (pos < 0) {
+					pos = 0;
+				}
+				if (size < 0) {
+					size = 0;
+				}
+				var textFormat;
+				if (size > 0) {
+					textFormat = this.getFlashTextFormat(pos, pos + size);
+				}
+				else if (pos == 0) {
+					textFormat = this.getFlashTextFormat(0, 1);
+				}
+				else {
+					textFormat = this.getFlashTextFormat(pos - 1, pos);
+				}
+				if (value != null) {
+					textFormat[attr] = value;
+				}
+				else {
+					textFormat[attr] = !textFormat[attr];
+				}
+				if (size > 0) {
+					this.setFlashTextFormat(textFormat, pos, pos + size);
+					if(this.parentTextEditor) {
+						this.parentTextEditor.storeValue();
+					}
+				}
+				else {
+					this.setNewTextFormat(textFormat);
+				}
+				this.setSelection(pos, pos + size);
+				this.updateInputTextHeight();
+				
+				if(this.scroll != oldScroll) {
+					this.setAttribute("scroll", oldScroll);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Apply the specified line format value to the current selection. The selection will be expanded to include 
+			complete lines.
+			@param string attr: the attribute to be change
+			@param object value: the new value
+		-->
+		<method name="applyLineFormat" args="attr, value">
+			<![CDATA[
+			if (this.cachedSelectionPosition != null) {
+				var oldScroll = this.scroll;
+				var pos = this.cachedSelectionPosition;
+				var size = this.cachedSelectionSize;
+				if (pos < 0) {
+					pos = 0;
+				}
+				if (size < 0) {
+					size = 0;
+				}
+				var currentText = this.getText();
+				var lineStart = 0;
+				var lineEnd = currentText.length;
+				for (var i = (pos-1); i >= 0; i--) {
+					if(currentText.charAt(i) == '\n'){
+						lineStart = i + 1;
+						break;
+					}
+				}
+				for (var i = (pos + size); i < currentText.length; i++) {
+					if (currentText.charAt(i) == '\n') {
+						lineEnd = i + 1;
+						break;
+					}
+				}
+				var endIndex = lineStart + 1;
+				var textFormat = this.getFlashTextFormat(lineStart, endIndex);
+				
+				if(lineStart >= currentText.length){ //special case, at the end of the text
+					if (value != null) {
+						textFormat[attr] = value;
+					}else {
+						textFormat[attr] = !textFormat[attr];
+					}					
+					this.setNewTextFormat(textFormat);	
+				}else{	//normal case
+					if (value == null) {
+						value = !textFormat[attr];
+					}
+					if (attr == "indent") {
+						value = textFormat.indent + value;
+						if (value < 0) {
+							value = 0;
+						}
+					}
+					this.applyTextAttr(attr, value, lineStart, lineEnd);
+				}
+				if(this.parentTextEditor) {
+					this.parentTextEditor.storeValue();
+				}
+				this.setSelection(pos, pos + size);
+				this.updateInputTextHeight();
+								
+				if(this.scroll != oldScroll) {
+					this.setAttribute("scroll", oldScroll);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Insert the specified text at the current selection point.  Either the cusor position or a selected
+			block of text, depending on what is currently selected.
+			@param string normalText: the raw text
+		-->
+		<method name="insertTextAtSelection" args="normalText">
+			<![CDATA[
+			if (this.cachedSelectionPosition != null) {
+				var pos = this.cachedSelectionPosition;
+				var size = this.cachedSelectionSize;
+				if (pos < 0) {
+					pos = 0;
+				}
+				if (size < 0) {
+					size = 0;
+				}
+				this.setSelection(pos, pos + size);
+				var textFormat = this.newTextFormat;
+				this.newTextFormat = null;
+				if (textFormat == null) {
+					if (size > 0) {
+						textFormat = this.getFlashTextFormat(pos, pos + size);
+					}
+					else if (pos == 0) {
+						textFormat = this.getFlashTextFormat(0, 1);
+					}
+					else {
+						textFormat = this.getFlashTextFormat(pos - 1, pos);
+					}
+				}
+				this.replaceSel(normalText);
+				this.setFlashTextFormat(textFormat, pos, pos + normalText.length);
+				if(this.parentTextEditor) {
+					this.parentTextEditor.storeValue();
+				}
+				this.cachedSelectionPosition = pos + normalText.length;
+				this.cachedSelectionSize = 0;
+				this.updateInputTextHeight();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set the text for this rich input text.
+			@param string newText: the new text
+		-->
+		<setter name="text" args="newText">
+			<![CDATA[
+			super.setAttribute('text', newText);
+			this.updateInputTextHeight();
+			]]>
+		</setter>
+		
+		<!---
+			Update the text for this rich input text. Use this method will ensure that
+			the newly set value is not stored back to the model.
+			@param string newText: new text
+		-->
+		<method name="updateText" args="newText">
+			<![CDATA[
+			this.settingText = true;
+			this.setAttribute('text', newText);
+			this.settingText = false;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getPrevSelection">
+			<![CDATA[
+			return parentTextEditor.toolbarView;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle onfocus event. Reset the stored value of the cursor postion and the stored selection size.
+		-->
+		<handler name="onfocus">
+			<![CDATA[
+			if (!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this,
+			    	offset: 1
+			    });
+			}
+			this.cachedSelectionPosition = null;
+			this.cachedSelectionSize = null;
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle onblur event. Store the value of the cursor postion and the selection size.
+		-->
+		<handler name="onblur">
+			<![CDATA[
+			if (this.parentTextEditor.storeValuePending) {
+				this.parentTextEditor.storeValue();
+			}
+			this.cachedSelectionPosition = this.getSelectionPosition();
+			this.cachedSelectionSize = this.getSelectionSize();
+			if(this.cachedSelectionSize < 0){
+				this.cachedSelectionSize = 0;
+			}
+			if(this.cachedSelectionPosition < 0){
+				this.cachedSelectionPosition = 0;
+			}
+			this.savedText = null;
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle mouse down events. Reset the text format.
+		-->
+		<method name="doMouseDown" args="e=null">
+			<![CDATA[
+			this.setNewTextFormat(null);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle key down event.  Save the text as it is entered.
+			@param string kc: the new character
+		-->
+		<handler name="onkeydown" args="kc">
+			<![CDATA[
+			this.savedText = this.getText();
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			Handle key up event. Catches the return key because ontext is not called when
+			business user hits enter.
+			@param string kc: the new character			
+		-->
+		<handler name="onkeyup" args="kc">
+			<![CDATA[
+			if (kc == 13 && this.newTextFormat == null) { // enter key doesn't trigger "ontext"
+				this.handleNewText();
+			}
+			this.savedText = null;
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+		-->
+		<handler name="ontext">
+			<![CDATA[
+			this.handleNewText();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle new text. When a new character is entered it will be formatted to match the preceding 
+			character. If a new format has been selected, it will be formatted with the new format.
+		-->
+		<method name="handleNewText">
+			<![CDATA[
+			if(!this.settingText){
+				if (this.savedText != null) {
+					var newText = this.getText();
+					if (newText.length - this.savedText.length == 1) {
+						var pos = this.getSelectionPosition() - 1;
+						var textFormat = this.newTextFormat;
+						this.newTextFormat = null;
+						if (textFormat == null) {
+							textFormat = this.getFlashTextFormat(pos - 1, pos);
+							if((pos == 0 || newText.charAt(pos-1)=='\n') && (newText.length > pos + 1 && newText.charAt(pos+1)!='\n')){
+								//special case, cursor at very front of an existing line
+								var lineFormat = this.getFlashTextFormat(pos + 1, pos + 2);
+								textFormat['indent'] = lineFormat.indent;
+								textFormat['bullet'] = lineFormat.bullet;
+								textFormat['align'] = lineFormat.align;
+							}
+						}
+						this.setFlashTextFormat(textFormat, pos, pos + 1);
+					}
+					else {
+						this.setNewTextFormat(null);
+					}
+					this.savedText = newText;
+				}
+				if(this.parentTextEditor) {
+					this.parentTextEditor.delayedStoreValue();
+				}
+				this.updateInputTextHeight();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set HTML text for this rich input text.
+			@param string newText: new HTML text
+		-->
+		<method name="setHTMLText" args="newText">
+			<![CDATA[
+			this.settingText = true;
+			newText = wcfRichTextEditorUtil.tagTextToLower(newText);
+			if(newText != null && newText != "" && wcfRichTextEditorUtil.validHTMLText(newText)){
+				var textFormat = new TextFormat();
+				var skipBreak = false;
+				var position = 0;
+				var i = 0; 
+				while(i < newText.length){
+					if(newText.charAt(i) == '<'){
+						var end = newText.indexOf('>',i);
+						if(end == -1){
+							break;
+						}
+						var tag = newText.substr(i+1,end-i-1);
+						if(tag.indexOf("li") == 0 || tag.indexOf("div") == 0){
+							textFormat = this.setBlockTag(tag, textFormat);
+							if(i != 0 && !skipBreak){
+								this.replaceText(position,position,"\n");
+								this.setFlashTextFormat(textFormat, position, position + 1);
+								position++;
+								skipBreak = true;
+							}
+						}else if(tag.indexOf("span") == 0){
+							textFormat = this.setSpanTag(tag,textFormat);
+						}else if(tag.indexOf("br") == 0){
+							textFormat.bullet = false;
+							this.replaceText(position,position,"\n");
+							this.setFlashTextFormat(textFormat, position, position + 1);
+							position++;	
+							skipBreak = true;
+						}else if(tag == "/li" || tag == "/div"){
+							textFormat.bullet = false;
+							textFormat.align = 'left';
+							textFormat.indent = 0;
+							if(!skipBreak){
+								this.replaceText(position,position,"\n");
+								this.setFlashTextFormat(textFormat, position, position + 1);
+								position++;
+								skipBreak = true;
+							}
+						}else if(tag == "/span"){
+							textFormat.italic = false;
+							textFormat.underline = false;
+							textFormat.bold = false;
+							textFormat.color = 0;
+							textFormat.size = 11;
+							textFormat.font = "Verdana";
+						}else if(tag == "ul" && i == 0){
+							skipBreak = true;
+						}else if(tag != "ul" && tag != "/ul"){
+							break;
+						}
+						i = end+1;
+					}else{
+						var end = newText.indexOf('<',i);
+						if(end == -1){
+							end = newText.length;
+						}
+						var plainText = wcfRichTextEditorUtil.unescapeString(newText.substr(i,end - i));
+						this.replaceText(position, position, plainText); 
+						this.setFlashTextFormat(textFormat, position, position + plainText.length);
+						position = position + plainText.length;
+						i = end;
+						skipBreak = false;
+					}
+				}
+			}else{
+				newText = wcfRichTextEditorUtil.removeTags(newText);
+				this.setAttribute('text', wcfRichTextEditorUtil.unescapeString(newText));
+			}
+			this.settingText = false;
+			this.updateInputTextHeight();
+			]]>
+		</method>
+		
+		<!---
+			Get HTML text for this rich input text.
+		-->
+		<method name="getHTMLText">
+			<![CDATA[
+			var text = this.getText();
+			var htmlText = "";
+			var outstandingSpan = false;
+			var outstandingDiv = false;
+			var outstandingUl = false;
+			var outstandingLi = false;
+			var newLine = true;
+			var spanIndex = 0;
+			for (var i = 0; i < text.length; i++) {
+				if(text.charAt(i) != '\n'){
+					var textFormat = this.getFlashTextFormat(i,i+1);
+					if(newLine){
+						if(!textFormat.bullet && outstandingUl){
+							htmlText = htmlText + "</ul>";
+							outstandingUl = false;
+						}else if(textFormat.bullet && !outstandingUl){
+							htmlText = htmlText + "<ul>";
+							outstandingUl = true;
+						}
+						var lineTag = this.getBlockTag(textFormat);
+						if (lineTag) {
+							htmlText = htmlText + lineTag;
+							if(textFormat.bullet){
+								outstandingLi = true;
+							}else{
+								outstandingDiv = true;
+							}
+						}
+					}
+					if(this.hasSpanChanged(this.getFlashTextFormat(spanIndex,i+1)) || newLine){ //if any of textFormat elements are null or a new line has started
+						if(outstandingSpan){
+							htmlText = htmlText + "</span>" 
+							outstandingSpan = false;
+						}
+						var spanTag = this.getSpanTag(textFormat);
+						if(spanTag != ""){
+							htmlText = htmlText + spanTag;
+							outstandingSpan = true;
+						}
+						spanIndex = i;
+					}
+					if(i > 0 && text.charAt(i) == " " && text.charAt(i-1) == " "){
+						htmlText = htmlText + "&nbsp;";
+					}else{
+						htmlText = htmlText + wcfRichTextEditorUtil.escapeChar(text.charAt(i));
+					}
+					newLine = false;
+				}else if(i < (text.length - 1)){
+					if(outstandingSpan){
+						htmlText = htmlText + "</span>";
+					}
+					if(outstandingLi){
+						htmlText = htmlText + "</li>";
+					}else if(outstandingDiv){
+						htmlText = htmlText + "</div>";
+					}else{
+						htmlText = htmlText + "<br/>";
+					}
+					newLine = true;
+					outstandingLi = false;
+					outstandingDiv = false;
+					outstandingSpan = false;
+				}
+			}
+			if (outstandingSpan) {
+				htmlText = htmlText + "</span>";
+			}
+			if(outstandingLi){
+				htmlText = htmlText + "</li>";
+			}else if(outstandingDiv){
+				htmlText = htmlText + "</div>";
+			}else if(text.length > 0 && text.charAt(text.length-1) == '\n'){
+				htmlText = htmlText + "<br/>";
+			}
+			if(outstandingUl){
+				htmlText = htmlText + "</ul>";
+			}
+			return htmlText;
+			]]>
+		</method>
+
+		<!--- 
+			@keywords private
+			Creates the span tags based on text formats 
+			@param textformat textFormat
+		-->		
+		<method name="getSpanTag" args="textFormat">
+			<![CDATA[
+			var text = "";
+			if(textFormat.bold){
+				text = text + "font-weight:bold;";
+			}
+			if(textFormat.underline){
+				text = text + "text-decoration:underline;";
+			}
+			if(textFormat.italic){
+				text = text + "font-style:italic;";
+			}
+			if(textFormat.size != null){
+				var size = textFormat.size;
+				if(this.parentTextEditor.usePercentageFontSizes && (size != 11)) {
+					// When using percentages, size 11 is 100%. We don't want to generate
+					// the font size tag for this case or else it will override any inherited
+					// CSS from the store front so we ignore it.
+					if(size==7){
+						size = foundationResources.richTextFontSize7.string;
+					}else if(size==9){
+						size = foundationResources.richTextFontSize9.string;
+					}else if(size==13){
+						size = foundationResources.richTextFontSize13.string;
+					}else if(size==16){
+						size = foundationResources.richTextFontSize16.string;
+					}else if(size==20){
+						size = foundationResources.richTextFontSize20.string;
+					}else if(size==30){
+						size = foundationResources.richTextFontSize30.string;
+					}
+					text = text + "font-size:" + size +";";
+				}
+				else if(!this.parentTextEditor.usePercentageFontSizes) {
+					// But in the non-percentage case, we need to support each size
+					// as different web and e-mail clients have a different default value.
+					// Old clients use 'medium' and newer clients use 'small', so we need
+					// to be explicit.
+					if(size==7){
+						size = "xx-small";
+					}else if(size==9){
+						size = "x-small";
+					}else if(size==11){
+						size = "small"; 
+					}else if(size==13){
+						size = "medium";
+					}else if(size==16){
+						size = "large";
+					}else if(size==20){
+						size = "x-large";
+					}else if(size==30){
+						size = "xx-large";
+					}
+					text = text + "font-size:" + size +";";
+				}
+			}
+			if(textFormat.color != null && textFormat.color != 0){
+				var color = textFormat.color.toString(16);
+				while(color.length < 6){
+					color = "0" + color;
+				}
+				text = text + "color:#" + color +";";
+			}
+			if(textFormat.font != null && textFormat.font != "Verdana"){
+				text = text + "font-family:" + textFormat.font +";";
+			}
+			if(text != ""){
+				text = "<span style='" + text + "'>";
+			}
+			return text;  
+			]]>
+		</method>
+
+		<!--- 
+			@keywords private
+			Sets a text format based on the span tag
+			@param string text: text containing span tag
+			@param textformat textFormat
+		-->		
+		<method name="setSpanTag" args="text,textFormat">
+			<![CDATA[
+			var endQuote = 0;
+			if(text.indexOf("font-weight:bold;") == (-1)){
+				textFormat.bold = false;
+			}else{
+				textFormat.bold = true;
+			}
+			if(text.indexOf("text-decoration:underline;") == (-1)){
+				textFormat.underline = false;
+			}else{
+				textFormat.underline = true;
+			}
+			if(text.indexOf("font-style:italic;") == (-1)){
+				textFormat.italic = false;
+			}else{
+				textFormat.italic = true;
+			}
+			var sizeTag = text.indexOf("font-size:");
+			if(sizeTag == (-1)){
+				textFormat.size = 11;
+			}else{
+				endQuote = text.indexOf(";", sizeTag+10);
+				var size = text.substring(sizeTag+10,endQuote);
+				if((size == foundationResources.richTextFontSize7.string) || (size == "xx-small")) {
+					size = 7;
+				}else if((size == foundationResources.richTextFontSize9.string) || (size == "x-small")) {
+					size = 9;
+				}else if((size == foundationResources.richTextFontSize11.string) || (size == "small")) {
+					size = 11;
+				}else if((size == foundationResources.richTextFontSize13.string) || (size == "medium")) {
+					size = 13;
+				}else if((size == foundationResources.richTextFontSize16.string) || (size == "large")) {
+					size = 16;
+				}else if((size == foundationResources.richTextFontSize20.string) || (size == "x-large")) {
+					size = 20;
+				}else if((size == foundationResources.richTextFontSize30.string) || (size == "xx-large")) {
+					size = 30;
+				}else{
+					size = 11;
+				}
+				textFormat.size = size;
+			}
+			var colorTag = text.indexOf("color:#");
+			if(colorTag == (-1)){
+				textFormat.color = 0;
+			}else{
+				endQuote = text.indexOf(";", colorTag+7);
+				var color = text.substring(colorTag+7,endQuote);
+				color = parseInt(color,16);				
+				textFormat.color = color;
+			}
+			var fontTag = text.indexOf("font-family:");
+			if(fontTag == (-1)){
+				textFormat.font = "Verdana";
+			}else{
+				endQuote = text.indexOf(";", fontTag+12);
+				var font = text.substring(fontTag+12,endQuote);
+				textFormat.font = font;
+			}
+			return textFormat;
+			]]>
+		</method>
+
+		<!--- 
+			@keywords private
+			Creates the div or li tags based on text formats 
+			@param textformat textFormat
+		-->		
+		<method name="getBlockTag" args="textFormat">
+			<![CDATA[
+			var text = "";
+			if(textFormat.align != null && textFormat.align != "left"){
+				text = text + "text-align:"+ textFormat.align +";";
+			}
+			if(textFormat.indent != null && textFormat.indent != 0){
+				text = text + "text-indent:" + textFormat.indent + "px;";
+			}
+			if(text != "" && !textFormat.bullet){
+				text = "<div style='" + text + "'>";
+			}else if(text != "" && textFormat.bullet){
+				text = "<li style='" + text + "'>";
+			}else if(textFormat.bullet){
+				text = "<li>";
+			}else{
+				text = null;
+			}
+			return text;
+			]]> 
+		</method>
+		
+		<!--- 
+			@keywords private
+			Sets a text format based on the div or li tags
+			@param string text: text containing div or li tag
+			@param textformat textFormat
+		-->		
+		<method name="setBlockTag" args="text,textFormat">
+			<![CDATA[
+			var alignPos = text.indexOf("text-align:");
+			if(alignPos != (-1)){
+				textFormat.align = text.slice(alignPos+11,text.indexOf(";",alignPos));
+			}
+			var indentPos = text.indexOf("text-indent:");
+			if(indentPos != (-1)){
+				textFormat.indent = parseInt(text.slice(indentPos+12,text.indexOf("px;",indentPos)));
+			}
+			if(text.indexOf("li") == 0){
+				textFormat.bullet = true;
+			}
+			return textFormat;
+			]]> 
+		</method>
+		
+		<!--- 
+			@keywords private
+			Returns true if bold, underline, italic, size, color or font have changed in the text format
+			@param textformat textFormat
+		-->
+		<method name="hasSpanChanged" args="textFormat">
+			<![CDATA[
+			if(	textFormat.bold == null || textFormat.underline == null || textFormat.italic == null || 
+				textFormat.size == null || textFormat.color == null || textFormat.font == null){
+				return true
+			}	
+			return false;
+			]]>
+		</method>
+				
+		<!--- 
+			@keywords private
+			Gets the text format
+			@param number Gets text format of text starting at this position
+			@param number Gets text format of text ending at this position
+		-->
+		<method name="getFlashTextFormat" args="beginindex, endindex">
+			<![CDATA[
+			if ($as3) {
+				var len = this.tsprite.textfield.length;
+				if (beginindex >= len) {
+					beginindex = len - 1;
+				}
+				if (beginindex == -1) {
+					endindex = -1;
+				}
+				else if (endindex >= len) {
+					endindex = -1;
+				}
+				return this.tsprite.textfield.getTextFormat(beginindex, endindex);
+			} else {
+				return this.sprite.__LZtextclip.getTextFormat(beginindex, endindex);
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Sets the text format
+			@param textformat textFormat
+			@param number Set text format starting at this position
+			@param number Set text format ending at this position
+		-->
+		<method name="setFlashTextFormat" args="fmt, beginindex, endindex">
+			<![CDATA[
+			if (beginindex || (beginindex == 0)) {
+				if ($as3) {
+					this.tsprite.textfield.setTextFormat(fmt, beginindex, endindex);
+				} else {
+					this.sprite.__LZtextclip.setTextFormat(beginindex, endindex, fmt);
+				}
+			} else {
+				if ($as3) {
+					this.tsprite.textfield.setTextFormat(fmt);
+				} else {
+					this.sprite.__LZtextclip.setTextFormat(fmt);
+				}
+			}
+			]]>
+		</method>
+	
+		<!--- 
+			@keywords private
+			Apply the specified format change to the substring indicated.
+			
+			@param String attr: the name of the attribute to change, One of bold, italic, underline, size,
+								face, color, url, align, indent, leading, bullet
+			@param color|boolean|number|string val: the value to which to set the specified attribute to
+			@param integer beginIndex: index of the beginning of the selection
+			@param integer endIndex: index of the end of the selection.
+		-->
+		<method name="applyTextAttr" args="attr, val, beginIndex, endIndex">
+			<![CDATA[
+			// Start with a TextFormat object with no attributes set
+			var format = new TextFormat();
+	
+			// Change the text format based on the format passed in.
+			format[attr] = val;
+			if ($as3) {
+				this.tsprite.textfield.setTextFormat(format, beginIndex, endIndex);
+			} else {
+				this.sprite.__LZtextclip.setTextFormat(beginIndex, endIndex, format);
+			}
+			]]> 
+		</method>
+	
+		<!--- 
+			@keywords private
+			Replace the current selection with the string specified. The current selection
+			is the range of characters which Flash thinks is selected. This range is
+			(-1, -1) unless this component has the focus.
+			
+			@keywords deprecated
+			@param String: str string to put where the current selection is in the string
+		-->
+		<method name="replaceSel" args="str">
+			<![CDATA[
+			if ($as3) {
+				this.tsprite.textfield.replaceSelectedText(str);
+			} else {
+				this.sprite.__LZtextclip.replaceSel(str);
+			}
+			]]> 
+		</method>
+	
+		<!--- 
+			@keywords private
+			Replace text between start and end, without changing that text's format.
+			
+			@param Number s: the start of the range to replace
+			@param Number e: the end of the range to replace
+			@param String txt: the text to put in the string instead of what's currently there
+		-->
+		<method name="replaceText" args="s, e, txt">
+			<![CDATA[
+			if ($as3) {
+				this.tsprite.textfield.replaceText(s,e,txt);
+			} else {
+				this.sprite.__LZtextclip.replaceText(s,e,txt);
+			}
+			]]> 
+		</method> 
+	</class>
+
+	<!--- 
+		@keywords private
+		Toolbar separator between buttons for rich text editor 
+	-->
+	<class name="wcfRichTextEditorSeparator" extends="view" resource="rteIconDivider" y="${(immediateparent.height-this.height)/2}" placement="buttons"/>
+
+	<!---
+		@keywords private
+		
+		Color Button for rich text editor toolbar  
+	-->
+	<class name="wcfRichTextEditorColorButton" extends="wcfRichTextToolBarButton">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.changeColorDel = new lz.Delegate(this, "changeColor");
+			this.closeColorPickerDel = new lz.Delegate(this, "closeColorPicker");
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (wcfColorPicker.attachTarget == this) {
+				this.closeColorPicker();
+			}
+			this.changeColorDel.unregisterAll();
+			delete this.changeColorDel;
+			this.closeColorPickerDel.unregisterAll();
+			delete this.closeColorPickerDel;
+			this.checkMouseDel.unregisterAll();
+			delete this.checkMouseDel;
+			super.destroy();
+			]]>
+		</method>
+	
+		<!---
+			Handle button click.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			this.openColorPicker();
+			]]>
+		</handler>
+	
+		<!---
+			Handle Key Down.
+		-->		
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+			if (k == 40) { // key down
+		    	this.openColorPicker();
+			}
+			]]>
+		</handler>	
+		
+		<!---
+			Change the color.
+		-->
+		<method name="changeColor" args="newColor">
+			<![CDATA[
+			this.closeColorPicker();
+			parent.classroot.richInputText.applyTextFormat('color',wcfColorPicker.color);
+			]]>
+		</method>
+		
+		<!---
+			Look for mouse clicks outside the color picker and close the color picker.
+		-->
+		<method name="checkMouse" args="e=null">
+			<![CDATA[
+			if (!wcfColorPicker.containsPt(wcfColorPicker.getMouse("x"), wcfColorPicker.getMouse("y"))) {
+				this.closeColorPicker();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Open the color picker.
+		-->
+		<method name="openColorPicker">
+			<![CDATA[
+			this.closeColorPicker();
+			wcfColorPicker.setAttachTarget(this);
+			wcfColorPicker.animate("visible", !wcfColorPicker.visible, 0, false);
+			this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+			lz.Keys.callOnKeyCombo(this.closeColorPickerDel, ['esc']);
+			this.changeColorDel.register(wcfColorPicker, "oncolor");
+			lz.ModeManager.makeModal(wcfColorPicker);
+			lz.Focus.setFocus(wcfColorPicker.colorCells);
+			]]>
+		</method>
+
+		<!---
+			Close the color picker.
+		-->
+		<method name="closeColorPicker" args="e=null">
+			<![CDATA[
+			if (wcfViewUtil.containsView(wcfColorPicker, lz.Focus.getFocus())) {
+				lz.Focus.setFocus(this, false);
+			}
+			lz.ModeManager.release(wcfColorPicker);
+			wcfColorPicker.setAttachTarget(null);
+			this.changeColorDel.unregisterAll();
+			lz.Keys.removeKeyComboCall(this.closeColorPickerDel, ['esc']);
+			this.checkMouseDel.unregisterAll();
+			wcfColorPicker.setAttribute("visible", false);
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfDropDownValue" extends="node">
+		<attribute name="value" value="null"/>
+		<attribute name="displayNameKey" value="null"/>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfDropDownButton" extends="basecomponent"  focusable="false" pixellock="true">
+		
+		<!---
+			Reference to the parent {@link wcfRichTextEditor}
+		-->
+		<attribute name="parentTextEditor" value="${null}" />
+		
+		<attribute name="buttonResource" type="string" value="${null}"/>
+		<attribute name="actionListOpen" value="${actionList.visible}"/>
+		<attribute name="items" value="${[]}"/>
+		<!--  The view whose button to which the drop down list should attached -->
+
+		<wcfRichTextToolBarButton name="button" buttonResource="${classroot.buttonResource}" onclick="parent.openActionList()" parentTextEditor="${parent.parentTextEditor}">
+			<method name="_callShow">
+				<![CDATA[
+				if (parent.actionListOpen) {
+					super.showDown();
+				} else {
+					super._callShow();
+				}
+				]]>
+			</method>
+		</wcfRichTextToolBarButton>
+
+		<plainfloatinglist name="actionList" attach="bottom" visible="false">
+			<method name="updateAttachLocation">
+				<![CDATA[
+				super.updateAttachLocation();
+				var right = this.x + this.width;
+				if (right > canvas.width) {
+					var newX = this.x - (right - canvas.width);
+					if (newX < 0) {
+						newX = 0;
+					}
+					this.setAttribute("x", newX);
+				}
+				this.bringToFront(); 
+				]]>
+			</method>
+			
+			<!--- @keywords private -->
+			<method name="getNextSelection" />
+			<!--- @keywords private -->
+	        <method name="getPrevSelection" />
+		</plainfloatinglist>
+
+		<method name="containsMouse"><![CDATA[
+			if(this.containsPt(this.getMouse("x"), this.getMouse("y"))){
+				return true;
+			}
+			return this.actionList.visible && this.actionList.containsPt(this.actionList.getMouse("x"), this.actionList.getMouse("y"));
+			]]>
+		</method>
+		<handler name="onblur" reference="actionList">
+			this.closeActionList();
+		</handler>
+
+		<handler name="onactionListOpen">
+			this.button._callShow();
+		</handler>
+
+		<handler name="onkeydown" reference="actionList" args="k">
+			if (k == 27) { // esc key
+				this.closeActionList();
+			}
+		</handler>
+
+		<handler name="onselect" reference="actionList" args="v">
+			var action = v.value;
+			this.closeActionList();
+			this.doAction(action);
+		</handler>
+
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			this.checkWidthDel = new lz.Delegate(this, "checkWidth");
+
+			// We assume wcfDropDownButton is always inside a toolbar, so the immediateparent of attachtarget will be
+			// the toolbar, and the drop down should attach to the toolbar's border. We need to substract 2 to compensate
+			// border shadow as well.
+			this.actionList.setAttribute("attachoffset", immediateparent.height - this.button.y - this.button.height - 2);
+			this.actionList.setAttribute("spacing", -2);
+			]]>
+		</method>
+
+		<method name="destroy">
+			<![CDATA[
+			this.actionList.autoscrollbar = false;
+			this.checkMouseDel.unregisterAll();
+			delete this.checkMouseDel;
+			this.checkWidthDel.unregisterAll();
+			delete this.checkWidthDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Append the specified action definition to action drop down.
+			@param object selection: the action definition
+		-->
+		<method name="addSelection" args="selection">
+			<![CDATA[
+			var item = new lz.wcfListItem(this.actionList, {
+				value: selection,
+				icon: null,
+				displayKey: selection.displayNameKey
+			});
+			this.items.push(item);
+			this.checkWidthDel.register(item.title, "onwidth");
+			this.checkWidth();
+			]]>
+		</method>
+
+		<!---
+			Enable the specified selection item.
+			@param object selection: the action definition
+		-->
+		<method name="enableSelection" args="selection">
+			<![CDATA[
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				if (item.value == selection) {
+					item.setAttribute("enabled", true);
+					break;
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Disable the specified selection item.
+			@param object selection: the action definition
+		-->
+		<method name="disableSelection" args="selection">
+			<![CDATA[
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				if (item.value == selection) {
+					item.setAttribute("enabled", false);
+					break;
+				}
+			}
+			]]>
+		</method>
+
+		<method name="checkMouse" args="e=null">
+			if (!this.actionList.containsPt(this.actionList.getMouse("x"), this.actionList.getMouse("y"))) {
+				closeActionList();
+			}
+		</method>
+
+		<method name="checkWidth" args="e=null">
+			<![CDATA[
+			var newWidth = 0;
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				var itemWidth = item.title.width;
+				if (itemWidth > newWidth) {
+					newWidth = itemWidth;
+				}
+			}
+			this.actionList.setAttribute('width', newWidth + 10);
+			]]>
+		</method>
+
+		<method name="openActionList">
+			this.actionList.clearSelection();
+			this.actionList.setAttribute("visible", true);
+			this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+			this.setAttribute("actionListOpen", true);
+			this.parent.activeButton = this;
+			lz.ModeManager.makeModal(this.actionList);
+			lz.Focus.setFocus(this.actionList);
+		</method>
+
+		<method name="closeActionList">
+			if (wcfViewUtil.containsView(this.actionList, lz.Focus.getFocus())) {
+				lz.Focus.setFocus(this, false);
+			}
+			this.setAttribute("actionListOpen", false);
+			this.actionList.setAttribute("visible", false);
+			this.checkMouseDel.unregisterAll();
+			this.parent.activeButton = null;
+			lz.ModeManager.release(this.actionList);
+		</method>
+
+		<method name="doAction" args="action">
+
+		</method>
+	</class>
+
+	<!-- /////////////////////////////////////// -->
+	<!-- Font Button  -->
+	<!-- /////////////////////////////////////// -->
+	<!--- @keywords private -->
+	<class name="wcfRichTextEditorFontButton" extends="wcfDropDownButton">
+		<method name="doAction" args="newfont">
+			parent.parent.classroot.richInputText.applyTextFormat('font',newfont.value);
+		</method>
+		<handler name="oninit"><![CDATA[
+			wcfLangUtil.forEach([ [foundationResources.richTextFontArial, "Arial"],
+								  [foundationResources.richTextFontGeorgia, "Georgia"],
+								  [foundationResources.richTextFontTimesNewRoman, "Times New Roman"],
+								  [foundationResources.richTextFontDefault, "Verdana"]  ],
+				function(pair){
+					var key = pair[0];
+					var font = pair[1];
+					//var font = key.string;
+					var item = new lz.wcfDropDownValue(this, {name: font, value: font, displayNameKey: key});
+					this.addSelection(item);
+					this.actionList.getItem(item).title.itemText.setAttribute("font", font);
+				},
+				this
+			);
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		@keywords private
+		Rich text editor size button.
+	-->
+	<class name="wcfRichTextEditorSizeButton" extends="wcfDropDownButton">
+		<handler name="oninit"><![CDATA[
+			addSize('7',  foundationResources.richTextFontSize7);
+			addSize('9',  foundationResources.richTextFontSize9);
+			addSize('11', foundationResources.richTextFontSize11);
+			addSize('13', foundationResources.richTextFontSize13);
+			addSize('16', foundationResources.richTextFontSize16);
+			addSize('20', foundationResources.richTextFontSize20);
+			addSize('30', foundationResources.richTextFontSize30);
+			]]>
+		</handler>
+
+		<method name="addSize" args="size, key "><![CDATA[
+			var item = new lz.wcfDropDownValue(this, {name: "size_"+size, value:size, displayNameKey: key});
+			this.addSelection(item);
+			]]>
+		</method>
+
+		<method name="doAction" args="newsize">
+			parent.parent.classroot.richInputText.applyTextFormat("size", newsize.value);
+		</method>
+	</class>
+	
+	<!-- /////////////////////////////////////// -->
+	<!-- Rich Text Tool Bar Button  -->
+	<!-- /////////////////////////////////////// -->
+	<!--- @keywords private -->
+	<class name="wcfRichTextToolBarButton" extends="wcfToolBarButton">
+		<!---
+			Reference to the parent {@link wcfRichTextEditor}
+		-->
+		<attribute name="parentTextEditor" value="${null}"/>
+		
+		<!--- @keywords private -->
+		<handler name="onkeydown" args="k">
+		    <![CDATA[
+		   if(k == 39){ //right
+		    	lz.Focus.setFocus(lz.Focus.getNext(this));
+		    }else if(k == 37){ //left
+		    	lz.Focus.setFocus(lz.Focus.getPrev(this));
+		    }else if (k == 27) { // esc key
+				lz.Focus.setFocus(this.parentTextEditor.richInputText);
+			}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="getNextSelection">
+			<![CDATA[
+		    return this.parentTextEditor.richInputText;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getPrevSelection">
+			<![CDATA[
+		    return this.parentTextEditor.toolbarView;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		Rich text editor utility methods.
+	-->
+	<node id="wcfRichTextEditorUtil">
+		
+		<!---
+			@keywords private
+		-->
+		<method name="unescapeXMLTags" args="str">
+			<![CDATA[
+			return wcfStringUtil.replace(wcfStringUtil.replace(str, "&lt;", "<"), "&gt;", ">");
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="escapeXMLTags" args="str">
+			<![CDATA[
+			return wcfStringUtil.replace(wcfStringUtil.replace(str, "<", "&lt;"), ">", "&gt;");
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="escapeChar" args="char">
+			<![CDATA[
+			if(char == "<"){
+				char = "&lt;";
+			}else if(char == ">"){
+				char = "&gt;";
+			}else if(char == "'"){
+				char = "&#39;";
+			}else if(char == "\""){
+				char = "&quot;";
+			}else if(char == "&"){
+				char = "&amp;";
+			}
+			return char;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="unescapeString" args="str">
+			<![CDATA[
+			return wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(str
+				,"&amp;", "&")
+				,"&quot;", "\"")
+				,"&#39;", "'")
+				,"&nbsp;", " ")
+				,"&lt;", "<")
+				,"&gt;", ">");
+			]]>
+		</method>
+		<!---
+			@keywords private
+		-->
+		<method name="escapeString" args="str">
+			<![CDATA[
+			return wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(wcfStringUtil.replace(str
+				, "&", "&amp;")
+				, "\"", "&quot;")
+				, "'", "&#39;")
+				, "	", "&nbsp;")
+				, "<", "&lt;")
+				, ">", "&gt;");
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="containsEscapedChar" args="str">
+			<![CDATA[
+			var containsEscapedChar = false;			
+			if (str.indexOf("&amp;") != -1 || str.indexOf("&quot;") != -1 || str.indexOf("&#39;") != -1 ||  str.indexOf("&nbsp;") != -1 ||  str.indexOf("&lt;") != -1 || str.indexOf("&gt;") != -1) {
+				containsEscapedChar = true;
+			}	
+			return containsEscapedChar;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private  
+		-->
+		<method name="removeTags" args="str">
+			<![CDATA[
+			var index = str.indexOf("<",0);
+			while(index != -1){
+				var start = index;
+				var end = str.indexOf(">",index)+1;
+				if(end <= 0){
+					end = str.length;
+				}
+				var tag = str.slice(start,end);
+				if(tag == "<br />" || tag == "<br/>" || tag == "<br>" || tag == "</div>" || tag == "</p>" || tag == "<li>"){
+					str = wcfStringUtil.replace(str,tag,"\n");
+				}else{
+					str = wcfStringUtil.replace(str,tag,"");
+				}
+				index = str.indexOf("<", 0);
+			}
+			return str;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="tagTextToLower" args="newText">
+			<![CDATA[ 
+			var index = newText.indexOf("<",0);
+			while(index != -1){
+				var start = index;
+				var end = newText.indexOf(">",index)+1;
+				if (end <= 0) {
+					break;
+				}
+				var tag = newText.slice(start,end);
+				var space = tag.indexOf(" ");
+				if (space != -1 && tag != "<br />") {
+					tag = tag.slice(0, space);
+					end = start + space;
+				}
+				tag = tag.toLowerCase();
+				var next = end;
+				if(tag == "<br>"){
+					tag = "<br/>";
+					next = next + 1;
+				}else if(tag == "<br />"){
+					tag = "<br/>";
+					next = next - 1;
+				}
+				newText = newText.slice(0,start) + tag + newText.slice(end, newText.length);
+				index = newText.indexOf("<",next);
+			}
+			return newText;
+			]]>
+		</method>
+		
+		<!---
+			Validate that the HTML text is the correct format for this rich input text.
+			Looking for this format <br/><div><li><span></span><span></span></div><br/>
+			@param string newText: new HTML text
+		-->
+		<method name="validHTMLText" args="newText">
+			<![CDATA[ 
+			var passed = true;
+			var index = newText.indexOf("<",0);
+			var outstandingLi = false;
+			var outstandingDiv = false;
+			var outstandingSpan = false;
+			while(index != -1){
+				var start = newText.indexOf("<",index);
+				var end = newText.indexOf(">",index)+1;
+				var tag = newText.slice(start,end);
+				if(tag == "<br/>"){
+					if(outstandingDiv || outstandingSpan){
+						passed = false;
+						break;
+					}
+				}else if (tag.indexOf("<li") == 0){
+					if(outstandingSpan){
+						passed = false;
+						break;
+					}
+					outstandingLi = true;
+				}else if (tag == "<ul>" || tag == "</ul>"){
+				}else if (tag == "</li>"){
+					if(!outstandingLi || outstandingSpan) {
+						passed = false;
+						break;
+					}
+					outstandingLi = false;
+				}else if (tag == "</div>"){
+					if(!outstandingDiv || outstandingSpan){
+						passed = false;
+						break;
+					}
+					outstandingDiv = false;
+				}else if (tag == "</span>"){
+					if(!outstandingSpan){
+						passed = false;
+						break;
+					}
+					outstandingSpan = false;
+				}else if (tag.indexOf("<",1) != -1){
+					passed = false;
+					break;
+				}else if (tag.indexOf("<div") == 0){
+					if(outstandingDiv || outstandingSpan){
+						passed = false;
+						break;
+					}
+					outstandingDiv = true;
+					outstandingLi = false;
+				}else if (tag.indexOf("<span") == 0){
+					if(outstandingSpan){
+						passed = false;
+						break;
+					}
+					outstandingSpan = true;
+				}else{
+					passed = false;
+					break;
+				}
+				index = newText.indexOf("<",index+1);
+			}
+			if(outstandingDiv || outstandingSpan){
+				passed = false;
+			}
+			return passed;
+			]]>
+		</method>
+		
+		<!---
+			@keywords flash-only 
+			
+			This method returns true if the two Flash TextFormat objects passed in are equal. The method will compare the 
+			following attributes of the TextFormat object:
+			<ul><li>align
+			<li>bold
+			<li>bullet
+			<li>color
+			<li>font
+			<li>indent
+			<li>italic
+			<li>size
+			<li>underline
+			</ul>
+			
+			@param TextFormat f1: the first format to compare
+			@param TextFormat f2: the second format to compare
+			@return boolean The method will return true if the two formats are equal, and false otherwise.
+		-->
+		<method name="areFormatsEqual" args="f1,f2">
+			<![CDATA[ 
+			return (f1.align == f2.align &&
+					f1.bold == f2.bold &&
+					f1.bullet == f2.bullet &&
+					f1.color == f2.color &&
+					f1.font == f2.font &&
+					f1.indent == f2.indent &&
+					f1.italic == f2.italic &&					
+					f1.size == f2.size &&
+					f1.underline == f2.underline);
+				]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		The editor wraps {@link wcfRichTextEditor} to edit {@link wcfRichInputText}. This edit does not
+		use {@link wcfRichTextEditor#property}
+	-->
+	<class name="wcfColumnRichTextEditor" extends="wcfRichTextEditor" 
+		width="420" textAreaHeight="50" maximumHeight="300">
+		<!--- 
+			@keywords private
+			The column being edited by {@link wcfColumnRichTextEditor} 
+		 -->
+		<attribute name="column" value="null"/>
+		
+		<!--- Selected objects {@link wcfModelObject} in grid -->
+		<attribute name="selectedObjects" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="getValue">
+			<![CDATA[
+			return this.value;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="resetValue"  args="initialValue">
+			<![CDATA[
+			this.setAttribute("richTextMode", this.defaultToRichTextMode);
+			this.setAttribute("value", initialValue);
+			]]>
+		</method>
+		
+	</class>
+
+	<!---
+		<p>
+		This class declares an enablement condition that indicates whether to enable the wcfPropertyRichTextEditor rich text editor.
+		</p><p>	
+		In the following example, a rich text editor and a multiline text editor are provided for the same long description property value. 
+		The rich text editor displays the HTML text as it appears in the storefront, while the multiline editor displays the actual HTML 
+		text that is generated. When a business user updates the long description in the rich text editor, the corresponding text is automatically 
+		updated in the multiline editor.
+		</p> 
+		
+		@START_CODE
+        <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc">
+            <RichTextEnablementCondition/>
+        </PropertyRichTextEditor>
+        <PropertyInputMultiLineText objectPath="CatalogEntryDescription" propertyName="lDesc" promptText="${catalogResources.longDescriptionPrompt}"/>
+		@END_CODE
+		
+		Use the wcfRichTextEnablementCondition class to disable the rich text editor in a field when unknown tags exist in the HTML that might corrupt 
+		existing tags.	
+	-->
+	<class name="wcfRichTextEnablementCondition" extends="wcfEnablementCondition" propertyName="${parent.propertyName}" isPropertyValue="true">
+		
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var newText = wcfRichTextEditorUtil.tagTextToLower(this.getValue(o));
+			return wcfRichTextEditorUtil.validHTMLText(newText);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		Rich text editors alert dialog, called when switching to rich text mode.
+	-->
+	<wcfAlertDialog id="wcfRichTextAlertDialog" showOK="false" showYes="true" showNo="true">
+		
+		<!--- @keywords private	-->
+		<attribute name="richTextEditor" value="${null}" />
+		
+		<!---
+			@keywords private
+			This method is called when the dialog is opened.
+		-->
+		<method name="openRichTextAlertDialog" args="alertText, richTextEditor">
+			<![CDATA[			
+			this.openWindow();	
+			this.setAttribute("richTextEditor", richTextEditor);
+			this.setAttribute("promptText", alertText);
+            ]]>
+        </method>
+        
+		<!---
+			@keywords private
+			This method is called when the user selects the Yes option.
+		-->
+		<method name="handleYes">
+			<![CDATA[
+			this.richTextEditor.switchModes(false);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when the dialog is closed.
+		-->
+		 <method name="closeWindow">
+			<![CDATA[
+			this.richTextEditor = null;
+			super.closeWindow();
+			]]>
+        </method>
+	</wcfAlertDialog>
+	
+</library>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyPane definitionName="prcManagePriceListPropertiesPane">
+		<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>
+		<PropertyGroup collapsable="false" name="group1">
+			<PropertyInputText promptText="${prcPriceResources.nameString}" propertyName="name" required="true" helpText="${prcPriceResources.helpText_priceListName}"/>
+			<PropertyInputMultiLineText promptText="${prcPriceResources.description}" propertyName="description"/>
+		</PropertyGroup>
+		<PropertyGroup collapsable="false" name="group2">
+			<PropertyChildListEditor findable="true" listDefinitionName="prcPriceEntryGrid" name="priceEntryList" objectTypes="PriceEntry" promptText="${prcPriceResources.catalogEntry}"
+				helpText="${prcPriceResources.helpText_priceEntryList}"/>
+		</PropertyGroup>
+	</PropertyPane>
+
+	<PropertyPane definitionName="prcManagePriceListReferencePane">
+		<PropertyGroup collapsable="true" groupTitle="${prcPriceResources.priceRules}" name="assignedToPriceRuleReferenceGroup" open="true">
+			<PropertyReferenceList listDefinitionName="prcAssignedToPriceRuleGrid" name="assignedToPriceRuleReferenceList" referenceObjectPaths="*/RefPriceList,*/RefInheritedPriceList,*/InputPriceListGroup,*/ComparisonPriceListGroup"/>
+		</PropertyGroup>
+		<PropertyGroup collapsable="true" groupTitle="${prcPriceResources.priceEquations}" name="assignedToPriceEquationGroup">
+			<PropertyReferenceList listDefinitionName="prcAssignedToPriceEquationGrid" name="assignedToPriceEquationReferenceList" referenceObjectPaths="*/PriceEquationEntry"/>
+		</PropertyGroup>
+	</PropertyPane>
+
+	<ObjectProperties definitionName="prcPriceListProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="managedPriceListPropertiesTab" text="${prcPriceResources.managePriceList}">
+				<PropertyPane baseDefinitionName="prcManagePriceListPropertiesPane"/>
+			</PropertyTabPane>
+			<PropertyTabPane name="managedPriceListReferenceTab" text="${prcPriceResources.references}">
+				<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+				<PropertyPane baseDefinitionName="prcManagePriceListReferencePane"/>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+
+</Definitions>

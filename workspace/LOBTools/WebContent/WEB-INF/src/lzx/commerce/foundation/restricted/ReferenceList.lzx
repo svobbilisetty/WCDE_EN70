@@ -1,0 +1,443 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords abstract
+		
+		This class defines a read-only list for {@link wcfReferenceObjectDefinition reference objects}.
+	-->
+	<class name="wcfBaseReferenceList" visible="true" extends="basecomponent" focusable="false">
+		<!---
+			@keywords private
+			Indicates that this reference list is embedded in a properties view.
+		-->
+		<attribute name="embedded" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Indicates that find and replace can be performed on the grid
+		-->
+		<attribute name="findable" type="boolean" value="false"/>
+		<!---
+			This attribute contains a comma separated list of reference object paths.
+			The list of reference object paths can be used to restrict the list of parent objects
+			to those that are referenced through the specified object path. An asterisk (*) can be used to replace
+			one or more object types in a reference object path. The asterisk will match all possible object types.
+			The following list of reference object paths displays the web activities that reference an e-Marketing spot:
+			<code>WebActivity/path/viewEMarketingSpot/ChildEMarketingSpot,WebActivity/path/branch/path/viewEMarketingSpot/ChildEMarketingSpot</code>.
+			The same result can be achieved by using an asterisk to replace the alternate paths to the reference object type:
+			<code>*/ChildEMarketingSpot</code>.
+		-->
+		<attribute name="referenceObjectPaths" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Reference to model object.
+		-->
+		<attribute name="o" setter="this.setModelObject(o)"/>
+		<!---
+			The name of the class to use for viewing this list.
+			This is often a class that extends {@link wcfObjectGrid}.
+			@type string
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The name of the definition to use for viewing this list. 
+			This is often a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableHeight" attribute. This
+			is used to calculate the list view's available height.
+		-->
+		<attribute name="availableHeightView" value="${wcfViewUtil.getAvailableHeightView(this)}" when="once"/>
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the list view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		<!---
+			@keywords private
+			Reference list status message.
+		-->
+		<attribute name="statusMessage" type="string" value=""/>
+		<!---
+			@keywords private
+			Indicates that the status message should be displayed as an error.
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			if (this.listClass == null) {
+				this.listClass = this.listDefinitionName;
+			}
+			if (this.availableHeightView != null) {
+				this.updateAvailableHeightDel = new lz.Delegate(this, "updateAvailableHeight");
+				this.updateAvailableHeightDel.register(this.availableHeightView, "onavailableHeight");
+				this.updateAvailableHeight();
+			}
+			if (this.availableWidthView != null) {
+				this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+				this.updateAvailableWidthDel.register(this.availableWidthView, "onavailableWidth");
+				this.updateAvailableWidth();
+			}
+			this.updateMessageDel = new lz.Delegate(this, "updateMessage");
+			if (lz[this.listClass]) {
+				new lz[this.listClass](this, {
+					name: "list",
+					placement: "content",
+					rowMenuClass: "wcfGridRowMenu",
+					menuClass: "wcfReferenceListMenu",
+					fitExistingRows: this.embedded,
+					padding: this.embedded ? 0 : 8,
+					filterLeftPadding: this.embedded ? 0 : 3,
+					listBorderSize: this.embedded ? 1 : 0,
+					findable: this.findable
+				});
+			}
+			else {
+				wcfDefinitionLoader.getDefinition(this.listClass, this, {
+					name: "list",
+					placement: "content",
+					rowMenuClass: "wcfGridRowMenu",
+					menuClass: "wcfReferenceListMenu",
+					fitExistingRows: this.embedded,
+					padding: this.embedded ? 0 : 8,
+					filterLeftPadding: this.embedded ? 0 : 3,
+					listBorderSize: this.embedded ? 1 : 0,
+					findable: this.findable
+				});
+			}
+			
+			if (this["o"]) {
+				this.o.bindViewToReferences(this.list, null, this.referenceObjectPaths);
+			}
+			this.updateMessage();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["o"]) {
+				this.o.releaseViewFromReferences(this.list);
+			}
+			if (this["updateAvailableHeightDel"]) {
+				this.updateAvailableHeightDel.unregisterAll();
+				delete this.updateAvailableHeightDel;
+			}
+			if (this["updateAvailableWidthDel"]) {
+				this.updateAvailableWidthDel.unregisterAll();
+				delete this.updateAvailableWidthDel;
+			}
+			this.updateMessageDel.unregisterAll();
+			delete this.updateMessageDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the available height.
+		-->
+		<method name="updateAvailableHeight" args="e=null">
+			<![CDATA[
+			var newHeight = this.availableHeightView.availableHeight - this.content.y;
+			if (this.embedded) {
+				newHeight -= 2;
+			}
+			if (this.content["availableHeight"] != newHeight) {
+				this.content.setAttribute("availableHeight", newHeight);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the available width.
+		-->
+		<method name="updateAvailableWidth" args="e=null">
+			<![CDATA[
+			var newWidth = this.availableWidthView.availableWidth;
+			if (this.embedded) {
+				newWidth -= 2;
+			}
+			if (this.content["availableWidth"] != newWidth) {
+				this.content.setAttribute("availableWidth", newWidth);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="getSelectedObject">
+			<![CDATA[
+			return this.list.getSelectedObject();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBaseReferenceList", "setModelObject(newObject)", [newObject]);
+			}
+
+			if (this["o"] !== newObject) {
+				if (this["o"]) {
+					if (this["list"]) {
+						this.o.releaseViewFromReferences(this.list);
+					}
+				}
+				this.o = newObject;
+				if (this.o) {
+					if (this["list"]) {
+						this.o.bindViewToReferences(this.list, null, this.referenceObjectPaths);
+					}
+				}
+				if (this["ono"]) {
+					this.ono.sendEvent(o);
+				}
+				this.updateMessage();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBaseReferenceList", "setModelObject(newObject)");				
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the message.
+		-->
+		<method name="updateMessage" args="e=null">
+			<![CDATA[
+			if (this["list"]) {
+				this.updateMessageDel.unregisterAll();
+				this.hasError = false;
+				var newMessage = "";
+				if (this["o"] && this.list["oList"]) {
+					if (this.list.oList.statusObject != null) {
+						this.hasError =  this.list.oList.statusObject.hasError;
+						newMessage = this.list.oList.statusObject.message;
+					}
+					this.updateMessageDel.register(this.list.oList, "onstatusObject");
+				}
+				if (newMessage != this.statusMessage) {
+					this.setAttribute("statusMessage", newMessage);
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the available custom services of the selected objects.
+			@return wcfCustomService[]
+		-->
+		<method name="getCustomServices">
+			<![CDATA[
+				var customServices = [];
+				var selectedObjects = this.list.getSelectedObjects();
+				if (selectedObjects != null && selectedObjects.length > 0) {
+					for(var i = 0; i < selectedObjects.length; i++) {
+						var oDef = selectedObjects[i].getReferencedObject().objectDefinition;
+						
+						for (var j = 0; j < oDef.customServices.length; j++) {
+							if(customServices.indexOf(oDef.customServices[j]) < 0) {
+								customServices.push(oDef.customServices[j]);
+							}
+						}
+					}
+				}
+				return customServices;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the available client actions of the selected objects.
+			@return wcfClientAction[]
+		-->
+		<method name="getClientActions">
+			<![CDATA[
+				var clientActions = [];
+				var selectedObjects = this.list.getSelectedObjects();
+				if (selectedObjects != null && selectedObjects.length > 0) {
+					for(var i = 0; i < selectedObjects.length; i++) {
+						var oDef = selectedObjects[i].getReferencedObject().objectDefinition;
+						
+						for (var j = 0; j < oDef.clientActions.length; j++) {
+							if(clientActions.indexOf(oDef.clientActions[j]) < 0 &&
+								((this.embedded && oDef.clientActions[j].availableFromEmbeddedListView) ||
+								(!this.embedded && oDef.clientActions[j].availableFromMainListView))) {
+								clientActions.push(oDef.clientActions[j]);
+							}
+						}
+					}
+				}
+				return clientActions;
+			]]>
+		</method>
+		
+		<simplelayout/>
+		<text name="message" text="${classroot.statusMessage}" multiline="true" width="${parent.content.width}" visible="${classroot.embedded &amp;&amp; classroot.statusMessage != ''}"/>
+		<view name="content" visible="${classroot.statusMessage == ''}" />
+	</class>
+	
+	<!---
+		This class defines a list of {@link wcfReferenceObjectDefinition reference objects}.
+		
+		The values for {@link wcfBaseReferenceList#referenceObjectPaths} and {@link wcfBaseReferenceList#listClass} used
+		to display the reference objects must be provided.
+	-->
+	<class name="wcfReferenceList" extends="wcfBaseReferenceList">
+		<!---
+			@keywords private
+			The nearest ancestor view that defines a model object.
+		-->
+		<attribute name="oView" value="${wcfModelUtil.findObjectView(this.parent)}" when="once"/>
+
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateModelObjectDel = new lz.Delegate(this, "updateModelObject");
+			this.updateModelObject();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateModelObjectDel.unregisterAll();
+			delete this.updateModelObjectDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the model object.
+		-->
+		<method name="updateModelObject" args="e=null">
+			<![CDATA[
+			this.updateModelObjectDel.unregisterAll();
+			this.updateModelObjectDel.register(this.oView, "ono");
+			var newObject = this.oView.o;
+			this.setAttribute("o", newObject);
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		This class defines a {@link wcfReferenceList} for use in a properties view.
+	-->
+	<class name="wcfPropertyReferenceList" extends="wcfPropertiesComponent">
+		<!---
+			Comma separated list of reference object paths. The list of
+			reference object paths can be used to restrict the list of parent objects
+			to those that are referenced through the specified object path.
+			An asterisk (*) can be used to replace
+			one or more object types in a reference object path. The asterisk will match all possible object types.
+			The following list of reference object paths displays the web activities that reference an e-Marketing spot:
+			<code>WebActivity/path/viewEMarketingSpot/ChildEMarketingSpot,WebActivity/path/branch/path/viewEMarketingSpot/ChildEMarketingSpot</code>.
+			The same result can be achieved by using an asterisk to replace the alternate paths to the reference object type:
+			<code>*/ChildEMarketingSpot</code>.
+		-->
+		<attribute name="referenceObjectPaths" type="string" value="${null}"/>
+		<!---
+			The name of the class to use for viewing this list.
+			This is often a class that extends {@link wcfObjectGrid}.
+			@type string
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The name of the definition to use for viewing this list. 
+			This is often a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Property reference list should determine their enablement on its own.  Overwrites the
+			{@link wcfPropertiesComponent#updateEnablement} method to do nothing.
+		-->
+		<method name="updateEnablement" args="e=null"/>
+		
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			super.createPrompt(parentComponent);
+			
+			if (parentComponent["editor"]) {
+				if (parentComponent["prompt"]) {
+					parentComponent.prompt.setAttribute('y', parentComponent.editor.content.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+				
+				if (parentComponent["extendedHelpIcon"]) {			
+					parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.content.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfBaseReferenceList(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o,
+				enabled: parentComponent.enabled,
+				referenceObjectPaths: this.referenceObjectPaths,
+				listClass: this.listClass,
+				listDefinitionName: this.listDefinitionName,
+				embedded: true
+			});
+			
+			if (parentComponent["prompt"]) {
+				parentComponent.prompt.setAttribute('y', parentComponent.editor.content.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+			}
+			
+			if (parentComponent["extendedHelpIcon"]) {			
+				parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.content.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+			}
+			]]>
+		</method>
+	
+	</class>
+
+</library>

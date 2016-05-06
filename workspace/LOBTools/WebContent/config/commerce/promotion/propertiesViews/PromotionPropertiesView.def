@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyPane definitionName="proPromotionManageTabPaneContent">
+		<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+
+		<PropertyGroup groupTitle="${promotionResources.promotion_newPromotionProperties}" name="promotionPropertiesGroup" open="true">
+			<PropertyInputText helpText="${promotionResources.promotion_adminName_helpText}" promptText="${promotionResources.promotion_newPromotionAdminName}" propertyName="adminName" required="true"/>
+	 		<PropertyViewLongText promptText="${promotionResources.promotion_newPromotionPromotionType}" propertyName="promotionType"/>
+	 		<PropertyGroup baseDefinitionName="proGeneral"/>
+		</PropertyGroup>		
+		
+		<PropertyGroup groupTitle="${promotionResources.promotion_purchaseConditionAndRewardTitle}" name="purchaseConditionAndRewardGroup" open="true">
+			<EnablementCondition conditionId="promotionType" enablementValue="" propertyName="promotionType"/>
+			<text text="${promotionResources.select_promotion_type_purchase_conditions_rewards}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup baseDefinitionName="proOrderLevelPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proOrderLevelValueDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proOrderLevelFreeGiftProperties"/>
+		<PropertyGroup baseDefinitionName="proOrderLevelFixedShippingDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proOrderLevelFixedAmountOffShippingDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelSameItemPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelValueDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelBuyXGetYFreeProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelPerItemPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelPerItemValueDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelFixedShippingDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelFixedCostDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelPerItemFixedCostDiscountProperties"/>		
+		<PropertyGroup baseDefinitionName="proCategoryLevelSameItemPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelValueDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelBuyXGetYFreeProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelBuyXGetYPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelPerItemPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelPerItemValueDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelFixedShippingDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelFixedCostDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proCategoryLevelPerItemFixedCostDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proProductLevelPWPPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proMultipleItemsPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proMultipleItemsGetYPercentDiscountProperties"/>
+		<PropertyGroup baseDefinitionName="proMultipleItemsGetYFixedAmountOffDiscountProperties"/>
+		
+		<PropertyGroup baseDefinitionName="proRedemptionLimits"/>
+		<PropertyGroup baseDefinitionName="proSchedule"/>		
+		<PropertyGroup baseDefinitionName="proTargetCustomerSegment"/>		
+		<PropertyGroup baseDefinitionName="proMiscellaneous"/>
+
+	</PropertyPane>
+	
+	<PropertyPane definitionName="proPromotionReferencesTabPaneContent">
+		<PropertyGroup collapsable="false" name="promotionFoldersGroup">
+			<!--- The reference list editor for a list of {@link PromotionFolder Promotion Folders} which are associated with a {@link Promotion promotion}. -->
+         	<PropertyReferenceList listDefinitionName="proPromotionFolderReferenceGrid" name="proPromotionFolderReferenceList" promptText="${promotionResources.promotion_promotionFolderReferences}" referenceObjectPaths="*/PromotionFolderItemReference,*/PromotionFolderInheritedItemReference,*/InheritedPromotionFolderInheritedItemReference"/>
+		 </PropertyGroup>
+		<PropertyGroup collapsable="false" name="marketingActivitiesGroup">
+			<!--- This reference list is used to show a list of {@link WebActivity Web Activities} and {@link DialogActivity Dialog Activities} which are associated with a {@link Promotion promotion}. -->
+		   <PropertyReferenceList listDefinitionName="proMarketingActivityReferenceGrid" name="proMarketingActivityReferenceList" promptText="${promotionResources.promotion_marketingActivityReferences}" referenceObjectPaths="*/ChildPromotion,*/ChildInheritedPromotion"/> 
+        </PropertyGroup>         	
+	</PropertyPane>
+	
+	<PropertyPane definitionName="proPromotionAttributesTabPaneContent">
+		<PropertyGroup collapsable="false" name="attributesGroup">
+			<PropertyInputMultiLineText promptText="${promotionResources.promotion_newPromotionAdminDesc}" propertyName="adminDescription"/>
+			<PropertyInputLongText helpText="${promotionResources.promotion_newPromotionShortDesc_helpText}" objectPath="PromotionDescription" promptText="${promotionResources.promotion_newPromotionShortDesc}" propertyName="shortDescription"/>
+			<PropertyRichTextEditor helpText="${promotionResources.promotion_newPromotionLongDesc_helpText}" objectPath="PromotionDescription" promptText="${promotionResources.promotion_newPromotionLongDesc}" propertyName="longDescription"/>
+		</PropertyGroup>
+	</PropertyPane>
+
+	<ObjectProperties definitionName="proPromotionProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="managePromotionTab" text="${promotionResources.promotion_managePromotionTab}">
+				<PropertyPane baseDefinitionName="proPromotionManageTabPaneContent"/>
+			</PropertyTabPane>
+			<PropertyTabPane name="promotionAttributesTab" text="${promotionResources.promotion_promotionAttributesTab}">
+				<PropertyPane baseDefinitionName="proPromotionAttributesTabPaneContent"/>
+			</PropertyTabPane>
+			<PropertyTabPane name="promotionReferences" text="${promotionResources.promotion_promotionReferencesTab}">				
+				<PropertyPane baseDefinitionName="proPromotionReferencesTabPaneContent"/>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+</Definitions>

@@ -1,0 +1,369 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+		<!---
+			<p>
+			Class definition for the advanced search class for Catalog Entries.
+			This class extends from the wcfAdvancedSearchContent class and is in charge of building the 
+			user interface for gathering the input from the user to perform the advanced search.
+			</p>
+			
+			<p>
+			As required by extending the wcfAdvancedSearchContent, a setSearchOptions method is
+			implemented to set the searchOptions attribute of the super class. The searchOptions is an
+			object that contains the name/value pairs that will be sent to the search service.
+			</p>
+			
+			<p>
+			This search is used to find the following:
+			{@link catProductPrimaryObjectDefinition Products},
+			{@link catBundlePrimaryObjectDefinition Bundles},
+			{@link catKitPrimaryObjectDefinition Kits},
+			{@link catProductSKUPrimaryObjectDefinition ProductSKUs},
+			{@link catCatalogGroupSKUPrimaryObjectDefinition CatalogGroupSKUs}
+			</p>
+			
+			<p>			
+			Search parameters incuded in this class : 
+				<ol>
+					<li> catalogEntryCode - Represents the partnumber of the catalog entry.
+					<li> catalogEntryName - Represents the name of the catalogentry
+					<li> mfPartNumber - Represents the manufacturer partnumber of the catalog entry.
+					<li> manufacturer - Represents the manufacturer of the catalog entry.
+					<li> published - Represents whether the catalog entry has been published or not or either.
+					<li> parentCategory - Represents the parent category of the catalog entry.
+					<li> catalogSelectionCatalogEntry - Represents the catalog to be searched in.
+					<li> catentryTypes - Represents the catalog entry types to be searched for.
+					<li> typeProducts, typeSKUs, typeKits and typeBundles - Represents the specific type of the catalog entry.
+				</ol>
+			</p>									  
+			
+			<p>
+			If this class is extended to append some extra search parameters, you must also write the
+			setSearchOptions method that calls the super.setSearchOptions() and then appends the new
+			extra search parameters to the searchOptions attribute.
+			</p>
+		-->
+		<class name="catAllCatalogEntriesAdvancedSearchContent" extends="wcfAdvancedSearchContent">
+	
+			<attribute name="myStyle" value="${this.parent.parent.parent.parent.parent.style}"/>
+			
+			<simplelayout axis="y"/>
+			<view name="section1" width="100%" height="14">
+					<simplelayout axis="y"/>
+					<view name="filler1" height="15"/>
+					<!-- Instructional text to the user -->
+					<text text="${catalogResources.searchInstructionalText.string}" multiline="true" width="100%" />
+					<view name="filler2" height="8"/>
+			</view>
+			<view name="section2" width="410" height="52">
+				<simplelayout axis="x"/>
+				<view name="section2_1" width="230" height="100%">
+						<simplelayout axis="y" spacing="2"/>
+						<view name="filler1" height="23"/>
+						<view name="section2_1_1" width="100%" height="30%">
+								<text text="${catalogResources.catalogEntryCodeSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section2_1_2" width="100%" height="70%">
+							<!-- Text field for the catalogEntryCode search parameter -->
+							<wcfInputText name="catalogEntryCode" width="177"/>
+						</view>
+				</view>
+				<view name="section2_2" width="181" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler1" height="23"/>
+					<view name="section2_2_1" width="100%" height="30%">
+						<text text="${catalogResources.catalogEntryNameSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section2_2_2" width="100%" height="40%">
+						<!-- Text field for the catalogEntryName search parameter -->
+						<wcfInputText name="catalogEntryName" width="177"/>
+					</view>
+				</view>
+			</view>
+			
+			<view name="section3" width="410" height="55">
+				<simplelayout axis="x"/>
+				<view name="section3_1" width="230" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler1" height="15"/>
+					<view name="section3_1_1" width="100%" height="16">
+						<text text="${catalogResources.mfPartnumberSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section3_1_2" width="97%" height="30">
+						<!-- Text field for the mfPartNumber (Manufacturer partnumber) search parameter -->
+						<wcfInputText name="mfPartNumber" width="177"/>
+					</view>
+				</view>
+			
+				<view name="section3_2" width="181" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler1" height="15"/>
+					<view name="section3_2_1" width="100%" height="16">
+						<text text="${catalogResources.manufacturerSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section3_2_2" width="100%" height="30">
+						<!-- Text field for the manufacturer search parameter -->
+						<wcfInputText name="manufacturer" width="177"/>
+					</view>
+				</view>
+			</view>
+		
+			<view name="section4" width="410" height="148" >
+				<simplelayout axis="y"/> 
+				
+				<view name="section4_2" width="100%" height="62">
+					<simplelayout axis="y"/>
+					
+					<view name="filler2" height="6"/>
+					
+					<view name="section4_2_1" width="100%" height="18" >
+						<text text="${catalogResources.categorySearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					
+					<view name="section4_2_2" width="100%" height="30" >
+						<simplelayout axis="y" spacing="11"/>
+						<!-- Text field for the parentCategory search param -->	
+						<wcfInputText name="parentCategory" width="177"/>
+						<view resource="dividerLine" stretches="width" width="${parent.width - 3}"/>
+					</view>
+				</view>
+				
+				<view name="section4_1" width="100%" height="100">
+					<simplelayout axis="y"/> 
+					<view name="section4_1_1" width="100%" height="18">
+						<text text="${catalogResources.publishSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section4_1_2" width="100%" height="65">
+						<!-- 
+							Radio button group for the published search param.
+							Options : 1) Published - Will search for all published catalog entries
+									  2) Not Published - Will search for all un-published catalog entries
+									  3) Published or Not Published - Will search for all published or un-published catalog entries
+						 -->
+						<wcfBaseRadioGroup name="published">
+						   	<wcfBaseRadioButton value="1" text="${catalogResources.publishedSearchOptionPrompt_1.string}"/>
+						   	<wcfBaseRadioButton value="2" text="${catalogResources.publishedSearchOptionPrompt_2.string}"/>
+					    	<wcfBaseRadioButton value="3" text="${catalogResources.publishedSearchOptionPrompt_3.string}" selected="true"/>
+						</wcfBaseRadioGroup>
+					</view>
+				</view>
+				
+				
+			</view>
+		 	
+		 	<view name="section5" width="410" height="66">
+				<simplelayout axis="x"/>
+				<view name="section5_1" width="100%" height="100%">
+					<simplelayout axis="y"/>
+					<view resource="dividerLine" stretches="width" width="${parent.width - 3}"/>
+					<view name="filler8" height="2"/>
+					<view name="section5_1_1" width="100%" height="22">
+						<text text="${catalogResources.catalogSearchPrompt.string}" width="100%" y="4" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section5_1_2" height="34" width="100%">
+						  <!-- 
+							  An instance of the Catalog Selection widget used 
+							  for choosing a catalog from the master and sales catalogs in the store.
+							  This is for the catalogSelectionCatalogEntry search parameter.
+						   -->
+						  <catCatalogSelectionWidget advancedSearchContent="${classroot}" y="3" name="catalogSelectionCatalogEntry" width="177"/>
+					</view> 
+					
+					<view resource="dividerLine" stretches="width" width="${parent.width - 3}"/>
+				</view>
+				
+			</view>
+			
+			
+			
+			<view name="section6" width="410" height="110">
+				<simplelayout axis="y"/>
+				
+				<text text="${catalogResources.catalogEntryTypeSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+				<view name="filler8" height="3"/>
+				<!-- 
+					Radio Button Group for catentryTypes search param. 
+					Options: 1) To search under all catalog entries except SKUs 
+							 2) To specify one or more particular type - This would list the different types to select from. 
+				-->
+				<wcfBaseRadioGroup x="5" name="catentryTypes">
+					    <wcfBaseRadioButton value="1" text="${catalogResources.catalogEntryTypeSearchOptionPrompt_1.string}" selected="true"/>
+					    <wcfBaseRadioButton value="2" text="${catalogResources.catalogEntryTypeSearchOptionPrompt_2.string}"/>
+				</wcfBaseRadioGroup>
+				<state applied="${immediateparent.catentryTypes.value == 2}">
+					<view name="filler9" height="10"/>
+					<view name="section6_1" width="100%" x="24" height="110">
+						<simplelayout axis="y"/>
+						<view name="section6_1_1" width="100%"  height="20">
+							
+							<!-- Checkbox for the typeProducts search parameter -->
+							<wcfBaseCheckbox name="typeProducts" text="${catalogResources.productTypeSearchOptionPrompt.string}" width="160"/>
+							<!-- Checkbox for the typeSKUs search parameter -->
+							<wcfBaseCheckbox name="typeSKUs" x="172" text="${catalogResources.skuTypeSearchOptionPrompt.string}" width="160"/>
+						</view>
+						<view name="section6_1_2" width="100%" height="20">
+							
+							<!-- Checkbox for the typeBundles search parameter -->
+							<wcfBaseCheckbox name="typeBundles" text="${catalogResources.bundleTypeSearchOptionPrompt.string}" width="160"/>
+							
+							<!-- Checkbox for the typeKits search parameter -->
+							<wcfBaseCheckbox name="typeKits" x="172" text="${catalogResources.kitTypeSearchOptionPrompt.string}" width="160"/>
+							
+							
+						</view>
+					</view>
+				</state>
+			
+			</view>
+		
+			<!---
+				Construct the search options for the all catalog entries advanced search.
+			-->
+			<method name="setSearchOptions">
+				<![CDATA[
+					super.setSearchOptions();
+					var newSearchOptions = {};
+					newSearchOptions.catalogEntryCode = this.section2.section2_1.section2_1_2.catalogEntryCode.getText();
+					newSearchOptions.catalogEntryName = this.section2.section2_2.section2_2_2.catalogEntryName.getText();
+					newSearchOptions.mfPartNumber = this.section3.section3_1.section3_1_2.mfPartNumber.getText();
+					newSearchOptions.manufacturer = this.section3.section3_2.section3_2_2.manufacturer.getText();
+					newSearchOptions.published = this.section4.section4_1.section4_1_2.published.getSelection().getValue();
+					newSearchOptions.parentCategory = this.section4.section4_2.section4_2_2.parentCategory.getText();
+					newSearchOptions.catalogSelectionCatalogEntry = this.section5.section5_1.section5_1_2.catalogSelectionCatalogEntry.getValue();
+					newSearchOptions.catentryTypes = this.section6.catentryTypes.getValue();
+					if (newSearchOptions.catentryTypes == 2) {
+						newSearchOptions.typeProducts = this.section6.section6_1.section6_1_1.typeProducts.getValue();
+						newSearchOptions.typeSKUs = this.section6.section6_1.section6_1_1.typeSKUs.getValue();
+						newSearchOptions.typeKits = this.section6.section6_1.section6_1_2.typeKits.getValue();
+						newSearchOptions.typeBundles = this.section6.section6_1.section6_1_2.typeBundles.getValue();
+					}
+					this.searchOptions = newSearchOptions;
+				]]>
+			</method>
+		</class>
+	
+
+		<!---
+			<p>
+			Class definition for the advanced search class for CatalogGroups.
+			This class extends from the wcfAdvancedSearchContent class and is in charge of building the 
+			user interface for gathering the input from the user to perform the advanced search.
+			<p>
+			
+			<p>
+			As required by extending the wcfAdvancedSearchContent, a setSearchOptions method is
+			implemented to set the searchOptions attribute of the super class. The searchOptions is an
+			object that contains the name/value pairs that will be sent to the search service.
+			<p>
+			
+			<p>
+			This search is used to find the following:
+			{@link catCatalogGroupPrimaryObjectDefinition CatalogGroups},
+			{@link catSalesCatalogGroupPrimaryObjectDefinition SalesCatalogGroups}
+			</p>
+			
+			<p>
+			Search parameters incuded in this class : 
+				<ol>
+					<li> catalogGroupCode - Represents the identifier of the catalog group.
+					<li> catalogGroupName - Represents the name of the catalog group.
+					<li> catalogGroupDescription - Represents the short description of the catalog group
+					<li> catalogSelectionCatalogGroup - Represents the catalog to be searched in.
+				</ol>
+			</p>
+			
+			<p>
+			If this class is extended to append some extra search parameters, you must also write the
+			setSearchOptions method that calls the super.setSearchOptions() and then appends the new
+			extra search parameters to the searchOptions attribute.
+			</p>
+		-->
+		<class name="catCategoriesAdvancedSearchContent" extends="wcfAdvancedSearchContent">
+			
+			<attribute name="myStyle" value="${this.parent.parent.parent.parent.parent.style}"/>
+		
+			<view name="main" width="410" height="250">
+				<simplelayout axis="y"/>
+				<view name="section1" width="100%" height="39">
+					<simplelayout axis="y"/>
+					<view name="filler1" height="15" />
+					<text text="${catalogResources.searchInstructionalText.string}" multiline="true" width="100%"/>
+					
+				</view>
+				<view name="section2" width="100%" height="44">
+					<simplelayout axis="x"/>
+					<view name="section2_1" width="230" height="20">
+						<simplelayout axis="y"/>
+						<text text="${catalogResources.catalogGroupCodeSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						<view name="filler1" height="1"/>
+						<!-- Text field for catalogGroupCode search parameter -->
+						<wcfInputText name="catalogGroupCode"  width="177"/>
+					</view>
+					<view name="section2_2" x="-2" width="181" height="20">
+						<simplelayout axis="y"/>
+						<text text="${catalogResources.catalogGroupNameSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						<view name="filler1" height="1"/>
+						<!-- Text field for catalogGroupName search parameter -->
+						<wcfInputText name="catalogGroupName"  width="177"/>
+					</view>
+				</view>
+				<view name="section3" width="100%" height="49">
+					<view name="section3_1" width="50%" height="25">
+						<simplelayout axis="y"/>
+						<text text="${catalogResources.catalogGroupDescriptionSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						<view name="filler1" height="1"/>
+						<!-- Text field for catalogGroupDescription search parameter -->
+						<wcfInputText name="catalogGroupDescription" width="177"/>
+					</view>
+				</view>
+				<view name="section4" width="100%" height="40">
+					<simplelayout axis="y"/>
+					<view resource="dividerLine" stretches="width" width="${parent.width - 3}"/>
+					<view name="filler6" height="6"/>
+					<view name="section4_1" width="50" height="21">
+						<text text="${catalogResources.catalogSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section4_2" width="175" height="100%">
+						<simplelayout axis="y"/>
+						<!-- 
+							  An instance of the Catalog Selection widget used 
+							  for choosing a catalog from the master and sales catalogs in the store.
+							  This is for the catalogSelectionCatalogGroup search parameter.
+						  -->
+						 <catCatalogSelectionWidget advancedSearchContent="${classroot}" name="catalogSelectionCatalogGroup"  width="177"/>
+					</view>
+				</view>
+				
+			</view>
+			
+			<!---
+				Construct the search options for the all catalog groups advanced search.
+			-->
+			<method name="setSearchOptions">
+				<![CDATA[
+	 				super.setSearchOptions();
+	 				var newSearchOptions = {};
+					newSearchOptions.catalogGroupCode = this.main.section2.section2_1.catalogGroupCode.getText();
+					newSearchOptions.catalogGroupName = this.main.section2.section2_2.catalogGroupName.getText();
+					newSearchOptions.catalogGroupDescription = this.main.section3.section3_1.catalogGroupDescription.getText();
+					newSearchOptions.catalogSelectionCatalogGroup = this.main.section4.section4_2.catalogSelectionCatalogGroup.getValue();
+					newSearchOptions.catalogSelectionCatalogGroupIdentifier = this.main.section4.section4_2.catalogSelectionCatalogGroup.getIdentifier();
+					newSearchOptions.catalogSelectionCatalogGroupStoreId = this.main.section4.section4_2.catalogSelectionCatalogGroup.getObjectStoreId();
+					this.searchOptions = newSearchOptions;
+				]]>
+			</method>
+		</class>
+</library>

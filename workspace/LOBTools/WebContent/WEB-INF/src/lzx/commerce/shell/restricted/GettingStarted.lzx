@@ -1,0 +1,415 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!--- @keywords private -->
+	<class name="wcfGettingStartedPage" width="100%" height="100%" visible="false"  >
+	
+		<!--- @keywords private -->
+		<attribute name="displayName" type="string" value="${shellResourceBundle.applicationMenuGettingStarted.string}"/>
+
+		<!--- @keywords private -->
+		<attribute name="mainWidth" value="${Math.max((this.content.innerContent.width), 800)}"/>
+	
+		<!--- @keywords private -->
+		<attribute name="featureWidth" value="${Math.floor(mainWidth/3)}"/>
+		
+		<!--- @keywords private -->
+		<attribute name="featureTextWidth" value="${featureWidth - 125}"/>
+		
+		<!---
+			@keywords private
+			This attribute indicates that this view currently has registered shortcut keys.
+		-->
+		<attribute name="keysRegistered" type="boolean" value="false"/>
+		
+		<!--- @keywords private -->
+		<method name="handleUserClose">
+			<![CDATA[
+			this.savePreferences("false");
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="handleUserOpen">
+			<![CDATA[
+			this.savePreferences("true");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="savePreferences" args="opened">
+			<![CDATA[
+			preferenceManager.setPreference("CMCGettingStartedPage", opened);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.pageDownDel = new lz.Delegate(this, "pageDown");
+			this.pageUpDel = new lz.Delegate(this, "pageUp");
+			this.checkFocusDel = new lz.Delegate(this, "checkFocus");
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.pageDownDel.unregisterAll();
+			delete this.pageDownDel;						
+			this.pageUpDel.unregisterAll();
+			delete this.pageUpDel;
+			this.checkFocusDel.unregisterAll();
+			delete this.checkFocusDel;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<handler name="onactive">
+			<![CDATA[
+			if (this.active) {
+				this.registerShortcutKeys();
+				this.checkFocusDel.unregisterAll();
+				this.checkFocusDel.register(lz.Focus, "onfocus");
+			}
+			else {
+				this.unregisterShortcutKeys();
+				this.checkFocusDel.unregisterAll();
+			}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method registers the shortcut keys. 
+		-->
+		<method name="registerShortcutKeys">
+			<![CDATA[
+			if (!this.keysRegistered) {
+				this.keysRegistered = true;
+				lz.Keys.callOnKeyCombo(this.pageDownDel, ["Pagedown"]);
+				lz.Keys.callOnKeyCombo(this.pageUpDel, ["Pageup"]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method unregisters the shortcut keys. 
+		-->
+		<method name="unregisterShortcutKeys">
+			<![CDATA[
+			if (this.keysRegistered) {
+				this.keysRegistered = false;
+				lz.Keys.removeKeyComboCall(this.pageDownDel, ["Pagedown"]);
+				lz.Keys.removeKeyComboCall(this.pageUpDel, ["Pageup"]);
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This method scrolls the getting started page down one page
+		-->
+		<method name="pageDown" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				this.content.innerContent.vScroll.step(20);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method scrolls the getting started page up one page.
+		-->
+		<method name="pageUp" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				this.content.innerContent.vScroll.step(-20);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check focus and auto scroll if needed.
+		-->
+		<method name="checkFocus" args="e=null">
+			<![CDATA[
+			var focusedView = lz.Focus.getFocus();
+			var containsFocus = wcfViewUtil.containsView(this, focusedView);
+			if (containsFocus) {
+				var vScrollStepsize = this.content.innerContent.vScroll.stepsize;
+				var hScrollStepsize = this.content.innerContent.hScroll.stepsize;
+				var y = focusedView.getAttributeRelative("y", this.content.innerContent.clipView);
+				var x = focusedView.getAttributeRelative("x", this.content.innerContent.clipView);
+				var clipViewHeight = this.content.innerContent.clipView.height;
+				var clipViewWidth = this.content.innerContent.clipView.width;
+				if (y < 0) { // move up
+					var space = y / vScrollStepsize;
+					this.content.innerContent.vScroll.step(space);
+				}
+				if (y + focusedView.height > clipViewHeight) { // move down
+					var space = (y + focusedView.height - clipViewHeight) / vScrollStepsize;
+					this.content.innerContent.vScroll.step(space);		
+				}
+				if (x < 0) { // move left
+					var space = x / hScrollStepsize;
+					this.content.innerContent.hScroll.step(space);
+				}
+				if (x + focusedView.width > clipViewWidth) { // move right
+					var space = (x + focusedView.width - clipViewWidth) / hScrollStepsize;
+					this.content.innerContent.hScroll.step(space);		
+				}
+			}
+			]]>
+		</method>		
+		
+		<simplelayout axis="y" />
+		<view name="barView" resource="gsBg_toolbar_getstart" stretches="width" width="${parent.width}" />
+		<view name="content" bgcolor="0x5272cc" x="5" width="${parent.width - 11}" height ="${parent.height - 17}" >
+			<view name="innerContent" bgcolor="white" x="1" y="1" width="${parent.width - 2}" height="${parent.height - 2}"  >
+				<view name="clipView" width="${parent.width}" height="${parent.height - parent.hScroll.height}" clip="true" >
+					<view name="gsView" fontsize="12" >
+						<simplelayout axis="y" />
+						<view name="mainView" y="10">
+							<view resource="gsGetStart_topframe_grad" stretches="width" width="${classroot.featureWidth * 3}" />
+							<view y="${parent.mainContentView.height-30}" width="${classroot.featureWidth * 3}" > 
+								<stableborderlayout axis="x"/>
+								<view resource="gsLeftside_featureVideo" />
+								<view resource="gsMiddleTile_featureVideo" stretches="width" />
+								<view resource="gsRightside_featureVideo" />
+							</view>
+							<view name="mainContentView">
+								<simplelayout axis="y" spacing="1"/>
+								<view height="15" />
+								<view x="10">
+									<simplelayout axis="x" spacing="8" />
+									<view resource="gsVideo_GetStart" />
+									<view>
+										<simplelayout axis="y" spacing="10" />
+										<text text="${shellResourceBundle.gsWelcomeTitle1.string}" fgcolor="#22366d" fontsize="16"/>
+										<view height="5" />
+										<view>
+											<simplelayout axis="x" spacing="15" />
+											<wcfVideoButton name="gsFeatureVideoThumb" resource="gsFeatureVideoThumb" videoLink="demo/ProductTour/ProductTour.html?noframes=true" />
+											<view>
+												<simplelayout axis="y" />
+												<text text="${shellResourceBundle.gsWelcomeTitle2.string}" />
+												<text width="${classroot.mainWidth - 400}" multiline="true" text="${shellResourceBundle.gsWelcomeTitle3.string}" />
+												<view height="8"/>
+												<text text="${shellResourceBundle.gsWelcomeTitle4.string}" />
+												<view>
+													<simplelayout axis="x" spacing="1" />
+													<view width="${Math.floor((classroot.mainWidth - 200)/2) - 10}">
+														<simplelayout axis="y" />
+														<text multiline="true" text="${shellResourceBundle.gsWelcomeTitle5.string}" width="${parent.width}"/>
+														<text multiline="true" text="${shellResourceBundle.gsWelcomeTitle6.string}" width="${parent.width}"/>
+														<text multiline="true" text="${shellResourceBundle.gsWelcomeTitle7.string}" width="${parent.width}"/>
+													</view>
+													<view width="${Math.floor((classroot.mainWidth - 200)/2) - 10}">
+														<simplelayout axis="y" />
+														<text multiline="true" text="${shellResourceBundle.gsWelcomeTitle8.string}" width="${parent.width}"/>
+														<text multiline="true" text="${shellResourceBundle.gsWelcomeTitle9.string}" width="${parent.width}"/>
+														<wcfHelpLinkText name="gsLearnMore" helpLink="concepts/ctfcmc.htm" text="${shellResourceBundle.gsLearnMore.string}" width="${parent.width}"/>
+													</view>
+												</view>
+											</view>
+										</view>
+									</view>
+								</view>
+							</view>
+						</view>
+						<view name="featureView" >
+							<simplelayout axis="x" />
+							<view name="catalogView" width="${classroot.featureWidth}">
+								<view width="${parent.width}">
+									<stableborderlayout axis="x"/>
+									<view resource="gsEnd_leftside_videos" />
+									<view resource="gsMiddleTile_videos" stretches="width" />
+									<view resource="gsRightside_videos" />
+								</view>
+								<view>
+									<simplelayout axis="y" spacing="10" />
+									<view height="1" />
+									<view x="10" >
+										<simplelayout axis="x" spacing="5" />
+										<view resource="gsCatalog" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsCatalogsTitle1.string}" fgcolor="#22366d" fontsize="14" />
+										</view>
+									</view>
+									<view height="10" />
+									<view x="20" >
+										<simplelayout axis="x" spacing="5" />
+										<wcfVideoButton name="gsVideoThumb" resource="gsVideoThumb" videoLink="demo/MerchandisingAssociation/MerchandisingAssociations.html?noframes=true" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsCatalogsTitle2.string}" />
+											<text width="${classroot.featureTextWidth}" multiline="true" text="${shellResourceBundle.gsCatalogsTitle3.string}" />
+										</view>
+									</view>
+									<view x="20" >
+										<simplelayout axis="x" spacing="5" />
+										<wcfVideoButton name="gsVideoThumb" resource="gsVideoThumb" videoLink="demo/ProductPlacement/demo_productplacement.html?noframes=true" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsCatalogsTitle4.string}" />
+											<text width="${classroot.featureTextWidth}" multiline="true" text="${shellResourceBundle.gsCatalogsTitle5.string}" />
+										</view>
+									</view>
+									<view x="98">
+										<wcfHelpLinkText name="gsLearnMore" helpLink="concepts/cpncatalogstool.htm" width="${classroot.featureTextWidth}" text="${shellResourceBundle.gsLearnMore.string}"/>
+									</view>
+								</view>
+							</view>
+							<view name="marketingView" width="${classroot.featureWidth}" >
+								<view width="${parent.width}">
+									<stableborderlayout axis="x"/>
+									<view resource="gsLeftside_videos" />
+									<view resource="gsMiddleTile_videos" stretches="width" />
+									<view resource="gsEnd_rightside_videos" />
+								</view>
+								<view> 
+									<simplelayout axis="y" spacing="10" />
+									<view height="1" />
+									<view x="15" >
+										<simplelayout axis="x" spacing="5" />
+										<view resource="gsMarketing" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsMarketingTitle1.string}" fgcolor="#22366d" fontsize="14" />
+										</view>
+									</view>
+									<view height="10" />
+									<view x="20" >
+										<simplelayout axis="x" spacing="5" />
+										<wcfVideoButton name="gsVideoThumb" resource="gsVideoThumb" videoLink="demo/WebIntro/WebIntro.html?noframes=true" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsMarketingTitle2.string}" />
+											<text width="${classroot.featureTextWidth}" multiline="true" text="${shellResourceBundle.gsMarketingTitle3.string}" />
+										</view>
+									</view>
+									<view x="20" >
+										<simplelayout axis="x" spacing="5" />
+										<wcfVideoButton name="gsVideoThumb" resource="gsVideoThumb" videoLink="demo/DialogIntro/DialogIntro.html?noframes=true" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsMarketingTitle4.string}" />
+											<text width="${classroot.featureTextWidth}" multiline="true" text="${shellResourceBundle.gsMarketingTitle5.string}" />
+										</view>
+									</view>
+									<view x="20" >
+										<simplelayout axis="x" spacing="5" />
+										<wcfVideoButton name="gsVideoThumb" resource="gsVideoThumb" videoLink="demo/Experiment/Experiment.html?noframes=true" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsMarketingTitle6.string}" />
+											<text width="${classroot.featureTextWidth}" multiline="true" text="${shellResourceBundle.gsMarketingTitle7.string}" />
+										</view>
+									</view>
+									<view x="98">
+										<wcfHelpLinkText name="gsLearnMore" helpLink="concepts/csbmarketingtools.htm" width="${classroot.featureTextWidth}" text="${shellResourceBundle.gsLearnMore.string}"/>
+									</view>
+								</view>
+							</view>
+							<view name="promotionView" width="${classroot.featureWidth}" >
+								<view width="${parent.width}">
+									<stableborderlayout axis="x"/>
+									<view resource="gsLeftside_videos" />
+									<view resource="gsMiddleTile_videos" stretches="width" />
+									<view resource="gsRightside_videos" />
+								</view>
+								<view>
+									<simplelayout axis="y" spacing="10" />
+									<view height="1" />
+									<view x="15" >
+										<simplelayout axis="x" spacing="5" />
+										<view resource="gsPromotions" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsPromotionsTitle1.string}" fgcolor="#22366d" fontsize="14" />
+										</view>
+									</view>
+									<view height="10" />
+									<view x="20" >
+										<simplelayout axis="x" spacing="5" />
+										<wcfVideoButton name="gsVideoThumb" resource="gsVideoThumb" videoLink="demo/WebIntro/WebIntro.html?noframes=true" />
+										<view>
+											<simplelayout axis="y" />
+											<text text="${shellResourceBundle.gsPromotionsTitle2.string}" />
+											<text width="${classroot.featureTextWidth}" multiline="true" text="${shellResourceBundle.gsPromotionsTitle3.string}" />
+										</view>
+									</view>
+									<view x="98">
+										<wcfHelpLinkText name="gsLearnMore" helpLink="concepts/cprpromotools.htm" width="${classroot.featureTextWidth}" text="${shellResourceBundle.gsLearnMore.string}"/>
+									</view>
+								</view>
+							</view>
+						</view>
+					</view>
+				</view>
+			
+				<view name="gsVScrollBottom" bgcolor="white"
+					x="${classroot.content.innerContent.vScroll.x}"
+					y="${classroot.content.innerContent.vScroll.y + classroot.content.innerContent.vScroll.height}"
+					height="${classroot.content.innerContent.hScroll.height}"
+					width="${classroot.content.innerContent.vScroll.width}"
+					visible="${classroot.content.innerContent.vScroll.visible &amp;&amp; classroot.content.innerContent.hScroll.visible}" />
+						
+				<wcfVerticalScrollbar name="vScroll" scrolltarget="parent.clipView.gsView"
+						x="${parent.clipView.x + parent.clipView.width - this.width}"
+						y="${parent.clipView.y}"
+						height="${parent.clipView.height + 1}"
+						visible="${this.scrollable}" />
+						
+				<wcfHorizontalScrollbar name="hScroll" scrolltarget="parent.clipView.gsView"
+						x="${parent.clipView.x}"
+						y="${parent.clipView.y + parent.clipView.height}"
+						width="${parent.clipView.width + 1}"
+						visible="${this.scrollable}" />
+			</view>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		This class implements the buttons in Management Center getting started videos.
+	-->
+	<class name="wcfVideoButton" extends="wcfFocusableBaseButton" doesenter="true" >
+		<wcfTooltip name="videoInfo" 
+				text="${shellResourceBundle.gsPlayVideo.string}" 
+				extendedText="${shellResourceBundle.gsPlayVideo.string}" />
+				
+		<!--- @keywords private -->
+		<attribute name="videoLink" type="string" />
+	
+		<!--- @keywords private -->
+		<handler name="onclick">
+			<![CDATA[
+			if (this.videoLink != "") {
+				helpManager.openVideoLink(this.videoLink);
+			}
+			]]>
+		</handler>
+	</class>
+	
+</library>

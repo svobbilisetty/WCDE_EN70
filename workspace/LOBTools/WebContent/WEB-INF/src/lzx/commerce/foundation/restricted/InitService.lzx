@@ -1,0 +1,68 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This service initializes one or more context values by invoking the 
+		URL specified in the <code>url</code> attribute on the WebSphere 
+		Commerce Server. Name-value pairs returned by this URL will be populated
+		into context.
+		
+		Required service parameters can be defined by declaring instances of
+		{@link wcfServiceParam} as children of the wcfInitService instance.
+	
+		An init service may only be declared as the immediate sub-node 
+		of an instance of a class that extends {@link wcfBusinessObjectEditor}.  
+		This service will be invoked when the business object editor instance
+		is initialized or when a new store is selected.
+	
+		The following example demonstrates the declaration of a {@link wcfContextValue}
+		instance and the wcfInitService instance that populates the context value.
+		
+		@START_CODE
+		<ContextValue parameterName="masterCatalogId"/>
+		<InitService url="/cmc/GetMasterCatalog">
+			<ServiceParam name="storeId"/>
+		</InitService>
+		@END_CODE
+		
+		When the parent wcfBusinessObject editor instance is initialized, 
+		the "/cmc/GetMasterCatalog" URL will be invoked with the "storeId" parameter.
+
+		The response from the request must be an XML document that contains one
+		or more context values. The following sample response will set the value of
+		the context value with the parameter name "masterCatalogId" to 1000.
+		
+		@START_CODE
+		<values>
+			<masterCatalogId>1000</masterCatalogId>
+		</values>
+		@END_CODE
+	-->
+	<class name="wcfInitService" extends="wcfService" refreshOnNewIdentity="true" retryOnError="true">
+		<!--- 
+			@keywords private 
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var services = immediateparent["initServices"];
+			if (!services) {
+				services = [];
+				immediateparent.initServices = services;
+			}
+			services.push(this);
+			]]>
+		</method>
+	</class>
+</library>

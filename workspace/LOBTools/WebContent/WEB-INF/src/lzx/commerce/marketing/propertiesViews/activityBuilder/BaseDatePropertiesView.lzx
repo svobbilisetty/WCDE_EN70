@@ -1,0 +1,411 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		<p>Properties view snippet for common selections of date and day ranges. This view provides a drop-down selection
+		to choose between:
+			<ol>
+				<li>At any time</li>
+				<li>Within a number of days</li>
+				<li>Prior to a number of days</li>
+				<li>Before a specific date</li>
+				<li>After a specific date</li>
+				<li>Within a date range</li>
+				<li>On a specific date</li>
+			</ol>
+		Based on the selection, the appropriate inputs for the number of days and date ranges will appear.
+		</p>
+		
+		<p>The following property names are managed by this view:
+			<ul>
+				<li>daysOperator</li>
+				<li>days</li>
+				<li>beforeAfterOnDate</li>
+				<li>beforeDate</li>
+				<li>date1</li>
+				<li>date2</li>
+			</ul>
+		</p>
+	-->
+	<class name="mktBaseDateProperties" extends="wcfPropertyGroup" collapsable="false">
+		<!---
+			This attribute provides the help text for this properties view component. The helpText will be used for creating tooltips.
+			The default value of this attribute is the empty string.
+		-->
+		<attribute name="helpText" type="text" value=""/>
+		
+		<wcfMultiValueSelector name="date" promptText="${mktMarketingResources.timeFrame.string}" helpText="${classroot.helpText}">
+			<wcfMultiValueSelection name="anyTime" displayName="${mktMarketingResources.anyTime.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="beforeDate" displayName="${mktMarketingResources.beforeDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[<]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="afterDate" displayName="${mktMarketingResources.afterDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[>]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="onDate" displayName="${mktMarketingResources.onDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[=]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="withinDates" displayName="${mktMarketingResources.withinDates.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[>=]]></beforeAfterOnDate>
+					<beforeDate><![CDATA[<=]]></beforeDate>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="withinDays" displayName="${mktMarketingResources.withinDays.string}">
+				<dataset name="values">
+					<daysOperator><![CDATA[<=]]></daysOperator>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="priorDays" displayName="${mktMarketingResources.priorDays.string}">
+				<dataset name="values">
+					<daysOperator><![CDATA[>]]></daysOperator>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+		</wcfMultiValueSelector>
+
+		<wcfPropertyGroup name="daysGroup" collapsable="false">
+			<wcfEnablementOrCondition conditionId="condDays">
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="daysOperator" enablementValue="&lt;="/>
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="daysOperator" enablementValue="&gt;"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyStepper minimumValue="1" propertyName="days" promptText="${mktMarketingResources.days.string}" />
+		</wcfPropertyGroup>
+
+		<wcfPropertyGroup name="dateGroup" collapsable="false">
+			<wcfEnablementOrCondition conditionId="condDate">
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="beforeAfterOnDate" enablementValue="&gt;"/>
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="beforeAfterOnDate" enablementValue="&lt;"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyDateTimePicker propertyName="date1" promptText="${mktMarketingResources.date.string}" />
+		</wcfPropertyGroup>
+
+		<wcfPropertyGroup name="datesGroup" collapsable="false">
+			<wcfEnablementAndCondition conditionId="condDates">
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="beforeAfterOnDate" enablementValue="&gt;="/>
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="beforeDate" enablementValue="&lt;="/>
+			</wcfEnablementAndCondition>
+			<wcfPropertyDateTimePicker propertyName="date1" promptText="${mktMarketingResources.date1.string}" />
+			<wcfPropertyDateTimePicker propertyName="date2" promptText="${mktMarketingResources.date2.string}" endOfDay="true"/>
+		</wcfPropertyGroup>
+		
+		<wcfPropertyGroup name="onDateGroup" collapsable="false">
+			<wcfEnablementCondition conditionId="condEqual" propertyName="beforeAfterOnDate" enablementValue="="/>
+			<wcfPropertyDatePicker propertyName="date1" promptText="${mktMarketingResources.date.string}" />
+		</wcfPropertyGroup>
+	</class>
+
+	<!---
+		<p>Properties view snippet for common selections of date and day ranges for use with flow elements that are triggers.
+		This view provides a drop-down selection to choose between:
+			<ol>
+				<li>At any time</li>
+				<li>Within a number of days</li>
+				<li>Before a specific date</li>
+				<li>After a specific date</li>
+				<li>Within a date range</li>
+				<li>On a specific date</li>
+			</ol>
+		Based on the selection, the appropriate inputs for the number of days and date ranges will appear.
+		</p>
+		
+		<p>The following property names are managed by this view:
+			<ul>
+				<li>daysOperator</li>
+				<li>days</li>
+				<li>beforeAfterOnDate</li>
+				<li>beforeDate</li>
+				<li>date1</li>
+				<li>date2</li>
+			</ul>
+		</p>
+	-->
+	<class name="mktBaseTriggerDateProperties" extends="wcfPropertyGroup" collapsable="false">
+		<!---
+			This attribute provides the help text for this properties view component. The helpText will be used for creating tooltips.
+			The default value of this attribute is the empty string.
+		-->
+		<attribute name="helpText" type="text" value=""/>
+		
+		<wcfMultiValueSelector name="date" promptText="${mktMarketingResources.timeFrame.string}" helpText="${classroot.helpText}">
+			<wcfMultiValueSelection name="anyTime" displayName="${mktMarketingResources.anyTime.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="beforeDate" displayName="${mktMarketingResources.beforeDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[<]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="afterDate" displayName="${mktMarketingResources.afterDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[>]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="onDate" displayName="${mktMarketingResources.onDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[=]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="withinDates" displayName="${mktMarketingResources.withinDates.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[>=]]></beforeAfterOnDate>
+					<beforeDate><![CDATA[<=]]></beforeDate>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="withinDays" displayName="${mktMarketingResources.withinDays.string}">
+				<dataset name="values">
+					<daysOperator><![CDATA[<=]]></daysOperator>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+		</wcfMultiValueSelector>
+
+		<wcfPropertyGroup name="daysGroup" collapsable="false">
+			<wcfEnablementOrCondition conditionId="condDays">
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="daysOperator" enablementValue="&lt;="/>
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="daysOperator" enablementValue="&gt;"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyStepper minimumValue="1" propertyName="days" promptText="${mktMarketingResources.days.string}" />
+		</wcfPropertyGroup>
+
+		<wcfPropertyGroup name="dateGroup" collapsable="false">
+			<wcfEnablementOrCondition conditionId="condDate">
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="beforeAfterOnDate" enablementValue="&gt;"/>
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="beforeAfterOnDate" enablementValue="&lt;"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyDateTimePicker propertyName="date1" promptText="${mktMarketingResources.date.string}" />
+		</wcfPropertyGroup>
+
+		<wcfPropertyGroup name="datesGroup" collapsable="false">
+			<wcfEnablementAndCondition conditionId="condDates">
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="beforeAfterOnDate" enablementValue="&gt;="/>
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="beforeDate" enablementValue="&lt;="/>
+			</wcfEnablementAndCondition>
+			<wcfPropertyDateTimePicker propertyName="date1" promptText="${mktMarketingResources.date1.string}" />
+			<wcfPropertyDateTimePicker propertyName="date2" promptText="${mktMarketingResources.date2.string}" endOfDay="true"/>
+		</wcfPropertyGroup>
+		
+		<wcfPropertyGroup name="onDateGroup" collapsable="false">
+			<wcfEnablementCondition conditionId="condEqual" propertyName="beforeAfterOnDate" enablementValue="="/>
+			<wcfPropertyDatePicker propertyName="date1" promptText="${mktMarketingResources.date.string}" />
+		</wcfPropertyGroup>
+	</class>
+
+	<!---
+		<p>Properties view snippet for common selections of date and day ranges. This view provides a drop-down selection
+		to choose between:
+			<ol>
+				<li>At any time</li>
+				<li>Number of previous orders</li>
+				<li>Within a number of days</li>
+				<li>Prior to a number of days</li>
+				<li>Before a specific date</li>
+				<li>After a specific date</li>
+				<li>Within a date range</li>
+				<li>On a specific date</li>
+			</ol>
+		Based on the selection, the appropriate inputs for the number of days and date ranges will appear.
+		</p>
+		
+		<p>The following property names are managed by this view:
+			<ul>
+				<li>daysOperator</li>
+				<li>days</li>
+				<li>beforeAfterOnDate</li>
+				<li>beforeDate</li>
+				<li>date1</li>
+				<li>date2</li>
+			</ul>
+		</p>
+	-->
+	<class name="mktPurchaseHistoryBaseDateProperties" extends="wcfPropertyGroup" collapsable="false">
+		<!---
+			This attribute provides the help text for this properties view component. The helpText will be used for creating tooltips.
+			The default value of this attribute is the empty string.
+		-->
+		<attribute name="helpText" type="text" value=""/>
+		
+		<wcfMultiValueSelector name="date" promptText="${mktMarketingResources.timeFrame.string}" helpText="${classroot.helpText}">
+			<wcfMultiValueSelection name="anyTime" displayName="${mktMarketingResources.anyTime.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="previousOrders" displayName="${mktMarketingResources.previousOrders.string}">
+				<dataset name="values">
+					<daysOperator>previousOrders</daysOperator>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>			
+			<wcfMultiValueSelection name="beforeDate" displayName="${mktMarketingResources.beforeDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[<]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="afterDate" displayName="${mktMarketingResources.afterDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[>]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="onDate" displayName="${mktMarketingResources.onDate.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[=]]></beforeAfterOnDate>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="withinDates" displayName="${mktMarketingResources.withinDates.string}">
+				<dataset name="values">
+					<daysOperator></daysOperator>
+					<days></days>
+					<beforeAfterOnDate><![CDATA[>=]]></beforeAfterOnDate>
+					<beforeDate><![CDATA[<=]]></beforeDate>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="withinDays" displayName="${mktMarketingResources.withinDays.string}">
+				<dataset name="values">
+					<daysOperator><![CDATA[<=]]></daysOperator>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection name="priorDays" displayName="${mktMarketingResources.priorDays.string}">
+				<dataset name="values">
+					<daysOperator><![CDATA[>]]></daysOperator>
+					<beforeAfterOnDate></beforeAfterOnDate>
+					<date1></date1>
+					<beforeDate></beforeDate>
+					<date2></date2>
+				</dataset>
+			</wcfMultiValueSelection>
+		</wcfMultiValueSelector>
+
+		<wcfPropertyGroup name="previousOrdersGroup" collapsable="false">
+			<wcfEnablementCondition conditionId="condPreviousOrders" propertyName="daysOperator" enablementValue="previousOrders"/>
+			<wcfPropertyStepper minimumValue="1" propertyName="days" promptText="${mktMarketingResources.numberOfOrders.string}" />
+		</wcfPropertyGroup>
+		
+		<wcfPropertyGroup name="daysGroup" collapsable="false">
+			<wcfEnablementOrCondition conditionId="condDays">
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="daysOperator" enablementValue="&lt;="/>
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="daysOperator" enablementValue="&gt;"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyStepper minimumValue="1" propertyName="days" promptText="${mktMarketingResources.days.string}" />
+		</wcfPropertyGroup>
+
+		<wcfPropertyGroup name="dateGroup" collapsable="false">
+			<wcfEnablementOrCondition conditionId="condDate">
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="beforeAfterOnDate" enablementValue="&gt;"/>
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="beforeAfterOnDate" enablementValue="&lt;"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyDateTimePicker propertyName="date1" promptText="${mktMarketingResources.date.string}" />
+		</wcfPropertyGroup>
+
+		<wcfPropertyGroup name="datesGroup" collapsable="false">
+			<wcfEnablementAndCondition conditionId="condDates">
+				<wcfEnablementCondition conditionId="condGreaterThan" propertyName="beforeAfterOnDate" enablementValue="&gt;="/>
+				<wcfEnablementCondition conditionId="condLessThan" propertyName="beforeDate" enablementValue="&lt;="/>
+			</wcfEnablementAndCondition>
+			<wcfPropertyDateTimePicker propertyName="date1" promptText="${mktMarketingResources.date1.string}" />
+			<wcfPropertyDateTimePicker propertyName="date2" promptText="${mktMarketingResources.date2.string}" endOfDay="true"/>
+		</wcfPropertyGroup>
+		
+		<wcfPropertyGroup name="onDateGroup" collapsable="false">
+			<wcfEnablementCondition conditionId="condEqual" propertyName="beforeAfterOnDate" enablementValue="="/>
+			<wcfPropertyDatePicker propertyName="date1" promptText="${mktMarketingResources.date.string}" />
+		</wcfPropertyGroup>
+	</class>
+	
+</library>

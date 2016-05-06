@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+    	
+    <ChildObjectDefinition definitionName="cftConditionValueObjectDefinition" objectType="CatalogFilterConditionValue" idProperty="conditionValId">
+
+
+   <PropertyDefinition propertyName="attrValId" displayName="${cftCatalogFilterResources.attributeDictionaryAllowedValueUniqueId}"/>
+
+   <PropertyDefinition propertyName="conditionAssignedValue" displayName="${cftCatalogFilterResources.catalogFilterConditionAssignedValue}" />
+
+   <CreateService url="/cmc/CreateCatalogFilterConditionValue">
+	<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="conditionId" propertyName="uniqueId" resolvePrimaryParent="false" parentProperty="true" />
+	<ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+	<ServiceParam name="attrvalId"  propertyName="attrValId" />
+   </CreateService>
+		
+   <UpdateService url="/cmc/UpdateCatalogFilterConditionValue">
+	<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+    <ServiceParam name="uniqueId" propertyName="conditionValId"/>
+	<ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+	<ServiceParam name="attrvalId" propertyName="attrValId" />
+   </UpdateService>
+		
+   <!--- Delete service to delete the attribute with allowed value type.  -->
+   <DeleteService url="/cmc/DeleteCatalogFilterConditionValue">
+	<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+       <ServiceParam name="uniqueID" propertyName="conditionValId"/>
+	<ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+   </DeleteService>
+		
+</ChildObjectDefinition>
+    
+    
+<ChildObjectDefinition definitionName="cftConditionAssignedValueObjectDefinition" objectType="CatalogFilterConditionAssignedValue" idProperty="conditionValId">
+
+
+   <PropertyDefinition propertyName="conditionAssignedValue" displayName="${cftCatalogFilterResources.catalogFilterConditionAssignedValue}" />
+
+   <CreateService url="/cmc/CreateCatalogFilterConditionValue">
+	<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="conditionId" propertyName="uniqueId" resolvePrimaryParent="false" parentProperty="true" />
+	<ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+	<ServiceParam name="stringValue" parameterName="stringValue" propertyName="conditionAssignedValue">
+				<EnablementCondition conditionId="stringValueCondition" enablementValue="String"  parentProperty="true" resolvePrimaryParent="false"
+					objectPath="AttributeDictionaryAttributeWithAssignedValuesAlias"  propertyName="attrDataType"/>
+	</ServiceParam>
+	<ServiceParam name="floatValue" parameterName="floatValue" propertyName="conditionAssignedValue">
+				<EnablementCondition conditionId="floatValueCondition" enablementValue="Float"  parentProperty="true" resolvePrimaryParent="false"
+					objectPath="AttributeDictionaryAttributeWithAssignedValuesAlias"  propertyName="attrDataType"/>
+	</ServiceParam>
+	<ServiceParam name="integerValue" parameterName="integerValue" propertyName="conditionAssignedValue">
+				<EnablementCondition conditionId="integerValueCondition" enablementValue="Integer"  parentProperty="true" resolvePrimaryParent="false"
+					objectPath="AttributeDictionaryAttributeWithAssignedValuesAlias"  propertyName="attrDataType"/>
+	</ServiceParam>
+</CreateService>
+		
+   <UpdateService url="/cmc/UpdateCatalogFilterConditionValue">
+	<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+    <ServiceParam name="uniqueID" propertyName="conditionValId"/>
+	<ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+	<ServiceParam name="stringValue" parameterName="stringValue" propertyName="conditionAssignedValue">
+				<EnablementCondition conditionId="stringValueCondition" enablementValue="String"  parentProperty="true" resolvePrimaryParent="false"
+					objectPath="AttributeDictionaryAttributeWithAssignedValuesAlias"  propertyName="attrDataType"/>
+	</ServiceParam>
+	<ServiceParam name="floatValue" parameterName="floatValue" propertyName="conditionAssignedValue">
+				<EnablementCondition conditionId="floatValueCondition" enablementValue="Float"  parentProperty="true" resolvePrimaryParent="false"
+					objectPath="AttributeDictionaryAttributeWithAssignedValuesAlias"  propertyName="attrDataType"/>
+	</ServiceParam>
+	<ServiceParam name="integerValue" parameterName="integerValue" propertyName="conditionAssignedValue">
+				<EnablementCondition conditionId="integerValueCondition" enablementValue="Integer"  parentProperty="true" resolvePrimaryParent="false"
+					objectPath="AttributeDictionaryAttributeWithAssignedValuesAlias"  propertyName="attrDataType"/>
+	</ServiceParam>
+   </UpdateService>
+		
+   <!--- Delete service to delete the attribute with assigned value type.  -->
+   <DeleteService url="/cmc/DeleteCatalogFilterConditionValue">
+	<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+	<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+	</ServiceParam>
+    <ServiceParam name="uniqueID" propertyName="conditionValId"/>
+	<ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+   </DeleteService>
+		
+</ChildObjectDefinition>
+
+</Definitions>

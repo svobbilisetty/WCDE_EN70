@@ -1,0 +1,300 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when a tool with unsaved changes closes.
+		It has the options of disregarding the changes and close the tool, and cancel the close action.
+	-->
+	<wcfAlertDialog name="wcfToolOnCloseWithChangesDialog" showOK="false" showYes="true" showNo="true" promptText="${shellResourceBundle.systemCloseToolWithUnsavedChangesPrompt.string}">
+		<!---
+			@keywords private
+			Identifier of the tool. This is a required attribute.
+		-->
+		<attribute name="objectId" type="string" value="" />
+
+		<!--- @keywords private -->
+		<method name="openToolOnCloseWithChangesDialog" args="oid">
+			<![CDATA[
+				this.objectId = oid;
+				this.openWindow();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the focus to No button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.noBtn);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="handleYes">
+			<![CDATA[
+				toolsController.destroyTool(this.objectId);
+			]]>
+		</method>
+	</wcfAlertDialog>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user selects a workspace task to
+		work on while opened tools in Management Center have unsaved changes. It has the options of
+		disregarding the changes and start working on the task, and cancel the action.
+	-->
+	<wcfAlertDialog name="wcfSwitchTaskWithChangesDialog" showOK="false" showYes="true" showNo="true" promptText="${shellResourceBundle.switchTaskWithUnsavedChangesPrompt.string}">
+		<!--- @keywords private -->
+		<attribute name="o" value="null" />
+		
+		<!---
+			@keywords private
+			This method opens this dialog to warn the user that tools in Management Center have unsaved
+			changes.
+			@param wcfModelObject o The model object that the user is performing the work on action with.
+		-->
+		<method name="openSwitchTaskWithChangesDialog" args="o">
+			<![CDATA[
+				if (o) {
+					this.o = o;
+				}
+				this.openWindow();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the focus to No button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.noBtn);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method closes this dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+				this.o = null;
+				super.closeWindow();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="handleYes">
+			<![CDATA[
+				wcfWorkspaceUtil.updateWorkspaceContext(this.o);
+			]]>
+		</method>
+	</wcfAlertDialog>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user selects workspace tasks to
+		process while opened tools in Management Center have unsaved changes. It has the options of
+		disregarding the changes and start processing the tasks, and cancel the action. Possible options
+		of processing the tasks are complete, approve and reject.
+	-->
+	<class name="wcfProcessTasksWithChangesDialog" extends="wcfAlertDialog" showOK="false" showYes="true" showNo="true" promptText="${shellResourceBundle.switchTaskWithUnsavedChangesPrompt.string}">
+		<!--- @keywords private -->
+		<attribute name="objects" value="null" />
+
+		<!---
+			@keywords private
+			This method opens this dialog to warn the user that tools in Management Center have unsaved
+			changes.
+			@param [wcfModelObject] objects The array of model objects that the user is performing the process action with.
+		-->
+		<method name="openProcessTasksWithChangesDialog" args="objects">
+			<![CDATA[
+				if (objects) {
+					this.objects = objects;
+				}
+				this.openWindow();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method closes this dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+				this.objects = null;
+				super.closeWindow();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the focus to No button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.noBtn);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user selects workspace tasks to
+		complete while opened tools in Management Center have unsaved changes. It has the options of
+		disregarding the changes and start completing the tasks, and cancel the action.
+	-->
+	<wcfProcessTasksWithChangesDialog name="wcfCompleteTasksWithChangesDialog">
+		<!--- @keywords private -->
+		<method name="handleYes">
+			<![CDATA[
+				// invoke the complete task service
+				wcfWorkspaceUtil.invokeCompleteTaskService(this.objects);
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<method name="openCompleteTasksWithChangesDialog" args="objects">
+			<![CDATA[
+				this.openProcessTasksWithChangesDialog(objects);
+			]]>
+		</method>
+	</wcfProcessTasksWithChangesDialog>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user selects workspace task groups
+		to approve while opened tools in Management Center have unsaved changes. It has the options
+		of disregarding the changes and start approving the task groups, and cancel the action.
+	-->
+	<wcfProcessTasksWithChangesDialog name="wcfApproveTaskGroupsWithChangesDialog">
+		<!--- @keywords private -->
+		<method name="handleYes">
+			<![CDATA[
+				// invoke the approve task group service
+				wcfWorkspaceUtil.invokeApproveTaskGroupService(this.objects);
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<method name="openApproveTaskGroupsWithChangesDialog" args="objects">
+			<![CDATA[
+				this.openProcessTasksWithChangesDialog(objects);
+			]]>
+		</method>
+	</wcfProcessTasksWithChangesDialog>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user selects workspace task groups
+		to cancel while opened tools in Management Center have unsaved changes. It has the options
+		of disregarding the changes and start canceling the task groups, and cancel the action.
+	-->
+	<wcfProcessTasksWithChangesDialog name="wcfCancelTaskGroupsWithChangesDialog">
+		<!--- @keywords private -->
+		<method name="handleYes">
+			<![CDATA[
+				// invoke the approve task group service
+				wcfWorkspaceUtil.invokeCancelTaskGroupService(this.objects);
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<method name="openCancelTaskGroupsWithChangesDialog" args="objects">
+			<![CDATA[
+				this.openProcessTasksWithChangesDialog(objects);
+			]]>
+		</method>
+	</wcfProcessTasksWithChangesDialog>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user selects workspace task groups
+		to reject while opened tools in Management Center have unsaved changes. It has the options
+		of disregarding the changes and start rejecting the task groups, and cancel the action.
+	-->
+	<wcfProcessTasksWithChangesDialog name="wcfRejectTaskGroupsWithChangesDialog">
+		<!--- @keywords private -->
+		<method name="handleYes">
+			<![CDATA[
+				// invoke the reject task group service
+				wcfWorkspaceUtil.invokeRejectTaskGroupService(this.objects);
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<method name="openRejectTaskGroupsWithChangesDialog" args="objects">
+			<![CDATA[
+				this.openProcessTasksWithChangesDialog(objects);
+			]]>
+		</method>
+	</wcfProcessTasksWithChangesDialog>
+	
+	<!---
+		@keywords private
+		
+		This class implements the dialog that is opened when there are outstanding transactions. A message
+		is displayed in the dialog.
+	-->
+	<wcfAlertDialog name="wcfTransactionProgressDialog" promptText="${shellResourceBundle.systemHasOutstandingTransactions.string}" />
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when a tool is opened or brought to focus while
+		Management Center is in its read-only mode. A message is displayed in the dialog.
+	-->
+	<wcfAlertDialog name="wcfApplicationInReadOnlyModeDialog" promptText="${shellResourceBundle.systemApplicationInReadOnlyMode.string}" />
+	
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when a tool is opened or brought to focus while
+		Management Center is in its read-only mode. A message is displayed in the dialog.
+	-->
+	<wcfAlertDialog name="wcfApplicationInReadOnlyModeInApprovedContentDialog" promptText="${shellResourceBundle.systemApplicationInReadOnlyModeInApprovedContent.string}" />
+	
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user selects workspace tasks to
+		process while there are unsaved changes in the task tool. Possible options of processing 
+		the tasks are complete, approve and reject.
+	-->
+	<wcfAlertDialog name="wcfProcessTasksWithUnsavedChangesDialog" promptText="${shellResourceBundle.systemHasUnsavedChanges.string}" />
+
+	<!-- 
+		This dialog is used to prompt the user when they have unsaved objects and want to change their current time zone
+	 -->
+	<wcfAlertDialog id="wcfChangeTimeZoneUnsavedDialog" showOK="true" showCancel="false" showYes="false" showNo="false"
+		promptText="${shellResourceBundle.changeTimeZoneUnsavedDialogText.string}">							
+	</wcfAlertDialog>
+
+	<!---
+		@keywords private
+
+		This class implements the dialog that is opened when the user opens a tool that is not available to workspace tasks
+		while the user is working on a workspace task. A message is displayed in the dialog.
+	-->
+	<wcfAlertDialog name="wcfToolNotAvailableToWorkspaceTasksDialog" promptText="${shellResourceBundle.systemToolNotAvailableToWorkspaceTasks.string}" />
+
+</library>

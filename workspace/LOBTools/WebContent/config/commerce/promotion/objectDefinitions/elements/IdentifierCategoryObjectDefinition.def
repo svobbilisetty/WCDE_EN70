@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the promotion element object definition for the Identifier_Category element sub type.		 	
+	-->
+	<PromotionElementReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="Promotion" definitionName="proIdentifierCategoryObjectDefinition" displayName="${promotionResources.promotion_Select_Category}" objectGroups="Identifier_CategoryGroup" objectType="Identifier_Category" package="pro" referencedTypes="CatalogGroup,SalesCatalogGroup">
+		
+		<!--- Creates the object with service parameter catgroupId from object path CatalogGroupAlias. -->
+		<CreateService baseDefinitionName="proPromotionElementCreateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="CatalogGroupAlias" propertyName="catgroupId"/>
+		</CreateService>
+		
+		<!--- Updates the object with service parameter catgroupId from object path CatalogGroupAlias. -->
+		<UpdateService baseDefinitionName="proPromotionElementUpdateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="CatalogGroupAlias" propertyName="catgroupId"/>
+		</UpdateService>
+		
+		<!--- 
+			The element type of this promotion element object which will be used by the XML transformation layer during promotion activation.
+			Possible values include "IncludeCategoryIdentifier" and "ExcludeCategoryIdentifier".  
+		-->
+		<PropertyDefinition propertyName="elementType" forceParentValidation="true">
+			<PropertyValue value="IncludeCategoryIdentifier"/>
+			<PropertyValue value="ExcludeCategoryIdentifier"/>
+		</PropertyDefinition>		
+		
+	</PromotionElementReferenceObjectDefinition>
+	
+	<!---
+		This is the promotion element object definition for the Identifier_InheritedCategory element sub type.		
+	-->
+	<PromotionElementReferenceObjectDefinition allowDuplicates="false" definitionName="proIdentifierInheritedCategoryObjectDefinition" displayName="${promotionResources.promotion_Select_Category}" objectGroups="Identifier_CategoryGroup" objectType="Identifier_InheritedCategory" package="pro" referencedTypes="InheritedCatalogGroup,InheritedSalesCatalogGroup">
+		
+		<!--- Creates the object with service parameter catgroupId from object path CatalogGroupAlias. -->
+		<CreateService baseDefinitionName="proPromotionElementCreateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="CatalogGroupAlias" propertyName="catgroupId"/>
+		</CreateService>
+		
+		<!--- Updates the object with service parameter catgroupId from object path CatalogGroupAlias. -->
+		<UpdateService baseDefinitionName="proPromotionElementUpdateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="CatalogGroupAlias" propertyName="catgroupId"/>
+		</UpdateService>
+		
+		<!--- 
+			The element type of this promotion element object which will be used by the XML transformation layer during promotion activation.
+			Possible values include "IncludeCategoryIdentifier" and "ExcludeCategoryIdentifier".  
+		-->
+		<PropertyDefinition propertyName="elementType" forceParentValidation="true">
+			<PropertyValue value="IncludeCategoryIdentifier"/>
+			<PropertyValue value="ExcludeCategoryIdentifier"/>
+		</PropertyDefinition>
+				
+	</PromotionElementReferenceObjectDefinition>
+</Definitions>

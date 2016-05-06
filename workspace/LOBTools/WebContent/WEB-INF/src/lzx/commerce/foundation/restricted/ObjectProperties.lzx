@@ -1,0 +1,2577 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		This is the base class for object properties view. This class should not be instantiated directly nor should it be extended
+		from directly.
+	-->
+	<class name="wcfBaseObjectProperties">
+		<!---
+			A comma separated list of component object names. A named component
+			object can be used as the component object of a properties component
+			declared within this properties views. The named object is typically managed by
+			one of the other properties components. For example, if you specify the 
+			{@link wcfPropertyChildListEditor#selectedObjectName} attribute on a child list
+			editor, then you can set up another properties component to listen to the selected
+			object by specifying the same value as the {@link wcfPropertiesComponent#componentObjectName}
+			attribute. All component object names must be declared using this attribute before they can
+			be used.
+		-->
+		<attribute name="componentObjectNames" type="string" value="${null}" />	
+		<!---
+			@keywords private
+			The title of the view. The default value is the empty string.
+		-->
+		<attribute name="title" value="" type="string" />
+		<!---
+			@keywords private
+		-->
+		<attribute name="splittable" value="true"/>
+		<!---
+			@keywords private
+			The view that contains the properties view. This value is set by calling {@link wcfPanelManager#findPanel} with this as
+			the parameter.
+		-->
+		<attribute name="panel" value="${wcfPanelManager.findPanel(this)}" when="once"/>		
+		<!---
+			@keywords private
+			The message to display below the title of the view. The default value is the empty string.
+		-->
+		<attribute name="errorMessage" value="" type="string" />
+		<!---
+			@keywords private
+			The message to display behind the title of the view. The default value is the empty string.
+		-->
+		<attribute name="titleQualifier" value="" type="string" />
+		<!---
+			@keywords private
+			The icon to be displayed in the view's header. This should be the name of a resource available in the library.
+		-->
+		<attribute name="headerIconResource" value="" type="string"/>
+		<!---
+			@keywords private
+			This attribute indicates that this object properties view has an error. The default value is "false".
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute holds a reference to the instance of {@link wcfModel}. It is set by calling {@link wcfModelUtil#findModelForView}
+			with this as the parameter.
+		-->
+		<attribute name="model" value="${wcfModelUtil.findModelForView(this)}" when="once"/>
+		<!---
+			@keywords private
+			This attribute is true if this view is being shown as the details view of a list class. The default value for this attribute is
+			"false".
+		-->
+		<attribute name="inDetails" type="boolean" value="false" />
+		<!---
+			@keywords private
+			Array of actions. These are instances of {@link wcfObjectPropertiesActionDefinition} that are created when the class is initalized.
+			If {@link wcfObjectProperties#inDetails} is true, there is one {@link wcfObjectPropertiesActionDefinition} created with
+			{@link wcfObjectSaveButton} as the {@link wcfObjectPropertiesActionDefinition#actionWidgetClass}. Otherwise, two are created
+			with {@link wcfObjectSaveButton} and {@link wcfObjectCloseButton} as their respective values for
+			{@link wcfObjectPropertiesActionDefinition#actionWidgetClass}.
+		-->
+		<attribute name="actions" value="${[]}"/>
+		<!---
+			@keywords private
+			A reference to the instance of the {@link wcfModelObject} whose properties are being displayed by the view.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			@keywords private
+			This variable indicates whether or not to add right padding to this view. The default value for this attribute is "true".
+			@see Panel#addRightSpacing Panel
+		-->
+		<attribute name="addRightSpacing" type="boolean" value="true"/>
+		
+		<!---
+			@keywords private
+			An array of enablement condition delegates that exist in any of this view's descendants. This array
+			is populated by the descendant that contains an {@link wcfEnablementCondition enablement condition}.
+		-->
+		<attribute name="enablementConditionDels" value="${[]}"/>
+		
+		<!--- Text to ask the user whether or not to launch the Information Center. -->
+		<attribute name="introDialogPromptText" type="string" value=""/>
+		<!---
+			The name of the preference key that the Preference Manager should check before launching the introduction dialog.
+			If the preference key returns a "true" value, the dialog will not be presented to the user. If this attribute is not specified,
+			the introduction dialog will also be shown to the user the first time they launch this properties view in every session.
+		-->
+		<attribute name="hideIntroPreferenceKey" type="string" value=""/>
+		<!--- Relative URL in the Information Center to launch if the user selects "Yes" to the introduction dialog. -->
+		<attribute name="introUrl" value="" type="string"/>	
+
+		<!---
+			@keywords private
+			An instance of {@link wcfDisplayNameStyle} that the framework will use to display the display name of this
+			business object. If this value is null, then the default display name style will
+			be used.
+		-->
+		<attribute name="displayNameStyle" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (!this.inDetails) {
+				if (configProperties.showSaveAndCloseOnProperties) {
+					this.actions.push(new lz.wcfObjectPropertiesActionDefinition(this, {
+						actionWidgetClass: "wcfObjectSaveAndCloseButton"
+					}));
+				}
+				else {
+					this.actions.push(new lz.wcfObjectPropertiesActionDefinition(this, {
+						actionWidgetClass: "wcfObjectSaveButton"
+					}));
+				}
+				this.actions.push(new lz.wcfObjectPropertiesActionDefinition(this, {
+					actionWidgetClass: "wcfObjectCloseButton"
+				}));
+			}
+			else {
+				this.actions.push(new lz.wcfObjectPropertiesActionDefinition(this, {
+					actionWidgetClass: "wcfObjectSaveButton"
+				}));
+			}
+			
+			if(this.introDialogPromptText && this.introDialogPromptText != "" && this.introUrl && this.introUrl != "") {
+				var showDialog = true;
+				if(this.hideIntroPreferenceKey && this.hideIntroPreferenceKey != "") {
+					showDialog = preferenceManager.getPreference(this.hideIntroPreferenceKey) != "true";
+				}
+				if(showDialog) {
+					wcfIntroPrompt.openIntroPrompt(this.introDialogPromptText, this.introUrl, this.hideIntroPreferenceKey);
+				}
+			}
+			this.resetComponentObjects();
+			]]>
+		</method>
+
+		<method name="resetComponentObjects">
+			<![CDATA[
+			if (this.componentObjectNames != null) {
+				if (this._componentObjectNames == null) {
+					this._componentObjectNames = wcfStringUtil.splitAndTrim(this.componentObjectNames, ",");
+				}
+				for (var i = 0; i < this._componentObjectNames.length; i++) {
+					this.setAttribute("o_" + this._componentObjectNames[i], null);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateHeaderDel"]) {
+				this.updateHeaderDel.unregisterAll();
+				delete this.updateHeaderDel;
+			}
+			if (this["updateDisplayNameStyleDel"]) {
+				this.updateDisplayNameStyleDel.unregisterAll();
+				delete this.updateDisplayNameStyleDel;
+			}
+			if (this["updateValidationErrorDel"]) {
+				this.updateValidationErrorDel.unregisterAll();
+				delete this.updateValidationErrorDel;
+			}
+			if (this["releaseModelObjectDel"]) {
+				this.releaseModelObjectDel.unregisterAll();
+				delete this.releaseModelObjectDel;
+			}
+			if (this["openModelObjectDel"]) {
+				this.openModelObjectDel.unregisterAll();
+				delete this.openModelObjectDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the {@link wcfModelObject} for this properties view. This method is declared as the setter for
+			{@link wcfObjectProperties#o}.
+			@param wcfModelObject newObject The new object to set for this properties view.
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				if (this["releaseModelObjectDel"]) {
+					this.releaseModelObjectDel.unregisterAll();
+				}
+				else {
+					this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+				}
+				if (this["openModelObjectDel"]) {
+					this.openModelObjectDel.unregisterAll();
+				}
+				else {
+					if (!this.inDetails) {
+						this.openModelObjectDel = new lz.Delegate(this, "handleOpenModelObject");
+					}
+				}
+				if (this["updateValidationErrorDel"]) {
+					this.updateValidationErrorDel.unregisterAll();
+				}
+				
+				this.o = newObject;
+				if (this.o) {
+					this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+					if (!this.inDetails) {
+						this.openModelObjectDel.register(this.o.model, "openObjectsUpdated");
+					}
+				}
+				this.updateHeader();
+				this.updateDisplayNameStyle();
+				
+				// force all descendant enablement conditions to re-evaluate
+				if(this["enablementConditionDels"]) {
+					for(var i = 0; i < this.enablementConditionDels.length; i++) {
+						enablementConditionDels[i].execute(this.o);
+					}
+				}
+				
+				this.resetComponentObjects();
+
+				if (this["ono"]) {
+					this.ono.sendEvent(o);
+				}
+				this.updateValidationError();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			This method is called whenever the {@link wcfModelObject#open open} flag on the current object is changed.
+			If the flag is <code>false</code>, the associated model object for this object properties class is
+			set to <code>null</code>.
+		-->
+		<method name="handleOpenModelObject" args="e=null">
+			<![CDATA[
+				if(this.o && !this.o.open) {
+					this.setAttribute("o", null);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update display name style.
+		-->
+		<method name="updateDisplayNameStyle" args="e=null">
+			<![CDATA[
+			if (this["updateDisplayNameStyleDel"]) {
+				this.updateDisplayNameStyleDel.unregisterAll();
+			} else {
+				this.updateDisplayNameStyleDel = new lz.Delegate(this, "updateDisplayNameStyle");
+			}
+			var style = null;
+			if (this.o != null) {
+				this.updateDisplayNameStyleDel.register(this.o, "ondisplayNameStyle");
+				style = this.o.displayNameStyle;
+			}	
+			if (style != this.displayNameStyle) {
+				this.setAttribute("displayNameStyle", style);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			This method updates the panel's header.
+		-->
+		<method name="updateHeader" args="e=null">
+			<![CDATA[
+			if (this["updateHeaderDel"]) {
+				this.updateHeaderDel.unregisterAll();
+			}
+			else {
+				this.updateHeaderDel = new lz.Delegate(this, "updateHeader");
+			}
+			var newTitle = "";
+			var newHeaderIconResource = null;
+			var newTitleQualifier = "";
+			var newHasError = false;
+			if (this.o != null) {
+				this.updateHeaderDel.register(this.o, "onobjectDisplayName");
+				if (this.o.isOpenGroupObject()) {
+					this.updateHeaderDel.register(this.o, "onopenGroupReadOnly");
+					this.updateHeaderDel.register(this.o, "onopenGroupPartiallyEditable");
+					this.updateHeaderDel.register(this.o, "onopenGroupDirty");
+					this.updateHeaderDel.register(this.o, "onerrorInOpenGroup");
+				}
+				this.updateHeaderDel.register(foundationResources.readOnly, "onstring");
+				this.updateHeaderDel.register(foundationResources.partiallyEditable, "onstring");
+				if (this.o.objectDisplayName != null) {
+					newTitle = wcfStringUtil.escapeText(this.o.objectDisplayName);
+					if (this.o.openGroupReadOnly) {
+						newTitleQualifier = foundationResources.readOnly.string;
+					} else {
+						if (this.o.openGroupDirty) {
+							newTitle = "*" + newTitle;
+						}
+						if (this.o.openGroupObject.openGroupPartiallyEditable) {
+							newTitleQualifier = foundationResources.partiallyEditable.string;
+						}
+					}
+				}
+				newHeaderIconResource = this.o.objectDefinition.headerIcon;
+				newHasError = this.o.openGroupObject.errorInOpenGroup;
+			}
+			if (this.title != newTitle) {
+				this.setAttribute("title", newTitle);
+			}
+			if (this.titleQualifier != newTitleQualifier) {
+				this.setAttribute("titleQualifier", newTitleQualifier);
+			}		
+			if (this.headerIconResource != newHeaderIconResource) {
+				this.setAttribute("headerIconResource", newHeaderIconResource);
+			}
+			if (this.hasError != newHasError) {
+				this.setAttribute("hasError", newHasError);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method updates the validation error in the header.
+			This method should not be invoked manually from anywhere. This method gets triggered whenever the error state changes in the openGroupObject.
+		-->
+		<method name="updateValidationError" args="e=null">
+			<![CDATA[
+			if (this["updateValidationErrorDel"]) {
+				this.updateValidationErrorDel.unregisterAll();
+			}
+			else {
+				this.updateValidationErrorDel = new lz.Delegate(this, "updateValidationError");
+			}
+			var newErrorMessage = "";
+			if(this["o"]){
+				this.updateValidationErrorDel.register(this.o, "onopenGroupError");
+				// display server errors if any
+				if (this.o.serverErrors.length > 0) {
+					newErrorMessage = this.o.serverErrors[0];
+				}
+				
+				if (newErrorMessage == "") {
+					var firstError = this.getFirstError(this);
+					if (firstError != null) {
+						newErrorMessage = firstError;
+					}
+				}
+				if (newErrorMessage == "" && this.o.openGroupError != null) {
+					newErrorMessage = this.o.openGroupError;
+				}
+			}
+
+			if (this.errorMessage != newErrorMessage) {
+				this.setAttribute("errorMessage", newErrorMessage);
+			}
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			This method recursively searches the properties view for the first error returned by a properties component.
+
+			@param lz.view v The view from which the search should begin.
+			@returns string error The first error.
+		-->
+		<method name="getFirstError" args="v">
+			<![CDATA[
+			var error = null;
+			if (v instanceof lz.wcfPropertiesComponent) {
+				error = v.getFirstError(this.updateValidationErrorDel);
+			}
+			else {
+				if (!v.isinited) {
+					this.updateValidationErrorDel.register(v, "oninit");
+				}
+				else {
+					if (v.subviews != null) {
+						for (var i = 0; i < v.subviews.length; i++) {
+							var currentView = v.subviews[i];
+							if ("enablementCondition" in currentView) {
+								this.updateValidationErrorDel.register(currentView, "onvisible");
+							}
+							if (!("enablementCondition" in currentView) || ("visible" in currentView && currentView.visible)) {
+								error = this.getFirstError(currentView);
+								if (error != null) {
+									break;
+								}
+							}
+						}
+					}
+					if (v.subnodes != null) {
+						for (var i = 0; i < v.subnodes.length; i++) {
+							var currentView = v.subnodes[i];
+							if (!currentView.isinited) {
+								this.updateValidationErrorDel.register(currentView, "oninit");
+							}
+						}
+					}
+				}
+			}
+			return error;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sets the focus to the first enabled {@link wcfPropertiesComponent}
+		-->
+		<method name="setFocusToFirstComponent" args="e=null">
+			<![CDATA[
+			var propertyComponent = this.getFirstEditableComponent(this);
+			if (propertyComponent != null){
+				lz.Focus.setFocus(propertyComponent.editor, false);
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Sets the focus to the {@link wcfPropertiesComponent} that is passed in. This method does not check any
+			characteristic of the properties component to ensure it is visible or editable.
+			@param wcfPropertiesComponent propertyComponent The wcfPropertiesComponent to set the focus to.
+		-->
+		<method name="setFocusToComponent" args="propertyComponent">
+			<![CDATA[			
+				lz.Focus.setFocus(propertyComponent.editor, false);
+			]]>
+		</method>
+		<!---
+			@keywords private
+			
+			<p>This method will recursively search the subnodes of the specified view, looking for a {@link wcfPropertiesComponent properties component}
+			that is enabled and matches the specified arguments. An {@link wcfModelObject object} must be passed in to this method as well as one
+			of an {@link wcfModelProperty object property} or a {@link wcfValidator#validatorType validatorType}.
+			
+			<p>If the specified view is a {@link wcfPropertiesComponent properties component} then
+			this method will call its {@link wcfPropertiesComponent#matches matches} to determine if it is a match.
+			
+			<p>If a match is found, this method will make the {@link wcfPropertiesComponent properties component} visible by ensuring
+			that it and all of its ancestors are visible as well. This can result in the expansion of {@link wcfPropertyGroup property groups}
+			and changing of {@link wcfPropertyTab tabs}. The method will then set the focus to the {@link wcfPropertiesComponent properties component}
+			and return true.
+			
+			<p>If no match is found, then this method returns false and does not affect the focus or what's currently being displayed.
+						
+			@param lz.view v The view from which to begin the recursive search for the matching {@link wcfPropertiesComponent}.
+			@param wcfModelObject o The model object of the matching property component.
+			@param wcfModelProperty property The object property of the matching property component. This can be null when a validator type is specified.
+			@param string validatorType The {@link wcfValidator#validatorType} of the matching property component. This can be null if a property is specified.
+			@param wcfModelObject propertiesViewObject The model object associated with v.
+			@return boolean true if the properties component with the error was found, and the focus was set to it. false otherwise.
+		-->
+		<method name="setFocusToErrorComponent" args="v,o,property,validatorType,propertiesViewObject">
+			<![CDATA[
+			var matches = false;					
+			if (v instanceof lz.wcfPropertiesComponent) {			
+				matches = v.matchesError(propertiesViewObject, o, property, validatorType);				
+				if (matches == true) {
+					if (!v.isinited) {						
+						v.completeInstantiation();
+					}
+					var currentView = v;	
+								
+					while (currentView != null && currentView != this) {
+						var currentView = currentView.parent;
+						if (currentView instanceof lz.wcfPropertyTabPane && currentView.parent.activePane != currentView)
+						{
+							currentView.parent.setAttribute("activePane", currentView);
+						}											
+						else if (currentView instanceof lz.wcfPropertyGroup && currentView.collapsable && !currentView.open)
+						{
+							currentView.setAttribute("open", true);
+						}
+					}
+										
+					if (typeof(this["setFocusToComponentDel"]) == "undefined") {
+						this.setFocusToComponentDel = new lz.Delegate(this, "setFocusToComponent");
+					}
+					wcfCallbackUtil.addDeferredCallback(this.setFocusToComponentDel, v, wcfCallbackUtil.PRIORITY_FOREGROUND);
+				}
+			}
+			else {				
+				if (!v.isinited) {
+					if (v instanceof lz.wcfPropertyPane || v instanceof lz.wcfPropertyGroup) {												
+						v.forceInstantiation("force");								
+					} else {
+						v.completeInstantiation();	
+					}
+				}
+				if (v["enablementCondition"] && !v.enablementCondition.isEnabled(v.oView.o)) {
+					matches = false;
+				}
+				else if (v.subnodes != null) {
+					for (var i = 0; i < v.subnodes.length; i++) {
+						var currentView = v.subnodes[i];						
+						matches = this.setFocusToErrorComponent(currentView, o, property, validatorType,  v["oView"] ? v.oView.o : propertiesViewObject);
+						if (matches == true) {
+							break;						
+						}
+					}
+				}
+			}									
+			return matches;
+			]]>			
+		</method>
+		
+		<!---
+			@keywords private
+			This method recursively searches the properties view for the first enabled properties component.
+
+			@param lz.view v The view from which the search should begin.
+			@returns {@link wcfPropertiesComponent#propertyComponent} The first enabled properties component.
+		-->
+		<method name="getFirstEditableComponent" args="v">
+			<![CDATA[
+			var propertyComponent = null;
+			if (v instanceof lz.wcfPropertiesComponent) {
+				if(v.enabled)
+					propertyComponent = v;
+			}else{
+				if (v.subnodes != null) {
+					for (var i = 0; i < v.subnodes.length; i++) {
+						var currentView = v.subnodes[i];
+						if (currentView["visible"]) {
+							propertyComponent = this.getFirstEditableComponent(currentView);
+							if (propertyComponent != null) {
+								break;
+							}
+						}
+					}
+				}
+			}
+			return propertyComponent;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method releases the model object from this properties view by setting {@link wcfObjectProperties#o} to null.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+			this.setAttribute("o", null);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords abstract
+		
+ 		This class is the base class for a business object properties view. The properties view of a business object is an editor that
+ 		is presented to a business user whenever the object is opened or a new object needs to be created. It allows business user to
+ 		edit or enter all the properties of a business object as an input form. Primary business objects are required to provide a
+ 		{@link wcfObjectDefinition#propertiesClass} attribute which contains the name of a class which extends this abstract class.
+ 		
+ 		<p>An extension class of wcfObjectProperties can accept two different type of children view classes. One is for the properties
+ 		view to have a row of tab(s), and therefore the expected children class is an instance of {@link wcfPropertyTabs}. And the
+ 		second option is to just have one content pane, and therefore the expected children class is an instance of {@link wcfPropertyPane}.
+ 		 		
+ 		<p>This class is an abstract class and should not be used directly nor should instances of it be created. Instead, create
+ 		an extension class and use the class as the {@link wcfObjectDefinition#propertiesClass} attribute of a {@link wcfObjectDefinition}.
+ 		
+ 		<p>This first example below shows how to create a properties view that has two tabs:
+		@START_CODE
+			<ObjectProperties definitionName="sampleObjectProperties">
+				<PropertyTabs name="samplePropertyTabs">
+					<PropertyTabPane name="samplePropertyTabPane_1" text="Tab 1">
+						<PropertyPane name="samplePropertyPane_1">
+							...
+						</PropertyPane>
+					</PropertyTabPane>
+					<PropertyTabPane name="samplePropertyTabPane_2" text="Tab 2">
+						<PropertyPane name="samplePropertyPane_2">
+							...
+						</PropertyPane>
+					</PropertyTabPane>
+				</PropertyTabs>
+			</ObjectProperties>
+		@END_CODE
+		
+		<p>This second example below shows how to create a properties view with one content pane without tabs:
+		
+		@START_CODE
+			<ObjectProperties definitionName="sampleObjectProperties">
+				<PropertyPane name="samplePropertyPane">
+					...
+				</PropertyPane>
+			</ObjectProperties>
+		@END_CODE
+	-->
+	<class name="wcfObjectProperties" extends="wcfBaseObjectProperties">		
+		<!--- @keywords private
+			  A handler for onconstruct.
+		-->
+		<handler name="onconstruct">
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "FINER", "wcfObjectProperties:" + title, "onconstruct", "Initialize begin...");
+			}	
+		</handler>
+		
+		<!--- @keywords private
+			  A handler for oninit.
+		-->
+		<handler name="oninit">
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "FINER", "wcfObjectProperties:" + title, "oninit", "Initialize end.");
+			}
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (typeof(this["initializePropertiesViewDel"]) == "undefined") {	
+				this.initializePropertiesViewDel = new lz.Delegate(this, "initializePropertiesView");
+			}
+			this.initializePropertiesViewDel.register(this.panel, "onactiveView");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["initializePropertiesViewDel"]) {
+				this.initializePropertiesViewDel.unregisterAll();
+				delete this.initializePropertiesViewDel;
+			}
+			if (this["setFocusToFirstComponentDel"]) {
+				this.setFocusToFirstComponentDel.unregisterAll();
+				delete this.setFocusToFirstComponentDel;
+			}
+			if (this["setFocusToComponentDel"]) {
+				this.setFocusToComponentDel.unregisterAll();
+				delete this.setFocusToComponentDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method sets the {@link wcfModelObject} for this properties view. This method is declared as the setter for
+			{@link wcfObjectProperties#o}.
+			@param wcfModelObject newObject The new object to set for this properties view.
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				var oldObject = this["o"];
+				super.setModelObject(newObject);
+				this.initializePropertiesView();
+				if (oldObject) {
+					oldObject.releaseReleasableProperties();
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="initializePropertiesView" args="e=null">
+			<![CDATA[
+			if (this["panel"] && this.panel.activeView == this && this.o != null && this.o.viewState == "") {
+				this.panel.scrollToTop();
+				this.o.setAttribute("viewState", "initialized");
+				for (var i = 0; i < this.subviews.length; i++) {
+					var v = this.subviews[i];
+					if (v["reset"]) {
+						v.reset();
+					}
+				}
+				if (!this.inDetails && !wcfIntroPrompt.isOpen) {				
+					if (typeof(this["setFocusToFirstComponentDel"]) == "undefined") {
+						this.setFocusToFirstComponentDel = new lz.Delegate(this, "setFocusToFirstComponent");
+					}
+					wcfCallbackUtil.addDeferredCallback(this.setFocusToFirstComponentDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		The wcfPropertyTabs class can be used to create a row of tabs for the object properties view. The wcfPropertyTabs class
+		takes instances of {@link wcfPropertyTabPane} as children and it creates a tab for each one. The wcfPropertyTabs controls
+		the visibility of a stack of {@link wcfPropertyTabPane} making sure that only one tab can be selected at a time and that
+		only the selected tab's contents is made visible.
+		
+		This class is to be used within an instance of {@link wcfObjectProperties}. Each {@link wcfObjectProperties} can contain
+		a single wcfPropertyTabs.
+		
+		The following example shows how to define a tab row with two tabs as defined by the two {@link wcfPropertyTabPane}:
+		
+		@START_CODE
+			<PropertyTabs name="samplePropertyTabs">
+				<PropertyTabPane name="samplePropertyTabPane" text="Sample Property Tab Pane">
+					...
+				</PropertyTabPane>
+				<PropertyTabPane name="samplePropertyTabPane2" text="Sample Property Tab Pane2">
+					...
+				</PropertyTabPane>
+			</PropertyTabs>
+		@END_CODE
+	-->
+	<class name="wcfPropertyTabs">
+		<!---
+			@keywords private
+			This attribute holds a reference to the active {@link wcfPropertyTabPane}.
+		-->
+		<attribute name="activePane" value="null" setter="this.setActivePane(activePane)" />
+		<!---
+			@keywords private
+			This attribute holds an array of {@link wcfPropertyTab} objects. One object is created for each child {@link wcfPropertyTabPane} of this.
+		-->
+		<attribute name="tabs" value="${[]}" />
+		<!---
+			@keywords private
+			This attribute holds an array of {@link wcfPropertyTabPane} objects that are children of this wcfPropertiesTabs object.
+		-->
+		<attribute name="tabPanes" value="${[]}" />
+		<!---
+			@keywords private
+			This attribute holds a refrence to the view that contains the property tabs. This value is found using {@link wcfPanelManager#findPanel}
+			and passing in this as the parameter.
+		-->
+		<attribute name="panel" value="${wcfPanelManager.findPanel(this)}" when="once"/>
+		<!---
+			@keywords private
+			This attribute holds a reference to the instance of {@link wcfPropertyTabHeader}. It is null by default, but will be set a value
+			when it is created in the {@link wcfPropertyTabs#init} method.
+		-->
+		<attribute name="tabHeader" value="null" />
+		<!---
+			@keywords private
+			This attribute indicates that this view currently has registered shortcut keys.
+		-->
+		<attribute name="keysRegistered" type="boolean" value="false"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			this.tabHeader = new lz.wcfPropertyTabHeader(this.panel.tabArea,{
+				propertyTabs: this
+			});
+			for (var i = 0; i < this.tabPanes.length; i++) {
+				var tab = new lz.wcfPropertyTab(this.tabHeader, {
+					propertyTabs: this,
+					tabPane: this.tabPanes[i]
+				});
+				this.tabs.push(tab);
+			}
+			this.reset();
+			this.tabHeader.checkOverflowTabs();
+			this.moveToNextTabDel = new lz.Delegate(this, "moveToNextTab");
+			this.moveToPreviousTabDel = new lz.Delegate(this, "moveToPreviousTab");
+			this.checkVisibilityDel = new lz.Delegate(this, "checkVisibility");
+			this.checkActiveDel = new lz.Delegate(this, "checkActive");
+			this.checkVisibility();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.moveToNextTabDel.unregisterAll();
+			delete this.moveToNextTabDel;						
+			this.moveToPreviousTabDel.unregisterAll();
+			delete this.moveToPreviousTabDel;						
+			this.checkVisibilityDel.unregisterAll();
+			delete this.checkVisibilityDel;
+			this.checkActiveDel.unregisterAll();
+			delete this.checkActiveDel;
+			this.tabHeader.destroy();
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method checks whether or not this property tab is currently visible and updates its views accordingly.
+		-->
+		<method name="checkVisibility" args="e=null">
+			<![CDATA[
+			var isVisible = false;
+			this.checkVisibilityDel.unregisterAll();
+			this.checkActiveDel.unregisterAll();
+			this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+			if (this.visibilityView != null) {
+				this.checkVisibilityDel.register(this.visibilityView, "onvisible");
+			}
+			else if (!this.visible) {
+				this.checkVisibilityDel.register(this, "onvisible");
+			}
+			else {
+				isVisible = true;
+				wcfViewUtil.registerVisibilityDelegate(this, this.checkVisibilityDel);
+			}
+			if (isVisible) {
+				this.checkActiveDel.register(this.panel, "onactive");
+				this.checkActive();
+			}
+			if (this.tabHeader.visible != isVisible) {
+				this.tabHeader.setAttribute("visible", isVisible);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method checks if this tabs view should be active and updates the shortcut keys accordingly.
+		-->
+		<method name="checkActive" args="e=null">
+			<![CDATA[
+			if (this.panel.active) {
+				this.registerShortcutKeys();
+			}
+			else {
+				this.unregisterShortcutKeys();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method registers the shortcut keys. It is called from {@link wcfPropertyTabs#checkActive}.
+		-->
+		<method name="registerShortcutKeys">
+			<![CDATA[
+			if (!this.keysRegistered) {
+				this.keysRegistered = true;
+				lz.Keys.callOnKeyCombo(this.moveToNextTabDel, ["Control", "Pagedown"]);
+				lz.Keys.callOnKeyCombo(this.moveToPreviousTabDel, ["Control", "Pageup"]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method unregisters the shortcut keys. It is called from {@link wcfPropertyTabs#checkActive}.
+		-->
+		<method name="unregisterShortcutKeys">
+			<![CDATA[
+			if (this.keysRegistered) {
+				this.keysRegistered = false;
+				lz.Keys.removeKeyComboCall(this.moveToNextTabDel, ["Control", "Pagedown"]);
+				lz.Keys.removeKeyComboCall(this.moveToPreviousTabDel, ["Control", "Pageup"]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method sets the active tab pane. It is used as the setter method for {@link wcfPropertyTabs#activePane}.
+			
+			@param wcfPropertyTabPane pane The tab pane that should be set as the active pane.
+		-->
+		<method name="setActivePane" args="pane">
+			<![CDATA[
+			if (this["activePane"] != pane) {
+				for (var i = 0; i < this.tabPanes.length; i++) {
+					var tab = this.tabs[i];
+					if (pane == this.tabPanes[i]) {
+						tab.setAttribute("active", true);
+					}
+					else if (tab.active) {
+						tab.setAttribute("active", false);
+					}
+				}
+				this.activePane = pane;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method sets the next tab in {@link wcfPropertyTabs#tabs} as the active tab. If the last tab is currently active,
+			then it will go back to the beginning of the list.
+		-->
+		<method name="moveToNextTab" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				var nextTabIndex = -1;
+				for (var i = 0; i < this.tabs.length; i++) {
+					if (this.tabs[i].active) {
+						nextTabIndex = i;
+						break;
+					}
+				}
+				if (nextTabIndex != -1) {
+					for (var i = 0; i < this.tabs.length; i++) {
+						nextTabIndex = (nextTabIndex + 1) % this.tabs.length;
+						var nextTab = this.tabs[nextTabIndex];
+						if (nextTab.tabPane.tabEnabled) {
+							lz.Focus.setFocus(nextTab);
+							this.setActivePane(nextTab.tabPane);
+							break;
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the previous tab in {@link wcfPropertyTabs#tabs} as the active tab. If the first tab is currently active,
+			then it will go back to the end of the list.
+		-->
+		<method name="moveToPreviousTab" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				var previousTabIndex = -1;
+				for (var i = 0; i < this.tabs.length; i++) {
+					if (this.tabs[i].active) {
+						previousTabIndex = i;
+						break;
+					}
+				}
+				if (previousTabIndex != -1) {
+					for (var i = 0; i < this.tabs.length; i++) {
+						previousTabIndex = (previousTabIndex - 1) % this.tabs.length;
+						var previousTab = this.tabs[previousTabIndex];
+						if (previousTab.tabPane.tabEnabled) {
+							lz.Focus.setFocus(previousTab);
+							this.setActivePane(previousTab.tabPane);
+							break;
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method resets the property tabs view to be the first tab in {@link wcfPropertyTabs#tabs}.
+		-->
+		<method name="reset">
+			<![CDATA[
+			for (var i = 0; i < this.tabs.length; i++) {
+				var nextTab = this.tabs[i];
+				if (nextTab.tabPane.tabEnabled) {
+					this.setActivePane(nextTab.tabPane);
+					break;
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Tabs header class. Used by wcfPropertyTabs class
+	-->
+	<class name="wcfPropertyTabHeader" extends="basecomponent" focusable="false" width="${immediateparent.width}" defaultplacement="tabs">
+		<!---
+			Reference to its wcfPropertyTabs instance.
+		-->
+		<attribute name="propertyTabs"/>
+		<!---
+			Reference to overflow button.
+		-->
+		<attribute name="overflowButton"/>
+
+		<view name="leftPadding" resource="panelTabsHeaderBackgroundResource" stretches="width" width="8"/>
+		<view name="tabs" x="${classroot.leftPadding.x + classroot.leftPadding.width}">
+			<simplelayout axis="x" />
+		</view>
+		<view name="rightPadding"  x="${classroot.tabs.x + classroot.tabs.width}" resource="panelTabsHeaderBackgroundResource" stretches="width" width="${classroot.width-classroot.tabs.x-classroot.tabs.width}"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.checkOverflowTabsDel =  new lz.Delegate(this, "checkOverflowTabs");
+			]]>
+		</method>	
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.checkOverflowTabsDel.unregisterAll();
+			delete this.checkOverflowTabsDel;
+			super.destroy();
+			]]>
+		</method>	
+
+		<!---
+			Checks the overflow tabs and creates the overflow tabs list button.
+		-->
+		<method name="checkOverflowTabs" args="e=null">
+			<![CDATA[
+			this.checkOverflowTabsDel.unregisterAll();
+			this.checkOverflowTabsDel.register(this, "onwidth");
+			var tabsWidth = this.tabs.x;
+			var overflowTabs = [];
+			for (var i=0; i < this.propertyTabs.tabs.length; i++) {
+				var tab = this.propertyTabs.tabs[i];
+				if (tab.visible) {
+					tabsWidth += tab.width;
+					if (tabsWidth > this.width) {
+						overflowTabs.push(tab);
+						tab.setAttribute("focusable", false);
+					} else {
+						tab.setAttribute("focusable", true);
+					}
+				}
+				this.checkOverflowTabsDel.register(tab, "onvisible");
+				this.checkOverflowTabsDel.register(tab, "onwidth");
+			}
+			if (overflowTabs.length > 0) {
+				if (!this["overflowButton"]) {
+					this.overflowButton = new lz.wcfTabOverflowButton(this, {
+						placement: "header",
+						actionDefinitions: overflowTabs
+					});
+				}
+				else {
+					this.overflowButton.setAttribute("actionDefinitions", overflowTabs);
+					this.overflowButton.setAttribute("visible", true);
+				}
+				this.overflowButton.setAttribute('x', this.width - this.overflowButton.width);
+				this.overflowButton.bringToFront();
+				this.overflowButton.setAttribute("focusable", true);
+			}
+			else if (this["overflowButton"]) {
+				this.overflowButton.setAttribute("visible", false);
+				this.overflowButton.setAttribute("focusable", false);
+			}
+			]]>
+		</method>	
+
+	</class>
+
+	<!---
+		@keywords private
+		Tab overflow button. Used by {@link wcfPropertyTabHeader}
+	-->
+	<class name="wcfTabOverflowButton" extends="wcfActionListButton" showSingle="true">
+		<attribute name="dropdownResource" value="propertyDropDownResource"/>
+		<!---
+			Perform the action.
+			@param object definition: optional action definition
+		-->
+		<method name="doAction" args="definition">
+			<![CDATA[
+			if(definition != null) {
+				definition.onclick.sendEvent();// also need to slide the tabs so that the active tab is visible
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			this.actionDropdown.setAttribute("yoffset", -2);
+			this.actionList.setAttribute("yoffset", -2);
+		</handler>
+	</class>
+
+	<!---
+		This class is used to define a tab within a {@link wcfPropertyTabs}. There can be multiple wcfPropertyTabPane defined
+		within a {@link wcfPropertyTabs}. Each one of them represent a different tab in the properties view. Use the text
+		attribute to declare the name that is displayed for the tab.
+		
+		A single instance of {@link wcfEnablementCondition} can be declared as the child of an instance of wcfPropertyTabPane.
+		If the enablement condition evaluates to "true", then the tab will be visible. If the enablement condition evaluates
+		to "false", then the tab will not be visible.		
+		
+		The wcfPropertyTabPane expects a {@link wcfPropertyPane} object as its children in order to define the actual content
+		shown when the tab is selected.
+		
+		The following example shows how to define a wcfPropertyTabPane:
+		
+		@START_CODE
+			<PropertyTabs name="samplePropertyTabs">
+				<PropertyTabPane name="samplePropertyTabPane" text="Sample Property Tab Pane">
+					<PropertyPane name="samplePropertyPane_1">
+						...
+					</PropertyPane>
+				</PropertyTabPane>
+			</PropertyTabs>
+		@END_CODE
+	-->
+	<class name="wcfPropertyTabPane" visible="false">
+		<!---
+			This attribute contains the text to be displayed on the tab. The default value is an empty string.
+		-->
+		<attribute name="text" value="" type="string" />
+		
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			this.updateEnablementDel = new lz.Delegate(this, "updateEnablement");
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			delete this.updateEnablementDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			var tabPanes = parent["tabPanes"];
+			if (!tabPanes) {
+				tabPanes = [];
+				parent.tabPanes = tabPanes;
+			}
+			tabPanes.push(this);
+			
+			if(this["enablementCondition"] && this.oView && this.oView["enablementConditionDels"]) {
+				this.oView.enablementConditionDels.push(this.updateEnablementDel);
+				this.updateEnablement();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<attribute name="tabEnabled" value="true" type="boolean" />
+		
+		<!---
+			@keywords private
+			This attribute holds a reference to the nearest ancestor view that defines a model object. This attribute value is found
+			by invoking {@link wcfModelUtil#findObjectView} with this as the parameter.
+		-->
+		<attribute name="oView" value="${wcfModelUtil.findObjectView(this)}" when="once"/>
+		
+		<!---
+			@keywords private
+			Update the visible attribute based on the current value of the enablement condition.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				this.updateEnablementDel.unregisterAll();
+				if (this.oView.o != null) {
+					this.enablementCondition.registerDelegate(this.oView.o, this.updateEnablementDel);
+				}
+				this.setAttribute("tabEnabled", this.oView != null && this.oView["o"] != null && this.enablementCondition.isEnabled(this.oView.o));
+				if (!this.tabEnabled && (typeof(parent["activePane"]) != "undefined" && parent.activePane == this)) {
+					parent.reset();
+				}
+			}
+			]]>
+		</method>
+		
+	</class>
+
+	<!---
+		@keywords private
+		This is the base class for the property tab. Instances of wcfPropertyTab are created in {@link wcfPropertyTabs#init}  each
+		{@link wcfPropertyTabPane} with its {@link wcfPropertyTabHeader} and {@link wcfPropertyTabs}.
+	-->
+	<class name="wcfPropertyTab" extends="basecomponent" visible="${this.tabPane.tabEnabled}">
+		<!---
+			@keywords private
+			A reference to the instance of {@link wcfPropertyTabs}.
+		-->
+		<attribute name="propertyTabs" />
+		<!---
+			@keywords private
+			Reference to the instance of {@link wcfPropertyTabPane}
+		-->
+		<attribute name="tabPane" />
+		<!---
+			@keywords private
+			A boolean variable that indicates whether tab is active. The default value is "false".
+		-->
+		<attribute name="active" type="boolean" value="false" />
+		<!---
+			@keywords private
+			A boolean variable that indicates whether mouse is hovering on this tab. The default value is false.
+		-->
+		<attribute name="hover" type="boolean" value="false" />
+		<!---
+			@keywords private
+			This attribute indicates whether keyboard focus will be received by this property tab. The default value is true.
+		-->
+		<attribute name="focusable" value="true" />
+		<!---
+			This attribute is the number of pixels to use for the left and right spacing. The default value is 10.
+		-->
+		<attribute name="margin" value="10" type="number" />
+		<!---
+			@keywords private
+			This attribute indicates the width of tab. The default value is bound to the width of the {@link wcfPropertyTab#displayName}
+			plus spacing for the left and right margins.
+		-->
+		<attribute name="width" value="${txt.width + this.margin * 2}"/>
+		<!---
+			@keywords private
+			The display name of the tab. The default value is bound to {@link wcfPropertyTabPane#text} of {@link wcfPropertyTab#tabPane}.
+		-->
+		<attribute name="displayName" value="${this.tabPane.text}" type="string"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			wcfCanvasMenu.addView(this);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This is an event handler for the active attribute.
+		-->
+		<handler name="onactive">
+			<![CDATA[
+			if (this.active) {
+				this.tabPane.setAttribute("visible", true);
+				this.tabPane.bringToFront();
+			}
+			else {
+				this.tabPane.setAttribute("visible", false);
+			}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This is an event handler for onmouseover.
+		-->
+		<handler name="onmouseover">
+			<![CDATA[
+			this.setAttribute("hover", true);
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			This is an event handler for the onmouseout event.
+		-->		
+		<handler name="onmouseout">
+			<![CDATA[
+			this.setAttribute("hover", false);
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			This is an event handler for onclick.
+		-->				
+		<handler name="onclick">
+			<![CDATA[
+			this.propertyTabs.setActivePane(this.tabPane);
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			This is an event handler for the onkeydown event.
+		-->		
+		<handler name="onkeydown" args="code">
+			<![CDATA[
+			if (code == 13 || code == 32) { // enter key or spacebar
+				this.onclick.sendEvent();
+			}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+		    ]]>
+		</handler>
+		
+		<view visible="${parent.active}" width="${parent.width}" y="2">
+			<view name="left" resource="resources/property_tab_left_active.png" />
+			<view name="center" resource="resources/property_tab_center_active.png" stretches="width" x="${parent.left.width}" width="${parent.right.x - parent.left.width}" />
+			<view name="right" resource="resources/property_tab_right_active.png" x="${parent.width - this.width}" />
+		</view>
+		<view visible="${!parent.active &amp;&amp; !parent.hover}" resource="resources/property_tab_bg.png" stretches="width" width="${parent.width}" />
+		<view visible="${!parent.active &amp;&amp; parent.hover}" resource="resources/property_tab_hover_bg.swf" stretches="width" width="${parent.width}" />
+		<text name="txt" x="${parent.margin}" y="4" text="${classroot.displayName}" resize="true" />
+	</class>
+
+	<!---
+		A wcfPropertyPane is the class that holds the contents of a pane in the properties view. A wcfPropertyPane has two type of usages:
+		one usage is to declare it as a direct child of {@link wcfObjectProperties} if the properties view of the business object has no tabs.
+		And a second usage is to use it as a child of {@link wcfPropertyTabPane} if the contents pane is for a tab that is within the properties
+		view.
+		
+		<p>To build up the contents of a wcfPropertyPane in the properties view, create instances of the widgets that have been specially
+		created for use in the property views. These widgets are the classes that extend the {@link wcfPropertiesComponent}. Some sample
+		widgets that can be used here are {@link wcfPropertyCheckbox}, {@link wcfPropertyInputText}, {@link wcfPropertyRichTextEditor} or
+		{@link wcfPropertyTimePicker}.
+		
+		<p>The following example shows how to define a wcfPropertyPane within a tab of a properties view:
+		@START_CODE
+			<ObjectProperties definitionName="sampleObjectProperties">
+				<PropertyTabs name="samplePropertyTabs">
+					<PropertyTabPane name="samplePropertyTabPane" text="Sample Property Tab Pane">
+						<PropertyPane name="samplePropertyPane_1">
+							...
+						</PropertyPane>
+					</PropertyTabPane>
+				</PropertyTabs>
+			</ObjectProperties>
+		@END_CODE
+		
+		<p>This second example below shows how to create a wcfPropertyPane directly under a {@link wcfObjectProperties}:
+		@START_CODE
+			<ObjectProperties definitionName="sampleObjectProperties">
+				<PropertyPane name="samplePropertyPane">
+					...
+				</PropertyPane>
+			</ObjectProperties>
+		@END_CODE
+	-->
+	<class name="wcfPropertyPane" defaultplacement="content">
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the this view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		<!---
+			@keywords private
+			This attribute holds the width available to descendant views. This value should not be changed directly,
+			as it is maintained	by {@link wcfPropertyPane#updateAvailableWidth}, but can be accessed if needed.
+		-->
+		<attribute name="availableWidth" type="number" value="0"/>
+		<!---
+			@keywords private
+			The minimum width of the editor to be retained by the layout manager, if sizeToAvailableWidth is true for
+			any property component. The default value for this attribute is 235.
+		-->
+		<attribute name="minWidth" type="number" value="235"/>
+		<!---
+			@keywords private
+			This attribute indicates that initialization should be defered until explicity invoked.
+		-->
+		<attribute name="initstage" value="defer"/>
+		<!---
+			@keywords private
+			This attribute holds a reference to the closest invisible ancestor view when this view is constructed.
+			This attribute is set in the {@link wcfPropertyPane#onconstruct} handler by calling
+			{@link wcfViewUtil#getInvisibleAncestor} with this as a parameter.
+		-->
+		<attribute name="visibilityView"/>
+
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			this.forceInstantiationDel = new lz.Delegate(this, "forceInstantiation");
+			this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+			if (this.visibilityView != null) {
+				this.forceInstantiationDel.register(this.visibilityView, "onvisible");
+			}
+			else {
+				this.initstage = null;
+			}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="forceInstantiation" args="force=null">
+			<![CDATA[
+			if (force == "force")
+			{
+				this.forceInstantiationDel.unregisterAll();
+				super.completeInstantiation();
+				wcfDefinitionLoader.completeCreateDefinitionChildren(this);
+			} else {
+				this.completeInstantiation();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="completeInstantiation">
+			<![CDATA[
+			if (this.visibilityView.visible)
+			{
+				this.forceInstantiationDel.unregisterAll();
+				this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+				if (this.visibilityView != null) {
+					this.forceInstantiationDel.register(this.visibilityView, "onvisible");
+				}
+				else {
+					super.completeInstantiation();
+					wcfDefinitionLoader.completeCreateDefinitionChildren(this);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+			this.updateAvailableWidthDel.register(this.availableWidthView, "onavailableWidth");
+			this.updateAvailableWidth();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.forceInstantiationDel.unregisterAll();
+			delete this.forceInstantiationDel;
+			if (this["updateAvailableWidthDel"]) {
+				this.updateAvailableWidthDel.unregisterAll();
+				delete this.updateAvailableWidthDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the available width of the property pane.
+		-->
+		<method name="updateAvailableWidth" args="e=null">
+			<![CDATA[
+			this.setAttribute("availableWidth", this.availableWidthView.availableWidth - 10);
+			]]>
+		</method>
+		
+		<view name="content" x="10" y="8">
+			<simplelayout axis="y" />
+		</view>
+		<view name="bottomPadding" height="10" y="${parent.content.y + parent.content.height}"/>
+	</class>
+	
+	<!---
+		@keywords private
+		Property group header. A property group header will be created for property groups that have a title.
+	-->
+	<class name="wcfPropertyGroupHeader" y="17">
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the this view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		<!---
+			wcfPropertyGroup reference.
+		-->
+		<attribute name="group"/>
+
+		<!---
+			Update the header to match the current "open" state.
+		-->
+		<method name="updateOpen">
+			<![CDATA[
+			if (this.group.open) {
+				this.headertext.headbutton.setAttribute('frame', 4);
+			}
+			else {
+				this.headertext.headbutton.setAttribute('frame', 1);
+			}
+			]]>
+		</method>
+		
+		<view name="headertext" focusable="${classroot.group.collapsable}"
+				height="20" bgcolor="0xDFE8FB" width="${classroot.availableWidthView.availableWidth}">
+			<simplelayout axis="x"/>
+			
+			<basebutton name="headbutton" bgcolor="${parent.bgcolor}" visible="${classroot.group.collapsable}" resource="propertyDrawerResource"
+					width="20"
+					onmouseover="this.setAttribute('frame', (classroot.group.open?5:2))"
+					onmouseout="this.setAttribute('frame', (classroot.group.open?4:1))"
+					onmousedown="this.setAttribute('frame', (classroot.group.open?6:3))"
+					onclick="lz.Focus.setFocus(parent, false);parent.onclick.sendEvent()" />
+
+			<statictext fontstyle="bold" text="${classroot.group.groupTitle + classroot.group.titleQualifier}" y="${parent.height/2 - this.height/2}"/>
+
+			<handler name="onkeydown" args="code">
+				<![CDATA[
+				if (code == 13 || code == 32) { // enter or space key
+					this.headbutton.onclick.sendEvent();
+				}
+				]]>
+			</handler>
+
+			<handler name="onclick">
+				<![CDATA[
+				if (classroot.group.collapsable) {
+					classroot.group.setAttribute("open", !classroot.group.open);
+					
+					if (classroot.group.open) {
+						var panel = wcfPanelManager.findPanel(this);
+						panel.show(classroot.group);
+					}
+				}
+				]]>
+			</handler>
+
+			<!---
+				Scroll to display the header if not in clipped view. Reset the stored value of the cursor postion and the stored selection size.
+			-->
+			<handler name="onfocus">			
+				var panel = wcfPanelManager.findPanel(this);
+				panel.show(classroot.group);
+				if(!this["indicator"]){
+					new lz.wcfFocusIndicator(this, {
+					name: "indicator",
+					focusableView: this,
+					indicatorView: this.headbutton
+					});
+				}
+			</handler>
+			
+		</view>
+		<view name="innerPadding" y="${parent.headertext.y + parent.headertext.height}" height="3" visible="${classroot.group.open}"/>
+	</class>
+
+	<!---
+		This class is used to group together related properties components within an instance of {@link wcfObjectProperties}. An instance of wcfPropertyGroup
+		can be instantiated as a child of {@link wcfPropertyPane} or another instance of wcfPropertyGroup. Multiple instances of
+		of {@link wcfPropertiesComponent} and wcfPropertyGroup can be instantiated as children of an instance of wcfPropertyGroup.
+		A property group can be used if you need to add a title, create a collapsable section or otherwise indicate visually that related properties components are
+		grouped together. You can also use a properties group if you need to conditionally control the visibility of one or more property components.
+		A single instance of {@link wcfEnablementCondition} can be declared as the child of an instance of wcfPropertyGroup. If the enablement condition
+		evaluates to "true", then the property group will be visible. If the enablement condition evaluates to "false", then the property group will not be visible.
+		
+		<p>The following example demonstrates the declaration of a collapsable property group that contains a single child properties component that
+		will display a product's merchandising associations.
+		@START_CODE
+			<PropertyGroup groupTitle="${catalogResources.merchandisingAssociationReference}"
+					open="true"
+					name ="productReferenceMerchandisingAssociations">
+				<PropertyReferenceList
+						name="merchandisingAssociationsRefList"
+						listDefinitionName="catBackReferenceAssociationGrid"
+						promptText="${catalogResources.merchandisingAssociationReference}"
+						referenceObjectPaths="CatalogEntry/MerchandisingAssociationReferencedCatalogEntries"
+						/>
+			</PropertyGroup>
+		@END_CODE
+
+	-->
+	<class name="wcfPropertyGroup" defaultplacement="content">
+		<!---
+			This attribute indicates that this property group should have the store name of the store that owns the current
+			object appended to the {@link wcfPropertyGroup#groupTitle}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayObjectStoreName" type="boolean" value="false" />
+		<!---
+			This attribute indicates that this properties group has the currently selected store name appended
+			next to the {@link wcfPropertyGroup#groupTitle}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayStoreName" type="boolean" value="false" />
+		<!---
+			@keywords private
+		-->
+		<attribute name="titleQualifier" type="string" value="" />
+		<!---
+			@keywords private
+			This attribute holds a reference to the instance of {@link wcfModel}. The instance is found using
+			{@link wcfModelUtil#findModelForView} and passing in this as a parameter.
+		-->
+		<attribute name="model" value="${wcfModelUtil.findModelForView(this)}" when="once"/>
+		<!---
+			This attribute contains the title of the group that is displayed in the header that appears before the group of widgets. The default value is the empty string.
+		-->
+		<attribute name="groupTitle" type="string" value="" />
+		<!---
+			This attribute specifies whether the group is collapsable or not. The default value for this attribute is "true".
+			If the group is not collapsable, the widgets are always displayed, indented under the header.
+		-->
+		<attribute name="collapsable" type="boolean" value="true" />
+		<!---
+			This attribute specifies whether the group is initially in the open state. This value is ignored if {@link wcfPropertyGroup#collapsable} is false.
+			The default value for this attribute is "false".
+			
+			If the group is in the open state, all widgets that are part of this property group are displayed to the user.
+		-->
+		<attribute name="open" value="false" type="boolean"/>
+		<!---
+			This attribute specifies whether or not the header will be shown regardless of {@link wcfPropertyGroup#groupTitle} or {@link wcfPropertyGroup#collapsable}
+			values. Default value is <code>true</code>.
+		-->
+		<attribute name="showHeader" value="true" type="boolean"/>
+		<!---
+			This attribute specifies whether the header is hidden if this is the only visible group. The default value is <code>false</code>.
+		-->
+		<attribute name="hideHeaderWhenOnlyGroup" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			The minimum width of the twistie area. The default value for this is the parent {@link wcfPropertyPane#minWidth}. Otherwise
+			if no parent value is available, it will default to 235 pixels.
+		-->
+		<attribute name="minWidth" type="number" value="${(parent['minWidth'])? parent.minWidth : 235}"/>
+		<!---
+			@keywords private
+			This attribute holds a reference to the nearest ancestor view that defines a model object. This attribute value is found
+			by invoking {@link wcfModelUtil#findObjectView} with this as the parameter.
+		-->
+		<attribute name="oView"/>
+		<!---
+			The name of the component object for this properties component. You
+			can specify a named component object for properties components if you
+			want the properties component to be dependent on another properties component.
+			All named component objects must be declared in the
+			{@link wcfObjectProperties#componentObjectNames} attribute of the containing
+			properties view.
+		-->
+		<attribute name="componentObjectName" type="string" value="${null}" />
+		<!-- 
+			@keywords private
+			The resolved {@link wcfObjectDefinition} for this properties component.
+		-->
+		<attribute name="objectDefinition"/>
+		<!---
+			@keywords private
+			
+			Defer initialization until explicity invoked.
+		-->
+		<attribute name="initstage" value="defer"/>
+		<!---
+			@keywords private
+			This attribute contains a reference to the closest invisible ancestor view when this view is constructed.
+		-->
+		<attribute name="visibilityView"/>
+		<!---
+			@keywords private
+			This attribute indicates that this view is a container view. The default value for this is "true".
+		-->
+		<attribute name="componentContainer" type="boolean" value="true"/>
+		<!---
+			Indicates that when this group is displayed, there will be a visual indication that the components
+			contained within this group are grouped together.
+		 -->
+		<attribute name="displayGrouping" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			True if a divider should be drawn above this group. False otherwise.
+		 -->
+		<attribute name="dividerAtTop" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			True if a divider should be drawn below this group. False otherwise.
+		-->
+		<attribute name="dividerAtBottom" type="boolean" value="true"/>
+		
+		<!---
+			This attribute indicates that the background area is highlighted.
+		-->
+		<attribute name="displayBackground" value="false" type="boolean" />
+
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			this.handleShowHeaderDel     = new lz.Delegate(this , "handleShowHeader");
+			this.updateEnablementDel     = new lz.Delegate(this , "updateEnablement");
+			this.updateOpenDel           = new lz.Delegate(this , "updateOpen");
+			this.forceInstantiationDel   = new lz.Delegate(this , "forceInstantiation");
+			this.updateTitleQualifierDel = new lz.Delegate(this , "updateTitleQualifier");
+			this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+			if (this.visibilityView != null) {
+				this.forceInstantiationDel.register(this.visibilityView, "onvisible");
+			}
+			else {
+				this.initstage = null;
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="forceInstantiation" args="force=null">
+			<![CDATA[
+			if (force == "force") {
+				this.forceInstantiationDel.unregisterAll();
+				super.completeInstantiation();
+				wcfDefinitionLoader.completeCreateDefinitionChildren(this);
+			} else {
+				this.completeInstantiation();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="completeInstantiation">
+			<![CDATA[
+			if (this.visibilityView.visible) {
+				this.forceInstantiationDel.unregisterAll();
+				this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+				if (this.visibilityView != null) {
+					this.forceInstantiationDel.register(this.visibilityView, "onvisible");
+				}
+				else {
+					super.completeInstantiation();
+					wcfDefinitionLoader.completeCreateDefinitionChildren(this);
+				}
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.oView = wcfModelUtil.findObjectView(this.parent, this.getComponentObjectName());
+			if (this.displayBackground) {
+				new lz.wcfPropertyAreaBackground(this, {
+					name: "background",
+					placement: "group", 
+					x: this.content.promptWidth + this.content.xspacing / 2 - 1
+				});
+				this.background.sendToBack();
+			}
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			]]>
+		</method>
+
+	<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			if(this["enablementCondition"] && this.oView && this.oView["enablementConditionDels"]) {
+				if (this.getComponentObjectName() == "o") {
+					this.oView.enablementConditionDels.push(this.updateEnablementDel);
+				}
+				this.updateEnablement();
+			}
+			this.handleShowHeader();
+			this.updateOpenDel.register(this, "onopen");
+			this.updateOpenDel.register(this, "oncollapsable");
+			this.updateOpen();
+			wcfCanvasMenu.addView(this);
+			if (this.displayStoreName || this.displayObjectStoreName || this.groupTitleResolver) {
+				this.updateTitleQualifier();
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.handleShowHeaderDel.unregisterAll();
+			delete this.handleShowHeaderDel;
+			this.updateEnablementDel.unregisterAll();
+			delete this.updateEnablementDel;
+			this.updateOpenDel.unregisterAll();
+			delete this.updateOpenDel;
+			this.forceInstantiationDel.unregisterAll();
+			delete this.forceInstantiationDel;
+			this.updateTitleQualifierDel.unregisterAll();
+			delete this.updateTitleQualifierDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Shows and hides the header when the <code>showHeader</code> flag changes and handles
+			the creation of {@link wcfPropertyGroupHeader} when required.
+		-->
+		<method name="handleShowHeader" args="e=null">
+			<![CDATA[
+			this.handleShowHeaderDel.unregisterAll();
+			this.handleShowHeaderDel.register(this, "onshowHeader");
+			if((this.groupTitle || this.collapsable || this.displayStoreName || this.displayObjectStoreName || this.groupTitleResolver) && this.showHeader && !this.headerArea["header"]) {
+				new lz.wcfPropertyGroupHeader(this.headerArea, {
+					name: "header",
+					group: this
+				});
+			}
+			var show = this.showHeader;
+			if (show && this.hideHeaderWhenOnlyGroup) {
+				this.handleShowHeaderDel.register(this.immediateparent, "oninit");
+				show = false;
+				for (var i = 0; i < this.immediateparent.subviews.length; i++) {
+					var v = this.immediateparent.subviews[i];
+					if (v != this) {
+						this.handleShowHeaderDel.register(v, "onvisible");
+						if (v.visible) {
+							show = true;
+						}
+					}
+				}
+			}
+			this.headerArea.setAttribute("visible", show);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getComponentObjectName">
+			<![CDATA[
+			return this.componentObjectName == null ? "o" : "o_" + this.componentObjectName;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the title qualifier.
+		-->
+		<method name="updateTitleQualifier" args="e=null">
+			<![CDATA[
+			this.updateTitleQualifierDel.unregisterAll();
+			var objectName = this.getComponentObjectName();
+			this.updateTitleQualifierDel.register(this.oView, "on" + objectName);
+			var resolvedGroupTitle = "";
+			var storeName = "";
+			if (this.oView[objectName]) {
+				if (this.groupTitleResolver) {
+					resolvedGroupTitle = this.groupTitleResolver.getValue(this.oView[objectName]);
+					this.groupTitleResolver.registerDelegate(this.oView[objectName], this.updateTitleQualifierDel);
+				}
+				if (this.displayObjectStoreName && this.oView[objectName].objectStoreId != "") {
+					var store = wcfStoreUtil.storeMap[this.oView[objectName].objectStoreId];
+					if (store == null) {
+						this.updateTitleQualifierDel.register(wcfStoreUtil,"storeLoaded");
+					} else {
+						storeName = store.displayName;
+					}
+				}
+				else if (this.displayStoreName) {
+					var storeConfig = wcfContextUtil.findStoreConfig(this.oView[objectName], this.updateTitleQualifierDel);
+					if (storeConfig != null) {
+						storeName = storeConfig.storeName;
+					}
+				}
+			}
+			var qualifier = "";
+			if (resolvedGroupTitle && resolvedGroupTitle != "") {
+				qualifier = resolvedGroupTitle;
+				if (this.groupTitle) {
+					qualifier = " (" + qualifier + " )";
+				}
+			}
+			if (storeName && storeName != "") {
+				if (this.groupTitle || qualifier != "") {
+					qualifier += " (" + storeName + ")";
+				}
+				else {
+					qualifier = storeName;
+				}
+			}
+			this.setAttribute("titleQualifier", qualifier);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the visible attribute based on the current value of the enablement condition.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				this.updateEnablementDel.unregisterAll();
+				var objectName = this.getComponentObjectName();
+				if (objectName != "o") {
+					this.updateEnablementDel.register(this.oView, "on" + objectName);
+				}
+				if (this.oView[objectName] != null) {
+					this.enablementCondition.registerDelegate(this.oView[objectName], this.updateEnablementDel);
+				}
+				var newVisible = this["oView"] != null && this.oView[objectName] != null && this.enablementCondition.isEnabled(this.oView[objectName]);
+				if (this.visible != newVisible) {
+					this.setAttribute("visible", newVisible);
+					if(this.oView["updateHeader"]) {
+						this.oView.updateHeader();
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Updates the visible attribute according to the open state.
+		-->
+		<method name="updateOpen" args="e=null">
+			<![CDATA[
+			if (this.open || !this.collapsable) {
+	   			this.content.setAttribute("visible", true);
+		    }
+		    else {
+				this.content.setAttribute("visible", false);
+		    }
+		    if (this.headerArea["header"]) {
+		    	this.headerArea.header.updateOpen();
+		    }
+			]]>
+		</method>
+		
+		<simplelayout axis="y" />
+		<view name="headerArea" visible="false"/>
+		<wcfPropertyArea name="content" visible="false" xspacing="${parent.displayBackground ? 12 : 6}"/>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class defines the property area. The wcfProperty area has a layout defined with two columns, and is used internally
+		by {@link wcfPropertyGroup}.
+		
+		This class should always be used within an instance of {@link wcfPropertyGroup} or {@link wcfPropertyPane}.
+	-->
+	<class name="wcfPropertyArea">
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the this view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		<!---
+			This attribute defines the spacing between components in the property pane along the x axis. The default value is 6px.
+		-->
+		<attribute name="xspacing" value="6" type="number" />
+		<!---
+			This attribute defines the spacing between components in the property pane along the y axis. The default value is 13px.
+		-->
+		<attribute name="yspacing" value="13" type="number" />
+		<!---
+			This attribute defines the width of the left column in the property pane which contains the prompt. The default value is 177px.
+		-->
+		<attribute name="promptWidth" type="number" value="177"/>
+		<!---
+			This attribute hold a reference to the nearest ancestor view that defines a model object. This attribute value is found
+			by invoking {@link wcfModelUtil#findObjectView} with this as the parameter.
+		-->
+		<attribute name="oView"/>
+		<!---
+			The name of the component object for this properties component. You
+			can specify a named component object for properties components if you
+			want the properties component to be dependent on another properties component.
+			All named component objects must be declared in the
+			{@link wcfObjectProperties#componentObjectNames} attribute of the containing
+			properties view.
+		-->
+		<attribute name="componentObjectName" type="string" value="${null}" />
+		<!---
+			This attribute indicates that this view is a container view. The default value for this attribute is "true".
+		-->
+		<attribute name="componentContainer" type="boolean" value="true"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.oView = wcfModelUtil.findObjectView(this.parent, this.getComponentObjectName());
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			this.updateEnablementDel = new lz.Delegate(this, "updateEnablement");
+			if(this["enablementCondition"] && this.oView && this.oView["enablementConditionDels"]) {
+				if (this.getComponentObjectName() == "o") {
+					this.oView.enablementConditionDels.push(this.updateEnablementDel);
+				}
+				this.updateEnablement();
+			}
+			
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getComponentObjectName">
+			<![CDATA[
+			return this.componentObjectName == null ? "o" : "o_" + this.componentObjectName;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			delete this.updateEnablementDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			This method updates the visible attribute based on the current value of the enablement condition.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				this.updateEnablementDel.unregisterAll();
+				var objectName = this.getComponentObjectName();
+				if (objectName != "o") {
+					this.updateEnablementDel.register(this.oView, "on" + objectName);
+				}
+				if (this.oView[objectName] != null) {
+					this.enablementCondition.registerDelegate(this.oView[objectName], this.updateEnablementDel);
+				}
+				var newVisible = this.enablementCondition.isEnabled(this.oView[objectName]);
+				if (this.visible != newVisible) {
+					this.setAttribute("visible", newVisible);
+					this.oView.updateHeader();
+				}
+			}
+			]]>
+		</method>
+		
+		<layout name="layout">
+			<!---
+				@keywords private
+				An array of dividers used to separate subviews that are managed by this layout
+			 -->
+			<attribute name="dividers" value="${[]}"/>
+
+			<!--- @keywords private -->
+			<method name="init">
+				<![CDATA[
+				super.init();
+				this.updateDelegate.register(classroot.availableWidthView, "onavailableWidth");
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Returns a visible divider that is to be displayed. This divider is guaranteed to
+				be visible.
+				@return wcfDividerLine a visible divider to be used
+			 -->
+			<method name="getDivider"><![CDATA[
+				// Look for the first unused dividers in the
+				// list of existing dividers. If none is found,
+				// a new one will be created and returned.
+				for(var i = 0; i < this.dividers.length; i++){
+					var divider = this.dividers[i];
+					
+					// A divider is being used if it is visible
+					if(!divider.visible){
+						divider.setAttribute("visible", true);
+						return divider;
+					}
+				}
+				
+				var divider = new lz.wcfDividerLine(classroot, {visible: true});
+				this.dividers.push(divider);
+				return divider;
+				]]>
+			</method>
+
+			<!---
+				@keywords private
+				Releases all the existing dividers maintained by this layout
+				so they can be used for other views. A released divider becomes invisible.
+			 -->
+			<method name="releasesDividers"><![CDATA[
+				for(var i = 0; i < this.dividers.length; ++i){
+					dividers[i].setAttribute("visible", false);
+				}
+				]]>
+			</method>
+	
+			<!---
+				This method is called whenever a new subview is added to the layout.
+				@param lz.view v The view to add to the layout.
+			-->
+			<method name="addSubview" args="v">
+				<![CDATA[
+				if (v["sizeToAvailableWidth"]) {
+					this.updateDelegate.register(v, "onwidth");
+				}
+				this.updateDelegate.register(v, "onheight");
+				this.updateDelegate.register(v, "onvisible");
+				this.updateDelegate.register(v, "ondisplayGrouping");
+				this.updateDelegate.register(v, "ondividerAtTop");
+				this.updateDelegate.register(v, "ondividerAtBottom");
+				
+				super.addSubview(v);
+				
+				var subnodeIndex = immediateparent.subnodes.indexOf(v);
+				var index = immediateparent.subviews.indexOf(v);
+				for (var i = index - 1; i >= 0; i--) {
+					var v1 = immediateparent.subviews[i];
+					if (subnodeIndex > immediateparent.subnodes.indexOf(v1)) {
+						break;
+					}
+					immediateparent.subviews.swap(index, index - 1);
+					index--;
+				}
+				index = this.subviews.indexOf(v);
+				for (var i = index - 1; i >= 0; i--) {
+					var v1 = this.subviews[i];
+					if (subnodeIndex > immediateparent.subnodes.indexOf(v1)) {
+						break;
+					}
+					this.setLayoutOrder(v, v1);
+				}				
+				]]>
+			</method>
+	
+			<!---
+				@keywords private
+				Updates the width of a given subview. The given subview will be scaled to
+				fit the given availableWidth if its attribute "sizeToAvailableWidth" is
+				true. If the available width is smaller than the given view's minimum width,
+				the minimum width will be used as the available width.
+				
+				@param lzView v the subview whose width will be set
+				@param availableWidth the availableWidth this subview may be scaled to
+			 -->
+			<method name="updateSubviewWidth" args="v, availableWidth"><![CDATA[
+				if (v["sizeToAvailableWidth"]) {
+					var newWidth = availableWidth;
+					if (typeof(v["promptWidth"]) == "undefined") {
+						if (v.minWidth > newWidth) {
+							newWidth = v.minWidth;
+						}
+					}
+					else if (v.minWidth > newWidth - classroot.promptWidth - classroot.xspacing) {
+						newWidth = classroot.promptWidth + classroot.xspacing + v.minWidth;
+					}
+					if (newWidth != v.width) {
+						v.setAttribute("width", newWidth);
+					}
+				}
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Finds the first visible view that is above the view with the given index in the subviews managed by
+				this layout.
+				@param subviewIndex the index of the given subview in the subviews managed by this layout
+				@return lzView the found view. If no view is found, null will be returned.
+			 -->
+			<method name="getViewAbove" args="subviewIndex"><![CDATA[
+				for(var i = subviewIndex - 1;  i >= 0; i--){
+					var v = this.subviews[i];
+					if(v.visible){
+						return v;
+					}
+				}
+				
+				return null;
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Finds the first visible view that is below the view with the given index in the subviews managed by
+				this layout.
+				@param subviewIndex the index of the given subview in the subviews managed by this layout
+				@return lzView the found view. If no view is found, null will be returned.
+			 -->
+			<method name="getViewBelow" args="subviewIndex"><![CDATA[
+				for(var i = subviewIndex + 1;  i < this.subviews.length; i++){
+					var v = this.subviews[i];
+					if(v.visible){
+						return v;
+					}
+				}
+				
+				return null;
+				]]>
+			</method>
+
+			
+			<!---
+				@keywords private
+				Checks if a divider should be inserted before adding a specified view. A divider should
+				be placed above the subview with the specified subview index if one of the following conditions is satisfied:
+					<ol>
+						<li>The subview is not the first visible subview in the subview array, this view's attribute
+							displayGrouping or dividerAtTop is set to true, and the view does not have a header.
+						</li>
+						
+						<li>
+							The subivew displayed above the given subview has its attribute displayGrouping or dividerAtBottom
+							set to true, and the given subview does not have a header.
+						</li>
+					</ol>
+				@param Number subviewIndex the index of the subview that this method examines in the array this.subviews
+				@return boolean true if a divider should be inserted. False otherwise.
+			 -->
+			<method name="checkDivider" args="subviewIndex"><![CDATA[
+				var subview = this.subviews[subviewIndex];
+
+				if(!subview || !subview.visible){
+					return false;
+				}
+				
+				var viewAbove = this.getViewAbove(subviewIndex);
+				if(viewAbove == null){
+					return false;
+				}
+				
+				return (viewAbove["dividerAtBottom"] || viewAbove["displayGrouping"] || subview["displayGrouping"] || subview["dividerAtTop"]) ;
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Checks if the parent of this area should have a divider line on top of it. The parent of this area
+				will have divider on top of it if this area has at least one visible view, and the top visible view
+				needs a divider at the top, and does not have a header. The parent's attribute "dividerAtTop" will
+				be updated if the value is different from the result of this checking.
+			 -->
+			<method name="checkDividerAtTop"><![CDATA[
+				for(var i = 0; i < this.subviews.length; i++){
+					var subview = this.subviews[i];
+					// Find the first visible subview on top, and check if it needs
+					// a divider at top
+					if(subview.visible){
+						var dividerAtTop = !(subview["collapsable"] || subview["groupTitle"] || subview["displayStoreName"] || subview["displayObjectStoreName"] || subview["groupTitleResolver"]) && (subview["displayGrouping"] || subview["dividerAtTop"]);
+						if(classroot.parent["dividerAtTop"] != dividerAtTop){
+							classroot.parent.setAttribute("dividerAtTop", dividerAtTop);
+						}
+						return;
+					}
+				}
+				
+				//At this point, no visible view is found
+				if(classroot.parent["dividerAtTop"]){
+					classroot.parent.setAttribute("dividerAtTop", false);
+				}
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Checks if the parent of this area should have a divider line below it. The parent of this area
+				will have divider below it if this area has at least one visible view, and the bottom visible view
+				needs a divider at bottom, and does not have a header. The parent's attribute "dividerAtBottom" will
+				be updated if the value is different from the result of this checking.
+			 -->
+			<method name="checkDividerAtBottom"><![CDATA[
+				for(var i = this.subviews.length - 1; i >= 0; i--){
+					var subview = this.subviews[i];
+					// Find the first visible view at the bottom, and check if it needs
+					// a divider below it.
+					if(subview.visible){
+						var dividerAtBottom = subview["displayGrouping"] || subview["dividerAtBottom"];
+						if(classroot.parent["dividerAtBottom"] != dividerAtBottom){
+							classroot.parent.setAttribute("dividerAtBottom", dividerAtBottom);
+						}
+						
+						return;
+					}
+				}
+				
+				// At this point, no visible view if found
+				if(classroot.parent["dividerAtBottom"]){
+					classroot.parent.setAttribute("dividerAtBottom", false);
+				}
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Inserts a divider at the given y-coordinate.
+				@return the divider that is inserted
+			 -->
+			<method name="insertDivider" args="y"><![CDATA[
+				var divider = this.getDivider();
+				divider.setAttribute("y", y);
+				
+				return divider;
+				]]>
+			</method>
+			
+			<!---
+				This method updates the layout.
+			-->
+			<method name="update" args="e=null">
+				<![CDATA[
+				if (!this.locked) {
+					this.locked = true;
+					var yPos = 0;
+					var availableWidth = classroot.availableWidthView.availableWidth;
+					this.releasesDividers();
+					for (var i = 0; i < this.subviews.length; i++) {
+						var v = this.subviews[i];
+						if (v.visible) {
+							if (!v["componentContainer"]) {
+								this.updateSubviewWidth(v, availableWidth);
+								
+								// Gets the y position of next subview
+								yPos += classroot.yspacing;
+							}
+							
+							if(this.checkDivider(i)){
+								// Make sure there is equal spacing above and
+								// below the inserted divider for component
+								// containers
+								if(v["componentContainer"]){
+									yPos += classroot.yspacing;
+								}
+								
+								var divider = this.insertDivider(yPos);
+								
+								// Make sure there is equal spacing above and below
+								// the inserted divider for views that are not
+								// component containers
+								if(!v["componentContainer"]){
+									yPos += classroot.yspacing;
+								}
+								
+								// Gets the y position of next subview
+								yPos += divider.height;
+							}
+							if (yPos != v.y) {
+								v.setAttribute("y", yPos);
+							}
+							yPos += v.height;
+						}
+					}
+					
+					this.checkDividerAtTop();
+					this.checkDividerAtBottom();
+					this.locked = false;
+				}
+				]]>
+			</method>
+		</layout>
+	</class>
+
+	<!---
+		Declares the value that will be used as the group title.
+		The algorithm used to determine this value is in {@link wcfValueResolver}.
+		
+		In the following sample, the value of the "storeIdentifier" property in the praent object is displayed as the property group title.	
+		@START_CODE
+		<PropertyGroup name="staticPageESiteUrlKeywordSection" componentObjectName="selectedStaticPage">
+			<PropertyGroupTitle parentProperty="true" propertyName="storeIdentifier"/>
+			...
+		</PropertyGroup>	    
+		@END_CODE
+
+		A single instance of this value can be declared as the child of an instance of wcfPropertyGroup.
+	-->
+	<class name="wcfPropertyGroupTitle" extends="wcfValueResolver">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			parent.groupTitleResolver = this;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This classs describes the definition of an action that can be performed on a model object.
+	 -->
+	<class name="wcfObjectPropertiesActionDefinition" extends="node">
+		<!---
+			The class of the action widget that user interacts.
+			For example, it could a button class. When the button
+			is clicked, the model object will be closed. This
+			action widget can be instantiated by an active view
+			container when a properties viewer is set active.
+		-->
+		<attribute name="actionWidgetClass" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			The instance of actionWidgetClass.
+		-->
+		<attribute name="actionWidget" value="null"/>
+		
+		<!---
+			Creates an action widget that is located inside the given container.
+			@param lz.view container: the parent view of the widget
+			@return the new widget instance
+		-->
+		<method name="createActionWidget" args="container">
+			<![CDATA[
+			if (this.actionWidget != null) {
+				this.actionWidget.setAttribute("visible", true);
+			}
+			else {
+				this.actionWidget = new lz[this.actionWidgetClass](container, {
+					actionDefinition: this
+				});
+			}
+			return this.actionWidget;
+			]]>
+		</method>
+		
+		<!---
+			Release the action widget.
+		-->
+		<method name="releaseActionWidget">
+			<![CDATA[
+			if (this.actionWidget != null) {
+				this.actionWidget.setAttribute("visible", false);
+			}
+			]]>
+		</method>
+	</class>
+
+
+	<!---
+		@keywords private
+		This class represents a divider line that visually divides displayed widgets. The height of the divider line instance
+		is determined by the resource used by the instance. The width of a divider line is the available width of the view
+		specified in the attribute "availableWidthView", whose default is the first parent view that has the attribute "availableWidth".
+		To following two examples show how to use this class. The first examples creates a divider line whose width is the same as the
+		availaleWidth of the default availableWidthView. The second example creates a divider line whose width is the same as the
+		availabelWidth of the given availableWidthView.
+		
+		@START_CODE
+			<DividerLine/>
+		@END_CODE
+		
+		@START_CODE
+			<DividerLine availbleWidthView="myAvailableWidthView"/>
+		@END_CODE
+	 -->
+	<class name="wcfDividerLine" resource="dividerLine" stretches="width" options="ignorelayout">
+		<!---
+			This attribute specifies a view whose available width will used as the width of
+			this divider line. It is by default the first ancestor view that has attribute
+			"availableWidth".
+		 -->
+		<attribute name="availableWidthView" value="$once{wcfViewUtil.getAvailableWidthView(this)}"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="init"><![CDATA[
+			super.init();
+			this.updateDividerWidthDel = new lz.Delegate(this, "updateDividerWidth");
+			this.updateDividerWidthDel.register(this.availableWidthView, "onavailableWidth");
+			this.updateDividerWidth();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="destroy"><![CDATA[
+			this.updateDividerWidthDel.unregisterAll();
+			delete this.updateDividerWidthDel;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		 -->
+		<handler name="onavailableWidthView"><![CDATA[
+			if(this["updateDividerWidthDel"]){
+				this.updateDividerWidthDel.unregisterAll();
+				if(this["availableWidthView"]){
+					this.updateDividerWidthDel.register(this.availableWidthView, "onavailableWidth");
+					this.updateDividerWidth();
+				}
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Sets the width of this divider line with the available width of availeWidthView.
+			Note we can't use "updateWidth" as a method name, as it is already used internally by
+			OpenLaszlo.
+		 -->
+		<method name="updateDividerWidth" args="e=null"><![CDATA[
+			this.setAttribute("width", this.availableWidthView.availableWidth);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This class is used as the background area for a property group.
+	 -->
+	<class name="wcfPropertyAreaBackground" options="ignorelayout" bgcolor="0xA5B1C7" y="${this.parent.content.y}" height="${this.parent.content.height}">
+		<!---
+			This attribute specifies a view whose available width will used as the width of
+			this divider line. It is by default the first ancestor view that has attribute
+			"availableWidth".
+		 -->
+		<attribute name="availableWidthView" value="$once{wcfViewUtil.getAvailableWidthView(this)}"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="init"><![CDATA[
+			super.init();
+			this.updateBackgroundWidthDel = new lz.Delegate(this, "updateBackgroundWidth");
+			this.updateBackgroundWidthDel.register(this.availableWidthView, "onavailableWidth");
+			this.updateBackgroundWidthDel.register(this.parent.content, "onwidth");
+			this.updateBackgroundWidth();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="destroy"><![CDATA[
+			this.updateBackgroundWidthDel.unregisterAll();
+			delete this.updateBackgroundWidthDel;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sets the width of this background view with the available width of availeWidthView.
+			Note we can't use "updateWidth" as a method name, as it is already used internally by
+			OpenLaszlo.
+		 -->
+		<method name="updateBackgroundWidth" args="e=null">
+			<![CDATA[
+			var newWidth = this.availableWidthView.availableWidth;
+			if (newWidth < this.parent.content.width) {
+				newWidth = this.parent.content.width;
+			}
+			this.setAttribute("width", newWidth - this.x);
+			]]>
+		</method>
+		
+		<view name="background" bgcolor="0xF5FAFA" x="1" y="1" width="${parent.width - 2}" height="${parent.height - 2}"/>
+	</class>
+</library>

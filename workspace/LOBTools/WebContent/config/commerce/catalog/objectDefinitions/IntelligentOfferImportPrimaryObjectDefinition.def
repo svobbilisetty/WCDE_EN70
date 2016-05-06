@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PrimaryObjectDefinition definitionName="IntelligentOfferImportsTop" displayName="${catalogResources.ioImports}" objectType="IntelligentOfferImportsTop" idProperty="ioImportsTopId" writeUsage="IBM_ManageCatalog">
+		<GetChildrenService url="/cmc/GetIntelligentOfferImportJobs" objectTypes="IntelligentOfferImport">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="catIntelligentOfferImportGridChildList"/>
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition definitionName="IntelligentOfferImport" objectType="IntelligentOfferImport" idProperty="ioImportId"
+		displayName="${catalogResources.ioImport_displayName}" displayNameProperty="fileName"
+		copyProtected="true" creatable="false"
+		headerIcon="ioImportHeaderIcon" icon="ioImportIcon"
+		propertiesDefinitionName="catIntelligentOfferImportProperties">
+
+		<RefreshService url="/cmc/GetIntelligentOfferImportJob">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="ioImportId" propertyName="ioImportId"/>
+		</RefreshService>
+
+		<GetChildrenService objectTypes="IntelligentOfferImportSummary" url="/cmc/GetIntelligentOfferImportJobSummary">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="ioImportId" propertyName="ioImportId"/>
+		</GetChildrenService>
+
+		<PropertyDefinition displayName="${catalogResources.catalogImport_fileName}" maximumSize="254" propertyName="fileName" type="string"/>
+
+		<PropertyDefinition displayName="${catalogResources.catalogImport_status}" propertyName="status">
+			<PropertyValue displayName="${catalogResources.catalogImports_status_Processing}" icon="processingIcon" value="Processing"/>
+			<PropertyValue displayName="${catalogResources.catalogImports_status_Complete}" icon="completeIcon" value="Complete"/>
+			<PropertyValue displayName="${catalogResources.catalogImports_status_Failed}" icon="failedIcon" value="Failed"/>
+			<PropertyValue displayName="${catalogResources.catalogImports_status_Failed}" icon="failedIcon" value="Cancelled"/>
+		</PropertyDefinition>
+
+		<ChildObjectDefinition displayName="${catalogResources.catalogImport_summary}" idProperty="summaryId" objectType="IntelligentOfferImportSummary" singleInstance="true">
+			<PropertyDefinition displayName="${catalogResources.catalogImport_summary}" propertyName="summary"/>
+		</ChildObjectDefinition>
+	</PrimaryObjectDefinition>
+
+</Definitions>

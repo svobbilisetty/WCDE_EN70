@@ -1,0 +1,151 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!---
+        @keywords private
+    -->
+	<class name="wcfVerticalScrollbar" extends="basescrollbar" axis="y" usemousewheel="false"> 
+	
+		<attribute name="wheelstepsize" type="number" value=".25"/>	
+
+	 	<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+		</method>
+        
+	 	<stableborderlayout axis="y"/>
+	
+		<basescrollarrow 
+			direction="-1" 
+			resource="verticalScrollUpArrow"
+			normalResourceNumber="1"
+			overResourceNumber="2" />
+	
+		<view name="scrolltrack">
+
+	        <view resource="verticalScrollBack" 
+	        		stretches="height" 
+	        		height="${parent.height}"/>
+		
+	        <basescrolltrack
+	            resource="verticalScrollBack"
+	            stretches="height"
+	            direction="-1"
+	            height="${parent.thumb.y}"/>
+				
+			<basescrollthumb 
+					name="thumb"
+					x="2"
+	        	    onmouseover="mid.setAttribute('frame', 2);" 
+	            	onmouseout="mid.setAttribute('frame', 1);">
+	            	
+			 	<stableborderlayout axis="y"/>
+				
+	        	<view resource="verticalScrollerTop"/>
+	            <view name="mid" resource="verticalScrollerMid" stretches="height" />
+	            <view resource="verticalScrollerBottom"/>
+			
+			</basescrollthumb>
+			
+			<basescrolltrack
+				resource="verticalScrollBack"
+				stretches="height"
+				direction="1" 
+				y="${parent.thumb.y + parent.thumb.height}" 
+				height="${parent.height - parent.thumb.y - parent.thumb.height}"/>
+		</view>
+	
+		<basescrollarrow 
+			direction="1" 
+			resource="verticalScrollDownArrow"
+			normalResourceNumber="1"
+			overResourceNumber="2" />
+				
+		<handler name="onmousewheeldelta" reference="lz.Keys" args="k">
+        	<![CDATA[
+        	this.scrollOnMouseWheel(k);
+			]]>
+		</handler>
+		
+		<method name="scrollOnMouseWheel" args="k">
+			<![CDATA[
+			if(this['visible']){
+				var v = this.scrolltarget.immediateparent;    		
+				if (wcfViewUtil.isMouseOver(v) && wcfViewUtil.containedInModalView(v)) {
+					this.page(-wheelstepsize*k);
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+        @keywords private
+    -->
+	<class name="wcfHorizontalScrollbar" extends="basescrollbar" axis="x" usemousewheel="false"> 
+	
+	 	<stableborderlayout axis="x"/>
+	 	
+	 	<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+		</method>
+        
+		<basescrollarrow 
+			direction="-1" 
+			resource="horizontalScrollLeftArrow"
+			normalResourceNumber="1"
+			overResourceNumber="2" />
+	
+		<view name="scrolltrack">
+
+	        <view resource="horizontalScrollBack" 
+	        		stretches="width" 
+	        		width="${parent.width}"/>
+		
+	        <basescrolltrack
+	            resource="horizontalScrollBack"
+	            stretches="width"
+	            direction="-1"
+	            width="${parent.thumb.x}"/>
+				
+			<basescrollthumb 
+					name="thumb"
+					y="2"
+	        	    onmouseover="mid.setAttribute('frame', 2);" 
+	            	onmouseout="mid.setAttribute('frame', 1);">
+	            	
+			 	<stableborderlayout axis="x"/>
+				
+	        	<view resource="horizontalScrollerLeft"/>
+	            <view name="mid" resource="horizontalScrollerMid" stretches="width" />
+	            <view resource="horizontalScrollerRight"/>
+			
+			</basescrollthumb>
+			
+			<basescrolltrack
+				resource="horizontalScrollBack"
+				stretches="width"
+				direction="1" 
+				x="${parent.thumb.x + parent.thumb.width}" 
+				width="${parent.width - parent.thumb.x - parent.thumb.width}"/>
+
+		</view>
+	
+		<basescrollarrow 
+			direction="1" 
+			resource="horizontalScrollRightArrow"
+			normalResourceNumber="1"
+			overResourceNumber="2" />
+	</class>
+</library>

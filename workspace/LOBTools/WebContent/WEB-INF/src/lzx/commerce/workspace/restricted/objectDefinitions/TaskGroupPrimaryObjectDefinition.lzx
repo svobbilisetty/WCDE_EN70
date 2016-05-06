@@ -1,0 +1,375 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		Client action definition that approves a task group in workspace.
+	-->
+	<class name="wspTaskGroupApproveClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.approve.string}" >
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+				wcfWorkspaceUtil.approveTaskGroups(objects);
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<wcfEnablementAndCondition>
+					<wcfEnablementCondition contextName="workspaceApprover" enablementValue="true" />
+					<wcfEnablementCondition propertyName="logonId" objectPath="ApproverAssociation/Approver">
+						<!--- @keywords private -->
+						<method name="isEnabled" args="o">
+							<![CDATA[
+								var propertyValues = this.getValues(o);
+								for (var i = 0; i < propertyValues.length; i++) {
+									if (propertyValues[i] == wcfContextUtil.findContextValue(null, "logonId").value) {
+										return true;
+									}
+								}
+								return false;
+							]]>
+						</method>
+					</wcfEnablementCondition>
+				</wcfEnablementAndCondition>
+			</wcfEnablementOrCondition>
+			<wcfEnablementCondition enablementValue="2" propertyName="status" />
+		</wcfEnablementAndCondition>
+	</class>
+
+	<!---
+		@keywords private
+		Client action definition that rejects a task group in workspace.
+	-->
+	<class name="wspTaskGroupRejectClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.reject.string}" >
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+				wcfWorkspaceUtil.rejectTaskGroups(objects);
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<wcfEnablementAndCondition>
+					<wcfEnablementCondition contextName="workspaceApprover" enablementValue="true" />
+					<wcfEnablementCondition propertyName="logonId" objectPath="ApproverAssociation/Approver">
+						<!--- @keywords private -->
+						<method name="isEnabled" args="o">
+							<![CDATA[
+								var propertyValues = this.getValues(o);
+								for (var i = 0; i < propertyValues.length; i++) {
+									if (propertyValues[i] == wcfContextUtil.findContextValue(null, "logonId").value) {
+										return true;
+									}
+								}
+								return false;
+							]]>
+						</method>
+					</wcfEnablementCondition>
+				</wcfEnablementAndCondition>
+			</wcfEnablementOrCondition>
+			<wcfEnablementCondition enablementValue="2" propertyName="status" />
+		</wcfEnablementAndCondition>
+	</class>
+
+	<!---
+		@keywords private
+		Client action definition that cancels a task group in workspace.
+	-->
+	<class name="wspTaskGroupCancelClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.cancel.string}">
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+				wcfWorkspaceUtil.cancelTaskGroups(objects);
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition enablementValue="0" propertyName="status" />
+				<wcfEnablementCondition enablementValue="1" propertyName="status" />
+				<wcfEnablementCondition enablementValue="2" propertyName="status" />
+				<wcfEnablementCondition enablementValue="7" propertyName="status" />
+			</wcfEnablementOrCondition>
+			<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+		</wcfEnablementAndCondition>
+	</class>
+
+	<wcfService id="wspTaskGroupCancelService" sendSiblingRequestsInParallel="false" sendWorkspaceContext="false" transactionService="true" url="/cmc/CancelTaskGroup">
+		<wcfServiceParam parameterName="taskGroupId" propertyName="taskGroupId"/>
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param wcfModelObject requestParent: The object on which this service was performed.
+		-->
+		<method args="requestParent" name="handleServiceSuccess">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var successMessage = foundationResources.replaceValues("customServiceSuccessful", [wspWorkspaceResources.cancel.string, requestParent.openGroupObject.objectDefinition.displayName, requestParent.openGroupObject.objectDisplayName]);
+				messageLogger.logStatus(successMessage);
+				if (requestParent.getPropertyValue("taskGroupIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTaskGroup").value) {
+					wcfWorkspaceUtil.clearContext();
+				}
+				// refresh the parent workspace in case workspace status change.
+				for (var refKey in requestParent.referenceMap) {
+					if (requestParent.referenceMap[refKey].objectType == "ChildTaskGroup"){
+						var parentWorkspace = requestParent.referenceMap[refKey].parentObject;
+						if (parentWorkspace.objectType == "Workspace") {
+							parentWorkspace.refreshing = true;
+							parentWorkspace.objectDefinition.refreshService.doRequest(parentWorkspace);
+						}
+					}
+				}				
+				requestParent.refreshChildren();
+				for (var key in requestParent.model.objectMap) {
+					if (requestParent.model.objectMap[key].objectType == "ToDoTasksTop" 
+						|| requestParent.model.objectMap[key].objectType == "CompletedTasksTop"
+						|| requestParent.model.objectMap[key].objectType == "ApprovedTasksTop"
+						|| requestParent.model.objectMap[key].objectType == "CanceledTasksTop") {
+						requestParent.model.objectMap[key].refreshChildren();
+					}
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		Open handler definition that opens a task group history object.
+	-->
+	<class name="wspTaskGroupHistoryOpenHandler" extends="wcfOpenHandler">
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+			@param boolean select: indicates that the opened object is to be selected
+		-->
+		<method name="open" args="o,select=true">
+			<![CDATA[
+			this.triggerOpen(o, select, false, false);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if this open handler is enabled.
+			
+			@param wcfModelObject o: the object to be opened
+			@param lz.Delegate del: optional delegate
+			@return boolean: true if the open action is enabled
+		-->
+		<method name="isEnabled" args="o,del=null">
+			<![CDATA[
+			var action = o.getPropertyValue("action");
+			return super.isEnabled(o, del) && action != null && action != "Delete" && this.getSearchDefinition(o) != null;
+			]]>
+		</method>
+		
+		<!---
+			@keywords abstract
+			Perform the logic required for the open object in compare view action.
+			@param wcfModelObject o: the object to be opened
+		-->
+		<method name="openInCompareView" args="o">
+			<![CDATA[
+			this.triggerOpen(o, false, true, false);
+			]]>
+		</method>
+		
+		<!---
+			@keywords abstract
+			Perform the logic required for the open object in the approved
+			content context for compare view action.
+			@param wcfModelObject o: the object to be opened
+		-->
+		<method name="openApprovedContentInCompareView" args="o">
+			<![CDATA[
+			this.triggerOpen(o, false, true, true);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if this open handler is enabled for opening objects in the compare view.
+			
+			@param wcfModelObject o: the object to be opened
+			@param lz.Delegate del: optional delegate
+			@return boolean: true if the open action is enabled for open objects in the compare view
+		-->
+		<method name="isOpenInCompareViewEnabled" args="o,del=null">
+			<![CDATA[
+			return this.isEnabled(o,del);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="triggerOpen" args="o,select,openInCompareView,openApprovedContent">
+			<![CDATA[
+			var searchDefinition = this.getSearchDefinition(o);
+			if (searchDefinition) {
+				var searchOptions = this.getSearchOptions(o,openApprovedContent);
+				var storeId = o.getPropertyValue("objectStoreId");
+				var storeConfig = wcfStoreUtil.getStore(storeId);
+				
+				var task = "T-1"; // Special task for open
+				var taskGroup = "TG-1"; // Special task group for open
+				var workspaceName = o.parentObject.getParentPrimaryObject().getPropertyValue("workspaceIdentifier");
+				var context = wcfContextUtil.findStoreContext(storeConfig, workspaceName, taskGroup, task, openApprovedContent);
+				wcfOpenObjectActionHandler.triggerAction(o.model, searchDefinition.searchType, searchOptions, select, openInCompareView, context);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="getSearchDefinition" args="o">
+			<![CDATA[
+			var searchDefinition = null;
+			var objectType = o.getPropertyValue("objectType");
+			
+			if (objectType == "SalesCatalogGroup" || objectType == "InheritedSalesCatalogGroup") {
+				searchDefinition = o.model.getSearchDefinition("FindCategories");
+			}
+			else if (objectType == "TopCatalogGroupPage" || objectType == "InheritedTopCatalogGroupPage"  
+				|| objectType == "CatalogGroupPage" || objectType == "InheritedCatalogGroupPage" ) {
+				searchDefinition = o.model.getSearchDefinition("FindCategoryPage");
+			}
+			else if (objectType == "TopSalesCatalogGroupPage" || objectType == "InheritedTopSalesCatalogGroupPage" 
+				|| objectType == "SalesCatalogGroupPage" || objectType == "InheritedSalesCatalogGroupPage" ) {
+				searchDefinition = o.model.getSearchDefinition("FindSalesCategoryPage");
+			}
+			else if (objectType == "ProductPage" || objectType == "InheritedProductPage" 
+				|| objectType == "ProductSKUPage" || objectType == "InheritedProductSKUPage" 
+				|| objectType == "CatalogGroupSKUPage" || objectType == "InheritedCatalogGroupSKUPage"
+				|| objectType == "BundlePage" || objectType == "InheritedBundlePage"
+				|| objectType == "KitPage" || objectType == "InheritedKitPage"
+				|| objectType == "DynamicKitPage" || objectType == "InheritedDynamicKitPage") {
+				searchDefinition = o.model.getSearchDefinition("FindCatalogEntryPage");
+			}
+			else {
+				var objectDefinition = o.model.getObjectDefinition(null, objectType, true);
+				if (objectDefinition) {
+					searchDefinition = objectDefinition.searchDefinition;
+				}
+			}
+			
+			return searchDefinition;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="getSearchOptions" args="o,openApprovedContent">
+			<![CDATA[
+			var objectCode = o.getPropertyValue("objectCode");
+			if (openApprovedContent) {
+				var oldObjectCode = o.getPropertyValue("xd_OldObjectCode");
+				if (oldObjectCode != null && oldObjectCode != "") {
+					objectCode = oldObjectCode;
+				}
+			}
+			var searchOptions = {};
+			searchOptions.searchText = objectCode;
+			searchOptions.searchUniqueId = o.getPropertyValue("objectUniqueId");
+			var objectType = o.getPropertyValue("objectType");
+			if (objectType == "SalesCatalogGroup" || objectType == "InheritedSalesCatalogGroup") {
+				searchOptions.salesCatalogId = o.getPropertyValue("xd_CatalogId");
+			}
+			
+			return searchOptions;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		<p>This class defines a client action for opening a history object
+		and it's base object in compare view.</p>
+	-->
+	<class name="wspTaskGroupCompareHistoryAction" extends="wcfClientAction" 
+		displayName="${wspWorkspaceResources.compareWithBase.string}"
+		childListEditorIcon="compareToApprovedIcon"
+		allowMultipleSelection="false">
+
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			var o = objects[0];
+			var compareViewTreeNode = o.model.oEditor.navigationTree.compareViewTree;
+			compareViewTreeNode.setAttribute("compareObject1Cache", null);
+			compareViewTreeNode.setAttribute("compareObject2Cache", null);
+			o.objectDefinition.openHandler.openInCompareView(o);
+			o.objectDefinition.openHandler.openApprovedContentInCompareView(o);
+			if (!compareViewTreeNode.selected) {
+				compareViewTreeNode.changeFocus(null);
+				compareViewTreeNode.setAttribute("selected", true);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if this compare handler is enabled.
+			
+			@param wcfModelObject o: the object to be opened
+			@return boolean: true if the open action is enabled
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			return super.isEnabled(o) && o.objectDefinition.openHandler.isOpenInCompareViewEnabled(o);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Register a delegate to be executed when the enablement condition changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerEnablementDelegate" args="o,del">
+			<![CDATA[
+			super.registerEnablementDelegate(o, del);
+			o.objectDefinition.openHandler.isOpenInCompareViewEnabled(o, del);
+			]]>
+		</method>
+	</class>
+	
+</library>

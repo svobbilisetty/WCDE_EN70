@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+<!-- =========================================== Action Mapping Definitions -->
+
+	<action-mappings>
+	
+	 	<action
+            parameter="com.ibm.commerce.content.preview.command.CMWSPreviewSetupCmd"
+            path="/CMWSPreviewSetup" type="com.ibm.commerce.foundation.internal.client.lobtools.actions.ControllerCommandAction"
+            className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">            	        
+	        <forward name="success" redirect="true" path="" />
+	        <forward name="error" path="/jsp/commerce/foundation/restricted/SessionError.jsp"/>
+	        <forward name="failed" path="/jsp/commerce/foundation/restricted/SessionError.jsp"/>
+        </action>
+                	
+		<action path="/AlertDialog" forward="/jsp/commerce/shell/restricted/AlertDialog.jsp" />
+		<action path="/ManagementCenter" forward="/jsp/commerce/shell/restricted/ManagementCenter.jsp" />
+		<action path="/ManagementCenterMain" forward="/jsp/commerce/shell/restricted/ManagementCenterMain.jsp" />
+		<action path="/GetOnlineStores" forward="/jsp/commerce/shell/restricted/GetOnlineStores.jsp" />
+		<action path="/GetPreferences" forward="/jsp/commerce/shell/restricted/GetPreferences.jsp" />
+		<action path="/GetResourceBundle" forward="/jsp/commerce/foundation/restricted/GetResourceBundle.jsp" />
+		<action path="/GetStoreConfiguration" forward="/jsp/commerce/foundation/restricted/GetStoreConfiguration.jsp" />
+		<action path="/FindStores" forward="/jsp/commerce/foundation/restricted/FindStores.jsp" />
+		<action path="/GetStore" forward="/jsp/commerce/foundation/restricted/GetStore.jsp" />
+		<action path="/GetStoreById" forward="/jsp/commerce/foundation/restricted/GetStoreById.jsp" />
+		<action path="/GetStorePathStores" forward="/jsp/commerce/foundation/restricted/GetStorePathStores.jsp" />
+		<action path="/GetTimeZone" forward="/jsp/commerce/foundation/restricted/GetTimeZone.jsp" />
+		<action path="/GetTimeZonesDetail" forward="/jsp/commerce/foundation/restricted/GetTimeZonesDetail.jsp" />
+		<action path="/InputTextDialog" forward="/jsp/commerce/foundation/restricted/InputTextDialog.jsp" />
+		<action path="/GetTopFolders" forward="/jsp/commerce/foundation/restricted/GetTopFolders.jsp" />
+		<action path="/GetChildFolders" forward="/jsp/commerce/foundation/restricted/GetChildFolders.jsp" />
+		<action path="/GetFolderReferences" forward="/jsp/commerce/foundation/restricted/GetFolderReferences.jsp" />
+		<action path="/GetParentFolder" forward="/jsp/commerce/foundation/restricted/GetParentFolder.jsp" />
+		<action path="/GetFolderById" forward="/jsp/commerce/foundation/restricted/GetFolderById.jsp" />
+		
+		<action path="/Logon" parameter="Person"
+			type="com.ibm.commerce.foundation.client.lobtools.actions.AuthenticationClientLibraryAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="channelId" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="authenticatePassword" />
+			<set-property property="aliasParameters"
+				value="password:logonPassword" />
+
+			<forward name="success" path="/jsp/commerce/shell/restricted/AuthenticationSuccess.jsp">
+			</forward>
+			<forward name="failed" path="/jsp/commerce/shell/restricted/AuthenticationFailed.jsp">
+			</forward>
+		</action>
+
+		<!--
+		<action path="/Logon" type="com.ibm.commerce.foundation.client.lobtools.actions.Logon">
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp">
+			</forward>
+			<forward name="success" path="/jsp/commerce/foundation/restricted/Values.jsp">
+			</forward>
+		</action>
+		-->
+
+		<action path="/ChangePassword" parameter="Person"
+			type="com.ibm.commerce.foundation.client.lobtools.actions.AuthenticationClientLibraryAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="resetPassword" />
+
+			<forward name="success" path="/jsp/commerce/foundation/restricted/Values.jsp">
+			</forward>
+			<forward name="failed" path="/jsp/commerce/shell/restricted/AuthenticationFailed.jsp">
+			</forward>
+		</action>
+
+		<action path="/Logout" parameter="Person"
+			type="com.ibm.commerce.foundation.client.lobtools.actions.AuthenticationClientLibraryAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="logout" />
+
+			<forward name="success" path="/jsp/commerce/foundation/restricted/Values.jsp">
+			</forward>
+			<forward name="failed" path="/jsp/commerce/shell/restricted/AuthenticationFailed.jsp">
+			</forward>
+		</action>
+
+		<action path="/ResolveIdentity" forward="/jsp/commerce/foundation/restricted/Values.jsp" />
+
+		<action path="/GetSSOToken" type="com.ibm.commerce.foundation.client.lobtools.actions.GetSSOToken">
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp">
+			</forward>
+			<forward name="success" path="/jsp/commerce/foundation/restricted/Values.jsp">
+			</forward>
+		</action>
+		
+		<action path="/GetAnalyticsSSOToken" type="com.ibm.commerce.foundation.client.lobtools.actions.GetAnalyticsSSOToken">
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp">
+			</forward>
+			<forward name="success" path="/jsp/commerce/foundation/restricted/Values.jsp">
+			</forward>
+		</action>
+
+		<action path="/SavePreferences" parameter="Person"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentClientLibraryAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.member.facade.client.MemberFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="updatePerson" />
+		</action>
+
+		<action path="/LogMessages" type="com.ibm.commerce.foundation.client.lobtools.actions.LogMessages">
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp">
+			</forward>
+			<forward name="success" path="/jsp/commerce/foundation/restricted/Object.jsp">
+			</forward>
+		</action>
+
+		<action path="/GetMisspelledWords" type="com.ibm.commerce.foundation.client.lobtools.actions.GetMisspelledWords" >
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp">
+			</forward>
+			<forward name="success" path="/jsp/commerce/foundation/restricted/GetMisspelledWords.jsp">
+			</forward>
+		</action>
+
+		<action path="/GetMisspelledSuggestions" type="com.ibm.commerce.foundation.client.lobtools.actions.GetMisspelledSuggestions" >
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp">
+			</forward>
+			<forward name="success" path="/jsp/commerce/foundation/restricted/GetMisspelledSuggestions.jsp">
+			</forward>
+		</action>
+
+		<action path="/ProhibitedCharactersError" forward="/jsp/commerce/foundation/restricted/Failed.jsp" />
+
+		<action path="/SerializeChangeControlMetaData" include="/jsp/commerce/foundation/restricted/SerializeChangeControlMetaData.jsp" />
+		
+		<action path="/PingServer" forward="/jsp/commerce/foundation/restricted/PingServer.jsp" />
+		
+		<action parameter="com.ibm.commerce.catalog.facade.client.visualmodeler.VisualModelerCatalogFacadeClient" 
+			path="/VisualModeler" type="com.ibm.commerce.foundation.client.lobtools.actions.VisualModelerAction">
+			<forward name="success" path="/jsp/commerce/foundation/restricted/VisualModelerSuccess.jsp"/>
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/VisualModelerError.jsp"/>				
+		</action>
+		<action path="/GetAccessRight" forward="/jsp/commerce/foundation/restricted/GetAccessRight.jsp" />
+		
+		<action path="/GetFeatureEnabled" forward="/jsp/commerce/foundation/restricted/GetFeatureEnabled.jsp" />
+		
+		<action path="/CreateFolder" parameter="Folder"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processFolder" />
+			<set-property property="actionCode" value="Create"/>
+			<set-property property="var" value="folder" />
+			<forward name="success" path="/jsp/commerce/foundation/restricted/RespondCreateFolder.jsp"/>
+		</action>
+		
+		<action path="/UpdateFolder" parameter="Folder"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeFolder" />
+			<set-property property="actionCode" value="Change"/>
+			<set-property property="var" value="folder" />
+			<forward name="success" path="/jsp/commerce/foundation/restricted/RespondCreateFolder.jsp"/>
+		</action>
+		
+		<action path="/DeleteFolder" parameter="Folder"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processFolder" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/CreateFolderItemReference" parameter="FolderItem"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeFolder" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="folder" />
+			<forward name="success" path="/jsp/commerce/foundation/restricted/RespondCreateFolderItem.jsp"/>
+		</action>
+		
+		<action path="/DeleteFolderItemReference" parameter="FolderItem"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeFolder" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/EditBusinessObject" forward="/jsp/commerce/foundation/restricted/EditBusinessObject.jsp" />
+		<action path="/CreateBusinessObject" forward="/jsp/commerce/foundation/restricted/CreateBusinessObject.jsp" />
+	</action-mappings>
+	
+	
+	<controller contentType="text/xml;charset=UTF-8"/>
+
+</struts-config>
+

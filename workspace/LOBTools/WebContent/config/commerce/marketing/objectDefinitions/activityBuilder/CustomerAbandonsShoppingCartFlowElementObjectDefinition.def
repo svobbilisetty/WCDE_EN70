@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Customer Abandons Shopping Cart trigger. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService}</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService}</li>
+			<li>instance of {@link wcfNumberRangeValidator} to ensure that the amount ranges (<code>numberOfDays</code> and <code>maximumNumberOfDaysCartHasBeenAbandoned</code>) are valid</li>			
+		</ul>
+		</p>
+
+	-->
+	<FlowElementObjectDefinition definitionName="mktCustomerAbandonsShoppingCartElementObject" displayName="${mktMarketingResources.customerAbandonsShoppingCartName}" elemTemplateType="Trigger" flowIcon="customerAbandonsShoppingCartIcon" headerIcon="customerAbandonsShoppingCartHeaderIcon" helpLink="concepts/csbtriabcart.htm" objectType="customerAbandonsShoppingCart" package="mkt" paletteIcon="customerAbandonsShoppingCartPaletteIcon" propertiesDefinitionName="mktCustomerAbandonsShoppingCartProperties" summaryClass="mktCustomerAbandonsShoppingCartSummary">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService"/>
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService"/>
+
+		<Xml name="template">
+			<elemTemplateName>customerAbandonsShoppingCart</elemTemplateName>
+			<numberOfDays>1</numberOfDays>
+			<repeatSchedule>runDaily</repeatSchedule>
+		</Xml>
+
+		<PropertyDefinition propertyName="repeatSchedule" required="true">
+			<PropertyValue displayName="${mktMarketingResources.repeatScheduleDaily}" value="runDaily"/>
+			<PropertyValue displayName="${mktMarketingResources.repeatScheduleOnce}" value="runOnce"/>
+		</PropertyDefinition>	
+		
+		<PropertyDefinition displayName="${mktMarketingResources.numberOfDaysCartHasBeenAbandoned}" minValue="1" propertyName="numberOfDays" required="true" type="number"/>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.maximumNumberOfDaysCartHasBeenAbandoned}" minValue="1" propertyName="maximumNumberOfDaysCartHasBeenAbandoned" required="true" type="number">
+			<EnablementCondition conditionId="runOnceElement" enablementValue="runOnce" propertyName="repeatSchedule"/>
+		</PropertyDefinition>
+		
+		<NumberRangeValidator endNumberPropertyName="maximumNumberOfDaysCartHasBeenAbandoned" startNumberPropertyName="numberOfDays" validatorId="daysValidator">
+			<EnablementCondition conditionId="runOnceElementValidator" enablementValue="runOnce" propertyName="repeatSchedule"/>
+		</NumberRangeValidator>
+	</FlowElementObjectDefinition>
+	
+</Definitions>

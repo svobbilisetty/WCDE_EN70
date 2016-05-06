@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>   
+   
+	<PrimaryObjectDefinition definitionName="catBaseCatalogPrimaryObjectDefinition" detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}" displayName="${catalogResources.catalog_DisplayName}" displayNameProperty="identifier" headerIcon="catalogHeaderIcon" icon="catalogIcon" idProperty="catalogId" isBaseDefinition="true" newDisplayName="${catalogResources.catalog_NewDisplayName}" objectGroups="CatalogAlias,AllCatalogAlias" utilitiesListDefinitionName="catUtilitiesBrowseGrid" propertiesDefinitionName="catCatalogProperties" writeUsage="IBM_ManageCatalog" searchType="FindCatalogs">
+			
+			<!--- Refresh Services -->
+						
+		<RefreshService url="/cmc/GetSalesCatalog">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catalogId" propertyName="catalogId"/>
+		</RefreshService>	
+		
+			<!--- 
+			Update service to update a sales catalog 
+		 -->
+		<UpdateService sendDefaultLanguageProperties="true" url="/cmc/UpdateSalesCatalog">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId" parameterName="languageId"/>
+			<ServiceParam name="catalogId" propertyName="catalogId"/>
+		</UpdateService>
+		
+		<!--- 
+			Retrieves the {@link catSalesCatalogDescription} child objects.
+		 -->
+		<GetChildrenService objectTypes="SalesCatalogDescription" url="/cmc/GetCatalogChildren-LanguageDescriptions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catalogId" propertyName="catalogId"/>
+		</GetChildrenService>
+		
+		
+		
+        <!--- 
+			Retrieves the {@link catChildCatalogGroup} child objects.
+		-->			
+		<GetChildrenService objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" url="/cmc/GetCatalogChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catalogIdentifier" propertyName="identifier"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+
+   	 	<!---
+			Child object definition for the description related fields of a catalog.
+			This object is language sensitive.
+		-->
+		<ChildObjectDefinition baseDefinitionName="catCatalogDescription"/>
+		
+       <!--- 
+			Child object definition  for the child catalog group of the catalog.  
+		-->		
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildCatalogGroup"/>
+
+      <!--- 
+			This navigation list definition is used to display {@link catChildCatalogGroup}.
+		-->			
+		<NavigationListDefinition displayName="${catalogResources.topCategoriesListDisplayName}" isDefault="true" listDefinitionName="catCategoryChildList" listTitle="${catalogResources.categoriesList}" name="CategoryChildList" helpLink="tasks/tpn_topcategories.htm"/>
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogPrimaryObjectDefinition" definitionName="Catalog" objectType="Catalog"/>
+	<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogPrimaryObjectDefinition" definitionName="InheritedCatalog" displayName="${catalogResources.inheritedCatalog_DisplayName}" headerIcon="inheritedCatalogHeaderIcon" icon="inheritedCatalogIcon" objectType="InheritedCatalog">
+		<!--- 
+			Child object definition  for the child catalog group of the catalog.  
+		-->		
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedCatalogGroup"/>
+	</PrimaryObjectDefinition>
+</Definitions>

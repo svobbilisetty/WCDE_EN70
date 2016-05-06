@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sync Tickler BOD Mapping for Websphere Commerce Telesales -->
+	<TemplateDocument>
+		<DocumentType version="8.1">SyncTickler</DocumentType>
+		<StartElement>SyncTickler</StartElement>
+		<TemplateTagName>SyncTickler81Map</TemplateTagName>
+		<CommandMapping>
+			<Command CommandName="com.ibm.commerce.tickler.commands.TicklerLockCmd" Condition='action="Lock" AND commerceObject="Tickler"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.tickler.commands.TicklerUnlockCmd" Condition='action="Unlock" AND commerceObject="Tickler"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.tickler.commands.TicklerActionRecordCmd" Condition='action="RecordAction" AND commerceObject="Tickler"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.tickler.commands.TicklerAssignCmd" Condition='action="Assign" AND commerceObject="Tickler"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+			</Command>
+		</CommandMapping>
+	</TemplateDocument>	
+	<TemplateTag name="SyncTickler81Map">
+		<!-- Command Parameters -->
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+		<Tag XPath='DataArea/Tickler/DocumentIds/DocumentId' XPathType='VECTOR' Field='ticklerIdsVector' />
+		<Tag XPath='DataArea/Tickler/DocumentIds/DocumentId/Id' Field='ticklerId' />		
+		<Tag XPath="DataArea/Tickler/ResponsibleMemberId" Field="assignToMemberId"/>
+		<Tag XPath="DataArea/Tickler/TicklerAction/TicklerActionId" Field="ticklerActionId"/>
+		<Tag XPath="DataArea/Tickler/TicklerAction/Description" Field="comment"/>
+		<Tag XPath="DataArea/Tickler/UserData/UserDataField" XPathType="USERDATA"/>
+	</TemplateTag>

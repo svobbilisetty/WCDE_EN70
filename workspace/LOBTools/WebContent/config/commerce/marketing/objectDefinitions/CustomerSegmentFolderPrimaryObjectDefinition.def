@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions> 
+	<!---
+            This definition defines the base object from which CustomerSegmentFolder and InheritedCustomerSegmentFolderare derived.
+            A Customer Segment folder is an object used to organize Customer Segments so that they can be found easily.
+            A Customer Segment can be in multiple folders at the same time which is why this class uses a reference object
+            definition to define the relationship between folders and Customer Segments.
+            E-Marketing folders use the Folder noun from the file wc-infrastructure-clientobjects.xml
+            which contains information on how the parameters in the services
+            are mapped to create the appropriate BOD for the Web services.
+	-->
+
+      <PrimaryObjectDefinition
+            definitionName="mktBaseCustomerSegmentFolderPrimaryObjectDefinition"
+            displayName="${mktMarketingResources.CustomerSegmentFolderObjectName}"
+            displayNameProperty="identifier"
+            idProperty="folderId"
+            isBaseDefinition="true"
+            newDisplayName="${mktMarketingResources.CustomerSegmentFolder_newCustomerSegmentFolderDisplayName}"
+            newObjectMenuItemText="${mktMarketingResources.contextMenuNewCustomerSegmentFolder}"
+            objectGroups="CustomerSegmentFolderGroup"
+            propertiesDefinitionName="mktCustomerSegmentFolderProperties"
+            writeUsage="IBM_ManageMarketingTool"> 
+           
+            <!--- This service retrieves all the child folders.  -->
+            <GetChildrenService objectTypes="CustomerSegmentFolderReference,InheritedCustomerSegmentFolderReference" url="/cmc/GetChildFolders">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="folderObjectType" value="CustomerSegmentFolder"/>
+            </GetChildrenService>
+           
+            <!--- This service retrieves all the folder items that belong to this folder. -->
+            <GetChildrenService objectTypes="CustomerSegmentFolderItemReference,CustomerSegmentFolderInheritedItemReference,InheritedCustomerSegmentFolderInheritedItemReference" url="/cmc/GetMarketingFolderItems">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="defaultLanguageId"/>
+            </GetChildrenService>
+			
+			<ObjectTypeFilter filterType="utilitiesViewFilter" objectTypes="CustomerSegmentFolderReference,InheritedCustomerSegmentFolderReference,CustomerSegmentFolderItemReference,CustomerSegmentFolderInheritedItemReference,InheritedCustomerSegmentFolderInheritedItemReference"/>
+			
+           	<!--- Update service to update a folder. -->
+            <UpdateService url="/cmc/UpdateFolder">
+                  <ServiceParam name="storeId" />
+                  <ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="parentFolderId" optional="true" parameterName="parentFolderId" parentProperty="true" propertyName="folderId"/>
+            </UpdateService>
+           
+            <!---
+                  Retrieves the mktBaseCustomerSegmentFolderPrimaryObjectDefinition object that is the parent to this object.
+            -->
+            <GetReferencesService url="/cmc/GetParentFolder">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+                  <ServiceParam name="folderId" propertyName="folderId"/>
+                  <ServiceParam name="parentFolderId" propertyName="parentFolderId"/>
+                  <ServiceParam name="folderObjectType" value="CustomerSegmentFolder"/>
+            </GetReferencesService>
+           
+            <!-- Refresh Service to reload the properties of the folder -->
+            <RefreshService url="/cmc/GetFolderById">
+            <ServiceParam name="storeId"/>
+            <ServiceParam name="folderId" propertyName="folderId"/>
+            <ServiceParam name="folderObjectType" value="CustomerSegmentFolder"/>
+            </RefreshService>
+           
+            <!--- This is the folder_id defined in the FOLDER table, which indicates the primary key of this folder. -->
+            <PropertyDefinition copyProtected="true" propertyName="folderId"/>
+           
+            <!--- This is the identifier of the folder. -->
+            <PropertyDefinition displayName="${mktMarketingResources.CustomerSegmentFolder_name}" maximumSize="256" propertyName="identifier" required="true" trim="true"/>
+           
+            <!--- This is the description of the folder. -->
+            <PropertyDefinition displayName="${mktMarketingResources.CustomerSegmentFolder_description}" maximumSize="256" propertyName="description" type="string"/>
+                 
+            <Xml name="template">
+                  <folderType>IBM_CustomerSegmentFolder</folderType>              
+            </Xml>
+            
+            <!--- Reference to the parent of the folder. -->
+            <ParentReferenceObjectDefinition cascadeDelete="true" baseDefinitionName="mktCustomerSegmentFolderReferenceObjectDefinition"/>
+            
+            <!--- Navigation list definition for navigating from the folder item to the Customer Segment. -->
+            <NavigationListDefinition baseDefinitionName="mktCustomerSegmentFolderItemGridChildList" isDefault="true"/>
+           
+            <!--- Navigation list definition for navigating from the folder to its child items. -->
+            <NavigationListDefinition baseDefinitionName="mktCustomerSegmentFolderGridChildList" toolbarIcon="folderListToolbarIcon"/>  
+                                                     
+      </PrimaryObjectDefinition>
+      
+      <!--
+            Defines the object to be used to represent folders owned by the local store.
+       -->
+      <PrimaryObjectDefinition baseDefinitionName="mktBaseCustomerSegmentFolderPrimaryObjectDefinition" creatable="true" definitionName="CustomerSegmentFolder" objectType="CustomerSegmentFolder" headerIcon="GenericFolderHeaderIcon" icon="GenericFolderIcon">
+      		<!--- Create service to create a folder and its relationship to a parent folder.. -->
+            <CreateService url="/cmc/CreateFolder">
+                  <ServiceParam name="storeId" />
+                  <ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+                  <ServiceParam name="parentFolderId" optional="false" parameterName="parentFolderId" parentProperty="true" propertyName="folderId">
+                  		<EnablementCondition conditionId="enableParentFolderId" negate="true" enablementValue="" propertyName="identifier" parentProperty="true"/>
+                  </ServiceParam>
+            </CreateService>
+      		
+      		<!--- Delete service to delete a folder. -->
+            <DeleteService url="/cmc/DeleteFolder">
+                  <ServiceParam name="storeId" />
+                  <ServiceParam name="folderId" propertyName="folderId"/> 
+            </DeleteService>
+      		
+            <TrueEnablementCondition /> 
+      		
+            <!--- Reference to the items that belong to the folder and are owned by the local store. -->
+            <ReferenceObjectDefinition baseDefinitionName="mktCustomerSegmentFolderItemReferenceObjectDefinition"/>
+           
+            <!--- Reference to the items that belong to the folder and are owned by the asset store. -->
+            <ReferenceObjectDefinition baseDefinitionName="mktCustomerSegmentFolderInheritedItemReferenceObjectDefinition"/>
+      </PrimaryObjectDefinition>
+      
+      <!--
+            Defines the object to be used to represent folders owned by the asset store.
+       -->
+      <PrimaryObjectDefinition baseDefinitionName="mktBaseCustomerSegmentFolderPrimaryObjectDefinition" compatibleObjectTypes="CustomerSegmentFolder" creatable="false" definitionName="InheritedCustomerSegmentFolder" objectType="InheritedCustomerSegmentFolder" headerIcon="InheritedGenericFolderHeaderIcon" icon="InheritedGenericFolderIcon">
+            <!--- Reference to the parent of the folder. -->
+            <ParentReferenceObjectDefinition baseDefinitionName="mktInheritedCustomerSegmentFolderReferenceObjectDefinition"/>
+ 
+            <!--- Reference to the items that belong to the folder and are owned by the asset store. -->
+            <ReferenceObjectDefinition baseDefinitionName="mktInheritedCustomerSegmentFolderInheritedItemReferenceObjectDefinition"/>
+      </PrimaryObjectDefinition>
+      
+      <!-- The relationship between this folder and its local parent -->           
+      <ParentReferenceObjectDefinition definitionName="mktCustomerSegmentFolderReferenceObjectDefinition" derivedId="true" idProperty="folderReferenceId" objectGroups="CustomerSegmentFolderReferenceGroup" objectType="CustomerSegmentFolderReference" referencedType="CustomerSegmentFolder" cascadeDelete="true"/>
+      
+      <!-- The relationship between this folder and its asset store parent -->
+      <ParentReferenceObjectDefinition definitionName="mktInheritedCustomerSegmentFolderReferenceObjectDefinition" derivedId="true" idProperty="folderReferenceId" objectGroups="CustomerSegmentFolderReferenceGroup" objectType="InheritedCustomerSegmentFolderReference" referencedType="InheritedCustomerSegmentFolder" cascadeDelete="true"/>
+      
+      <!-- The relationship between a folder and local Customer Segments in this folder. -->
+      <ReferenceObjectDefinition allowDuplicates="false" baseDefinitionName="mktBaseCustomerSegmentFolderItemReferenceObjectDefinition" initializeObjectStoreId="true"  objectGroups="CustomerSegmentFolderItemReferenceGroup" definitionName="mktCustomerSegmentFolderItemReferenceObjectDefinition" objectType="CustomerSegmentFolderItemReference" referencedTypes="CustomerSegment">
+            <TrueEnablementCondition  conditionType="childObjectCondition"/>
+      </ReferenceObjectDefinition>
+      
+      <!-- The relationship between this folder and asset store Customer Segments in this folder. -->
+      <ReferenceObjectDefinition allowDuplicates="false" baseDefinitionName="mktBaseCustomerSegmentFolderItemReferenceObjectDefinition" initializeObjectStoreId="true" objectGroups="CustomerSegmentFolderItemReferenceGroup" definitionName="mktCustomerSegmentFolderInheritedItemReferenceObjectDefinition" objectType="CustomerSegmentFolderInheritedItemReference" referencedTypes="InheritedCustomerSegment">
+            <TrueEnablementCondition conditionType="childObjectCondition"/>
+      </ReferenceObjectDefinition>
+      
+      <!-- The relationship between an inherited folder and an inherited Customer Segment in this folder. -->
+      <ReferenceObjectDefinition allowDuplicates="false" baseDefinitionName="mktBaseCustomerSegmentFolderItemReferenceObjectDefinition" objectGroups="CustomerSegmentFolderItemReferenceGroup" definitionName="mktInheritedCustomerSegmentFolderInheritedItemReferenceObjectDefinition" objectType="InheritedCustomerSegmentFolderInheritedItemReference" referencedTypes="InheritedCustomerSegment">
+            <TrueEnablementCondition conditionType="childObjectCondition"/>
+      </ReferenceObjectDefinition>
+     
+      <!-- The class to represent relationships between folders and Customer Segments. These relationships are called folder items. -->
+      <ReferenceObjectDefinition definitionName="mktBaseCustomerSegmentFolderItemReferenceObjectDefinition" isBaseDefinition="true" idProperty="folderItemID">
+            <!--- Create service to create the relationship between the parent folder and folder item reference. -->
+            <CreateService url="/cmc/CreateFolderItemReference">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="objectStoreId" parentProperty="true" propertyName="objectStoreId"/>
+                  <ServiceParam name="folderItemStoreId" parameterName="folderItemStoreId" propertyName="objectStoreId" objectPath="CustomerSegmentGroup"/>
+                  <ServiceParam name="folderId" parentProperty="true" propertyName="folderId"/>
+                  <ServiceParam name="folderItemReferenceId" objectPath="CustomerSegmentGroup" propertyName="uniqueId"/>
+            </CreateService>
+            
+            <!--- Delete service to delete the relationship between the parent folder and folder item reference. -->
+            <DeleteService url="/cmc/DeleteFolderItemReference">
+                  <ServiceParam name="storeId"/>
+                  <ServiceParam name="folderItemStoreId" parameterName="folderItemStoreId" propertyName="objectStoreId" objectPath="CustomerSegmentGroup"/>
+                  <ServiceParam name="folderId" parentProperty="true" propertyName="folderId"/>
+                  <ServiceParam name="folderItemReferenceId" objectPath="CustomerSegmentGroup" propertyName="uniqueId"/>
+                  <ServiceParam name="folderItemType" propertyName="folderItemType"/>
+            </DeleteService> 
+ 
+            <TrueEnablementCondition conditionId="objectTypeFolderCondition" conditionType="childObjectCondition"/>
+            
+            <Xml name="template">
+                  <folderItemType>MemberGroupType</folderItemType>
+            </Xml>           
+      </ReferenceObjectDefinition>
+
+</Definitions>

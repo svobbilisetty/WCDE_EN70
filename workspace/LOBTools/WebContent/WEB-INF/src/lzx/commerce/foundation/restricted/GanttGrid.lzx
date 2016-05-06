@@ -1,0 +1,1069 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<wcfStandardStyle id="wcfGanttChartStyle"/>
+	<!---
+		@keywords private
+	 -->
+	<class name="wcfGanttGridBar" titleVisible="false" draggable="false" extends="wcfGridColumn" sortable="false">
+		<handler name="oninit">
+			<![CDATA[
+				this.updateColumnWidthDel = new lz.Delegate(this, "updateColumnWidth");
+				this.updateColumnWidthDel.register(parent.clippedContent, "onwidth");
+				this.updateColumnWidthDel.register(parent.clippedContent.gridContent, "onwidth");
+				this.updateColumnWidthDel.register(parent, "onavailableWidth");
+				this.updateColumnWidthCallbackDel = new lz.Delegate(this, "updateColumnWidthCallback");
+				
+				this.updateColumnWidthCallback();
+				parent.updateHorizontalDimensions();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="setPropertyName" args="newPropertyName">
+			<![CDATA[
+			this.propertyName = newPropertyName;	
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="setObjectPath" args="newObjectPath">
+			<![CDATA[
+			this.objectPath = newObjectPath;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="getCellDescriptorMap">
+			<![CDATA[
+			if (this.cellDescriptorMap == null) {
+				this.cellDescriptorMap = parent.getCellDescriptorMap();
+			}
+			return this.cellDescriptorMap;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateColumnWidth" args="e=null">
+			<![CDATA[
+			wcfCallbackUtil.addDeferredCallback(this.updateColumnWidthCallbackDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateColumnWidthCallback" args="e=null">
+			<![CDATA[
+				var deltaWidth = (parent.availableWidth!=null?parent.availableWidth:parent.clippedContent.width) - parent.clippedContent.gridContent.width;
+				var newWidth = this.width + deltaWidth;
+				newWidth = newWidth >= 0 ? newWidth : 0;
+				
+				if (newWidth != this.width) {
+					this.setAttribute("width", newWidth);
+				}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				this.updateColumnWidthDel.unregisterAll();
+				delete this.updateColumnWidthDel;
+
+				super.destroy();
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfGanttGridBarViewer" height="8" valign="middle">
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		<attribute name="property2" value="null"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+				immediateparent.setAttribute("height", this.height);
+				if (parent.grid.visibleStartDate && parent.grid.visibleEndDate) {
+					this.updateBar();
+				}
+			]]>
+		</handler>
+		
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValueDel.register(this.property, "ondirty");
+					this.updateValue();
+				}
+			}
+			
+			var newProperty2 = null;
+			if (this.parent.row["o"]) {
+				var cellDescriptor = this.parent.column.getCellDescriptor(this.parent.row.o,this.updateValueDel);
+				newProperty2 = this.parent.row.o.getProperty(cellDescriptor.propertyName2, cellDescriptor.objectPath);
+			}
+			if (newProperty2 != this["property2"]) {
+				this.setProperty2(newProperty2);
+			}
+			]]>
+		</method>
+		
+		<method name="setProperty2" args="newProperty2">
+			<![CDATA[
+			if (newProperty2 != this["property2"]) {
+				if (typeof(this.updateValue2Del) == "undefined") {
+					this.updateValue2Del = new lz.Delegate(this, "updateValue2");
+				}
+				this.updateValue2Del.unregisterAll();
+				this.property2 = newProperty2;
+				if (this.property2) {
+					this.updateValue2Del.register(this.property2, "onvalue");
+					this.updateValue2Del.register(this.property2, "ondirty");
+					this.updateValue2();
+				}
+			}
+			]]>
+		</method>
+
+		<method name="updateValue" args="e=null">
+			if (this.startDateStr != this.property.value) {
+				this.setAttribute("startDateStr", this.property.value);
+			}
+		</method>
+		
+		<method name="updateValue2" args="e=null">
+			if (this.endDateStr != this.property2.value) {
+				this.setAttribute("endDateStr", this.property2.value);
+			}
+		</method>
+
+		<handler name="dateRangeChanged" reference="parent.grid">
+			this.updateBar();
+		</handler>
+		
+		<handler name="onstartDate">
+			<![CDATA[
+				if (parent.grid.visibleStartDate && parent.grid.visibleEndDate) {
+					this.updateBar();
+				}
+			]]>
+		</handler>
+		
+		<handler name="onendDate">
+			<![CDATA[
+				if (parent.grid.visibleStartDate && parent.grid.visibleEndDate) {
+					this.updateBar();
+				}
+			]]>
+		</handler>
+		
+		<method name="updateBar">
+			<![CDATA[
+				var startDiff = wcfDateUtil.datedaysdiff(startDate, parent.grid.visibleStartDate);
+				var endDiff = wcfDateUtil.datedaysdiff(endDate, parent.grid.visibleStartDate);
+				
+				var relStartDiff = (startDiff!=null && startDiff >= 0)?startDiff:0;
+				var relNumDays = endDiff!=null?(endDiff-relStartDiff+1):null;
+				
+				this.bar.setAttribute('x', relStartDiff * parent.grid.widthPerDay - parent.content.x);
+				
+				var newWidth = 0;
+				if (parent.column.width > this.bar.x) {
+					if (relNumDays!=null) {
+						if (relNumDays >= 0) {
+							newWidth = Math.min((parent.column.width - this.bar.x), (relNumDays * parent.grid.widthPerDay));
+						}
+					} else {
+						newWidth = parent.column.width - this.bar.x;
+					}
+				}
+                this.bar.setAttribute('width', newWidth);
+			]]>
+		</method>
+				
+		<attribute name="startDateStr" value="" type="string"/>
+		<attribute name="endDateStr" value="" type="string"/>
+		
+		<attribute name="startDate" value="${wcfDateUtil.parse(this.startDateStr, wcfDateUtil.DATE_FORMAT)}" />
+		<attribute name="endDate" value="${wcfDateUtil.parse(this.endDateStr, wcfDateUtil.DATE_FORMAT)}" />
+		
+		<view name="bar" height="8" bgcolor="${wcfGanttChartStyle.ganttbarbordercolor}" valign="middle">
+			<view x="1" y="1" height="${immediateparent.height-2}" width="${immediateparent.width-2}" bgcolor="${wcfGanttChartStyle.ganttbarcolor}"/>
+		</view>
+
+	</class>
+
+	<!---
+		@keywords abstract
+		<p>
+		wcfGanttGrid is a specialized {@link wcfObjectGrid} with Gantt chart capabilities. Columns and filters are added in the same way but a Gantt
+		chart shows up as a column at the end of the grid without being specified. wcfGanttGrid and classes that extend wcfGanttGrid must not be
+		instantiated directly. 	They may only be declared as the "listClass" for {@link wcfChildListEditor}, {@link wcfSearchDefinition} and
+		{@link wcfReferenceList}. The framework will determine when the list view is required and instantiate the specified wcfGanttGrid class to
+		display a list of business objects. The grid instance will create a row for every object in the list of business objects.
+		Each row in a grid can display the start date and end date of an object. For example, a promotion has a start date and
+		an end date, therefore a Gantt grid can be used to show the date range of a list of promotions.
+		</p><p>
+		The following code creates a Gantt grid that displays a list of objects of the same type which uses the startDate and endDate names for the
+		Gantt chart date range. startDatePropertyName and endDatePropertyName attributes are used here to specify these property names.
+		</p><p>
+		@START_CODE
+			<GanttGrid definitionName="sampleGanttGrid" startDatePropertyName="startDate" endDatePropertyName="endDate">
+				<GridIconTypeImage name="type" text="${resources.type}" width="60" required="true"/>
+				<GridText name="uniqueID" propertyName="Id" editable="false" text="${resources.uniqueID}"
+					visible="false" width="90" datatype="number"/>
+			</GanttGrid>
+		@END_CODE
+		</p><p>
+		The next example shows the same Gantt grid but displays a list of objects of more than one type with differnt start and end date
+		properties.  This is accomplished by using the {@link wcfGanttGridBarDescriptor} instead of startDatePropertyName and
+		endDatePropertyName.  Below sampleObject1 has a different start and end date property names than sampleObject2.
+		</p><p>
+		@START_CODE
+			<GanttGrid definitionName="sampleGanttGrid">
+	`			<GanttGridBarDescriptor objectType="sampleObject1" propertyName="startDate" propertyName2="endDate"/>
+				<GanttGridBarDescriptor objectType="sampleObject2" propertyName="beginDate" propertyName2="finishDate"/>
+				
+				<GridIconTypeImage name="type" text="${resources.type}" width="60" required="true"/>
+				<GridText name="uniqueID" propertyName="Id" editable="false" text="${resources.uniqueID}"
+					visible="false" width="90" datatype="number"/>
+			</GanttGrid>
+		@END_CODE
+		</p>
+	 -->
+	<class name="wcfGanttGrid" extends="wcfObjectGrid" showvlines="true" showDummyColumn="false" showHorizontalScrollbar="false">
+		<!---
+			@keywords private
+			Reference to a class that can be used to implement the footer of this grid.
+		-->
+		<attribute name="footerClass" value="wcfGanttGridFooter"/>
+	
+		<!---
+			The initial range, in days, for the calendar view.
+			The default value is 90 days.  The calendar displays 30 days before and 60 days after the current day.
+		 -->
+		<attribute name="range" type="number" value="90"/>
+	
+		<!---
+			@keywords private
+			The start date visible to a user.
+		-->
+		<attribute name="visibleStartDate" value="null" />
+		
+		<!---
+			@keywords private
+			The end date visible to a user.
+		-->
+		<attribute name="visibleEndDate" value="null" />
+		
+		<!---
+			@keywords private
+			The number of days visible to a user.
+		-->
+		<attribute name="visibleDays" type="number" value="1"/>
+		
+		<!---
+			@keywords private
+			The width each day can have when displayed.
+		-->
+		<attribute name="widthPerDay" type="number" value="0" />
+		
+		<!---
+			@keywords private
+			This event is triggered when the date range of an item is changed.
+		-->
+		<event name="dateRangeChanged" />
+		
+		<!---
+			This attribute is used to specify the path that is used to locate the properties defined in the startDatePropertyName
+			and endDatePropertyName attributes. In other words dateObjectPath is used to find a child Management Center object
+			relative to the current object. If the property applies to the current object, then you do not need
+			to specify an dateObjectPath.
+		-->
+		<attribute name="dateObjectPath" type="string" value="${null}"/>
+		
+		<!---
+			The property that contains the start date of the object.  This is the default start date property.  It is a required attribute
+			unless a {@link wcfGanttGridBarDescriptor} is defined.
+		-->		
+		<attribute name="startDatePropertyName" value="startdate" type="string"/>
+		
+		<!---
+			The property that contains the end date of the object. This is the default end date property.  It is a required attribute
+			unless a {@link wcfGanttGridBarDescriptor} is defined.
+		-->
+		<attribute name="endDatePropertyName" value="enddate" type="string"/>
+		
+		<!---
+			@keywords private
+			A map that stores all the descriptors for each cell. See {@link wcfCellDescriptorMap}
+			for details.
+		-->
+		<attribute name="cellDescriptorMap" value="${null}"/>
+		<!---
+			@keywords private
+			This attribute specifies the name of the view class used to create cell viewer for the Gantt grid bar.
+			@type string
+		-->
+		<attribute name="cellViewerClass" type="string" value="wcfGanttGridBarViewer"/>
+		<!---
+			@keywords private
+			This attribute specifies the name of the view class used to create editor instances for the Gantt grid bar.
+			@type string
+		-->
+		<attribute name="cellEditorClass" type="string" value="${null}"/>
+		
+		<!--- @keywords private	 -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+				if (this.preferenceKey == null || preferenceManager.getPreference(this.preferenceKey) == null) {
+					this.setColumnPosition(this.ganttBar, this.columns.length, true);
+				}
+				
+				this.updateGanttAxisWidthDel = new lz.Delegate(this, "updateGanttAxisWidth");
+				this.updateGanttAxisXDel = new lz.Delegate(this, "updateGanttAxisX");
+				this.updateGanttBarsDel = new lz.Delegate(this, "updateGanttBars");
+				this.updateGanttAxisSpaceDel = new lz.Delegate(this, "updateGanttAxisSpace");
+				this.registerResizers();
+				this.updateGanttAxisSpace(false);
+				
+				super.postCreateDefinitionChildren();
+			
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				this.updateGanttAxisWidthDel.unregisterAll();
+				delete this.updateGanttAxisWidthDel;
+				
+				this.updateGanttAxisXDel.unregisterAll();
+				delete this.updateGanttAxisXDel;
+				
+				this.updateGanttBarsDel.unregisterAll();
+				delete this.updateGanttBarsDel;
+				
+				this.updateGanttAxisSpaceDel.unregisterAll();
+				delete this.updateGanttAxisSpaceDel;
+
+				super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			@return wcfCellDescriptorMap cell descriptor map owned by this grid. If no descriptor map is found, a default one
+				will be created and returned.
+		-->
+		<method name="getCellDescriptorMap">
+			<![CDATA[
+			if (this.cellDescriptorMap == null) {
+				this.cellDescriptorMap = new lz.wcfGridCellDescriptorMap(this);
+				new lz.wcfGanttGridBarDescriptor(this, {_default: true, objectType: null, objectPath: this.dateObjectPath, propertyName: this.startDatePropertyName, propertyName2: this.endDatePropertyName});
+			}
+			return this.cellDescriptorMap;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Finds the cell description that matches the given object definition.
+			@param wcfModelObject the object that matches the found cell descriptor.
+				See {@link wcfCellDescriptorMap#getCellDescriptor} for details.
+		-->
+		<method name="getCellDescriptor" args="object,delegate=null">
+			<![CDATA[
+			var cellDescriptor = null;
+
+			var multipleMatch = false;
+			var cellDescriptors = this.getCellDescriptorMap().getCellDescriptors(object, delegate);
+			for (var i = 0; i < cellDescriptors.length; i++) {
+				var objects = object.getObjects(cellDescriptors[i].objectPath, null, null, true);
+				if (objects.length > 1) {
+					cellDescriptor = null;
+					multipleMatch = true;
+				}
+				if (!multipleMatch && objects.length == 1) {
+					if (cellDescriptor) {
+						cellDescriptor = null;
+						multipleMatch = true;
+					}
+					else {
+						cellDescriptor = cellDescriptors[i];
+					}
+				}
+			}
+			if (cellDescriptor == null && !multipleMatch && cellDescriptors.length == 1 && this.implicitCreate) {
+				cellDescriptor = cellDescriptors[0];
+			}
+
+			return cellDescriptor;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Override this method to return additional initialization arguments for that will be used to create the viewer.
+			@return object additional initialization arguments
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return null;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Rescales this grid based on the given visible start date and the end date. See
+			{@link wcfGanttAxis#render} for how the scaling is performed. The bar of the
+			Gantt grid will be updated too by calling {@link wcfGanttGrid#updateGanttBars}.
+			@param Date p_visibleStartDate the new visible start date for rescaling
+			@param Date p_visibleEndDate the new visible end date for rescaling.
+		 -->
+		<method name="rescale" args="p_visibleStartDate, p_visibleEndDate">
+			<![CDATA[
+				this.visibleStartDate = p_visibleStartDate;
+				this.visibleEndDate = p_visibleEndDate;
+				
+				this.ganttAxis.setAttribute("startDate", this.visibleStartDate);
+				this.ganttAxis.setAttribute("endDate", this.visibleEndDate);
+				this.ganttAxis.render();
+			
+				this.updateGanttBars();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Updates the bar of this grid based. Each day will have the same width. The sum of the width
+			of every visible day will be equal to the the width of the bar.
+			@event dateRangeChanged
+		 -->
+		<method name="updateGanttBars" args="e=null">
+			<![CDATA[
+				this.visibleDays = wcfDateUtil.datedaysdiff(this.visibleEndDate, this.visibleStartDate)+1;
+				this.widthPerDay = this.ganttBar.width/this.visibleDays;
+
+				this.dateRangeChanged.sendEvent();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Registers the this.updateGanttAxisSpaceDel to the onresizing event of each column's resizer view.
+		 -->
+		<method name="registerResizers">
+			<![CDATA[
+				for (var i = 0; i < this.columns.length; i++) {
+					this.updateGanttAxisSpaceDel.register(this.columns[i].resizer, "onresizing");
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Updates the spaces in Gantt axis.
+			@param boolean resizing true if the grid is in the middle of resizing, in which case the bar will be hidden.
+				Otherwise, this grid will be resized.
+		 -->
+		<method name="updateGanttAxisSpace" args="resizing">
+			<![CDATA[
+				if (resizing) {
+					this.updateGanttAxisXDel.unregisterAll();
+					this.updateGanttAxisWidthDel.unregisterAll();
+					this.updateGanttBarsDel.unregisterAll();
+					this.ganttAxis.setAttribute("visible", false);
+				}
+				else {
+					this.updateGanttAxisXDel.register(this.ganttBar, "onx");
+					this.updateGanttAxisWidthDel.register(this.ganttBar, "onwidth");
+					this.updateGanttBarsDel.register(this.ganttBar, "onwidth");
+					this.updateGanttAxisX();
+					this.updateGanttAxisWidth();
+					this.ganttAxis.render();
+					this.updateGanttBars();
+					this.ganttAxis.setAttribute("visible", true);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Vertically aligns the Gantt axis and the Gantt bar.
+		 -->
+		<method name="updateGanttAxisX" args="e=null">
+			<![CDATA[
+				this.ganttAxis.setAttribute("x", this.ganttBar.x + (this.showPrefixColumn ? 15 : 0));
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sychronizes the width of the Gantt axis with that of Gantt bar.
+		 -->
+		<method name="updateGanttAxisWidth" args="e=null">
+			<![CDATA[
+				this.ganttAxis.setAttribute("width", this.ganttBar.width);
+			]]>
+		</method>
+		
+		<wcfGanttAxis name="ganttAxis" y="${parent.clippedContent.y}" clip="true" height="${parent.clippedContent.height}" marginWidth="20" placement="${parent}" options="ignorelayout"/>
+		
+		<wcfGanttGridBar name="ganttBar" text="${foundationResources.ganttBarTitle.string}" required="true" visible="true" width="600"/>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttGridFooter" width="${parent.width}">
+		<attribute name="grid"/>
+	
+		<attribute name="totalsArea" value="${content.bottomArea.bottomAreaParent.totalsAreaParent.totalsArea}" />
+		<attribute name="fromDateInput" value="${content.bottomArea.bottomAreaParent.summaryView.daterange.dates.fromdate}" />
+		<attribute name="toDateInput" value="${content.bottomArea.bottomAreaParent.summaryView.daterange.dates.todate}" />
+		
+		<attribute name="ganttGridFilter" value="null" />
+
+		<attribute name="__totalsAreaInited" value="false" type="boolean"/>
+		
+		<attribute name="summaryViewWidth" value="250" type="number"/>
+		
+		<attribute name="barareavisible" value="true" type="boolean"/>
+		
+		<method name="init">
+			<![CDATA[
+				this.content.bottomArea.bottomAreaParent.totalsAreaParent.ganttControl = this;	
+				this.content.bottomArea.bottomAreaParent.summaryView.ganttControl = this;	
+
+				this.updatePositionsAndWidthDel = new lz.Delegate(this, "updatePositionsAndWidth");
+				
+				this.updateRegisterSizeDelegatesDel = new lz.Delegate(this, "updateRegisterSizeDelegates");
+				this.registerResizers();
+				this.updateRegisterSizeDelegates(false);
+			
+				if (this["oListUpdatedDel"]) {
+					this.oListUpdatedDel.unregisterAll();
+				}
+				else {
+					this.oListUpdatedDel = new lz.Delegate(this, "oListUpdated");
+				}
+				this.oListUpdatedDel.register(this.grid, "onoList");
+				this.oListUpdated();
+				
+				super.init();
+			]]>
+		</method>
+		
+		<method name="registerResizers">
+			<![CDATA[
+				for (var i = 0; i < this.grid.columns.length; i++) {
+					this.updateRegisterSizeDelegatesDel.register(this.grid.columns[i].resizer, "onresizing");
+				}
+			]]>
+		</method>
+		
+		<method name="updateRegisterSizeDelegates" args="resizing">
+			<![CDATA[
+				if (resizing) {
+					this.updatePositionsAndWidthDel.unregisterAll();
+				}
+				else {
+					this.updatePositionsAndWidthDel.register(this.grid, "onwidth");
+					this.updatePositionsAndWidth();
+				}
+			]]>
+		</method>
+		
+		<method name="updatePositionsAndWidth" args="e=null">
+			<![CDATA[
+				this.content.bottomArea.bottomAreaParent.totalsAreaParent.setAttribute("width", Math.max(this.grid.width - this.summaryViewWidth, 300));
+			]]>
+		</method>
+			
+		<method name="oListUpdated" args="e=null">
+			<![CDATA[
+				if (this.grid["oList"]) {
+				
+					var rangeBeforeToday = Math.round(this.grid.range/3);
+					
+					var todaysDate = new Date();
+					var selectedStartDate = wcfDateUtil.copydate(todaysDate);
+					wcfDateUtil.adddays(selectedStartDate, -rangeBeforeToday);
+					
+					var selectedEndDate = wcfDateUtil.copydate(todaysDate);
+					wcfDateUtil.adddays(selectedEndDate, this.grid.range-rangeBeforeToday);
+
+
+					if (this["modelObjectsUpdatedDel"]) {
+						this.modelObjectsUpdatedDel.unregisterAll();
+					}
+					else {
+						this.modelObjectsUpdatedDel = new lz.Delegate(this, "modelObjectsUpdated");
+					}
+					
+					this.modelObjectsUpdatedDel.register(this.grid.oList, "onmodelObjects");
+					this.modelObjectsUpdated();
+										
+					this.updatevisiblelist(selectedStartDate, selectedEndDate);
+				}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				this.oListUpdatedDel.unregisterAll();
+				delete this.oListUpdatedDel;
+				
+				this.updatePositionsAndWidthDel.unregisterAll();
+				delete this.updatePositionsAndWidthDel;
+				
+				this.updateRegisterSizeDelegatesDel.unregisterAll();
+				delete this.updateRegisterSizeDelegatesDel;
+
+				super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="rescaleDateRange" args="addDays">
+			<![CDATA[
+			var newSelectedEndDate = wcfDateUtil.copydate(this.totalsArea.selectedStartDate);
+			wcfDateUtil.adddays(newSelectedEndDate, addDays);
+				
+			this.totalsArea.updateSelectedDates(this.totalsArea.selectedStartDate, newSelectedEndDate);
+			]]>
+		</method>
+	
+		<view name="content" width="${parent.width}">
+			<view name="vdivider" x="0" y="0" width="${parent.width}">
+			
+			    <view x="0" y="0" width="${parent.width}" resource="ganttHideBarBack" stretches="width"/>
+			
+				<view name="hideToggleView" height="${parent.height}" focusable="true">
+					<view resource="ganttHideBarPlus" x="5" valign="middle" visible="${!classroot.barareavisible}"/>
+					<view resource="ganttHideBarMinus" x="5" valign="middle" visible="${classroot.barareavisible}"/>
+					<text text="${foundationResources.show.string}" x="20" valign="middle" fontsize="11" font="Arial" visible="${!classroot.barareavisible}"/>
+					<text text="${foundationResources.hide.string}" x="20" valign="middle" fontsize="11" font="Arial" visible="${classroot.barareavisible}"/>
+					
+					<!--- @keywords private -->
+					<handler name="onclick">
+						<![CDATA[
+						classroot.setAttribute("barareavisible", !classroot.barareavisible);
+						]]>
+					</handler>
+					
+					<!--- @keywords private -->
+					<handler name="onkeydown" args="k">
+						<![CDATA[
+						if (k == 13 || k == 32) { // enter or spacebar
+							classroot.setAttribute("barareavisible", !classroot.barareavisible);
+						}
+						]]>
+					</handler>
+					
+					<!--- @keywords private -->
+					<handler name="onfocus">
+						<![CDATA[
+						if(!this["indicator"]){
+							new lz.wcfFocusIndicator(this, {
+								name: "indicator",
+								focusableView: this,
+								indicatorView: this
+							});
+						}
+						]]>
+					</handler>
+					
+				</view>
+			</view>
+			<view name="bottomArea" y="${classroot.content.vdivider.y+classroot.content.vdivider.height}" height="${classroot.barareavisible?this.bottomAreaParent.height:19}" clip="true">
+			
+				<view name="bottomAreaParent" y="${classroot.barareavisible?0:-64}">
+			
+					<view name="totalsAreaParent" clip="true" x="${classroot.summaryViewWidth}">
+						<handler name="onwidth">
+							if (classroot.__totalsAreaInited) {
+								classroot.updateTotalsPosition();
+							}
+						</handler>
+						
+						<wcfGanttTotalsArea name="totalsArea" ganttControl="${classroot}" />
+					</view>
+				
+					<view name="summaryView" fontsize="10" font="Arial" bgcolor="${wcfGanttChartStyle.ganttfiltercontrolsbackground}" x="0" height="${classroot.content.bottomArea.bottomAreaParent.totalsAreaParent.height}" width="${classroot.summaryViewWidth}">
+						<view name="daterange" x="5" valign="top">
+							<simplelayout axis="y" spacing="1" />
+							<text text="${foundationResources.range.string}" fontsize="11" fgcolor="${wcfGanttChartStyle.ganttfontcolor}"/>
+							<view name="dates">
+								<simplelayout axis="x" spacing="5" />
+								<wcfDatePicker name="fromdate">
+									<method name="storeValue">
+										<![CDATA[
+										super.storeValue();
+										var newSelectedStartDate = this.getDate();
+										if (newSelectedStartDate != classroot.totalsArea.selectedStartDate) {
+											if (newSelectedStartDate) {
+												classroot.totalsArea.updateSelectedDates(newSelectedStartDate, classroot.totalsArea.selectedEndDate);
+											}
+											else {
+												this.setDate(classroot.totalsArea.selectedStartDate);
+											}
+										}
+										]]>
+									</method>
+								</wcfDatePicker>
+								<text text="${foundationResources.datesTo.string}" fontsize="11" fgcolor="${wcfGanttChartStyle.ganttfontcolor}"/>
+								<wcfDatePicker name="todate">
+									<method name="storeValue">
+										<![CDATA[
+										super.storeValue();
+										var newSelectedEndDate = this.getDate();
+										if (newSelectedEndDate != classroot.totalsArea.selectedEndDate) {
+											if (newSelectedEndDate) {
+												classroot.totalsArea.updateSelectedDates(classroot.totalsArea.selectedStartDate, newSelectedEndDate);
+											}
+											else {
+												this.setDate(classroot.totalsArea.selectedEndDate);
+											}
+										}
+										]]>
+									</method>
+								</wcfDatePicker>
+							</view>
+						</view>
+						<view name="presetLinks" x="5" valign="bottom">
+							<simplelayout axis="y" spacing="1" />
+							<text text="${foundationResources.scale.string}" fontsize="11" fgcolor="${wcfGanttChartStyle.ganttfontcolor}"/>
+							<view name="rescaleLinks">
+								<simplelayout axis="x" spacing="10" />
+								<text fgcolor="${wcfGanttChartStyle.ganttfontcolor}" text="${'&lt;u&gt;' + foundationResources['oneWeekLink'].string + '&lt;/u&gt;'}" onclick="rescaleClicked();" visible="${(classroot.content.bottomArea.bottomAreaParent.totalsAreaParent.width/2) > 7}" focusable="true">
+								
+									<!--- @keywords private -->
+									<method name="rescaleClicked">	
+										<![CDATA[
+										classroot.rescaleDateRange(6);
+										]]>
+									</method>
+
+									<!--- @keywords private -->
+									<handler name="onkeydown" args="k">
+										<![CDATA[
+										if (k == 13 || k == 32) { // enter or spacebar
+											classroot.rescaleDateRange(6);
+										}
+										]]>
+									</handler>
+									
+									<!--- @keywords private -->
+									<handler name="onfocus">
+										<![CDATA[
+										if(!this["indicator"]){
+											new lz.wcfFocusIndicator(this, {
+												name: "indicator",
+												focusableView: this,
+												indicatorView: this
+											});
+										}
+										]]>
+									</handler>
+									
+								</text>
+								<text fgcolor="${wcfGanttChartStyle.ganttfontcolor}" text="${'&lt;u&gt;' + foundationResources['oneMonthLink'].string + '&lt;/u&gt;'}" onclick="rescaleClicked();" visible="${(classroot.content.bottomArea.bottomAreaParent.totalsAreaParent.width/2) > 30}" focusable="true">
+
+									<!--- @keywords private -->
+									<method name="rescaleClicked">	
+										<![CDATA[
+										classroot.rescaleDateRange(30);
+										]]>
+									</method>
+
+									<!--- @keywords private -->
+									<handler name="onkeydown" args="k">
+										<![CDATA[
+										if (k == 13 || k == 32) { // enter or spacebar
+											classroot.rescaleDateRange(30);
+										}
+										]]>
+									</handler>
+									
+									<!--- @keywords private -->
+									<handler name="onfocus">
+										<![CDATA[
+										if(!this["indicator"]){
+											new lz.wcfFocusIndicator(this, {
+												name: "indicator",
+												focusableView: this,
+												indicatorView: this
+											});
+										}
+										]]>
+									</handler>
+
+								</text>
+								<text fgcolor="${wcfGanttChartStyle.ganttfontcolor}" text="${'&lt;u&gt;' + foundationResources['threeMonthsLink'].string + '&lt;/u&gt;'}" onclick="rescaleClicked();" visible="${(classroot.content.bottomArea.bottomAreaParent.totalsAreaParent.width/2) > 90}" focusable="true">
+
+									<!--- @keywords private -->
+									<method name="rescaleClicked">	
+										<![CDATA[
+										classroot.rescaleDateRange(90);
+										]]>
+									</method>
+
+									<!--- @keywords private -->
+									<handler name="onkeydown" args="k">
+										<![CDATA[
+										if (k == 13 || k == 32) { // enter or spacebar
+											classroot.rescaleDateRange(90);
+										}
+										]]>
+									</handler>
+									
+									<!--- @keywords private -->
+									<handler name="onfocus">
+										<![CDATA[
+										if(!this["indicator"]){
+											new lz.wcfFocusIndicator(this, {
+												name: "indicator",
+												focusableView: this,
+												indicatorView: this
+											});
+										}
+										]]>
+									</handler>
+									
+								</text>
+								<text fgcolor="${wcfGanttChartStyle.ganttfontcolor}" text="${'&lt;u&gt;' + foundationResources['sixMonthsLink'].string + '&lt;/u&gt;'}" onclick="rescaleClicked();" visible="${(classroot.content.bottomArea.bottomAreaParent.totalsAreaParent.width/2) > 180}" focusable="true">
+
+									<!--- @keywords private -->
+									<method name="rescaleClicked">	
+										<![CDATA[
+										classroot.rescaleDateRange(180);
+										]]>
+									</method>
+
+									<!--- @keywords private -->
+									<handler name="onkeydown" args="k">
+										<![CDATA[
+										if (k == 13 || k == 32) { // enter or spacebar
+											classroot.rescaleDateRange(180);
+										}
+										]]>
+									</handler>
+									
+									<!--- @keywords private -->
+									<handler name="onfocus">
+										<![CDATA[
+										if(!this["indicator"]){
+											new lz.wcfFocusIndicator(this, {
+												name: "indicator",
+												focusableView: this,
+												indicatorView: this
+											});
+										}
+										]]>
+									</handler>
+									
+								</text>
+								<text fgcolor="${wcfGanttChartStyle.ganttfontcolor}" text="${'&lt;u&gt;' + foundationResources['oneYearLink'].string + '&lt;/u&gt;'}" onclick="rescaleClicked();" visible="${(classroot.content.bottomArea.bottomAreaParent.totalsAreaParent.width/2) > 365}" focusable="true">
+
+									<!--- @keywords private -->
+									<method name="rescaleClicked">	
+										<![CDATA[
+										classroot.rescaleDateRange(365);
+										]]>
+									</method>
+
+									<!--- @keywords private -->
+									<handler name="onkeydown" args="k">
+										<![CDATA[
+										if (k == 13 || k == 32) { // enter or spacebar
+											classroot.rescaleDateRange(365);
+										}
+										]]>
+									</handler>
+									
+									<!--- @keywords private -->
+									<handler name="onfocus">
+										<![CDATA[
+										if(!this["indicator"]){
+											new lz.wcfFocusIndicator(this, {
+												name: "indicator",
+												focusableView: this,
+												indicatorView: this
+											});
+										}
+										]]>
+									</handler>
+									
+								</text>
+							</view>
+						</view>
+					</view>
+				</view>
+			</view>
+		</view>
+		
+		<method name="rescale" args="visibleStartDate, visibleEndDate">
+			<![CDATA[
+				this.fromDateInput.setDate(visibleStartDate);
+				this.toDateInput.setDate(visibleEndDate);
+			
+				this.grid.rescale(visibleStartDate, visibleEndDate);
+			]]>
+		</method>
+
+		
+		<method name="updatevisiblelist" args="visibleStartDate, visibleEndDate">
+			<![CDATA[
+				if (this.grid.oList != null) {
+					if (this.ganttGridFilter == null) {
+						this.ganttGridFilter = new lz.wcfGanttGridFilter(this, {filterType: "wcfDateRangeGanttFilter", ganttGrid: this.grid});
+					}
+					this.ganttGridFilter.visibleStartDate = wcfDateUtil.getTimeDay(visibleStartDate);
+					this.ganttGridFilter.visibleEndDate = wcfDateUtil.getTimeDay(visibleEndDate);
+
+					var filterList = this.grid.oList.filterList;
+					
+					if (!filterList) {
+						filterList = [];
+					}
+					
+					var ganttFilterFound = false;
+					for (var i = 0; i < filterList.length; i++) {
+						if (this.ganttGridFilter == filterList[i]) {
+							ganttFilterFound = true;
+							break;
+						}
+					}
+					
+					if (ganttFilterFound) {
+						this.grid.oList.refreshFilteredObjects();
+					}
+					else {
+						filterList.push(this.ganttGridFilter);
+						this.grid.oList.setAttribute("filterList", filterList);
+					}
+				}
+				
+				this.rescale(visibleStartDate, visibleEndDate);
+
+				if (!this.__totalsAreaInited) {
+					totalsArea.setAttribute("selectedStartDate", visibleStartDate);
+					totalsArea.setAttribute("selectedEndDate", visibleEndDate);	
+				}
+			
+				this.updateTotalsPosition();
+			]]>
+		</method>
+		
+		<method name="updateTotalsPosition">
+			<![CDATA[
+				var newX = -1;
+				
+				if (this.__totalsAreaInited) {
+					newX = Math.round(totalsArea.getLeftX() - ((totalsArea.parent.width - totalsArea.getRightX() + totalsArea.getLeftX())/2));
+				}
+
+				if (newX < 0 || (totalsArea.width - newX) < totalsArea.parent.width) {
+					this.updateTotalsAreaDateRange();
+					var oldX = newX;
+					newX = Math.round(totalsArea.getLeftX() - ((totalsArea.parent.width - totalsArea.getRightX() + totalsArea.getLeftX())/2));					
+					totalsArea.setAttribute('x', totalsArea.x+oldX-newX+1);
+				}
+				
+				var delta = Math.abs(newX - (totalsArea.x * -1));
+				totalsArea.animate("x",-newX,5 * delta);				
+			]]>
+		</method>
+		
+		<method name="updateTotalsAreaDateRange">
+			<![CDATA[
+				var selectedStartDate = totalsArea.selectedStartDate;
+				var selectedEndDate = totalsArea.selectedEndDate;
+				
+				var newStartDate = wcfDateUtil.copydate(selectedStartDate);
+				wcfDateUtil.adddays(newStartDate, -Math.round(totalsArea.parent.width/2));
+				
+				var newEndDate = wcfDateUtil.copydate(selectedEndDate);
+				wcfDateUtil.adddays(newEndDate, Math.round(totalsArea.parent.width/2));
+				
+				totalsArea.setAttribute("startDate", newStartDate);
+				totalsArea.setAttribute("endDate", newEndDate);
+				
+				totalsArea.updateTotalsArea();
+				
+				this.__totalsAreaInited = true;
+			]]>		
+		</method>
+
+		<method name="modelObjectsUpdated" args="e=null">
+			totalsArea.updateTotalsArea();
+			registerDatePropertyUpdated();
+		</method>
+		
+		<method name="registerDatePropertyUpdated">
+			<![CDATA[
+				if (this["datePropertyUpdatedDel"]) {
+					this.datePropertyUpdatedDel.unregisterAll();
+				}
+				else {
+					this.datePropertyUpdatedDel = new lz.Delegate(this, "datePropertyUpdated");
+				}
+					
+				if (this.grid.oList != null) {
+					var modelObjects = this.grid.oList.getMatchingModelObjects();
+					
+					for (var i = 0; i < modelObjects.length; i++) {
+						var cellDescriptor = this.grid.getCellDescriptor(modelObjects[i],this.datePropertyUpdatedDel);
+						if(cellDescriptor) {
+							var startDateProperty = modelObjects[i].getProperty(cellDescriptor.propertyName, cellDescriptor.objectPath);
+							var endDateProperty = modelObjects[i].getProperty(cellDescriptor.propertyName2, cellDescriptor.objectPath);
+	
+							this.datePropertyUpdatedDel.register(startDateProperty, "onvalue");
+							this.datePropertyUpdatedDel.register(startDateProperty, "ondirty");
+							
+							this.datePropertyUpdatedDel.register(endDateProperty, "onvalue");
+							this.datePropertyUpdatedDel.register(endDateProperty, "ondirty");
+						}
+					}
+				}
+			]]>
+		</method>
+	
+		<method name="datePropertyUpdated" args="e=null">
+			totalsArea.updateTotalsArea();
+		</method>
+
+	</class>
+	
+	<!---
+		This class allows objects of different types to be displayed in the same
+		instance of wcfGanttGrid. Each object type can have different property names for
+		the start and end date.
+	-->
+	<class name="wcfGanttGridBarDescriptor" extends="wcfGridCellDescriptor">
+		<!---
+			The end date property name.
+		-->
+		<attribute name="propertyName2" type="string" value="${null}"/>
+	</class>
+
+</library>

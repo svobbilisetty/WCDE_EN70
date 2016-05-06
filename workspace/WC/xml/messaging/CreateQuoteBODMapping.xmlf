@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Create Quote BOD Mapping for Websphere Commerce Telesales -->
+	<TemplateDocument>
+		<DocumentType version="8.1">CreateQuote</DocumentType>
+		<StartElement>CreateQuote</StartElement>
+		<TemplateTagName>CreateQuote81</TemplateTagName>
+		<CommandMapping>			
+			<Command CommandName="com.ibm.commerce.order.commands.OrderCreateQuoteCmd" Condition='fromObject="Order"'>
+				<Constant Field="sensitiveInfoCopy">Y</Constant>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReUrl">NoReURL</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.quote.commands.QuoteCreateCmd" Condition='fromObject=""'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReUrl">NoReURL</Constant>
+			</Command>		
+		</CommandMapping>							
+	</TemplateDocument>
+	<TemplateTag name="CreateQuote81">
+		<!-- Command Parameters -->
+		<Tag XPath="DataArea/Create/CreateCriteria/CreateExpression@fromObject" Field="fromObject" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Create/CreateCriteria/CreateExpression" Field="orderId"/>
+		<Tag XPath="DataArea/Quote/UserData/UserDataField" XPathType="USERDATA"/>
+	</TemplateTag>

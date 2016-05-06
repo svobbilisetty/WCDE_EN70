@@ -1,0 +1,75 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!---
+		Custom service definition that enables users to launch the store front of the selected store.
+		This action is not the same as store preview as the launched store will use data contained in the
+		base schema, and no options can be set by the user. 
+		When the store is launched, a SSO Token is set in the session that will log the user into the store automatically. This enables
+		a store to be browsed even when it is closed. 
+	-->
+	<class name="stoLaunchStoreCustomService" extends="wcfCustomService" displayName="${stoStoreResources.launchStore.string}"
+		toolbarIcon="launchStoreButton" allowMultipleSelection="false" sendIdentity="true" sendWorkspaceContext="false" 
+		url="/cmc/GetSSOToken">
+		
+		<!---
+			@keywords private
+			This method is invoked by the framework when the custom service successfully generates the SSO Token. 
+			The custom service can be launched from the "Edit" menu, toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				var storeId = requestParent.getPropertyValue("storeId");
+				var SSOToken = null;
+				var nodes = e.childNodes;
+				for (var i = 0; i < nodes.length; i++) {
+					var node = nodes[i];
+					var parameterName = node.nodeName;
+					if (parameterName == "SSOToken") {
+						SSOToken = wcfXMLUtil.getNodeValue(node);
+						break;
+					}
+				}
+				var storeConfig = wcfContextUtil.findStoreConfig(requestParent);
+				if ((SSOToken != null) && (storeId != null) && (storeId != "") && (storeConfig != null)) {
+					var webPath = storeConfig.staticContent.contextPath + storeConfig.staticContent.urlMappingPath;
+					
+					var currentURL = new LzURL(lz.Browser.getLoadURL());
+					var port = (storeConfig.staticContent.webServerSSLPort != null && storeConfig.staticContent.webServerSSLPort != "") ? ":" + storeConfig.staticContent.webServerSSLPort : "";
+					
+					var locale = wcfContextUtil.findContextValue(null, "locale");
+					var storeLanguageObject = storeConfig.getLanguageByLocale(locale.value);
+					var langIdParam = "";
+					if(storeLanguageObject != null) {
+						langIdParam = "&langId=" + storeLanguageObject.languageId;
+					}
+					
+					//The window must be launched with HTTPS in order to generate all the necessary cookies
+					var storeUrl = "https://" + currentURL.host + port + webPath + "/StoreView?storeId=" + storeId + "&ActivityToken=" + SSOToken + langIdParam;
+						
+					var newWindowObj = new Object();
+					newWindowObj.URL = storeUrl;
+					newWindowObj.windowName = "StoreWindow";
+					newWindowObj.windowFeatures = "scrollbars=yes,toolbar=yes,directories=yes,status=yes,menubar=yes,copyhistory=yes,resizable=yes,location=yes";
+					newWindowObj.windowWidth = 1014;
+					newWindowObj.windowHeight = 710;
+						
+					callJSFunction("openNewCenteredWindow", newWindowObj);
+				}
+			]]>
+		</method>
+	</class>
+</library>

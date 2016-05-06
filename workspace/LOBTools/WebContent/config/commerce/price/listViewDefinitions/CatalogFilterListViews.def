@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	 <ObjectGrid definitionName="cftIncludeProductListGrid" preferenceKey="cftIncludeProductListGrid1">
+        <GridText name="uniqueID" objectPath="CatalogEntry" propertyName="catentryId" editable="false"
+            text="${cftCatalogFilterResources.catalogFilterProductGridUnique}" visible="false" width="90" datatype="number" alignment="right"/>
+        <GridIconTypeImage name="type" text="${cftCatalogFilterResources.catalogFilterProductGridType}"
+            width="60" required="true" visible="true"/>
+        <GridStoreName name="store" propertyName="objectStoreId" objectPath="CatalogEntry"
+            text="${cftCatalogFilterResources.catalogFilterProductGridStore}" width="125"/>
+        <GridText name="partNumber" objectPath="CatalogEntry" propertyName="partnumber" editable="false"
+            text="${cftCatalogFilterResources.catalogFilterProductGridCode}" width="90" visible="true" required="true"/>
+        <GridText name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name"
+            editable="false" text="${cftCatalogFilterResources.catalogFilterProductGridName}" width="200" required="true" />
+        <GridComboBox name="xclude" propertyName="xclude"
+            visible="false" editable="false" text="${cftCatalogFilterResources.catalogFilterProductGridFilterType}" width="100"/>
+    </ObjectGrid>
+     <ObjectGrid definitionName="cftExcludeProductListGrid" preferenceKey="cftExcludeProductListGrid">
+        <GridText name="uniqueID" objectPath="CatalogEntry" propertyName="catentryId" editable="false"
+            text="${cftCatalogFilterResources.catalogFilterProductGridUnique}" visible="false" width="90" datatype="number" alignment="right"/>
+        <GridIconTypeImage name="type" text="${cftCatalogFilterResources.catalogFilterProductGridType}"
+            width="60" required="true" visible="true"/>
+        <GridStoreName name="store" propertyName="objectStoreId" objectPath="CatalogEntry"
+            text="${cftCatalogFilterResources.catalogFilterProductGridStore}" width="125"/>
+        <GridText name="partNumber" objectPath="CatalogEntry" propertyName="partnumber" editable="false"
+            text="${cftCatalogFilterResources.catalogFilterProductGridCode}" width="90" visible="true" required="true"/>
+        <GridText name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name"
+            editable="false" text="${cftCatalogFilterResources.catalogFilterProductGridName}" width="200" required="true" />
+        <GridComboBox name="xclude" propertyName="xclude"
+            visible="false" editable="false" text="${cftCatalogFilterResources.catalogFilterProductGridFilterType}" width="100"/>
+    </ObjectGrid>
+
+    <ObjectGrid definitionName="cftCategoryElementListGrid" preferenceKey="cftCategoryElementListGrid">
+        
+        <GridIconTypeImage name="type" text="${cftCatalogFilterResources.catalogFilterCategoryGridType}"
+            width="60" required="true" visible="true">
+        </GridIconTypeImage>
+        <GridText name="uniqueID" editable="false" text="${cftCatalogFilterResources.catalogFilterCategoryGridCode}"
+            visible="true" width="175" required="true" >
+            <GridCellDescriptor name="catgrpCodeCell" objectPath="CatalogGroupAlias" propertyName="identifier" />
+            <GridCellDescriptor name="catalogCodeCell" objectPath="CatalogAlias" propertyName="identifier" />
+        </GridText>
+        <GridText name="nameGrid" editable="false" text="${cftCatalogFilterResources.catalogFilterCategoryGridName}" width="175"
+            visible="true" required="true">
+            <GridCellDescriptor name="catgrpNameCell" objectPath="CatalogGroupAlias/CatalogGroupDescription"
+                propertyName="name"/>
+            <GridCellDescriptor name="catalogNameCell" objectPath="CatalogAlias/SalesCatalogDescription"
+                propertyName="name"/>
+        </GridText>
+        <GridText name="shortDescription" editable="false"
+            propertyName="sDesc" text="${cftCatalogFilterResources.catalogFilterCategoryGridDescription}" width="250" visible="false">
+            <GridCellDescriptor name="catgrpDescriptionCell" objectPath="CatalogGroupAlias/CatalogGroupDescription"
+                propertyName="sDesc"/>
+            <GridCellDescriptor name="catalogDescriptionCell" objectPath="CatalogAlias/SalesCatalogDescription"
+                propertyName="sDesc"/>
+        </GridText>
+         <GridComboBox name="xclude" propertyName="xclude"
+            required="true" visible="true" editable="true" text="${cftCatalogFilterResources.catalogFilterCategoryGridFilterType}" width="100">
+        </GridComboBox> 
+    </ObjectGrid>
+    
+    <ObjectGrid definitionName="cftAttributeSetGrid" preferenceKey="cftAttributeSetGrid">
+        <GridText name="attributeSetName" propertyName="name" text="${cftCatalogFilterResources.catalogFilterAttributeSetGridName}" visible="true" width="190" required="true"/>
+    </ObjectGrid>
+    
+    <EnablementOrCondition conditionId="singleOpCondition" definitionName="catCatalogFilterConditionSingleValueOperator" >
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_LESS_THAN" conditionId="lessThanCondition" />
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_NOT_LESS_THAN" conditionId="notLessThanCondition" />
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_GREATER_THAN" conditionId="greaterThanCondition" />
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_NOT_GREATER_THAN" conditionId="notGreaterThanCondition" />
+	</EnablementOrCondition>
+	
+	<EnablementOrCondition negate="true" conditionId="multipleOpCondition" definitionName="catCatalogFilterConditionMultipleValueOperator" >
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_LESS_THAN" conditionId="lessThanCondition" />
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_NOT_LESS_THAN" conditionId="notLessThanCondition" />
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_GREATER_THAN" conditionId="greaterThanCondition" />
+		<EnablementCondition propertyName="operator" enablementValue="NUMBER_NOT_GREATER_THAN" conditionId="notGreaterThanCondition" />
+	</EnablementOrCondition>
+	
+    
+    <ObjectGrid definitionName="cftAttributeGrid" preferenceKey="cftAttributeGrid"> 
+        <GridIconTypeImage editable="false" name="type" propertyName="" required="true" text="${cftCatalogFilterResources.catalogFilterAttributeGridType}" width="90"/>
+        
+        <GridColumn  name="attributeName" text="${cftCatalogFilterResources.catalogFilterAttributeGridName}" required="true" width="250">
+        	
+			<GridComboBoxCellDescriptor name="PropTextCellDescriptor" propertyName="template">
+				 <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    enablementValue="CatalogFilterCatentProperty" conditionId="PropCondition" />
+			</GridComboBoxCellDescriptor>
+			 
+			<GridTextCellDescriptor name="AttrTextCellDescriptor" objectPath="AttributeDictionaryAttributes" propertyName="attributeCode" editable="false">
+				 <EnablementOrCondition>
+				 	<EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="CatalogFilterAttributeWithAllowedValues" conditionId="AttrAllowedCondition" />
+                    <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="InheritedCatalogFilterAttributeWithAllowedValues" conditionId="InheritedAttrAllowedCondition" />
+                    <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="CatalogFilterAttributeWithAssignedValues" conditionId="AttrAssignedCondition" />
+                    <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="InheritedCatalogFilterAttributeWithAssignedValues" conditionId="InheritedAttrAssignedCondition" />
+                 </EnablementOrCondition>
+			</GridTextCellDescriptor>
+			
+		</GridColumn>
+		
+        <GridComboBox name="attributeOperator" propertyName="operator" text="${promotionResources.promotion_AttributeMatchingRule}" visible="true" width="190"  required="true" />
+        
+        <GridColumn name="attributeValue" text="${cftCatalogFilterResources.catalogFilterAttributeGridAttrvalue}" visible="true" width="190" editable="true" >
+
+			
+		<GridChildObjectTextCellDescriptor name="PropTextCellDescriptor" childObjectType="CatalogFilterConditionPropertyValue" childPropertyName="conditionAssignedValue">
+			<EnablementAndCondition>
+				<EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+					enablementValue="CatalogFilterCatentProperty" conditionId="PropCondition" />
+				<EnablementOrCondition baseDefinitionName="catCatalogFilterConditionMultipleValueOperator" />
+			</EnablementAndCondition>
+		</GridChildObjectTextCellDescriptor>
+			
+		<GridTextCellDescriptor name="PropSingleValueCellDescriptor" propertyName="attrValue">
+			<EnablementAndCondition>
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+						enablementValue="CatalogFilterCatentProperty" conditionId="PropCondition" />
+					<EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+						enablementValue="CatalogFilterAttributeWithAssignedValues" conditionId="AttrAssignedCondition" />
+                    <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="InheritedCatalogFilterAttributeWithAssignedValues" conditionId="InheritedAttrAssignedCondition" />
+				</EnablementOrCondition>
+			    <EnablementOrCondition baseDefinitionName="catCatalogFilterConditionSingleValueOperator" />
+			</EnablementAndCondition>
+		</GridTextCellDescriptor>
+			
+			<GridChildObjectTextCellDescriptor name="ADAssignedValueTextCellDescriptor" childObjectType="CatalogFilterConditionAssignedValue" childPropertyName="conditionAssignedValue">
+			  <EnablementAndCondition>
+        		<EnablementOrCondition>
+				 	<EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="CatalogFilterAttributeWithAssignedValues" conditionId="AttrAssignedCondition" />
+                    <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="InheritedCatalogFilterAttributeWithAssignedValues" conditionId="InheritedAttrAssignedCondition" />
+                </EnablementOrCondition>
+				<EnablementOrCondition baseDefinitionName="catCatalogFilterConditionMultipleValueOperator" />
+		      </EnablementAndCondition>
+			</GridChildObjectTextCellDescriptor>
+			
+			<MultipleAttributeValueCellDescriptor package="cat" name="AttrAllowedValueCellDescriptor" childObjectType="CatalogFilterConditionValue" childPropertyName="attrValId">
+			  <EnablementAndCondition>
+				 <EnablementOrCondition>
+				 	<EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="CatalogFilterAttributeWithAllowedValues" conditionId="AttrAllowedCondition" />
+                    <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="InheritedCatalogFilterAttributeWithAllowedValues" conditionId="InheritedAttrAllowedCondition" />
+                 </EnablementOrCondition>
+				<EnablementOrCondition baseDefinitionName="catCatalogFilterConditionMultipleValueOperator" />
+		      </EnablementAndCondition>
+			</MultipleAttributeValueCellDescriptor>
+			
+			 <SingleAttributeValueCellDescriptor package="cat" name="PropRadio" childObjectType="CatalogFilterConditionValue" childPropertyName="attrValId">
+			  <EnablementAndCondition>
+				 <EnablementOrCondition>
+				 	<EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="CatalogFilterAttributeWithAllowedValues" conditionId="AttrAllowedCondition" />
+                    <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    	enablementValue="InheritedCatalogFilterAttributeWithAllowedValues" conditionId="InheritedAttrAllowedCondition" />
+                 </EnablementOrCondition>
+			    <EnablementOrCondition baseDefinitionName="catCatalogFilterConditionSingleValueOperator" />
+		      </EnablementAndCondition>
+			 </SingleAttributeValueCellDescriptor>
+			
+        </GridColumn>
+        
+    </ObjectGrid>
+    
+
+    <ObjectGrid definitionName="cftCatalogFilterGrid" preferenceKey="cftCatalogFilterGrid">
+        <GridText name="catalogFilterId" propertyName="catalogFilterId" editable="false" text="${cftCatalogFilterResources.catalogFilterGridUnique}"
+            visible="false" width="90" datatype="number" />
+        <GridIconTypeImage enableFilter="true" name="type" propertyName="" required="true" text="${prcPriceResources.type}" width="100"/>
+        <GridStoreName name="objectStoreId" propertyName="objectStoreId" text="${cftCatalogFilterResources.catalogFilterGridStore}" width="180" />
+        <GridText name="cftname" propertyName="name" editable="false" text="${cftCatalogFilterResources.catalogFilterGridName}" width="180" visible="true"
+            required="true" />
+        <GridText name="cftdescription" propertyName="description" editable="true" text="${cftCatalogFilterResources.catalogFilterGridDescription}" width="350"
+            visible="true" />
+    </ObjectGrid>
+   
+    <ChildListEditor definitionName="cftCatalogFilterGridEditor" listDefinitionName="cftCatalogFilterGrid"
+        objectTypes="CatalogFilter,InheritedCatalogFilter" />
+
+    <NavigationListDefinition definitionName="cftCatalogFilterGridChildList" listClass="cftCatalogFilterGridEditor" helpLink="tasks/tpncatalogfilters.htm"
+        listTitle="${cftCatalogFilterResources.catalogFilterList}" displayName="${cftCatalogFilterResources.catalogFilterList}" isDefault="true" />
+
+</Definitions>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcPriceListConditionElementObject" displayName="${prcPriceResources.priceListCondition}" elemTemplateType="Condition" flowIcon="priceListConditionElementIcon" headerIcon="priceListConditionElementHeaderIcon" helpLink="concepts/cpiconpricelist.htm" objectType="priceListCondition" package="prc" paletteIcon="priceListConditionPaletteIcon" propertiesDefinitionName="prcPriceListConditionElementProperties" summaryClass="prcPriceListConditionElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_priceListId" objectPath="RefPriceListGroup" propertyName="priceListId"/>
+		</CreateService>
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_priceListId" objectPath="RefPriceListGroup" propertyName="priceListId"/>
+		</UpdateService>
+	
+		<Xml name="template">
+			<inPriceLists>yes</inPriceLists>
+			<elemTemplateName>priceListCondition</elemTemplateName>
+		</Xml>
+	
+		<PropertyDefinition propertyName="inPriceLists">
+			<PropertyValue displayName="${prcPriceResources.inPriceLists}" value="yes"/>
+			<PropertyValue displayName="${prcPriceResources.notInPriceLists}" value="no"/>
+		</PropertyDefinition>
+		
+		<ReferenceObjectDefinition objectGroups="RefPriceListGroup" allowDuplicates="false" derivedId="true" idProperty="priceListId" objectType="RefPriceList" referencedType="PriceList" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="RefPriceListGroup" allowDuplicates="false" derivedId="true" idProperty="priceListId" objectType="RefInheritedPriceList" referencedType="InheritedPriceList"/>
+	
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceList}" objectPath="RefPriceListGroup" validatorId="reqPriceListValidator" validatorType="noPriceListProvidedinCondition"/>
+		
+	</FlowElementObjectDefinition>
+
+</Definitions>

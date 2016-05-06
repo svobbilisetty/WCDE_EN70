@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--- This definition defines the base object from which ProductSKUPage and InheritedProductSKUPage are derived.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseCatalogEntryPagePrimaryObjectDefinition"
+		definitionName="pglBaseProductSKUPagePrimaryObjectDefinition"
+		displayName="${catalogResources.displayNameProductLevelSKU}"
+		helpLink="tasks/tpngen1s.htm"
+		isBaseDefinition="true"
+		propertiesDefinitionName="pglSKUPageProperties">
+		
+		<!---  
+		    Reference object definition between the Product SKU page and a SKU page layout.
+		    A Product SKU page can have multiple SKU page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSKUPageLayoutAssociationReferencedSKUPageLayouts"/>
+		<!---  
+		    Reference object definition between the Product SKU page and an inherited SKU page layout.
+		    A Product SKU page can have multiple inherited SKU page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts"/>
+		<!---  
+		    Reference object definition between the inherited Product SKU page and an inherited SKU page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts"/>
+		<!---  
+		      Reference object definition between the SKU page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSKUPageReferenceDefaultSKUPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglSKUPageLayoutAssociationReferencedSKUPageLayouts} and
+			{@link pglSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts} references for this product SKU page.
+		-->
+		<GetChildrenService objectTypes="SKUPageLayoutAssociationReferencedSKUPageLayouts,SKUPageLayoutAssociationReferencedInheritedSKUPageLayouts,InheritedSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" 
+			url="/cmc/GetCatalogEntryPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ItemPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this SKU page.
+		-->
+		<GetChildrenService objectTypes="SKUPageReferenceDefaultSKUPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForCatalogPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ItemPage"/>
+		</GetChildrenService>
+	</PrimaryObjectDefinition>
+
+  	<!---		
+		This definition represents the primary object definition describing a ProductSKU Page as a business object.
+	-->      
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseProductSKUPagePrimaryObjectDefinition" 
+    	definitionName="ProductSKUPage"
+    	headerIcon="skuPageHeaderIcon"
+		icon="skuPageIcon"  
+     	objectType="ProductSKUPage">
+    </PrimaryObjectDefinition>
+
+  	<!---		
+		This definition represents the primary object definition describing an Inherited ProductSKU Page as a business object.
+	-->      
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseProductSKUPagePrimaryObjectDefinition" 
+    	definitionName="InheritedProductSKUPage"
+    	displayName="${catalogResources.displayNameInheritedProductLevelSKU}"
+	    headerIcon="inheritedSKUPageHeaderIcon" 
+	    icon="inheritedSKUPageIcon"
+    	objectType="InheritedProductSKUPage">
+    </PrimaryObjectDefinition>	
+</Definitions>

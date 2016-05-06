@@ -1,0 +1,23 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<%-- 
+    **** Display Facebook Plug-ins; Like/Send button on Product Details Page ****  
+--%>
+<%@ include file="../../Common/EnvironmentSetup.jspf" %>
+	
+<c:set var="refValue" value="${categoryId}+${productId}+${catalogEntryDetails.partNumber}+${catalogEntryDetails.manufacturer}"/>
+<%-- the presence of a space (" ") caused the Send button not to render, therefore we will replace all spaces with a period (".") --%>
+<c:if test="${refValue != null && fn:contains(refValue, ' ') }">
+	<c:set value="${fn:replace(refValue, ' ', '.')}" var="refValue" />
+</c:if>

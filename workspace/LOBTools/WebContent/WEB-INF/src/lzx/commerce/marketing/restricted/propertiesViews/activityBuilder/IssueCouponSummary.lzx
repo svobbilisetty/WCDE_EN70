@@ -1,0 +1,42 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktIssueCouponElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktIssueCouponElementObject} object:
+		<ul>
+			<li>ChildPromotion/PromotionGroup[identifier]</li>
+		</ul>
+	-->
+	<class name="mktIssueCouponSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="promotionNames" objectPath="ChildPromotion/PromotionGroup" propertyName="adminName"/>
+
+		<!---
+			Sets the summary text for the {@link mktIssueCouponElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var promotions = this.getValuesList("promotionNames");
+				if(promotions != "") {
+					promotions = wcfStringUtil.escapeText(promotions);
+				}
+
+				this.setSummaryText(promotions);
+			]]>
+		</method>
+
+	</class>
+</library>

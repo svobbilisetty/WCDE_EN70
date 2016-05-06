@@ -1,0 +1,434 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		<p>Base class for all graphical flow builders used as a properties view for an object type. 
+		This class provides a view of a flow diagram where flow elements can be added, and a properties pane
+		below the diagram to edit selected flow elements.</p>
+		
+		<p>Implementors of this class should provide values for:
+		<ul>
+			<li><code>generalPropertiesClass</code></li>
+			<li><code>flowConnectorClass</code></li>
+			<li><code>flowPathClass</code></li>
+			<li>a <code>dataset</code> with the name <code>palette</code></li>
+		</ul>
+		</p>
+		
+		<p>The palette dataset should have the format:
+		@START_CODE
+		<dataset name="palette">
+			<Group resourceBundle="resourceBundleId" name="groupOneResourceKey">
+				<Element objectType="elementOne"/>
+				<Element objectType="elementTwo"/>
+			</Group>
+			<Group resourceBundle="resourceBundleId" name="groupTwoResourceKey">
+				<Element objectType="elementThree"/>
+				<Element objectType="elementFour"/>
+			</Group>
+		</dataset>
+		@END_CODE
+		See {@link wcfPaletteGroup} for more information.</p>
+
+		@keywords private abstract
+	-->
+	<class name="wcfFlowBuilder" extends="wcfBaseObjectProperties" addRightSpacing="false" width="${immediateparent.availableWidth}" height="${immediateparent.availableHeight}">
+		<!---
+			The class name that modifies the properties of the object. This properties view
+			will be shown when the start node is selected in the flow diagram.
+			@type wcfFlowElementProperties
+		-->
+		<attribute name="generalPropertiesClass" type="string" value="${null}"/>
+		<!---
+			The definition name of the properties view that modifies the properties of the object. This properties view
+			will be shown when the start node is selected in the flow diagram. Only specify this
+			attribute if you are not providing a value for <code>generalPropertiesClass</code>.
+		-->
+		<attribute name="generalPropertiesDefinitionName" type="string" value="${null}"/>
+
+		<!---
+			The class name to use for the connectors in the diagram.
+			@type wcfBaseFlowConnector
+		-->
+		<attribute name="flowConnectorClass" type="string" value="wcfBaseFlowConnector"/>
+
+		<!---
+			The maximum levels of nested branching allowed in the flow. Default is 5.
+			Larger values may cause unexpected hanging due to Flash execution stack limits.
+			@keywords private
+		-->
+		<attribute name="maxBranchDepth" type="number" value="5"/>
+
+		<!--- @keywords private -->
+		<attribute name="editableFlow" type="boolean" value="true" />
+		
+		<!--- @keywords private -->
+		<attribute name="propertiesPane" value="null" />
+		<!--- @keywords private -->
+		<attribute name="propertiesFrameVisible" type="boolean" value="true" />
+		
+		<!--- @keywords private -->
+		<attribute name="flowPathClass" type="string" value="wcfFlowPath" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			if (this.generalPropertiesClass == null) {
+				this.generalPropertiesClass = this.generalPropertiesDefinitionName;
+			}
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+				if (parent instanceof lz.wcfPanel) {
+					if (this.inDetails) {
+						this.updatePropertiesFrameVisible();
+						this.updatePropertiesFrameVisibleDel = new lz.Delegate(this, "updatePropertiesFrameVisible");
+						this.updatePropertiesFrameVisibleDel.register(parent, "onmaximized");
+					}
+				}
+				
+				this.propertiesFrameVisible = !this.inDetails;
+				this.determinePaneSizes();
+				
+				if (this["o"]) {
+					this.container.completeInstantiation();
+					this.container.flowPane.content.flowcontent.flowDiagram.setAttribute("o", this.o);
+				}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updatePropertiesFrameVisibleDel"]) {
+				this.updatePropertiesFrameVisibleDel.unregisterAll();
+				delete this.updatePropertiesFrameVisibleDel;
+			}
+			if (this["setFocusToFirstComponentDel"]) {
+				this.setFocusToFirstComponentDel.unregisterAll();
+				delete this.setFocusToFirstComponentDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updatePropertiesFrameVisible" args="e=null">
+			<![CDATA[
+			if (parent.maximized) {
+				this.setAttribute("propertiesFrameVisible", true);
+			}
+			else {
+				this.setAttribute("propertiesFrameVisible", false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				var oldObject = this["o"];
+				super.setModelObject(newObject);	
+				if (oldObject) {
+					oldObject.releaseReleasableProperties();
+				}				
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<handler name="ono">
+			<![CDATA[
+			if (this["container"] && this.o) {
+				this.container.completeInstantiation();
+				this.container.flowPane.content.flowcontent.flowDiagram.setAttribute("o", this.o);
+			}
+			this.updateEditableFlow();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateEditableFlow" args="e=null">
+			<![CDATA[
+			if (this["updateEditableFlowDel"]) {
+				this.updateEditableFlowDel.unregisterAll();
+			}
+			else {
+				this.updateEditableFlowDel = new lz.Delegate(this, "updateEditableFlow");
+			}
+			if (this["o"]) {
+				this.updateEditableFlowDel.register(this.o, "onreadOnly");
+				var newEditableFlow = !this.o.readOnly;
+				if (newEditableFlow != this.editableFlow) {
+					this.setAttribute("editableFlow", newEditableFlow);
+				}
+			}
+			]]>
+		</method>
+
+		<handler name="onpropertiesFrameVisible">
+			this.determinePaneSizes();
+		</handler>
+		
+		<handler name="onheight" reference="container">
+			this.determinePaneSizes();
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="determinePaneSizes">
+			<![CDATA[
+				if (this.container["flowPane"]) {
+					if (this.propertiesFrameVisible) {
+						if (this["__previousYRatio"]) {
+							this.container.flowPane.resizer.setAttribute("y", Math.round(this["__previousYRatio"] * this.container.height));
+						}
+						else {
+							this.container.flowPane.resizer.setAttribute("y", Math.round(this.container.height / 2.5));
+						}
+					}
+					else {
+						this.container.flowPane.resizer.setAttribute("y", Math.round(this.container.height - this.container.flowPane.resizer.height));
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			Called when the model object changes and resets views, if required.
+			Currently, when new objects are created, the focus is set to the first input field.
+			@keywords private
+		-->
+		<method name="resetPropertiesView" args="e=null">
+			<![CDATA[
+			if (this.o != null && !this.inDetails && !wcfIntroPrompt.isOpen) {
+				if (typeof(this["setFocusToFirstComponentDel"]) == "undefined") {
+					this.setFocusToFirstComponentDel = new lz.Delegate(this, "setFocusToFirstComponent");
+				}
+				wcfCallbackUtil.addDeferredCallback(this.setFocusToFirstComponentDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			<p>This method will search the FlowElements of the flow in the Flow Builder, looking for a {@link wcfPropertiesComponent properties component}
+			that is enabled and matches the specified arguments. An {@link wcfModelObject object} must be passed in to this method as well as one 
+			of an {@link wcfModelProperty object property} or a {@link wcfValidator#validatorType validatorType}. 
+			
+			<p>If the specified view is a {@link wcfPropertiesComponent properties component} then 
+			this method will call its {@link wcfPropertiesComponent#matches matches} to determine if it is a match. 
+			
+			<p>If a match is found, this method will make the {@link wcfPropertiesComponent properties component} visible by ensuring
+			that it and all of its ancestors are visible as well. It will also make the flow element it is associated with visible.
+			This can result in the expansion of {@link wcfPropertyGroup property groups}
+			and changing of {@link wcfPropertyTab tabs}. The method will then set the focus to the {@link wcfPropertiesComponent properties component}
+			and return true.
+			
+			<p>If no match is found, then this method returns false and does not affect the focus or what's currently being displayed.
+						
+			@param LzView v The view from which to begin the recursive search for the matching {@link wcfPropertiesComponent}.
+			@param wcfModelObject o The model object of the matching property component. 
+			@param wcfModelProperty property The object property of the matching property component. This can be null when a validator type is specified. 
+			@param string validatorType The {@link wcfValidator#validatorType} of the matching property component. This can be null if a property is specified.
+			@param wcfModelObject propertiesViewObject The model object associated with v.
+			@return boolean true if the properties component with the error was found, and the focus was set to it. false otherwise.
+		-->
+		<method name="setFocusToErrorComponent" args="v,o,property,validatorType,propertiesViewObject">
+			<![CDATA[			
+
+			var matches = false;					
+			if (v == this) {
+				var curO = o;							
+				while (curO.parentObject != null && !curO.objectDefinition.matchesType("FlowElement")) {	
+					curO = curO.parentObject;
+				}
+
+				var propertiesView = null;
+				if (curO.parentObject == null) {				
+					propertiesView = this.propertiesPane.getPropertiesView(v.o, this.generalPropertiesClass);
+					this.propertiesPane.loadProperties(v.o, this.generalPropertiesClass);					
+				} else if (curO.objectDefinition.matchesType("FlowElement")) {								
+					if (curO.objectDefinition.objectType == "path") {
+						this.propertiesPane.loadProperties(curO.parentObject);										
+					} else {
+						this.propertiesPane.loadProperties(curO);					
+					}
+					propertiesView = this.propertiesPane.getPropertiesView();
+				}
+				matches = super.setFocusToErrorComponent(propertiesView, o, property, validatorType, propertiesView["oView"] ? propertiesView.oView.o : propertiesViewObject);
+			} else {
+				matches = super.setFocusToErrorComponent(v, o, property, validatorType, v["oView"] ? v.oView.o : propertiesViewObject);
+			}
+			
+			return matches;
+			]]>			
+		</method>
+		
+		<!---
+			@keywords private
+			This method recursively searches the properties view for the first error returned by a properties component.
+
+			@param lz.view v The view from which the search should begin.
+			@returns string error The first error.
+		-->
+		<method name="getFirstError" args="v">
+			<![CDATA[
+			var error = null;
+			if (v == this && this.propertiesPane != null) {
+				this.updateValidationErrorDel.register(this.propertiesPane, "onvisible")
+				error = this.getFirstError(this.propertiesPane);
+				if (error == null) {
+					error = this.getFirstError(this.container.flowPane.content);
+				}
+			}
+			if (error == null) {
+				if (v instanceof lz.wcfElement) {
+					if (v["oList"]) {
+						this.updateValidationErrorDel.register(v.oList, "objectViewsUpdated");
+					}
+					if (v["o"]) {
+						this.updateValidationErrorDel.register(v.o, "onvalidationErrors");
+						var errors = v.o.getValidationErrors();
+						if (errors.length > 0) {
+							error = errors[0];
+						}
+						if (error == null) {
+							var propertyMap = v.o.propertyMap;
+							for (var key in propertyMap) {
+								var property = propertyMap[key];
+								this.updateValidationErrorDel.register(property, "onvalidationErrors");
+								errors = property.getValidationErrors();
+								if (errors.length > 0) {
+									error = errors[0];
+									break;
+								}
+							}
+						}
+					}
+				}
+				else if (v instanceof lz.wcfFlowPath) {
+					if (v["oList"]) {
+						this.updateValidationErrorDel.register(v.oList, "objectViewsUpdated");
+					}
+				}
+				if (error == null) {
+					error = super.getFirstError(v);
+				}
+			}
+			return error;
+			]]>
+		</method>
+
+			
+		<!-- We want the panel to be part of the drag and drop tracking so that its registered on top -->		
+		<wcfTrackingDropTarget dragAndDropManager="${wcfDndManager}"/>
+
+		<view name="container" width="100%" height="100%" initstage="defer">
+			<wcfPaletteConfiguration name="palette" height="100%"
+				datapath="${'local:classroot.palette:/'}"
+				visible="${classroot.editableFlow}" />
+			
+			<view name="flowPane" x="${parent.palette.visible ? parent.palette.width : 0}" y="0" width="${immediateparent.width - x}" height="100%">
+				<view name="content" x="0" y="0" height="${parent.resizer.y}" clip="true" width="${parent.width}">
+					<view name="flowcontent" width="${parent.width}" clip="true" height="${parent.height}" valign="top">
+						<wcfFlow name="flowDiagram" y="${Math.round((immediateparent.height/2) - (this.height/2))}" flowBuilder="${classroot}" editableFlow="${classroot.editableFlow}" flowPathClass="${classroot.flowPathClass}"/>
+						<wcfHorizontalScrollbar name="hScrollbar" valign="bottom" scrolltarget="${parent.flowDiagram}" visible="${scrollable}"
+							width="${(parent.vScrollbar.visible) ? parent.width - parent.vScrollbar.width : parent.width}" 
+							/>
+						<wcfVerticalScrollbar name="vScrollbar" align="right" scrolltarget="${parent.flowDiagram}" visible="${scrollable}"/>
+					</view>
+				</view>
+				
+				<wcfPropertiesPane name="propertiesPane" visible="${classroot.propertiesFrameVisible}" x="0" y="${parent.resizer.y+parent.resizer.height}" width="${parent.width}" height="${parent.height-this.y}">
+					<handler name="oninit">
+						classroot.propertiesPane = this;
+					</handler>
+				</wcfPropertiesPane>
+				
+				<view name="resizer" x="0" width="${parent.width}" height="7">
+					<attribute name="dragging" type="boolean" value="false"/>
+	
+					<handler name="onmousedown">
+				        this.deltaY = parent.getMouse("y") - this.getAttributeRelative("y", this.parent);
+						this.dragging = true;
+						lz.Cursor.lock();
+						dragger.setAttribute('applied', true);
+					</handler>
+			
+					<handler name="onmouseup">
+						this.dragging = false;
+						lz.Cursor.unlock();
+						dragger.setAttribute('applied', false);
+					</handler>
+	
+					<handler name="ony">
+						<![CDATA[
+							if (this.dragging) {
+								classroot["__previousYRatio"] = (this.y / classroot.container.height);
+								if (!classroot.propertiesFrameVisible) {
+									classroot.setAttribute("propertiesFrameVisible", true);
+								}
+							}
+						]]>
+					</handler>
+					
+					<method name="checkDrag" args="mouseY">
+						<![CDATA[
+							if (mouseY < 0) {
+								return 0;
+							}
+							else if ((mouseY+this.height) > parent.height) {
+								return parent.height-this.height;
+							}
+							return mouseY;
+						]]>
+					</method>
+					  
+					<state name="dragger">
+					    <attribute name="y" value="${this.checkDrag(parent.getMouse('y')-this.deltaY)}"/>
+					</state>
+					  
+					<view resource="wcfSnapBackground" stretches="width" width="${parent.width}" height="7"/>
+					<view resource="wcfSnapDownArrow" visible="${classroot.propertiesFrameVisible}" align="center"
+						onmouseover="this.setAttribute('frame', 2)" onmouseout="this.setAttribute('frame', 1)"
+						onclick="classroot.setAttribute('propertiesFrameVisible', false)"/>
+						
+					<view resource="wcfSnapUpArrow" visible="${!classroot.propertiesFrameVisible}" align="center"
+						onmouseover="this.setAttribute('frame', 2)" onmouseout="this.setAttribute('frame', 1)"
+						onclick="classroot.setAttribute('propertiesFrameVisible', true)"/>
+				</view>
+			</view>
+		</view>
+	</class>
+</library>

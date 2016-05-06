@@ -1,0 +1,48 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		<p>Validator for {@link mktDisplayCoremetricsRecommendationElementObject Display Intelligent Offer Recommendation action}. Based on the selected option,
+		this validator ensures that Zone ID parameter values are provided.</p>
+		
+		<p>There should only be one instance of this class defined for each {@link mktFlowElementObjectDefinition}.</p>
+	-->
+	<class name="mktDisplayCoremetricsValidator" extends="wcfValidator" validatorType="displayCoremetricsValidator">
+		<!--- Warning message to show when no Zone IDs are provided -->
+		<attribute name="noZoneIDsProvidedErrorMessage" value="${mktMarketingResources.noZoneIdProvided.string}" type="string"/>
+		
+		<!--- The object path for search term objects -->
+		<attribute name="zoneIdObjectPath" value="zoneId" type="string"/>
+				
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o) {
+				return; // nothing to validate
+			}
+
+			var deliveryPropValue = o.getPropertyValue("delivery");
+			
+			o.clearValidationError(this);
+			
+			if(deliveryPropValue == "siteZone") {
+				var childObjects = o.getObjects(this.zoneIdObjectPath);
+				if(childObjects.length <= 0) {
+					o.addValidationError(this, this.noZoneIDsProvidedErrorMessage);
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

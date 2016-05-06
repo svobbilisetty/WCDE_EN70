@@ -1,0 +1,397 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!---
+		<p>This is the main palette class for use within an {@link wcfFlowBuilder}. When instantiating this class,
+		a datapath must be set on this view with XML in the following format:
+		@START_CODE
+		<Group resourceBundle="resources" name="key1">
+			<Element objectType="element1"/>
+			<Element objectType="element2"/>
+		</Group>
+		<Group resourceBundle="resources" name="key2">
+			<Element objectType="element3"/>
+			<Element objectType="element4"/>
+		</Group>
+		...
+		<Group resourceBundle="resources" name="keyN">
+			<Element objectType="elementN"/>
+			<Element objectType="elementN"/>
+		</Group>
+		@END_CODE 
+		</p>
+		
+		<p>Using the provided XML, a {@link wcfPaletteGroup} will be created for each <code>Group</code> element and will be added
+		as a drawer on the palette accordion.</p>
+		
+		<p>This class also provides a drag handler on the right edge of the palette. Dragging this handle will allow the user
+		to resize the palette as desired.</p>
+	
+		@keywords private
+	-->
+	<class name="wcfPaletteConfiguration">
+		<!--- Minimum allowed width for this palette -->
+		<attribute name="minWidth" value="90" type="number"/>
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			wcfCanvasMenu.addView(this);
+			]]>
+		</method>
+							
+		<wcfTabslider name="palette" x="0" y="0" width="${parent.rightBorder.x}" height="100%" spacing="0">
+			<simplelayout axis="y" spacing="0" />
+			<wcfPaletteGroup datapath="Group"/>
+		</wcfTabslider>
+		
+		<view name="rightBorder" x="90" y="0" width="6" height="${parent.palette.height}" bgcolor="0xb4c9d5">
+			<attribute name="dragging" type="boolean" value="false"/>
+
+			<handler name="onmousedown">
+				<![CDATA[
+		        this.deltaX = this.parent.getMouse("x") - this.getAttributeRelative("x", this.parent); 
+				this.dragging = true;
+				lz.Cursor.lock();
+				this.dragger.setAttribute('applied', true);
+				]]>
+			</handler>
+	
+			<handler name="onmouseup">
+				<![CDATA[
+				this.dragging = false;
+				lz.Cursor.unlock();
+				this.dragger.setAttribute('applied', false);
+				]]>
+			</handler>
+			
+			<method name="checkDrag" args="mousex">
+				<![CDATA[
+					if (mousex < classroot.minWidth) {
+						return classroot.minWidth;
+					}
+					else if ((mousex + this.width) > classroot.parent.width) {
+						return classroot.parent.width - this.width;
+					}
+					return mousex;
+				]]>
+			</method>
+			  
+			<state name="dragger">
+			    <attribute name="x" value="${this.checkDrag(this.parent.getMouse('x') - this.deltaX)}"/>
+			</state>
+
+			<view y="1" resource="wcfVertSnapBackground" stretches="height" height="${parent.height - 1}"/>
+		</view>
+	</class>
+	
+	<!---
+		Tab slider (drawer) used for the palette in the Flow Builder. This slider provides additional
+		functionality over the base OpenLaszlo slider in that this allows multiple tabs to be open at once. It
+		will automatically close tabs if needed to make additional space for user-opened tabs.
+		
+		@keywords private
+	-->
+	<class name="wcfTabslider" extends="basetabslider" itemclassname="wcfPaletteGroup" bgcolor="0xffffff">
+		<!---
+			Array of all the tabs sorted by view order, top to bottom, regardless of openness.
+			@keywords private
+		-->
+		<attribute name="sortedTabs" value="${[]}"/>
+		<!---
+			Array of the currently open tabs, sorted by the order it was opened.
+			@keywords private
+		-->
+		<attribute name="openTabs" value="${[]}"/>
+
+		<handler name="oninit">
+			<![CDATA[
+				this.openAll();
+			]]>
+		</handler>
+		
+		<!---
+			When the height changes on this slider, this method is called to
+			recalculate the available height and updates any open tabs.
+			@keywords private
+		-->
+		<method name="resetHeight">
+			<![CDATA[
+				this.calcAvailableHeight();
+				this.redistributeHeights();
+			]]>
+		</method>
+
+		<!---
+			Opens as many tabs as possible, from top to bottom, without causing tabs to scroll. The first tab
+			will always be opened.
+		-->
+		<method name="openAll">
+			<![CDATA[
+				if(this.sortedTabs.length > 0) {
+					this.openTab(this.sortedTabs[0]);
+					
+					for(var i = 1; i < this.sortedTabs.length; i++) {
+						if(this.hasRoomToOpen(this.sortedTabs[i])) {
+							this.openTab(this.sortedTabs[i]);
+						}
+						else {
+							break;
+						}
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			Returns whether or not the given tab can be opened and its contents shown in its entirely (without a scrollbar)
+			and without closing another tab to make space.
+			 
+			@param wcfPaletteGroup tabelement instance of the tab to check
+			@return boolean Returns <code>true</code> if the tab is currently closed and it could be opened fully without scrolling, otherwise <code>false</code>.
+		-->
+		<method name="hasRoomToOpen" args="tabelement">
+			<![CDATA[
+				var canOpen = false;
+				if(tabelement && !this.isTabOpen(tabelement)) {
+					canOpen = tabelement.contentHeight <= this.availableheight;
+				}
+				return canOpen;
+			]]>
+		</method>
+
+		<!---
+			Returns whether or not the given tab is currently open
+			 
+			@param wcfPaletteGroup tabelement instance of the tab to check
+			@return boolean Returns <code>true</code> if the tab is currently open, otherwise <code>false</code>.
+		-->
+		<method name="isTabOpen" args="tabelement">
+			<![CDATA[
+				var foundTab = false;
+				if(tabelement) {
+					for(var i = 0; i < this.openTabs.length; i++) {
+						if(this.openTabs[i] == tabelement) {
+							foundTab = true;
+							break;
+						}
+					}
+				}
+				return foundTab;
+			]]>
+		</method>
+		
+		<!---
+			Closes the specified tab.
+			 
+			@param wcfPaletteGroup tabelement the tab to close
+			@return boolean Returns <code>true</code> if the tab was successfully closed, otherwise <code>false</code>.
+		-->
+		<method name="closeTab" args="tabelement">
+			<![CDATA[
+				var didclose = false;
+				if(tabelement && this.isTabOpen(tabelement)) {
+					for(var i = 0; i < this.openTabs.length; i++) {
+						if(this.openTabs[i] == tabelement) {
+							this.openTabs.splice(i, 1);
+							break;
+						}
+					}
+
+					tabelement.close(tabelement.minheight, this.slideduration);
+					this.redistributeHeights();
+					
+					didclose = true;
+				}
+				return didclose;
+			]]>
+		</method>
+		
+		<!---
+			Opens the specified tab. Other tabs may be closed in order to make room for the requested tab.
+			 
+			@param wcfPaletteGroup tabelement the tab to open
+			param boolean withAnimation: unused.
+			@return boolean Returns <code>true</code> if the tab was successfully opened, otherwise <code>false</code>.
+		-->
+		<method name="openTab" args="tabelement,withAnimation=false">
+			<![CDATA[
+				var didopen = false;
+				if(tabelement && !this.isTabOpen(tabelement)) {
+					if(this.openTabs.length > 0 && !this.hasRoomToOpen(tabelement)) {
+						var freedHeight = 0;
+						var tabsToClose = [];
+						for(var i = 0; i < this.openTabs.length; i++) {
+							freedHeight += this.openTabs[i].contentHeight;
+							tabsToClose.push(this.openTabs[i]);
+							
+							// got enough room to show new tab
+							if(freedHeight + this.availableheight >= tabelement.contentHeight) {
+								break;
+							}
+						}
+						
+						for(var i = 0; i < tabsToClose.length; i++) {
+							this.closeTab(tabsToClose[i]);
+						}
+					}
+					
+					this.openTabs.push(tabelement);
+					tabelement.open(tabelement.contentHeight, this.slideduration, true);
+					this.redistributeHeights();
+					didopen = true;
+				}
+				
+				return didopen;
+			]]>
+		</method>
+		
+		<!---
+			Toggles the specified tab. If the tab is currently closed, it will be opened. If the tab is currently open,
+			it will be closed if there is another tab open.
+			 
+			@param wcfPaletteGroup tabelement the tab to toggle
+		-->
+		<method name="toggleTab" args="tabelement">
+			<![CDATA[
+				if(tabelement) {
+					if(this.isTabOpen(tabelement) && (this.openTabs.length > 1)) {
+						this.closeTab(tabelement);
+					}
+					else {
+						this.openTab(tabelement);
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			This method should be called every time a tab changes state or the overall height changes. This method
+			goes through all of the currently open tabs and redistributes vertical space amongst them such that all the
+			tabs are visible and fits on the screen.
+			
+			@keywords private
+		-->
+		<method name="redistributeHeights">
+			<![CDATA[
+				var totalHeight = this._defaultview.height;
+				var contentHeight = 0;
+				var sortedOpenTabs = [];
+				
+				for(var i = 0; i < this.sortedTabs.length; i++) {
+					var sv = this.sortedTabs[i];
+					if(sv.contentvisible) {
+						contentHeight += sv.contentHeight;
+						sortedOpenTabs.push(sv);
+					}
+				}
+				
+				var extraHeight = totalHeight - contentHeight - this.totalminheight;
+				
+				for(var i = 0; i < sortedOpenTabs.length; i++) {
+					var tab = sortedOpenTabs[i];
+
+					var resizeHeight = tab.minheight + tab.contentHeight;
+					if(extraHeight >= 0) {
+						if(i == (sortedOpenTabs.length-1)) {
+							// add all of the extra room to the last open tab
+							resizeHeight += extraHeight;
+						}
+					}
+					else {
+						// distribute negative extra height amongst all open tabs
+						resizeHeight += Math.floor(extraHeight / sortedOpenTabs.length);
+						if(i == 0) {
+							resizeHeight += extraHeight % sortedOpenTabs.length;
+						}
+					}
+					tab.resize(resizeHeight, this.slideduration);
+				}
+				
+				this.setAttribute('availableheight', Math.max(0, extraHeight));
+			]]>
+		</method>
+		
+		<!---
+			Calculate the height available for new tabs. This method overrides from the one defined in basetabslider.
+			@keywords private
+		-->
+		<method name="calcAvailableHeight">
+			<![CDATA[
+				var cv = null; 
+				if(this.defaultplacement != null) {
+					cv = this.searchSubviews("name", this.defaultplacement);
+				}
+				
+				if(cv == null) {
+					cv = this;
+				}
+				this._defaultview = cv;
+				this.sortedTabs = [];
+				
+				if(cv['subviews']) {
+					if(!cv['layouts']) {
+						return;
+					}
+					
+					var tmh = 0;
+					var contentHeight = 0;
+					for(var m = 0; m < cv.subviews.length; m++) {
+						var sv = cv.subviews[m]
+						if(sv.visible && sv instanceof lz.basetabelement) {
+							tmh += sv['minheight'] + this.spacing;
+							this.sortedTabs.push(sv);
+							
+							if(sv.contentvisible) {
+								contentHeight += sv.contentHeight;
+							}
+						}
+					}
+					// don't need spacing on last element
+					tmh -= this.spacing;
+				
+					// set the corresponding height of the attributes
+					this.setAttribute('availableheight', Math.max(0, cv.height - contentHeight - tmh));
+					this.setAttribute('totalminheight', tmh);
+				}
+			]]>
+		</method>
+		
+		<!---
+			Alias for the <code>toggleTab</code> method and overrides from the one defined in basetabslider.
+			This method opens or closes the specified tab.
+			@param wcfPaletteGroup item the tab to open
+		-->
+		<method name="select" args="item">
+			<![CDATA[
+				this.toggleTab(item);
+			]]>
+		</method>
+		
+		<!---
+			Opens the first (from top to bottom), closed tab.
+		-->
+		<method name="openNext">
+			<![CDATA[
+				for(var i = 0; i < this.sortedTabs.length; i++) {
+					if(!this.isTabOpen(this.sortedTabs[i])) {
+						this.openTab(this.sortedTabs[i]);
+						break;
+					}
+				}
+			]]>
+		</method>
+	</class>
+</library>

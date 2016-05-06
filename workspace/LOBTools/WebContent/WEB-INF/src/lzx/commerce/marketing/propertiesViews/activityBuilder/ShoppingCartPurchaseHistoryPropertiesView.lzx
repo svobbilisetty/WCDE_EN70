@@ -1,0 +1,223 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Base number properties view for use in the Shopping Cart and Purchase History Total targets.
+		@keywords private
+	-->
+	<class collapsable="false" extends="wcfPropertyGroup" name="mktShopCartPurchHistTotalBaseNumberProperties">
+		<!---
+			This attribute provides the help text for this properties view component. The helpText will be used for creating tooltips.
+			The default value of this attribute is the empty string.
+		-->
+		<attribute name="helpText" type="text" value=""/>
+		
+		<!--- @keywords private -->
+		<attribute name="usage" type="string" value="Items"/>
+
+		<wcfMultiValueSelector helpText="${classroot.helpText}" name="quantity1" promptText="${mktMarketingResources['numberOf' + classroot.usage].string}">
+			<wcfMultiValueSelection displayName="${mktMarketingResources['any' + classroot.usage].string}" name="select01">
+				<dataset name="values">
+					<quantityOperator1/>
+					<quantityValue1/>
+					<quantityOperator2/>
+					<quantityValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['atLeast' + classroot.usage].string}" name="select02">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[>=]]></quantityOperator1>
+					<quantityOperator2/>
+					<quantityValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['exact' + classroot.usage].string}" name="select03">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[=]]></quantityOperator1>
+					<quantityOperator2/>
+					<quantityValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['lessThan' + classroot.usage].string}" name="select04">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[<]]></quantityOperator1>
+					<quantityOperator2/>
+					<quantityValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['between' + classroot.usage].string}" name="select05">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[>=]]></quantityOperator1>
+					<quantityOperator2><![CDATA[<=]]></quantityOperator2>
+				</dataset>
+			</wcfMultiValueSelection>
+		</wcfMultiValueSelector>
+
+		<wcfPropertyGroup collapsable="false" name="group02">
+			<wcfEnablementOrCondition conditionId="cond1">
+				<wcfEnablementAndCondition conditionId="cond11">
+					<wcfEnablementCondition conditionId="cond111" enablementValue="&gt;=" propertyName="quantityOperator1"/>
+					<wcfEnablementCondition conditionId="cond112" enablementValue="" propertyName="quantityOperator2"/>
+				</wcfEnablementAndCondition>
+				<wcfEnablementCondition conditionId="cond12" enablementValue="=" propertyName="quantityOperator1"/>
+				<wcfEnablementCondition conditionId="cond13" enablementValue="&lt;" propertyName="quantityOperator1"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyStepper minimumValue="1" promptText="${mktMarketingResources.number.string}" propertyName="quantityValue1"/>
+		</wcfPropertyGroup>
+		<wcfPropertyGroup collapsable="false" name="group03">
+			<wcfEnablementAndCondition conditionId="cond2">
+				<wcfEnablementCondition conditionId="cond21" enablementValue="&gt;=" propertyName="quantityOperator1"/>
+				<wcfEnablementCondition conditionId="cond22" enablementValue="&lt;=" propertyName="quantityOperator2"/>
+			</wcfEnablementAndCondition>
+			<wcfPropertyStepper minimumValue="1" promptText="${mktMarketingResources.quantity1.string}" propertyName="quantityValue1"/>
+			<wcfPropertyStepper minimumValue="1" promptText="${mktMarketingResources.quantity2.string}" propertyName="quantityValue2"/>
+		</wcfPropertyGroup>
+	</class>
+
+	<!---
+		Base number properties view for use in the Shopping Cart and Purchase History Product Contents targets
+		@keywords private
+	-->
+	<class collapsable="false" extends="wcfPropertyGroup" name="mktShopCartPurchHistProdCatBaseNumberProperties">
+		<!---
+			This attribute provides the help text for this properties view component. The helpText will be used for creating tooltips.
+			The default value of this attribute is the empty string.
+		-->
+		<attribute name="helpText" type="text" value=""/>
+
+		<!--- @keywords private -->
+		<attribute name="usage" type="string" value="Items"/>
+
+		<wcfMultiValueSelector helpText="${classroot.helpText}" name="quantity2" promptText="${mktMarketingResources['numberOf' + classroot.usage].string}">
+			<wcfMultiValueSelection displayName="${mktMarketingResources['atLeast' + classroot.usage].string}" name="select06">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[>=]]></quantityOperator1>
+					<quantityOperator2/>
+					<quantityValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['exact' + classroot.usage].string}" name="select07">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[=]]></quantityOperator1>
+					<quantityOperator2/>
+					<quantityValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['lessThan' + classroot.usage].string}" name="select08">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[<]]></quantityOperator1>
+					<quantityOperator2/>
+					<quantityValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['between' + classroot.usage].string}" name="select09">
+				<dataset name="values">
+					<quantityOperator1><![CDATA[>=]]></quantityOperator1>
+					<quantityOperator2><![CDATA[<=]]></quantityOperator2>
+				</dataset>
+			</wcfMultiValueSelection>
+		</wcfMultiValueSelector>
+
+		<wcfPropertyGroup collapsable="false" name="group05">
+			<wcfEnablementOrCondition conditionId="cond3">
+				<wcfEnablementAndCondition conditionId="cond31">
+					<wcfEnablementCondition conditionId="cond311" enablementValue="&gt;=" propertyName="quantityOperator1"/>
+					<wcfEnablementCondition conditionId="cond312" enablementValue="" propertyName="quantityOperator2"/>
+				</wcfEnablementAndCondition>
+				<wcfEnablementCondition conditionId="cond32" enablementValue="=" propertyName="quantityOperator1"/>
+				<wcfEnablementCondition conditionId="cond33" enablementValue="&lt;" propertyName="quantityOperator1"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyStepper minimumValue="0" promptText="${mktMarketingResources.number.string}" propertyName="quantityValue1"/>
+		</wcfPropertyGroup>
+		<wcfPropertyGroup collapsable="false" name="group06">
+			<wcfEnablementAndCondition conditionId="cond4">
+				<wcfEnablementCondition conditionId="cond41" enablementValue="&gt;=" propertyName="quantityOperator1"/>
+				<wcfEnablementCondition conditionId="cond42" enablementValue="&lt;=" propertyName="quantityOperator2"/>
+			</wcfEnablementAndCondition>
+			<wcfPropertyStepper minimumValue="0" promptText="${mktMarketingResources.quantity1.string}" propertyName="quantityValue1"/>
+			<wcfPropertyStepper minimumValue="0" promptText="${mktMarketingResources.quantity2.string}" propertyName="quantityValue2"/>
+		</wcfPropertyGroup>
+	</class>
+
+	<!---
+		Base value properties view for use in the Shopping Cart and Purchase History targets
+		@keywords private
+	-->
+	<class collapsable="false" extends="wcfPropertyGroup" name="mktShopCartPurchHistBaseValueProperties">
+		<!--- @keywords private -->
+		<attribute name="usage" type="string" value="Items"/>
+		<!--- @keywords private -->
+		<attribute name="usage2" type="string" value=""/>
+
+		<wcfMultiValueSelector name="value" promptText="${mktMarketingResources['valueOf' + classroot.usage].string}">
+			<wcfMultiValueSelection displayName="${mktMarketingResources['anyValue' + classroot.usage2].string}" name="select10">
+				<dataset name="values">
+					<amountOperator1/>
+					<amountValue1/>
+					<amountOperator2/>
+					<amountValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['atLeastValue' + classroot.usage2].string}" name="select11">
+				<dataset name="values">
+					<amountOperator1><![CDATA[>=]]></amountOperator1>
+					<amountOperator2/>
+					<amountValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['exactValue' + classroot.usage2].string}" name="select12">
+				<dataset name="values">
+					<amountOperator1><![CDATA[=]]></amountOperator1>
+					<amountOperator2/>
+					<amountValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['lessThanValue' + classroot.usage2].string}" name="select13">
+				<dataset name="values">
+					<amountOperator1><![CDATA[<]]></amountOperator1>
+					<amountOperator2/>
+					<amountValue2/>
+				</dataset>
+			</wcfMultiValueSelection>
+			<wcfMultiValueSelection displayName="${mktMarketingResources['betweenValue' + classroot.usage2].string}" name="select14">
+				<dataset name="values">
+					<amountOperator1><![CDATA[>=]]></amountOperator1>
+					<amountOperator2><![CDATA[<=]]></amountOperator2>
+				</dataset>
+			</wcfMultiValueSelection>
+		</wcfMultiValueSelector>
+
+		<wcfPropertyGroup collapsable="false" name="group08">
+			<wcfEnablementOrCondition conditionId="cond5">
+				<wcfEnablementAndCondition conditionId="cond51">
+					<wcfEnablementCondition conditionId="cond511" enablementValue="&gt;=" propertyName="amountOperator1"/>
+					<wcfEnablementCondition conditionId="cond512" enablementValue="" propertyName="amountOperator2"/>
+				</wcfEnablementAndCondition>
+				<wcfEnablementCondition conditionId="cond52" enablementValue="=" propertyName="amountOperator1"/>
+				<wcfEnablementCondition conditionId="cond53" enablementValue="&lt;" propertyName="amountOperator1"/>
+			</wcfEnablementOrCondition>
+			<wcfPropertyCurrencyValueEditor currencyPropertyName="amountCurrency" promptText="${mktMarketingResources.amount1.string}" propertyName="amountValue1"/>
+			<wcfPropertyCombobox promptText="${mktMarketingResources.currency.string}" propertyName="amountCurrency" required="true"/>
+		</wcfPropertyGroup>
+		<wcfPropertyGroup collapsable="false" name="group09">
+			<wcfEnablementAndCondition conditionId="cond6">
+				<wcfEnablementCondition conditionId="cond61" enablementValue="&gt;=" propertyName="amountOperator1"/>
+				<wcfEnablementCondition conditionId="cond62" enablementValue="&lt;=" propertyName="amountOperator2"/>
+			</wcfEnablementAndCondition>
+			<wcfPropertyCurrencyValueEditor currencyPropertyName="amountCurrency" promptText="${mktMarketingResources.amount1.string}" propertyName="amountValue1"/>
+			<wcfPropertyCurrencyValueEditor currencyPropertyName="amountCurrency" promptText="${mktMarketingResources.amount2.string}" propertyName="amountValue2"/>
+			<wcfPropertyCombobox promptText="${mktMarketingResources.currency.string}" propertyName="amountCurrency" required="true"/>
+		</wcfPropertyGroup>
+	</class>
+</library>

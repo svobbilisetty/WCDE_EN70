@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>   
+ 
+	<!---
+		<p/>
+		This initialization service sets the master catalog id attribute of <code>catCatalogManagement</code>.
+		<p/>
+	-->
+	<InitService definitionName="catCatalogInitService" url="/cmc/GetMasterCatalog">
+		<ServiceParam name="storeId"/>
+		<ServiceParam name="catalogViewRole"/>
+		<ServiceParam name="marketingViewRole"/>
+		<ServiceParam name="promotionViewRole"/>
+		<ServiceParam name="attachmentViewRole"/>
+		<ServiceParam name="pricingViewRole"/>
+  	</InitService>
+  	
+  	<!---
+		<p/>
+		This initialization service sets the attribute dictionary enablement value 
+		'attributeDictionaryEnabledForStore' attribute of <code>catCatalogManagement</code>.
+		<p/>
+	-->
+	<InitService definitionName="catAttributeDictionaryInitService" url="/cmc/GetAttributeDictionaryEnablementForStore">
+		<ServiceParam name="storeId"/>
+		<ServiceParam name="catalogViewRole"/>
+		<ServiceParam name="marketingViewRole"/>
+		<ServiceParam name="promotionViewRole"/>
+		<ServiceParam name="attachmentViewRole"/>
+		<ServiceParam name="pricingViewRole"/>
+  	</InitService>
+  	
+  	<!---
+		<p/>
+		This initialization service sets the catalog entry description override enablement value 
+		'descriptionOverrideEnabledForStore' context value.
+		<p/>
+	-->
+	<InitService definitionName="catDescriptionOverrideInitService" url="/cmc/GetDescriptionOverrideEnablementForStore">
+		<ServiceParam name="storeId"/>
+		<ServiceParam name="catalogViewRole"/>
+		<ServiceParam name="marketingViewRole"/>
+		<ServiceParam name="promotionViewRole"/>
+		<ServiceParam name="attachmentViewRole"/>
+		<ServiceParam name="pricingViewRole"/>
+  	</InitService>
+  	
+	<!---
+		<p/>
+		This initialization service sets catalog file upload access control in context value
+		'catalogFileUploadRole'.
+		<p/>
+	-->
+  	<InitService definitionName="catFileUploadAccessInitService" url="/cmc/GetAccessRight">
+		<ServiceParam name="storeId"/>
+		<ServiceParam parameterName="usage" value="IBM_FileUploadCatalogTool"/>
+		<ServiceParam parameterName="accessRightContext" value="catalogFileUploadRole"/>
+  	</InitService>
+  	
+</Definitions>

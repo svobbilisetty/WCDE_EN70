@@ -1,0 +1,195 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- 
+		@keywords private 
+		DaySelect base class.
+	-->
+	<class name="proBaseDaySelect" extends="basecomponent" focusable="false">
+		<!---
+			@keywords private
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="objectType" value="" type="string"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="day" value="" type="string"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="selectedPropertyName" value="" type="string"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="selectedPropertyValue" value="" type="string"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="dayObject" value="null"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="_inited" value="false" type="boolean"/>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="destroy">
+			<![CDATA[		
+			if (this["updateDayObjectDel"]) {
+				this.updateDayObjectDel.unregisterAll();
+				delete this.updateDayObjectDel;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (newObject != this["o"]) {
+				this.o = newObject;
+			
+				if (this["o"]) {
+					this.updateDayObject();
+				}
+				else {
+					this.dayObject = null;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateDayObject" args="e=null">
+			<![CDATA[
+			if (!this["updateDayObjectDel"]) {
+				this.updateDayObjectDel = new lz.Delegate(this, "updateDayObject");
+			}
+			else {
+				this.updateDayObjectDel.unregisterAll();
+			}
+						
+			if (this["o"]) {
+				this["dayObject"] = this.o.model.findObject( this.o, this.o.model.getObjectDefinition(this.o, this.objectType), this.day );
+				
+				if (!this["dayObject"] || this.dayObject.pendingDelete) {
+					this.dayObject = null;
+				}
+					
+				if (this["input"]) {
+					this.input.setValue(this.dayObject != null);
+				}
+			
+				var selectedProperty = this.o.getProperty(this.selectedPropertyName);
+				this.updateDayObjectDel.register(selectedProperty, "onvalue");
+				this.updateDayObjectDel.register(this.o, "onchildObjects");
+				
+				if (selectedProperty.value == this.selectedPropertyValue) {
+					this.input.setValue(true);
+				}
+			}
+			]]>
+		</method>
+		
+		<wcfBaseCheckbox name="input" enabled="${classroot.enabled}">
+			<handler name="oninit">
+				<![CDATA[
+				classroot._inited = true;
+				classroot.updateDayObject();
+				]]>
+			</handler>
+			<handler name="onvalue">
+				<![CDATA[
+				if (classroot["o"] && classroot._inited) {
+					if (this.value && classroot.dayObject == null) {
+						classroot.dayObject = classroot.o.model.findObject( classroot.o, classroot.o.model.getObjectDefinition(classroot.o, classroot.objectType), classroot.day );
+						if (!classroot.dayObject) {
+							classroot.dayObject = classroot.o.model.createObject( classroot.o, classroot.o.model.getObjectDefinition(classroot.o, classroot.objectType), classroot.day, true );
+							classroot.o.updateChildObjects();
+						}
+						classroot.dayObject.getProperty(classroot.dayObject.objectDefinition.idProperty).setAttribute("value", classroot.day);
+					}
+					else if (!this.value && classroot.dayObject != null) {
+						classroot.dayObject.deleteObject();
+						classroot.dayObject = null;
+					}
+				}
+				]]>
+			</handler>
+		</wcfBaseCheckbox>
+	</class>
+	 
+	<!--- 
+		@keywords final
+		A day selector for use within an object properties panel.  This day selector is selected if an object type "Weekday" 
+		is created with an object id with the specified day value associated with this selector.  Below is an example
+		of how to declare a day selector for day Monday.
+		
+		@START_CODE
+			<DaySelect package="pro" day="Monday" objectType="WeekDay" selectedPropertyName="isEveryDayOfTheWeek" selectedPropertyValue="true" promptText="Monday"/>
+		@END_CODE
+		
+		@deprecated Use {@link wcfPropertyChildObjectCheckbox} for a more generic implementation of a checkbox widget that
+			manages an object.
+	-->
+	<class name="proDaySelect" extends="wcfPropertiesComponent" focusable="false">
+		<!---
+			The objectType associated with this instance of proDaySelect.
+		-->
+		<attribute name="objectType" value="" type="string"/>
+		<!---
+			The day associated with this instance of proDaySelect.  This will correspond to the object Id of the child of
+			objectType.
+		-->
+		<attribute name="day" value="" type="string"/>
+		<!---
+			The property name when set to a property value that is equivalent to a selection of this day object.
+		-->
+		<attribute name="selectedPropertyName" value="" type="string"/>
+		<!---
+			The property value when set for the property name that is equivalent to a selection of this day object.
+		-->
+		<attribute name="selectedPropertyValue" value="" type="string"/>
+		
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.proBaseDaySelect(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o,
+				enabled: parentComponent.enabled,
+				objectType: this.objectType,
+				day: this.day,
+				selectedPropertyName: this.selectedPropertyName,
+				selectedPropertyValue: this.selectedPropertyValue
+			});
+			]]>
+		</method>
+
+	</class>
+
+</library>

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Organizational object definition for the Campaigns node in the navigation tree. To list marketing campaigns,
+		a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetCampaigns</code> and is
+		displayed using an instance of {@link mktCampaignGridChildList mktCampaignGridChildList}.
+	-->
+	<OrganizationalObjectDefinition definitionName="CampaignsTop" displayName="${mktMarketingResources.organizationalCampaigns}" objectType="CampaignsTop" organizedObjectTypes="Campaign">
+		<GetChildrenService url="/cmc/GetCampaigns">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+
+		<NavigationListDefinition baseDefinitionName="mktCampaignGridChildList"/>
+		<OpenCoremetricsReportClientAction displayName="${mktMarketingResources.viewCampaignsReport}" reportUri="report:/websphere/campaign.ftl"/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for the Activities node in the navigation tree. To list marketing activities,
+		a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetActivities</code> and is
+		displayed using an instance of {@link mktActivityGridChildList mktActivityGridChildList} or
+		{@link mktActivityGanttChartChildList mktActivityGanttChartChildList}.
+		To list Activity folders, a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetTopFolders</code> and is
+		displayed using an instance of {@link mktTopActivityFolderGridChildList mktTopActivityFolderGridChildList}.
+	-->
+	<OrganizationalObjectDefinition definitionName="ActivitiesTop" displayName="${mktMarketingResources.organizationalActivities}" objectType="ActivitiesTop" organizedObjectTypes="WebActivity,DialogActivity,EmailActivity,InheritedWebActivity,InheritedDialogActivity,InheritedEmailActivity,ActivityFolder,InheritedActivityFolder">
+		<GetChildrenService url="/cmc/GetActivities" objectTypes="WebActivity,DialogActivity,EmailActivity,InheritedWebActivity,InheritedDialogActivity,InheritedEmailActivity">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService url="/cmc/GetTopFolders" objectTypes="ActivityFolder,InheritedActivityFolder">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="folderType" value="IBM_ActivityFolder"/>
+			<ServiceParam name="folderObjectType" value="ActivityFolder"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="mktActivityGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktTopActivityFolderGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktActivityGanttChartChildList"/>
+		<OpenCoremetricsReportClientAction displayName="${mktMarketingResources.viewActivitiesReport}" reportUri="report:/websphere/campaign_fulllist.ftl"/>
+		<UnassignedFolderFilter/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for the Search Activities node in the navigation tree. To list search activities,
+		a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetSearchActivities</code> and is
+		displayed using an instance of {@link mktSearchActivityGridChildList mktSearchActivityGridChildList} or
+		{@link mktSearchActivityGanttChartChildList mktSearchActivityGanttChartChildList}.
+	-->
+	<OrganizationalObjectDefinition definitionName="SearchActivitiesTop" displayName="${mktMarketingResources.organizationalSearchActivities}" objectType="SearchActivitiesTop" organizedObjectTypes="SearchActivity">
+		<GetChildrenService url="/cmc/GetSearchActivities">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+
+		<NavigationListDefinition baseDefinitionName="mktSearchActivityGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktSearchActivityGanttChartChildList"/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for the E-mail Templates node in the navigation tree. To list e-mail templates,
+		a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetEmailTemplates</code> and is
+		displayed using an instance of {@link mktEmailTemplateGridChildList mktEmailTemplateGridChildList}.
+	-->
+	<OrganizationalObjectDefinition definitionName="EmailTemplatesTop" displayName="${mktMarketingResources.organizationalEmailTemplates}" objectType="EmailTemplatesTop" organizedObjectTypes="EmailTemplate">
+		<GetChildrenService url="/cmc/GetEmailTemplates">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+
+		<NavigationListDefinition baseDefinitionName="mktEmailTemplateGridChildList"/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for the e-Marketing Spots node in the navigation tree. To list e-Marketing Spots,
+		a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetEMarketingSpots</code> and is
+		displayed using an instance of {@link mktEMarketingSpotGridChildList mktEMarketingSpotGridChildList}.
+		To list E-Marketing Spot folders, a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetTopFolders</code> and is
+		displayed using an instance of {@link mktTopEMarketingSpotFolderGridChildList mktTopEMarketingSpotFolderGridChildList}.
+	
+	-->
+	<OrganizationalObjectDefinition definitionName="EMarketingSpotTop" displayName="${mktMarketingResources.organizationalEMarketingSpots}" objectType="EMarketingSpotTop" organizedObjectTypes="EMarketingSpot,InheritedEMarketingSpot,EMarketingSpotFolder,InheritedEMarketingSpotFolder">
+		<GetChildrenService url="/cmc/GetEMarketingSpots" objectTypes="EMarketingSpot,InheritedEMarketingSpot" >
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService url="/cmc/GetTopFolders" objectTypes="EMarketingSpotFolder,InheritedEMarketingSpotFolder" >
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="folderType" value="IBM_EMarketingSpotFolder"/>
+			<ServiceParam name="folderObjectType" value="EMarketingSpotFolder"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="mktEMarketingSpotGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktTopEMarketingSpotFolderGridChildList"/>
+		<OpenCoremetricsReportClientAction displayName="${mktMarketingResources.viewESpotsReport}" reportUri="report:/websphere/espot.ftl"/>
+		<UnassignedFolderFilter/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for dialog activity templates node in template picker. To list web activity
+		templates, a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL
+		<code>/cmc/GetWebActivityTemplates</code>.
+	-->
+	<OrganizationalObjectDefinition definitionName="WebActivityTemplatesTop" displayName="${mktMarketingResources.organizationalActivityTemplates}" objectType="WebActivityTemplatesTop" organizedObjectTypes="WebActivityTemplate">
+		<GetChildrenService url="/cmc/GetWebActivityTemplates">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for dialog activity templates node in the template picker. To list dialog activity
+		templates, a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL
+		<code>/cmc/GetDialogActivityTemplates</code>.
+	-->
+	<OrganizationalObjectDefinition definitionName="DialogActivityTemplatesTop" displayName="${mktMarketingResources.organizationalActivityTemplates}" objectType="DialogActivityTemplatesTop" organizedObjectTypes="DialogActivityTemplate">
+		<GetChildrenService url="/cmc/GetDialogActivityTemplates">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for activity templates node in template picker. To list activity
+		templates, two {@link wcfGetChildrenService wcfGetChildrenServices} are defined which calls the URL
+		<code>/cmc/GetWebActivityTemplates</code> and <code>/cmc/GetDialogActivityTemplates</code>. The results
+		are displayed using an instance of {@link mktActivityTemplateGridChildList} or {@link mktActivityTemplateGanttChartChildList}.
+	-->
+	<OrganizationalObjectDefinition definitionName="ActivityTemplatesTop" displayName="${mktMarketingResources.organizationalActivityTemplates}" objectType="ActivityTemplatesTop" organizedObjectTypes="WebActivityTemplate,DialogActivityTemplate">
+		<GetChildrenService url="/cmc/GetWebActivityTemplates">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+		<GetChildrenService url="/cmc/GetDialogActivityTemplates">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="mktActivityTemplateGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktActivityTemplateGanttChartChildList"/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for search activity templates node in template picker. To list search activity
+		templates, a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL
+		<code>/cmc/GetSearchActivityTemplates</code>.
+	-->
+	<OrganizationalObjectDefinition definitionName="SearchActivityTemplatesTop" displayName="${mktMarketingResources.organizationalSearchActivityTemplates}" objectType="SearchActivityTemplatesTop" organizedObjectTypes="SearchActivityTemplate">
+		<GetChildrenService url="/cmc/GetSearchActivityTemplates">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+
+		<NavigationListDefinition baseDefinitionName="mktSearchActivityTemplateGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktSearchActivityTemplateGanttChartChildList"/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for the Marketing Content node in the navigation tree. To list marketing content,
+		a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetMarketingContent</code> and is
+		displayed using an instance of {@link mktMarketingContentGridChildList mktMarketingContentGridChildList}.
+		To list Content folders, a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetTopFolders</code> and is
+		displayed using an instance of {@link mktTopContentFolderGridChildList mktTopContentFolderGridChildList}.
+	-->
+	<OrganizationalObjectDefinition definitionName="MarketingContentTop" displayName="${mktMarketingResources.organizationalContent}" objectType="MarketingContentTop" organizedObjectTypes="MarketingContent,InheritedMarketingContent,ContentFolder,InheritedContentFolder">
+		<GetChildrenService url="/cmc/GetMarketingContent" objectTypes="MarketingContent,InheritedMarketingContent" >
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService url="/cmc/GetTopFolders" objectTypes="ContentFolder,InheritedContentFolder" >
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="folderType" value="IBM_ContentFolder"/>
+			<ServiceParam name="folderObjectType" value="ContentFolder"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="mktMarketingContentGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktTopContentFolderGridChildList"/>
+		<UnassignedFolderFilter/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+    	Organizational object definition for the Customer Segment node in the navigation tree. To list customer segments,
+	    a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetCustomerSegments</code> and is
+    	displayed using an instance of {@link mktCustomerSegmentGridChildList mktCustomerSegmentGridChildList}.
+    	To list Customer Segment folders, a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL <code>/cmc/GetTopFolders</code> and is
+		displayed using an instance of {@link mktTopCustomerSegmentFolderGridChildList mktTopCustomerSegmentFolderGridChildList}.
+	-->
+	<OrganizationalObjectDefinition definitionName="CustomerSegmentTop" displayName="${mktMarketingResources.organizationalCustomerSegments}" objectType="CustomerSegmentTop" organizedObjectTypes="CustomerSegment,InheritedCustomerSegment,CustomerSegmentFolder,InheritedCustomerSegmentFolder">
+		<GetChildrenService url="/cmc/GetCustomerSegments" objectTypes="CustomerSegment,InheritedCustomerSegment" >
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+
+		<GetChildrenService url="/cmc/GetTopFolders" objectTypes="CustomerSegmentFolder,InheritedCustomerSegmentFolder" >
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="folderType" value="IBM_CustomerSegmentFolder"/>
+			<ServiceParam name="folderObjectType" value="CustomerSegmentFolder"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="mktCustomerSegmentGridChildList"/>
+		<NavigationListDefinition baseDefinitionName="mktTopCustomerSegmentFolderGridChildList"/>
+		<UnassignedFolderFilter/>
+	</OrganizationalObjectDefinition>
+
+	<OrganizationalObjectDefinition definitionName="MerchandisableAttributeDictionaryAttributesTop" displayName="${mktMarketingResources.merchandisableAttributes}" objectType="MerchandisableAttributeDictionaryAttributesTop" organizedObjectTypes="AttributeDictionary,InheritedAttributeDictionary" utilitiesListDefinitionName="mktUtilitiesAttributeBrowseGrid">
+		<GetChildrenService url="/cmc/GetMerchandisableAttributes">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+	</OrganizationalObjectDefinition>
+	
+	<OrganizationalObjectDefinition definitionName="FacetableAttributeDictionaryAttributesTop" displayName="${mktMarketingResources.facetableAttributes}" objectType="FacetableAttributeDictionaryAttributesTop" organizedObjectTypes="AttributeDictionary,InheritedAttributeDictionary" utilitiesListDefinitionName="mktUtilitiesAttributeBrowseGrid">
+		<GetChildrenService url="/cmc/GetFacetableAttributes">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Top object definition for the Marketing business object editor tool. This object creates instances of the following
+		organizational objects:<ul>
+			<li>{@link CampaignsTop}</li>
+			<li>{@link ActivitiesTop}</li>
+			<li>{@link SearchActivitiesTop}</li>
+			<li>{@link EmailTemplatesTop}</li>
+			<li>{@link EMarketingSpotTop}</li>
+			<li>{@link ActivityTemplatesTop}</li>
+			<li>{@link DialogActivityTemplatesTop}</li>
+			<li>{@link WebActivityTemplatesTop}</li>
+			<li>{@link SearchActivityTemplatesTop}</li>
+			<li>{@link MarketingContentTop}</li>
+			<li>{@link AttachmentResourceAttachmentType}</li>
+			<li>{@link CustomerSegmentTop}</li>
+		</ul>
+	-->
+	<TopObjectDefinition definitionName="mktMarketingTopObjectDefinition">
+		<Xml name="template">
+			<object objectType="CampaignsTop"/>
+			<object objectType="ActivitiesTop"/>
+			<object objectType="SearchActivitiesTop"/>			
+			<object objectType="EmailTemplatesTop"/>
+			<object objectType="EMarketingSpotTop"/>
+			<object objectType="ActivityTemplatesTop"/>
+			<object objectType="DialogActivityTemplatesTop"/>
+			<object objectType="WebActivityTemplatesTop"/>
+			<object objectType="SearchActivityTemplatesTop"/>
+			<object objectType="MarketingContentTop"/>
+			<object objectType="AttachmentResourceAttachmentType"/>
+			<object objectType="CustomerSegmentTop"/>
+			<object objectType="MerchandisableAttributeDictionaryAttributesTop"/>
+			<object objectType="FacetableAttributeDictionaryAttributesTop"/>
+		</Xml>		
+		
+		<!--- Retrieves the {@link Catalog Catalog} child objects. -->
+		<GetChildrenService url="/cmc/GetMasterCatalogObject">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService> 
+		<!--- Retrieves the {@link SalesCatalog Sales Catalog} child objects. -->
+		<GetChildrenService url="/cmc/GetSalesCatalogs">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the {@link attManagedDirectory ManagedDirectory} and 
+			{@link attInheritedManagedDirectory InheritedManagedDirectory} objects.
+		-->
+		<GetChildrenService url="/cmc/GetRootManagedDirectory">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+		<!--- Retrieves the {@link SearchTermAssociations Search Term Associations} and {@link InheritedSearchTermAssociations Inherited Search Term Associations} child objects.  -->
+		<GetChildrenService objectTypes="SearchTermAssociations,InheritedSearchTermAssociations" url="/cmc/GetSearchTermAssociations">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="searchEnabled"/>
+		</GetChildrenService>		
+		<!--- Retrieves the {@link LocationRegion Location Regions} child objects.  -->
+		<GetChildrenService objectTypes="LocationRegion" url="/cmc/GetLocationRegions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="lbsEnabled"/>
+		</GetChildrenService>
+	</TopObjectDefinition>
+	
+</Definitions>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		List to display the attributes for an attribute dictionary or attribute dictionary group.
+		This list is the default list to be displayed.
+	-->		 
+	<NavigationListDefinition
+		definitionName="catAttributeDictionaryAttributeAttributesNavigationList"
+		displayName="${catalogResources.dictionaryAttributeList}"
+		isDefault="true"
+		listDefinitionName="catAttributeDictionaryAttributeList"
+		listTitle="${catalogResources.dictionaryAttributeList}"
+		name="childAttributesNavList"
+		toolbarIcon="listAttributesToolbarIcon"
+		helpLink="tasks/ttfsearch.htm"/>
+		
+  	<!---
+		This definition will display a list of dictionary attributes.
+	-->
+	<ChildListEditor
+		definitionName="catAttributeDictionaryAttributeList"
+		listDefinitionName="catAttributeDictionaryAttributeGrid"
+		objectTypes="ChildAttributeDictionaryAttributeWithAllowedValues,ChildInheritedAttributeDictionaryAttributeWithAllowedValues,ChildAttributeDictionaryAttributeWithAssignedValues,ChildInheritedAttributeDictionaryAttributeWithAssignedValues">
+	</ChildListEditor>
+		
+	<!---
+		This definition will display a list of attribute dictionary attributes.
+	-->
+	<ObjectGrid definitionName="catAttributeDictionaryAttributeGrid" preferenceKey="catAttributeDictionaryAttributeGrid">
+		<GridNumeric editable="true" name="sequence" numDecimalPlaces="1" propertyName="sequence" text="${catalogResources.displaySequence}" visible="true" width="130"/>
+        <GridText editable="false" name="attrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId" text="${catalogResources.productUniqueId_ColumnHeader}" visible="false" width="150"/>            
+        <GridIconTypeImage name="typeIcon" enableFilter="true" propertyName="typeIcon" required="true" text="${catalogResources.attributeType_ColumnHeader}" visible="true" width="60"/>
+        <GridStoreName name="store" objectPath="AttributeDictionaryAttributes"/>
+        <GridText editable="true" name="attributeCode" objectPath="AttributeDictionaryAttributes" propertyName="attributeCode" required="true" text="${catalogResources.attributeCodePrompt}" visible="true" width="170"/>
+		<GridText editable="true" name="attrName" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="attrName" required="true" text="${catalogResources.attributeDisplayNamePrompt}" visible="true" width="200"/>
+		<GridComboBox editable="true" enableFilter="true" name="attrDataType" objectPath="AttributeDictionaryAttributes" text="${catalogResources.attributeDataType_ColumnHeader}" propertyName="attrDataType" required="true" visible="true" width="130"/>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="displayable" objectPath="AttributeDictionaryAttributes" propertyName="displayable" text="${catalogResources.attributeDisplayable}" visible="true" width="110"/>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="comparable" objectPath="AttributeDictionaryAttributes" propertyName="comparable" text="${catalogResources.attributeComparable}" visible="true" width="110"/>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" text="${catalogResources.attributeMerchandisable}" visible="true" width="110">
+			<GridCellDescriptor objectType="ChildAttributeDictionaryAttributeWithAllowedValuesGroup" objectPath="AttributeDictionaryAttributeWithAllowedValuesAlias" name="merchandisable" propertyName="merchandisable"/>
+			<GridCellDescriptor objectType="ChildAttributeDictionaryAttributeWithAssignedValuesGroup" name="notMerchandisable" disabled="true"/>
+			<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+		</GridCheckbox>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="searchable" objectPath="AttributeDictionaryAttributes" propertyName="searchable" text="${catalogResources.attributeSearchable}" visible="true" width="100">
+			<EnablementAndCondition conditionId="showSearchColumnsCondition">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+				<!--  
+				<EnablementCondition contextName="workspaceTask" enablementValue="" conditionId="inAWorkspaceTaskContextValueCondition"/>
+				-->
+			</EnablementAndCondition>			
+		</GridCheckbox>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="facetable" objectPath="AttributeDictionaryAttributes" propertyName="facetable" text="${catalogResources.attributeFacetable}" visible="true" width="110">
+			<EnablementAndCondition conditionId="showSearchColumnsCondition">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+				<!-- 
+				<EnablementCondition contextName="workspaceTask" enablementValue="" conditionId="inAWorkspaceTaskContextValueCondition"/>
+				 -->
+			</EnablementAndCondition>		
+		</GridCheckbox>
+		<GridText editable="true" name="attrDescription" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="attrDescription" text="${catalogResources.attributeDescriptionPrompt}" visible="false" width="200"/>
+		<GridText editable="true" name="xdescdata_SecondaryDescription" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="xdescdata_SecondaryDescription" text="${catalogResources.attributeSecondaryDescriptionPrompt}" visible="false" width="200"/>
+		<GridComboBox editable="true" enableFilter="true" name="xdescdata_UnitOfMeasure" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" text="${catalogResources.attributeValueUnitOfMeasure}" propertyName="xdescdata_UnitOfMeasure" required="false" visible="false" width="130"/>
+		<GridText editable="true" name="xdescdata_Footnote" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="xdescdata_Footnote" text="${catalogResources.attributeFootnotePrompt}" visible="false" width="200"/>
+		<GridText editable="true" name="xdescdata_DisplayGroupName" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="xdescdata_DisplayGroupName" text="${catalogResources.attributeGroupNamePrompt}" visible="false" width="200"/>
+	</ObjectGrid>
+	
+	<!--		
+		This definition will display a list of attribute dictionary attributes from the search result.
+		
+		@keywords private
+	-->
+	<ObjectGrid definitionName="catAttributeDictionaryAttributeSearchGrid" preferenceKey="catAttributeDictionaryAttributeSearchGrid">
+        <GridText editable="false" name="attrId" propertyName="attrId" text="${catalogResources.productUniqueId_ColumnHeader}" visible="false" width="150"/>            
+        <GridIconTypeImage name="typeIcon" enableFilter="true" propertyName="typeIcon" required="true" text="${catalogResources.attributeType_ColumnHeader}" visible="true" width="60"/>
+        <GridStoreName name="store"/>
+        <GridText editable="true" name="attributeCode" propertyName="attributeCode" required="true" text="${catalogResources.attributeCodePrompt}" visible="true" width="170"/>
+		<GridText editable="true" name="attrName" propertyName="attrName" objectPath="AttributeDictionaryAttributeDescription" required="true" text="${catalogResources.attributeDisplayNamePrompt}" visible="true" width="200"/>
+		<GridComboBox editable="true" enableFilter="true" name="attrDataType" text="${catalogResources.attributeDataType_ColumnHeader}" propertyName="attrDataType" required="true" visible="true" width="130"/>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="displayable" propertyName="displayable" text="${catalogResources.attributeDisplayable}" visible="true" width="110"/>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="comparable" propertyName="comparable" text="${catalogResources.attributeComparable}" visible="true" width="110"/>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="merchandisable" text="${catalogResources.attributeMerchandisable}" visible="true" width="110">
+			<GridCellDescriptor name="merchandisable" objectType="AttributeDictionaryAttributeWithAllowedValuesAlias" propertyName="merchandisable"/>
+			<GridCellDescriptor name="notMerchandisable" objectType="AttributeDictionaryAttributeWithAssignedValuesAlias" disabled="true"/>
+			<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+		</GridCheckbox>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="searchable" propertyName="searchable" text="${catalogResources.attributeSearchable}" visible="true" width="100">
+			<EnablementAndCondition conditionId="showSearchColumnsCondition">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+					<!-- 
+				<EnablementCondition contextName="workspaceTask" enablementValue="" conditionId="inAWorkspaceTaskContextValueCondition"/>
+				-->
+			</EnablementAndCondition>
+		</GridCheckbox>
+		<GridCheckbox editable="true" enableFilter="true" alignment="center" name="facetable" propertyName="facetable" text="${catalogResources.attributeFacetable}" visible="true" width="100">
+			<EnablementAndCondition conditionId="showSearchColumnsCondition">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+					<!-- 
+				<EnablementCondition contextName="workspaceTask" enablementValue="" conditionId="inAWorkspaceTaskContextValueCondition"/>
+				-->
+			</EnablementAndCondition>
+		</GridCheckbox>
+		<GridText editable="true" name="attrDescription" objectPath="AttributeDictionaryAttributeDescription" propertyName="attrDescription" text="${catalogResources.attributeDescriptionPrompt}" visible="false" width="200"/>
+		<GridText editable="true" name="xdescdata_SecondaryDescription" objectPath="AttributeDictionaryAttributeDescription" propertyName="xdescdata_SecondaryDescription" text="${catalogResources.attributeSecondaryDescriptionPrompt}" visible="false" width="200"/>
+		<GridComboBox editable="true" enableFilter="true" name="xdescdata_UnitOfMeasure" objectPath="AttributeDictionaryAttributeDescription" text="${catalogResources.attributeValueUnitOfMeasure}" propertyName="xdescdata_UnitOfMeasure" required="false" visible="false" width="130"/>
+		<GridText editable="true" name="xdescdata_Footnote" objectPath="AttributeDictionaryAttributeDescription" propertyName="xdescdata_Footnote" text="${catalogResources.attributeFootnotePrompt}" visible="false" width="200"/>
+		<GridText editable="true" name="xdescdata_DisplayGroupName" objectPath="AttributeDictionaryAttributeDescription" propertyName="xdescdata_DisplayGroupName" text="${catalogResources.attributeGroupNamePrompt}" visible="false" width="200"/>
+	</ObjectGrid>
+	
+	<!---
+		This definition displays the characteristics of a list of {@link catBaseAttributeDictionaryAttributePrimaryObjectDefinition} objects.
+		It is used for the utilities pane browse tab.
+	-->
+	<ObjectGrid definitionName="catUtilitiesAttributeBrowseGrid" preferenceKey="catUtilitiesAttributeBrowseGrid">
+        <GridIconTypeImage name="typeIcon" required="true" text="${catalogResources.attributeType_ColumnHeader}" visible="true" width="100"/>              
+        <GridDisplayName required="true" name="displayName" text="${catalogResources.UtilityPaneHeaderText}" width="170"/>
+        <GridText name="attributeName" required="true" text="${catalogResources.utilitiesAttributeBrowseGridName}" visible="true" width="170">
+			<GridCellDescriptor name="attributeNameCell" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="attrName"/>
+		</GridText>
+	</ObjectGrid>
+	
+	<!---
+		This definition displays the characteristics of a list of {@link catBaseAttributeDictionaryAttributeValue} objects.
+		It is used for the utilities pane browse tab.
+	-->
+	<ObjectGrid definitionName="catUtilitiesAttributeValueBrowseGrid" preferenceKey="catUtilitiesAttributeValueBrowseGrid">
+        <GridIconTypeImage name="typeIcon" required="true" text="${catalogResources.attributeValueType_ColumnHeader}" visible="true" width="100"/>
+        <GridColumn required="true" name="attributeValueValue" text="${catalogResources.utilitiesAttributeValueBrowseGridValue}" visible="true" width="170">
+			<GridTextCellDescriptor name="stringValue" objectType="AttributeDictionaryAttributeStringValueAlias" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value"/>
+			<GridNumericCellDescriptor name="integerValue" datatype="number" objectType="AttributeDictionaryAttributeIntegerValueAlias" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value"/>
+			<GridNumericCellDescriptor name="floatValue" datatype="number" numDecimalPlaces="1" objectType="AttributeDictionaryAttributeFloatValueAlias" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value"/>
+		</GridColumn>
+	</ObjectGrid>
+
+	<!--
+		This definition displays the characteristics of a list of {@link catBaseAttributeDictionaryAttributePrimaryObjectDefinition} objects from search result.
+		It is used for the utilities pane find tab.
+		
+		@keywords private
+	-->
+	<ObjectGrid definitionName="catUtilitiesAttributeSearchGrid" preferenceKey="catUtilitiesAttributeSearchGrid">
+        <GridIconTypeImage name="typeIcon" required="true" text="${catalogResources.attributeType_ColumnHeader}" visible="true" sortable="false" width="60"/>              
+        <GridDisplayName required="true" name="displayName" text="${catalogResources.UtilityPaneHeaderText}" width="120"/>
+        <GridText name="attributeName" required="true" text="${catalogResources.utilitiesAttributeBrowseGridName}" visible="true" width="140">
+			<GridCellDescriptor name="attributeNameCell" objectPath="AttributeDictionaryAttributeDescription" propertyName="attrName"/>
+		</GridText>
+	</ObjectGrid>
+	
+</Definitions>

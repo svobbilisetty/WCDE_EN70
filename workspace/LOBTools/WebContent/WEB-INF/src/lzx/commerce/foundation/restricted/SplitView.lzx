@@ -1,0 +1,205 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		A split view. This view expects two child views. The child views
+		will be displayed on each side of a draggable divider.
+	-->
+	<class name="wcfSplitView">
+		<!---
+			The axis along which the split will be drawn. Valid values
+			are "x" and "y". The default is "y".
+		-->
+		<attribute name="axis" value="y" type="string"/>
+		<!---
+			The number of pixels to initially allocate to the first view if
+			the split is axis is "x".
+		-->
+		<attribute name="xSplitSize" value="200" type="number"/>
+		<!---
+			The number of pixels to initially allocate to the first view if
+			the split is axis is "y".
+		-->
+		<attribute name="ySplitSize" value="200" type="number"/>
+		<!---
+			Indicates that "xSplitSize" and "ySplitSize" should be applied to
+			the second view.
+		-->
+		<attribute name="reverseSplit" value="false" type="boolean"/>
+		<!---
+			Indicates that the view has been minimized.
+		-->
+		<attribute name="minimized" value="false" type="boolean"/>
+		<!---
+			Indicates that the view has been maximized.
+		-->
+		<attribute name="maximized" value="false" type="boolean"/>
+		<!---
+			Indicates that the view has been closed.
+		-->
+		<attribute name="closed" value="false" type="boolean"/>
+		<!---
+			Minimum width for this view.
+		-->
+		<attribute name="minWidth" value="0" type="number"/>
+		<!---
+			Minimum hieght for this view.
+		-->
+		<attribute name="minHeight" value="0" type="number"/>
+		<!---
+			Indicates that this view can be split into master/details panels.
+		-->
+		<attribute name="splittable" value="true" type="boolean"/>
+		<!---
+			Indicates that the splittable flag is being ignored.
+		-->
+		<attribute name="ignoreSplittable" value="false" type="boolean"/>
+		<!---
+			Current maximized panel.
+		-->
+		<attribute name="maximizedPanel" value="null"/>
+		
+		<wcfStretchLayout name="stretchLayout" axis="${parent.axis == 'x' ? 'y' : 'x'}"/>
+		<wcfSplitViewLayout name="splitViewLayout" axis="${parent.axis}"/>
+
+		<method name="init">
+			<![CDATA[
+			var views = this.subviews;
+			var l = views.length;
+			for (var i = 0; i < l; i++) {
+				var v = views[i];
+				if (!(v instanceof lz.wcfResizer)) {
+					this.splitViewLayout.setLayoutOrder(v, this.resizer);
+					break;
+				}
+			}
+			if (splitViewLayout.subviews.length == 3) {
+				var v1 = this.splitViewLayout.subviews[0];
+				var v2 = this.splitViewLayout.subviews[2];
+				this.resizer.v1 = v1;
+				this.resizer.v2 = v2;
+
+				this.updateMinWidthDel = new lz.Delegate(this, "updateMinWidth");
+				if (!this.ignoreSplittable) {
+					this.updateMinWidthDel.register(v1, "onsplittable");
+				}
+				this.updateMinWidthDel.register(v1, "onminWidth");
+				this.updateMinWidthDel.register(v1, "onclosed");
+				this.updateMinWidthDel.register(v1, "onminimized");
+				this.updateMinWidthDel.register(v2, "onminWidth");
+				this.updateMinWidthDel.register(v2, "onclosed");
+				this.updateMinWidthDel.register(v2, "onminimized");
+				this.updateMinWidth();
+				this.updateMinHeightDel = new lz.Delegate(this, "updateMinHeight");
+				if (!this.ignoreSplittable) {
+					this.updateMinHeightDel.register(v1, "onsplittable");
+				}
+				this.updateMinHeightDel.register(v1, "onminHeight");
+				this.updateMinHeightDel.register(v1, "onclosed");
+				this.updateMinHeightDel.register(v1, "onminimized");
+				this.updateMinHeightDel.register(v2, "onminHeight");
+				this.updateMinHeightDel.register(v2, "onclosed");
+				this.updateMinHeightDel.register(v2, "onminimized");
+				this.updateMinHeight();
+			}
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this['updateMinWidthDel']) {
+				this.updateMinWidthDel.unregisterAll();
+				delete this.updateMinWidthDel;
+			}
+			if (this['updateMinHeightDel']) {
+				this.updateMinHeightDel.unregisterAll();
+				delete this.updateMinHeightDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateMinWidth" args="e=null">
+			<![CDATA[
+			this.setAttribute("minWidth", this.calcMinWidth());
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateMinHeight" args="e=null">
+			<![CDATA[
+			this.setAttribute("minHeight", this.calcMinHeight());
+			]]>
+		</method>
+		
+		<method name="calcMinWidth">
+			<![CDATA[
+			var v1 = this.splitViewLayout.subviews[0];
+			var v2 = this.splitViewLayout.subviews[2];
+			var resizerWidth = this.splitViewLayout.resizer.size;
+			var minWidth1 = v1.minWidth;
+			var minWidth2 = v2.minWidth;
+			var v2Closed = (v1.splittable || this.ignoreSplittable) ? v2.closed : true;
+			if (v1.closed || v2Closed || v1.minimized || v2.minimized) {
+				resizerWidth = 0;
+			}
+			if (v1.closed) {
+				minWidth1 = 0;
+			}
+			if (v2Closed) {
+				minWidth2 = 0;
+			}
+			return minWidth1 + minWidth2 + resizerWidth;
+			]]>
+		</method>
+		
+		<method name="calcMinHeight">
+			<![CDATA[
+			var v1 = this.splitViewLayout.subviews[0];
+			var v2 = this.splitViewLayout.subviews[2];
+			var resizerHeight = this.splitViewLayout.resizer.size;
+			var minHeight1 = v1.minHeight;
+			var minHeight2 = v2.minHeight;
+			var v2Closed = (v1.splittable || this.ignoreSplittable) ? v2.closed : true;
+			if (v1.closed || v2Closed || v1.minimized || v2.minimized) {
+				resizerHeight = 0;
+			}
+			if (v1.closed) {
+				minHeight1 = 0;
+			}
+			if (v2Closed) {
+				minHeight2 = 0;
+			}
+			return minHeight1 + minHeight2 + resizerHeight;
+			]]>
+		</method>
+		
+		<method name="close">
+			this.setAttribute("closed", true);
+		</method>
+	
+		<method name="open">
+			this.setAttribute("closed", false);
+		</method>
+
+		<wcfResizer name="resizer" axis="${parent.axis}" xSplitSize="${parent.xSplitSize}" ySplitSize="${parent.ySplitSize}" reverseSplit="${parent.reverseSplit}"/>
+		
+	</class>
+
+</library>

@@ -1,0 +1,91 @@
+<%--
+/*
+ *-------------------------------------------------------------------
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2006
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *
+ *-------------------------------------------------------------------
+ */
+--%>
+<%--
+*****
+This object snippet displays a set of address entry fields in the address book page, and the appropriate
+required parameters are set up.
+
+Required parameters:
+	paramSource:	An address databean or any other object implementing java.util.Map that the address databean
+					fields could be retrieved from.   For example, 'paramSource.firstName' will be evaluated.
+					If paramSource is set to be a map with an entry with a key of 'firstName' or an AddressDataBean 
+					with the method getFirstName, the first name field will be prepopulated.
+					This method of prepopulation is useful because you may wish to prepopulate the fields with
+					information from the request (for example, in an error situation) or with an existing address
+					(when updating an address).
+	
+Optional parameters:	
+	locale:		The locale of the address entry fields you wish to display.  
+				Note that in the starter stores this variable is declared for you.
+				If locale is not provided a default display format is used.
+
+Note:  Because this snippet contains entry fields, we use the store style sheet entries in this object snippet.
+
+You may customize the files listed below or add additional locale handling to this file.
+
+*****
+--%>
+
+
+<!-- BEGIN AddressBookAddressEntryFormDisplay.jspf -->
+<%-- 
+  ***
+  *	Start: Address Form - First Name, Last Name, Address Information
+  * The layouts of these entry fields are different depending on the locale.
+  ***
+--%>
+<c:choose>
+	<c:when test="${isBrazilStore}"><%-- Regardless of the locale, Brazil store always 
+		                                 wants this form/layout of the address fields --%>
+		<%@ include file="AddressBookAddressEntryForm.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,first_name,LAST_NAME,ADDRESS,CITY,COUNTRY/REGION,STATE/PROVINCE,ZIP,phone1,EMAIL1"/>
+ 	</c:when>
+
+	<c:when test="${locale eq 'fr_FR' || locale eq 'de_DE' || locale eq 'es_ES' || locale eq 'it_IT' || locale eq 'ro_RO'}">
+		<%@ include file="AddressBookAddressEntryForm_DE_ES_FR_IT_RO.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,first_name,LAST_NAME,ADDRESS,ZIP,CITY,state/province,COUNTRY/REGION,phone1,EMAIL1"/>
+	</c:when>
+	<c:when test="${locale eq 'zh_CN'}">
+		<%@ include file="AddressBookAddressEntryForm_CN.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,LAST_NAME,first_name,COUNTRY/REGION,STATE/PROVINCE,CITY,ADDRESS,ZIP,phone1,EMAIL1"/>
+	</c:when>
+	<c:when test="${locale eq 'zh_TW'}">
+		<%@ include file="AddressBookAddressEntryForm_TW.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,LAST_NAME,first_name,COUNTRY/REGION,STATE/PROVINCE,CITY,ZIP,ADDRESS,phone1,EMAIL1"/>
+	</c:when>
+	<c:when test="${locale eq 'ar_EG'}">
+		<%@ include file="AddressBookAddressEntryForm_AR.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,first_name,LAST_NAME,COUNTRY/REGION,CITY,STATE/PROVINCE,ADDRESS,phone1,EMAIL1"/>
+	</c:when>
+	<c:when test="${locale eq 'ru_RU'}">
+		<%@ include file="AddressBookAddressEntryForm_RU.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,first_name,middle_name,LAST_NAME,ADDRESS,ZIP,CITY,state/province,COUNTRY/REGION,phone1,EMAIL1"/>
+	</c:when>
+	<c:when test="${locale eq 'pl_PL'}">
+		<%@ include file="AddressBookAddressEntryForm_PL.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,first_name,LAST_NAME,ADDRESS,ZIP,CITY,STATE/PROVINCE,COUNTRY/REGION,phone1,EMAIL1"/>
+	</c:when>
+	<c:when test="${locale eq 'ja_JP' || locale eq 'ko_KR'}">
+		<%@ include file="AddressBookAddressEntryForm_JP_KR.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,LAST_NAME,FIRST_NAME,COUNTRY/REGION,ZIP,STATE/PROVINCE,CITY,ADDRESS,phone1,EMAIL1"/>
+	</c:when>
+	<c:otherwise>
+		<%@ include file="AddressBookAddressEntryForm.jspf"%>
+		<input type="hidden" id="AddressForm_FieldsOrderByLocale" value="NICK_NAME,first_name,LAST_NAME,ADDRESS,CITY,COUNTRY/REGION,STATE/PROVINCE,ZIP,phone1,EMAIL1"/>
+	</c:otherwise>
+</c:choose>
+<!-- END AddressBookAddressEntryFormDisplay.jspf -->

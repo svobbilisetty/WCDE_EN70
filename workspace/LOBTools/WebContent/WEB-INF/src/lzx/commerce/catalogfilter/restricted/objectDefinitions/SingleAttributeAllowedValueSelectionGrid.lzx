@@ -1,0 +1,359 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	
+	<!---
+		@keywords final
+		Use this class to show a child object radio list editor in a grid cell. Use this class instead of wcfGridChildObjectCheckbox if you
+		need to display text for some rows and something else for other rows.
+	-->
+	<class name="catSingleAttributeValueCellDescriptor" extends="wcfGridChildObjectCheckboxCellDescriptor" propertyName="">
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectCheckboxEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="catADGridChildSingleObjectRadioEditor"/>
+	</class>
+	
+	
+	<!---
+		@keywords private
+		
+		Child object check box editor class for internal use by {@link wcfGridChildObjectCheckbox}.
+		
+		In edit mode, a dialog {@link wcfDialog} named wcfChildObjectCheckboxDialog is opened that contains a
+		list of check boxes that allow the business user to select the desired child objects.
+	-->
+	<class name="catADGridChildSingleObjectRadioEditor" extends="basecomponent" width="${immediateparent.availableWidth}" focusable="false">	
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property that will be used to automatically create check boxes. The property
+			must have a {@link wcfPropertyDefinition property definition} declared as part of the object definition identified by
+			<code>childObjectType</code>. The property definition must include one or more {@link wcfPropertyValue property values}.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			updateValue();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Update and refresh wcfGridTextEditor value with a new {@link wcfModelProperty} value.
+			@keywords private			
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateValueDel) == "undefined") {
+				this.updateValueDel = new lz.Delegate(this, "updateValue");
+			}
+			this.updateValueDel.unregisterAll();
+			this.updateValueDel.register(this, "ono");
+			var newText = "";
+			var propertyValues = this.getPropertyValues(this.updateValueDel);
+			for (var i = 0; i < propertyValues.length; i++) {
+				var propertyValue = propertyValues[i];
+				var objectType = this.childObjectType + "[" + this.childPropertyName + "=" + propertyValue.value + "]";
+				if (this.o.getObject(objectType, false, null, this.updateValueDel) != null) {
+					if (newText != "") {
+						newText += ", ";
+					}
+					newText += propertyValue.displayName;
+				}
+			}
+			if (this.textView.text != newText) {
+				this.textView.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the list of property values.
+			@keywords private		
+		-->
+		<method name="getPropertyValues" args="del=null">
+			<![CDATA[
+			var propertyValues = [];
+			if (this.o != null) {
+				var attributeObject = this.o.getObject("AttributeDictionaryAttributes");
+				var attributeValueDefs = attributeObject.objectDefinition.getChildDefinitions("AttributeDictionaryAttributeValueAlias");
+				attributeObject.loadChildren(attributeValueDefs);
+				
+				var attributeAllowedValueType = null;
+	
+				// Get attribute dictionary attributes type to construct path
+				var attributeDataType = attributeObject.getPropertyValue("attrDataType");
+				// Get the attribute allowed values from the registered attribute object
+				if (attributeDataType == "String") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeStringValueAlias";
+				}
+				else if (attributeDataType == "Integer") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeIntegerValueAlias";
+				}
+				else if (attributeDataType == "Float") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeFloatValueAlias";
+				}
+				
+				// Get the array of allowed values
+				if (attributeAllowedValueType != null) {
+					var allowedValues = attributeObject.getObjects(attributeAllowedValueType, del);
+					for (var i = 0; i < allowedValues.length; i++) {
+						var allowedValue = allowedValues[i];
+						var attrValId = allowedValue.getPropertyValue("attrValId");
+						if(attrValId && attrValId.length > 0) {
+							var displayNameProperty = allowedValue.getProperty("value", "AttributeDictionaryAttributeValueDescription");
+							if (displayNameProperty == null) {
+								if (del != null) {
+									del.register(allowedValue, "onchildObjects");
+								}
+							}
+							else {
+								if (del != null) {
+									del.register(displayNameProperty, "onvalue");
+								}
+								var displayName = displayNameProperty.value;
+								displayName = wcfStringUtil.escapeText(displayName);
+								propertyValues.push({value: attrValId, displayName: displayName});
+							}
+						}
+					}
+					if(attributeDataType == "String") {
+						wcfSortUtil.sort(propertyValues, catStringValuesComparator);
+					}
+					else {
+						wcfSortUtil.sort(propertyValues, catNumericValuesComparator);
+					}
+				}
+			}
+			return propertyValues;
+			]]>
+		</method>
+		
+		<simplelayout axis="x" spacing="0"/>
+		
+		<text name="textView" width="${parent.width-parent.openDialogButton.width}" multiline="true"/>	
+
+		<basebutton name="openDialogButton" enabled="${classroot.enabled}" resource="rteGridIcon" focusable="true">
+			<!--
+				@keyword private
+				onclick is fired not only on mouse click but also when a business user hits the enter key.  onkeyup was being called
+				after the dialog was opened and causing the value to be stored even though there was no change.
+				 An lz.Timer was added to let the flash stack clear before the rte is opened to prevent this.
+			-->
+			<handler name="onclick">
+				<![CDATA[
+				wcfADChildSingleObjectRadioDialog.openChildObjectCheckboxDialog(classroot);
+				]]>
+			</handler>
+			
+			<!---
+				@keywords private
+				Handle focus.
+			-->
+			<handler name="onfocus">
+				<![CDATA[
+				if(!this["indicator"]){	
+					new lz.wcfFocusIndicator(this, {
+						name: "indicator",
+						focusableView: this,
+						indicatorView: this
+					});
+				}
+				]]>
+			</handler>
+		</basebutton>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Child Object Checkbox Dialog.
+	-->
+	<wcfDialog name="wcfADChildSingleObjectRadioDialog" contentPaddingLeftSize="0" contentPaddingRightSize="0" contentPaddingTopSize="0" contentPaddingBottomSize="0" minWidth="100">
+		<!---
+			Reference to grid editor from which this dialog was launched.
+		-->
+		<attribute name="gridEditor"/>
+		<!---
+			Array of check boxes.
+		-->
+		<attribute name="radioButtons" value="${[]}"/>
+		<!---
+			Array of property values.
+		-->
+		<attribute name="propertyValues" value="${null}"/>
+
+		<!---
+			Handle OK. 
+		-->
+		<method name="onOk">
+			<![CDATA[
+			var selectedValue = this.borderedView.clippedContent.content.valueGroup.value;
+			//Debug.write("selected value is " + selectedValue);
+			var oo = this.gridEditor.o;
+			var childObjectType = this.gridEditor.childObjectType;
+			var childPropName = this.gridEditor.childPropertyName;
+			if (selectedValue){
+				var childObject = oo.getObject(childObjectType, false);
+				if (childObject){
+					childObject.deleteObject();
+				}
+				var childObjDef = oo.model.getObjectDefinition(oo, childObjectType);
+				var newChild = oo.model.createNewObject(childObjDef, oo, false);
+				newChild.setPropertyValue(childPropName, null, selectedValue);
+				//Debug.write("newChild." + childPropName + "=" + newChild.getPropertyValue(childPropName));
+				oo.updateChildObjects(true);					
+			}
+			
+			this.closeWindow();
+			]]>
+		</method>
+
+		<!---
+			Handle Cancel. 
+		-->
+		<method name="onCancel">
+			<![CDATA[
+			this.closeWindow();
+			]]>
+		</method>
+
+		<!---
+			Open the child object checkbox dialog.
+			@param wcfGridChildObjectCheckboxEditor gridEditor grid cell editor
+		 -->
+		<method name="openChildObjectCheckboxDialog" args="gridEditor">
+			<![CDATA[
+			this.openWindow();
+			this.gridEditor = gridEditor;
+			var childDefinition = gridEditor.o.model.getObjectDefinition(gridEditor.o, gridEditor.childObjectType, true);
+			if (childDefinition != null) {
+				this.propertyValues = gridEditor.getPropertyValues();
+				//Debug.write("propertyValues.len="+this.propertyValues.length);
+				var boxIndex = 0;
+				for (var i = 0; i < this.propertyValues.length; i++) {
+					var propertyValue = this.propertyValues[i];
+					var value = propertyValue.value;
+					var objectType = gridEditor.childObjectType + "[" + gridEditor.childPropertyName + "=" + propertyValue.value + "]";
+					var selected = gridEditor.o.getObject(objectType) != null;
+					//Debug.write("Button: text = "+propertyValue.displayName+",value="+value);
+					if (boxIndex < this.radioButtons.length) {
+						this.radioButtons[boxIndex].setAttribute("text", propertyValue.displayName);
+						this.radioButtons[boxIndex].setAttribute("value", value);
+						this.radioButtons[boxIndex].setAttribute("selected", selected);
+						this.radioButtons[boxIndex].setAttribute("visible", true);						
+					}
+					else {
+						this.radioButtons.push(new lz.wcfBaseRadioButton(this.borderedView.clippedContent.content.valueGroup, {
+							text: propertyValue.displayName,
+							value: value,
+							selected: selected,
+							focusable: false
+						}));
+					}
+					boxIndex++;
+				}
+			}
+			
+			]]>
+		</method>
+
+		<!---
+			Close the dialog.
+		 -->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.propertyValues = null;
+			
+			for (var i = 0; i < this.radioButtons.length; i++) {
+				this.radioButtons[i].destroy();
+			}
+			this.radioButtons.length = 0;
+			
+			]]>
+		</method>
+		
+		<wcfBorderedView name="borderedView" width="180" height="150" borderSize="1" borderColor="${parent.style.bordercolumnlistcolor}">
+			<attribute name="hScrollRequired" type="boolean" value="${this.clippedContent.content.width > this.clippedContent.width}"/>
+			<attribute name="vScrollRequired" type="boolean" value="${this.clippedContent.content.height > this.clippedContent.height}"/>
+			<attribute name="hScrollHeight" type="number" value="${(this.hScrollRequired ? this.hScroll.height : 0)}"/>
+			<attribute name="vScrollWidth" type="number" value="${(this.vScrollRequired ? this.vScroll.width : 0)}"/>
+			<view name="clippedContent" clip="true"
+					x="3"
+					y="3"
+					width="${parent.width - parent.vScrollWidth - 6}"
+					height="${parent.height - parent.hScrollHeight - 6 }">
+				<view x="3" y="3" name="content">
+					<simplelayout axis="y"/>
+					<wcfRadioGroup name="valueGroup" >
+					</wcfRadioGroup>
+				</view>
+			</view>
+			<wcfHorizontalScrollbar name="hScroll" scrolltarget="parent.clippedContent.content"
+					x="-1"
+					y="${parent.clippedContent.y + parent.clippedContent.height + 2}"
+					width="${parent.width-parent.vScrollWidth}"
+					visible="${parent.hScrollRequired}"/>
+			
+			<wcfVerticalScrollbar name="vScroll" scrolltarget="parent.clippedContent.content"
+					x="${parent.clippedContent.x + parent.clippedContent.width + 2}"
+					y="-1"
+					height="${parent.height-parent.hScrollHeight}"
+					visible="${parent.vScrollRequired}"/>
+		</wcfBorderedView>
+		
+
+	
+		<view name="buttonSection" placement="footer">
+			<wcfButton name="okButton" text="${foundationResources.simpleDialogOK.string}" isdefault="true">
+				<handler name="onclick">
+					<![CDATA[
+					parent.parent.onOk();
+					]]>
+				</handler>
+			</wcfButton>
+			<wcfButton name="cancelButton" text="${foundationResources.simpleDialogCancel.string}">
+				<handler name="onclick">
+					<![CDATA[
+					parent.parent.onCancel();
+					]]>
+				</handler>
+			</wcfButton>
+			<simplelayout axis="x"/>
+		</view>
+
+	</wcfDialog>
+	
+</library>

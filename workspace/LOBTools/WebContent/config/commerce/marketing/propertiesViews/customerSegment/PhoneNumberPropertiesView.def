@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktPhoneNumberProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/PhoneNumber" promptText="${mktMarketingResources.cspPhoneNumber}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="any" objectPath="TopAndList/PhoneNumber" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyPhoneNumber}" listDefinitionName="mktCSPhoneNumberGrid" name="phoneNumberGrid" objectPath="TopAndList/PhoneNumber/PhoneNumberList" objectTypes="PhoneNumberStartsWithOption" promptText="${mktMarketingResources.customerSegment_phoneNumber_SpecifyPhoneNumber}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="notAny" objectPath="TopAndList/PhoneNumber" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyPhoneNumber}" listDefinitionName="mktCSPhoneNumberGrid" name="phoneNumberGrid" objectPath="TopAndList/PhoneNumber/PhoneNumberList" objectTypes="PhoneNumberNotStartsWithOption" promptText="${mktMarketingResources.customerSegment_phoneNumber_SpecifyPhoneNumber}"/>
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktCSPhoneNumberGrid" preferenceKey="mktCSPhoneNumberGrid">		
+		<GridText editable="true" name="phoneNumberName" propertyName="conditionValue" required="true" text="${mktMarketingResources.customerSegment_phoneNumber_Specified}" visible="true" width="250"/>
+	</ObjectGrid>
+</Definitions>

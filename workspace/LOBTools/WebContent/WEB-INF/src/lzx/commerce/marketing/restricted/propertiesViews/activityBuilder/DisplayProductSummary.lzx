@@ -1,0 +1,260 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktDisplayProductElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktDisplayProductElementObject} object:
+		<ul>
+			<li>ChildCatentry/CatalogEntry/CatalogEntryDescription[name]</li>
+			<li>elemTemplateName</li>
+			<li>searchTermList</li>
+			<li>useUserSearchTerm</li>
+			<li>searchActionFilter/filterName</li>
+			<li>displayMax</li>
+			<li>searchActionOrderBy/orderByField</li>
+		</ul>
+	-->
+	<class name="mktDisplayProductSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="productNames" objectPath="ChildCatentry/CatalogEntry/CatalogEntryDescription" propertyName="name" sequencePropertyName="sequence" sequencePropertyPath="ChildCatentry" />
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="searchTermList" propertyName="searchTermList"/>
+		<wcfFlowSummaryParam name="useUserSearchTerm" propertyName="useUserSearchTerm"/>
+		<wcfFlowSummaryParam name="displayMax" propertyName="displayMax"/>
+		<wcfFlowSummaryParam name="orderByField" objectPath="searchActionOrderBy" propertyName="orderByField" resolveDisplayName="true" sequencePropertyName="sequence" />
+		<wcfFlowSummaryParam name="filterName" objectPath="filterGroup" propertyName="displayName" checkObjectDefinition="true" forceResolveAll="true" sequencePropertyName="sequence" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_displayMax, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_searchTerm, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_shopperSearchTerm, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_filterBy, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_sortBy, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktDisplayProductElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var products = this.getValuesList("productNames");
+				var choice = this.resolvedParams["elemTemplateName"];
+				if(products != "" && choice == "displayProduct") {
+					products = wcfStringUtil.escapeText(products);
+					summaryText += products;
+				}
+				else {
+					if ( choice == "displayProductStandardSearch") {
+						var maxDisplay = this.resolvedParams["displayMax"];
+						if(maxDisplay  != null && maxDisplay != "") {
+							var summaryMaxDisplay = mktMarketingResources.replaceValues("summarydisplayProduct_displayMax", [maxDisplay]);
+							summaryText += summaryMaxDisplay;
+						}
+
+						var useShopperKeyword = this.resolvedParams["useUserSearchTerm"];
+						if(useShopperKeyword == "true") {
+							var shopperKeywordText = mktMarketingResources.summarydisplayProduct_shopperSearchTerm.string;
+							summaryText += "\n" + shopperKeywordText;
+						}
+						
+						var searchKeyword = this.resolvedParams["searchTermList"];
+						if ( useShopperKeyword == "false" && searchKeyword != null && searchKeyword != "" ) {
+							var summaryKeyword = mktMarketingResources.replaceValues("summarydisplayProduct_searchTerm", [searchKeyword]);
+							summaryText += "\n" + summaryKeyword;
+						}
+
+						var filterNames = this.getValuesList("filterName");
+						if ( filterNames != "" ){
+							var summaryFilter = mktMarketingResources.replaceValues("summarydisplayProduct_filterBy", [filterNames]);
+							summaryText += "\n" + summaryFilter;
+						}
+
+						var orderByFields = this.getValuesList("orderByField");
+						if ( orderByFields != "" ){
+							var summarySort = mktMarketingResources.replaceValues("summarydisplayProduct_sortBy", [orderByFields]);
+							summaryText += "\n" + summarySort;
+						}
+					}
+				}
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		This summary view provides brief information about the {@link mktDisplayProductCombinedElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktDisplayProductCombinedElementObject} object:
+		<ul>
+			<li>ChildCatentryGroup/CatalogEntry/CatalogEntryDescription[name]</li>
+			<li>elemTemplateName</li>
+			<li>searchTermList</li>
+			<li>useUserSearchTerm</li>
+			<li>searchActionFilter/filterName</li>
+			<li>displayMax</li>
+			<li>catalogEntryPropertySearchFilter[filterName]</li>
+			<li>catenttype_id_ntk_cs/filterValue[filterValue]</li>
+			<li>ChildCatalogGroupGroup/CatalogGroupAlias[identifier]</li>
+			<li>ChildAttributeWithAllowedValuesGroup/AttributeDictionaryAttributes[attributeCode]</li>
+			<li>ChildFacetExclusion[facetExclusionField]</li>
+		</ul>
+	-->
+	<class name="mktDisplayProductCombinedSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="productNames" objectPath="ChildCatentryGroup/CatalogEntry/CatalogEntryDescription" propertyName="name" sequencePropertyName="sequence" sequencePropertyPath="ChildCatentryGroup" />
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="searchTermList" propertyName="searchTermList"/>
+		<wcfFlowSummaryParam name="useUserSearchTerm" propertyName="useUserSearchTerm"/>
+		<wcfFlowSummaryParam name="includeCategories" propertyName="includeCategories"/>
+		<wcfFlowSummaryParam name="includeFacets" propertyName="includeFacets"/>
+		<wcfFlowSummaryParam name="displayMax" propertyName="displayMax"/>
+		<wcfFlowSummaryParam name="orderByPropertyField" objectPath="searchActionOrderBy" propertyName="orderByField" resolveDisplayName="true" sequencePropertyName="sequence" />
+		<wcfFlowSummaryParam name="propertyName" objectPath="catalogEntryPropertySearchFilter" propertyName="filterName" resolveDisplayName="true"/>
+		<wcfFlowSummaryParam name="productType" objectPath="catenttype_id_ntk_cs/filterValue" propertyName="filterValue" resolveDisplayName="true"/>
+		<wcfFlowSummaryParam name="categoryName" objectPath="ChildCatalogGroupGroup/CatalogGroupAlias" propertyName="identifier"/>
+		<wcfFlowSummaryParam name="attributeName" objectPath="ChildAttributeWithAllowedValuesGroup/AttributeDictionaryAttributes" propertyName="attributeCode"/>
+		<wcfFlowSummaryParam name="facetExclusionField" objectPath="ChildFacetExclusion" propertyName="facetExclusionField" resolveDisplayName="true"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_displayMax, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_searchTerm, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_shopperSearch, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_filterBy, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_sortBy, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_customerCategorySelection, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_customerFacetSelection, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_ignoreCustomerFacetSelection, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_useShoppers1, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_useShoppers2, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarydisplayProduct_useShoppers3, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktDisplayProductCombinedElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var products = this.getValuesList("productNames");
+				var choice = this.resolvedParams["elemTemplateName"];
+				if(products != "" && choice == "displayProduct") {
+					products = wcfStringUtil.escapeText(products);
+					summaryText += products;
+				}
+				else {
+					if ( choice == "displayProductStandardSearchCombined") {
+						var overrideText = [];
+						var maxDisplay = this.resolvedParams["displayMax"];
+						if(maxDisplay != null && maxDisplay != "") {
+							var summaryMaxDisplay = mktMarketingResources.replaceValues("summarydisplayProduct_displayMax", [maxDisplay]);
+							summaryText += summaryMaxDisplay;
+						}
+
+						var useShopperKeyword = this.resolvedParams["useUserSearchTerm"];
+						if(useShopperKeyword == "true") {
+							var shopperKeywordText = mktMarketingResources.summarydisplayProduct_shopperSearch.string;
+							overrideText.push(shopperKeywordText);
+						}
+						var useCustomerCategorySelection = this.resolvedParams["includeCategories"];
+						if(useCustomerCategorySelection == "true") {
+							var includeCategoryText = mktMarketingResources.summarydisplayProduct_customerCategorySelection.string;
+							overrideText.push(includeCategoryText);
+						}
+						
+						var useCustomerFacetSelection = this.resolvedParams["includeFacets"];
+						if(useCustomerFacetSelection == "true") {
+							var includeFacetText = mktMarketingResources.summarydisplayProduct_customerFacetSelection.string;
+							overrideText.push(includeFacetText);
+						}
+						
+						if ( overrideText.length == 1 ) {
+							summaryText += "\n" + mktMarketingResources.replaceValues("summarydisplayProduct_useShoppers1", overrideText);
+						} else if ( overrideText.length == 2 ) {
+							summaryText += "\n" + mktMarketingResources.replaceValues("summarydisplayProduct_useShoppers2", overrideText);
+						} else if ( overrideText.length == 3 ) {
+							summaryText += "\n" + mktMarketingResources.replaceValues("summarydisplayProduct_useShoppers3", overrideText);
+						}
+						
+						var searchKeyword = this.resolvedParams["searchTermList"];
+						if (searchKeyword != null && searchKeyword != "" ) {
+							var summaryKeyword = mktMarketingResources.replaceValues("summarydisplayProduct_searchTerm", [searchKeyword]);
+							summaryText += "\n" + summaryKeyword;
+						}
+							
+						if(useCustomerFacetSelection == "true") {	
+							var facetExclusionFields = this.getValuesList("facetExclusionField");
+							if (facetExclusionFields != null && facetExclusionFields != ""){
+								var summaryFacetExclusion = mktMarketingResources.replaceValues("summarydisplayProduct_ignoreCustomerFacetSelection", [facetExclusionFields]);
+								summaryText += "\n" + summaryFacetExclusion;
+							}							
+						}
+												
+						var categoryNames = this.getValuesList("categoryName");
+						var attributeName = this.getValuesList("attributeName");
+						var propertyName = this.getValuesList("propertyName");
+						var productTypes = this.getValuesList("productType");
+						var filterText = "";
+						if ( categoryNames != "" ){
+							filterText = categoryNames;
+						}
+						if ( propertyName != "" ){
+							if ( filterText != "" ){
+								filterText += ", " + propertyName;
+							} else {
+								filterText = propertyName;
+							}							
+						}
+						if ( attributeName != "" ){
+							if ( filterText != "" ){
+								filterText += ", " + attributeName;
+							} else {
+								filterText = attributeName;
+							}							
+						}
+						if ( productTypes != "" ){
+							if ( filterText != "" ){
+								filterText += ", " + productTypes;
+							} else {
+								filterText = productTypes;
+							}							
+						}
+						if ( filterText != "" ){
+							var summaryFilter = mktMarketingResources.replaceValues("summarydisplayProduct_filterBy", [filterText]);
+							summaryText += "\n" + summaryFilter;
+						}
+
+						var orderByPropertyField = this.getValuesList("orderByPropertyField");
+						var orderText = "";
+						if ( orderByPropertyField != "" ){
+							orderText = orderByPropertyField;
+						}
+						if ( orderText != "" ){
+							var summarySort = mktMarketingResources.replaceValues("summarydisplayProduct_sortBy", [orderText]);
+							summaryText += "\n" + summarySort;
+						}
+					}
+				}
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<_config:DevelopmentComponentConfiguration
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.ibm.com/xmlns/prod/commerce/foundation/config ../xsd/wc-component.xsd "
+	xmlns:_config="http://www.ibm.com/xmlns/prod/commerce/foundation/config">
+	<_config:dataservice
+    		dataMediatorType="JDBC"
+           	metadataClass="com.ibm.commerce.catalog.facade.server.metadata.CatalogMetadata"
+		maximumPageSize="1000">
+		
+		<_config:context key="CURRENCY"
+                    name="com.ibm.commerce.context.globalization.GlobalizationContext"
+                    propertyName="currency"
+                    defaultValue="USD" />
+		
+		<_config:mapping>
+			<_config:key name="AttributeDictionaryAttribute" />
+			<_config:basetable name="ATTR" useAllColumns="true">
+				<_config:columns name="IDENTIFIER" 
+						propertyName="AttributeIdentifier/ExternalIdentifier/Identifier" caseSensitive="false"/>
+				<_config:associatedtable name="ATTRDESC" useAllColumns="true">
+					<_config:columns name="NAME" propertyName="AttributeDescription/Name" caseSensitive="false"/>						
+					<_config:columns name="LANGUAGE_ID" propertyName="AttributeDescription/language" caseSensitive="false"/>						
+				</_config:associatedtable>
+			</_config:basetable>
+		</_config:mapping>		  
+
+		<_config:mapping>
+			<_config:key name="Catalog" />
+			<_config:basetable name="CATALOG" useAllColumns="true">
+				<_config:columns name="IDENTIFIER" 
+						propertyName="CatalogIdentifier/ExternalIdentifier/Identifier" caseSensitive="false"/>
+				<_config:associatedtable name="CATALOGDSC" useAllColumns="true">
+					<_config:columns name="NAME" propertyName="Description/Name" caseSensitive="false"/>						
+					<_config:columns name="LANGUAGE_ID" propertyName="Description/language" caseSensitive="false"/>						
+				</_config:associatedtable>
+			</_config:basetable>
+		</_config:mapping>		  
+
+		<_config:mapping>
+		  <_config:key name="CatalogFilter" />
+   		<_config:basetable name="CATFILTER" useAllColumns="false">
+		    <_config:columns name="IDENTIFIER" caseSensitive="false"
+    		  propertyName="CatalogFilterIdentifier/ExternalIdentifier/Identifier" />
+   		</_config:basetable>
+ 		</_config:mapping>
+	</_config:dataservice>
+		
+	<_config:valuemappingservice>
+		<_config:valuemapping externalName="CatalogFilterSelectionTypeMapping" internalName="CatalogFilterSelectionTypeMapping">
+			<_config:valuemap externalValue="Exclude" internalValue="0" />
+			<_config:valuemap externalValue="Include" internalValue="1" />
+			<_config:valuemap externalValue="ExcludeImplicitSKU" internalValue="2" />
+			<_config:valuemap externalValue="IncludeImplicitSKU" internalValue="3" />
+		</_config:valuemapping>
+		
+		<_config:valuemapping externalName="CatalogFilterConditionRelationMapping" internalName="CatalogFilterConditionRelationMapping">
+			<_config:valuemap externalValue="and" internalValue="0" />
+			<_config:valuemap externalValue="or" internalValue="1" />
+		</_config:valuemapping>
+
+		<_config:valuemapping externalName="WebContentTypeMapping" internalName="WebContentTypeMapping">
+			<_config:valuemap externalValue="HTML" internalValue="text/html" />
+			<_config:valuemap externalValue="PDF" internalValue="application/pdf" />
+			<_config:valuemap externalValue="XML" internalValue="application/xml" />
+			<_config:valuemap externalValue="WORD" internalValue="application/msword" />
+			<_config:valuemap externalValue="PPT" internalValue="application/mspowerpoint" />
+			<_config:valuemap externalValue="EXCEL" internalValue="application/msexcel" />
+		</_config:valuemapping>
+
+	</_config:valuemappingservice>
+	
+  <_config:authorization-configuration>
+		<_config:protectable-proxy
+			protectable="com.ibm.commerce.catalog.facade.server.authorization.CatalogNavigationViewTypeProtectableProxy"
+			interfacename="com.ibm.commerce.catalog.facade.datatypes.CatalogNavigationViewType" />
+			
+		<_config:protectable-proxy 
+			protectable="com.ibm.commerce.catalog.facade.server.authorization.CatalogFilterTypeProtectableProxy"
+			interfacename="com.ibm.commerce.catalog.facade.datatypes.CatalogFilterType" />
+			
+		<_config:protectable-proxy 
+			protectable="com.ibm.commerce.catalog.facade.server.authorization.CatalogEntryFilteringTypeProtectableProxy"
+			interfacename="com.ibm.commerce.catalog.facade.datatypes.CatalogEntryFilteringType" />
+			
+		<_config:protectable-proxy 
+			protectable="com.ibm.commerce.catalog.facade.server.authorization.SEOURLTypeProtectableProxy"
+			interfacename="com.ibm.commerce.foundation.common.datatypes.SEOURLType" />
+		<_config:protectable-proxy 
+			protectable="com.ibm.commerce.catalog.facade.server.authorization.SEOPropertiesTypeProtectableProxy"
+			interfacename="com.ibm.commerce.foundation.common.datatypes.SEOPropertiesType" />		
+		
+		<_config:protectable-proxy 
+			protectable="com.ibm.commerce.catalog.facade.server.authorization.CatalogDescriptionOverrideTypeProtectableProxy"
+			interfacename="com.ibm.commerce.catalog.facade.datatypes.CatalogDescriptionOverrideType" />					
+	</_config:authorization-configuration>
+	
+	<_config:extendedconfiguration>
+	
+		<_config:configgrouping name="LoadOnStartup">
+			<!-- 
+				Defines a list of modules to be called at server start up, with the name of the property being the class name for
+				implementing the com.ibm.commerce.foundation.internal.server.services.bootstrap.LoadOnStartup interface.
+				Its value field defines whether this module should be loaded or not. 
+			  -->
+			<_config:property name="com.ibm.commerce.catalog.facade.server.services.bootstrap.SearchServiceWarmStarter" value="true" />
+		</_config:configgrouping>
+		
+		<_config:configgrouping name="SearchConfiguration">
+
+			<!-- 
+				Start up
+			  -->
+			<!-- Allow WC server to issue a search request to warm start the SOLR server;
+			     setting to false will disable warm starting SOLR server. -->
+			<_config:property name="WarmStartSearchServer" value="true" />
+			<!-- Reset any pending indexing lock at server startup. Normally this kind of cleanup operation
+			     is not necessary unless a prior indexing process failed unexpectedly and blocks all subsequent
+			     indexing requests to start. -->
+			<_config:property name="WarmStartResetIndexingLock" value="false" />
+					
+			<!-- 
+				Server connectivity
+			  -->
+			<!-- Maximum number of indexing retries -->
+			<_config:property name="IndexingRetries" value="10" />
+			<!-- Time interval between indexing retry, unit in second -->
+			<_config:property name="IndexingRetryInterval" value="60" />
+			<!-- Data import handler timeout, unit in second -->
+			<_config:property name="IndexingTimeout" value="15" />
+			<!-- Time interval between each polling for replication status on slave servers, unit in second -->
+			<_config:property name="ReplicationPollingInterval" value="5" />
+			<!-- Connection timeout for the polling request for replication status, unit in second -->
+			<_config:property name="ReplicationPollingConnectionTimeout" value="15" />
+			
+			<!-- 
+				Search Term Association 
+			 -->
+			<!-- Maximum number of synonym expanded predicates allowed within each search operation -->
+			<_config:property name="SynonymExpansionThreshold" value="300" />
+			
+			<!-- 
+				Index synchronization 
+			 -->
+			<!-- Pre-processor to be executed in a multi-threaded mode -->
+			<_config:property name="MultiThreadedIndexPreprocessing" value="false" />
+			<!-- Maximum number of delta updates that can be perform without a full re-indexing -->
+			<_config:property name="DeltaIndexingThreshold" value="10000" />
+			<!-- When the number of delta updates exceeds this threshold, a warning will be 
+			     displayed at the store preview header -->
+			<_config:property name="IndexingWarningThreshold" value="1000" />
+			<!-- Maximum amount of time (in minutes) to allow a lock to be placed to an index --> 
+			<_config:property name="IndexingMaximumLockTime" value="720" />
+			<!-- Maximum amount of time (in minutes) each thread is allowed to use for indexing each core --> 
+			<_config:property name="MaximumThreadTimeForIndexing" value="120" />
+
+			<!-- 
+				DynaCache invalidation for storefront cached content
+			 -->
+			<!-- 
+				Invalidation identifier template for CatalogEntry and CatalogGroup objects, with each identifier separated by 
+				a comma (,).  In order to automate the cache invalidation for storefront cached content using DynaCache as
+				part of the search re-indexing procedure, the following guideline must be followed:
+				
+				 - define a cache policy (in cachespec.xml) for a JSP page with the proper dependency identifier
+				   for use with search index emergency (delta) update.
+				   
+				   For example, in order to invalidate the ProductDisplay page given a catalog entry identifier:
+				    
+					   <dependency-id>ProductDisplay:productId:langId
+						  <component id="" ignore-value="true" type="pathinfo">
+							 <required>true</required>
+							 <value>/ProductDisplay</value>
+						  </component>
+						  <component id="productId" type="parameter">
+						     <required>true</required>
+						  </component>
+						  <component id="DC_lang" type="attribute">
+							 <required>true</required>
+						  </component>
+					   </dependency-id>
+					   
+				   For example, in order to invalidate the CategoryDisplay page given a catalog group identifier:
+				   
+					   <dependency-id>CategoryDisplay:categoryId:langId
+						  <component id="" ignore-value="true" type="pathinfo">
+							 <required>true</required>
+							 <value>/CategoryDisplay</value>
+							 <value>/SearchDisplay</value>
+						  </component>
+						  <component id="categoryId" type="parameter">
+						     <required>true</required>
+						  </component>
+						  <component id="DC_lang" type="attribute">
+							 <required>true</required>
+						  </component>
+					   </dependency-id>
+					   
+				   For example, in order to invalidate the TopCategoriesDisplay page:
+				   
+					   <dependency-id>TopCategoriesDisplay:langId
+						  <component id="" ignore-value="true" type="pathinfo">
+							 <required>true</required>
+							 <value>/TopCategoriesDisplay</value>
+						  </component>
+						  <component id="DC_lang" type="attribute">
+							 <required>true</required>
+						  </component>
+					   </dependency-id>
+					   
+				 - define a corresponding invalidation identifier to be generated by providing a template
+				   for the following two properties in this wc-component.xml file, for example:
+				   
+				   		<_config:property name="CacheInvalidationForCatalogEntry"
+				   					 	  value="ProductDisplay:productId:langId:$catEntryId$:$langId$,CategoryDisplay:categoryId:langId:$catGroupId$:$langId$" />
+				   
+				   There are two invalidation templates provided above - the first template is to invalidate the ProductDisplay
+				   page, while the second template is used for invalidating its immediate parent categories across all catalogs.
+				   
+				  		<_config:property name="CacheInvalidationForCatalogGroup"
+				   						  value="CategoryDisplay:categoryId:langId:$catGroupId$:$langId$,TopCategoriesDisplay:langId:$langId$" />
+				   
+				   Similar to the product related invalidation template, there are also two invalidation templates provided
+				   above for categories - the first template is to invalidate the CategoryDisplay for the current category
+				   and all its immediate parent categories across all catalogs, while the second template is used for
+				   invalidating another related display, called TopCategoriesDisplay.  This TopCategoriesDisplay is typically
+				   used in the Home page where the affect category may show up. 
+				   						  
+				The following is a list of pre-defined context variables that can be used in the "CacheInvalidationForCatalogEntry"
+				invalidation identifier template:
+
+				 - catEntryId = internal identifier for the modified catalog entry
+				 - catGroupId = internal identifier for its immediate parent category across all catalogs
+				 - langId     = internal language identifier for the modifier entry
+				 
+				The following is a list of pre-defined context variables that can be used in the "CacheInvalidationForCatalogGroup"
+				invalidation identifier template:
+
+				 - catGroupId = internal identifier for the modified catalog group, as well as its immediate parent category
+				                across all catalogs
+				 - langId     = internal language identifier for the modifier entry
+			 -->
+			<_config:property name="CacheInvalidationForCatalogEntry"
+			                  value="" />
+			<_config:property name="CacheInvalidationForCatalogGroup"
+			                  value="" />
+			<!-- 
+				Full cache invalidation - this is a special cache invalidation operator for full cache invalidation.
+				When the search runtime determines that a full cache invalidation is necessary and this value
+				"CacheInvalidationForAll" is set (default is set to "clearall"), then this value will be set into
+				the CACHEIVL.DATA_ID in order to request all cache to be cleared.  However, if this value is not set
+				or left as an empty string (""), then no full cache invalidation will be performed.
+				Note: in order to allow full cache invalidation to be performed through the DynaCacheInvalidationCmd
+				scheduler command, ensure that "enableRefreshRegistry=false" is passed in as the one of the job
+				parameters.
+			 -->
+			<_config:property name="CacheInvalidationForAll" value="" />
+			<!-- 
+				Cache invalidation delay - in order to determine a reasonable amount of delay, in milliseconds, before the
+				cache invalidation kicks in after each search re-indexing, there are the four factors that needs to be
+				considered: 
+				 - the time of the next re-indexing scheduler command will be executed, e.g. in 5 minutes
+				 - the amount of time approximately that the re-indexing may take to completion, e.g 2 minutes
+				 - the next replication time between the production search index and the Repeater, e.g. 1 minute
+				 - the amount of time approximately that the index replication may take to completion, e.g. 3 minutes
+				In this given example above, the estimated invalidation delay should be the total of 5, 2, 1, and 3 minutes,
+				which equals to 11 minutes, or 660000 milliseconds.  Default is 0 - meaning to disable manual delay override
+				and automatically synchronize with the search index replication.  In other words, all corresponding 
+				dependencies for the updated entries will be invalidated immediately after index replication is completed. 
+			 -->
+			<_config:property name="CacheInvalidationDelay" value="0" />
+
+			<!-- 
+				Statistics
+			 -->
+			<!-- Batch processing size for capturing search statistics, unit is the number of cached entries -->
+			<_config:property name="SearchStatisticsBatchInsertSize" value="10000" />
+			<!-- Time interval between batch processing updates, unit in second -->
+			<_config:property name="SearchStatisticsUpdateInterval" value="600" />
+			<!-- Track search rule statistics up to only the first number of search result pages -->
+			<_config:property name="SearchStatisticsResultPagesTrackingThreshold" value="1" />
+						
+							
+			<!-- 
+			 	Special character handling
+			 	
+				Lucene escape character list: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ 
+				eDismax escape character list can be a lot smaller(i.e, + - ), however we will maintain
+				a single large Lucene character set because we share it with the filter queries which 
+				use the Lucene query syntax
+				EscapePatterns uses full characters match
+				IgnorePatterns uses regular expression match
+				StopPatterns uses regular expression match 
+	
+			Following is the sample list of Lucene query parser escape characters:
+			
+			<_config:property name="EscapePatterns" value="\,+,-,&amp;&amp;,~,||,(,),{,},[,],&quot;,^,!,:,AND,OR,NOT" />
+			
+			Following is the sample list of eDismax query parser escape characters:
+			
+			<_config:property name="EscapePatterns" value="+,-,&quot;" />
+
+			-->
+			<_config:property name="EscapePatterns" value="\,+,-,&amp;&amp;,~,||,(,),{,},[,],&quot;,^,!,:,AND,OR,NOT" />
+			<_config:property name="IgnorePatterns" value="" />
+			<!-- REGULAR Expression escape .|*?+(){}[]^$\ -->
+			<_config:property name="StopPatterns" value="[\\*\\?]+,&apos;&apos;|&quot;&quot;,.*[\\~\|].*" />
+			<!--  keywords with leading wildcard characters will be updated to not contain them   -->
+		 	<_config:property name="IgnoreLeadingPatterns" value="[\\*\\?]+"/>
+			<!-- ; splits different sections. Each section related fields will be separated by , -->
+			<_config:property name="RequestFields" value="searchTerm,filterTerm,manufacturer,minPrice,maxPrice,categoryId" />
+			
+			<!-- 
+				Query function
+			 -->
+			<!--
+				BoostByRankInCatalogAndCategory
+				
+				Formula for boosting by product/category sequence: -0.001 x rank
+				Param 1: internal catalog identifier
+				Param 2: internal category identifier
+			 -->
+			<_config:property name="BoostByRankInCatalogAndCategory" value="product(-0.001,getSequenceByCatalogAndCategory(sequence,'%s','%s'))" />
+			<!--
+				FilterInventoryByStoreAndFulfillmentCenter
+				
+				Formula for retrieving inventory count by physical store  using the single-value indexing design
+				Param 1: online store internal identifier
+				Param 2: physical store internal identifier
+				Param 3: range filter [%s TO %s]
+				
+				Note: this function can only be used for single-value option on Inventory index
+			 -->
+			<_config:property name="FilterInventoryByStoreAndFulfillmentCenter" value="inv_strlocqty_%s_%s:%s" />
+			<!--
+				OnlinePhysicalStoreQualifier
+				
+				A static identifier for an online store virtual physical store field name in solr index. There is no actual physical store 
+				associated to an online store. 			
+				
+				Note: This property will only be needed when DOM inventory model is used. 
+			 -->
+			<_config:property name="OnlinePhysicalStoreQualifier" value="OnlineStore" />
+			<!--
+				ConvertPhysicalStoreToFulfillmentCenter
+				
+				This flag controls whether or not the identifier passed in through _wcf.search.store parameter
+				is a store location identifier and should be converted into a fulfillment center identifier to be used
+				with the inventory search index.  For example, set this option to "true" when used with non-ATP inventory
+				model, or set this option to "false" when used with DOM inventory model.
+			 -->
+			<_config:property name="ConvertPhysicalStoreToFulfillmentCenter" value="true" />
+			
+			<!-- 
+				Facet management
+			 -->
+			<!-- 
+				The allowed table SRCHATTRPROP propertyname types to be displayed and managed in the "Show Facets" feature in the managment center.
+			 -->
+			<_config:property name="allowedFacetPropertynames" value="facet,facet-category,facet-range,facet-classicAttribute" />
+			<!-- The maximum number of facet fields to request in the FacetHelper.  This is configurable to avoid Solr URI length limit errors -->
+			<_config:property name="maximumFacetFieldsToRequest" value="200" />
+			
+			<!-- 
+				Search runtime
+			 -->
+			<!-- 
+				This configuration defines whether to use new relevancy keyword search function or use previous keyword search function. 
+				Attentions: if set the value to "true", please don't forget to update "EscapePatterns" values to corresponding parser.
+			-->
+			<_config:property name="BackCompatibleKeywordSearch" value="false" />
+			
+			<!-- This configuration defines whether to enable publish support for description override. -->
+			<_config:property name="EnablePublishOverride" value="false" />
+			
+			<!-- Dynamic Catalog Entry Recommendations -->
+			<!-- This is the search profile used in the dynamic catalog entry recommendation configuration -->
+			<_config:property name="dynamicCatalogEntryRecommendation_searchProfile" value="IBM_findCatalogEntryWithoutDescriptionByNameAndShortDescription" />
+			
+			<!-- 
+				Search profiles global defaults
+			 -->
+			<!--
+				Requests search server to generate additional debug messages.
+				Defaults to false.
+
+				This property acts as the default value for all search profile setting like this
+				<_config:profile>
+					<_config:query>
+						<_config:param name="debug" value="false"/>
+					</_config:query>
+				</_config:profils>
+				in the wc-search.xml file
+			-->
+			<_config:property name="SearchProfilesDebug" value="false" />
+			
+			<!--
+				Determines the level of details for preview. Defaults to 1.
+				0: Minimal  - includes marketing rules
+				1: Summary  - includes marketing rules, index status
+				2: Detailed - includes marketing rules, index status, query explain
+
+				This property acts as the default value for all search profile setting like this
+				<_config:profile>
+					<_config:query>
+						<_config:param name="preview" value="1"/>
+					</_config:query>
+				</_config:profils>
+				in the wc-search.xml file				
+			-->
+			<_config:property name="SearchProfilesPreview" value="1" />
+			
+			<!--
+				Determines the display mode for showing price in storefront. Defaults to 1.
+				0: Computed
+				   - summary: prices only for the current page are calculated at runtime
+				   - hide price facets
+				   - show computed price in each result
+				   - hide price range search in Advanced Search page
+				   - usage: prices are not populated in the search index
+				1: Indexed
+				   - summary: all prices are retrieved from search index
+				   - show price facets with price range configured in facet configuration table
+				   - show indexed price in each result
+				   - show price range search in Advanced Search page
+				   - usage: prices are populated in the search index
+				2: Mixed
+				   - summary: search result contains computed prices, while price facets use indexed prices
+				   - show price facets with price range configured in facet configuration table
+				   - show computed price in each result
+				   - show price range search in Advanced Search page
+				   - usage: prices for all supported currencies are populated in the search index
+
+				This property acts as the default value for all search profile setting like this
+				<_config:profile>
+					<_config:query>
+						<_config:param name="price" value="1"/>
+					</_config:query>
+				</_config:profils>
+				in the wc-search.xml file				
+			-->
+			<_config:property name="SearchProfilesPrice" value="1" />	
+					
+			<!--
+				Requests search server to capture search related statistics in the WC runtime.
+				When this option is enabled, statistical data is cached in memory until the
+				batch size (defined as SearchStatisticsBatchInsertSize in wc-component.xml
+				under ExtendedConfiguration) has been reached. This is done to minimize the
+				amount of I/O traffic caused as a result of search statistics gathering.
+				Defaults to false.
+
+				This property acts as the default value for all search profile setting like this
+				<_config:profile>
+					<_config:query>
+						<_config:param name="statistics" value="false"/>
+					</_config:query>
+				</_config:profils>
+				in the wc-search.xml file				
+			-->
+			<_config:property name="SearchProfilesStatistics" value="false"/>
+
+		</_config:configgrouping>
+		
+		<_config:configgrouping name="AccessProfileToSearchProfileMapping">
+		  <_config:property name="IBM_Store_Summary" value="IBM_findCatalogEntrySummary"/>
+		  <_config:property name="IBM_Store_Details" value="IBM_findCatalogEntryDetails"/>
+		  <_config:property name="IBM_Store_CatalogEntryAttachments" value="IBM_findCatalogEntryAttachments"/>
+		  <_config:property name="IBM_Store_CatalogEntryDetailsWithAttachments" value="IBM_findCatalogEntryDetailsWithAttachments"/>
+		  <_config:property name="IBM_Store_CatalogEntryDetailsWithComponentsAndAttachments" value="IBM_findCatalogEntryDetailsWithComponentsAndAttachments"/>
+		  <_config:property name="IBM_Store_CatalogEntryDetailsWithMerchandisingAssociations" value="IBM_findCatalogEntryDetailsWithMerchandisingAssocDetails"/>
+		  <_config:property name="IBM_Store_All" value="IBM_findCatalogEntryAll"/>
+		  <_config:property name="IBM_Store_CatalogEntryPrice" value="IBM_findCatalogEntryPrice"/>
+		  <_config:property name="IBM_Store_CatalogEntryPriceWithAttributes" value="IBM_findCatalogEntryPriceWithAttributes"/>
+		</_config:configgrouping>
+		
+		<!-- 
+			 The following configuration group maps access profiles to SEO filter classes. This mapping is used by the GetCatalogNavigationView service
+			 to populate SEO TMD into the CatalogNavigationView noun. This mapping is used irrespective of Search being enabled or disabled. 
+			 
+			 If Search is enabled, then it is possible to add a Search result filter for adding SEO TMD in wc-search.xml file. In such a scenario, the
+			 SEO filter specified in wc-search.xml file for the corresponding search profile will take precedence over the SEO filter specified in the 
+			 access profile to SEO filter mapping below. 
+			 
+			 If you want to add SEO filter at an access profile level, then the name of the property should be the access profile, e.g, 
+			 IBM_Store_Summary. In this case the SEO filtering will be applied for all IBM_Store_Summary access profiles irrespective of
+			 the search profile.
+
+			 If you want to add SEO filter at a search profile level, then the name of the property should be access profile + search profile, e.g, 
+			 IBM_Store_Summary+IBM_findCatalogEntrySummary. In this case the SEO filtering will be applied only for the access profile IBM_Store_Summary
+			 having a search profile IBM_findCatalogEntrySummary.
+		-->
+		<_config:configgrouping name="AccessProfileToSEOFilterMapping">
+			<_config:property name="IBM_Store_Summary+IBM_findCatalogEntrySummary" value="com.ibm.commerce.catalog.facade.server.services.search.metadata.SearchCatalogNavigationViewSEOTitleMetaDataFilter"/>
+			<_config:property name="IBM_Store_Details+IBM_findCatalogGroupDetails" value="com.ibm.commerce.catalog.facade.server.services.search.metadata.SearchCatalogNavigationViewSEOTitleMetaDataFilter"/>
+			<_config:property name="IBM_Store_Summary_SEO" value="com.ibm.commerce.catalog.facade.server.services.search.metadata.SearchCatalogNavigationViewSEOTitleMetaDataFilter"/>
+			<_config:property name="IBM_Store_Details_SEO" value="com.ibm.commerce.catalog.facade.server.services.search.metadata.SearchCatalogNavigationViewSEOTitleMetaDataFilter"/>
+		</_config:configgrouping>
+	</_config:extendedconfiguration>
+	
+</_config:DevelopmentComponentConfiguration>

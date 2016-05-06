@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyPane definitionName="cftCatalogFilterImportMainTabPaneContent">
+		<!--- Property group for the main properties of catalog filter import -->
+		<PropertyGroup name="CatalogFilterImportPropertiesGroup" groupTitle="${catalogResources.catalogImport_propertiesGroup}" open="true">
+			<!--- 
+				Property group which contain the file upload widget. 
+				This widget is only shown when creating a new catalog filter import  
+			-->
+			<PropertyGroup name="CatalogFilterImportUploadGroup" collapsable="false">
+				<!--- Enable condition which only show the file upload widget when creating a new catalog filter import  -->
+				<EnablementCondition conditionId="newCatalogFilterImportCondition" checkNewObject="true" enablementValue="true"/>
+		        <!--- File Upload widget to browse and select a file from local system  -->
+		        <PropertyFileUploader name="filePath" promptText="${cftCatalogFilterResources.catalogFilterImport_sourcePath}"
+	                extendedHelpText="${cftCatalogFilterResources.extendedHelpText_selectFile}" required="true">
+				</PropertyFileUploader>
+			</PropertyGroup> 
+			              
+	        <!--- An input field for file name -->
+	        
+	        			<PropertyGroup collapsable="false" name="fileNamePropertyGroup">
+				<!--- Enable condition which does not show the file name when creating a new catalog import  -->
+				<EnablementCondition checkNewObject="true" conditionId="existingCatalogFilterImportCondition" enablementValue="false"/>
+		        <!--- An input field for file name -->
+                 <PropertyInputText name="fileName" propertyName="fileName" extendedHelpText="${cftCatalogFilterResources.extendedHelpText_fileName}" 
+	             promptText="${cftCatalogFilterResources.catalogFilterImport_fileName}" required="true"/>
+	            </PropertyGroup> 
+                
+	        <!--- An input field for file size. It is read-only. -->    
+			<PropertyKilobyte name="fileSize" propertyName="fileSize" promptText="${cftCatalogFilterResources.catalogFilterImport_fileSize}"/>
+	            
+			<!---  The character set used in the file -->
+			<PropertyCombobox propertyName="fileEncoding" required="true" promptText="${cftCatalogFilterResources.catalogFilterImport_fileEncoding}"/>
+					
+		</PropertyGroup>
+		
+		<!--- Property group for the status information of the catalog filter import -->		
+		<PropertyGroup name="CatalogFilterImportStatusGroup" groupTitle="${cftCatalogFilterResources.catalogFilterImport_status}" open="true">
+			<!--- Enablement condition which only display status group when viewing price list import -->
+			<EnablementCondition conditionId="viewCatalogFilterImportCondition" checkNewObject="true" enablementValue="false"/>
+			
+			<!--- The name of the user who creates the catalog filter import  -->
+	        <PropertyInputText name="userName" propertyName="userName" promptText="${cftCatalogFilterResources.catalogFilterImport_userName}"
+	            extendedHelpText="${cftCatalogFilterResources.extendedHelpText_userName}"/>	
+	            		
+			<!--- Show the current status of the catalog filter import -->		
+			<PropertyCombobox propertyName="status" name="status" width="120" promptText="${cftCatalogFilterResources.catalogFilterImport_status}"
+				extendedHelpText="${cftCatalogFilterResources.extendedHelpText_status}">
+			</PropertyCombobox>
+			<!--- The summary report of the catalog filter import  -->
+			<PropertyViewLongText extendedHelpText="${catalogResources.extendedHelpText_summary}" objectPath="CatalogFilterImportSummary" promptText="${catalogResources.catalogImport_summary}" propertyName="summary">
+			</PropertyViewLongText>
+		</PropertyGroup>
+
+	</PropertyPane>			
+	
+	<ObjectProperties definitionName="cftCatalogFilterImportProperties">
+			<PropertyPane baseDefinitionName="cftCatalogFilterImportMainTabPaneContent"/>
+	</ObjectProperties>
+
+</Definitions>

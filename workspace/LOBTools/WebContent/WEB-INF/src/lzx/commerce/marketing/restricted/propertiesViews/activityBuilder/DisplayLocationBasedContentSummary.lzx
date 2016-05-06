@@ -1,0 +1,63 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktDisplayLocationBasedContentElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktDisplayLocationBasedContentElementObject} object:
+		<ul>
+			<li>locationType</li>
+		</ul>
+	-->
+	<class name="mktDisplayLocationBasedContentSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="locationType" propertyName="locationType"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.updateSummaryDel.register(mktMarketingResources.summaryDisplayLocationBasedContentForStore, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryDisplayLocationBasedContentForRegion, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktDisplayLocationBasedContentElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = this.getLocationType();
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+
+		<!--- @keywords private -->
+		<method name="getLocationType">
+			<![CDATA[
+				var summary = "";
+
+				if (this.resolvedParams["locationType"] == "pointOfInterest") {
+					summary = mktMarketingResources.summaryDisplayLocationBasedContentForStore.string;
+				} else if (this.resolvedParams["locationType"] == "region") {
+					summary = mktMarketingResources.summaryDisplayLocationBasedContentForRegion.string;
+				}
+
+				return summary;
+			]]>
+		</method>
+
+	</class>
+</library>

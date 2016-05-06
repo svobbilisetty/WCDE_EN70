@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectGrid definitionName="catSynonymGrid" preferenceKey="catSynonymGrid">
+		<GridStoreName name="store"/>
+		<GridIconTypeImage name="typeIcon" propertyName="typeIcon" required="true" text="${catalogResources.staType}" width="60"/>
+		<GridText editable="true" propertyName="searchTerms" required="true" text="${catalogResources.synonymListColumnHeader}" visible="true" width="600"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="catReplacementGrid" preferenceKey="catReplacementGrid">
+		<GridStoreName name="store"/>
+		<GridIconTypeImage name="typeIcon" propertyName="typeIcon" required="true" text="${catalogResources.staType}" width="60"/>
+		<GridText editable="true" name="searchTerm" propertyName="searchTerm" required="true" text="${catalogResources.searchTermColumnHeader}" visible="true" width="130"/>
+		<GridComboBox name="replacementType" propertyName="associationType" required="true" text="${catalogResources.replacementTypeColumnHeader}" visible="true" width="150"/>
+		<GridText editable="true" name="replacementTerms" propertyName="replacementTerms" required="true" text="${catalogResources.replacementTermsColumnHeader}" visible="true" width="320"/>
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="catLandingPageGrid" preferenceKey="catLandingPageGrid">
+		<GridStoreName name="store"/>
+		<GridIconTypeImage name="typeIcon" propertyName="typeIcon" required="true" text="${catalogResources.staType}" width="60"/>
+		<GridText editable="true" name="searchTerms" propertyName="searchTerms" required="true" text="${catalogResources.searchTermsColumnHeader}" visible="true" width="250"/>
+		<GridText editable="true" name="landingPage" propertyName="landingPage" required="true" text="${catalogResources.landingPageColumnHeader}" visible="true" width="350"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="catTopSearchHitGrid" preferenceKey="catTopSearchHitGrid">
+		<GridText editable="false" name="searchTerms" propertyName="searchTerms" text="${catalogResources.topSearchHitsReport_Keyword}" visible="true" width="150"/>
+		<catSearchSessionsGridText editable="false" name="searchSessions" propertyName="searchSessions" percentagePropertyName="percentage" text="${catalogResources.topSearchHitsReport_SearchingSessions}" alignment="right" datatype="number" visible="true" width="150"/>
+		<GridColumn editable="false" name="searchResults" text="${catalogResources.topSearchHitsReport_ResultsForKeyword}" visible="true" width="150">
+			<GridTextCellDescriptor name="searchResults" objectType="TopSearchHit" propertyName="searchResults" alignment="right" datatype="number">
+				<EnablementCondition conditionId="notLandingPageCondition" enablementValue="false" propertyName="hasLandingPage"/>
+			</GridTextCellDescriptor>
+			<GridComboBoxCellDescriptor name="landingPage" objectType="TopSearchHit" propertyName="landingPage" alignment="right">
+				<EnablementCondition conditionId="landingPageCondition" enablementValue="true" propertyName="hasLandingPage"/>
+			</GridComboBoxCellDescriptor>
+		</GridColumn>
+		<GridText editable="false" name="synonyms" propertyName="synonyms" text="${catalogResources.topSearchHitsReport_SynonymsOrReplacements}" visible="true" width="200"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="catTopSearchMissGrid" preferenceKey="catTopSearchMissGrid">
+		<GridText editable="false" name="searchTerms" propertyName="searchTerms" text="${catalogResources.topSearchMissesReport_Keyword}" visible="true" width="150"/>
+		<catSearchSessionsGridText editable="false" name="searchSessions" propertyName="searchSessions" percentagePropertyName="percentage" text="${catalogResources.topSearchMissesReport_SearchingSessions}" alignment="right" datatype="number" visible="true" width="150"/>
+		<GridText editable="false" name="suggestion" propertyName="suggestion" text="${catalogResources.topSearchMissesReport_Suggestion}" visible="true" width="150"/>
+		<GridText editable="false" name="suggestionResults" propertyName="suggestionResults" text="${catalogResources.topSearchMissesReport_ResultsForSuggestedKeyword}" alignment="right" datatype="number" visible="true" width="200"/>
+	</ObjectGrid>
+	
+</Definitions>

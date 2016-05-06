@@ -1,0 +1,62 @@
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2007
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<class name="wcfStretchLayout" extends="layout">
+		<attribute name="axis" value="y" setter="this.setAxis(axis)" type="string" />
+		<method name="setAxis" args="a" >
+			if (this['axis'] == null || this.axis != a) {
+				this.axis = a;
+				this.sizeAxis = a == "x" ? "width" : "height"
+				if (this.subviews.length) {
+					this.update();
+				}
+				if (this['onaxis']) {
+					this.onaxis.sendEvent(this.axis);
+				}
+				this.updateDelegate.register(this.immediateparent, "on" + this.sizeAxis );
+			}
+		</method>
+
+		<method name="addSubview" args="v">
+			if (!this.locked) {
+				var size = immediateparent[this.sizeAxis];
+				if (size != v[this.sizeAxis]) {
+					v.setAttribute(this.sizeAxis, size);
+				}
+			}
+			super.addSubview( v );
+		</method>
+		
+		<method name="update" args="e=null">
+			<![CDATA[
+			if (!this.locked) {
+				this.lock();
+				var l = this.subviews.length;
+				for (var i = 0; i < l; i++) {
+				    var v = this.subviews[i]; 
+					var size = immediateparent[this.sizeAxis];
+					if (size != v[this.sizeAxis]) {
+						v.setAttribute(this.sizeAxis, size);
+					}
+					if (v[this.axis] != 0) {
+						v.setAttribute(this.axis, 0);
+					}
+				}
+		        this.locked = false;
+			}
+			]]>
+		</method>
+	</class>
+</library>

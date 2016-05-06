@@ -1,0 +1,109 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		This is a base class for displaying a floating tooltip. Tooltip can be used in any view simply by writing the 
+		{@link wcfTooltip} tag within the view. Following is an example for creating a simple tooltip for a button:
+		
+		@START_CODE
+			<button resource="newIcon">
+            	<wcfTooltip text="Create new" extendedText="Create a new marketing activity for the current campaign." />
+        	</button>
+		@END_CODE
+
+		In the above example, {@link wcfTooltip#text} is the short tooltip text. You can have a long description of the 
+		object in the tooltip which can be specified in {@link wcfTooltip#extendedText}. You can also put a link to the 
+		Information	Center in the tooltip.
+		
+		The display of extended tooltip can be controlled in User Preference. The look and feel of the tooltip is defined 
+		in a single instance of {@link wcfBorderedView} which has an id wcfTooltipView. wcfToolTipView is reused to display
+		the tooltip for all objects in the Management Center. 
+	-->
+	<class name="wcfTooltip" extends="node" initstage="late">
+		<!--- 
+			The short tooltip text. If it is set to null or an empty string then the tooltip will not be displayed. 
+		-->
+		<attribute name="text" type="text" value=""/>
+		<!--- 
+			(Optional) The extended text that appears as the tooltip. Extended tooltip is displayed only if "Enable detailed tooltips"
+			preference is selected in User Preference.
+		-->
+		<attribute name="extendedText" type="text" value=""/>
+		<!--- 
+			(Optional) The text in the link that appears in the tooltip when "Enable detailed tooltips" preference is selected in 
+			User Preference. If it is set to null or an empty string then the default value which is "More details..." will be displayed.
+		-->
+		<attribute name="linkText" type="text" value=""/>
+		<!--- 
+			(Optional) The relative URL of the link which refers to the Information Center page that describes the object in greater 
+			detail. If it is set to null or an empty string then the link will not be displayed.
+		-->
+		<attribute name="linkURL" type="text" value=""/>
+		<!---
+			@keywords private 
+			(Optional) Image url for the tooltip.If it is set to null or an empty string then the image tooltip will not be displayed.
+		-->
+		<attribute name="imageURL" type="string" value=""/>
+	
+		<!---
+			@keywords private 
+			Flag that indicates whether the object that has the tooltip is currently visible.
+		-->
+		<attribute name="parentVisible" value="false" type="boolean" />
+		<!--- 
+			Flag which controls the enablement of the tooltip.  
+		-->
+		<attribute name="enabled" value="true" type="boolean" />
+
+		<!--- 
+			@keywords private
+			Initialization method for this class.	
+		-->
+		<handler name="oninit">
+			<![CDATA[
+			this.setVisibilityDel = new lz.Delegate(this, "setVisibility");
+			wcfViewUtil.registerVisibilityDelegate(this, this.setVisibilityDel);  
+			this.setVisibility();
+			wcfTooltipView.registerTooltipSource(this);
+			]]>
+		</handler>
+
+		<!--- 
+			@keywords private
+			Destroy method for this class.	
+		-->
+		<method name="destroy">
+			<![CDATA[
+			wcfTooltipView.unregisterTooltipSource(this);
+			if (this['setVisibilityDel']) {
+				this.setVisibilityDel.unregisterAll();
+				delete this.setVisibilityDel;
+			}
+			super.destroy();
+			]]>
+		</method>		
+		
+		<!--- 
+			@keywords private
+			Determines the visibility of the object that needs the tooltip.
+		-->
+		<method name="setVisibility" args="e=null">
+			<![CDATA[
+			this.parentVisible = wcfViewUtil.getInvisibleAncestor(this) == null;
+			]]>
+		</method>
+	</class>
+</library>

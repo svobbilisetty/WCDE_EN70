@@ -1,0 +1,1524 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+
+    <PropertyGroup definitionName="catManageGeneralProductInformation" groupTitle="${catalogResources.generalProductInformationSection}" open="true">
+        <!-- Catalog Entry Unique ID -->
+        <PropertyViewLongText promptText="${catalogResources.uniqueId_ColumnHeader}" propertyName="catentryId">
+             <FalseEnablementCondition/>
+        </PropertyViewLongText>
+        <!-- Property: Code. An input box for the code property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_Code}" promptText="${catalogResources.codePrompt}" propertyName="partnumber" required="true"/>
+		
+		<!-- Use this property group to display the name property when the description override feature is disabled.  -->
+		<PropertyGroup collapsable="false" name="catNameGroup">
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name"/>
+			<EnablementAndCondition conditionId="inheritedCatalogEntryCondition" baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+		</PropertyGroup>
+		
+		<!-- Use this property group to display the name property when the description override feature is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideNameGroup">
+			<EnablementAndCondition conditionId="inheritedCatalogEntryCondition" baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name" displayObjectStoreName="true"/>
+			<!-- Property: Name Override. An input box for the name override property. -->
+			<PropertyInputText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.namePrompt}" propertyName="overrideName" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Use this property group to display the short description property when the description override feature is disabled.  -->
+		<PropertyGroup collapsable="false" name="catSDescGroup">
+			<EnablementAndCondition conditionId="inheritedCatalogEntryCondition" baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc"/>
+		</PropertyGroup>
+		
+		<!-- Use this property group to display the short description property when the description override feature is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc" displayObjectStoreName="true"/>
+			<!-- Property: Short Description Override. A long input box for the short description override property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="overrideSDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Use this property group to display the long description property when the description override feature is disabled.  -->
+		<PropertyGroup collapsable="false" name="catLDescGroup">
+			<EnablementAndCondition conditionId="inheritedCatalogEntryCondition" baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc"/>
+		</PropertyGroup>
+		
+		<!-- Use this property group to display the long description property when the description override feature is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc" displayObjectStoreName="true"/>
+			<!-- Property: Long Description Override. A rich text editor for the long description override property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.longDescriptionPrompt}" propertyName="overrideLDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Use this property group to display the keyword property when the description override feature is disabled.  -->
+		<PropertyGroup collapsable="false" name="catKeywordGroup">
+			<EnablementAndCondition conditionId="inheritedCatalogEntryCondition" baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword"/>
+		</PropertyGroup>
+		
+		<!-- Use this property group to display the keyword property when the description override feature is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideKeywordGroup">
+		<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword" displayObjectStoreName="true"/>
+			<!-- Property: Keyword Override. A multiline input box for the search optimization keyword override property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.keywordPrompt}" propertyName="overrideKeyword" displayStoreName="true"/>
+		</PropertyGroup>
+		
+        <!-- Property: Additional Description 1. A multiline input box for the auxilary description 1 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription1Prompt}" propertyName="xdesc_auxDescription1"/> -->
+        <!-- Property: Additional Description 2. A multiline input box for the auxilary description 2 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription2Prompt}" propertyName="xdesc_auxDescription2"/> -->
+        <!-- Property: Manufacturer Name. An input box for the manufacturer name property. -->
+        <PropertyInputText objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPrompt}" propertyName="xprop_manufacturer"/>
+        <!-- Property: Manufacturer Partnumber. An input box for the manufacturer part number property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_manufacturerPartNumber}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPartNumberPrompt}" propertyName="xprop_manufacturerPartNumber"/>
+        <!-- Property: URL. An input box for the URL of the catalog entry property. -->    
+        <PropertyInputLongText extendedHelpText="${catalogResources.extendedHelpText_url}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.urlPrompt}" propertyName="xprop_url"/>
+        <!--- An editor to manage the parent category of a product -->
+        <ReferenceEditor allowCreate="true" extendedHelpText="${catalogResources.extendedHelpText_catalogEntryCategory}" headerText="${catalogResources.codePrompt}" name="parentCategoryRefEditor" parentObjectTypes="CatalogGroup,InheritedCatalogGroup" promptText="${catalogResources.parentCategoryInMasterCatalogPrompt}" referenceObjectTypes="ChildProduct,ChildSalesCatalogEntry,ChildSalesProduct,ChildInheritedProduct,ChildSalesInheritedProduct,ChildSalesInheritedCatalogEntry" required="true" validatorTypes="requiredParentCategoryValidator,requiredParentVersionedCategoryValidator"/>
+        <!-- Property: Recurring order. A radio group for the disallow recurring order property. -->
+	<MultiValueSelector name="recurringOrderSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryRecurringOrder}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntryRecurringOrder}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderTrue}" name="recurringOrderTrue">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>0</xprop_disallowRecurringOrder>
+				<xprop_subscriptionTypeId significant="false">NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderFalse}" name="recurringOrderFalse">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>  
+        <!-- Property: Subscription Type Id. A radio group for the subscription type id property. -->
+	<MultiValueSelector name="subscriptionSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntrySubscription}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntrySubscription}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionTrue}" name="catalogEntrySubscriptionTrue">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>TIME-BASED</xprop_subscriptionTypeId>
+				<xprop_disallowRecurringOrder significant="false">1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionFalse}" name="catalogEntrySubscriptionFalse">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>  
+    </PropertyGroup>
+
+    <PropertyGroup definitionName="catManageGeneralSKUInformation" groupTitle="${catalogResources.generalSKUInformationTab}" open="true">
+        <!-- Catalog Entry Unique ID -->
+        <PropertyViewLongText promptText="${catalogResources.uniqueId_ColumnHeader}" propertyName="catentryId">
+             <FalseEnablementCondition/>
+        </PropertyViewLongText>
+        <!-- Property: Code. An input box for the code property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_SKUCode}" promptText="${catalogResources.codePrompt}" propertyName="partnumber" required="true"/>
+		
+		<!-- Property group to display the name property when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the name property when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name" displayObjectStoreName="true"/>
+			<!-- Property: Name Override. An input box for the name override property. -->
+			<PropertyInputText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.namePrompt}" propertyName="overrideName" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the short description property when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the short description property when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc" displayObjectStoreName="true"/>
+			<!-- Property: Short Description Override. A long input box for the short description override property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="overrideSDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the long description property when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the long description property when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc" displayObjectStoreName="true"/>
+			<!-- Property: Long Description Override. A rich text editor for the long description override property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.longDescriptionPrompt}" propertyName="overrideLDesc" displayStoreName="true"/>
+		</PropertyGroup>
+        
+		<!-- Property group to display the keyword property when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the keyword property when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword" displayObjectStoreName="true"/>
+			<!-- Property: Keyword Override. A multiline input box for the search optimization keyword override property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.keywordPrompt}" propertyName="overrideKeyword" displayStoreName="true"/>
+		</PropertyGroup>
+		
+        <!-- Property: Alternate Description 1. A multiline input box for the auxilary description 1 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription1Prompt}" propertyName="xdesc_auxDescription1"/> -->
+        <!-- Property: Alternate Description 2. A multiline input box for the auxilary description 2 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription2Prompt}" propertyName="xdesc_auxDescription2"/> -->
+        <!-- Property: Manufacturer Name. An input box for the manufacturer name property. -->
+        <PropertyInputText objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPrompt}" propertyName="xprop_manufacturer"/>
+        <!-- Property: Manufacturer Partnumber. An input box for the manufacturer part number property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_manufacturerPartNumber}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPartNumberPrompt}" propertyName="xprop_manufacturerPartNumber"/>
+        <!-- Property: URL. An input box for the URL of the catalog entry property. -->    
+        <PropertyInputLongText extendedHelpText="${catalogResources.extendedHelpText_url}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.urlPrompt}" propertyName="xprop_url"/>
+        <!--- An editor to manage the  parent category of a sku -->
+        <ReferenceEditor extendedHelpText="${catalogResources.extendedHelpText_catalogEntryCategory}" headerText="${catalogResources.codePrompt}" name="parentCategoryRefEditor" parentObjectTypes="CatalogGroup,InheritedCatalogGroup" promptText="${catalogResources.parentCategoryInMasterCatalogPrompt}" referenceObjectTypes="ChildCatalogGroupSKU,ChildInheritedCatalogGroupSKU" required="true" validatorTypes="requiredParentCategoryValidator,requiredParentVersionedCategoryValidator"/>              
+        <!-- Property: Recurring order. A radio group for the disallow recurring order property. -->
+	<MultiValueSelector name="recurringOrderSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryRecurringOrder}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntryRecurringOrder}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderTrue}" name="recurringOrderTrue">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>0</xprop_disallowRecurringOrder>
+				<xprop_subscriptionTypeId significant="false">NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderFalse}" name="recurringOrderFalse">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector> 
+        <!-- Property: Subscription Type Id. A radio group for the subscription type id property. -->
+	<MultiValueSelector name="subscriptionSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntrySubscription}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntrySubscription}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionTrue}" name="catalogEntrySubscriptionTrue">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>TIME-BASED</xprop_subscriptionTypeId>
+				<xprop_disallowRecurringOrder significant="false">1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionFalse}" name="catalogEntrySubscriptionFalse">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>                 
+    </PropertyGroup>
+    
+
+    <PropertyGroup definitionName="catManageGeneralProductSKUInformation" groupTitle="${catalogResources.generalSKUInformationTab}" open="true">
+        <!-- Catalog Entry Unique ID -->
+        <PropertyViewLongText promptText="${catalogResources.uniqueId_ColumnHeader}" propertyName="catentryId">
+             <FalseEnablementCondition/>
+        </PropertyViewLongText>
+        <!-- Property: Code. An input box for the code property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_SKUCode}" promptText="${catalogResources.codePrompt}" propertyName="partnumber" required="true"/>
+		
+		<!--  Property group to display the name when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name"/>
+		</PropertyGroup>
+		
+		<!--  Property group to display the name when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name" displayObjectStoreName="true"/>
+			<!-- Property: Name Override. An input box for the name override property. -->
+			<PropertyInputText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.namePrompt}" propertyName="overrideName" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!--  Property group to display the short description when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc"/>
+		</PropertyGroup>
+		
+		<!--  Property group to display the short description when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc" displayObjectStoreName="true"/>
+			<!-- Property: Short Description Override. A long input box for the short description override property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="overrideSDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!--  Property group to display the long description when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc"/>
+		</PropertyGroup>
+		
+		<!--  Property group to display the long description when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc" displayObjectStoreName="true"/>
+			<!-- Property: Long Description Override. A rich text editor for the long description override property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.longDescriptionPrompt}" propertyName="overrideLDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!--  Property group to display the keyword when the description override feature is disabled. -->
+		<PropertyGroup collapsable="false" name="catKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword"/>
+		</PropertyGroup>
+		
+		<!--  Property group to display the keyword when the description override feature is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword" displayObjectStoreName="true"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.keywordPrompt}" propertyName="overrideKeyword" displayStoreName="true"/>
+		</PropertyGroup>
+		
+        <!-- Property: Alternate Description 1. A multiline input box for the auxilary description 1 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription1Prompt}" propertyName="xdesc_auxDescription1"/> -->
+        <!-- Property: Alternate Description 2. A multiline input box for the auxilary description 2 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription2Prompt}" propertyName="xdesc_auxDescription2"/> -->
+        <!-- Property: Manufacturer Name. An input box for the manufacturer name property. -->
+        <PropertyInputText objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPrompt}" propertyName="xprop_manufacturer"/>
+        <!-- Property: Manufacturer Partnumber. An input box for the manufacturer part number property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_manufacturerPartNumber}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPartNumberPrompt}" propertyName="xprop_manufacturerPartNumber"/>
+        <!-- Property: URL. An input box for the URL of the catalog entry property. -->    
+        <PropertyInputLongText extendedHelpText="${catalogResources.extendedHelpText_url}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.urlPrompt}" propertyName="xprop_url"/>
+        <!--- An editor to manage the  parent product of a sku -->
+        <ReferenceEditor extendedHelpText="${catalogResources.extendedHelpText_SKUParent}" headerText="${catalogResources.codePrompt}" name="parentCategoryRefEditor" parentObjectTypes="Product,InheritedProduct" promptText="${catalogResources.parentProductPrompt}" referenceObjectTypes="ProductChildSKU,ProductChildInheritedSKU" required="true" validatorTypes="requiredParentProductValidator,requiredParentVersionedProductValidator"/>            
+        <!-- Property: Recurring order. A radio group for the disallow recurring order property. -->
+	<MultiValueSelector name="recurringOrderSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryRecurringOrder}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntryRecurringOrder}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderTrue}" name="recurringOrderTrue">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>0</xprop_disallowRecurringOrder>
+				<xprop_subscriptionTypeId significant="false">NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderFalse}" name="recurringOrderFalse">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>    
+        <!-- Property: Subscription Type Id. A radio group for the subscription type id property. -->
+	<MultiValueSelector name="subscriptionSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntrySubscription}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntrySubscription}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionTrue}" name="catalogEntrySubscriptionTrue">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>TIME-BASED</xprop_subscriptionTypeId>
+				<xprop_disallowRecurringOrder significant="false">1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionFalse}" name="catalogEntrySubscriptionFalse">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>         
+    </PropertyGroup> 
+       
+    
+    <PropertyGroup definitionName="catManageGeneralKitInformation" groupTitle="${catalogResources.generalKitInformationSection}" open="true">
+        <!-- Catalog Entry Unique ID -->
+        <PropertyViewLongText promptText="${catalogResources.uniqueId_ColumnHeader}" propertyName="catentryId">
+             <FalseEnablementCondition/>
+        </PropertyViewLongText>
+        <!-- Property: CatenttypeID. A combobox to select the catenttypeId property. -->
+        <PropertyCombobox promptText="${catalogResources.kitTypeTitle}" propertyName="catenttypeId">
+        	<EnablementAndCondition>
+        		<EnablementCondition checkObjectDefinition="true" propertyName="objectType" objectPath="KitComponentGroup/ProductSKUs" enablementValue="" conditionId="catenttypeIdKitComponentCondition" />
+        		<EnablementCondition checkObjectDefinition="true" propertyName="objectType" objectPath="CatalogEntryConfigModel/KitConfigModelAssociationGroup/ConfigModelGroup" enablementValue="" conditionId="catenttypeIdConfigModelAssociationCondition" />
+        		<EnablementCondition checkObjectDefinition="true" propertyName="objectType" objectPath="SterlingDynamicKitComponentGroup" enablementValue="" conditionId="catenttypeIdSterlingDynamicKitComponentCondition" />
+        	</EnablementAndCondition>
+        </PropertyCombobox>
+        <!-- Property: Code. An input box for the code property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_Code}" promptText="${catalogResources.codePrompt}" propertyName="partnumber" required="true"/>
+		
+		<!-- Property group to display the name when description override is disabled.  -->
+		<PropertyGroup collapsable="false" name="catNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the name when description override is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name" displayObjectStoreName="true"/>
+			<!-- Property: Name Override. An input box for the name override property. -->
+			<PropertyInputText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.namePrompt}" propertyName="overrideName" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the short description when description override is disabled.  -->
+		<PropertyGroup collapsable="false" name="catSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the short description when description override is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc" displayObjectStoreName="true"/>
+			<!-- Property: Short Description Override. A long input box for the short description override property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="overrideSDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the long description when description override is disabled.  -->
+		<PropertyGroup collapsable="false" name="catLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the long description when description override is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc" displayObjectStoreName="true"/>
+			<!-- Property: Long Description Override. A rich text editor for the long description override property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.longDescriptionPrompt}" propertyName="overrideLDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the keyword when description override is disabled.  -->
+		<PropertyGroup collapsable="false" name="catKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword"/>
+		</PropertyGroup>
+		
+		<!-- Property group to display the keyword when description override is enabled.  -->
+		<PropertyGroup collapsable="false" name="catOverrideKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword" displayObjectStoreName="true"/>
+			<!-- Property: Keyword Override. A multiline input box for the search optimization keyword override property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.keywordPrompt}" propertyName="overrideKeyword" displayStoreName="true"/>
+		</PropertyGroup>
+		
+        <!-- Property: Alternate Description 1. A multiline input box for the auxilary description 1 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription1Prompt}" propertyName="xdesc_auxDescription1"/> -->
+        <!-- Property: Alternate Description 2. A multiline input box for the auxilary description 2 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription2Prompt}" propertyName="xdesc_auxDescription2"/> -->
+        <!-- Property: Manufacturer Name. An input box for the manufacturer name property. -->
+        <PropertyInputText objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPrompt}" propertyName="xprop_manufacturer"/>
+        <!-- Property: Manufacturer Partnumber. An input box for the manufacturer part number property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_manufacturerPartNumber}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPartNumberPrompt}" propertyName="xprop_manufacturerPartNumber"/>
+         <!-- Property: URL. An input box for the URL of the catalog entry property. -->    
+        <PropertyInputLongText extendedHelpText="${catalogResources.extendedHelpText_url}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.urlPrompt}" propertyName="xprop_url"/>
+        <!--- An editor to manage the  parent category of a kit -->
+        <ReferenceEditor allowCreate="true" extendedHelpText="${catalogResources.extendedHelpText_catalogEntryCategory}" headerText="${catalogResources.codePrompt}" name="parentCategoryRefEditor" parentObjectTypes="CatalogGroup,InheritedCatalogGroup" promptText="${catalogResources.parentCategoryInMasterCatalogPrompt}" referenceObjectTypes="ChildKit,ChildInheritedKit" required="true" validatorTypes="requiredParentCategoryValidator,requiredParentVersionedCategoryValidator"/>
+        <!-- Property: Recurring order. A radio group for the disallow recurring order property. -->
+	<MultiValueSelector name="recurringOrderSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryRecurringOrder}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntryRecurringOrder}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderTrue}" name="recurringOrderTrue">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>0</xprop_disallowRecurringOrder>
+				<xprop_subscriptionTypeId significant="false">NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderFalse}" name="recurringOrderFalse">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector> 
+        <!-- Property: Subscription Type Id. A radio group for the subscription type id property.
+        Not allowing Kit to be subscription products.
+	<MultiValueSelector name="subscriptionSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntrySubscription}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntrySubscription}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionTrue}" name="catalogEntrySubscriptionTrue">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>TIME-BASED</xprop_subscriptionTypeId>
+				<xprop_disallowRecurringOrder significant="false">1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionFalse}" name="catalogEntrySubscriptionFalse">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>   
+        -->
+    </PropertyGroup>
+
+    <PropertyGroup definitionName="catManageGeneralBundleInformation" groupTitle="${catalogResources.generalBundleInformationSection}" open="true">
+        <!-- Catalog Entry Unique ID -->
+        <PropertyViewLongText promptText="${catalogResources.uniqueId_ColumnHeader}" propertyName="catentryId">
+             <FalseEnablementCondition/>
+        </PropertyViewLongText>
+        <!-- Property: Code. An input box for the code property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_Code}" promptText="${catalogResources.codePrompt}" propertyName="partnumber" required="true"/>
+		
+		<!--  Property Group to display the name when description override is disabled. -->
+		<PropertyGroup collapsable="false" name="catNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name"/>
+		</PropertyGroup>
+		
+		<!--  Property Group to display the name when description override is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideNameGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Name. An input box for the name property. -->
+			<PropertyInputText objectPath="CatalogEntryDescription" promptText="${catalogResources.namePrompt}" propertyName="name" displayObjectStoreName="true"/>
+			<!-- Property: Name Override. An input box for the name override property. -->
+			<PropertyInputText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.namePrompt}" propertyName="overrideName" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!--  Property Group to display the short description when description override is disabled. -->
+		<PropertyGroup collapsable="false" name="catSDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"  negate="true"/>
+			<!-- Property: Short Description. A long input box for the short description property. -->
+		<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc"/>
+		</PropertyGroup>
+		
+		<!--  Property Group to display the short description when description override is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideSDescGroup">
+ 		<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+       		<!-- Property: Short Description. A long input box for the short description property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc" displayObjectStoreName="true"/>
+			<!-- Property: Short Description Override. A long input box for the short description override property. -->
+			<PropertyInputLongText objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="overrideSDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!--  Property Group to display the long description when description override is disabled. -->
+		<PropertyGroup collapsable="false" name="catLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc"/>
+		</PropertyGroup>
+		
+		<!--  Property Group to display the long description when description override is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideLDescGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Long Description. A rich text editor for the long description property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc" displayObjectStoreName="true"/>
+			<!-- Property: Long Description Override. A rich text editor for the long description override property. -->
+			<PropertyRichTextEditor objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.longDescriptionPrompt}" propertyName="overrideLDesc" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!--  Property Group to display the keyword when description override is disabled. -->
+		<PropertyGroup collapsable="false" name="catKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword"/>
+		</PropertyGroup>
+		
+		<!--  Property Group to display the keyword when description override is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideKeywordGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Property: Keyword. A multiline input box for the search optimization keyword property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword" displayObjectStoreName="true"/>
+			<!-- Property: Keyword Override. A multiline input box for the search optimization keyword override property. -->
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.keywordPrompt}" propertyName="overrideKeyword" displayStoreName="true"/>
+		</PropertyGroup>
+        <!-- Property: Alternate Description 1. A multiline input box for the auxilary description 1 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription1Prompt}" propertyName="xdesc_auxDescription1"/> -->
+        <!-- Property: Alternate Description 2. A multiline input box for the auxilary description 2 property. -->
+        <!-- This field is disabled by default. Uncomment this section to enable the field -->
+        <!-- <PropertyRichTextEditor
+            objectPath="CatalogEntryDescription"
+            promptText="${catalogResources.addDescription2Prompt}" propertyName="xdesc_auxDescription2"/> -->
+        <!-- Property: Manufacturer Name. An input box for the manufacturer name property. -->
+        <PropertyInputText objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPrompt}" propertyName="xprop_manufacturer"/>
+        <!-- Property: Manufacturer Partnumber. An input box for the manufacturer part number property. -->
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_manufacturerPartNumber}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.manufacturerPartNumberPrompt}" propertyName="xprop_manufacturerPartNumber"/>
+        <!-- Property: URL. An input box for the URL of the catalog entry property. -->    
+        <PropertyInputLongText extendedHelpText="${catalogResources.extendedHelpText_url}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.urlPrompt}" propertyName="xprop_url"/>
+        <!--- An editor to manage the  parent category of a bundle -->
+        <ReferenceEditor allowCreate="true" extendedHelpText="${catalogResources.extendedHelpText_catalogEntryCategory}" headerText="${catalogResources.codePrompt}" name="parentCategoryRefEditor" parentObjectTypes="CatalogGroup,InheritedCatalogGroup" promptText="${catalogResources.parentCategoryInMasterCatalogPrompt}" referenceObjectTypes="ChildBundle,ChildInheritedBundle" required="true" validatorTypes="requiredParentCategoryValidator,requiredParentVersionedCategoryValidator"/>
+        <!-- Property: Recurring order. A radio group for the disallow recurring order property. -->
+	<MultiValueSelector name="recurringOrderSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryRecurringOrder}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntryRecurringOrder}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderTrue}" name="recurringOrderTrue">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>0</xprop_disallowRecurringOrder>
+				<xprop_subscriptionTypeId significant="false">NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntryRecurringOrderFalse}" name="recurringOrderFalse">
+			<Xml name="values">
+				<xprop_disallowRecurringOrder>1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>     
+        <!-- Property: Subscription Type Id. A radio group for the subscription type id property.
+        Not allowing Bundle to be subscription products.
+	<MultiValueSelector name="subscriptionSelector" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntrySubscription}" useRadioButtons="true" helpText="${catalogResources.extendedHelpText_catalogEntrySubscription}">
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionTrue}" name="catalogEntrySubscriptionTrue">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>TIME-BASED</xprop_subscriptionTypeId>
+				<xprop_disallowRecurringOrder significant="false">1</xprop_disallowRecurringOrder>
+			</Xml>
+		</MultiValueSelection>
+		<MultiValueSelection displayName="${catalogResources.catalogEntrySubscriptionFalse}" name="catalogEntrySubscriptionFalse">
+			<Xml name="values">
+				<xprop_subscriptionTypeId>NONE</xprop_subscriptionTypeId>
+			</Xml>
+		</MultiValueSelection>
+	</MultiValueSelector>      
+        -->
+    </PropertyGroup>
+
+    <PropertyGroup definitionName="catManagePublishingInformation" groupTitle="${catalogResources.publishingSection}">
+        <!-- Property: For Purchase. A checkbox for the for purchase property. -->
+        <PropertyCheckbox extendedHelpText="${catalogResources.extendedHelpText_buyable}" falseValue="0" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.forPurchasePrompt}" propertyName="xprop_buyable" trueValue="1"/>
+        <!-- Property: On Special. A checkbox for the on special property. -->
+        <PropertyCheckbox extendedHelpText="${catalogResources.extendedHelpText_onSpecial}" falseValue="0" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.onSpecialPrompt}" propertyName="xprop_onSpecial" trueValue="1"/>
+        <!-- Property: On Auction. A checkbox for the on auction property. -->
+        <!-- This tag is disabled by default. To enable it, uncomment the tag below -->
+        <!--  <PropertyCheckbox trueValue="1" falseValue="0" 
+            extendedHelpText="${catalogResources.extendedHelpText_onAuction}" 
+            objectPath="CatalogEntryExtraProperties"
+            promptText="${catalogResources.onAuctionPrompt}" 
+            propertyName="xprop_onAuction"/> -->
+        <!-- Property: Start Date. A date picker for the start date property. -->
+        <PropertyDatePicker extendedHelpText="${catalogResources.extendedHelpText_startDate}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.startDatePrompt}" propertyName="xprop_startDate"/>
+        <!-- Property: End Date. A date picker for the end date property.-->
+        <PropertyDatePicker extendedHelpText="${catalogResources.extendedHelpText_endDate}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.endDatePrompt}" propertyName="xprop_endDate"/>
+        <!-- Property: Availability Date. A date picker for the availability date property.-->
+		<!-- This tag is disabled by default. To enable it, uncomment the tag below -->
+        <!-- <PropertyDatePicker
+            extendedHelpText="${catalogResources.extendedHelpText_availabilityDate}" 
+            objectPath="CatalogEntryExtraProperties"
+            promptText="${catalogResources.availabilityDatePrompt}" propertyName="xprop_availabilityDate"/> -->
+        <!-- Property: Last Date to Order. A date picker for the last date to order property.-->
+        <!-- This tag is disabled by default. To enable it, uncomment the tag below -->
+        <!-- <PropertyDatePicker
+            extendedHelpText="${catalogResources.extendedHelpText_lastOrderDate}" 
+            objectPath="CatalogEntryExtraProperties"
+            promptText="${catalogResources.lastDateToOrderPrompt}" propertyName="xprop_lastOrderDate"/> -->
+        <!-- Property: End of Service Date. A date picker for the end of service date property.-->
+        <!-- This tag is disabled by default. To enable it, uncomment the tag below -->
+		<!-- <PropertyDatePicker
+            extendedHelpText="${catalogResources.extendedHelpText_endOfServiceDate}" 
+            objectPath="CatalogEntryExtraProperties"
+            promptText="${catalogResources.endOfServiceDatePrompt}" propertyName="xprop_endOfServiceDate"/> -->
+        <!-- Property: Discontinued Date. A date picker for the discontinued date property.-->
+		<!-- This tag is disabled by default. To enable it, uncomment the tag below -->
+        <!-- <PropertyDatePicker
+            extendedHelpText="${catalogResources.extendedHelpText_discontinueDate}" 
+            objectPath="CatalogEntryExtraProperties"
+            promptText="${catalogResources.discontinuedDatePrompt}" propertyName="xprop_discontinueDate"/> -->
+    </PropertyGroup>
+
+
+
+    <PropertyGroup definitionName="catManageDisplayInformation" groupTitle="${catalogResources.displaySection}">
+
+		<!-- Property: Published. A checkbox for the published property. -->
+     	<PropertyCheckbox extendedHelpText="${catalogResources.extendedHelpText_displayToCustomers}" falseValue="0" objectPath="CatalogEntryDescription" promptText="${catalogResources.displayToCustomerPrompt}" propertyName="xdesc_published" trueValue="1"/>
+    
+ 		<!-- Property group to show the display to customer flag setting when description override is disabled. -->		
+        <!-- This tag is disabled by default. To enable it, uncomment the tag below -->		 		
+		<!--
+		
+		<PropertyGroup collapsable="false" name="catPublishedGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<PropertyCombobox objectPath="CatalogEntryDescription" extendedHelpText="${catalogResources.extendedHelpText_displayToCustomers}" promptText="${catalogResources.displayToCustomerPrompt}" propertyName="xdesc_published" required="true"/>
+		</PropertyGroup>
+		
+		-->
+		
+        <!-- Property group to show the display to customer flag setting when description override is enabled. -->
+        <!-- This tag is disabled by default. To enable it, uncomment the tag below -->						
+		<!--
+		<PropertyGroup collapsable="false" name="catOverridePublishedGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<PropertyCombobox objectPath="CatalogEntryDescription" extendedHelpText="${catalogResources.extendedHelpText_displayToCustomers}" promptText="${catalogResources.displayToCustomerPrompt}" propertyName="xdesc_published" required="true" displayObjectStoreName="true"/>
+			<PropertyCombobox objectPath="CatalogEntryDescriptionOverride" extendedHelpText="${catalogResources.extendedHelpText_displayToCustomers}" promptText="${catalogResources.displayToCustomerPrompt}" propertyName="xdescovr_published" displayStoreName="true"/>
+		</PropertyGroup>
+		
+	
+		
+		-->
+		
+		
+		<!-- Property group to show the thumbnail image setting when description override is disabled. -->
+		<PropertyGroup collapsable="false" name="catTImageGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Thumbnail image -->
+			<ImageEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.thumbnailPrompt}" propertyName="tImage"/>
+		</PropertyGroup>
+		
+		<!-- Property group to show the thumbnail image setting when description override is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideTImageGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Thumbnail image -->
+			<ImageEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.thumbnailPrompt}" propertyName="tImage" displayObjectStoreName="true"/>
+			<!-- Thumbnail image override -->
+			<ImageEditor objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.thumbnailPrompt}" propertyName="overrideTImage" displayStoreName="true"/>
+		</PropertyGroup>
+		
+		<!-- Property group to show the full image setting when description override is disabled. -->
+		<PropertyGroup collapsable="false" name="catFImageGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions" negate="true"/>
+			<!-- Full image -->
+			<ImageEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.fullImagePrompt}" propertyName="fImage"/>
+		</PropertyGroup>
+		
+		<!-- Property group to show the full image setting when description override is enabled. -->
+		<PropertyGroup collapsable="false" name="catOverrideFImageGroup">
+			<EnablementAndCondition baseDefinitionName="catInheritedCatalogEntryAndOverrideEnabledConditions"/>
+			<!-- Full image -->
+			<ImageEditor objectPath="CatalogEntryDescription" promptText="${catalogResources.fullImagePrompt}" propertyName="fImage" displayObjectStoreName="true"/>
+			<!-- Full image override -->
+			<ImageEditor objectPath="CatalogEntryDescriptionOverride" promptText="${catalogResources.fullImagePrompt}" propertyName="overrideFImage" displayStoreName="true"/>
+		</PropertyGroup>
+    </PropertyGroup>   
+
+    <PropertyGroup definitionName="catManagePricingInformation" groupTitle="${catalogResources.pricingSection}">
+        <EnablementOrCondition conditionId="catCatalogNoVersionConditionEnablement"> 
+    		<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+    		<EnablementCondition contextName="listPriceListEnabled" enablementValue="false"/>
+    	</EnablementOrCondition>
+    	
+        <!-- Child List Editor: A table to display list price for the catalog entry in different currencies. -->
+        <ChildListViewer extendedHelpText="${catalogResources.extendedHelpText_listprice}" listDefinitionName="catListPriceObjectGrid" name="listPriceClv" objectTypes="CatalogEntryListPrice" promptText="${catalogResources.listPricePrompt}"/>
+        
+        <!-- Property Group: Contains a table to display Inherited offer price for the catalog entry in different currencies. -->
+        <PropertyGroup collapsable="false" name="catOffersInheritedPropertyGroup">	
+			<PropertyChildListEditor displayObjectStoreName="true" extendedHelpText="${catalogResources.extendedHelpText_offerprice}" listDefinitionName="catInheritedOfferObjectGrid" name="offersInheritedCle" objectTypes="InheritedCatalogEntryOffer" promptText="${catalogResources.offerPricePrompt}" validatorTypes="offerPriceMinimumQuantityValidator"/>
+			<EnablementAndCondition>
+				<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+				<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+			</EnablementAndCondition>
+		</PropertyGroup>	    
+         
+     	<!-- Property Group: Contains a table to display different offers for the catalog entry in different currencies. -->
+        <PropertyGroup collapsable="false" name="catOffersPropertyGroup">	
+        	<PropertyChildListEditor displayStoreName="true" extendedHelpText="${catalogResources.extendedHelpText_offerprice}" listDefinitionName="catOfferObjectGrid" name="offersCle" objectTypes="CatalogEntryOffer" promptText="${catalogResources.offerPricePrompt}" validatorTypes="offerPriceMinimumQuantityValidator"/>
+			<EnablementAndCondition>
+				<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+				<EnablementOrCondition conditionId="storeTypeCondition" negate="true">
+					<EnablementCondition conditionId="demandHubCondition" contextName="storeType" enablementValue="CHS"/>
+					<EnablementCondition conditionId="supplierHubCondition" contextName="storeType" enablementValue="SCP"/>
+					<EnablementCondition conditionId="consumerDirectResellerStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="RPS"/>
+					<EnablementCondition conditionId="b2bResellerStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="BRP"/>
+					<EnablementCondition conditionId="consumerDirectHostedStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="MPS"/>
+					<EnablementCondition conditionId="b2bHostedStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="BMP"/>
+				</EnablementOrCondition>   
+			</EnablementAndCondition>
+		</PropertyGroup>		
+    </PropertyGroup>
+     
+     <PropertyGroup definitionName="catManageAdditionalInformation" groupTitle="${catalogResources.additionalInformationSection}" open="false">
+        <!-- Property: Field 1. A custom input box for the catalog entry property. -->    
+        <PropertyStepper extendedHelpText="${catalogResources.extendedHelpText_field1}" maximumValue="2147483647" minimumValue="-2147483648" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryExtraPropertiesField1_DisplayName}" propertyName="xprop_field1"/>     
+        
+        <!-- Property: Field 2. A custom input box for the catalog entry property. -->    
+        <PropertyStepper extendedHelpText="${catalogResources.extendedHelpText_field2}" maximumValue="2147483647" minimumValue="-2147483648" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryExtraPropertiesField2_DisplayName}" propertyName="xprop_field2"/>   
+            
+            <!-- Property: Field 3. A custom input box for the catalog entry property. -->    
+        <PropertyNumericText extendedHelpText="${catalogResources.extendedHelpText_field3}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryExtraPropertiesField3_DisplayName}" propertyName="xprop_field3"/>   
+            
+            <!-- Property: Field 4. A custom input box for the catalog entry property. -->    
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_field4}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryExtraPropertiesField4_DisplayName}" propertyName="xprop_field4"/>   
+            
+            <!-- Property: Field 5. A custom input box for the catalog entry property. -->    
+        <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_field5}" objectPath="CatalogEntryExtraProperties" promptText="${catalogResources.catalogEntryExtraPropertiesField5_DisplayName}" propertyName="xprop_field5"/>   
+    </PropertyGroup>
+    
+	<PropertyGroup definitionName="catManageCatalogEntrySeoAttributes" displayObjectStoreName="false" displayStoreName="true">
+		<!-- Property Group: Contains the URL keyword and full URL for the catalog entry page -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoUrlSection">
+				<EnablementAndCondition conditionId="localObjectTypesAndStoreCondition">
+						<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>
+						<EnablementOrCondition conditionId="storeTypeCondition">
+							<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+							<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+							<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+							<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+							<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+						</EnablementOrCondition>
+				</EnablementAndCondition>
+				<PropertyUrlPreview name="desktopUrlKeyword" extendedHelpText="${catalogResources.extendedHelpText_seoDesktopUrl}" objectPath="CatalogEntryBaseSeoURL/CatalogEntrySeoURL" package="cat" promptText="${catalogResources.seoDesktopUrlPrompt}" propertyName="seo_urlkeyword"/>
+		</PropertyGroup>	  
+		
+		<!-- Property Group: Contains the URL keyword and full URL for the catalog entry page (for eSites) -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoESitesUrlSection">
+				<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+						<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+						<EnablementOrCondition conditionId="storeTypeCondition">
+							<EnablementCondition conditionId="b2cEsiteCondition" contextName="storeType" enablementValue="MHS"/>
+							<EnablementCondition conditionId="b2bEsiteCondition" contextName="storeType" enablementValue="BMH"/>
+						</EnablementOrCondition>
+				</EnablementAndCondition>
+				<PropertyUrlPreview name="desktopUrlKeyword1" extendedHelpText="${catalogResources.extendedHelpText_seoDesktopUrlEsite}" objectPath="CatalogEntryBaseSeoURL/CatalogEntrySeoURL" package="cat" promptText="${catalogResources.seoDesktopUrlPrompt}" propertyName="seo_urlkeyword"/>
+		</PropertyGroup>	
+		
+	    <!-- Property Group: Contains the title of the catalog entry page -->
+	    <PropertyGroup collapsable="false" displayGrouping="false" name="seoTMDSection">
+			<EnablementAndCondition conditionId="localObjectTypesAndStoreCondition">
+					<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>
+					<EnablementOrCondition conditionId="storeTypeCondition">
+						<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+						<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+						<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+						<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+						<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>	    
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoTitleSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoTitle}" objectPath="CatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+						promptText="${catalogResources.seoTitlePrompt}" propertyName="seo_useTitleDefault">
+					<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatetitle"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_title"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the meta description of the catalog entry page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoMetaDescSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoMetaDesc}" objectPath="CatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+						promptText="${catalogResources.seoMetaDescPrompt}" propertyName="seo_useMetaDescDefault">
+					<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatemetadesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_metadesc" multiline="true"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the image alt text of the catalog entry page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoImageAltTextSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoImageAltDesc}" objectPath="CatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+						promptText="${catalogResources.seoImageDescPrompt}" propertyName="seo_useImageAltDescDefault">
+					<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templateimagealtdesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_imagealtdesc"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+		</PropertyGroup>
+		
+	    <PropertyGroup collapsable="false" displayGrouping="false" name="seoEsitesTMDSection">
+			<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+					<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+					<EnablementOrCondition conditionId="storeTypeCondition">
+						<EnablementCondition conditionId="b2cEsiteCondition" contextName="storeType" enablementValue="MHS"/>
+						<EnablementCondition conditionId="b2bEsiteCondition" contextName="storeType" enablementValue="BMH"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>  
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoTitleSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoTitle}" objectPath="CatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+						promptText="${catalogResources.seoTitlePrompt}" propertyName="seo_useTitleDefault">
+					<RadioButtonDescriptor value="0" text="${catalogResources.seoDefaultTitleOptionEsiteStorePrompt}" name="seo_templatetitle"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideTitleOptionEsiteStorePrompt}" editorPropertyName="seo_title"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the meta description of the catalog entry page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoMetaDescSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoMetaDesc}" objectPath="CatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+						promptText="${catalogResources.seoMetaDescPrompt}" propertyName="seo_useMetaDescDefault">
+					<RadioButtonDescriptor value="0" text="${catalogResources.seoDefaultDescOptionEsiteStorePrompt}" name="seo_templatemetadesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideDescOptionEsiteStorePrompt}" editorPropertyName="seo_metadesc" multiline="true"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the image alt text of the catalog entry page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoImageAltTextSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoImageAltDesc}" objectPath="CatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+						promptText="${catalogResources.seoImageDescPrompt}" propertyName="seo_useImageAltDescDefault">
+					<RadioButtonDescriptor value="0" text="${catalogResources.seoDefaultImageOptionEsiteStorePrompt}" name="seo_templateimagealtdesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideImageOptionEsiteStorePrompt}" editorPropertyName="seo_imagealtdesc"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+		</PropertyGroup>		
+	</PropertyGroup>
+	
+	<PropertyGroup definitionName="catManageInheritedCatalogEntrySeoAttributes" displayObjectStoreName="true" displayStoreName="false">
+		<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+				<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+				<EnablementOrCondition conditionId="storeTypeCondition">
+					<EnablementCondition conditionId="b2cEsiteCondition" contextName="storeType" enablementValue="MHS"/>
+					<EnablementCondition conditionId="b2bEsiteCondition" contextName="storeType" enablementValue="BMH"/>
+				</EnablementOrCondition>
+		</EnablementAndCondition>
+		
+		<!-- Property Group: Contains the URL keyword and full URL for the catalog entry page -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoUrlSection">
+				<PropertyUrlPreview name="desktopUrlKeyword" extendedHelpText="${catalogResources.extendedHelpText_seoDesktopUrl}" objectPath="InheritedCatalogEntryBaseSeoURL/CatalogEntrySeoURL" package="cat" promptText="${catalogResources.seoDesktopUrlPrompt}" propertyName="seo_urlkeyword"/>
+		</PropertyGroup>	  
+
+	    <!-- Property Group: Contains the title of the catalog entry page -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoTitleSection">
+			<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoTitle}" objectPath="InheritedCatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+					promptText="${catalogResources.seoTitlePrompt}" propertyName="seo_useTitleDefault">
+				<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatetitle"/>
+				<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_title"/>
+			</PropertyRadioGroup>
+		</PropertyGroup>
+
+		<!-- Property Group: Contains the meta description of the catalog entry page --> 
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoMetaDescSection">
+			<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoMetaDesc}" objectPath="InheritedCatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+					promptText="${catalogResources.seoMetaDescPrompt}" propertyName="seo_useMetaDescDefault">
+				<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatemetadesc"/>
+				<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_metadesc" multiline="true"/>
+			</PropertyRadioGroup>
+		</PropertyGroup>
+
+		<!-- Property Group: Contains the image alt text of the catalog entry page --> 
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoImageAltTextSection">
+			<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoImageAltDesc}" objectPath="InheritedCatalogEntryBaseSeoAttributes/CatalogEntrySeoAttributes"
+					promptText="${catalogResources.seoImageDescPrompt}" propertyName="seo_useImageAltDescDefault">
+				<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templateimagealtdesc"/>
+				<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_imagealtdesc"/>
+			</PropertyRadioGroup>
+		</PropertyGroup>
+	</PropertyGroup>
+	
+	<PropertyGroup definitionName="catManageCatalogGroupSeoAttributes" displayObjectStoreName="false" displayStoreName="true">
+		<!-- Property Group: Contains the URL keyword and full URL for the catalog group page -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoUrlSection">
+				<EnablementAndCondition conditionId="localObjectTypesAndStoreCondition">
+						<EnablementOrCondition conditionId="localObjectTypesCondition">
+							<EnablementCondition checkObjectDefinition="true" conditionId="catalogGroupCondition" enablementValue="CatalogGroup" propertyName="objectType"/>
+							<EnablementCondition checkObjectDefinition="true" conditionId="salesCatalogGroupCondition" enablementValue="SalesCatalogGroup" propertyName="objectType"/>
+						</EnablementOrCondition>
+						<EnablementOrCondition conditionId="storeTypeCondition">
+							<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+							<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+							<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+							<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+							<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+						</EnablementOrCondition>
+				</EnablementAndCondition>
+				<PropertyUrlPreview name="desktopUrlKeyword" extendedHelpText="${catalogResources.extendedHelpText_seoDesktopUrl_Category}" objectPath="CatalogGroupBaseSeoURL/CatalogGroupSeoURL" package="cat" promptText="${catalogResources.seoDesktopUrlPrompt}" propertyName="seo_urlkeyword"/>
+		</PropertyGroup>	  
+		
+		<!-- Property Group: Contains the URL keyword and full URL for the catalog group page (for eSites) -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoESitesUrlSection">
+				<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+						<EnablementOrCondition conditionId="inheritedObjectTypesCondition">
+							<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupCondition" enablementValue="InheritedCatalogGroup" propertyName="objectType"/>
+							<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSalesCatalogGroupCondition" enablementValue="InheritedSalesCatalogGroup" propertyName="objectType"/>
+						</EnablementOrCondition>
+						<EnablementOrCondition conditionId="storeTypeCondition">
+							<EnablementCondition conditionId="b2cEsiteCondition" contextName="storeType" enablementValue="MHS"/>
+							<EnablementCondition conditionId="b2bEsiteCondition" contextName="storeType" enablementValue="BMH"/>
+						</EnablementOrCondition>
+				</EnablementAndCondition>
+				<PropertyUrlPreview name="desktopUrlKeyword1" extendedHelpText="${catalogResources.extendedHelpText_seoDesktopUrlEsite_Category}" objectPath="CatalogGroupBaseSeoURL/CatalogGroupSeoURL" package="cat" promptText="${catalogResources.seoDesktopUrlPrompt}" propertyName="seo_urlkeyword"/>
+		</PropertyGroup>
+		
+		<!-- Property Group: Contains the title of the catalog group page -->
+		<PropertyGroup collapsable="false" displayGrouping="false" name="seoTMDSection">
+			<EnablementAndCondition conditionId="localObjectTypesAndStoreCondition">
+					<EnablementOrCondition conditionId="localObjectTypesCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="catalogGroupCondition" enablementValue="CatalogGroup" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="salesCatalogGroupCondition" enablementValue="SalesCatalogGroup" propertyName="objectType"/>
+					</EnablementOrCondition>
+					<EnablementOrCondition conditionId="storeTypeCondition">
+						<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+						<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+						<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+						<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+						<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoTitleSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoTitle}" objectPath="CatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+						promptText="${catalogResources.seoTitlePrompt}" propertyName="seo_useTitleDefault">
+					<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatetitle"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_title"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the meta description of the catalog group page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoMetaDescSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoMetaDesc_Category}" objectPath="CatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+						promptText="${catalogResources.seoMetaDescPrompt}" propertyName="seo_useMetaDescDefault">
+					<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatemetadesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_metadesc" multiline="true"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the image alt text of the catalog group page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoImageAltTextSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoImageAltDesc}" objectPath="CatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+						promptText="${catalogResources.seoImageDescPrompt}" propertyName="seo_useImageAltDescDefault">
+					<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templateimagealtdesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_imagealtdesc"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" displayGrouping="false" name="seoEsitesTMDSection">
+			<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+					<EnablementOrCondition conditionId="inheritedObjectTypesCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupCondition" enablementValue="InheritedCatalogGroup" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSalesCatalogGroupCondition" enablementValue="InheritedSalesCatalogGroup" propertyName="objectType"/>
+					</EnablementOrCondition>
+					<EnablementOrCondition conditionId="storeTypeCondition">
+						<EnablementCondition conditionId="b2cEsiteCondition" contextName="storeType" enablementValue="MHS"/>
+						<EnablementCondition conditionId="b2bEsiteCondition" contextName="storeType" enablementValue="BMH"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoTitleSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoTitle}" objectPath="CatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+						promptText="${catalogResources.seoTitlePrompt}" propertyName="seo_useTitleDefault">
+					<RadioButtonDescriptor value="0" text="${catalogResources.seoDefaultTitleOptionEsiteStorePrompt}" name="seo_templatetitle"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideTitleOptionEsiteStorePrompt}" editorPropertyName="seo_title"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the meta description of the catalog group page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoMetaDescSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoMetaDesc_Category}" objectPath="CatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+						promptText="${catalogResources.seoMetaDescPrompt}" propertyName="seo_useMetaDescDefault">
+					<RadioButtonDescriptor value="0" text="${catalogResources.seoDefaultDescOptionEsiteStorePrompt}" name="seo_templatemetadesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideDescOptionEsiteStorePrompt}" editorPropertyName="seo_metadesc" multiline="true"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+			
+			<!-- Property Group: Contains the image alt text of the catalog group page --> 
+			<PropertyGroup collapsable="false" displayGrouping="true" name="seoImageAltTextSection">
+				<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoImageAltDesc}" objectPath="CatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+						promptText="${catalogResources.seoImageDescPrompt}" propertyName="seo_useImageAltDescDefault">
+					<RadioButtonDescriptor value="0" text="${catalogResources.seoDefaultImageOptionEsiteStorePrompt}" name="seo_templateimagealtdesc"/>
+					<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideImageOptionEsiteStorePrompt}" editorPropertyName="seo_imagealtdesc"/>
+				</PropertyRadioGroup>
+			</PropertyGroup>
+		</PropertyGroup>		
+	</PropertyGroup>	
+
+	<PropertyGroup definitionName="catManageInheritedCatalogGroupSeoAttributes" displayObjectStoreName="true" displayStoreName="false">
+		<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+				<EnablementOrCondition conditionId="inheritedObjectTypesCondition">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupCondition" enablementValue="InheritedCatalogGroup" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSalesCatalogGroupCondition" enablementValue="InheritedSalesCatalogGroup" propertyName="objectType"/>
+				</EnablementOrCondition>
+				<EnablementOrCondition conditionId="storeTypeCondition">
+					<EnablementCondition conditionId="b2cEsiteCondition" contextName="storeType" enablementValue="MHS"/>
+					<EnablementCondition conditionId="b2bEsiteCondition" contextName="storeType" enablementValue="BMH"/>
+				</EnablementOrCondition>
+		</EnablementAndCondition>
+		<!-- Property Group: Contains the URL keyword and full URL for the catalog group page -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoUrlSection">
+				<PropertyUrlPreview name="desktopUrlKeyword" extendedHelpText="${catalogResources.extendedHelpText_seoDesktopUrl_Category}" objectPath="InheritedCatalogGroupBaseSeoURL/CatalogGroupSeoURL" package="cat" promptText="${catalogResources.seoDesktopUrlPrompt}" propertyName="seo_urlkeyword"/>	
+		</PropertyGroup>	  
+		
+		<!-- Property Group: Contains the title of the catalog group page -->
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoTitleSection">
+			<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoTitle}" objectPath="InheritedCatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+					promptText="${catalogResources.seoTitlePrompt}" propertyName="seo_useTitleDefault">
+				<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatetitle"/>
+				<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_title"/>
+			</PropertyRadioGroup>
+		</PropertyGroup>
+		
+		<!-- Property Group: Contains the meta description of the catalog group page --> 
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoMetaDescSection">
+			<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoMetaDesc_Category}" objectPath="InheritedCatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+					promptText="${catalogResources.seoMetaDescPrompt}" propertyName="seo_useMetaDescDefault">
+				<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templatemetadesc"/>
+				<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_metadesc" multiline="true"/>
+			</PropertyRadioGroup>
+		</PropertyGroup>
+		
+		<!-- Property Group: Contains the image alt text of the catalog group page --> 
+		<PropertyGroup collapsable="false" displayGrouping="true" name="seoImageAltTextSection">
+			<PropertyRadioGroup extendedHelpText="${catalogResources.extendedHelpText_seoImageAltDesc}" objectPath="InheritedCatalogGroupBaseSeoAttributes/CatalogGroupSeoAttributes"
+					promptText="${catalogResources.seoImageDescPrompt}" propertyName="seo_useImageAltDescDefault">
+				<RadioButtonWithPropertyViewerDescriptor value="0" text="${catalogResources.seoDefaultOptionPrompt}" viewerPropertyName="seo_templateimagealtdesc"/>
+				<RadioButtonWithInputTextDescriptor value="1" text="${catalogResources.seoOverrideOptionPrompt}" editorPropertyName="seo_imagealtdesc"/>
+			</PropertyRadioGroup>
+		</PropertyGroup>
+	</PropertyGroup>
+
+    <PropertyPane definitionName="catManageProduct">
+        <PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>
+        <PropertyGroup baseDefinitionName="catManageGeneralProductInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePublishingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageDisplayInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePricingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageAdditionalInformation"/>
+    </PropertyPane>
+    
+    <PropertyPane definitionName="catManageBundle">
+        <PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>    
+        <PropertyGroup baseDefinitionName="catManageGeneralBundleInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePublishingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageDisplayInformation"/>
+        <PropertyGroup baseDefinitionName="catManageAdditionalInformation"/>
+    </PropertyPane>
+    
+    <PropertyPane definitionName="catManageKit">
+        <PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>    
+        <PropertyGroup baseDefinitionName="catManageGeneralKitInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePublishingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageDisplayInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePricingInformation">
+        	<!-- Hide this section if the catenttypeId is Dynamic Kit and Sterling Configuration is enabled -->
+            <EnablementOrCondition conditionId="catManagePricingInformationCondition">
+            	<EnablementCondition contextName="sterlingConfigEnabled" enablementValue="false" conditionId="catManagePricingInfoSterlingConfigFalseCondition"/>
+				<EnablementCondition propertyName="catenttypeId" enablementValue="DynamicKitBean" conditionId="catManagePricingInformationNotDynamicKitCondition" negate="true"/>
+            </EnablementOrCondition>
+         </PropertyGroup>
+        <PropertyGroup baseDefinitionName="catManageAdditionalInformation"/> 
+    </PropertyPane>
+    
+	<PropertyPane definitionName="catKitConfigurator">
+    	<PropertyGroup name="catKitConfiguratorGroup" collapsable="false" >
+				<PropertyChildListEditor singleChild="true" objectPath="CatalogEntryConfigModel" extendedHelpText="${catalogResources.extendedHelpText_configModel}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpngrkit.htm" promptText="${catalogResources.kitConfigModel}" listDefinitionName="catConfigModelGrid" objectTypes="KitConfigModelAssociation,InheritedKitConfigModelAssociation" clientActionTypes="VisualModeler"/>
+				<ChildListViewer extendedHelpText="${catalogResources.extendedHelpText_preconfig}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpngrkit.htm" promptText="${catalogResources.kitPreconfig_DisplayName}" listDefinitionName="catCatentryConfigChildGrid" objectTypes="SterlingDynamicKitComponent,InheritedSterlingDynamicKitComponent" clientActionTypes="Configurator" messageText="${catalogResources.kitPreconfigMessage}" />
+		</PropertyGroup>
+    </PropertyPane> 
+   
+    <PropertyPane definitionName="catManageSKU">
+        <!-- Property Group: General SKU Details. This property group contains general properties about a SKU.  -->
+        <PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>        
+        <PropertyGroup baseDefinitionName="catManageGeneralSKUInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePublishingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageDisplayInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePricingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageAdditionalInformation"/>
+    </PropertyPane>
+    
+    <PropertyPane definitionName="catManageProductSKU">
+        <!-- Property Group: General SKU Details. This property group contains general properties about a SKU.  -->
+        <PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>        
+        <PropertyGroup baseDefinitionName="catManageGeneralProductSKUInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePublishingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageDisplayInformation"/>
+        <PropertyGroup baseDefinitionName="catManagePricingInformation"/>
+        <PropertyGroup baseDefinitionName="catManageAdditionalInformation"/> 
+    </PropertyPane>    
+     
+	<PropertyPane definitionName="catSearchEngineOptimization">
+		<!-- Property Group: Contains the catalog entry SEO properties inherited from the catalog asset store -->
+		<PropertyGroup name="catCatEntrySeoAssetStoreSection" baseDefinitionName="catManageInheritedCatalogEntrySeoAttributes"/>
+		<!-- Property Group: Contains the catalog entry SEO properties of the local store (shows store name in the group title) -->
+		<PropertyGroup name="catCatEntrySeoESiteStoreSection" baseDefinitionName="catManageCatalogEntrySeoAttributes" open="true">
+			<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+					<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+					<EnablementOrCondition conditionId="storeTypeCondition" negate="true">
+						<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+						<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+						<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>
+		</PropertyGroup>
+		<!-- Property Group: Contains the catalog entry SEO properties of the local store (no group title) -->
+		<PropertyGroup name="catCatEntrySeoLocalStoreSection" baseDefinitionName="catManageCatalogEntrySeoAttributes" displayObjectStoreName="false" displayStoreName="false" collapsable="false">
+			<EnablementAndCondition conditionId="localObjectTypesAndStoreCondition">
+					<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>
+					<EnablementOrCondition conditionId="storeTypeCondition">
+						<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+						<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+						<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+						<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+						<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>
+		</PropertyGroup>
+	</PropertyPane>
+	
+	<PropertyPane definitionName="catCatalogGroupSearchEngineOptimization">
+		<!-- Property Group: Contains the catalog group SEO properties inherited from the catalog asset store -->
+		<PropertyGroup name="catCatGroupSeoAssetStoreSection" baseDefinitionName="catManageInheritedCatalogGroupSeoAttributes"/>
+		<!-- Property Group: Contains the catalog group SEO properties of the local store (shows store name in the group title) -->
+		<PropertyGroup name="catCatGroupSeoESiteStoreSection" baseDefinitionName="catManageCatalogGroupSeoAttributes" open="true">
+			<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+					<EnablementOrCondition conditionId="inheritedObjectTypesCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupCondition" enablementValue="InheritedCatalogGroup" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSalesCatalogGroupCondition" enablementValue="InheritedSalesCatalogGroup" propertyName="objectType"/>
+					</EnablementOrCondition>
+					<EnablementOrCondition conditionId="storeTypeCondition" negate="true">
+						<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+						<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+						<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>
+		</PropertyGroup>
+		<!-- Property Group: Contains the catalog group SEO properties of the local store (no group title) -->
+		<PropertyGroup name="catCatGroupSeoLocalStoreSection" baseDefinitionName="catManageCatalogGroupSeoAttributes" displayObjectStoreName="false" displayStoreName="false" collapsable="false">
+			<EnablementAndCondition conditionId="localObjectTypesAndStoreCondition">
+					<EnablementOrCondition conditionId="localObjectTypesCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="catalogGroupCondition" enablementValue="CatalogGroup" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="salesCatalogGroupCondition" enablementValue="SalesCatalogGroup" propertyName="objectType"/>
+					</EnablementOrCondition>
+					<EnablementOrCondition conditionId="storeTypeCondition">
+						<EnablementCondition conditionId="catAssetStoreCondition" contextName="storeType" enablementValue="CPS"/>
+						<EnablementCondition conditionId="b2cStoreCondition" contextName="storeType" enablementValue="B2C"/>
+						<EnablementCondition conditionId="b2bStoreCondition" contextName="storeType" enablementValue="B2B"/>
+						<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+						<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+					</EnablementOrCondition>
+			</EnablementAndCondition>
+		</PropertyGroup>
+	</PropertyPane>
+	
+    <PropertyPane definitionName="catCatalogEntryDescriptiveAttributes">       
+        <!-- 
+        	Property Group: A properties group to display non-dictionary descriptive attributes for a catalog entry.
+
+        	ATTRIBUTE DICTIONARY CUSTOMIZATION POINT: comment out the property group below if creating
+        	non-dictionary attributes is desired.
+        -->
+		<PropertyGroup collapsable="false" name="catCatalogEntryDescriptiveAttributesPropertyGroup">
+			<!-- 
+				Enable if the product has classic descriptive attributes or
+				the store does not use an attribute dictionary.
+			 -->		
+			<EnablementOrCondition>
+				<EnablementCondition conditionId="StoreUsesDictionary" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled" negate="true"/>
+				<ProductHasClassicDescriptiveAttributesEnablementCondition package="cat"/>
+			</EnablementOrCondition>
+			<!-- 
+				An instantiation of a definition which contains a Child List Editor to display non-dictionary descriptive attributes. 
+			-->
+			<PropertyChildListEditor baseDefinitionName="catCatalogEntryDescriptiveAttributeList"/>
+		</PropertyGroup>
+        <!-- 
+        	Property Group: A properties group to display dictionary descriptive attributes for a product.
+        -->
+		<PropertyGroup collapsable="false" name="catCatalogEntryDescriptiveDictionaryAttributesPropertyGroup">
+			<!-- 
+				Enable if the store uses an attribute dictionary.
+			 -->	
+			<EnablementCondition conditionId="attributeDictionaryIsEnabledCondition" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled"/>
+			<!-- 
+				An instantiation of a definition which contains a Child List Editor to display dictionary descriptive attributes. 
+			-->
+			<PropertyChildListEditor baseDefinitionName="catCatalogEntryAttrDictDescriptiveAttributeList"/>
+			
+		</PropertyGroup>
+    </PropertyPane>
+    
+   <PropertyPane definitionName="catCatalogEntryDefiningAttributes">
+  		<!-- 
+  			Property Group: A properties group to display local defining attributes for a product. 
+  			
+        	ATTRIBUTE DICTIONARY CUSTOMIZATION POINT: comment out the property group below if viewing
+        	non-dictionary attributes is not desired.	
+  		-->
+		<PropertyGroup collapsable="false" name="catCatalogEntryDefiningAttributesPropertyGroup">
+			<!-- 
+				Enable if the product has classic defining attributes and no AD defining attributes or
+				the store does not use an attribute dictionary.
+			 -->
+			<EnablementOrCondition>
+				<EnablementCondition conditionId="StoreUsesDictionary" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled" negate="true"/>
+				<EnablementAndCondition>
+					<EnablementCondition conditionId="catalogEntryHasAttributeDictionaryDefiningAttributesCondition" enablementValue="true" objectPath="CatalogEntryAttributeDictionaryDefiningAttributeProperties" propertyName="catalogEntryHasAttributeDictionaryDefiningAttributes" negate="true"/>
+					<ProductHasClassicDefiningAttributesEnablementCondition package="cat"/>
+				</EnablementAndCondition>
+			</EnablementOrCondition>
+			<!-- 
+				An instantiation of a definition which contains a Child List Editor to display non-dictionary defining attributes. 
+			-->
+        	<PropertyChildListEditor baseDefinitionName="catCatalogEntryDefiningAttributeList"/>
+		</PropertyGroup>    
+        <!-- 
+        	Property Group: A properties group to display attribute dictionary defining attributes for a product. 
+        -->
+		<PropertyGroup collapsable="false" name="catCatalogEntryDefiningDictionaryAttributesPropertyGroup">
+			<!-- 
+				Enable if the product has no classic defining attributes or has classic and AD defining attributes
+				and the store uses an attribute dictionary.
+			 -->
+			<EnablementAndCondition>
+				<EnablementCondition conditionId="StoreUsesDictionary" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled"/>
+				<EnablementOrCondition>
+					<EnablementAndCondition conditionId="1">
+						<EnablementCondition conditionId="catalogEntryHasAttributeDictionaryDefiningAttributesCondition" enablementValue="true" objectPath="CatalogEntryAttributeDictionaryDefiningAttributeProperties" propertyName="catalogEntryHasAttributeDictionaryDefiningAttributes"/>
+						<ProductHasClassicDefiningAttributesEnablementCondition package="cat"/>
+					</EnablementAndCondition>
+					<EnablementAndCondition conditionId="2">
+						<ProductHasClassicDefiningAttributesEnablementCondition package="cat" negate="true"/>
+					</EnablementAndCondition>
+				</EnablementOrCondition>
+			</EnablementAndCondition>
+			<!-- 
+				An instantiation of a definition which contains a Child List Editor to display local product defining attributes. 
+			-->
+			<PropertyChildListEditor baseDefinitionName="catCatalogEntryAttributeDictionaryDefiningAttributeList"/>
+		</PropertyGroup>		
+    </PropertyPane>
+    
+    <PropertyPane definitionName="catSKUAttributes">
+        <!-- 
+        	Property Group: A properties group to display non-dictionary descriptive attributes for a SKU.
+
+        	ATTRIBUTE DICTIONARY CUSTOMIZATION POINT: comment out the property group below if creating
+        	non-dictionary attributes is desired.
+        -->
+        <PropertyGroup collapsable="false" name="catCatalogEntryDescriptiveAttributesPropertyGroup">
+        	<!-- 
+				Enable if the product has classic descriptive attributes or
+				the store does not use an attribute dictionary.
+			 -->		
+			<EnablementOrCondition>
+				<EnablementCondition conditionId="StoreUsesDictionary" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled" negate="true"/>
+				<ProductHasClassicDescriptiveAttributesEnablementCondition package="cat"/>
+			</EnablementOrCondition>
+			
+			<PropertyChildListEditor baseDefinitionName="catCatalogEntryDescriptiveAttributeList"/>
+		</PropertyGroup>
+		
+        <!-- 
+        	Property Group: A properties group to display dictionary descriptive attributes for a product.
+        -->
+		<PropertyGroup collapsable="false" name="catCatalogEntryDescriptiveDictionaryAttributesPropertyGroup">
+			<!-- 
+				Enable if the store uses an attribute dictionary.
+			 -->	
+			<EnablementCondition conditionId="attributeDictionaryIsEnabledCondition" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled"/>
+			<!-- 
+				An instantiation of a definition which contains a Child List Editor to display dictionary descriptive attributes. 
+			-->
+			<PropertyChildListEditor baseDefinitionName="catCatalogEntryAttrDictDescriptiveAttributeList"/>
+		</PropertyGroup>
+    </PropertyPane>
+
+    <PropertyPane definitionName="catProductMerchandisingAssociations">
+    
+        <!-- An instantiation of a definition which will display merchandising associations in a grid. -->
+		<PropertyGroup collapsable="false" name="catMerchandisingAssociationPropertyGroupListNoStoreName">
+			<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>	
+        	<PropertyChildListEditor baseDefinitionName="catMerchandisingAssociationListNoStoreName" clientActionTypes="LaunchCoremetricsMAReport"/>
+		</PropertyGroup>
+        <!-- An instantiation of a definition which will display inherited merchandising associations in a grid. -->
+		<PropertyGroup collapsable="false" name="catInheritedMerchandisingAssociationPropertyGroupList">
+			<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+        	<PropertyChildListEditor baseDefinitionName="catInheritedMerchandisingAssociationList" clientActionTypes="LaunchCoremetricsMAReport"/>
+		</PropertyGroup>
+	    <!-- An instantiation of a definition which will display inherited merchandising associations created locally in a grid. -->
+		<PropertyGroup collapsable="false" name="catMerchandisingAssociationPropertyGroupListStoreName">
+			<EnablementAndCondition conditionId="inheritedObjectTypesAndStoreCondition">
+				<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+				<EnablementOrCondition conditionId="storeTypeCondition" negate="true">
+					<EnablementCondition conditionId="demandHubCondition" contextName="storeType" enablementValue="CHS"/>
+					<EnablementCondition conditionId="supplierHubCondition" contextName="storeType" enablementValue="SCP"/>
+				</EnablementOrCondition>
+			</EnablementAndCondition>
+        	<PropertyChildListEditor baseDefinitionName="catMerchandisingAssociationListStoreName" clientActionTypes="LaunchCoremetricsMAReport"/>
+		</PropertyGroup>
+		
+    </PropertyPane>
+        
+    <PropertyPane definitionName="catBundleComponents">
+        <PropertyGroup collapsable="false" name="catBundleComponentChildList">
+            <!-- An instantiation of a definition which will display the components in a bundle. -->
+			<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>	
+        	<PropertyChildListEditor baseDefinitionName="catBundleComponentChildList"/>
+		</PropertyGroup>
+        <!-- An instantiation of a definition which will display inherited components. -->
+		<PropertyGroup collapsable="false" name="catInheritedBundleComponentChildList">
+			<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+        	<PropertyChildListEditor baseDefinitionName="catInheritedBundleComponentChildList"/>
+		</PropertyGroup>
+    </PropertyPane>
+    
+    <PropertyPane definitionName="catKitComponents">
+        <!-- Conditionally Visable Area: This area will change what is displayed depending on the value of the catenttypeId property. -->
+        <PropertyArea name="kit">
+            <!-- Enablement Condition: Only display this section if the catenttypeId property is equal to 'PackageBean' -->
+            <EnablementCondition conditionId="packageBeanIdCondition" enablementValue="PackageBean" propertyName="catenttypeId"/>
+            <!-- An instantiation of a definition which will display bundle components. -->
+            <PropertyGroup collapsable="false" name="catKitComponentChildList">
+	            <!-- An instantiation of a definition which will display the components in a bundle. -->
+				<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>	
+        		<PropertyChildListEditor baseDefinitionName="catKitComponentChildList"/>
+			</PropertyGroup>
+        	<!-- An instantiation of a definition which will display inherited components. -->
+			<PropertyGroup collapsable="false" name="catInheritedKitComponentChildList">
+				<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+        		<PropertyChildListEditor baseDefinitionName="catInheritedKitComponentChildList"/>
+			</PropertyGroup>
+        </PropertyArea>
+        <!-- Conditionally Visable Area: This area will change what is displayed depending on the value of the catenttypeId property. -->
+        <PropertyArea name="dynamicKit">
+            <!-- Enablement Condition: Only display this section if the catenttypeId property is equal to 'DynamicKitBean' -->
+            <EnablementCondition conditionId="dynamicKitBeanIdCondition" enablementValue="DynamicKitBean" propertyName="catenttypeId"/>
+            <!-- An instantiation of a definition which will display bundle components. -->
+            <PropertyGroup collapsable="false" name="catKitComponentChildList">
+	            <!-- An instantiation of a definition which will display the components in a bundle. -->
+				<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>	
+        		<PropertyChildListEditor baseDefinitionName="catKitComponentChildList"/>
+			</PropertyGroup>
+        	<!-- An instantiation of a definition which will display inherited components. -->
+			<PropertyGroup collapsable="false" name="catInheritedKitComponentChildList">
+				<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+        		<PropertyChildListEditor baseDefinitionName="catInheritedKitComponentChildList"/>
+			</PropertyGroup>
+        </PropertyArea>
+		<!-- Conditionally Visable Area: This area will change what is displayed depending on the value of the catenttypeId property. -->        
+        <PropertyArea name="selectKitType">
+            <!-- Enablement Condition: Only display this section if the catenttypeId property is equal to '' -->
+            <EnablementCondition conditionId="blankIdCondition" enablementValue="" propertyName="catenttypeId"/>
+			<!-- An instantiation of a definition which will display kit components. -->
+            <PropertyGroup collapsable="false" name="catKitComponentChildList">
+	            <!-- An instantiation of a definition which will display the components in a bundle. -->
+				<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>	
+        		<PropertyChildListEditor baseDefinitionName="catKitComponentChildList"/>
+			</PropertyGroup>
+        	<!-- An instantiation of a definition which will display inherited components. -->
+			<PropertyGroup collapsable="false" name="catInheritedKitComponentChildList">
+				<EnablementOrCondition baseDefinitionName="catInheritedCatalogEntryEnablement"/>
+        		<PropertyChildListEditor baseDefinitionName="catInheritedKitComponentChildList"/>
+			</PropertyGroup>
+	        </PropertyArea>
+      </PropertyPane>
+      
+    <PropertyPane definitionName="catCatalogEntryInventoryPane">
+        <!-- Property Group:  Inventory. This section displays properties relating to the inventory of a catentry. -->
+        <PropertyGroup collapsable="false" groupTitle="${catalogResources.catalogEntryInventorySection}" name="inventoryPropGroup" open="true">
+	        <PropertyArea name="trackInventoryArea">
+	            <!-- Enablement Condition: Only display this section if the catenttypeId property is not equal to 'DynamicKitBean' -->
+	            <EnablementCondition conditionId="dynamicKitBeanCondition" enablementValue="DynamicKitBean" negate="true" propertyName="catenttypeId"/>
+	            <!-- Property: Track Inventory. A combobox to select how to track inventory of a catentry. Applied to both ATP and non-ATP store. -->
+	            <PropertyCombobox objectPath="CatalogEntryInventory" promptText="${catalogResources.trackInventoryPrompt}" propertyName="xful_trackInventory"/>
+	        </PropertyArea>
+            <!-- Property: Allow Back Order. A checkbox for the allow back order property of a catentry. Only applied to ATP store. -->
+            <PropertyCombobox extendedHelpText="${catalogResources.extendedHelpText_backOrderable}" objectPath="CatalogEntryInventory" promptText="${catalogResources.allowBackOrderPrompt}" propertyName="xful_backOrderable"/>
+            <!-- Property: Force Back Order. A checkbox to select the force back order property. Only applied to ATP store. -->
+            <PropertyCombobox extendedHelpText="${catalogResources.extendedHelpText_forceBackOrder}" objectPath="CatalogEntryInventory" promptText="${catalogResources.forceBackOrderPrompt}" propertyName="xful_forceBackOrder"/>
+            <!-- Property: Returns Not Required For Refund. A checkbox to select the returns not required for refund property. Only applied to ATP store. -->
+            <PropertyCombobox objectPath="CatalogEntryInventory" promptText="${catalogResources.returnsNotRequiredForRefundPrompt}" propertyName="xful_returnNotDesired"/>
+            <!-- Property: Returns And Refunds Not Allowed. A checkbox to select the returns and refunds not allowed property. Only applied to ATP store. -->
+            <PropertyCombobox objectPath="CatalogEntryInventory" promptText="${catalogResources.returnsAndRefundsNotAllowedPrompt}" propertyName="xful_creditable"/>
+            <!-- Property: Fullfill Separately. A checkbox to select the fullfill separately property. Only applied to ATP store. -->
+            <PropertyCombobox extendedHelpText="${catalogResources.extendedHelpText_releaseSeparately}" objectPath="CatalogEntryInventory" promptText="${catalogResources.fulfillSeparatelyPrompt}" propertyName="xful_releaseSeparately"/>
+            <!-- Property: Smallest Measured Amount. An input box to select the smallest measured amount property. Only applied to ATP store. -->
+            <PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_quantityMultiple}" objectPath="CatalogEntryInventory" promptText="${catalogResources.smallestMeasuredAmountPrompt}" propertyName="xful_quantityMultiple"/>
+            <!-- Property: Unit Of Measure. A combobox to allow for the selection of the unit of measure property of a catentry. Applied to both ATP and non-ATP store. -->
+            <PropertyCombobox objectPath="CatalogEntryInventory" promptText="${catalogResources.unitOfMeasurePrompt}" propertyName="xful_uom"/>
+        </PropertyGroup>
+    </PropertyPane>
+
+    <PropertyPane definitionName="catBundleResources">
+        <!-- Property Group: Bundle Reference. A properties group that displays any references to the catentry.  -->
+        <PropertyGroup groupTitle="${catalogResources.merchandisingAssociationReference}" name="catBundleReferenceMerchandisingAssociations" open="true">
+            
+                <!-- Reference List: A table to display merchandising associations that this catentry is a part of. -->
+                <PropertyReferenceList listDefinitionName="catBackReferenceAssociationGrid" name="merchandisingAssociationsRefList" promptText="${catalogResources.merchandisingAssociationsSection}" referenceObjectPaths="CatalogEntry/MerchandisingAssociationReferencedCatalogEntries,CatalogEntry/MerchandisingAssociationReferencedInheritedCatalogEntries,CatalogEntry/InheritedMerchandisingAssociationReferencedInheritedCatalogEntries"/>
+                
+        </PropertyGroup>
+        
+        <!-- Property Group: sales catalog group Reference. A properties group that displays any sales catalog group references to the catentry.  -->
+				<PropertyGroup baseDefinitionName="catReferenceSalesCatalogGroup"/>
+        
+        <!-- Property Group: Activity Reference. A properties group that displays any marketing activity references to the bundle. -->
+        <PropertyGroup groupTitle="${catalogResources.marketingActivityReferencesSection}" name="bundleReferenceActivities" open="false">
+              <!-- Reference List: A table to display activities from which this bundle is referenced. -->
+							<PropertyReferenceList listDefinitionName="catMarketingActivityReferenceGrid" name="catMarketingActivityBundleReferenceList" promptText="${catalogResources.marketingActivityReferences}" referenceObjectPaths="*/ChildCatentryGroup"/>                				
+							<!-- do not display in catalog asset store because it does not refer to storefront asset store -->
+							<EnablementCondition conditionId="casCondition" contextName="storeType" enablementValue="CPS" negate="true"/>
+        </PropertyGroup>
+        				        
+    </PropertyPane>
+
+	<PropertyGroup definitionName="catReferenceSalesCatalogGroup" groupTitle="${catalogResources.salesCatalogCategoryReference}" open="false">
+
+		<!-- Reference List: A table to display sales catalog groups that this catalog entry is a child of. -->
+		<PropertyReferenceList listDefinitionName="catSalesCatalogReferenceGrid" name="salesCatGroupRefList" promptText="${catalogResources.salesCatalogCategoryReferenceSection}" referenceObjectPaths="*/ChildSalesCatalogEntry,*/ChildSalesInheritedCatalogEntry"/>
+
+	</PropertyGroup>
+
+     <!-- 
+	
+		 catManageAttachment 
+		 @Purpose: Attachment Reference Notebook: Attachment References of current business object
+		 
+		 This definition holds all of the properties that will be displayed on the Manage Attachment tab of the category or catentry properties notebook.
+		 
+	-->
+	 <PropertyPane definitionName="catManageAttachment">
+	    
+	     <PropertyGroup collapsable="false" name="catAttachmentReferencePropertyGroup">	 
+	         <EnablementOrCondition conditionId="objectTypesCondition">
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="productCondition" enablementValue="Product" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="bundleCondition" enablementValue="Bundle" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="kitCondition" enablementValue="Kit" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="catalogGroupCondition" enablementValue="CatalogGroup" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="catalogGroupSKUCondition" enablementValue="CatalogGroupSKU" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="productSKUCondition" enablementValue="ProductSKU" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="salesCatalogGroupCondition" enablementValue="SalesCatalogGroup" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="salesCatalogCondition" enablementValue="SalesCatalog" propertyName="objectType"/>
+	          </EnablementOrCondition>
+		      <PropertyChildListEditor baseDefinitionName="catAttachmentReferenceList" objectTypes="AttachmentReference,BusinessObjectToInheritedAttachment"/>
+	     </PropertyGroup>
+	     	
+		 <PropertyGroup collapsable="false" name="catInheritedAttachmentReferencePropertyGroup">			
+			 <EnablementOrCondition conditionId="inheritedObjectTypesCondition">
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedProductCondition" enablementValue="InheritedProduct" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedBundleCondition" enablementValue="InheritedBundle" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedKitCondition" enablementValue="InheritedKit" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupCondition" enablementValue="InheritedCatalogGroup" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupSKUCondition" enablementValue="InheritedCatalogGroupSKU" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedSalesCatalogGroupCondition" enablementValue="InheritedSalesCatalogGroup" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedSalesCatalogCondition" enablementValue="InheritedSalesCatalog" propertyName="objectType"/>
+	          	 <EnablementCondition checkObjectDefinition="true" conditionId="inheritedProductSKUCondition" enablementValue="InheritedProductSKU" propertyName="objectType"/>	          	
+	         </EnablementOrCondition>
+			 <PropertyChildListEditor baseDefinitionName="catAttachmentReferenceList" objectTypes="InheritedBusinessObjectToInheritedAttachment"/>
+		</PropertyGroup>
+	 </PropertyPane>
+</Definitions>

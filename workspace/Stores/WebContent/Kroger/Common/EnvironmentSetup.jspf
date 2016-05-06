@@ -1,0 +1,383 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<%-- 
+  *****
+  * This file retrieves and prepares a lot of information which are used by all the store JSP files.
+  * This file creates JSTL variables which can just be referenced by the store JSP files that include
+  * it.
+  *****
+--%>
+
+<%@ include file="JSTLEnvironmentSetup.jspf" %>
+
+<%@ page import="com.ibm.commerce.command.CommandContext" %>
+<%@ page import="com.ibm.commerce.context.preview.PreviewContext" %>
+<%@ page import="com.ibm.commerce.server.ECConstants"%>
+<%@ page import="com.ibm.commerce.common.beans.StoreCurrencyFormatDescriptionDataBean" %>
+<%@ page import="com.ibm.commerce.server.ConfigProperties" %>
+<%@ page import="com.ibm.commerce.server.WebModuleConfig" %>
+<%@ page import="com.ibm.commerce.server.WcsApp" %>
+
+<%
+// check to see if wcparam is available; initialise it if it is not available
+if( null == request.getAttribute(com.ibm.commerce.server.ECConstants.EC_INPUT_PARAM)){
+	request.setAttribute(com.ibm.commerce.server.ECConstants.EC_INPUT_PARAM, new com.ibm.commerce.datatype.WcParam(request));
+}
+%>
+
+<%-- This flow tag is used to change styles --%>
+<flow:fileRef id="vfileColor" fileId="vfile.color"/>
+<flow:fileRef id="StyleDir" fileId="StyleDir"/>
+<flow:fileRef id="vfileStylesheet" fileId="vfile.stylesheet"/>
+<flow:fileRef id="vfileStylesheetie" fileId="vfile.stylesheetie"/>
+<flow:fileRef id="vfileStylesheetie7" fileId="vfile.stylesheetie7"/>
+<flow:fileRef id="vfileStylesheetprint" fileId="vfile.stylesheetprint"/>
+
+<c:set var = "env_vfileColor" scope="request" value="${vfileColor}"/>
+<c:set var = "env_StyleDir" scope="request" value="${StyleDir}"/>
+<c:set var = "env_vfileStylesheet" scope="request" value="${vfileStylesheet}"/>
+<c:set var = "env_vfileStylesheetie7" scope="request" value="${vfileStylesheetie7}"/>
+<c:set var = "env_vfileStylesheetprint" scope="request" value="${vfileStylesheetprint}"/>
+
+<%-- The commerce useBean tag is used to activate the StoreDataBean --%>
+<wcbase:useBean id="sdb" classname="com.ibm.commerce.common.beans.StoreDataBean" scope="request" />
+
+<%-- These are variables to use on pages --%>
+<c:set var="locale" value="${CommandContext.locale}" scope="request" />
+<c:set var="storeName" value="${sdb.storeEntityDescriptionDataBean.displayName}" scope="request" />
+<c:set var="userType" value="${CommandContext.user.registerType}" scope="request"/>
+<c:set var="anonymousUser" value="false" scope="request"/>
+<c:if test="${CommandContext.user.userId eq '-1002'}">
+	<c:set var="anonymousUser" value="true" scope="request"/>
+</c:if>
+
+<c:set var="lastCmdName" value="${CommandContext.commandName}" scope="request" />
+<c:set var="langId" value="${CommandContext.languageId}" scope="request" />
+<c:set var="storeId" value="${CommandContext.storeId}" scope="request"/>
+<c:if test="${!empty WCParam.catalogId}">
+	<c:set var="catalogId" value="${WCParam.catalogId}" scope="request"/>
+</c:if>
+<c:set var="userId" value="${CommandContext.userId}"/>
+
+<%-- Does this store support mobile store --%>
+<c:if test = '${fn:contains(sdb.storeLevel,"MOBILE")}'>
+	<c:set var="env_mobileStoreSupport" value="true" scope="request" />
+</c:if>
+
+
+<%--
+	For CaaS, prefix the path of jspStoreImgDir and jsAssetsDir, so that it points to webserver. OOB it will be empty
+--%>
+<c:set var = "jsServerPath" value=""/>
+<c:set var = "cssServerPath" value=""/>
+
+<%-- urlLangId parameter can be passed to wcf:url tags. If passed, this urlLangId will be used to look up
+the URL keywords. If keywords are not found for this urlLangId, then store default langId will be used to look up
+the URL keywords. By default page langId is set as urlLangId. If store URLs are supported in only one language, then set that
+Id here --%>
+<c:set var="urlLangId" value="${langId}" scope="request"/>
+
+<%-- URL pointing to the hosted store home directory.  Use this to reference images --%>
+<c:set var="storeImgDir" value="${sdb.filePath}" scope="request" />
+
+<%-- WebAsset directory of the hosted store.  Includes JSPs, HTML, Image files, etc --%>
+<c:set var="storeDir" value="${sdb.jspPath}" scope="request" />
+
+<%-- URL pointing to the shared image directory.  Use this to reference images --%>
+<c:set var="jspStoreImgDir" value="${jsServerPath}${sdb.jspStoreDirFilePath}" scope="request" />
+
+<%-- WebAsset directory of the shared file directory.  Includes JSPs, HTML, Image files, etc --%>
+<c:set var="env_jspStoreDir" value="/${sdb.jspStoreDir}/" scope="request" />
+
+<%-- Path used to retrieve the JavaScript assets.  Use this to reference your JavaScript files. --%>
+<c:set var="jsAssetsDir" value="${cssServerPath}${sdb.jspStoreDirFilePath}" scope="request" />
+
+<%--
+Example directories:
+storeImgDir - /wcsstore/<hostedstoredir>/
+storeDir - /<hostedstoredir>/
+jspStoreImgDir - /wcsstore/<sharedstorefrontassetstoredir>/ 
+jspStoreDir - /<sharedstorefrontassetstoredir>/ 
+--%>
+
+<%-- Determine if we are in preview mode. --%>
+<wcst:preview var="env_inPreview" />
+
+<%-- Load the store bundles --%>
+<c:if test="${env_inPreview && !empty cookie.WC_TOOLLOCALE.value}">
+	<fmt:setLocale value="${cookie.WC_TOOLLOCALE.value}"/>
+	<fmt:setBundle basename="com.ibm.commerce.stores.preview.properties.StorePreviewer" var="previewText"  scope="request"/>
+</c:if>
+
+<fmt:setLocale value="${CommandContext.locale}" />
+<fmt:setBundle basename="/${sdb.jspStoreDir}/storetext_v2" scope="request"/>
+<fmt:setBundle basename="/${sdb.jspStoreDir}/storetext" var="storeText"/>
+
+<c:set var="dojolocale" value="${fn:replace(locale, '_' , '-')}" />
+<c:set var="dojolocale" value="${fn:toLowerCase(dojolocale)}" />
+
+<c:set var="dojoDir" value="${staticAssetContextRoot}/dojo18"/>
+<c:set var="dojoFile" value="${dojoDir}/dojo/dojo.js"/>
+<c:set var="dojoFileDesktop" value="${dojoDir}/dojo/dojodesktop.js"/>
+
+<%-- Register module path to the NLS error messages folder --%>
+<c:set var="dojoConfigParams" value="parseOnLoad: true, isDebug: false,  modulePaths: {storetext: '${sdb.jspStoreDirFilePath}'}, useCommentedJson: true,locale: '${dojolocale}' "/>
+
+
+<%-- Default view in which products are displayed--%>
+<c:set var="env_defaultPageView" value="grid" scope="request"/>
+
+<%-- Is this a b2b store...  --%>
+<c:set var="env_b2bStore" value="false" scope="request"/>
+<c:set var="env_displayListPriceInProductPage" value="true" scope="request"/>
+
+<c:choose>
+       <c:when test="${CommandContext.locale eq 'iw_IL'}">
+              <%-- for now, only iw_IL is determined to be BiDi env --%>
+              <c:set var="isBiDiLocale" value="true" />
+              <c:set var="shortLocale" value="he"/>
+       </c:when>
+       <c:otherwise>
+              <c:set var="shortLocale" value="${fn:substring(CommandContext.locale,0,2)}"/>
+              <c:set var="isBiDiLocale" value="false" />
+       </c:otherwise>
+</c:choose>
+
+<wcbase:useBean id="currencyFormatterDB" classname="com.ibm.commerce.common.beans.StoreCurrencyFormatDescriptionDataBean" scope="request">
+	<c:set property="storeId" value="${storeId}" target="${currencyFormatterDB}" />
+	<c:set property="langId" value="${langId}" target="${currencyFormatterDB}" />
+	<c:set property="currencyCode" value="${CommandContext.currency}" target="${currencyFormatterDB}" />
+	<c:set property="numberUsage" value="-1" target="${currencyFormatterDB}" />
+</wcbase:useBean>
+
+<c:set var="env_currencyDecimal" value="${currencyFormatterDB.decimalPlaces}" scope="request"/>
+<c:set var="env_currencyCode" value="${currencyFormatterDB.currencyCode}" scope="request"/>
+
+<c:if test="${CommandContext.currency == 'KRW'}">
+	<c:set property="currencySymbol" value='&#8361;' target="${currencyFormatterDB}"/>
+</c:if>
+<c:if test="${CommandContext.currency == 'PLN'}">
+	<c:set property="currencySymbol" value='z&#322;' target="${currencyFormatterDB}"/>
+</c:if>
+<c:set var="env_CurrencySymbolToFormat" value="${currencyFormatterDB.currencySymbol}" scope="request"/>
+
+
+<c:forEach var="dbLanguage" items="${sdb.languageDataBeans}">
+	<c:if test="${langId == dbLanguage.languageId}">
+		<c:set var="env_languageString" value="${dbLanguage.nativeDescriptionString}" scope="request"/>
+	</c:if>
+</c:forEach>
+<%
+    	// Add support for possible SSL Accelerator port setup in WC config file.
+    	// There could be a setup for using different ports for SSL and nonSSL 
+    	// which are not 443 and 80 respectively.
+    	
+    	// Uncomment the code below if using SSL Accelerator and want to read the values from the configuration file.
+    	// Reading from config file can have a negative effect on performance. A better approach is to just enter the
+    	// port values in this file directly by putting value in inSSLAcceleratorPort and inNonSSLAcceleratorPort
+    	// variables below.
+    	//WebModuleConfig storeWebModule = ConfigProperties.singleton().getWebModule(WcsApp.storeWebModuleName);
+    	String loginTimeoutValue = "0";
+    	if (request.getAttribute("loginTimeoutValue") == null) {
+		loginTimeoutValue = ConfigProperties.singleton().getValue("LoginTimeout/Timeout/value");
+    	}		
+    	int inSSLAcceleratorPort = 443;
+    	//if (storeWebModule.getInSSLPort() != null) {
+    	//	inSSLAcceleratorPort = new Integer(storeWebModule.getInSSLPort()).intValue();
+    	//}
+    	int inNonSSLAcceleratorPort = 80;
+    	//if (storeWebModule.getInNonSSLPort() != null) {
+    	//	inNonSSLAcceleratorPort = new Integer(storeWebModule.getInNonSSLPort()).intValue();
+    	//}
+    	request.setAttribute("inSSLAcceleratorPort", inSSLAcceleratorPort);
+    	request.setAttribute("inNonSSLAcceleratorPort", inNonSSLAcceleratorPort);
+    	request.setAttribute("loginTimeoutValue", loginTimeoutValue);
+%>
+<c:set var="request" value="${pageContext.request}"/>
+<c:choose>
+	<c:when test="${request.serverPort != 80 && request.serverPort != 443 && request.serverPort != requestScope.inSSLAcceleratorPort && request.serverPort != requestScope.inNonSSLAcceleratorPort}">
+		<c:set var="portUsed" value=":${request.serverPort}"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="portUsed" value=""/>
+	</c:otherwise>
+</c:choose>
+
+<c:set var="schemeToUse" value="http"/>
+<c:choose>
+	<c:when test="${request.serverPort == requestScope.inSSLAcceleratorPort}">
+		<c:set var="schemeToUse" value="https"/>
+	</c:when>
+	<c:when test="${request.serverPort == requestScope.inNonSSLAcceleratorPort}">
+		<c:set var="schemeToUse" value="http"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="schemeToUse" value="${request.scheme}"/>
+	</c:otherwise>
+</c:choose>
+
+<c:set var="env_schemeToUse" value="${schemeToUse}" scope="request"/>
+<c:set var="env_contextPathUsed" value="" scope="request"/>
+<c:set var="env_absoluteUrl" value="" scope="request"/>
+<c:if test="${!empty requestScope['requestURIPath'] && requestScope['requestURIPath'] != null && !empty requestScope['requestServletPath'] && requestScope['requestServletPath'] != null}">
+	<c:set var="env_contextPathUsed" value="${fn:substringBefore(requestScope['requestURIPath'],requestScope['requestServletPath'])}" scope="request"/>
+	<c:set var="env_contextAndServletPath" value="${env_contextPathUsed}${requestScope['requestServletPath']}" scope="request"/>
+	<c:set var="env_absoluteUrl" value="${schemeToUse}://${request.serverName}${portUsed}${env_contextPathUsed}${requestScope['requestServletPath']}/" scope="request"/>
+</c:if>
+
+<%-- This variable is used to determine if the should support payment type promotions on the shipping & billing method page. --%>
+<flow:ifEnabled feature="PaymentPromotion">
+	<c:set var="supportPaymentTypePromotions" value="true"/>
+</flow:ifEnabled>
+<flow:ifDisabled feature="PaymentPromotion">
+	<c:set var="supportPaymentTypePromotions" value="false"/>
+</flow:ifDisabled>
+
+<%-- Constants used by subscriptions products --%>
+<c:set var="env_subsFulfillmentFrequencyAttrName" value="fulfillmentFrequency" scope="request"/>
+<c:set var="env_subsPaymentFrequencyAttrName" value="paymentFrequency" scope="request"/>
+<c:set var="env_subsTimePeriodAttrName" value="timePeriod" scope="request"/>
+
+<%-- Since this env file is included at lot of places, make sure that we construct HomePageURLWithLang SEO URL only once --%>
+<c:if test = "${empty env_TopCategoriesDisplayURL}">
+	<wcf:url var="TopCategoriesDisplayURLTemp" value="TopCategories1" patternName="HomePageURLWithLang">
+		<wcf:param name="langId" value="${langId}" />
+		<wcf:param name="storeId" value="${storeId}" />
+		<wcf:param name="catalogId" value="${catalogId}" />
+		<wcf:param name="urlLangId" value="${urlLangId}"/>
+	</wcf:url>
+	<%-- Put the variable in request scope, so that imported JSP's will find this var --%>
+	<c:set var="env_TopCategoriesDisplayURL" value="${TopCategoriesDisplayURLTemp}" scope="request"/>
+</c:if>
+
+<c:set var="env_maxOrderItemsToInspect" value="50"/>
+
+<%-- Begin pagination control variables definition --%>
+<%-- set default pageSize and beginIndex --%>
+<c:set var="beginIndex" value="${WCParam.beginIndex}" scope="request"/>
+<c:if test="${empty beginIndex}">
+	<c:set var="beginIndex" value = "0" scope="request"/>
+</c:if>
+
+<c:set var="pageSize" value = "${WCParam.pageSize}" scope="request"/>
+<c:if test="${empty pageSize}">
+	<c:set var="pageSize" value="12" scope="request"/>
+</c:if>
+<c:set var="env_resultsPerRow" value="4" scope="request"/>
+<c:set var="env_grid_pagination_count" value = "${12}" scope="request"/>
+<c:set var="env_list_pagination_count" value = "${8}" scope="request"/>
+<%-- End pagination control variables definition --%>
+
+<%-- env_fetchMarketingDetailsOnLoad, if set to true will fetch discounts, promos and espot on page load --%>
+<c:set var="env_fetchMarketingDetailsOnLoad" value="false" scope="request"/>
+
+<%-- Set to context root where images can be found --%>
+<c:set var="env_imageContextPath" value="${staticAssetContextRoot}" scope="request"/> 
+
+<%
+	// gets the webalias (default is /wcsstore)
+	String webAlias = ConfigProperties.singleton().getWebModule(WcsApp.storeWebModuleName).getWebAlias();
+	request.setAttribute("env_webAlias", webAlias);
+%>
+
+<wcf:useBean var="cachedCatalogEntryDetailsMap" classname="java.util.HashMap" scope="request"/>
+
+<%- Image directory name conventions --%>
+<c:set var="itemThumbnailImage" value="160x160" scope="request"/>
+<c:set var="itemFullImage" value="1000x1000" scope="request"/>
+
+<c:set var="productThumbnailImage" value="160x160" scope="request"/>
+<c:set var="productMasterImage" value="1000x1000" scope="request"/>
+<c:set var="productPageImage" value="447x447" scope="request"/>
+
+<c:set var="miniShopCartImage" value="105x105" scope="request"/>
+<c:set var="quickInfoImage" value="330x330" scope="request"/>
+<c:set var="miniImage" value="70x70" scope="request"/>
+
+<c:set var="profileShippingNickname" value="Default_Shipping_${storeId}"/>
+<c:set var="profileBillingNickname" value="Default_Billing_${storeId}"/>
+
+<c:set var="maxOrderItemsPerPage" value="20"/>
+<c:set var="maxOrderItemsToInspect" value="50"/>
+
+<%-- Oracle has a limitation on the number of identifiers on an "in" clause --%>
+<c:set var="maxSKUs" value="1000"/>
+
+<%-- These variables are used to determine if the corresponding orders will be categorized and displayed in the order status section. --%>
+<c:set var="showProcessedOrders" value="true"/>
+<c:set var="showWaitingForApprovalOrders" value="false"/>
+<c:set var="showScheduledOrders" value="false"/>
+
+<%-- The variable showPONumber is used to indicate if the purchase order number should be displayed for this store. --%>
+<c:set var="showPONumber" value="false"/>
+
+<%-- The variable ariaMessageNode is used to indicate id of the span where refreshArea will update message when the content is updated.  This message will notify the user of certain section on the page is updated after the refreshArea is completed using aria live region.  The default span is located in MessageDisplay.jspf --%>
+<c:set var="ariaMessageNode" value="ariaMessage" scope="request"/>
+
+<% request.setAttribute("previewContext", ((CommandContext) request.getAttribute("CommandContext")).getContext(PreviewContext.CONTEXT_NAME)); %>
+<c:set var="env_storePreviewLink" value="${!empty previewContext && !empty previewContext.properties['previewToken']}"/>
+
+<%-- The amount of time that the inactivity dialog will stay before it closes itself, default is 20 sec  --%>
+<c:set var="inactivityWarningDialogDisplayTimer" value="20000" scope="request"/>
+
+<%-- The amount of time that the inactivity dialog will display before the server time out, the default server timeout is 30 minutes and the dialog wlil open 30 seconds before that --%>
+<c:set var="inactivityWarningDialogBuffer" value="30000" scope="request"/>
+
+<%@ include file="../ShoppingArea/Configurator/SterlingConfiguratorIntegrationSetup.jspf" %>	
+<c:set var="android" value="${fn:contains(fn:toLowerCase(header['User-Agent']),'android')}" scope="request"/>
+<c:set var="ios" value="${fn:contains(fn:toLowerCase(header['User-Agent']),'ipad') || fn:contains(fn:toLowerCase(header['User-Agent']),'iphone') || fn:contains(fn:toLowerCase(header['User-Agent']),'ipod')}" scope="request"/>
+<c:set var="env_Tealeaf" value="false"/>
+<flow:ifEnabled feature="Tealeaf">
+	<c:set var="env_Tealeaf" value="true"/>
+</flow:ifEnabled>
+
+<%-- These variables are used to store the frequency values for a recurring order.--%>
+<c:set var="RecurringOrderFrequency1" value="1"/>
+<c:set var="RecurringOrderFrequency2" value="1"/>
+<c:set var="RecurringOrderFrequency3" value="1"/>
+<c:set var="RecurringOrderFrequency4" value="2"/>
+<c:set var="RecurringOrderFrequency5" value="3"/>
+<c:set var="RecurringOrderFrequency6" value="4"/>
+
+<%-- These variables are used to store the UOM of recurring order frequencies. The possible values are: DAY, HUR, MON, WEE, ANN--%>
+<c:set var="RecurringOrderFrequencyUOM1" value="DAY"/>
+<c:set var="RecurringOrderFrequencyUOM2" value="DAY"/>
+<c:set var="RecurringOrderFrequencyUOM3" value="WEE"/>
+<c:set var="RecurringOrderFrequencyUOM4" value="WEE"/>
+<c:set var="RecurringOrderFrequencyUOM5" value="WEE"/>
+<c:set var="RecurringOrderFrequencyUOM6" value="WEE"/>
+<c:set var="RecurringOrderFrequencyDayUOM" value="DAY"/>
+<c:set var="RecurringOrderFrequencyWeekUOM" value="WEE"/>
+<c:set var="RecurringOrderFrequencyMonthUOM" value="MON"/>
+
+<%-- These variables are used to store the frequency display texts for recurring orders. --%>
+<fmt:message var="RecurringOrderFrequencyText1" key="SCHEDULE_ORDER_INTERVAL_1" />
+<fmt:message var="RecurringOrderFrequencyText2" key="EVERY_DAY" />
+<fmt:message var="RecurringOrderFrequencyText3" key="EVERY_WEEK" />
+<fmt:message var="RecurringOrderFrequencyText4" key="EVERY_X_WEEKS" >
+	<fmt:param value="${RecurringOrderFrequency4}"></fmt:param>
+</fmt:message>
+<fmt:message var="RecurringOrderFrequencyText5" key="EVERY_X_WEEKS" >
+	<fmt:param value="${RecurringOrderFrequency5}"></fmt:param>
+</fmt:message>
+<fmt:message var="RecurringOrderFrequencyText6" key="EVERY_X_WEEKS" >
+	<fmt:param value="${RecurringOrderFrequency6}"></fmt:param>
+</fmt:message>
+
+<%-- This variable is used to store the notice period for cancelling a recurring order in seconds. --%>
+<c:set var="cancelRecurringOrderNoticePeriod" value="43200"/>
+
+<%-- This variable is used to store the notice period for cancelling a subscription in seconds. --%>
+<c:set var="cancelSubscriptionNoticePeriod" value="43200"/>

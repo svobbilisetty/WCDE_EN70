@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--- This definition defines the base object from which KitPage and InheritedKitPage are derived.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseCatalogEntryPagePrimaryObjectDefinition"
+		definitionName="pglBaseKitPagePrimaryObjectDefinition" 
+		detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}" 
+		displayName="${catalogResources.kit_DisplayName}"
+	  	helpLink="tasks/tpl_wwkitpages.htm"
+	    isBaseDefinition="true" 
+	    propertiesDefinitionName="pglKitPageProperties">
+	    
+	    <!---  
+		    Reference object definition between the kit page and a static kit page layout.
+		    A static kit page can have multiple kit page layout associations.
+		-->
+	    <ReferenceObjectDefinition baseDefinitionName="pglKitPageLayoutAssociationReferencedKitPageLayouts"/>
+	    <!---  
+		    Reference object definition between the kit page and an inherited static kit page layout.
+		    A static kit page can have multiple inherited kit page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglKitPageLayoutAssociationReferencedInheritedKitPageLayouts"/>
+		<!---  
+		    Reference object definition between the inherited kit page and an inherited static kit page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedKitPageLayoutAssociationReferencedInheritedKitPageLayouts"/>
+		<!---  
+		    Reference object definition between the kit page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglKitPageReferenceDefaultKitPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglKitPageLayoutAssociationReferencedKitPageLayouts} and
+			{@link pglKitPageLayoutAssociationReferencedInheritedKitPageLayouts} references for this kit page.
+		-->
+		<GetChildrenService objectTypes="KitPageLayoutAssociationReferencedKitPageLayouts,KitPageLayoutAssociationReferencedInheritedKitPageLayouts,InheritedKitPageLayoutAssociationReferencedInheritedKitPageLayouts" 
+			url="/cmc/GetCatalogEntryPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="StaticKitPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this kit page.
+		-->
+		<GetChildrenService objectTypes="KitPageReferenceDefaultKitPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForCatalogPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="StaticKitPage"/>
+		</GetChildrenService>
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing a Kit Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseKitPagePrimaryObjectDefinition"
+     	definitionName="KitPage"
+     	headerIcon="kitPageHeaderIcon"
+		icon="kitPageIcon"
+     	objectType="KitPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Kit Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseKitPagePrimaryObjectDefinition"
+     	definitionName="InheritedKitPage"
+     	displayName="${catalogResources.inheritedKit_DisplayName}"
+	    headerIcon="inheritedKitPageHeaderIcon" 
+	    icon="inheritedKitPageIcon" objectType="InheritedKitPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglKitPageLayoutAssociationReferencedKitPageLayouts" objectType="KitPageLayoutAssociationReferencedKitPageLayouts" referencedTypes="KitPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedKitPageLayoutAssociationReferencedInheritedKitPageLayouts" definitionName="pglKitPageLayoutAssociationReferencedInheritedKitPageLayouts" objectType="KitPageLayoutAssociationReferencedInheritedKitPageLayouts" referencedTypes="InheritedKitPageLayout"/>
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="KitPageLayoutAssociationReferencedInheritedKitPageLayouts" definitionName="pglInheritedKitPageLayoutAssociationReferencedInheritedKitPageLayouts" objectType="InheritedKitPageLayoutAssociationReferencedInheritedKitPageLayouts" referencedTypes="InheritedKitPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglKitPageReferenceDefaultKitPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="KitPageReferenceDefaultKitPageLayout" 
+		referencedTypes="KitPageLayout,InheritedKitPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

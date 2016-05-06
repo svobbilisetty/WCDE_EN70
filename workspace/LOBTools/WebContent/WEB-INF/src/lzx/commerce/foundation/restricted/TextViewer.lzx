@@ -1,0 +1,135 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		The wcfTextViewer class will bind a {@link wcfModelProperty} with the {@OLlink text} widget. 
+		The text will be refreshed to represent the value of the property.
+		
+		This text field is for internal use by properties view. 
+		{@link wcfPropertyViewLongText} create an wcfTextViewer instance for use in the properties view. 
+	-->
+	<class name="wcfTextViewer" extends="text" visible="true" resize="true" multiline="true" selectable="true" focusable="true">
+		<!--- 
+			Reference to {@link wcfModelProperty} object that is being edited. 
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		<!---
+			Indicates that the text should be interpreted as HTML.
+		-->
+		<attribute name="html" value="false" type="boolean"/>
+		<!---
+			This is a dummy variable. This is defined just for the enablement condition code to work without errors.
+		-->
+		<attribute name="enabled" value="true" type="boolean"/>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+			<![CDATA[
+		 	if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+				});
+			}
+			if ($as3) {
+				// assign keyboard control
+				LFCApplication.stage.focus = this.tsprite.textfield;
+				this.setSelection(0);
+			} else {
+				if (this.getSelectionPosition() == -1) {
+					this.setSelection(0);
+				}
+			}
+			]]>
+		</handler>
+				
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Set the {@link wcfModelProperty} to be associated with this input box. Listeners are created to
+			watch the property value. If the property changes at anytime, the updateValue method will be called.
+			@param wcfModelProperty newProperty: New Property associated with this input box.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValue();
+				}
+				else {
+					this.updateValueDel.unregisterAll();
+					this.setAttribute('text', "");
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Gets the display value from the properties value and sets it as the text to be displayed in the viewer.
+			@param lz.Delegate del An optional delegate to call when a change in property value is caused by the value service.
+			@returns string: display value
+		-->
+		<method name="getDisplayValue" args="del">
+			<![CDATA[
+			var value = this.property.value;
+			var displayValue = "";
+			if (this.property.propertyDefinition != null) {
+				var propertyValues = this.property.propertyDefinition.getPropertyValues(this.property.o, del);
+				for (var i = 0; i < propertyValues.length; i++) {
+					var propertyValue = propertyValues[i];
+					if (propertyValue.value == value) {
+						displayValue = propertyValue.displayName;
+						del.register(propertyValue, "ondisplayName");
+					}
+				}
+			}
+			
+			if(displayValue == "") {
+				displayValue = value;
+			}
+			return displayValue;
+			]]>
+		</method>
+		
+		<!--- 
+			Update and refresh the wcfTextViewer value with a new {@link wcfModelProperty} value. 
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			this.updateValueDel.unregisterAll();
+			this.updateValueDel.register(this.property, "onvalue");
+			var value = this.getDisplayValue(this.updateValueDel);
+			if (value != this.getText()) {
+				this.setAttribute('text', value);
+			}
+			]]>
+		</method>
+	</class>
+</library>

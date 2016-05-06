@@ -1,0 +1,266 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords final
+		
+		This class provides the template selector wizard used when creating a new {@link mktWebActivityPrimaryObjectDefinition Web activity from a template}.
+		A dialog window is presented the user with a dropdown of the available {@link mktWebActivityTemplatePrimaryObjectDefinition templates} for the store.
+		Once a template is selected, a new Web activity is created using the chosen template as a starting point.
+	
+		@deprecated Use {@link mktWebActivityTemplatePickerWizard}
+	-->
+	<class name="mktWebActivityTemplateWizard" extends="wcfBaseCreateWizard" title="${mktMarketingResources.activtyTemplateDialogTitle.string}" closeable="true">
+		<!--- @keywords private -->
+		<attribute name="descriptionProperty" value="description" type="string"/>
+		<!--- @keywords private -->
+		<attribute name="webActivityTemplatesTop" value="null"/>
+		<!--- @keywords private -->
+		<attribute name="templateObjects" value="${[]}"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+
+			if (this.webActivityTemplatesTop == null) {
+				this.findWebActivityTemplatesTop();
+			}
+			else {
+				this.webActivityTemplatesTop.loadChildren();
+			}
+			this.__inited = true;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateTemplatesDel.unregisterAll();
+			delete this.updateTemplatesDel;
+			this.releaseModelObjectDel.unregisterAll();
+			delete this.releaseModelObjectDel;
+			this.releaseTemplateObjectDel.unregisterAll();
+			delete this.releaseTemplateObjectDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="findWebActivityTemplatesTop">
+			<![CDATA[
+			for (var key in this.model.objectMap) {
+				if (this.model.objectMap[key].objectType == "WebActivityTemplatesTop") {
+					this.setAttribute("webActivityTemplatesTop", this.model.objectMap[key]);
+					break;
+				}
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->		
+		<handler name="onwebActivityTemplatesTop">
+			<![CDATA[
+			if (this.webActivityTemplatesTop) {
+				this.webActivityTemplatesTop.loadChildren();
+			}
+			this.updateTemplates();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="openWindow">
+			<![CDATA[
+			if (this["__inited"]) {
+				if (this.webActivityTemplatesTop == null) {
+					this.findWebActivityTemplatesTop();
+				}
+				else {
+					this.webActivityTemplatesTop.loadChildren();
+				}
+			}
+
+			super.openWindow();
+
+			this.templateComboContainer.templateCombo.clearSelection();
+			this.descView.description.setAttribute('text', "");
+			this.buttonView.okButton.setAttribute("enabled", false);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateTemplates" args="e=null">
+			<![CDATA[
+			if (!this["updateTemplatesDel"]) {
+				this.updateTemplatesDel = new lz.Delegate(this, "updateTemplates");
+			}
+			else {
+				this.updateTemplatesDel.unregisterAll();
+			}
+			
+			if (!this["releaseModelObjectDel"]) {
+				this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+			}
+			else {
+				this.releaseModelObjectDel.unregisterAll();
+			}
+			
+			if (!this["releaseTemplateObjectDel"]) {
+				this.releaseTemplateObjectDel = new lz.Delegate(this, "releaseTemplateObject");
+			}
+			else {
+				this.releaseTemplateObjectDel.unregisterAll();
+			}
+
+			while (this.templateObjects.length > 0) {
+				var o = this.templateObjects.shift();
+				o.referenceCount--;
+			}
+
+			var values = [];
+			
+			if (this.webActivityTemplatesTop) {
+				this.updateTemplatesDel.register(this.webActivityTemplatesTop, "onchildObjects");
+				this.releaseModelObjectDel.register(this.webActivityTemplatesTop, "beingDestroyed");
+	
+				var objects = this.webActivityTemplatesTop.childObjects;
+				for (var i = 0; i < objects.length; i++) {
+					var o = objects[i];
+	
+					var displayKey = null;
+					if (o.objectDisplayName == "Content Recommendation") {
+						displayKey = mktMarketingResources.webActivityTemplContentRecommendation;
+					}
+					else if (o.objectDisplayName == "Category Recommendation") {
+						displayKey = mktMarketingResources.webActivityTemplCategoryRecommendation;
+					}
+					else if (o.objectDisplayName == "Product Recommendation") {
+						displayKey = mktMarketingResources.webActivityTemplProductRecommendation;
+					}
+					else if (o.objectDisplayName == "Promotion Recommendation") {
+						displayKey = mktMarketingResources.webActivityTemplPromotionRecommendation;
+					}
+					else if (o.objectDisplayName == "Merchandising Association Recommendation") {
+						displayKey = mktMarketingResources.webActivityTemplMerchAssocRecommendation;
+					}
+					else if (o.objectDisplayName == "Blank Activity") {
+						displayKey = mktMarketingResources.webActivityTemplBlank;
+					}
+					
+					var displayName = "";
+					if (displayKey != null) {
+						this.updateTemplatesDel.register(displayKey, "onstring");
+						displayName = displayKey.string;
+					}
+					else {
+						this.updateTemplatesDel.register(o, "onobjectDisplayName");
+						displayName = o.objectDisplayName;
+					}
+					
+					values.push({
+						displayName: displayName,
+						o: o
+					});
+					this.releaseTemplateObjectDel.register(o, "beingDestroyed");
+					o.referenceCount++;
+					this.templateObjects.push(o);
+				}
+			}
+			this.templateComboContainer.templateCombo.setValues(values);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method releases the {@link wcfModelObject model object} from this template picker
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+			this.setAttribute("webActivityTemplatesTop", null);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method releases the specified template object.
+		-->
+		<method name="releaseTemplateObject" args="o">
+			<![CDATA[
+			for (var i = 0; i < this.templateObjects.length; i++) {
+				if (this.templateObjects[i] == o) {
+					this.templateObjects.splice(i, 1);
+					break;
+				}
+			}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="15"/>
+		<view name="templateComboContainer">
+			<simplelayout axis="y" spacing="5"/>
+			<text text="${mktMarketingResources.activityTemplate.string}"></text>
+			<wcfBaseComboBox name="templateCombo" defaultTextResourceBundleKey="${mktMarketingResources.chooseActivityTemplate}" width="300">
+				<handler name="onselectedValue">
+					<![CDATA[
+					if (this.selectedValue != null) {
+						var displayDescription = "";
+						if (this.selectedValue.o.objectDisplayName == "Content Recommendation") {
+							displayDescription = mktMarketingResources.webActivityTemplContentRecommendationDescription.string;
+						}
+						else if (this.selectedValue.o.objectDisplayName == "Category Recommendation") {
+							displayDescription = mktMarketingResources.webActivityTemplCategoryRecommendationDescription.string;
+						}
+						else if (this.selectedValue.o.objectDisplayName == "Product Recommendation") {
+							displayDescription = mktMarketingResources.webActivityTemplProductRecommendationDescription.string;
+						}
+						else if (this.selectedValue.o.objectDisplayName == "Promotion Recommendation") {
+							displayDescription = mktMarketingResources.webActivityTemplPromotionRecommendationDescription.string;
+						}
+						else if (this.selectedValue.o.objectDisplayName == "Merchandising Association Recommendation") {
+							displayDescription = mktMarketingResources.webActivityTemplMerchAssocRecommendationDescription.string;
+						}
+						else if (this.selectedValue.o.objectDisplayName == "Blank Activity") {
+							displayDescription = mktMarketingResources.webActivityTemplBlankDescription.string;
+						}
+						else {
+							displayDescription = this.selectedValue.o.getPropertyValue(classroot.descriptionProperty);
+						}
+					
+						classroot.descView.description.setAttribute('text', displayDescription);
+						classroot.buttonView.okButton.setAttribute("enabled", true);
+					}
+					]]>
+				</handler>
+			</wcfBaseComboBox>
+		</view>
+		<view name="descView" width="${immediateparent.width}" height="80">
+			<text name="description" multiline="true" width="${immediateparent.width}"/>
+		</view>
+
+		<view name="buttonView" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton name="okButton" text="${mktMarketingResources.ok.string}">
+				<handler name="onclick">
+					classroot.complete(classroot.templateComboContainer.templateCombo.selectedValue.o);
+				</handler>
+			</wcfButton>
+			<wcfButton text="${mktMarketingResources.cancel.string}">
+				<handler name="onclick">
+					classroot.cancel();
+				</handler>
+			</wcfButton>
+		</view>
+	</class>
+	
+</library>

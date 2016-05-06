@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<!---
+		@keywords private
+	-->
+	<PrimaryObjectDefinition creatable="true" initializeObjectStoreId="false" definitionName="Workspace" displayName="${wspWorkspaceResources.workspace}"
+		displayNameProperty="wrkspcName" idProperty="workspaceId" objectType="Workspace" propertiesDefinitionName="wspWorkspaceProperties"
+		headerIcon="workspaceHeaderIcon" icon="workspaceIcon" browseFilterType="CURRENT" newObjectMenuItemText="${wspWorkspaceResources.newWorkspace}">
+
+		<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+
+		<ParentReferenceObjectDefinition baseDefinitionName="wspChildTaskGroupObjectDefinition">
+			<EnablementOrCondition>
+				<EnablementCondition propertyName="workspaceStatus" enablementValue="Active" />
+				<EnablementCondition propertyName="workspaceId" enablementValue="" />
+			</EnablementOrCondition>
+		</ParentReferenceObjectDefinition>
+
+		<NavigationListDefinition baseDefinitionName="wspTaskGroupGridChildList" helpLink="" />
+
+		<GetChildrenService objectTypes="ChildTaskGroup" url="/cmc/GetTaskGroupsByWorkspaceId">
+			<ServiceParam name="workspaceId" propertyName="workspaceId" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetChildrenService>
+
+		<CreateService url="/cmc/CreateWorkspace">
+		</CreateService>
+
+		<UpdateService url="/cmc/UpdateWorkspace">
+			<ServiceParam name="workspaceId" propertyName="workspaceId" />
+		</UpdateService>
+
+		<DeleteService url="/cmc/DeleteWorkspace">
+			<ServiceParam name="workspaceId" propertyName="workspaceId" />
+		</DeleteService>
+
+		<RefreshService url="/cmc/GetWorkspaceById">
+			<ServiceParam name="workspaceId" propertyName="workspaceId" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+		</RefreshService>
+
+		<WorkspaceCancelCustomService package="wsp" />
+
+		<PropertyDefinition displayName="${wspWorkspaceResources.workspaceName}" maximumSize="254" propertyName="wrkspcName" required="true" trim="true" />
+
+		<PropertyDefinition propertyName="workspacePersistentType">
+			<PropertyValue displayName="${wspWorkspaceResources.workspaceSingleUse}" value="false" isDefault="true" />
+			<PropertyValue displayName="${wspWorkspaceResources.workspacePersistent}" value="true" />
+		</PropertyDefinition>
+
+		<PropertyDefinition propertyName="workspaceStatus" displayName="${wspWorkspaceResources.workspaceStatus}" send="false">
+			<PropertyValue displayName="${wspWorkspaceResources.workspaceStatusActive}" value="Active" />
+			<PropertyValue displayName="${wspWorkspaceResources.workspaceStatusCompleted}" value="Complete" />
+			<PropertyValue displayName="${wspWorkspaceResources.workspaceStatusCanceled}" value="Canceled" />
+			<PropertyValue displayName="${wspWorkspaceResources.workspaceStatusCancelInProgress}" value="CancelInProgress" />
+		</PropertyDefinition>
+		
+		<Xml name="template">
+			<workspaceStatus>Active</workspaceStatus>
+			<workspaceEmergencyFix>false</workspaceEmergencyFix>
+		</Xml>
+
+	</PrimaryObjectDefinition>
+
+</Definitions>

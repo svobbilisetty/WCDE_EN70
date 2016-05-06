@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PrimaryObjectDefinition creatable="false"
+			definitionName="mktLocationRegionPrimaryObjectDefinition"
+			displayName="${mktMarketingResources.region}"
+			displayNameProperty="name"
+			headerIcon="regionHeaderIcon"
+			icon="regionIcon"
+			idProperty="regionId"
+			isBaseDefinition="true"
+			propertiesDefinitionName="mktLocationRegionProperties"
+			searchType="FindLocationRegions"
+			browseFilterType="MarketingLocationFilter"
+			writeUsage="IBM_ManageMarketingTool">
+
+		<EnablementCondition contextName="lbsEnabled" enablementValue="true" conditionId="lbsEnabledContextValueCondition"/>
+
+		<!---  Retrieves the child {@link LocationPOI Location Point of Interest} objects.	-->
+		<GetChildrenService url="/cmc/GetLocationPOIs">
+			<ServiceParam name="storeId" />
+			<ServiceParam name="regionId" propertyName="regionId" />
+		</GetChildrenService>
+
+		<ParentReferenceObjectDefinition derivedId="true" idProperty="pointOfInterestId" objectType="ReferencePOI" referencedTypes="LocationPOI"/>
+
+		<PropertyDefinition displayName="${mktMarketingResources.regionId}"          maximumSize="20"  propertyName="regionId"          required="true" trim="true" />
+		<PropertyDefinition displayName="${mktMarketingResources.objectName}"        maximumSize="50"  propertyName="name"              required="true" trim="true" />
+		<PropertyDefinition displayName="${mktMarketingResources.description}"       maximumSize="100" propertyName="description" />
+
+	</PrimaryObjectDefinition>
+
+	<PrimaryObjectDefinition baseDefinitionName="mktLocationRegionPrimaryObjectDefinition" creatable="false" definitionName="LocationRegion" objectType="LocationRegion" />
+
+</Definitions>

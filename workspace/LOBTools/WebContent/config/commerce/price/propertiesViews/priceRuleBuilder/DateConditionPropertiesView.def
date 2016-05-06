@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<!---
+		Properties view for the {@link prcDateConditionElementObject}.
+	-->
+	<FlowElementProperties definitionName="prcDateConditionElementProperties">
+		<PropertyGroup collapsable="false" displayGrouping="true"  name="dateCondition" >
+		
+			<PropertyDateTimePicker promptText="${prcPriceResources.startDate}" propertyName="startDate" required="true"/>
+			<PropertyDateTimePicker endOfDay="true" promptText="${prcPriceResources.endDate}" propertyName="endDate" />
+			
+			<PropertyGroup collapsable="false" displayGrouping="true" name="isEveryDayOfTheWeekGroup">
+				<PropertyRadioGroup helpText="${prcPriceResources.helpText_days_available}" promptText="${prcPriceResources.prompt_days_available}" propertyName="isEveryDayOfTheWeek"/>
+				<PropertyGroup collapsable="false" name="weekdaysGroup">
+					<EnablementCondition conditionId="isEveryDayOfTheWeek" enablementValue="false" propertyName="isEveryDayOfTheWeek"/>
+					<PropertyChildObjectDaysSelect objectType="WeekDay"/>
+				</PropertyGroup>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" displayGrouping="true" name="allThroughTheDayGroup">
+				<MultiValueSelector helpText="${prcPriceResources.helpText_time_available}" name="allThroughTheDaySelector" promptText="${prcPriceResources.prompt_time_available}" useRadioButtons="true">
+					<MultiValueSelection displayName="${promotionResources.promotion_AllThroughTheDay}" name="allThroughTheDay">
+						<Xml name="values">
+							<isAllThroughTheDay>true</isAllThroughTheDay>
+							<startTime significant="false"/>
+							<endTime significant="false"/>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${promotionResources.promotion_DuringASpecifiedTimeOfDay}" name="duringASpecifiedTimeOfDay">
+						<Xml name="values">
+							<isAllThroughTheDay>false</isAllThroughTheDay>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+					
+				<PropertyGroup collapsable="false" name="timePickerGroup">
+					<EnablementCondition conditionId="isAllThroughTheDay" enablementValue="false" propertyName="isAllThroughTheDay"/>
+					<PropertyTimePicker promptText="${promotionResources.promotion_StartTime}" propertyName="startTime" required="true" timeFormat="HH:mm:ss"/>
+					<PropertyTimePicker promptText="${promotionResources.promotion_EndTime}" propertyName="endTime" required="true" timeFormat="HH:mm:ss"/>
+				</PropertyGroup>
+			</PropertyGroup>
+			
+		</PropertyGroup>
+		
+		
+	</FlowElementProperties>
+	
+</Definitions>

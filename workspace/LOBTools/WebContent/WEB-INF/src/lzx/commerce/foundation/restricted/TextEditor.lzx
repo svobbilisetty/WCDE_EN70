@@ -1,0 +1,179 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		The wcfTextEditor class will bind a {@link wcfModelProperty} with the {@link wcfInputText} widget. The relationship 
+		is bi-directional.  This means that the inputbox text will be refreshed to represent the value of the property and 
+		the new property value will be stored when a user changes the inputbox text.
+		
+		This text field is for internal use by both the properties and grid implementations. {@link wcfPropertyInputText}, 
+		{@link wcfPropertyInputLongText} and {@link wcfPropertyInputMultiLineText} all create an wcfTextEditor for 
+		use in the properties view. {@link wcfGridTextEditor} creates wcfTextEditor for use inside {@link wcfGrid}.
+	-->
+	<class name="wcfTextEditor" extends="wcfInputText" visible="true">
+		<!--- Reference to {@link wcfModelProperty} object that is being edited. -->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		<!---
+			@keywords private
+			Context menu class for the background of the text editor.
+		-->
+		<attribute name="menuClass" type="string" value="wcfTextEditorMenu"/>
+		<!---
+			@keywords private 
+			Locks the stored value from being updated.
+		-->
+		<attribute name="storeValueLock" type="boolean" value="false"/>
+		<!---
+			@keywords private 
+			Delay used in the delayStoreValue method, will wait this amount before calling storeValue
+		-->
+		<attribute name="storeValueDelay" value="500"/> <!-- 1000ms = 1 second -->
+		<!---
+			@keywords private 
+			keeps track of the store value timer, when true the timer is already set
+		-->
+		<attribute name="storeValuePending" type="boolean" value="false"/>
+		<!---
+			@keywords private 
+			Skip storing value of the property.
+		-->
+		<attribute name="skipStoringValue" type="boolean" value="false"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+			new lz[this.menuClass](this, {
+			name: "menu",
+			editor: this
+			});
+			this.menu.addView(this);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Set the {@link wcfModelProperty} to be associated with this input box. Listeners are created to
+			watch the property value. If the property changes at anytime, the updateValue method will be called.
+			@param wcfModelProperty newProperty: New Property associated with this input box.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				if (this["property"] && this.storeValuePending) {
+					this.storeValue();
+				}
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+				else {
+					this.setText("");
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			Update and refresh the wcfTextEditor value with a new {@link wcfModelProperty} value. 
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (!this.storeValueLock) {
+				var value = this.property.value;
+				if (value != this.getText()) {
+					this.skipStoringValue = true;
+					this.setText(value);
+					this.skipStoringValue = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			Set the {@link wcfModelProperty} to represent the wcfTextEditor value. This method is called when the input box
+			value is changed.
+		-->
+		<method name="storeValue" args="e=null">
+			<![CDATA[
+			if (this.storeValuePending) {
+				this.storeValueDel.unregisterAll();
+				lz.Timer.removeTimer(this.storeValueDel);
+			}
+			this.storeValuePending = false;
+			this.storeValueLock = true;
+			if (this['property']) {
+				this.property.change(this.getText());
+				if(wcfLogger.enabled){
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfTextEditor", "storeValue", "updates the model property " + this.property.propertyName + " with new value " + this.getText() + this.property.o.logString());
+				}
+			}
+			this.storeValueLock = false;
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Calls storeValue on a 2.5 second delay
+		-->
+		<method name="delayedStoreValue">
+			<![CDATA[
+			if (!this.skipStoringValue && !this.storeValuePending && this.property){
+				this.storeValuePending = true;
+				if (typeof(this.storeValueDel) == "undefined") {
+					this.storeValueDel = new lz.Delegate(this, "storeValue");
+				}
+				this.storeValueDel.unregisterAll();
+				this.storeValueDel.register(this.property.o.openGroupObject, "beingSaved");
+				lz.Timer.addTimer(this.storeValueDel, this.storeValueDelay);
+			}
+			]]>
+		</method>
+
+		<!--- 
+			When the text of the input box is changed by the business user, storeValue method will be called.
+		-->	
+		<handler name="ontext">
+			<![CDATA[
+			this.delayedStoreValue();
+			]]>
+		</handler>
+		
+		<!--- 
+			@keywords private
+		-->	
+		<handler name="onblur">
+			<![CDATA[
+			if (this.storeValuePending) {
+				this.storeValue();
+			}
+			]]>
+		</handler>
+	</class>
+</library>

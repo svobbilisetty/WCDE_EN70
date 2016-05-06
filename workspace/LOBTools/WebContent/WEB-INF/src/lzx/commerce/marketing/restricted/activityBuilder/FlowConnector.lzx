@@ -1,0 +1,381 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		<p>The default flow connector class for use in {@link mktActivityBuilder activity builders}. Within an activity builder,
+		a connector joins two elements together visually, and when elements are dropped onto a connector, the elements
+		are inserted between the two, previously joined elements.</p>
+	-->
+	<class name="mktBaseFlowConnector" extends="wcfBaseFlowConnector">
+
+		<!--- @keywords private -->
+		<method name="handleDroppedElements" args="sources">
+			<![CDATA[
+			this.parentFlow.o.lock();
+			
+			var parentPath = wcfFlowUtils.getParentFlowPath(this);
+			if(parentPath) {
+				var parentPathObj = parentPath.o;
+
+				// make sure we're not trying to move an element to the same place
+				// var parentFlowElement = wcfFlowUtils.getParentFlowElement(this);
+				var parentFlowElement = this.getFlowElement();
+				if((parentFlowElement != null) && sources[0]["flowElement"]) {
+					if(sources[0].flowElement.o == parentFlowElement.o) {
+						this.parentFlow.o.unlock(true);
+						this.parentFlow.o.updateChildObjects();
+						return;
+					}
+				}
+
+				for(var i = 0; i < sources.length; i++) {
+					var newObject = null;
+
+					var insertSequence;
+					if(parentFlowElement == null) {
+						insertSequence = wcfFlowUtils.getNextSequenceNumber(parentPathObj);
+					}
+					else {
+						insertSequence = wcfFlowUtils.getNextSequenceNumber(parentPathObj, parentFlowElement.o);
+					}
+					
+					// move case
+					if (sources[i]["flowElement"]) {
+						var moveObj = sources[i]["flowElement"].o;
+						newObject = parentPathObj.model.createNewObject(null, parentPathObj, true, moveObj);
+						newObject.setPropertyValue("sequence", null, insertSequence);
+						moveObj.deleteObject();
+					}
+					// new element from palette
+					else {
+						var objectType = sources[i].dragObject.objectType;
+						var objectDef = parentPathObj.model.getObjectDefinition(parentPathObj, objectType)
+						var branchType = "";
+						
+						// If an experiment or branch is dropped, we automatically create the branch using the next element
+						// in the flow. We also include all of the next elements that are of the same type of the
+						// first included element.
+						if((objectDef.elemTemplateType == "Branch") && (parentFlowElement != null)) {
+							this.parentFlow.unselectAll();
+							var parentFlowElementType = parentFlowElement.o.objectDefinition.elemTemplateType;
+
+							// force random branching for trigger testing
+							if(parentFlowElementType == "Trigger") {
+								branchType = "random";
+							}
+							
+							var siblings = parentPath.getChildren();
+							for(var i = 0; i < siblings.length; i++) {
+								// search for ourself
+								if(siblings[i] == parentFlowElement) {
+									var j = i + 1;
+									// check everything after for the same type and include them
+									while((j < siblings.length) && (siblings[j].o.objectDefinition.elemTemplateType == parentFlowElementType)) {
+										siblings[j].select();
+										j++;
+									}
+									break;
+								}
+							}
+							
+							// create experiment
+							parentFlowElement.select();
+							parentFlowElement.addElementsToBranch(branchType, objectType);
+						}
+						else {
+							newObject = parentPathObj.model.createNewObject(objectDef, parentPathObj);
+							newObject.setPropertyValue("sequence", null, insertSequence);
+							
+							// if the branching element was placed at the end of a path
+							if(objectDef.elemTemplateType == "Branch") {
+								var pathObjectDefinition = newObject.model.getObjectDefinition(newObject, parentPathObj.objectType);
+					
+								// create top path element
+								insertSequence = wcfFlowUtils.getNextSequenceNumber(newObject);
+								var topFlowObj = newObject.model.createNewObject(pathObjectDefinition, newObject);
+								topFlowObj.setPropertyValue("sequence", null, insertSequence);
+					
+								// create bottom path element
+								insertSequence = wcfFlowUtils.getNextSequenceNumber(newObject);
+								var botFlowObj = newObject.model.createNewObject(pathObjectDefinition, newObject);
+								botFlowObj.setPropertyValue("sequence", null, insertSequence);
+								
+								newObject.updateChildObjects();
+								topFlowObj.updateChildObjects();
+								botFlowObj.updateChildObjects();
+							}
+						}
+					}
+				}
+			}
+
+			this.parentFlow.o.unlock(true);
+			this.parentFlow.o.updateChildObjects();
+			this.parentFlow.unselectAll();
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="mktWebActivityFlowConnector" extends="mktBaseFlowConnector">
+		<!--- @keywords private -->
+		<method name="isEnabled" args="dragSources">
+			<![CDATA[
+			var enabled = super.isEnabled(dragSources);
+			if(!enabled) {
+				return false;
+			}
+			else {
+				var parentFlowPath = wcfFlowUtils.getParentFlowPath(this);
+				if(parentFlowPath) {
+					var hasExperiment = this.parentFlow && this.parentFlow.o && this.parentFlow.o.getPropertyValue("experimentType") == "Experiment";
+					var creatingExperiment = false;
+					
+					// disable if we're creating an experiment and one already exists
+					if((dragSources.length == 1) && dragSources[0].dragObject["objectType"] && (dragSources[0].dragObject.objectType == "branch")) {
+						creatingExperiment = true;
+						if(hasExperiment) {
+							return false;
+						}
+					}
+					
+					var parentFlowElement = this.getFlowElement();
+					var elements = wcfFlowUtils.getSortedElements(parentFlowPath.o);
+
+					// if this is the last connector
+					if(parentFlowElement == null) {
+						// disable if creating an experiment
+						if(creatingExperiment) {
+							return false;
+						}
+						
+						// disable if this is after a Trigger and not on the main path (ie: in an branch)
+						if(elements.length > 0 && (parentFlowPath != this.parentFlow.flowPath)) {
+							var lastElement = elements[elements.length - 1];
+							if(lastElement.objectDefinition.elemTemplateType == "Trigger") {
+								return false;
+							}
+						}
+					}
+					
+					// if not the last connector
+					if(parentFlowElement && parentFlowElement["o"]) {
+						// disable if this is the first connector on the main path and not creating an experiment
+						if((elements[0] == parentFlowElement.o) && this.parentFlow && (parentFlowPath == this.parentFlow.flowPath) && !creatingExperiment) {
+							return false;
+						}
+						
+						// disable if this is before a trigger and not creating an experiment
+						if((parentFlowElement.o.objectDefinition.elemTemplateType == "Trigger") && !creatingExperiment) {
+							return false;
+						}
+						
+						// disable if this is before an experiment and trying to create a branch
+						if((parentFlowElement.o.objectDefinition.objectType == "branch") && (dragSources[0].dragObject.objectType == "simpleBranch")) {
+							return false;
+						}
+					}
+					
+					// dragging multiple elements (move scenario)
+					var movedBranch = null;
+					if(dragSources[0]["flowElement"]) {
+						for(var i = 0; i < dragSources.length; i++) {
+							if(dragSources[i].flowElement.o && dragSources[i].flowElement.o.objectDefinition.elemTemplateType == "Branch") {
+								movedBranch = dragSources[i].flowElement;
+								break;
+							}
+						}
+					}
+					// disable if a branch/experiment is being moved and we are a descendent
+					if(movedBranch) {
+						var ancestor = this;
+						while(ancestor != null && ancestor != canvas) {
+							if(ancestor == movedBranch) {
+								return false;
+							}
+							ancestor = ancestor.parent;
+						}
+					}
+				}
+
+				return true;
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="mktDialogActivityFlowConnector" extends="mktBaseFlowConnector">
+		<!--- @keywords private -->
+		<method name="isEnabled" args="dragSources">
+			<![CDATA[
+			var enabled = super.isEnabled(dragSources);
+			if(!enabled) {
+				return false;
+			}
+			else {
+				var parentFlowPath = wcfFlowUtils.getParentFlowPath(this);
+				if(parentFlowPath) {
+					var hasExperiment = this.parentFlow && this.parentFlow.o && this.parentFlow.o.getPropertyValue("experimentType") == "Experiment";
+					var creatingExperiment = false;
+					
+					// disable if we're creating an experiment and one already exists
+					if((dragSources.length == 1) && dragSources[0].dragObject["objectType"] && (dragSources[0].dragObject.objectType == "branch")) {
+						creatingExperiment = true;
+						if(hasExperiment) {
+							return false;
+						}
+					}
+					
+					var parentFlowElement = this.getFlowElement();
+
+					// if not the last connector
+					if(parentFlowElement && parentFlowElement["o"]) {
+						// disable if this is before an experiment and trying to create a branch
+						if((parentFlowElement.o["objectType"] == "branch") && (dragSources[0].dragObject["objectType"] == "simpleBranch")) {
+							return false;
+						}
+					}
+					
+					// dragging multiple elements (move scenario)
+					var movedBranch = null;
+					if(dragSources[0]["flowElement"]) {
+						for(var i = 0; i < dragSources.length; i++) {
+							if(dragSources[i].flowElement.o && dragSources[i].flowElement.o.objectDefinition.elemTemplateType == "Branch") {
+								movedBranch = dragSources[i].flowElement;
+								break;
+							}
+						}
+					}
+					// disable if a branch/experiment is being moved and we are a descendent
+					if(movedBranch) {
+						var ancestor = this;
+						while(ancestor != null && ancestor != canvas) {
+							if(ancestor == movedBranch) {
+								return false;
+							}
+							ancestor = ancestor.parent;
+						}
+					}
+				}
+
+				return true;
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="handleDroppedElements" args="sources">
+			<![CDATA[
+			this.parentFlow.o.lock();
+			
+			var parentPath = wcfFlowUtils.getParentFlowPath(this);
+			if(parentPath) {
+				var parentPathObj = parentPath.o;
+
+				// make sure we're not trying to move an element to the same place
+				// var parentFlowElement = wcfFlowUtils.getParentFlowElement(this);
+				var parentFlowElement = this.getFlowElement();
+				if((parentFlowElement != null) && sources[0]["flowElement"]) {
+					if(sources[0].flowElement.o == parentFlowElement.o) {
+						this.parentFlow.o.unlock(true);
+						this.parentFlow.o.updateChildObjects();
+						return;
+					}
+				}
+
+				for(var i = 0; i < sources.length; i++) {
+					var newObject = null;
+
+					var insertSequence;
+					if(parentFlowElement == null) {
+						insertSequence = wcfFlowUtils.getNextSequenceNumber(parentPathObj);
+					}
+					else {
+						insertSequence = wcfFlowUtils.getNextSequenceNumber(parentPathObj, parentFlowElement.o);
+					}
+					
+					// move case
+					if (sources[i]["flowElement"]) {
+						var moveObj = sources[i]["flowElement"].o;
+						newObject = parentPathObj.model.createNewObject(null, parentPathObj, true, moveObj);
+						newObject.setPropertyValue("sequence", null, insertSequence);
+						moveObj.deleteObject();
+					}
+					// new element from palette
+					else {
+						var objectType = sources[i].dragObject.objectType;
+						var objectDef = parentPathObj.model.getObjectDefinition(parentPathObj, objectType)
+						var branchType = "";
+						
+						// If an experiment or branch is dropped, we automatically create the branch using the next element
+						// in the flow. We also include all of the next elements that are of the same type of the
+						// first included element.
+						if((objectDef.elemTemplateType == "Branch") && (parentFlowElement != null)) {
+							this.parentFlow.unselectAll();
+							var parentFlowElementType = parentFlowElement.o.objectDefinition.elemTemplateType;
+							
+							var siblings = parentPath.getChildren();
+							for(var i = 0; i < siblings.length; i++) {
+								// search for ourself
+								if(siblings[i] == parentFlowElement) {
+									var j = i + 1;
+									// check everything after for the same type and include them
+									while((j < siblings.length) && (siblings[j].o.objectDefinition.elemTemplateType == parentFlowElementType)) {
+										siblings[j].select();
+										j++;
+									}
+									break;
+								}
+							}
+							
+							// create experiment
+							parentFlowElement.select();
+							parentFlowElement.addElementsToBranch(branchType, objectType);
+						}
+						else {
+							newObject = parentPathObj.model.createNewObject(objectDef, parentPathObj);
+							newObject.setPropertyValue("sequence", null, insertSequence);
+							
+							// if the branching element was placed at the end of a path
+							if(objectDef.elemTemplateType == "Branch") {
+								var pathObjectDefinition = newObject.model.getObjectDefinition(newObject, parentPathObj.objectType);
+					
+								// create top path element
+								insertSequence = wcfFlowUtils.getNextSequenceNumber(newObject);
+								var topFlowObj = newObject.model.createNewObject(pathObjectDefinition, newObject);
+								topFlowObj.setPropertyValue("sequence", null, insertSequence);
+					
+								// create bottom path element
+								insertSequence = wcfFlowUtils.getNextSequenceNumber(newObject);
+								var botFlowObj = newObject.model.createNewObject(pathObjectDefinition, newObject);
+								botFlowObj.setPropertyValue("sequence", null, insertSequence);
+								
+								newObject.updateChildObjects();
+								topFlowObj.updateChildObjects();
+								botFlowObj.updateChildObjects();
+							}
+						}
+					}
+				}
+			}
+
+			this.parentFlow.o.unlock(true);
+			this.parentFlow.o.updateChildObjects();
+			this.parentFlow.unselectAll();
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="istInstallmentRuleProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${istInstallmentResources.installmentRuleProperties}" name="group" open="true">
+				<PropertyInputText promptText="${istInstallmentResources.ruleName}" propertyName="name" required="true"/>
+				<PropertyInputMultiLineText promptText="${istInstallmentResources.description}" propertyName="description"/>		
+				<PropertyStepper maximumValue="1000000" minimumValue="0" promptText="${istInstallmentResources.priority}" propertyName="priority"/>
+				<PropertyDateTimePicker promptText="${istInstallmentResources.startDateLabel}" propertyName="startDate"/>
+				<PropertyDateTimePicker promptText="${istInstallmentResources.endDateLabel}" propertyName="endDate"/>
+			</PropertyGroup>
+
+			<PropertyGroup groupTitle="${istInstallmentResources.targetCatalog}" name="targetProducts">
+				<PropertyCheckbox promptText="${istInstallmentResources.includeAllCatEntries}" propertyName="includeAllCatEntries"/>
+				<PropertyGroup collapsable="false" name="includeProductEditors">
+					<EnablementCondition conditionId="notIncludeAllCatEntries" enablementValue="true" negate="true" propertyName="includeAllCatEntries"/>
+					<PropertyChildListEditor listDefinitionName="istCategoryGrid" name="inclCatEditor" objectTypes="InclusionChildCatalogGroup,InclusionChildInheritedCatalogGroup" promptText="${istInstallmentResources.includedCategories}" validatorTypes="reqCatalogValidator"/>
+					<PropertyChildListEditor listDefinitionName="istProductGrid" name="inclProdEditor" objectTypes="InclusionChildCatentry,InclusionChildInheritedCatentry" promptText="${istInstallmentResources.includedCatEntries}" validatorTypes="reqCatalogValidator"/>
+				</PropertyGroup>
+
+				<PropertyChildListEditor listDefinitionName="istCategoryGrid" name="exclCatEditor" objectTypes="ExclusionChildCatalogGroup,ExclusionChildInheritedCatalogGroup" promptText="${istInstallmentResources.excludedCategories}"/>
+				<PropertyChildListEditor listDefinitionName="istProductGrid" name="exclProdEditor" objectTypes="ExclusionChildCatentry,ExclusionChildInheritedCatentry" promptText="${istInstallmentResources.excludedCatEntries}"/>
+			</PropertyGroup>
+			
+			<PropertyGroup groupTitle="${istInstallmentResources.targetManufacturer}" name="targetManufacturer">
+				<PropertyCheckbox promptText="${istInstallmentResources.includeAllManufacturers}" propertyName="includeAllManufacturers"/>
+				<PropertyGroup collapsable="false" name="includeManufacturer">
+					<EnablementCondition conditionId="notIncludeAllPayMethods" enablementValue="true" negate="true" propertyName="includeAllManufacturers"/>
+					<PropertyInputText objectPath="ManufacturerCondition" promptText="${istInstallmentResources.manufacturer}" propertyName="x_manufacturerName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+			
+			<PropertyGroup groupTitle="${istInstallmentResources.targetPaymentMethods}" name="targetPayments">
+				<PropertyCheckbox promptText="${istInstallmentResources.includeAllPayMethods}" propertyName="includeAllPayMethods"/>
+				<PropertyGroup collapsable="false" name="includePaymentEditors">
+					<EnablementCondition conditionId="notIncludeAllPayMethods" enablementValue="true" negate="true" propertyName="includeAllPayMethods"/>
+					<PropertyChildListEditor listDefinitionName="istPaymentMethodsGrid" name="paymentsEditor" objectTypes="PaymentMethod" promptText="${istInstallmentResources.includedPaymentMethods}" required="true" validatorTypes="reqPayMethodValidator"/>
+				</PropertyGroup>
+			</PropertyGroup>
+			
+			<PropertyGroup groupTitle="${istInstallmentResources.installmentOptionsHeader}" name="installmentOptions">				
+				<PropertyCombobox name="currencyEditor" promptText="${istInstallmentResources.currency}" propertyName="currency" required="true"/>
+				<OptionPropertyChildListEditor listDefinitionName="istInstallmentOptionsGrid" name="optionsEditor" objectTypes="InstallmentOption" package="ist" promptText="${istInstallmentResources.installmentOptionsLabel}" required="true" validatorTypes="reqOptionValidator"/>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+</Definitions>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This navigation list definition is used to display the contents and characteristics of a list of the following objects:
+    	PercentPriceConstant, NumberPriceConstant, CurrencyPriceConstant, 
+    	InheritedPercentPriceConstant, InheritedNumberPriceConstant and 
+    	InheritedCurrencyPriceConstant.
+		 
+	-->
+	<NavigationListDefinition definitionName="prcPriceConstantGridChildList" displayName="${prcPriceResources.priceConstantList}" helpLink="" isDefault="true" listDefinitionName="prcPriceConstantListEditor" listTitle="${prcPriceResources.list}" toolbarIcon="listToolbarIcon"/>
+		
+    <ChildListEditor definitionName="prcPriceConstantListEditor" listDefinitionName="prcPriceConstantGrid" objectTypes="PercentPriceConstant,NumberPriceConstant,CurrencyPriceConstant,InheritedPercentPriceConstant,InheritedNumberPriceConstant,InheritedCurrencyPriceConstant"/>
+	
+	
+	<ObjectGrid definitionName="prcPriceConstantGrid" preferenceKey="prcPriceConstantGrid">
+		<GridIconTypeImage enableFilter="true" name="type" propertyName="" required="true" text="${prcPriceResources.type}" width="90"/>
+    	<GridStoreName name="store" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+    	<GridText editable="true" name="nameString" propertyName="name" text="${prcPriceResources.nameString}" width="160"/>
+    	<GridText editable="true" name="description" propertyName="description" text="${prcPriceResources.description}" width="300"/>
+    	<GridText editable="false" name="value" text="${prcPriceResources.value}" width="120">
+    		<GridNumericCellDescriptor name="percentValue" objectType="PercentPriceConstantGroup" propertyName="numericalValue"/>
+    		<GridNumericCellDescriptor name="numberValue" objectType="NumberPriceConstantGroup" propertyName="numericalValue"/>
+    		<GridNumericCellDescriptor name="monetaryValue" objectType="CurrencyPriceConstantGroup" objectPath="PriceConstantCurrencyValue" propertyName="defaultCurrencyValue"/>
+    	</GridText>
+    	
+    	<GridColumn name="currency" editable="false" text="${prcPriceResources.currency}" width="85">
+    		<GridTextCellDescriptor name="currencyCell" objectPath="PriceConstantCurrencyValue" propertyName="defaultCurrencyCode" >
+    			<EnablementCondition conditionId="currencyConstant" enablementValue="Currency" propertyName="format"/>
+    		</GridTextCellDescriptor>
+    	</GridColumn>
+    	
+    	<GridDateTime editable="false" name="createDate" propertyName="createDate" text="${prcPriceResources.createDate}" visible="false" width="120"/>
+		
+		<GridDateTime editable="false" name="lastUpdate" propertyName="lastUpdate" text="${prcPriceResources.lastUpdate}" visible="false" width="120"/>
+    	
+    	<GridText alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="priceConstantId" text="${prcPriceResources.uniqueId}" visible="false" width="90"/>
+    		
+    </ObjectGrid> 	
+</Definitions>

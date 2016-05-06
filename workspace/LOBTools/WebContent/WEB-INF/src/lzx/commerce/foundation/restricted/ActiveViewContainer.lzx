@@ -1,0 +1,251 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		A container for displaying an active view. Many views may be created with
+		this view as the parent view, but only the current active child view will be visible
+		at any one time.
+	-->
+	<class name="wcfActiveViewContainer" extends="wcfPanel">
+		<!---
+			Reference to the view that is currently active.
+		-->
+		<attribute name="activeView" value="null"/>
+		<!---
+			Indicates that this view can be split into master/details panels.
+		-->
+		<attribute name="splittable" value="false" type="boolean"/>
+		<!---
+			The title used when no active view is set
+		-->
+		<attribute name="defaultTitle" type="string" value=""/>
+		<!---
+			The title message used when no active view is set
+		-->
+		<attribute name="defaultTitleMessage" type="string" value=""/>
+		
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateHeaderDel = new lz.Delegate(this, "updateHeader");
+			this.updateHeader();
+			this.updateDisplayNameStyleDel = new lz.Delegate(this, "updateDisplayNameStyle");
+			this.updateDisplayNameStyle();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateHeaderDel.unregisterAll();
+			delete this.updateHeaderDel;
+			this.updateDisplayNameStyleDel.unregisterAll();
+			delete this.updateDisplayNameStyleDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Set the active view.
+			@param view v: the active view
+			@param boolean immediate: if true set the active view call back immediately
+		-->
+		<method name="setActiveView" args="v,immediate=false">
+			<![CDATA[
+				if(!immediate){
+					if (!this["setActiveViewCallBackDel"]) {
+						this.setActiveViewCallBackDel = new lz.Delegate(this, "setActiveViewCallBack");
+					}
+					wcfCallbackUtil.addDeferredCallback(this.setActiveViewCallBackDel, {v: v}, wcfCallbackUtil.PRIORITY_IMMEDIATE);
+				}else{
+					this.setActiveViewCallBack({v:v});
+				}
+			]]>
+		</method>
+
+		
+		<!---
+			@keywords private
+			
+			Set the active view. This will be called by the Callback utility.
+			@param object args: object parameter that contains the active view.
+		-->
+		<method name="setActiveViewCallBack" args="args">
+			<![CDATA[
+			if (this.activeView) {
+				this.activeView.setAttribute("visible", false);
+				var containsFocusedView = false;
+				if (wcfViewUtil.containsView(this.activeView, lz.Focus.getFocus())) {
+					containsFocusedView = true;
+				}
+				if (this.activeView["actions"]) {
+					if (!containsFocusedView && wcfViewUtil.containsView(this.actions, lz.Focus.getFocus())) {
+						containsFocusedView = true;
+					}
+					for (var i = 0; i < this.activeView.actions.length; i++) {
+						this.activeView.actions[i].releaseActionWidget();
+					}
+				}
+				if (containsFocusedView) {
+					wcfModelUtil.findModelForView(this).oEditor.restoreFocus();
+				}
+			}
+			var v = args.v;
+			this.activeView = v;
+			var clippedContentVisible = true;
+			if (v) {
+				if (v.immediateparent == this.nonclippedContent) {
+					clippedContentVisible = false;
+				}
+				v.setAttribute("visible", true);
+				if (v["splittable"]) {
+					this.setAttribute("splittable", v.splittable);
+				}
+				else {
+					this.setAttribute("splittable", false);
+				}
+				if (v["actions"]) {
+					for (var i = 0; i < v.actions.length; i++) {
+						v.actions[i].createActionWidget(this.actions);
+					}
+				}
+				var newAddRightSpacing = false;
+				if (v["addRightSpacing"] != undefined) {
+					newAddRightSpacing = v.addRightSpacing;
+				}
+				if (newAddRightSpacing != this.addRightSpacing) {
+					this.setAttribute("addRightSpacing", newAddRightSpacing);
+					if(this.clipView["updateAvailableSpace"]) {
+						this.clipView.updateAvailableSpace();
+					}
+				}
+			} else {
+				this.setAttribute("splittable", false);
+			}
+			this.setTitleBackground(v != null);
+			this.updateHeader();
+			this.updateDisplayNameStyle();
+			if (this.clippedContent.visible != clippedContentVisible) {
+				this.clippedContent.setAttribute("visible", clippedContentVisible);
+			}
+			if (this["onactiveView"]) {
+				this.onactiveView.sendEvent();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the panel header style.
+		-->
+		<method name="updateDisplayNameStyle" args="e=null">
+			<![CDATA[
+			var newTextColor = 0x0;
+			var newTextStyle = "plain";
+			this.updateDisplayNameStyleDel.unregisterAll();
+			if (this.activeView != null && typeof(this.activeView["displayNameStyle"]) != "undefined") {
+				var style = this.activeView.displayNameStyle;
+				this.updateDisplayNameStyleDel.register(this.activeView, "ondisplayNameStyle");
+				if (style != null) {
+					newTextColor = style.color;
+					if (style.bold && style.italic) {
+						newTextStyle = "bolditalic";
+					}
+					else if (style.bold) {
+						newTextStyle = "bold";
+					}
+					else if (style.italic) {
+						newTextStyle = "italic";
+					}
+				}
+			}
+			if (this.textColor != newTextColor) {
+				this.setAttribute("textColor", newTextColor);
+			}
+			if (this.textStyle != newTextStyle) {
+				this.setAttribute("textStyle", newTextStyle);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the panel header.
+		-->
+		<method name="updateHeader" args="e=null">
+			<![CDATA[
+			this.updateHeaderDel.unregisterAll();
+			var newTitle = "";
+			var newTitleMessage = "";
+			var newErrorMessage = "";
+			var newHeaderIconResource = null;
+			var newHasError = false;
+			var newTitleQualifier = "";
+			if (this.activeView != null) {
+				var v = this.activeView;
+				if (typeof(v["title"]) != "undefined") {
+					this.updateHeaderDel.register(v, "ontitle");
+					newTitle = v.title;
+				}
+				if (typeof(v["titleMessage"]) != "undefined") {
+					this.updateHeaderDel.register(v, "ontitleMessage");
+					newTitleMessage = v.titleMessage;
+				}
+				if (typeof(v["errorMessage"]) != "undefined") {
+					this.updateHeaderDel.register(v, "onerrorMessage");
+					newErrorMessage = v.errorMessage;
+				}
+				if (typeof(v["titleQualifier"]) != "undefined") {
+					this.updateHeaderDel.register(v, "ontitleQualifier");
+					newTitleQualifier = v.titleQualifier;
+				}	
+				if (typeof(v["headerIconResource"]) != "undefined") {
+					this.updateHeaderDel.register(v, "onheaderIconResource");
+					newHeaderIconResource = v.headerIconResource;
+				}
+				if (typeof(v["hasError"]) != "undefined") {
+					this.updateHeaderDel.register(v, "onhasError");
+					newHasError = v.hasError;
+				}
+			}else {
+				newTitle = this.defaultTitle;
+				this.updateHeaderDel.register(this, "ondefaultTitle");
+				newTitleMessage = this.defaultTitleMessage;
+				this.updateHeaderDel.register(this, "ondefaultTitleMessage");
+			}
+			
+			if (newTitle != this.title) {
+				this.setAttribute("title", newTitle);
+			}
+			if (newTitleMessage != this.titleMessage) {
+				this.setAttribute("titleMessage", newTitleMessage);
+			}
+			if (newErrorMessage != this.errorMessage) {
+				this.setAttribute("errorMessage", newErrorMessage);
+			}
+			if (newTitleQualifier != this.titleQualifier) {
+				this.setAttribute("titleQualifier", newTitleQualifier);
+			}		
+			if (newHeaderIconResource != this.headerIconResource) {
+				this.setAttribute("headerIconResource", newHeaderIconResource);
+			}
+			if (newHasError != this.hasError) {
+				this.setAttribute("hasError", newHasError);
+			}
+			]]>
+		</method>
+	</class>
+</library>

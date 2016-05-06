@@ -1,0 +1,52 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for {@link mktViewSearchEMarketingSpotPrimaryObjectDefinition Customer Submits Search}. This ensures that 
+		the searchKeyword objects are deleted when searchOperator is set to "any" and validate at least one searchKeyword
+		object is specified otherwise.
+	-->
+	<class name="mktSearchKeywordValidator" extends="wcfValidator"  validatorType="searchKeywordValidator">
+		<!--- Warning message to show when an attachment is missing. -->
+		<attribute name="keywordRequiredErrorMessage" value="${mktMarketingResources.noKeywordProvided.string}" type="string"/>
+		<!--- Object path of the searchKeyword objects -->
+		<attribute name="searchKeywordObjectPath" value="searchKeyword" type="string"/>
+		<!--- Property name containing the Marketing Content format value -->
+		<attribute name="searchOperatorPropertyName" value="searchOperator" type="string"/>
+
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o){
+				return; // nothing to validate
+			}
+			
+			var selectedOperator = o.getPropertyValue(this.searchOperatorPropertyName);
+			var searchKeywords = o.getObjects(this.searchKeywordObjectPath);
+			
+			o.clearValidationError(this);
+			
+			if ((selectedOperator != "any") && (searchKeywords.length == 0)){
+				o.addValidationError(this, this.keywordRequiredErrorMessage);
+			}
+			else if (selectedOperator == "any") {
+				for (var i = 0; i < searchKeywords.length; i++) {
+					searchKeywords[i].deleteObject();
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+</library>

@@ -1,0 +1,887 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		wcfNumericEditor is a specialized input field for handling numeric input.
+		
+		Extending from {@link wcfTextEditor}, this widget auto-formats the input string to the format specified by the number format preference
+		when displayed to the user. Unlike {@link wcfTextEditor}, the values stored internally is different than the formatted
+		value that is displayed - the value is stored in the format xxxx.yyy.
+		
+		This text field is for internal use by both the properties and grid implementations provided by {@link wcfPropertyNumericText}
+		and {@link wcfGridNumeric}. It should not be initialized directly.
+	-->
+	<class name="wcfNumericEditor" extends="wcfTextEditor" visible="true" pattern="[\-0-9,. ]*">				
+		<!---
+			numDecimalPlaces is the number of decimal places to pad. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>		
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[													
+			this.updateValue(true);
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onnumDecimalPlaces">
+			<![CDATA[
+			this.updateValue(true);
+			]]>
+		</handler>		
+						
+		<!---
+			The method sets a new property object.
+			
+			@param wcfProperty newProperty The new property object to set for this widget.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				else {
+					this.updateValueDel.unregisterAll();
+				}
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(lz.Focus, "onfocus");
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue(true);
+				}
+				else {
+					this.setText("");
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private  -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			This method updates the widget with a new property value. The method is careful to update only if the focus isn't on the widget,
+			or if it is being called from {@link wcfNumericEditor#setProperty()} as otherwise the typing will behave incorrectly.
+			
+			@param boolean force When this value is true the value will update even if the widget is currently in focus.
+		-->
+		<method name="updateValue" args="force=undefined">
+			<![CDATA[			
+			if (!this.storeValueLock && this.property) {
+				// Updating only if the focus isn't on the widget or via setProperty(). Otherwise, the typing gets all screwed up
+				if((lz.Focus.lastfocus == this['inputText']) || ((typeof(force) == "boolean") && (force == true)) || (force == null) || (typeof(force) == "string")) {
+					var value = this.property.value;
+					var localeValue = wcfGlobalizationUtil.formatNumberToDisplayFormat(value, this.numDecimalPlaces, this.updateValueDel);
+					
+					if (localeValue != this.getText()) {
+						this.skipStoringValue = true;
+						this.setText(localeValue);
+						this.skipStoringValue = false;
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- This method stores the property value. -->
+		<method name="storeValue" args="e=null">
+			<![CDATA[
+			if (this.storeValuePending) {
+				this.storeValueDel.unregisterAll();
+				lz.Timer.removeTimer(this.storeValueDel);
+			}
+			this.storeValuePending = false;
+			this.storeValueLock = true;
+			if (this.property) {
+				var newDisplayValue = this.getText();
+				var currentDisplayValue = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.property.value, this.numDecimalPlaces);
+				if (newDisplayValue != currentDisplayValue) {
+					var newValue = wcfGlobalizationUtil.formatNumberToDataFormat(newDisplayValue);
+					this.property.change(newValue);
+					if(wcfLogger.enabled){
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfNumericEditor", "storeValue", "updates the model property " + this.property.propertyName + " with new value " + newValue + this.property.o.logString());
+					}
+				}
+			}
+			this.storeValueLock = false;
+			]]>
+		</method>
+				
+	</class>
+
+
+	<!---
+		@keywords final
+		This class defines a monetary value editor widget to be used in properties views.
+		This widget automatically formats the input string to the number format. The number format is selected in the user preference panel.
+		The widget determines the correct number of decimal places required for the specified currency.
+		If the number has less than the required number of decimal places, it will pad using zeros.
+		If the number has more than the required number of decimal places, it will display all of decimal places.
+
+		The currency is resolved as using the following method:
+		<ul>
+			<li>when the currencyPropertyName attribute is set, the currency is the value from this property. If this property contains an invalid currency,
+				then no padding will apply to the monetary value.</li>
+			<li>when the currencyPropertyName attribute is not set, the default currency of the store is used</li>
+		</ul>
+	-->
+	<class name="wcfPropertyCurrencyValueEditor" extends="wcfPropertyEditor">
+		<!---
+			The name of the property that will be used as the currency code.
+			If this value is not provided, the default currency code from the current store will be used.
+		-->
+		<attribute name="currencyPropertyName" type="string"/>
+		<!---
+			The object path to the object containing <code>currencyPropertyName</code>
+			If the object path resolves to more than one object, the first object will be used. If no object
+			path is specified, the current object will be used.
+		-->
+		<attribute name="currencyObjectPath" type="string" value=""/>
+		<!---
+			Indicates that the object path specified in <code>currencyObjectPath</code>
+			should be resolved using the parent primary object, rather than the current object
+		-->
+		<attribute name="resolvePrimaryParent" type="boolean" value="false"/>
+		<!---
+			Indicates that the currency code will be appended to the prompt text. The default value is "true".
+		-->
+		<attribute name="appendCurrencyCodeToPrompt" type="boolean" value="true"/>
+
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.updateNumDecimalPlacesDel = new lz.Delegate(this, "updateNumDecimalPlaces");
+			super.init();
+			this.updateNumDecimalPlaces();
+			]]>
+		</method>
+
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			delete this.updateNumDecimalPlacesDel;
+			this.updateNumDecimalPlacesDel.unregisterAll();
+			super.destroy();
+			]]>
+		</method>
+
+
+		<!---
+			@keywords private
+			This method updates {@link wcfPropertiesComponent#newPrompt}.
+		-->
+		<method name="updateNewPromptText" args="e=null">
+			<![CDATA[
+			super.updateNewPromptText(e);
+			if (this.appendCurrencyCodeToPrompt) {
+				var currencyCode = "";
+				if (this["o"]) {
+					if (this["currencyPropertyName"]) {
+						var currencyO = this.o;
+						if (this["currencyObjectPath"] && this.currencyObjectPath!="") {
+							if (this["resolvePrimaryParent"]) {
+								// Get the parent primary object for the current object
+								var topO = o.getParentPrimaryObject();
+								if (topO) {
+									currencyO = topO.getObject(this.currencyObjectPath);
+								}										
+							}
+							else {
+								currencyO = o.getObject(this.currencyObjectPath);
+							}
+						}
+
+					 	var modelPropertyCurrency = currencyO.getProperty(this.currencyPropertyName);
+						this.updateNewPromptTextDel.register(modelPropertyCurrency, "onvalue");
+						currencyCode = modelPropertyCurrency.value;
+					 } else {
+						var storeConfig = wcfContextUtil.findStoreConfig(this.o, this.updateNewPromptTextDel);
+						if (storeConfig != null && storeConfig.defaultCurrency != null) {
+							currencyCode = storeConfig.defaultCurrency.currencyCode;
+						}
+					}
+				}
+				if (currencyCode != "") {
+					this.setAttribute("newPrompt", this.newPrompt + " (" + currencyCode + ")");
+				}
+			}
+			]]>
+		</method>
+
+
+		<!--- @keywords private -->
+		<method name="updateNumDecimalPlaces" args="e=null">
+			<![CDATA[
+			var num = 0;
+			this.updateNumDecimalPlacesDel.unregisterAll();
+			if (this["editor"] && this["o"]) {
+				var currencyCode = null;
+				if (this["currencyPropertyName"]) {
+					var currencyO = this.o;
+					if (this["currencyObjectPath"] && this.currencyObjectPath!="") {
+						if (this["resolvePrimaryParent"]) {
+							// Get the parent primary object for the current object
+							var topO = o.getParentPrimaryObject();
+							if (topO) {
+								currencyO = topO.getObject(this.currencyObjectPath);
+							}										
+						}
+						else {
+							currencyO = o.getObject(this.currencyObjectPath);
+						}
+					}
+				
+					var modelPropertyCurrency = currencyO.getProperty(this.currencyPropertyName);
+					this.updateNumDecimalPlacesDel.register(modelPropertyCurrency, "onvalue");
+					currencyCode = modelPropertyCurrency.value;
+				 } else {
+					var storeConfig = wcfContextUtil.findStoreConfig(this.o, this.updateNewPromptTextDel);
+					if ((storeConfig != null) && (storeConfig.defaultCurrency != null)) {
+						currencyCode = storeConfig.defaultCurrency.currencyCode;
+					}
+				}
+				if (currencyCode != null) {
+				 	num = wcfGlobalizationUtil.getCurrencyDecimalPlaces(currencyCode);
+				}
+				this.editor.setAttribute("numDecimalPlaces", num);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfNumericEditor(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled,
+				width: 87
+			});
+			this.updateNumDecimalPlaces();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfPropertyCurrencyValueEditor", "setModelObject(newObject)",[newObject]);
+			}
+			
+			super.setModelObject(newObject);
+			this.updateNumDecimalPlaces();
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfPropertyCurrencyValueEditor", "setModelObject");
+			}			
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		This class defines a widget to be used in properties views.
+		This widget auto-formats the input string to the format specified by the number format preference
+		when displayed to the user. The values stored internally is different than the formatted
+		value that is displayed - the value is stored in the format xxxx.yyy.
+			
+	-->
+	<class name="wcfPropertyNumericText" extends="wcfPropertyEditor">
+		<!---
+			numDecimalPlaces is the number of decimal places to pad. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>				
+
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfNumericEditor(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled,
+				width: 87,
+				numDecimalPlaces: this.numDecimalPlaces
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		This class defines a widget to be used as a column in a  {@link wcfObjectGrid}.
+		This column auto-formats the input string to the format specified by the number format preference
+		when displayed to the user. The values stored internally is different than the formatted
+		value that is displayed - the value is stored in the format xxxx.yyy.
+	-->
+	<class name="wcfGridNumeric" datatype="number" alignment="right" extends="wcfGridColumn">
+		<!--- @keywords private -->
+		<attribute name="cellViewerClass" value="wcfGridNumericViewer"/>
+
+		<!--- @keywords private -->
+		<attribute name="cellEditorClass" value="wcfGridNumericEditor"/>
+		
+		<!---
+			@keywords private
+			Use "wcfColumnNumericEditor" to create Column Editor editor.
+		-->
+		<attribute name="columnEditorClass" value="wcfColumnNumericEditor"/>
+		
+		<!---
+			numDecimalPlaces is the number of decimal places to pad. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				numDecimalPlaces: this.numDecimalPlaces
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->					
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				numDecimalPlaces: this.numDecimalPlaces
+			};
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		Use this class to display a numeric value in a grid cell. Use this class instead of wcfGridNumeric if you
+		need to display a numeric value for some rows and something else for other rows.
+	-->
+	<class name="wcfGridNumericCellDescriptor" datatype="number" alignment="right" extends="wcfGridCellDescriptor">
+		<!--- @keywords private -->
+		<attribute name="cellViewerClass" value="wcfGridNumericViewer"/>
+
+		<!--- @keywords private -->
+		<attribute name="cellEditorClass" value="wcfGridNumericEditor"/>
+		<!---
+			numDecimalPlaces is the number of decimal places to pad. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				numDecimalPlaces: this.numDecimalPlaces
+			};
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->					
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				numDecimalPlaces: this.numDecimalPlaces
+			};
+			]]>
+		</method>		
+		
+	</class>
+	
+	<!--- 
+		@keywords private
+		This editor is used to edit {@link wcfGridNumeric} column
+	 -->
+	<class name="wcfColumnNumericEditor" extends="wcfInputText" pattern="[-0-9,. ]*">
+		
+		<!--- 
+			@keywords private
+			The column being edited by {@link wcfColumnNumericEditor} 
+		 -->
+		<attribute name="column" value="null"/>
+		
+		<!--- Selected objects {@link wcfModelObject} in grid -->
+		<attribute name="selectedObjects" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="getValue">
+			<![CDATA[
+			return wcfGlobalizationUtil.formatNumberToDataFormat(this.getText());
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="resetValue" args="initialValue">
+			<![CDATA[
+			this.setText(wcfGlobalizationUtil.formatNumberToDisplayFormat(initialValue, this.column.numDecimalPlaces));
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Numeric editor class for internal use by {@link wcfGridNumeric} to bind a property to the grid input box and will be
+		displayed while the grid is in edit mode. Extends {@link wcfNumericEditor} to handle formatting.
+	-->
+	<class name="wcfGridNumericEditor" extends="wcfNumericEditor" width="${immediateparent.availableWidth}">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();			
+			this.updateBGColorDel = new lz.Delegate(this, "updateBGColor");	
+			this.updateBGColor();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[	
+			if (this["updateBGColorDel"]){
+				this.updateBGColorDel.unregisterAll();
+				delete this.updateBGColorDel;
+			}
+			super.destroy();			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the background and border color of the editor.
+		-->	
+		<method name="updateBGColor" args="e=null"><![CDATA[		
+			this.updateBGColorDel.unregisterAll();
+			this.updateBGColorDel.register(parent.column, "onvisible");
+			if (parent.column.visible) {
+				var c = this.style.forminputdisabledbgcolor;
+				var b = this.style.disabledbordercolor;
+				if (parent.row.selected) {
+					if (parent.row.parent.activated) {
+						c = this.style.forminputdisabledselectedbgcolor;
+						b = this.style.disabledselectedbordercolor;
+					} else {							
+						c = this.style.forminputdisabledinactiveselectedbgcolor;
+						b = this.style.disabledinactiveselectedbordercolor;
+					}
+				} else  if (parent.row.mouseIn) {
+					c = this.style.forminputdisabledhoverbgcolor;
+					b = this.style.disabledhoverbordercolor;
+				}
+				if (c != this.disabledBGColor) {
+					this.setAttribute("disabledBGColor", c);
+				}
+				if (b != this.disabledBorderColor) {
+					this.setAttribute("disabledBorderColor", b);
+				}
+				this.updateBGColorDel.register(parent.row, "onselected");
+				this.updateBGColorDel.register(parent.row, "onmouseIn");
+				this.updateBGColorDel.register(parent.row.parent, "onactivated");
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		This is a numeric viewer class for internal use by {@link wcfGridNumeric} to bind a property to the grid input box
+		and will be used to display the number in the grid. It extends {@link wcfGridTextViewer}.
+	-->
+	<class name="wcfGridNumericViewer" extends="wcfGridTextViewer">		
+		<!---
+			numDecimalPlaces is the number of decimal places to pad. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>								
+		<!---
+			This method updates the value displayed in the viewer.
+		-->
+		<method name="updateValue"  args="e=null">
+			<![CDATA[
+			var displayValue = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.property.value, this.numDecimalPlaces, this.updateValueDel);
+			if (this.text != displayValue) {
+				this.setAttribute("text", displayValue);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		This class defines a grid column for managing monetary values with different currencies.	
+		It does not require a property name to be specified and instead	uses the currency properties of the object to
+		which it is bound. These currency properties are instances of {@link wcfDefaultCurrencyPropertyDefinition}
+		and {@link wcfAlternativeCurrencyPropertyDefinition}.
+		
+		This widget creates one column for each currency property, using the currency code as the header and property name.
+		It will create a column for the default currency of the current store, and clones itself for each of the supported
+		non-default currencies.
+		
+		@see wcfDefaultCurrencyPropertyDefinition
+		@see wcfAlternativeCurrencyPropertyDefinition
+	 -->
+	<class name="wcfGridCurrency" extends="wcfGridNumeric">
+		<!---
+			Whether or not this column needs to clone itself for each of the non-default columns.
+		-->
+		<attribute name="cloneEnabled" type="boolean" value="true"/>
+		<!---
+			Whether or not the cloned columns for non-default currencies are required. "True" means user can
+			not hide these columns.
+		-->
+		<attribute name="cloneColumnsRequired" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			Array of currency columns created as clones of this column.
+		-->
+		<attribute name="currencyColumns" value="${[]}"/>
+		<!---
+			@keywords private
+			Array of currency columns created as clones of this column that are pooled.
+		-->
+		<attribute name="currencyColumnsPool" value="${[]}"/>
+		<!---
+			@keywords private
+			Indicates that the default currency code should be used for the column header text.
+		-->
+		<attribute name="setHeaderToDefaultCurrency" type="boolean" value="false"/>
+		<!---
+			Indicates whether or not the currency code should be appended to the column header text.
+		-->
+		<attribute name="appendCurrencyCodeToHeader" type="boolean" value="false"/>
+		<!---
+			Indicates whether or not the property name should be set to the currency code.
+		-->
+		<attribute name="setPropertyNameToCurrencyCode" type="boolean" value="true"/>
+
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+				super.postCreateDefinitionChildren();
+				if (this.text == "" && !this.appendCurrencyCodeToHeader) {
+					this.setHeaderToDefaultCurrency = true;
+				}
+				this.updateColumnsDel = new lz.Delegate(this, "updateColumns");
+				this.updateColumns();
+			]]>		
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateColumnsDel.unregisterAll();
+			delete this.updateColumnsDel;
+			super.destroy();
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Update the columns when switch to a new store.
+		-->
+		<method name="updateColumns" args="e=null">
+			<![CDATA[
+			this.updateColumnsDel.unregisterAll();
+			if (typeof(this["oView"]) == "undefined") {
+				this.oView = wcfModelUtil.findObjectView(this);
+			}
+			var storeConfig = null;
+			if(this.oView) {
+				this.updateColumnsDel.register(this.oView, "ono");
+				var o = this.oView.o;
+				if (o != null) {
+					storeConfig = wcfContextUtil.findStoreConfig(o, this.updateColumnsDel);
+				}
+			}
+			else {
+				storeConfig = wcfContextUtil.findStoreConfig(this.parent.model.oEditor, this.updateColumnsDel);
+			}
+			if ((storeConfig != null) && (storeConfig.defaultCurrency != null))
+			{
+				var refreshRequired = false;
+				while (this.currencyColumns.length > 0)
+				{
+					var currencyColumn = this.currencyColumns.shift();
+					currencyColumn.setAttribute("text", null);
+					this.parent.releaseColumn(currencyColumn);
+					this.currencyColumnsPool.push(currencyColumn);
+					
+					refreshRequired = true;
+				}
+				
+				var defaultCode = storeConfig.defaultCurrency.currencyCode;
+				
+				var decimalPlaces = wcfGlobalizationUtil.CURRENCY_DECIMALS_MAP[defaultCode];					
+				this.setAttribute("numDecimalPlaces", decimalPlaces);
+				
+				if (this.setHeaderToDefaultCurrency)
+				{
+					this.setAttribute("text", defaultCode);
+				}
+				if (this.setPropertyNameToCurrencyCode)
+				{
+					this.setAttribute("propertyName", defaultCode);
+				}
+				if (!this.setHeaderToDefaultCurrency && this.appendCurrencyCodeToHeader)
+				{
+					this.updateDisplayText();
+				}
+													
+				if (this.cloneEnabled)
+				{			
+					var currencies = storeConfig.supportedCurrencies;			
+					var columnPos = parent.columns.indexOf(this) + 1;
+					for (var i = 0; i < currencies.length; i++)
+					{
+						var currencyCode = currencies[i].currencyCode;
+						decimalPlaces = wcfGlobalizationUtil.CURRENCY_DECIMALS_MAP[currencyCode];	
+						if (defaultCode != currencyCode)
+						{	
+							var currencyColumn = null;
+							if (this.currencyColumnsPool.length > 0) {
+								currencyColumn = this.currencyColumnsPool.pop();
+								currencyColumn.setAttribute("text", currencyCode);
+								currencyColumn.setAttribute("propertyName", currencyCode);
+								currencyColumn.setAttribute("numDecimalPlaces", decimalPlaces);	
+								this.parent.addColumn(currencyColumn, this.visible);
+							}
+							else {
+								currencyColumn = new lz.wcfGridNumeric(this.parent, {
+									text:currencyCode,
+									propertyName:currencyCode,
+									objectPath:this.objectPath,
+									required:this.cloneColumnsRequired,
+									width:this.width,
+									numDecimalPlaces:decimalPlaces,
+									visible:this.visible
+								});
+							}							
+							this.currencyColumns.push(currencyColumn);
+							parent.setColumnPosition(currencyColumn, columnPos + i, false);
+							refreshRequired = true;
+						}						
+					}
+				}
+				if (refreshRequired) {
+					parent.updateColumnOrder();
+					parent.refresh();
+				}
+			}		
+			]]>	
+		</method>		
+		<!---
+			@keywords private
+			This method update the column's header display text.
+		-->
+		<method name="updateDisplayText" args="e=null">
+			<![CDATA[
+			if (!this.setHeaderToDefaultCurrency && this.appendCurrencyCodeToHeader) {
+				if (typeof(this["oView"]) == "undefined") {
+					this.oView = wcfModelUtil.findObjectView(this);
+				}
+				var storeConfig = null;
+				if(this.oView) {
+					this.updateColumnsDel.register(this.oView, "ono");
+					var o = this.oView.o;
+					if (o != null) {
+						storeConfig = wcfContextUtil.findStoreConfig(o);
+					}
+				}
+				else {
+					storeConfig = wcfContextUtil.findStoreConfig(this.parent.model.oEditor);
+				}
+				if (storeConfig != null && storeConfig.defaultCurrency != null) {
+					this.setAttribute("displayText", this.text + " (" + storeConfig.defaultCurrency.currencyCode+ ")");
+				}
+			}
+			else {
+				super.updateDisplayText(e);
+			}
+			]]>
+		</method>				
+	</class>
+
+	<!---
+		@keywords private
+		
+		This is a monetary value viewer class for internal use by {@link wcfGridSingleCurrency} used to display a numeric value.
+		The value is formatted based on the currency defined in {@linke wcfGridSingleCurrencyViewer#currencyPropertyName}
+		and may be truncated as defined in {@link wcfGridSingleCurrencyViewer#truncateDecimals}.
+	-->
+	<class name="wcfGridSingleCurrencyViewer" extends="wcfGridTextViewer">		
+		<!---
+			@keywords private
+			The number of decimal places to truncate the value to. This is automatically updated based on the
+			currency value and should not be changed.
+		-->
+		<attribute name="numDecimalPlaces" value="2" type="number"/>
+		<!---
+			The name of the property that contains the currency code to use for this viewer. It is assumed
+			that the currency property exists on the same object as this viewer's {@link wcfGridTextViewer#property}.
+		-->
+		<attribute name="currencyPropertyName" value="${null}" type="string"/>
+		<!---
+			Whether or not to truncate the display value to the number of decimals places as defined by the currency.
+		-->
+		<attribute name="truncateDecimals" value="true" type="boolean"/>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				if(this["numDecimalPlacesDel"]) {
+					this.numDecimalPlacesDel.unregisterAll();
+					delete this.numDecimalPlacesDel;
+				}
+				if(this["updateDecimalsDel"]) {
+					this.updateDecimalsDel.unregisterAll();
+					delete this.updateDecimalsDel;
+				}
+				super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			This method updates the value displayed in the viewer. This method is called whenever the property value
+			or {@link wcfGridSingleCurrencyViewer#numDecimalPlaces} changes.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if(!this["numDecimalPlacesDel"]) {
+				this.numDecimalPlacesDel = new lz.Delegate(this, "updateValue");
+				this.numDecimalPlacesDel.register(this, "onnumDecimalPlaces");
+			}
+
+			this.updateDecimals();
+			
+			var displayValue = this.property.value;
+			if(truncateDecimals) {
+				displayValue = wcfGlobalizationUtil.truncateDecimals(displayValue, this.numDecimalPlaces);
+			}
+			displayValue = wcfGlobalizationUtil.formatNumberToDisplayFormat(displayValue, this.numDecimalPlaces, this.updateValueDel);
+
+			if (this.text != displayValue) {
+				this.setAttribute("text", displayValue);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method looks up the currency formatting defined in {@link wcfGridSingleCurrencyViewer#currencyPropertyName} and
+			updates {@link wcfGridSingleCurrencyViewer#numDecimalPlaces} as required.
+		-->
+		<method name="updateDecimals" args="e=null">
+			<![CDATA[
+			if(this["updateDecimalsDel"]) {
+				this.updateDecimalsDel.unregisterAll();
+			}
+			else {
+				this.updateDecimalsDel = new lz.Delegate(this, "updateDecimals");
+			}
+			
+			if(this["currencyPropertyName"] && this["property"]) {
+				var currencyProp = this.property.o.getProperty(this.currencyPropertyName);
+
+				this.updateDecimalsDel.register(currencyProp, "onvalue");
+				var currencyCode = currencyProp.value;
+				var currencyDecimals = wcfGlobalizationUtil.getCurrencyDecimalPlaces(currencyCode);
+				currencyDecimals = (currencyDecimals == null) ? 2 : currencyDecimals;
+
+				if(this.numDecimalPlaces != currencyDecimals) {
+					this.setAttribute("numDecimalPlaces", currencyDecimals);
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+
+		<p>Similar to {@link wcfGridCurrency}, this class defines a column for managing monetary values based on currency.
+		However, this column does not replicate or clone itself based on currency property definitions. Instead, this grid
+		column requires a <code>currencyPropertyName</code> to be specified.</p>
+		
+		<p>No {@link wcfGridColumn#cellEditorClass} is defined for this grid column, and {@link wcfGridColumn#editable} is
+		set to <code>false</code>, so this column should be used for read-only data only.</p>
+	-->
+	<class name="wcfGridSingleCurrency" datatype="number" alignment="right" extends="wcfGridColumn" editable="false">
+		<!--- @keywords private -->
+		<attribute name="cellViewerClass" value="wcfGridSingleCurrencyViewer"/>
+		<!---
+			The name of the property that contains the currency code to use for this viewer. It is assumed
+			that the currency property exists on {@link wcfGridColumn#objectPath}.
+		-->
+		<attribute name="currencyPropertyName" value="${null}" type="string"/>
+
+		<!---
+			Whether or not to truncate the display value to the number of decimals places as defined by the currency.
+		-->
+		<attribute name="truncateDecimals" value="true" type="boolean"/>
+
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				currencyPropertyName: this.currencyPropertyName,
+				truncateDecimals: this.truncateDecimals
+			};
+			]]>
+		</method>
+	</class>
+</library>

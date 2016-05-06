@@ -1,0 +1,122 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		This class is an enablement condition will returns "true" if the product has
+		{@link catCatalogEntryDefiningAttribute} children.
+	    
+	    @keywords private
+	-->
+	<class name="catProductHasClassicDefiningAttributesEnablementCondition" extends="wcfEnablementCondition">
+	
+		<!---  An unique identifier string for this condition within a node. -->
+		<attribute name="conditionId" type="string" value="catProductHasClassicDefiningAttributesEnablementCondition"/>
+			
+		<!--- 
+			This method will returns "true" if the product has
+			{@link catCatalogEntryDefiningAttribute} children.
+			
+		    @keywords private
+			@param wcfModelObject o the model object that is to be enabled/disabled.
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var result = false;
+			if (o)
+			{	
+				o.loadChildren([o.objectDefinition.getChildDefinition("CatalogEntryDefiningAttribute")]);
+				var classicDefiningAttributes = o.getObjects("CatalogEntryDefiningAttribute");
+				if( classicDefiningAttributes != null && classicDefiningAttributes.length > 0)
+				{
+					result = true;
+				}	
+			}
+			
+			if(this.negate)
+			{
+				result = !result;
+			}
+			
+			return result;
+			
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		This class is an enablement condition will returns "true" if the product has
+		{@link catCatalogEntryDescriptiveAttribute} children.
+	    
+	    @keywords private
+	-->
+	<class name="catProductHasClassicDescriptiveAttributesEnablementCondition" extends="wcfEnablementCondition">
+	
+		<!---  An unique identifier string for this condition within a node. -->
+		<attribute name="conditionId" type="string" value="catProductHasClassicDescriptiveAttributesEnablementCondition"/>
+		<!---
+			If this is set to "true", the result will be negated.
+		-->
+		<attribute name="negate" type="boolean" value="false"/>
+		
+		<!---
+			 Enablement condition type. This attribute should only be set if the parent accepts more than one type of enablement condition. For 
+			 example, {@link wcfObjectDefinition} instances accept two possible enablement condition types: "parentObjectCondition" and 
+			 "childObjectCondition"
+		-->
+		<attribute name="conditionType" type="string" value="enablementCondition"/>
+			
+		<!--- 
+			This method will returns "true" if the product has
+			{@link catCatalogEntryDescriptiveAttribute} children.
+			
+		    @keywords private
+			@param wcfModelObject o the model object that is to be enabled/disabled.
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var result = false;
+			if (o)
+			{
+				o.loadChildren([o.objectDefinition.getChildDefinition("CatalogEntryDescriptiveAttribute")]);
+				var classicDescriptiveAttributes = o.getObjects("CatalogEntryDescriptiveAttribute");
+				if( classicDescriptiveAttributes != null && classicDescriptiveAttributes.length > 0)
+				{
+					result = true;
+				}	
+			}
+			
+			if(this.negate)
+			{
+				result = !result;
+			}
+			
+			return result;
+			
+			]]>
+		</method>
+		<!---
+			Register a delegate to be executed when the resolved value changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerDelegate" args="o, del">
+			<![CDATA[
+			del.register(o,"onchildObjects");
+			]]>
+		</method>		
+	</class>
+</library>

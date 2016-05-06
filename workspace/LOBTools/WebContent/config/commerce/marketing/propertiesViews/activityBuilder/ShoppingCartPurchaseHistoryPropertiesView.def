@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		Properties view for the {@link mktShoppingCartTotalsElementObject Shopping Cart Totals target}.
+		
+		@deprecated Use {@link mktShoppingCartProperties} which now combines the functionality of {@link mktShopCartTotalsProperties},
+			{@link mktShopCartPurchHistProductContentsProperties} and {@link mktShopCartPurchHistCategoryContentsProperties}.
+	-->
+	<FlowElementProperties definitionName="mktShopCartTotalsProperties">
+		<PropertyGroup collapsable="false" name="group14">
+			<PropertyRadioGroup helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_total}" promptText="${mktMarketingResources.targetCondition}" propertyName="containsOperator"/>
+			<ShopCartPurchHistTotalBaseNumberProperties package="mkt"/>
+			<ShopCartPurchHistBaseValueProperties package="mkt"/>
+			<BaseDateProperties package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+
+	<!---
+		Properties view for the {@link mktPurchaseHistoryTotalsElementObject Purchase History Totals target}.
+		
+		@deprecated Use {@link mktPurchaseHistoryProperties} which now combines the functionality of {@link mktPurchHistTotalsProperties},
+			{@link mktShopCartPurchHistProductContentsProperties} and {@link mktShopCartPurchHistCategoryContentsProperties}.
+	-->
+	<FlowElementProperties definitionName="mktPurchHistTotalsProperties">
+		<PropertyGroup collapsable="false" name="group15">
+			<PropertyRadioGroup helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_total}" promptText="${mktMarketingResources.targetCondition}" propertyName="containsOperator"/>
+			<ShopCartPurchHistTotalBaseNumberProperties package="mkt" usage="Orders"/>
+			<ShopCartPurchHistBaseValueProperties package="mkt" usage="Orders"/>
+			<BaseDateProperties package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+
+	<!---
+		Properties view for the {@link mktShoppingCartProductContentsElementObject Shopping Cart Product target} and
+		{@link mktPurchaseHistoryProductContentsElementObject Purchase History Product Contents target}.
+		
+		@deprecated Use {@link mktShoppingCartProperties} or {@link mktPurchaseHistoryProperties} for the
+			{@link mktShoppingCartElementObject} or {@link mktPurchaseHistoryElementObject} elements respectively.
+	-->
+	<FlowElementProperties definitionName="mktShopCartPurchHistProductContentsProperties">
+		<PropertyGroup collapsable="false" name="group16">
+			<MultiValueSelector helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_products}" name="anyOrAll1" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+				<MultiValueSelection displayName="${mktMarketingResources.anyProducts}" name="select22">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.allProducts}" name="select23">
+					<Xml name="values">
+						<anyOrAll>all</anyOrAll>
+						<containsOperator>=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.notAnyProducts}" name="select24">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>!=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+	
+			<PropertyChildListEditor listDefinitionName="mktProductGrid" name="prodEditor" objectTypes="ChildCatentry,ChildInheritedCatentry" promptText="${mktMarketingResources.products}" required="true" validatorTypes="noProductsSelected"/>
+	
+			<ShopCartPurchHistProdCatBaseNumberProperties package="mkt"/>
+			<ShopCartPurchHistBaseValueProperties package="mkt" usage2="Items"/>
+			<BaseDateProperties package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+
+	<!---
+		Properties view for the {@link mktShoppingCartCategoryContentsElementObject Shopping Cart Category target} and
+		{@link mktPurchaseHistoryCategoryContentsElementObject Purchase History Category Contents target}.
+		
+		@deprecated Use {@link mktShoppingCartProperties} or {@link mktPurchaseHistoryProperties} for the
+			{@link mktShoppingCartElementObject} or {@link mktPurchaseHistoryElementObject} elements respectively.
+	-->
+	<FlowElementProperties definitionName="mktShopCartPurchHistCategoryContentsProperties">
+		<PropertyGroup collapsable="false" name="group17">
+			<MultiValueSelector helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_categories}" name="anyOrAll2" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+				<MultiValueSelection displayName="${mktMarketingResources.anyCategories}" name="select25">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.allCategories}" name="select26">
+					<Xml name="values">
+						<anyOrAll>all</anyOrAll>
+						<containsOperator>=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.notAnyCategories}" name="select27">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>!=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+	
+			<PropertyChildListEditor listDefinitionName="mktCategoryGrid" name="catEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.categories}" required="true" validatorTypes="noCategoriesSelected"/>
+	
+			<ShopCartPurchHistProdCatBaseNumberProperties package="mkt"/>
+			<ShopCartPurchHistBaseValueProperties package="mkt" usage2="Categories"/>
+			<BaseDateProperties package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+	
+	<!---
+		Properties view for the {@link mktShoppingCartElementObject Shopping Cart target}.
+	-->
+	<FlowElementProperties definitionName="mktShoppingCartProperties">
+		<PropertyGroup collapsable="false" name="containerGroup">
+			<PropertyCombobox promptText="${mktMarketingResources.shopCartCriteria}" propertyName="elemTemplateName"/>
+			
+			<PropertyGroup collapsable="false" name="totalsGroup">
+				<EnablementCondition conditionId="totalsElement" enablementValue="shoppingCartTotals" propertyName="elemTemplateName"/>
+				<PropertyRadioGroup helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_total}" promptText="${mktMarketingResources.targetCondition}" propertyName="containsOperator"/>
+				<ShopCartPurchHistTotalBaseNumberProperties helpText="${mktMarketingResources.help_shopcart_anyCatalogEntries}" package="mkt"/>
+				<ShopCartPurchHistBaseValueProperties package="mkt"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="productsGroup">
+				<EnablementCondition conditionId="productsElement" enablementValue="shoppingCartProductContents" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_products}" name="anyOrAll1" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.anyProducts}" name="select22">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.allProducts}" name="select23">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.notAnyProducts}" name="select24">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+		
+				<PropertyChildListEditor listDefinitionName="mktProductGrid" name="prodEditor" objectTypes="ChildCatentry,ChildInheritedCatentry" promptText="${mktMarketingResources.products}" required="true"/>
+		
+				<ShopCartPurchHistProdCatBaseNumberProperties helpText="${mktMarketingResources.help_shopcart_catalogEntries}" package="mkt"/>
+				<ShopCartPurchHistBaseValueProperties package="mkt" usage2="Items"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="categoriesGroup">
+				<EnablementCondition conditionId="categoriesElement" enablementValue="shoppingCartCategoryContents" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_categories}" name="anyOrAll2" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.anyCategories}" name="select25">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.allCategories}" name="select26">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.notAnyCategories}" name="select27">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+		
+				<PropertyChildListEditor listDefinitionName="mktCategoryGrid" name="catEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.categories}" required="true"/>
+		
+				<ShopCartPurchHistProdCatBaseNumberProperties helpText="${mktMarketingResources.help_shopcart_catalogEntries}" package="mkt"/>
+				<ShopCartPurchHistBaseValueProperties package="mkt" usage2="Categories"/>
+			</PropertyGroup>
+			
+			<BaseDateProperties helpText="${mktMarketingResources.help_timeframe_shoppingCart}" package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+	
+	<!---
+		Properties view for the {@link mktPurchaseHistoryElementObject Purchase History target}.
+	-->
+	<FlowElementProperties definitionName="mktPurchaseHistoryProperties">
+		<PropertyGroup collapsable="false" name="containerGroup">
+			<PropertyCombobox promptText="${mktMarketingResources.purchaseHistoryCriteria}" propertyName="elemTemplateName"/>
+			
+			<PropertyGroup collapsable="false" name="totalsGroup">
+				<EnablementCondition conditionId="totalsElement" enablementValue="purchaseHistoryTotals" propertyName="elemTemplateName"/>
+				<PropertyRadioGroup helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_total}" promptText="${mktMarketingResources.targetCondition}" propertyName="containsOperator"/>
+				<ShopCartPurchHistTotalBaseNumberProperties helpText="${mktMarketingResources.help_purchhist_anyCatalogEntries}" package="mkt" usage="Orders"/>
+				<ShopCartPurchHistBaseValueProperties package="mkt" usage="Orders"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="productsGroup">
+				<EnablementCondition conditionId="productsElement" enablementValue="purchaseHistoryProductContents" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_products}" name="anyOrAll1" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.anyProducts}" name="select22">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.allProducts}" name="select23">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.notAnyProducts}" name="select24">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+		
+				<PropertyChildListEditor listDefinitionName="mktProductGrid" name="prodEditor" objectTypes="ChildCatentry,ChildInheritedCatentry" promptText="${mktMarketingResources.products}" required="true"/>
+		
+				<ShopCartPurchHistProdCatBaseNumberProperties helpText="${mktMarketingResources.help_purchhist_catalogEntries}" package="mkt"/>
+				<ShopCartPurchHistBaseValueProperties package="mkt" usage2="Items"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="categoriesGroup">
+				<EnablementCondition conditionId="categoriesElement" enablementValue="purchaseHistoryCategoryContents" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_shopcartpurchhist_targetCondition_categories}" name="anyOrAll2" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.anyCategories}" name="select25">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.allCategories}" name="select26">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.notAnyCategories}" name="select27">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+		
+				<PropertyChildListEditor listDefinitionName="mktCategoryGrid" name="catEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.categories}" required="true"/>
+		
+				<ShopCartPurchHistProdCatBaseNumberProperties helpText="${mktMarketingResources.help_purchhist_catalogEntries}" package="mkt"/>
+				<ShopCartPurchHistBaseValueProperties package="mkt" usage2="Categories"/>
+			</PropertyGroup>			
+			
+			<BaseDateProperties helpText="${mktMarketingResources.help_timeframe_purchaseHistory}" package="mkt">
+				<EnablementCondition conditionId="condPurchaseHistoryFocus" propertyName="elemTemplateName" enablementValue="purchaseHistoryTotals"/>
+			</BaseDateProperties>
+			<PurchaseHistoryBaseDateProperties helpText="${mktMarketingResources.help_timeframe_purchaseHistory}" package="mkt">
+				<EnablementCondition conditionId="condPurchaseHistoryFocus" propertyName="elemTemplateName" enablementValue="purchaseHistoryTotals" negate="true"/>
+			</PurchaseHistoryBaseDateProperties>
+						
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

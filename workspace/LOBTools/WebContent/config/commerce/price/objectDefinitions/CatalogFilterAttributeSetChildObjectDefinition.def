@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+		<!---
+		This child object definition defines attribute set under the category or catalog.		
+	-->
+	<ChildObjectDefinition definitionName="cftAttributeSetChildObjectDefinition" idProperty="uniqueId" objectType="CatalogFilterAttributeSet" displayName="${cftCatalogFilterResources.catalogFilterAttributeSet}" >
+		
+		<!--- Create service to create the attribute set child object under the category element.  -->
+		<CreateService url="/cmc/CreateCategoryElementAttributeSet">
+			 <ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+            <ServiceParam name="categoryElementId" propertyName="uniqueId" resolvePrimaryParent="false" parentProperty="true" />
+            <ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+            <ServiceParam name="name" propertyName="name"/>
+            <ServiceParam name="relation" propertyName="relation" />
+		</CreateService>
+		
+		<!--- Update service to update the attribute set child object under the category element.  -->
+		<UpdateService url="/cmc/UpdateCategoryElementAttributeSet">
+			 <ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+            <ServiceParam name="uniqueId" propertyName="uniqueId"/>
+			<ServiceParam name="name" propertyName="name"/>
+			<ServiceParam name="relation" propertyName="relation" />
+		</UpdateService>
+		
+		<!--- Delete service to delete the attribute set child object under the category element.  -->
+		<DeleteService url="/cmc/DeleteCategoryElementAttributeSet">
+			 <ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+            <ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+            <ServiceParam name="name" propertyName="name"/>
+            <ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</DeleteService>
+		
+		<!---The name of this attribute set. -->
+		<PropertyDefinition displayName="${cftCatalogFilterResources.catalogFilterAttributeSetName}" propertyName="name" required="true" trim="true"/>
+		
+		<!---The condition relation of this attribute set. -->
+		<PropertyDefinition displayName="${cftCatalogFilterResources.catalogFilterAttributeSetRelation}" propertyName="relation" required="true"/>
+		
+		<ChildObjectDefinition baseDefinitionName="cftPropertyAttributeObjectDefinition"/>
+		
+		<ReferenceObjectDefinition baseDefinitionName="cftAttributeWithAssignedValuesObjectDefinition" />
+		<ReferenceObjectDefinition baseDefinitionName="cftInheritedAttributeWithAssignedValuesObjectDefinition" />
+		<ReferenceObjectDefinition baseDefinitionName="cftAttributeWithAllowedValuesObjectDefinition" />
+		<ReferenceObjectDefinition baseDefinitionName="cftInheritedAttributeWithAllowedValuesObjectDefinition" />
+		 
+		<Xml name="template">
+            <relation>and</relation>
+        </Xml>
+        
+	</ChildObjectDefinition>
+	
+</Definitions>

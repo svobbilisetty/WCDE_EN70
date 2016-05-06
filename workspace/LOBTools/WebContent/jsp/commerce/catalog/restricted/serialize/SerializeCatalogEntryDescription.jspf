@@ -1,0 +1,56 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<c:forEach var="description" items="${catalogEntry.description}">
+	<object objectType="CatalogEntryDescription">
+		<languageId><wcf:cdata data="${description.language}"/></languageId>
+		<objectStoreId><wcf:cdata data="${catalogEntry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID}"/></objectStoreId>
+		<catalogEntryId><wcf:cdata data="${catalogEntry.catalogEntryIdentifier.uniqueID}"/></catalogEntryId>
+		<name><wcf:cdata data="${description.name}"/></name>
+		<sDesc><wcf:cdata data="${description.shortDescription}"/></sDesc>
+		<lDesc><wcf:cdata data="${description.longDescription}"/></lDesc>
+		<keyword><wcf:cdata data="${description.keyword}"/></keyword>
+		<fImage><wcf:cdata data="${description.fullImage}"/></fImage>
+		<tImage><wcf:cdata data="${description.thumbnail}"/></tImage>
+		<c:forEach var="userDataField" items="${description.attributes}">
+			<xdesc_${userDataField.typedKey}><wcf:cdata data="${userDataField.typedValue}"/></xdesc_${userDataField.typedKey}>
+		</c:forEach>
+	</object>
+	<c:if test="${!empty description.override}">
+	<c:set var="override" value="${description.override[0]}"/>
+		<object objectType="CatalogEntryDescriptionOverride">
+			<c:set var="showVerb" value="${showVerb}" scope="request"/>
+			<c:set var="businessObject" value="${description.override[0]}" scope="request"/>
+			<jsp:include page="/cmc/SerializeChangeControlMetaData" />
+			<objectStoreId>${param.storeId}</objectStoreId>
+			<languageId><wcf:cdata data="${description.language}"/></languageId>
+			<overrideId><wcf:cdata data="${description.override[0].descriptionOverrideIdentifier.uniqueID}"/></overrideId>
+			<overrideName><wcf:cdata data="${description.override[0].name}"/></overrideName>
+			<overrideSDesc><wcf:cdata data="${description.override[0].shortDescription}"/></overrideSDesc>
+			<overrideLDesc><wcf:cdata data="${description.override[0].longDescription}"/></overrideLDesc>
+			<overrideKeyword><wcf:cdata data="${description.override[0].keyword}"/></overrideKeyword>
+			<overrideFImage><wcf:cdata data="${description.override[0].fullImage}"/></overrideFImage>
+			<overrideTImage><wcf:cdata data="${description.override[0].thumbnail}"/></overrideTImage>
+			<c:set var="publishedFound" value="false"/>
+			<c:forEach var="userDataField" items="${description.override[0].attributes}">
+				<c:if test="${userDataField.typedKey == 'published'}">
+					<c:set var="publishedFound" value="true"/>
+				</c:if>
+				<xdescovr_${userDataField.typedKey}><wcf:cdata data="${userDataField.typedValue}"/></xdescovr_${userDataField.typedKey}>
+			</c:forEach>
+			<c:if test="${publishedFound != true}">
+				<xdescovr_published></xdescovr_published>
+			</c:if>
+		</object>
+		</c:if>
+</c:forEach>

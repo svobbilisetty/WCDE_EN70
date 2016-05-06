@@ -1,0 +1,174 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<class name="wcfColumnFilterButton" width="21" focusable="false">
+		<attribute name="buttonResource" type="string" value="columnFilterMultiState"/>
+		<attribute name="column"/>
+		<!---
+			@keywords private
+			Indicates that the dropdown list is open.
+		-->
+		<attribute name="listOpen" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Array of values.
+		-->
+		<attribute name="values" value="${null}"/>
+		<!---
+			@keywords private
+			Currently selected filter.
+		-->
+		<attribute name="selectedValue" value="${wcfShowAllValue}"/>
+		<!--- @keywords private -->
+		<attribute name="defaultItemIndent" type="number" value="0"/>
+		<attribute name="displaySelectedIndicator" type="boolean" value="true"/>
+		<attribute name="selectedIcon" type="string" value="checkmarkIcon"/>
+		<method name="init">
+		<![CDATA[
+			super.init();
+			this.resetFilterDel = new lz.Delegate(this, "resetFilter");	
+				
+		]]>
+		</method>
+
+		<method name="destroy">
+			<![CDATA[
+			if (this.resetFilterDel) {
+				this.resetFilterDel.unregisterAll();
+				delete this.resetFilterDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="openList">
+			<![CDATA[
+			var selectedText = this.selectedValue == null ? null : this.selectedValue.value;
+			this.values = [wcfShowAllValue];
+			var tempVals = {};
+			var objects = this.column.parent.oList.getMatchingModelObjects();
+			for (var i = 0; i < objects.length; i++) {
+				var displayValue = this.column.getColumnFilterDisplayValue(objects[i]);
+				if (displayValue && typeof(tempVals[displayValue]) == "undefined"){
+					tempVals[displayValue] = true;
+					var value = {value:displayValue, displayName:displayValue};
+					this.values.push(value);
+					if (value.value == selectedText) {
+						this.selectedValue = value;
+					}
+				}				
+			}
+			wcfValueSelectorList.openList(this);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="selectValue" args="newValue">
+			<![CDATA[
+			this.resetFilterDel.unregisterAll;
+			if (newValue == null) {
+				newValue = wcfShowAllValue;
+			}
+			if (newValue.value != this.selectedValue.value) {
+				var objectGrid = this.column.parent;
+				if (objectGrid["oList"]) {
+					var filterList = objectGrid.oList.filterList;
+					if (this.selectedValue != null && this.selectedValue.value != null) {
+						var index = filterList.indexOf(this.column.columnFilter);
+						if (index != -1) {
+							filterList.splice(index, 1);
+						}
+					}
+					this.column.columnFilter.displayValue = newValue.value;
+					if (newValue.value != null) {
+						filterList.push(this.column.columnFilter);
+						this.resetFilterDel.register(objectGrid.oList, "onreset");
+						this.mainView.filterDropdown.setStateNum(1);
+					}
+					else {
+						this.mainView.filterDropdown.setStateNum(0);
+					}
+					this.setAttribute("selectedValue", newValue);
+					objectGrid.oList.setAttribute("filterList", filterList);
+				}
+			}
+			else {
+				this.column.parent.oList.refreshFilteredObjects();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Reset the filter so that no filter is chosen. 
+		-->
+		<method name="resetFilter" args="e=null">
+			<![CDATA[		
+			this.selectValue(wcfShowAllValue);
+			]]>		
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="restoreFocus">
+			<![CDATA[
+			lz.Focus.setFocus(this.column);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onlistOpen">
+			<![CDATA[
+			this.mainView.filterDropdown._callShow();
+			]]>
+		</handler>
+		
+		<view name="mainView" width="${parent.width-4}">	
+			<!--  the point of down arrow should kiss the bottom border of the header cell -->		
+			<multistatebutton name="filterDropdown"
+					resource="${classroot.buttonResource}"
+					y="${classroot.parent.height-this.height}" 
+					align="right"
+					onclick="classroot.openList()"
+					statenum="0" statelength="3" maxstate="1">
+					
+
+				<handler name="on_msin" >
+					this._callShow();
+				</handler>
+				
+				<handler name="on_msdown">
+					this._callShow();
+				</handler>
+				
+				<method name="_callShow">
+					<![CDATA[
+					if (classroot.listOpen) {
+						super.showDown();
+					}
+					else {
+						super._callShow();
+					}
+					]]>
+				</method>
+			</multistatebutton>
+		</view>	
+	</class>
+	
+	<!--- @keywords private -->
+	<node id="wcfShowAllValue">
+		<attribute name="displayName" type="string" value="${foundationResources.gridFilterShowAll.string}" />
+		<attribute name="value" value="null"/>
+	</node>
+</library>

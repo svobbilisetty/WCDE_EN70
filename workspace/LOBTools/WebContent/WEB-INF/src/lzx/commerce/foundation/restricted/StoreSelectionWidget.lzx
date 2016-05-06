@@ -1,0 +1,327 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- Store selection widget search service. -->
+	<wcfService id="wcfStoreSelectionGetStoreListService" url="/cmc/FindStores" sendWorkspaceContext="false" checkResultsOverLimit="false" retryOnError="true">
+		<!---
+			Maximum number of items to return.
+		-->
+	 	<wcfServiceParam name="maxItems" value="${configProperties.maximumStoresInList}"/>
+		<!---
+			Record set start number.
+		-->
+		<wcfServiceParam name="recordSetStartNumber" value="0"/>
+			
+		<!---
+			Parse the store objects.
+		-->
+		<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+			<![CDATA[
+			var stores = wcfStoreUtil.parseStores(dataElement);
+			var defaultItemIndent = 16;
+			if(dataElement.attributes["recordSetCompleteIndicator"] && dataElement.attributes.recordSetCompleteIndicator == "false"){
+				stores.push(wcfStoreSearchAction);
+				defaultItemIndent = 22;
+			}
+			requestParent.setAttribute("defaultItemIndent", defaultItemIndent);
+			requestParent.setValues(stores);
+			]]>
+		</method>
+		
+		<!---
+			Never try to get more records. If there are more than 10 stores, then the
+			store search option will be displayed at the bottom of the store selection
+			list.
+		-->
+		<method name="hasMoreRecords" args="ds,e">
+			<![CDATA[
+			return false;
+			]]>
+		</method>
+	</wcfService>
+	
+	<!--- Store selection widget get default store service. -->
+	<wcfService id="wcfStoreSelectionGetDefaultStoreService" url="/cmc/GetStore" sendWorkspaceContext="false" retryOnError="true">
+		<!---
+			Parse the specified data element and return a wcfStore instance.
+		-->
+		<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfStoreSelectionGetDefaultStoreService", "parseObjects(requestParent, dataElement)", [requestParent, dataElement]);
+			}
+			var store = null;
+			if (dataElement.childNodes.length > 0) {
+				store = wcfStoreUtil.parseStore(dataElement.childNodes[0]);
+				requestParent.changeStore(store);
+			}
+			else if (requestParent["handleDefaultStoreNotAvailable"]) {
+				requestParent.handleDefaultStoreNotAvailable();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfStoreSelectionGetDefaultStoreService", "parseObjects(requestParent, dataElement)", [store]);
+			}
+			]]>
+		</method>
+	</wcfService>
+	
+	<!---
+		@keywords private
+		
+		Store search action in store search drop down.
+	-->
+	<node id="wcfStoreSearchAction">
+		<!---
+			Display name.
+		-->
+		<attribute name="displayName" value="${foundationResources.storeSelectionWidget_searchLinkText.string}"/>
+		<!---
+			Icon.
+		-->
+		<attribute name="icon" type="string" value="StoreSelectSearchButtonResource"/>
+		<!---
+			Declare whether to add a seperator before this list item or not
+		-->
+		<attribute name="addSeparatorBefore" type="boolean" value="true"/>
+		<!---
+			Indent.
+		-->
+		<attribute name="indent" type="number" value="0"/>
+	</node>
+
+	<!---
+		@keywords private
+		
+		Store selection widget.
+	-->
+	<class name="wcfStoreSelectionWidget" extends="wcfValueSelector" defaultTextResourceBundleKey="foundationResources.storeSelectionWidget_defaultText" width="175">
+		<!---
+			Reference to business object editor instance.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			The context of the store selection widget is the global context.
+		-->
+		<attribute name="localContext"/>
+		<!---
+			Indicates that the store configuration for the selected store is currently loading.
+		-->
+		<attribute name="loadingStoreConfiguration" type="boolean" value="false"/>
+			
+	<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfStoreSelectionWidget", "init");				
+			}
+			super.init();
+			this.localContext = wcfContextUtil.getGlobalContext();
+			this.changeStoreDel = new lz.Delegate(this, "changeStoreWithPrompt");
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfStoreSelectionWidget", "init");				
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.changeStoreDel.unregisterAll();
+			delete this.changeStoreDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- Refresh the store list and the default store. -->
+		<method name="refresh" args="store=null">
+			<![CDATA[
+			if (this.oEditor.showStoreSelection) {
+				wcfStoreSelectionGetStoreListService.doRequest(this, {
+					usage: this.oEditor.usage
+				});
+				if (store != null) {
+					this.changeStore(store, false);
+				}
+			}
+			else {
+				this.changeStore(wcfStoreUtil.getStore("0"));
+			}
+			]]>
+		</method>
+		
+		<!---
+			Change the current store to match the current store. Prompt the user if there are unsaved changes.
+			@param wcfStore newStore: the new store
+		-->
+		<method name="changeStoreWithPrompt" args="newStore">
+			<![CDATA[
+				this.changeStore(newStore, true);
+			]]>
+		</method>
+		
+		<!---
+			Change the current store to match the current store
+			@param wcfStore newStore: the new store
+			@param boolean prompt: Prompt the user if there are unsaved changes. The default is "true".
+		-->
+		<method name="changeStore" args="newStore,  prompt=true">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfStoreSelectionWidget", "changeStore");				
+			}
+			this.changeStoreDel.unregisterAll();
+			this.loadingStoreConfiguration = false;
+			if (newStore !== null && !newStore.configurationLoaded) {
+				this.changeStoreDel.register(newStore, "onconfigurationLoaded");
+				this.loadingStoreConfiguration = true;
+				newStore.loadConfiguration();
+			}else if (prompt) {
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					// check if there are any unsaved changes		
+					var unsavedObjects = [];
+					var openObjects = this.oEditor.model.openObjects;
+					for (var i = 0; i < openObjects.length; i++) {
+						var o = openObjects[i];
+						if (o.openGroupObject.openGroupDirty) {
+							unsavedObjects.push(o);
+						}
+					}
+					if (unsavedObjects.length > 0) {
+						wcfChangeStoreConfirmationDialog.openChangeStoreConfirmationDialog(this, newStore, unsavedObjects);
+					}
+					else { 
+						this.changeStore(newStore, false); 
+					} 
+				}
+			}
+			else {
+				var newStoreContext = newStore != null ?  wcfContextUtil.findStoreContext(newStore) : null;
+				var newStoreSelected = this.oEditor.localContext == null || this.oEditor.localContext != newStoreContext;
+				// Store selection will be updated only if no store has been selected, or a different store is selected
+				if (newStoreSelected) {
+					var oldStoreContext = this.oEditor.localContext;
+					this.setAttribute("selectedValue", newStore);
+					this.oEditor.setAttribute("localContext", newStoreContext);
+
+					// Trigger onisStoreSelected event only if a new store is selected when no store is selected yet, or the business editor 
+					// loses its selected store. 
+					if(!this.oEditor.isStoreSelected && newStore){
+						this.oEditor.setAttribute("isStoreSelected", true); 
+					}else if(this.oEditor.isStoreSelected && !newStore){
+						this.oEditor.setAttribute("isStoreSelected", false); 
+					}
+
+					if (oldStoreContext != null) {
+						this.oEditor.model.reinitializeModel();
+					}
+
+					if (newStore != null) {
+						if (lz.ModeManager.getModalView() == null) {
+							this.oEditor.restoreFocus();
+						}
+					}
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfStoreSelectionWidget", "changeStore");				
+			}
+			]]>
+		</method>
+		
+		<!---
+			Handle selection of a new value.
+		-->
+		<method name="selectValue" args="newValue">
+			<![CDATA[
+			if (newValue != null && newValue == wcfStoreSearchAction) {
+				this.openStoreSelectDialog();
+			}
+			else {
+				if (wcfEventTimer.enabled) wcfEventTimer.start("changeStore " + newValue.storeName);
+				this.changeStore(newValue);
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			]]>
+		</method>
+		<!---
+			Open the store selection dialog.
+		-->
+		<method name="openStoreSelectDialog">
+			<![CDATA[
+			if (!wcfAutomationUtil.active && this.oEditor.active) {
+				var storesToShow = null;
+				if (this.values.length > 0 && this.values[this.values.length - 1] != wcfStoreSearchAction) {
+					storesToShow = this.values;
+				}
+				wcfStoreSelectDialog.openStoreSearchDialog(this.changeStoreDel, "", this.oEditor.usage, storesToShow);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Open the store selection dialog if the default store is not available.
+		-->
+		<method name="handleDefaultStoreNotAvailable">
+			<![CDATA[
+			this.openStoreSelectDialog();
+			]]>
+		</method>
+		
+		<!---
+			Set the list of values that will be displayed in the drop-down list.
+			@param Object[] values: The array of values to be displayed to the list. Each value object in the array
+				must have a <code>displayName</code> attribute which is used as the display value for the entry.
+		-->
+		<method name="setValues" args="values">
+			<![CDATA[
+			this.values = [];
+			if (values != null && values.length > 0) {
+				for (var i = 0; i < values.length; i++) {
+					this.values.push(values[i]);
+				}
+				if (this.selectedValue == null && !this.loadingStoreConfiguration) {
+					if (values.length == 1) {
+						this.changeStore(values[0]);
+					}
+					else {
+						var currentDefaultStore = preferenceManager.getPreference("CMCDefaultStore");
+						if (currentDefaultStore) {
+							var needToGetDefaultStore = true;
+							for (var i = 0; i < values.length; i++) {
+								if (values[i].storeName == currentDefaultStore) {
+									needToGetDefaultStore = false;
+									this.changeStore(values[i]);
+									break;
+								}
+							}
+							if (needToGetDefaultStore) {
+								wcfStoreSelectionGetDefaultStoreService.doRequest(this, {
+									storeName: currentDefaultStore,
+									usage: this.oEditor.usage
+								});
+							}
+						}
+						else {
+							this.openStoreSelectDialog();
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

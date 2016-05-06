@@ -1,0 +1,2914 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords abstract 
+		
+		A child list editor is a widget that you can use to edit the child {@link wcfModelObject model objects} of a 
+		particular object. You can use the child list editor to add new child objects to the list, 
+		delete child objects from the list, or edit existing child objects in the list. 
+		
+		The class needs to provide the {@link wcfObjectDefinition#objectType object types} of the child objects to be displayed, as well
+		as the name of the class to use for viewing the child list. 
+		
+		This is an abstract class and instances of this type should not be created, nor should this class be extended. 
+		Instead, use either {@link wcfChildListEditor}	or {@link wcfPropertyChildListEditor} as needed. 
+	-->
+	<class name="wcfBaseChildListEditor" visible="true" extends="basecomponent" focusable="false">
+		<!---
+			A comma separated list of {@link wcfObjectDefinition#objectType object types} to be displayed in this child object list.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string"/>
+		<!---
+			True if this child list editor should only have a single child.  It will delete its children
+			when a new child is added and will only accept one child.
+		-->
+		<attribute name="singleChild" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Model instance.
+		-->
+		<attribute name="model"/>
+		<!---
+			@keywords private
+			Model object instance.
+		-->
+		<attribute name="o" setter="this.setModelObject(o)"/>
+		<!---
+			@keywords private
+			Array of object selectors supported by this list view.
+		-->
+		<attribute name="objectSelectors"/>
+		<!---
+			The name of the class to use for viewing this list. 
+			This is often a class that extends {@link wcfObjectGrid}.
+			@type string
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The name of the definition to use for viewing this list. 
+			This is often a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableHeight" attribute. This
+			is used to calculate the list view's available height.
+		-->
+		<attribute name="availableHeightView" value="${wcfViewUtil.getAvailableHeightView(this)}" when="once"/>
+		<!---
+			@keywords private
+			The fraction of available height allocated for this editor. When one or more editors share the same available
+			space, this is used to determine the fraction of space allocated for each individual one.
+		-->
+		<attribute name="fractionOfAvailableHeight" type="number" value="1"/>
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the list view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		<!---
+			@keywords private
+			Array of custom services available for the objects in this child list editor.
+		-->
+		<attribute name="customServices" value="${[]}"/>
+		<!---
+			@keywords private
+			Array of client actions available for the objects in this child list editor.
+		-->
+		<attribute name="clientActions"/>
+		<!---
+			@keywords private
+			Indicates that this child list editor is embedded in a properties view.
+		-->
+		<attribute name="embedded" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Indicates that the delete action is enabled.
+		-->
+		<attribute name="deleteEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the sequence up action is enabled.
+		-->
+		<attribute name="sequenceUpEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the sequence down action is enabled.
+		-->
+		<attribute name="sequenceDownEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the Edit Column action is enabled.
+		-->
+		<attribute name="editColumnEnabled" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			Indicate Edit Column action is not available
+		-->
+		<attribute name="hideEditColumnAction" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the delete action is not available.
+		-->
+		<attribute name="hideDeleteAction" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the add action is enabled.
+		-->
+		<attribute name="addEnabled" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Instance of search widget {@link wcfChildSearchWidget}
+		-->
+		<attribute name="searchWidget"/>
+		<!---
+			@keywords private
+			Instance of utility button {@link wcfUtilitiesButton}
+		-->
+		<attribute name="utilitesButton"/>
+		<!---
+			@keywords private
+			Instance of new button {@link wcfNewChildButton}
+		-->
+		<attribute name="newButton"/>
+		<!---
+			@keywords private
+			Instance of sequencer up button {@link wcfSequenceUpButton}
+		-->
+		<attribute name="sequenceUpButton"/>
+		<!---
+			@keywords private
+			Instance of sequencer down button {@link wcfSequenceDownButton}
+		-->
+		<attribute name="sequenceDownButton"/>
+		<!---
+			Resource name of the new button.
+		-->
+		<attribute name="newButtonResource" type="string" value="grid_createNewIconForSingleAction"/>
+		<!---
+			Tooltip text of the new button. Specify this attribute if the default text needs to be overridden.
+		-->
+		<attribute name="newButtonHelpText" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Child list status message.
+		-->
+		<attribute name="statusMessage" type="string" value=""/>
+		<!---
+			@keywords private
+			Indicates that the status message should be displayed as an error.
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		<!--- @keywords private
+		
+			  Indicates if reference object is moveable
+		-->
+		<attribute name="referenceMoveable" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that pop-up dialog will be presented to the user for the copy action.
+		-->
+		<attribute name="promptForCopy" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates whether find and replace is available for the grid contained within this child list editor. The default is <code>false</code>.
+		-->
+		<attribute name="findable" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			An ancestor view that will be updated with the currently selected object.
+		-->
+		<attribute name="selectedObjectView" value="null"/>
+		<!---
+			@keywords private
+			The name of the attribute of the selectedObjectVIew that will be updated with the currently selected object.
+		-->
+		<attribute name="selectedObjectName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Array of embedded client action buttons.
+		-->
+		<attribute name="childClientActionButtons"/>
+		<!---
+			When a value for sequencePropertyName is specified, the sequence of the grid is controlled by the property with this name. The property must be a number. 
+		-->		
+		<attribute name="sequencePropertyName" type="string" value="${null}"/>
+		<!---
+			When a value for {@link wcfBaseChildListEditor#sequencePropertyName sequencePropertyName} is specified, the value of this property will be used to help resolve the property value.
+		-->	
+		<attribute name="sequencePropertyPath" type="string" value="${null}"/>	
+		<!---
+			When a value for {@link wcfBaseChildListEditor#sequencePropertyName sequencePropertyName} is specified, this property will be used to increment the value of the sequence property when new objects are added to the list.
+		-->		
+		<attribute name="sequenceIncrement" type="number" value="1"/>
+		<!---
+			@keywords private
+			A reference to the sorter for the grid. This is will be defined when {@link wcfBaseChildListEditor#sequencePropertyName sequencePropertyName} is not null.
+		-->
+		<attribute name="sequencedGridSorter" value="${null}"/>
+		<!---
+			@keywords private
+			Comma separated client action types. Client actions associated with the current object that have a matching action type will be displayed in the toolbar of the child list editor.
+		-->
+		<attribute name="clientActionTypes" value="" type="string"/>
+		<!---
+			@keywords private
+			Array of client actions that will be added to the child list editor toolbar for selected row objects.
+		-->
+		<attribute name="childObjectClientActions"/>
+		<!---
+			@keywords private
+			Array of client actions that will be added to the child list editor toolbar for objects referenced through selected row objects.
+		-->
+		<attribute name="referencedObjectClientActions"/>
+		<!---
+			@keywords private
+			Array of client actions that will be added to the child list editor toolbar for the current parent object.
+		-->
+		<attribute name="parentObjectClientActions"/>
+		<!---
+			@keywords private
+			Indicates that the New button will always be displayed.
+		-->
+		<attribute name="alwaysShowNewButton" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute indicates that the editor will provide the ability to create a new referenced primary object directly
+			from the child list editor toolbar. The attribute is only applicable to child list editors that manage reference objects.
+			The default is false.
+		-->
+		<attribute name="allowCreateReferencedPrimary" type="boolean" value="false"/>
+				
+		<!--- @keywords private -->
+		<event name="onselect"/>
+		
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+			this.checkEnabledDel = new lz.Delegate(this, "checkEnabled");
+			this.updateActionsDel = new lz.Delegate(this, "updateActions");
+			this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+			this.listSelectDel = new lz.Delegate(this, "listSelect");
+			this.createdPrimaryObjectDel = new lz.Delegate(this, "createdPrimaryObject");
+			this.updateMessageDel = new lz.Delegate(this, "updateMessage");
+			this.customServices = [];
+			this.clientActions = [];
+			this.childObjectClientActions = [];
+			this.referencedObjectClientActions = [];
+			this.parentObjectClientActions = [];			
+			this.childClientActionButtons = [];
+			this.objectSelectors = [];
+			this.o = null;
+			super.construct(args, parent);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (this.listClass == null) {
+				this.listClass = this.listDefinitionName;
+			}
+			if (this.availableHeightView != null) {
+				this.updateAvailableHeightDel = new lz.Delegate(this, "updateAvailableHeight");
+				this.updateAvailableHeightDel.register(this.availableHeightView, "onavailableHeight");
+				this.updateAvailableHeightDel.register(this.actionArea, "onheight");
+				this.updateAvailableHeight();
+			}
+			if (this.availableWidthView != null) {
+				this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+				this.updateAvailableWidthDel.register(this.availableWidthView, "onavailableWidth");
+				this.updateAvailableWidth();
+			}
+			
+			if (lz[this.listClass]) {
+				new lz[this.listClass](this, {
+					name: "list",
+					placement: "content",
+					rowMenuClass: "wcfChildListMenu",
+					menuClass: "wcfChildListBackgroundMenu",
+					fitExistingRows: this.embedded,
+					listBorderSize: this.embedded ? 1 : 0,
+					filterLeftPadding: this.embedded ? 0 : 3,
+					findable: this.findable,
+					selectedObjectName: selectedObjectName,
+					selectedObjectView: selectedObjectView,
+					sortingOff: this.sequencePropertyName != null
+				});
+			}
+			else {
+				wcfDefinitionLoader.getDefinition(this.listClass, this, {
+					name: "list",
+					placement: "content",
+					rowMenuClass: "wcfChildListMenu",
+					menuClass: "wcfChildListBackgroundMenu",
+					fitExistingRows: this.embedded,
+					listBorderSize: this.embedded ? 1 : 0,
+					filterLeftPadding: this.embedded ? 0 : 3,
+					findable: this.findable,
+					selectedObjectName: selectedObjectName,
+					selectedObjectView: selectedObjectView,
+					sortingOff: this.sequencePropertyName != null
+				});
+			}
+			
+			if (this.sequencePropertyName != null) {
+				if (!this["sequencedGridSorter"]) {
+					this.sequencedGridSorter = new lz.wcfSequenceSortComparator(this);
+				}
+				this.sequencedGridSorter.setAttribute("sequencePropertyName", this.sequencePropertyName);
+				this.sequencedGridSorter.setAttribute("sequencePropertyPath", this.sequencePropertyPath);
+			}
+			
+			if (this["o"]) {
+				this.o.bindViewToChildren(this.list, null, this.objectTypes, this.sequencedGridSorter);				
+			}
+			
+			if (this.list["filters"] && this.list.filters.length > 0){
+				if (this.embedded){
+					this.list.setAttribute("padding", 5);
+				}
+			}else{
+				this.list.setAttribute("padding", 0);
+			}
+			
+			this.checkEnabled();		
+			this.listSelectDel.register(this.list, "onselect");
+			if (this.embedded) {
+				this.createActions();
+				this.updateActions();
+			}
+			this.updateMessage();
+			super.init();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["o"]) {
+				this.o.releaseViewFromChildren(this.list);
+			}
+			this.listSelectDel.unregisterAll();
+			delete this.listSelectDel;
+			delete this.createdPrimaryObjectDel;
+			this.checkEnabledDel.unregisterAll();
+			delete this.checkEnabledDel;
+			this.updateActionsDel.unregisterAll();
+			delete this.updateActionsDel;
+			if (this["updateAvailableHeightDel"]) {
+				this.updateAvailableHeightDel.unregisterAll();
+				delete this.updateAvailableHeightDel;
+			}
+			if (this["updateAvailableWidthDel"]) {
+				this.updateAvailableWidthDel.unregisterAll();
+				delete this.updateAvailableWidthDel;
+			}
+			this.releaseModelObjectDel.unregisterAll();
+			delete this.releaseModelObjectDel;
+			this.updateMessageDel.unregisterAll();
+			delete this.updateMessageDel;
+			super.destroy();
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			This method sets the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBaseChildListEditor", "setModelObject(newObject)", [newObject]);
+			}
+			if (this["o"] !== newObject) {
+				this.releaseModelObjectDel.unregisterAll();
+				if (this["o"]) {
+					this.objectSelectors = [];
+					this.customServices = [];
+					this.clientActions = [];
+					this.childObjectClientActions = [];
+					this.referencedObjectClientActions = [];
+					this.parentObjectClientActions = [];
+					if (this["list"]) {
+						this.o.releaseViewFromChildren(this.list);
+					}
+				}
+				this.o = newObject;
+				if (this.o) {
+					this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+					if (this["list"]) {
+						this.o.bindViewToChildren(this.list, null, this.objectTypes, this.sequencedGridSorter);
+					}
+
+					this.objectSelectors = this.model.getObjectSelectors(this.o, this.objectTypes);
+					this.promptForCopy = false;
+					var actionTypes = wcfStringUtil.splitAndTrim(this.clientActionTypes, ",");
+					
+					for (var i = 0; i < this.objectSelectors.length; i++) {
+						var oDef = this.objectSelectors[i].objectDefinition;
+						for (var j = 0; j < oDef.customServices.length; j++) {
+							if (this.customServices.indexOf(oDef.customServices[j]) < 0) {
+								this.customServices.push(oDef.customServices[j]);
+							}
+						}
+						for (var j = 0; j < oDef.clientActions.length; j++) {
+							var clientAction = oDef.clientActions[j];
+							if (((this.embedded && clientAction.availableFromEmbeddedListView) ||
+								(!this.embedded && clientAction.availableFromMainListView)) &&
+								this.clientActions.indexOf(clientAction) < 0) {
+								this.clientActions.push(clientAction);
+							}
+							if (this.embedded && clientAction.childListEditorIcon != null && clientAction.childListEditorIcon != "" &&
+								this.childObjectClientActions.indexOf(clientAction) < 0) {
+								this.childObjectClientActions.push(clientAction);
+							}
+						}
+						if (oDef.reference) {
+							for (var k = 0; k < oDef.referencedDefinitions.length; k++) {
+								var referencedDef = oDef.referencedDefinitions[k];
+								for (var j = 0; j < referencedDef.customServices.length; j++) {
+									if (this.customServices.indexOf(referencedDef.customServices[j]) < 0) {
+										this.customServices.push(referencedDef.customServices[j]);
+									}
+								}
+								for (var j = 0; j < referencedDef.clientActions.length; j++) {
+									var clientAction = referencedDef.clientActions[j];
+									if (((this.embedded && referencedDef.clientActions[j].availableFromEmbeddedListView) ||
+										(!this.embedded && referencedDef.clientActions[j].availableFromMainListView)) &&
+										this.clientActions.indexOf(referencedDef.clientActions[j]) < 0) {
+										this.clientActions.push(referencedDef.clientActions[j]);
+									}
+									if (this.embedded && clientAction.childListEditorIcon != null && clientAction.childListEditorIcon != "" &&
+										this.referencedObjectClientActions.indexOf(clientAction) < 0) {
+										
+										if(clientAction.actionType == "" || actionTypes.indexOf(clientActions.actionType) != -1) {
+											this.referencedObjectClientActions.push(clientAction);
+										}
+									}
+								}
+							}
+						}
+						if (oDef.organizational || oDef.primary || oDef.parentReference || oDef.collectionReference) {
+							this.promptForCopy = true;
+						}
+					}
+					if (this.embedded) {
+						if (actionTypes.length > 0) {
+							for (var i = 0; i < this.o.objectDefinition.clientActions.length; i++) {
+								if (actionTypes.indexOf(this.o.objectDefinition.clientActions[i].actionType) != -1) {
+									this.parentObjectClientActions.push(this.o.objectDefinition.clientActions[i]);
+								}
+							}
+						}
+					}
+					if (this.promptForCopy) { 
+						this.promptForCopy = !this.o.objectDefinition.organizational;
+					}
+				}
+				if (this["list"]) {
+					this.checkEnabled();
+				}
+				if (this["ono"]) {
+					this.ono.sendEvent(o);
+				}
+				this.updateMessage();
+			}
+			if (this.embedded) {
+				this.createActions();
+				this.updateActions();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBaseChildListEditor", "setModelObject(newObject)");				
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method releases the {@link wcfModelObject model object} from this child list editor.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+			this.setAttribute("o", null);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method checks the current enablement of the available actions.
+		-->
+		<method name="checkEnabled" args="e=null">
+			<![CDATA[
+			this.checkEnabledDel.unregisterAll();
+				
+			// check delete action
+			var actionEnabled =  this.o != null && this.isDeleteEnabled(this.checkEnabledDel);
+			if (actionEnabled != this.deleteEnabled) {
+				this.setAttribute("deleteEnabled", actionEnabled);
+			}
+			
+			//check sequence action
+			actionEnabled = this.sequencePropertyName != null && this.o != null && this.isSequenceUpEnabled(this.checkEnabledDel);
+			if (actionEnabled != this.sequenceUpEnabled) {
+				this.setAttribute("sequenceUpEnabled", actionEnabled);
+			}
+			
+			actionEnabled = this.sequencePropertyName != null && this.o != null && this.isSequenceDownEnabled(this.checkEnabledDel);
+			if (actionEnabled != this.sequenceDownEnabled) {
+				this.setAttribute("sequenceDownEnabled", actionEnabled);
+			}
+			
+			//check Edit Column action
+			actionEnabled = this.isEditColumnEnabled(this.checkEnabledDel);
+			if (actionEnabled != this.editColumnEnabled) {
+				this.setAttribute("editColumnEnabled", actionEnabled);
+			}
+			
+			// check add action
+			actionEnabled = false;
+			if (this.o != null && (!this.singleChild || this.isDeleteAllEnabled(this.checkEnabledDel))) {
+				for (var i = 0; i < this.objectSelectors.length; i++) {
+					var def = this.objectSelectors[i].objectDefinition;
+					if (def.isCreatable(this.o, null, this.checkEnabledDel)) {
+						if (def.parentReference) {
+							for (var k = 0; k < def.referencedDefinitions.length; k++) {
+								var referencedDef = def.referencedDefinitions[k];
+								if (referencedDef.isCreatable(this.o, null, this.checkEnabledDel)) {
+									actionEnabled = true;
+								}
+							}
+						}
+						else {
+							actionEnabled = true;
+						}
+						if (actionEnabled) {
+							break;
+						}
+					}
+				}
+			}
+			if (actionEnabled != this.addEnabled) {
+				this.setAttribute("addEnabled", actionEnabled);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method creates the toolbar actions for this list.
+		-->
+		<method name="createActions">
+			<![CDATA[
+				if (this["actionArea"]) {
+					if (!this["_actionsCreated"]) {
+						this.searchWidget = new lz.wcfChildSearchWidget(this.actionArea, {
+							editor: this,
+							searchDefinitions: null,
+							y: 1
+						});
+						this.newButton = new lz.wcfNewChildButton(this.actionArea, {
+							editor: this,
+							actionDefinitions: null,
+							buttonResourceForSingleAction: this.newButtonResource,
+							buttonHelpText: this.newButtonHelpText,
+							y: 5
+						});
+						new lz.wcfDeleteChildButton(this.actionArea, {
+							editor: this,
+							y: 5
+						});
+						if (this.sequencePropertyName != null) {
+							this.sequenceUpButton = new lz.wcfSequenceUpButton(this.actionArea, {editor: this, y: 5} );
+							this.sequenceDownButton = new lz.wcfSequenceDownButton(this.actionArea, {editor: this, y: 5} );
+						}
+						if (!this.singleChild) {
+							new lz.wcfEditColumnButton(this.actionArea, {
+								editor: this,
+								y: 5
+							});
+						}
+						this.utilitesButton = new lz.wcfUtilitiesButton(this.actionArea, {
+							editor: this,
+							objectDefinition: null,
+							y: 5
+						});
+						
+						this._actionsCreated = true;
+						this.actionArea.setAttribute("visible", true);
+					}
+					var totalClientActionButtons = this.childObjectClientActions.length + this.referencedObjectClientActions.length + this.parentObjectClientActions.length;
+					while (this.childClientActionButtons.length < totalClientActionButtons) {
+						this.childClientActionButtons.push(new lz.wcfChildClientActionButton(this.actionArea, {
+							editor: this,
+							enabled: false
+						}));
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateChildClientActionButtons">
+			<![CDATA[
+			var buttonIndex = 0;
+			for (var i = 0; i < this.childObjectClientActions.length; i++) {
+				var clientAction = this.childObjectClientActions[i];
+				var button = this.childClientActionButtons[buttonIndex];
+				button.setAttribute("clientAction", clientAction);
+				button.setAttribute("parentObjectAction", false);
+				button.setAttribute("referencedObjectAction", false);
+				button.updateButton();
+				buttonIndex++;
+			}
+			for (var i = 0; i < this.referencedObjectClientActions.length; i++) {
+				var clientAction = this.referencedObjectClientActions[i];
+				var button = this.childClientActionButtons[buttonIndex];
+				button.setAttribute("clientAction", clientAction);
+				button.setAttribute("parentObjectAction", false);
+				button.setAttribute("referencedObjectAction", true);
+				button.updateButton();
+				buttonIndex++;
+			}
+			for (var i = 0; i < this.parentObjectClientActions.length; i++) {
+				var clientAction = this.parentObjectClientActions[i];
+				var button = this.childClientActionButtons[buttonIndex];
+				button.setAttribute("clientAction", clientAction);
+				button.setAttribute("parentObjectAction", true);
+				button.setAttribute("referencedObjectAction", false);
+				button.updateButton();
+				buttonIndex++;
+			}
+			while (buttonIndex < this.childClientActionButtons.length) {
+				var button = this.childClientActionButtons[buttonIndex];
+				button.setAttribute("clientAction", null);
+				button.updateButton();
+				buttonIndex++;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method will update the toolbar actions with the new object object definition.
+		-->
+		<method name="updateActions" args="e=null">
+			<![CDATA[
+				this.updateActionsDel.unregisterAll();
+				if (this.objectSelectors && this.objectSelectors.length > 0 && this["actionArea"]) {
+					var primaryCreate = false;
+					var createActionDefinitions = [];
+					var referenceDefinitions = [];
+					var searchDefinitions = [];
+					var searchTypes = {};
+					for (var i = 0; i < this.objectSelectors.length; i++) {
+						var actionDefinitions = [];
+						var objectSelector = this.objectSelectors[i];
+						var def = objectSelector.objectDefinition;
+						
+						if (def.primary) {
+							if (def.isCreatable(null, null, this.updateActionsDel)) {
+								actionDefinitions.push({primaryDefinition: null, childDefinitions: [null]});
+							}
+						}
+						else if (def.referencedDefinitions == null || def.newHandler != null) {
+							if (def.isCreatable(this.o, null, this.updateActionsDel)) {
+								actionDefinitions.push({primaryDefinition: null, childDefinitions: [null]});
+							}
+						}
+						else {
+							if (def.isCreatable(this.o, null, this.updateActionsDel)) {
+								if (def.parentReference || def.collectionReference || this.allowCreateReferencedPrimary) {
+									for (var j = 0; j < def.referencedDefinitions.length; j++) {
+										if (def.referencedDefinitions[j].isCreatable(null, null, this.updateActionsDel)) {
+											actionDefinitions.push({primaryDefinition: def.referencedDefinitions[j], childDefinitions: [null]});
+										}
+									}
+								}
+								if (!def.parentReference) {
+									referenceDefinitions.push(def);
+		
+									for (var j = 0; j < def.referencedDefinitions.length; j++) {
+										var referencedDef = def.referencedDefinitions[j];
+										var searchDef = referencedDef.searchDefinition;
+										if (searchDef != null && !searchTypes[searchDef.searchType]) {
+											searchTypes[searchDef.searchType] = true;
+											searchDefinitions.push(searchDef);
+										}
+		
+										if (referencedDef.createService != null) {
+											var creatableChildDefs = referencedDef.getAllowImplicitParentCreateChildDefinitions();
+											var addableRefDefs = referencedDef.getAllowImplicitParentCreateReferenceDefinitions();
+											if ((creatableChildDefs.length > 0 || addableRefDefs.length > 0) && referencedDef.isCreatable(this.o, null, this.updateActionsDel)) {
+												var testObject = wcfModelUtil.createTestObject(referencedDef);
+												var childDefinitions = [];
+												for (var k = 0; k < creatableChildDefs.length; k++) {
+													if (creatableChildDefs[k].isCreatable(testObject, null, this.updateActionsDel)) {
+														childDefinitions.push(creatableChildDefs[k]);
+													}
+												}
+		
+												if (childDefinitions.length > 0) {
+													actionDefinitions.push({primaryDefinition: referencedDef, childDefinitions: childDefinitions});
+												}
+		
+												for (var k = 0; k < addableRefDefs.length; k++) {
+													referenceDefinitions.push(addableRefDefs[k]);
+													for (var l = 0; l < addableRefDefs[k].referencedDefinitions.length; l++) {
+														searchDef = addableRefDefs[k].referencedDefinitions[l].searchDefinition;
+														if (searchDef != null && !searchTypes[searchDef.searchType]) {
+															searchTypes[searchDef.searchType] = true;
+															searchDefinitions.push(searchDef);
+														}
+													}
+												}
+											}											
+										}
+									}
+								}
+							}
+						}
+
+						for (var j = 0; j < actionDefinitions.length; j++) {
+							var primaryDef = actionDefinitions[j].primaryDefinition;
+							var childDefinitions = actionDefinitions[j].childDefinitions;
+							for (var k = 0; k < childDefinitions.length; k++) {
+								var childDef = childDefinitions[k];
+								
+								var actionDef = null;
+								if (childDef != null) {
+									actionDef = childDef;
+								}
+								else if (primaryDef != null) {
+									actionDef = primaryDef;
+									primaryCreate = true;
+								}
+								else {
+									actionDef = def;
+								}
+								var actionDisplayName = actionDef.displayName;
+								this.updateActionsDel.register(actionDef, "ondisplayName");
+								var actionIcon = actionDef.icon;
+
+								createActionDefinitions.push({displayName: actionDisplayName,
+									icon: actionIcon,
+									objectSelector: objectSelector,
+									primaryDefinition: primaryDef,
+									childDefinition: childDef});
+							}
+						}
+					}
+					
+					var doUpdateSearchDefinitions = false;
+					for (var i = 0; i < searchDefinitions.length; i++) {
+						if (!searchDefinitions[i].showInUtilitiesView && this["o"] && !this.o.isContextReadOnly()) {
+							searchDefinitions[i].showInUtilitiesView = true;
+							doUpdateSearchDefinitions = true;
+						}
+					}
+					if (doUpdateSearchDefinitions) {
+						this.model.oEditor.utilities.updateSearchDefinitions();
+					}
+
+					// set action definitions for wcfChildSearchWidget
+					if (!this.alwaysShowNewButton && referenceDefinitions.length > 0 && searchDefinitions.length > 0 && (createActionDefinitions.length == 0 || primaryCreate)) {
+						this.searchWidget.setAttribute("searchDefinitions", searchDefinitions);
+					}
+					else {
+						this.searchWidget.setAttribute("searchDefinitions", null);
+					}
+
+					// set action definitions for wcfUtilitiesButton
+					if (referenceDefinitions.length > 0) {
+						this.utilitesButton.setAttribute("objectDefinition", referenceDefinitions[0].referencedDefinitions[0]);
+					}
+					else {
+						this.utilitesButton.setAttribute("objectDefinition", null);
+					}
+
+					// set action definitions for wcfNewChildButton
+					var newButtonDefinitions = [];
+					for (var i = 0; i < createActionDefinitions.length; i++) {
+						newButtonDefinitions.push(createActionDefinitions[i]);
+					}
+					if (newButtonDefinitions.length > 0 || this.alwaysShowNewButton) {
+						if (!primaryCreate) {
+							for (var i = 0; i < searchDefinitions.length; i++) {
+								newButtonDefinitions.push({displayName: searchDefinitions[i].objectTypeDisplayName != null ? searchDefinitions[i].objectTypeDisplayName : searchDefinitions[i].displayName, icon: searchDefinitions[i].icon, searchDefinition: searchDefinitions[i]});
+							}
+						}
+						this.newButton.setAttribute("actionDefinitions", newButtonDefinitions);
+					}
+					else {
+						this.newButton.setAttribute("actionDefinitions", null);
+					}
+
+					this.updateActionsDel.register(this.list, "onselect");
+					this.updateChildClientActionButtons();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the message.
+		-->
+		<method name="updateMessage" args="e=null">
+			<![CDATA[
+				if (this["list"]) {
+					this.updateMessageDel.unregisterAll();
+					this.hasError = false;
+					var newMessage = "";
+					if (this["o"] && this.list["oList"]) {
+						if (this.list.oList.statusObject != null) {
+							this.hasError = this.list.oList.statusObject.hasError;
+							newMessage = this.list.oList.statusObject.message;
+						}
+						this.updateMessageDel.register(this.list.oList, "onstatusObject");
+					}
+					if (newMessage != this.statusMessage) {
+						this.setAttribute("statusMessage", newMessage);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method gets the currently selected object in the list.
+		-->
+		<method name="getSelectedObject">
+			<![CDATA[
+				return this.list.getSelectedObject();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when the selection changes in the list.
+		-->
+		<method name="listSelect" args="e=null">
+			<![CDATA[
+				if (this.onselect) {
+					this.onselect.sendEvent();
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create a new child object for the specified object definition.  In case of a non-primary object,
+			if the objectOpenGroup is set to true and has a properties class, the new object properties view
+			will be set in focus.  Otherwise, the object will be selected in the grid in edit mode.
+			@param Object actionDef: The action definition for the created object
+		-->
+		<method name="createChild" args="actionDef">
+			<![CDATA[
+				if (this.singleChild) {
+					this.doDeleteAll();
+				}
+
+				var creatableDef = null;
+
+				if (actionDef.objectSelector.objectDefinition.reference && actionDef.childDefinition == null && actionDef.primaryDefinition != null) {
+					creatableDef = actionDef.primaryDefinition;
+				}
+				else {
+					creatableDef = actionDef.objectSelector.objectDefinition;
+				}
+				var nextSeq = this.getNextSequence();
+				if (creatableDef.newHandler != null) {
+					creatableDef.newHandler.createNewObject(creatableDef, this.o);
+				}
+				else if (actionDef.childDefinition != null) {
+					var newPO = this.model.createNewObject(actionDef.primaryDefinition);
+					var newCO = this.model.createNewObject(actionDef.childDefinition, newPO);
+					var newRO = this.model.createNewObject(creatableDef, this.o);
+					newRO.addChild(newPO);
+					
+					if (this.sequencePropertyName != null) {						
+						newPO.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, nextSeq);
+					}
+
+					if (this.o.lockCount == 0) {
+						this.o.updateChildObjects(true);
+						this.list.showObjectInView(newRO, true);
+					}
+				}
+				else if (creatableDef.primary) {
+					creatableDef.doCreate({createCallbackDel: this.createdPrimaryObjectDel});
+				}
+				else {
+					var newO = this.o.model.createNewObject(creatableDef, this.o, true);
+
+					for (var i = 0; i < actionDef.objectSelector.selectors.length; i++) {
+						newO.setPropertyValue(actionDef.objectSelector.selectors[i].propertyName, null, actionDef.objectSelector.selectors[i].propertyValue);
+					}
+					
+					if (this.sequencePropertyName != null) {
+						newO.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, nextSeq);
+					}
+
+					if (this.o.lockCount == 0) {
+						this.o.updateChildObjects(true);
+						this.list.showObjectInView(newO, true);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Adds a reference child for the given new primary object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="createdPrimaryObject" args="newObject">
+			<![CDATA[
+				var roDef = null;
+				for (var i = 0; i < this.objectSelectors.length; i++) {
+					var def = this.objectSelectors[i].objectDefinition;
+					if (def.reference && def.isReferencedDefinition(newObject.objectDefinition)) {
+						roDef = def;
+						if (def.parentReference || def.collectionReference) {
+							break;
+						}
+					}
+				}
+				if (roDef != null) {
+					var newRO = this.model.createNewObject(roDef, this.o);
+					newRO.addChild(newObject);
+					if (this.sequencePropertyName != null) {
+						newRO.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, this.getNextSequence());
+					}
+					newObject = newRO;
+				}
+				if (this.o.lockCount == 0) {
+					this.list.showObjectInView(newObject);
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the available custom services.
+		-->
+		<method name="getCustomServices">
+			<![CDATA[
+				return this.customServices;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the available client actions.
+		-->
+		<method name="getClientActions">
+			<![CDATA[
+				return this.clientActions;
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Check if Edit Column is enabled for the selected objects.
+		-->
+		<method name="isEditColumnEnabled" args="delegate">
+			<![CDATA[
+			var editColumnEnabled = false;
+			if (this["list"] && this.list["isEditColumnEnabled"]) {
+				editColumnEnabled = this.list.isEditColumnEnabled(delegate);
+			}
+			return editColumnEnabled;
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Check if delete is enabled for the given objects.
+			@param Array objects: An array of wcfModelObject objects
+			@param lz.Delegate delegate: An optional parameter with a delegate that will be registered with the
+			readonly properties of the objects in question.
+		-->
+		<method name="isDeleteObjectsEnabled" args="objects, delegate">
+			<![CDATA[
+				var deleteEnabled = objects.length > 0;
+				if (deleteEnabled) {
+					var deleteCollectionReferencedObjectEnabled = true;
+					var deleteCollectionReferenceEnabled = true;
+					for (var i = 0; i < objects.length; i++) {
+						var oDef = objects[i].objectDefinition;
+						if (oDef.parentReference) {
+							if (!objects[i].getReferencedObject().isDeletable(delegate)) {
+								deleteEnabled = false;
+								break;
+							}
+						}
+						else if (oDef.collectionReference) {
+							if (!objects[i].getReferencedObject().isDeletable(delegate)) {
+								deleteCollectionReferencedObjectEnabled = false;
+							}
+							if (!objects[i].isDeletable(delegate)) {
+								deleteCollectionReferenceEnabled = false;
+							}
+							if (!deleteCollectionReferencedObjectEnabled && !deleteCollectionReferenceEnabled) {
+								deleteEnabled = false;
+								break;
+							}
+						}
+						else {
+							if (!objects[i].isDeletable(delegate)) {
+								deleteEnabled = false;
+								break;
+							}
+						}
+					}
+				}
+				return deleteEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if delete is enabled.
+			@param lz.Delegate delegate: An optional parameter, a delegate registered to changes that can effect the deletable state
+		-->
+		<method name="isDeleteEnabled" args="delegate=null">
+			<![CDATA[
+				if (delegate) {
+					delegate.register(this, "onselect");
+				}
+				return this.isDeleteObjectsEnabled(this.list.getSelectedObjects(), delegate);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if delete all is enabled.
+			@param lz.Delegate delegate: An optional parameter with a delegate that will be registered with the
+			readonly properties of the objects in question.
+		-->
+		<method name="isDeleteAllEnabled" args="delegate=null">
+			<![CDATA[
+				var objects = this.list.oList.getMatchingModelObjects();
+				if (delegate) {
+					delegate.register(this.list.oList, "onfilteredObjects");
+				}
+				return objects.length == 0 || this.isDeleteObjectsEnabled(objects, delegate);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Invoke delete for the given wcfModelObjects.
+			@param Array objects: An array of wcfModelObject objects
+		-->
+		<method name="doDeleteObjects" args="objects">
+			<![CDATA[
+				var objs = [];
+				for (var i = 0; i < objects.length; i++) {
+					objs[i] = objects[i];
+				}
+				var deleteObjects = [];
+				var isCollectionReferenceObjects = true;
+				for (var i = 0; i < objs.length; i++) {
+					var o = objs[i];
+					var oDef = o.objectDefinition;
+					if (oDef.openGroupTop) {
+						deleteObjects.push(o);
+					}
+					else if (oDef.parentReference || oDef.collectionReference) {
+						deleteObjects.push(o.getReferencedObject());
+					}
+					else {
+						o.deleteObject();
+					}
+					if (isCollectionReferenceObjects && !oDef.collectionReference) {
+						isCollectionReferenceObjects = false;
+					}
+				}
+				if (isCollectionReferenceObjects) {
+					var deleteCollectionReferencedObjectEnabled = true;
+					var deleteCollectionReferenceEnabled = true;
+					for (var i = 0; i < objs.length; i++) {
+						var o = objs[i];
+						if (!o.getReferencedObject().isDeletable()) {
+							deleteCollectionReferencedObjectEnabled = false;
+							break;
+						}
+						if (!o.isDeletable()) {
+							deleteCollectionReferenceEnabled = false;
+							break;
+						}
+					}
+					if (deleteObjects.length == 1) {
+						if (deleteCollectionReferencedObjectEnabled && deleteCollectionReferenceEnabled) {
+							wcfCollectionReferenceObjectDeleteConfirmationDialog.openCollectionReferenceObjectDeleteConfirmationDialog(objs[0]);
+						}
+						else if (deleteCollectionReferencedObjectEnabled) {
+							deleteObjects[0].deleteObject(true);
+						}
+						else if (deleteCollectionReferenceEnabled) {
+							wcfCollectionReferenceObjectRemoveConfirmationDialog.openCollectionReferenceObjectRemoveConfirmationDialog(objs[0]);
+						}
+					}
+					else if (deleteObjects.length > 0) {
+						if (deleteCollectionReferencedObjectEnabled && deleteCollectionReferenceEnabled) {
+							wcfMultipleCollectionReferenceObjectDeleteConfirmationDialog.openMultipleCollectionReferenceObjectDeleteConfirmationDialog(objs);
+						}
+						else if (deleteCollectionReferencedObjectEnabled) {
+							wcfMultipleDeleteConfirmationDialog.openMultipleDeleteConfirmationDialog(deleteObjects);
+						}
+						else if (deleteCollectionReferenceEnabled) {
+							wcfMultipleCollectionReferenceObjectRemoveConfirmationDialog.openMultipleCollectionReferenceObjectRemoveConfirmationDialog(objs);
+						}
+					}
+				}
+				else {
+					if (deleteObjects.length == 1) {
+						deleteObjects[0].deleteObject(true);
+					}
+					else if (deleteObjects.length > 0) {
+						wcfMultipleDeleteConfirmationDialog.openMultipleDeleteConfirmationDialog(deleteObjects);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Invoke delete.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+				this.doDeleteObjects(this.list.getSelectedObjects());
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Invoke delete for all child objects.
+		-->
+		<method name="doDeleteAll">
+			<![CDATA[
+				this.doDeleteObjects(this.list.oList.getMatchingModelObjects());
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method launches the edit column dialog.
+		-->
+		<method name="doEditColumn">
+			<![CDATA[
+			wcfEditColumnDialog.openEditColumnDialog(this.list);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if drop is enabled.
+			@param array sources: array of drag sources
+		-->
+		<method name="isDropEnabled" args="sources">
+			<![CDATA[
+				var dropEnabled = false;
+				if (sources.length > 0 && sources[0].dragParent != this.list) {
+					var objects = [];
+					for (var i = 0; i < sources.length; i++) {
+						objects.push(wcfModelUtil.findObjectForView(sources[i]));
+					}
+					dropEnabled = this.getAddActions(objects).length > 0;
+				}
+				return dropEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Add the dragged objects into this list.
+			@param array sources: array of drag sources
+		-->
+		<method name="droppedInTarget" args="sources">
+			<![CDATA[
+				var objects = [];
+				for (var i = 0; i < sources.length; i++) {
+					objects.push(wcfModelUtil.findObjectForView(sources[i]));
+				}
+				this.addObjects(objects);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if all of the objects currently in the clipboard can be used as source objects to
+			add new objects to this list.
+			@return boolean: true if the objects can be pasted
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+				var pasteEnabled = false;
+				var objects = this.model.clipboardObjects;
+				pasteEnabled = this.getAddActions(objects).length > 0;
+				return pasteEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Paste the objects in the clipboard into this list.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+				var pasteObjects = this.model.clipboardObjects;
+				this.addObjects(pasteObjects);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if the sequence up button is enabled. 
+			@param lz.Delegate delegate: An optional parameter, a delegate registered to changes that can effect the sequence state
+		-->
+		<method name="isSequenceUpEnabled" args="delegate=null">
+			<![CDATA[
+				var seqUpEnabled = false;
+				if (delegate) {
+					delegate.register(this, "onselect");
+				}				
+				var selectedObjects = this.list.getSelectedObjects();
+				if (this.sequencePropertyName != null && selectedObjects.length == 1) {		
+					var index = this.list.oList.filteredObjects.indexOf(selectedObjects[0]);
+					if (index != 0 && 
+						!selectedObjects[0].getPropertyReadOnly(this.sequencePropertyName, this.sequencePropertyPath) &&
+						!this.list.oList.filteredObjects[index-1].getPropertyReadOnly(this.sequencePropertyName, this.sequencePropertyPath)) {
+						seqUpEnabled = true;
+					}
+				}
+				return seqUpEnabled;
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Invoke sequenceUp.
+		-->
+		<method name="doSequenceUp">
+			<![CDATA[
+				var selectedObject = this.list.getSelectedObjects()[0];
+				var index = this.list.oList.filteredObjects.indexOf(selectedObject); 
+				var previousRowO = this.list.oList.filteredObjects[index-1];
+				
+				//now switch values with the previous row's one
+				var oldVal = selectedObject.getPropertyValue(this.sequencePropertyName, this.sequencePropertyPath);
+				var newVal = previousRowO.getPropertyValue(this.sequencePropertyName, this.sequencePropertyPath);			
+				selectedObject.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, newVal);
+				previousRowO.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, oldVal);
+	
+				//Switch the items
+				this.list.oList.filteredObjects[index] = previousRowO;
+				this.list.oList.filteredObjects[index-1] = selectedObject;
+				
+				this.updateSequence();
+						
+				this.list.oList.setAttribute("filteredObjects", this.list.oList.filteredObjects);
+				
+				this.list.showObjectInView(selectedObject, false);
+				
+				this.checkEnabled();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if the sequence down button is enabled.
+			@param lz.Delegate delegate: An optional parameter, a delegate registered to changes that can effect the sequence state
+		-->
+		<method name="isSequenceDownEnabled" args="delegate=null">
+			<![CDATA[			
+				var seqDownEnabled = false;
+				if (delegate) {
+					delegate.register(this, "onselect");
+				}				
+				var selectedObjects = this.list.getSelectedObjects();
+				if (this.sequencePropertyName != null && selectedObjects.length == 1) {					
+					var index = this.list.oList.filteredObjects.indexOf(selectedObjects[0]);					
+					if (index != this.list.oList.filteredObjects.length-1 && 
+						!selectedObjects[0].getPropertyReadOnly(this.sequencePropertyName, this.sequencePropertyPath) &&
+						!this.list.oList.filteredObjects[index+1].getPropertyReadOnly(this.sequencePropertyName, this.sequencePropertyPath)) {
+						seqDownEnabled = true;
+					}
+				}
+				return seqDownEnabled;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Invoke sequence down.
+		-->
+		<method name="doSequenceDown">
+			<![CDATA[
+				var selectedObject = this.list.getSelectedObjects()[0];
+				var index = this.list.oList.filteredObjects.indexOf(selectedObject); 
+				var nextRowO = this.list.oList.filteredObjects[index+1];
+				
+				//now switch values with the next row's one
+				var oldVal = selectedObject.getPropertyValue(this.sequencePropertyName, this.sequencePropertyPath);
+				var newVal = nextRowO.getPropertyValue(this.sequencePropertyName, this.sequencePropertyPath);
+				selectedObject.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, newVal);
+				nextRowO.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, oldVal);
+				
+				//Switch the items
+				this.list.oList.filteredObjects[index] = nextRowO;
+				this.list.oList.filteredObjects[index+1] = selectedObject;
+				
+				this.updateSequence();
+				
+				this.list.oList.setAttribute("filteredObjects", this.list.oList.filteredObjects);
+				
+				this.list.showObjectInView(selectedObject, false);
+				
+				this.checkEnabled();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the list of add actions that are available for the specified list of source objects.
+			@param array objects: array of wcfModelObject instances to check
+			@return array: array of object definitions
+		-->
+		<method name="getAddActions" args="objects">
+			<![CDATA[
+				var actions = [];
+				if (!this.singleChild || (objects.length == 1 && this.isDeleteAllEnabled())) {
+					if (wcfActionUtil.isMoveActionEnabled(objects, this.o, this.objectSelectors, this.referenceMoveable)) {
+						actions.push(wcfMoveAction);
+					}
+					if (wcfActionUtil.isCopyActionEnabled(objects, this.o, this.objectSelectors)) {
+						actions.push(wcfCopyAction);
+					}
+					if (wcfActionUtil.isAddToCollectionActionEnabled(objects, this.o, this.objectSelectors)) {
+						actions.push(wcfAddToCollectionAction);
+					}
+					actions = actions.concat(this.getAddReferenceActions(objects));
+					if (actions.length == 0) {
+						var pass = true;
+						if (objects.length > 0) {
+							for (var i = 0; i < objects.length; i++) {
+								if (this.getAddReferenceActions([objects[i]]).length != 1) {
+									pass = false;
+									break;
+								}
+							}
+							if (pass) {
+								actions.push(wcfAddReferenceAction);
+							}
+						}
+					}
+				}
+				return actions;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the list of add reference actions that are available for the
+			specified list of source objects.
+			@param array objects: array of wcfModelObject instances to check
+			@return array: array of acceptable add actions allowed
+		-->
+		<method name="getAddReferenceActions" args="objects">
+			<![CDATA[
+			var actions = [];
+			for (var i = 0; i < this.objectSelectors.length; i++) {
+				var oDef = this.objectSelectors[i].objectDefinition;
+				if (!oDef.parentReference && !oDef.collectionReference && oDef.referencedDefinitions != null) {
+					if (wcfActionUtil.isAddReferenceActionEnabled(objects, this.o, this.objectSelectors, oDef)) {
+						actions.push({displayName: oDef["displayName"], targetDefinition: oDef, primaryDefinition: null, childDefinition: null});
+					}
+					else {
+						var targetDef = oDef;
+						for (var k = 0; k < oDef.referencedDefinitions.length; k++) {
+							var referencedDef = oDef.referencedDefinitions[k];
+							var referenceDefs = referencedDef.getAllowImplicitParentCreateReferenceDefinitions();
+							var childDefs = referencedDef.getAllowImplicitParentCreateChildDefinitions();
+							var testObjects = null;
+							if ((referenceDefs.length > 0 || childDefs.length > 0) && referencedDef.isCreatable(this.o)) {
+								testObjects = [];
+								testObjects.push(wcfModelUtil.createTestObject(referencedDef));
+								if (wcfActionUtil.isAddReferenceActionEnabled(testObjects, this.o, null, targetDef)) {
+									for (var j = 0; j < referenceDefs.length; j++) {
+										var referenceDef = referenceDefs[j];
+										if (wcfActionUtil.isAddReferenceActionEnabled(objects, testObjects[0], null, referenceDef)) {
+											actions.push({displayName: referenceDef.displayName, targetDefinition: targetDef, primaryDefinition: referencedDef, childDefinition: referenceDef, 
+														  sequencePropertyName: this.sequencePropertyName, sequencePropertyPath: this.sequencePropertyPath, nextSeq: this.getNextSequence()});
+										}
+									}
+									for (var j = 0; j < childDefs.length; j++) {
+										var childDef = childDefs[j];
+										if (childDef.isCreatable(testObjects[0]) && this.isCopyCompatible(childDef, objects)) {
+											actions.push({displayName: childDef.displayName, targetDefinition: targetDef, primaryDefinition: referencedDef, childDefinition: childDef, 
+														  sequencePropertyName: this.sequencePropertyName, sequencePropertyPath: this.sequencePropertyPath, nextSeq: this.getNextSequence()});
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			return actions;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Checks if the given object definition is copy compatible with the given source objects
+			@param wcfObjectDefinition oDef: the object definition
+			@param array objects: source objects
+		-->
+		<method name="isCopyCompatible" args="oDef, objects">
+			<![CDATA[
+			var actionEnabled = false;
+			if (objects.length > 0) {
+				actionEnabled = true;
+				for (var i = 0; i < objects.length; i++) {
+					var sourceDef = objects[i].getReferencedObject().objectDefinition;
+					if (oDef != sourceDef && !sourceDef.isCompatibleType(oDef.objectType)) {
+						actionEnabled = false;
+						break;
+					}
+				}
+			}
+			return actionEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Perform the add action for the specified list of objects.
+		-->
+		<method name="doAddAction" args="action, objects">
+			<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfBaseChildListEditor " + (action["displayName"] ? action.displayName : "doAddAction") + ": " + this.o.objectDisplayName + " #objects=" + objects.length);
+				if (this.singleChild) {
+					this.doDeleteAll();
+				}
+				var nextSeq = this.getNextSequence(); 
+				if (action == wcfMoveAction) {
+					wcfActionUtil.triggerMove(objects, this.o, this.objectSelectors, this.sequencePropertyName, this.sequencePropertyPath, nextSeq, this.sequenceIncrement);
+				}
+				else if (action == wcfCopyAction) {
+					wcfActionUtil.triggerCopy(objects, this.o, this.objectSelectors, this.sequencePropertyName, this.sequencePropertyPath, nextSeq, this.sequenceIncrement);
+				}
+				else if (action == wcfAddToCollectionAction) {
+					wcfActionUtil.triggerAddToCollection(objects, this.o);
+				}
+				else if (action == wcfAddReferenceAction) {
+					for (var i = 0; i < objects.length; i++) {
+						wcfActionUtil.triggerAddReference(this.getAddReferenceActions([objects[i]])[0], [objects[i]], this.o, this.sequencePropertyName, this.sequencePropertyPath, nextSeq, this.sequenceIncrement);
+						nextSeq = this.getNextSequence();
+					}
+				}
+				else {
+					wcfActionUtil.triggerAddReference(action, objects, this.o, this.sequencePropertyName, this.sequencePropertyPath, nextSeq, this.sequenceIncrement);
+				}
+				if (this.sequencePropertyName != null && this.sequencedGridSorter != null) {
+					this.list.oList.doSort(this.sequencedGridSorter, true);
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Add the specified source objects to the list. If there are multiple ways that the objects may be
+			added to the list, then a pop-up dialog will be presented to the user with the list of options.
+			@param array objects: array of source objects
+		-->
+		<method name="addObjects" args="objects">
+			<![CDATA[
+				var actions = this.getAddActions(objects);
+				if (actions.length > 0) {
+					if (actions.length > 1 || (this.promptForCopy && actions.length == 1 && actions[0] == wcfCopyAction)) {
+						if (actions.length > 4) {
+							wcfAddActionPopUp.open(this, actions, objects);
+						} else {
+							wcfAddActionDialog.openAddActionDialog(this, actions, objects);
+						}
+					} else { 
+						this.doAddAction(actions[0], objects);
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This item computes the next sequence in the list by looking at the last sequence value in the current list and adding {@link wcfBaseChildListEditor#sequenceIncrement} to it. This method does not have a notion of paging, so it is possible that the returned value will not be unique and/or might move the item to the next page.
+			@return string The sequence value of the next item in the list.
+		-->
+		<method name="getNextSequence">
+			<![CDATA[
+				var nextSeq = 1;				
+				if (this.sequencePropertyName != null && this.list.oList.filteredObjects.length > 0) {
+					this.updateSequence();
+					var numItems = this.list.oList.filteredObjects.length;									
+					nextSeq = parseInt(this.list.oList.filteredObjects[numItems-1].getPropertyValue(this.sequencePropertyName, this.sequencePropertyPath)) + this.sequenceIncrement;
+				}
+				return nextSeq.toString();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Ensure that all the items in the list have a unique sequence value.
+		-->
+		<method name="updateSequence">
+			<![CDATA[
+				if (this.sequencePropertyName != null && this.list.oList.filteredObjects.length >= 2) {
+						for (var i = 1; i < this.list.oList.filteredObjects.length; i++) {
+							var firstObjectValue = parseInt(this.list.oList.filteredObjects[i - 1].getPropertyValue(this.sequencePropertyName, this.sequencePropertyPath));
+							if (isNaN(firstObjectValue)) {
+								firstObjectValue = 1;
+							}
+							var secondObject = this.list.oList.filteredObjects[i];
+							var secondObjectValue = parseInt(secondObject.getPropertyValue(this.sequencePropertyName, this.sequencePropertyPath));
+							if (isNaN(secondObjectValue) || secondObjectValue <= firstObjectValue) {
+								var newValue = firstObjectValue + this.sequenceIncrement;
+			    				secondObject.setPropertyValue(this.sequencePropertyName, this.sequencePropertyPath, 
+			    							newValue.toString());
+						}
+					}
+				}				
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			Update the available height.
+		-->
+		<method name="updateAvailableHeight" args="e=null">
+			<![CDATA[
+			var newHeight = this.availableHeightView.availableHeight * this.fractionOfAvailableHeight - this.content.y;
+			if (this.embedded) {
+				newHeight -= 2;
+			}
+			if (this.content["availableHeight"] != newHeight) {
+				this.content.setAttribute("availableHeight", newHeight);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the available width.
+		-->
+		<method name="updateAvailableWidth" args="e=null">
+			<![CDATA[
+			var newWidth = this.availableWidthView.availableWidth;
+			if (this.embedded) {
+				newWidth -= 2;
+			}
+			if (this.content["availableWidth"] != newWidth) {
+				this.content.setAttribute("availableWidth", newWidth);
+			}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="5"/>
+
+		<view name="actionArea" visible="false">
+			<simplelayout axis="x" spacing="3"/>
+		</view>
+		<text name="message" text="${classroot.statusMessage}" multiline="true" width="${parent.content.width}" visible="${classroot.embedded &amp;&amp; classroot.statusMessage != ''}"/>		
+		<view name="content"/>
+		
+		<wcfDropTarget targetKey="${'element'}" dragAndDropManager="${wcfDndManager}" >
+			<handler name="ondroppedintarget" args="sources">
+				<![CDATA[
+				classroot.droppedInTarget(sources);
+				]]>
+			</handler>
+			<method name="isEnabled" args="currentDragSource">
+				<![CDATA[
+    			return classroot.isDropEnabled(currentDragSource);
+    			]]>
+    		</method>
+		</wcfDropTarget>
+	</class>
+	
+	<!---
+		A child list editor is a widget that you can use to edit the child {@link wcfModelObject model objects} of a particular object. 
+		You can use the child list editor to create new child objects in the list, delete child objects from the 
+		list, or edit existing child objects in the list. This class requires the 
+		{@link wcfObjectDefinition#objectType} value of the child objects to be displayed, as well as the name of the 
+		class to use for viewing the child list.
+		
+		Classes should extend wcfChildListEditor, as follows:
+	
+			@START_CODE
+				<class name="sampleChildListEditor" extends="wcfChildListEditor" 
+					listClass="sampleGrid"
+					objectTypes="SampleChildObject,SampleChildFolder"/>
+			@END_CODE
+			
+		A child list editor can also be declared as a definition:
+			@START_CODE
+				<ChildListEditor definitionName="sampleChildListEditor" 
+					listDefinitionName="sampleGrid"
+					objectTypes="SampleChildObject,SampleChildFolder"/>
+			@END_CODE
+		
+		Classes and definitions that extend wcfChildListEditor are often provided as the {@link wcfNavigationListDefinition#listClass} for a 
+		{@link wcfNavigationListDefinition}.
+	-->
+	<class name="wcfChildListEditor" extends="wcfBaseChildListEditor" referenceMoveable="true">
+		<!---
+			@keywords private
+			The nearest ancestor view that defines a model object.
+		-->
+		<attribute name="oView" value="${wcfModelUtil.findObjectView(this.parent)}" when="once"/>
+		<!---
+			@keywords private
+			This attribute is an object path to use when looking up the {@link wcfModelObject} that this class binds to. 
+			If this value is not provided, the class will bind to {@link wcfBaseChildListEditor#o}. 
+			Otherwise it will bind to the object returned when this attribute is resolved relative to 
+			{@link wcfBaseChildListEditor#o}.
+						
+			The default value for this attribute is null. 
+		-->
+		<attribute name="objectPath" type="string" value="${null}"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.model = wcfModelUtil.findModelForView(this);
+			this.updateModelObjectDel = new lz.Delegate(this, "updateModelObject");
+			this.updateModelObject();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateModelObjectDel.unregisterAll();
+			delete this.updateModelObjectDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the model object.
+		-->
+		<method name="updateModelObject" args="e=null">
+			<![CDATA[
+			this.updateModelObjectDel.unregisterAll();
+			this.updateModelObjectDel.register(this.oView, "ono");
+			var newObject = this.oView.o;
+			if (newObject != null && this.objectPath) {
+				newObject = newObject.getObject(this.objectPath, false, null, this.updateModelObjectDel);
+			}
+			this.setAttribute("o", newObject);
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		@keywords final
+		This class defines a child list editor for use within a properties view. It behaves like 
+		{@link wcfChildListEditor} but it can be declared as a child of {@link wcfPropertyGroup}. 
+		The widget will include its own toolbar that allows the business user to add new objects to the list.
+		@see wcfChildListEditor. 
+	-->
+	<class name="wcfPropertyChildListEditor" extends="wcfPropertiesComponent">
+		<!---
+			Comma separated list of object types to be displayed in this child object list.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string"/>
+		<!---
+			True if this child list editor should only have a single child.  It will delete its children
+			when a new child is added and will only accept one child.
+		-->
+		<attribute name="singleChild" type="boolean" value="false"/>
+		<!---
+			The class name for the list view. This must be a class that extends wcfObjectGrid. 
+			@type string
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The definition name for the list view. This must be a definition that extends wcfObjectGrid.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			Resource name of the create new object button.
+		-->
+		<attribute name="newButtonResource" type="string" value="grid_createNewIconForSingleAction"/>
+		<!---
+			Tooltip text of the new button. Specify this attribute if the default text needs to be overridden.
+		-->
+		<attribute name="newButtonHelpText" type="string" value="${null}"/>
+		<!---
+			Set this to <code>true</code> to hide the Edit Column action. The default is <code>false</code>.
+		-->
+		<attribute name="hideEditColumnAction" type="boolean" value="false"/>
+		<!---
+			Set this to <code>true</code> to hide the Delete action. The default is <code>false</code>.
+		-->
+		<attribute name="hideDeleteAction" type="boolean" value="false"/>
+		<!---
+			The fraction of the available vertical space that will be allocated to this editor. This can be used to prevent the editor from
+			consuming all of the visible space in a properties view. When multiple editors share the same properties view,
+			they can each be assigned a fraction of the available height so that they are all visible at the same time. For example,
+			to ensure that an editor only takes up half the available vertical space, set this attribute to "0.5".
+		-->
+		<attribute name="fractionOfAvailableHeight" type="number" value="1"/>
+		<!---
+			The name of the currently selected object. This name must match one of the names declared
+			in the containing {@link wcfObjectProperties properties view} with the componentObjectNames
+			attribute. Other {@link wcfPropertiesComponent properties components} can be configured to
+			use this selected object as their component object by specifying the same name with the
+			componentObjectName attribute.
+		-->
+		<attribute name="selectedObjectName" type="string" value="${null}" />
+		<!---
+			Indicates whether find and replace is available for the grid contained within this child list editor. The default is <code>false</code>.
+		-->
+		<attribute name="findable" type="boolean" value="false"/>
+		
+		<!---
+			Defines a property to use to sequence the objects in the list. When this value is provided, the list will be sequenced by the value of this property, and 
+			the columns will not be sortable.
+		-->
+		<attribute name="sequencePropertyName" type="string" value="${null}"/>
+		<!---
+			This property is used in conjunction with {@link wcfPropertyChildListEditor#sequencePropertyName} to resolve the value of the sequence property.
+		-->
+		<attribute name="sequencePropertyPath" type="string" value="${null}"/>
+		<!---
+			When a value for {@link wcfBaseChildListEditor#sequencePropertyName sequencePropertyName} is specified, this property will be used to increment the value of the sequence property when new objects are added to the list.
+		-->		
+		<attribute name="sequenceIncrement" type="number" value="1"/>			
+		<!---
+			The types of client action.
+		-->
+		<attribute name="clientActionTypes" value="" type="string"/>
+		<!---
+			Indicates that the New button will always be displayed.
+		-->
+		<attribute name="alwaysShowNewButton" type="boolean" value="false"/>
+		<!---
+			This attribute indicates that the editor will provide the ability to create a new referenced primary object directly
+			from the child list editor toolbar. The attribute is only applicable to child list editors that manage reference objects.
+			The default is false
+		-->
+		<attribute name="allowCreateReferencedPrimary" type="boolean" value="false"/>
+				
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			super.createPrompt(parentComponent);
+			
+			if (parentComponent["editor"]) {
+				if (parentComponent["prompt"]) {
+					parentComponent.prompt.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+				}
+				
+				if (parentComponent["extendedHelpIcon"]) {			
+					parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Property child list editors should determine their enablement on its own by looking at its 
+			child object definitions to find out if they can be creatable. Overwrites the 
+			{@link wcfPropertiesComponent#updateEnablement} method to do nothing.
+		-->
+		<method name="updateEnablement" args="e=null"/>
+		
+		<!---
+			@keywords private
+			This method creates the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var objectView = null;
+			var objectName = null;
+			if (this.selectedObjectName != null ) {
+				objectName = "o_" + this.selectedObjectName;
+				objectView = wcfModelUtil.findObjectView(this.parent, objectName);
+			}
+			new lz.wcfBaseChildListEditor(parentComponent, {
+				name: "editor",
+				model: parentComponent.model,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o,
+				objectTypes: this.objectTypes,
+				listClass: this.listClass,
+				listDefinitionName: this.listDefinitionName,
+				embedded: true,
+				singleChild: this.singleChild,
+				newButtonResource: this.newButtonResource,
+				newButtonHelpText: this.newButtonHelpText,
+				hideEditColumnAction: this.hideEditColumnAction,
+				hideDeleteAction: this.hideDeleteAction,
+				fractionOfAvailableHeight: this.fractionOfAvailableHeight,
+				selectedObjectView: objectView,
+				selectedObjectName: objectName,
+				findable: this.findable, 
+				sequencePropertyName: this.sequencePropertyName,
+				sequencePropertyPath: this.sequencePropertyPath,
+				sequenceIncrement: this.sequenceIncrement,
+				clientActionTypes: this.clientActionTypes,
+				alwaysShowNewButton: this.alwaysShowNewButton,
+				allowCreateReferencedPrimary: this.allowCreateReferencedPrimary
+			});			
+			if (parentComponent["prompt"]) {
+				parentComponent.prompt.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+			}
+			
+			if (parentComponent["extendedHelpIcon"]) {			
+				parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y",parentComponent.editor)+ parentComponent.style.forminputbordersize + 1);
+			}
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			This method returns the error message to be displayed from the first cell that contains an error
+			@param lz.Delegate del This method will register the specified delegate to be called if the returned error changes.
+			
+			@return string The error message to be displayed.
+		-->
+		<method name="getFirstError" args="del">
+			<![CDATA[
+			var error = null;
+			if(this["editor"] && this.editor["o"]){
+				error = super.getFirstError(del);
+				if(error == null){
+					error = this.editor.list.getFirstError(del);
+				}
+			}
+			return error;
+			]]>
+		</method>
+	</class>
+
+	
+	<!---
+		@keywords private
+		This class defines the create new child button.
+	-->
+	<class name="wcfNewChildButton" extends="wcfActionListButton" buttonResource="grid_createNewIcon" buttonResourceForSingleAction="grid_createNewIconForSingleAction" 
+	enabled="${editor.addEnabled}" defaultActionDefinition="${actionDefinitions==null?null:actionDefinitions[0]}" displaySelectedIndicator="true" dropdownResource="dropdownToolbarIcon_New" visible="${actionDefinitions==null?false:true}">
+		<!---
+			Child list editor.
+		-->
+		<attribute name="editor"/>
+
+		<!---
+			Tooltip text for this button.
+		-->
+		<attribute name="buttonHelpText" type="string" value="${null}"/>
+
+		<wcfTooltip name="tooltip"/>
+	
+		<!---
+			Create the new child object.
+			@param Object definition: the action definition for the object to create
+		-->
+		<method name="doAction" args="definition">
+			<![CDATA[
+			if (definition == null) {
+				definition = this.actionDefinitions[0];
+			}
+			if (definition["searchDefinition"]) {
+				wcfNewChildSearchDialog.openNewChildSearchDialog(this, definition.searchDefinition);
+			}
+			else {
+				this.editor.createChild(definition);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateTooltipDel = new lz.Delegate(this, "updateTooltip");
+			this.updateTooltip();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateTooltip" args="e=null">
+			<![CDATA[
+			this.updateTooltipDel.unregisterAll();
+			this.updateTooltipDel.register(this, "ondefaultActionDefinition");
+
+			if (this.buttonHelpText != null) {
+				this.tooltip.setAttribute("text", this.buttonHelpText);
+			}
+			else {
+				if (this.defaultActionDefinition != null && typeof(this.defaultActionDefinition["displayName"]) != "undefined") {
+					this.updateTooltipDel.register(foundationResources.childListEditorNewObject, "onstring");
+					this.tooltip.setAttribute("text", foundationResources.replaceValues("childListEditorNewObject", [this.defaultActionDefinition.displayName]));
+				}
+				else {
+					this.updateTooltipDel.register(foundationResources.childListEditorNew, "onstring");
+					this.tooltip.setAttribute("text", foundationResources.childListEditorNew.string);
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This class defines the delete child button.
+	-->
+	<class name="wcfDeleteChildButton" extends="basebutton" doesenter="true" resource="grid_deleteIcon" enabled="${editor.deleteEnabled}" visible="${!editor.hideDeleteAction}" focusable="true">
+		<!---
+			Child list editor.
+		-->
+		<attribute name="editor"/>
+
+		<wcfTooltip text="${foundationResources.childListEditorDelete.string}"/>
+		
+		<handler name="onclick">
+			<![CDATA[
+			this.editor.doDelete();
+			]]>
+		</handler>		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+	</class>
+	
+	<!---
+		@keywords private
+		This class defines the embedded child client action button.
+	-->
+	<class name="wcfChildClientActionButton">
+		<!--- @keywords private -->
+		<attribute name="editor"/>
+		<!--- @keywords private -->
+		<attribute name="clientAction"/>
+		<!--- @keywords private -->
+		<attribute name="text" type="string" value=""/>
+		<!--- @keywords private -->
+		<attribute name="parentObjectAction" type="boolean" value="false"/>
+		<!--- @keywords private -->
+		<attribute name="referencedObjectAction" type="boolean" value="false"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateButtonDel = new lz.Delegate(this, "updateButton");
+			this.updateButton();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateButton" args="e=null">
+			<![CDATA[
+			this.updateButtonDel.unregisterAll();
+			if (this.clientAction != null) {
+				var actionEnabled = false;
+				var selectedObjects = this.editor.list.getSelectedObjects();
+				if (this.parentObjectAction) {
+					actionEnabled = this.clientAction.isEnabled(this.editor.o);
+					this.clientAction.registerEnablementDelegate(this.editor.o, this.updateButtonDel);
+				}
+				else {
+					if (selectedObjects.length > 0 && (this.clientAction.allowMultipleSelection || selectedObjects.length == 1)) {
+						actionEnabled = true;
+						for (var i = 0; i < selectedObjects.length; i++) {
+							var o = this.referencedObject ? selectedObjects[i].getReferencedObject() : selectedObjects[i];
+							if (!o["objectDefinition"] || !o.objectDefinition.isClientActionDefined(this.clientAction)) {
+								actionEnabled = false;
+								break;
+							}
+							this.clientAction.registerEnablementDelegate(o, this.updateButtonDel);
+							if (!this.clientAction.isEnabled(o)) {
+								actionEnabled = false;
+								break;
+							}
+						}
+					}
+				}
+				this.updateButtonDel.register(this.clientAction, "ondisplayName");
+				this.setAttribute("text", this.clientAction.displayName);
+				if (this.clientAction.childListEditorIcon != null && this.clientAction.childListEditorIcon != "") {
+					this.textButton.setAttribute("visible", false);
+					this.textButton.setAttribute("enabled", false);
+					this.resourceButton.setAttribute("buttonResource", this.clientAction.childListEditorIcon);
+					this.resourceButton.setAttribute("resourceviewcount", 1);
+					this.resourceButton._callShow();
+					this.resourceButton.setAttribute("visible", true);
+					this.resourceButton.setAttribute("enabled", actionEnabled);
+				}
+				else {
+					this.resourceButton.setAttribute("visible", false);
+					this.resourceButton.setAttribute("enabled", false);
+					this.textButton.setAttribute("visible", true);
+					this.textButton.setAttribute("enabled", actionEnabled);
+				}
+				this.setAttribute("visible", true);
+			} else {
+				this.setAttribute("visible", false);
+				this.resourceButton.setAttribute("enabled", false);
+				this.textButton.setAttribute("enabled", false);
+			}
+			]]>
+		</method>
+				
+		<!--- @keywords private -->
+		<method name="handleClick">
+			<![CDATA[
+			var objects = [];
+			if (this.parentObjectAction) {
+				objects.push(this.editor.o);
+			}
+			else {
+				var selectedObjects = this.editor.list.getSelectedObjects();
+				for (var i = 0; i < selectedObjects.length; i++) {
+					objects.push(this.referencedObjectAction ? selectedObjects[i].getReferencedObject() : selectedObjects[i]);
+				}
+			}
+			this.clientAction.performAction(objects);
+			]]>
+		</method>
+
+		<wcfToolBarButton name="resourceButton" y="5" visible="false" onclick="parent.handleClick()">
+			<wcfTooltip name="tooltip" text="${classroot.text}" />
+		</wcfToolBarButton>
+		<wcfButton name="textButton" y="2" text="${classroot.text}" visible="false" onclick="parent.handleClick()"/>
+	</class>
+
+	<!---
+		@keywords private
+		This class defines the Edit Column button.
+	-->
+	<class name="wcfEditColumnButton" extends="basebutton" doesenter="true" resource="editColumnEmbedButtonIcon" 
+		enabled="${editor.editColumnEnabled}" focusable="true" visible="${!editor.hideEditColumnAction}">
+		<!---
+			Child list editor.
+		-->
+		<attribute name="editor"/>
+
+		<wcfTooltip text="${foundationResources.childListEditorEditColumn.string}"/>
+		
+		<handler name="onclick">
+			<![CDATA[
+			this.editor.doEditColumn();
+			]]>
+		</handler>
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+	</class>
+	
+	<!---
+		@keywords private
+		This class defines the utilities view launch button.
+	-->
+	<class name="wcfUtilitiesButton" extends="basebutton" doesenter="true" resource="grid_utilitiesIcon" enabled="${editor.addEnabled}" focusable="true"  visible="${objectDefinition==null?false:true}">
+		<!---
+			Editor view associated with this button.
+		-->
+		<attribute name="editor"/>
+		<!---
+			Object definition.
+		-->
+		<attribute name="objectDefinition" value="${null}"/>
+		
+		<wcfTooltip text="${foundationResources.refEditorShowUtilities.string}" extendedText="${foundationResources.refEditorShowUtilitiesExtendedHelp.string}" linkURL="tasks/ttfutilitiespane.htm"/>
+
+		<handler name="onclick">
+			<![CDATA[
+			var utilities = this.objectDefinition.model.oEditor.utilities;
+			utilities.setContext(this.objectDefinition);
+			utilities.open();
+			]]>
+		</handler>
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+	</class>
+	
+	<!---
+		@keywords private
+		This class defines the sequence up button.
+	-->
+	<class name="wcfSequenceUpButton" extends="basebutton" doesenter="true" enabled="${editor.sequenceUpEnabled}" resource="grid_sequenceUpButton" focusable="true"  visible="${this.editor.sequencePropertyName != null}">
+		<!---
+			Child list editor associated with this button.
+		-->
+		<attribute name="editor"/>
+		
+		<wcfTooltip text="${foundationResources.childListEditorSeqUp.string}" extendedText="${foundationResources.childListEditorSeqUpExtendedHelp.string}" />
+
+		<handler name="onclick">
+			<![CDATA[			
+			this.editor.doSequenceUp();
+			lz.Focus.setFocus(this);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+	</class>
+	
+	<!---
+		@keywords private
+		This class defines the sequence down button.
+	-->
+	<class name="wcfSequenceDownButton" extends="basebutton" doesenter="true" enabled="${editor.sequenceDownEnabled}" resource="grid_sequenceDownButton" focusable="true"  visible="${this.editor.sequencePropertyName != null}">
+		<!---
+			Child list editor.
+		-->
+		<attribute name="editor"/>
+		
+		<wcfTooltip text="${foundationResources.childListEditorSeqDown.string}" extendedText="${foundationResources.childListEditorSeqDownExtendedHelp.string}" />
+
+		<handler name="onclick">
+			<![CDATA[			
+			this.editor.doSequenceDown();
+			lz.Focus.setFocus(this);
+			]]>
+		</handler>
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+	</class>
+	
+
+	<!---
+		@keywords private
+		Child search widget. This widget is used to search for a primary object that will be referenced
+		by the parent child list.
+	-->
+	<class name="wcfChildSearchWidget" visible="${searchDefinitions==null?false:true}">
+		<!---
+			Child list editor.
+		-->
+		<attribute name="editor"/>
+		<!---
+			Array of search definitions.
+		-->
+		<attribute name="searchDefinitions" value="null"/>
+		<!---
+			Current definition.
+		-->
+		<attribute name="currentDefinition" value="null"/>
+		<!---
+			Current search results object.
+		-->
+		<attribute name="searchResults" value="null"/>
+		<!--- 
+			The request identifier for the curent search results. 
+		-->
+		<attribute name="serviceRequestId" type="string" value=""/>
+		<!--- 
+			The search text for the curent search results. 
+		-->
+		<attribute name="serviceSearchText" type="string" value=""/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.searchCompleteDel = new lz.Delegate(this, "searchComplete");			
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.searchCompleteDel.unregisterAll();
+			delete this.searchCompleteDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sets currentDefinition and defaultActionDefinition.
+		-->
+		<handler name="onsearchDefinitions">
+			<![CDATA[
+			this.resetSearchField();
+			if(this.searchDefinitions != null){
+				this.currentDefinition = this.searchDefinitions[0];
+			}else{
+				this.currentDefinition = null;
+			}
+			this.searchButton.setAttribute("defaultActionDefinition", this.currentDefinition);
+			]]>
+		</handler>
+
+		<!---
+			Launch the search.
+		-->
+		<method name="doSearch">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfChildSearchWidget doSearch: " + this.searchTextArea.searchText.getText());
+			if (wcfStringUtil.trim(this.searchTextArea.searchText.getText()) == "") {
+				//do not send request to server if the searchText is empty
+				this.serviceRequestId = "-1";
+				var params = {};
+				params.requestIdentifier = "-1";
+				params.searchResultObjects = [];
+				params.statusMessage = foundationResources.searchResultsNoCriteriaMsg.string;
+				this.searchComplete(params);
+			} else {
+				var s = this.editor.model.findSearchResults(this.currentDefinition.searchType);
+				this.searchResults = s;
+				this.searchCompleteDel.unregisterAll();
+				this.searchCompleteDel.register(s, "onsearchComplete");
+				
+				s.doSearch({searchText: this.searchTextArea.searchText.getText()});
+				this.serviceRequestId = s.searchDefinition.searchService.requestIdentifier;
+				this.serviceSearchText = this.searchTextArea.searchText.getText();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			Handle search complete.
+			@param object args: the arguments containing the search service requestIdentifier and the search result objects
+		-->
+		<method name="searchComplete" args="args">
+			<![CDATA[
+			if (args && args.requestIdentifier == this.serviceRequestId) {
+				this.searchCompleteDel.unregisterAll();
+				var errorMessage = null;
+				if (args && args.searchResultObjects) {
+					var objects = args.searchResultObjects;
+					
+					if (objects.length == 0 ) {
+						errorMessage = args.statusMessage;
+					}
+					else {
+						var doUtilitiesOpen = false;
+						if (objects.length == 1 || objects.length <= this.serviceSearchText.split(",").length) {
+							var actions = this.editor.getAddReferenceActions(objects);
+							if (actions.length == 1) {
+								this.editor.doAddAction(actions[0], objects);
+								var statusMessage = args.statusMessage;
+								messageLogger.logStatus(statusMessage);
+							}
+							else {
+								doUtilitiesOpen = true;
+							}
+						}
+						else {
+							doUtilitiesOpen = true;
+						}
+						if (doUtilitiesOpen) {
+							var utilities = this.editor.o.model.oEditor.utilities;
+							utilities.setContext(this.currentDefinition);
+							utilities.open();
+						}
+					}
+				} 
+				else if (args && args.statusMessage) {
+					errorMessage = args.statusMessage;
+				}
+				
+				if (errorMessage != null) {
+					messageLogger.logException(null, errorMessage);	
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="ono" reference="editor">
+			this.resetSearchField();
+		</handler>
+		
+		<!---
+			Clear the text from the search field, and unregister the delegate listening for results of searches
+			that were already in progress.
+		-->
+		<method name="resetSearchField">
+			//If there is a search in progress, we do not want it to affect the widget anymore.
+			this.searchCompleteDel.unregisterAll();
+			searchTextArea.searchText.setAttribute('text', "");
+		</method>
+
+		<simplelayout axis="x" spacing="1"/>
+		<wcfCenterLayout axis="y"/>
+		
+		<wcfBorderedView name="searchTextArea">
+			<view resource="${parent.searchText.enabled ? 'searchTextBackground' : 'searchTextDisabledBackground'}" />
+			<inputtext name="searchText" y="1" x="1" width="133">
+				<attribute name="enabled" type="boolean" value="${classroot.editor.addEnabled}"/>
+				<handler name="onkeydown" args="kc">
+					<![CDATA[
+					if (kc == 13) {
+						classroot.doSearch();
+					}
+					]]>
+				</handler>
+			</inputtext>
+			<!---
+				@keywords private
+				Handle onfocus event. 
+			-->
+			<handler name="onfocus" reference="searchText">
+				<![CDATA[
+				if(!this["indicator"]){
+				    new lz.wcfFocusIndicator(this, {
+				    	name: "indicator",
+				    	focusableView: this.searchText,
+				    	indicatorView: this,
+				    	offset: 1
+				    });
+				   }
+				]]>
+			</handler>
+		</wcfBorderedView>
+
+		<wcfActionListButton name="searchButton" actionDefinitions="${parent.searchDefinitions}" enabled="${classroot.editor.addEnabled &amp;&amp; classroot.searchTextArea.searchText.getText() != ''}" defaultActionDefinition="${classroot.currentDefinition}" displaySelectedIndicator="true">
+			<attribute name="buttonText" value="${foundationResources.childListEditorFindAndAdd.string}"/>
+			<attribute name="dropdownResource" value="searchDropdownResource"/>
+			<attribute name="dropdownOffset" value="0"/>
+			
+			<wcfTooltip text="${foundationResources.childListEditorFindAndAdd.string}" linkURL="tasks/ttfsearch.htm" extendedText="${foundationResources.childListEditorFindAndAddExtendedHelp.string}"/>
+			
+			<method name="doAction" args="definition">
+				if (definition) {
+					classroot.currentDefinition = definition;
+				}
+				// note: definition is passed in only when selecting from action list
+				if (typeof(definition) == "undefined" || definition == null) {
+					classroot.doSearch();
+				}
+			</method>
+		</wcfActionListButton>
+	</class>
+
+	<!--- @keywords private -->
+	<node name="wcfMoveAction">
+		<attribute name="displayName" type="string" value="${foundationResources.addActionPopUpMove.string}" />
+	</node>
+
+	<!--- @keywords private -->
+	<node name="wcfCopyAction">
+		<attribute name="displayName" type="string" value="${foundationResources.addActionPopUpCopy.string}" />
+	</node>
+
+	<!--- @keywords private -->
+	<node name="wcfAddToCollectionAction">
+		<attribute name="displayName" type="string" value="${foundationResources.addActionPopUpAdd.string}" />
+	</node>
+
+	<!--- @keywords private -->
+	<node name="wcfAddReferenceAction" />
+
+	<!---
+		@keywords private
+		Add action dialog. This dialog presents the user with a list of possible "add" actions.
+	-->
+	<list name="wcfAddActionPopUp" visible="false" x="-1000" y="-1000">
+		<!---
+			Reference to the child list editor being added.
+		-->
+		<attribute name="editor" value="null"/>
+		<!---
+			Array of source objects. This is a required attribute.
+		-->
+		<attribute name="objects" value="${[]}"/>
+		<!---
+			Array of list items.
+		-->
+		<attribute name="items" value="${[]}"/>
+		<!---
+			Array of list items available for reuse.
+		-->
+		<attribute name="availableItems" value="${[]}"/>
+
+		<!---
+			The view to which focus will be restored when the popup is closed.
+		-->
+		<attribute name="restoreFocusView" value="null"/>
+		<!---
+			Business Object Editor associated with the objects being added.
+		 -->
+		<attribute name="oEditor" value="null"/>		
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			]]>
+		</method>
+
+		<!--- @keywords private -->		
+		<method name="destroy">
+			<![CDATA[
+			this.checkMouseDel.unregisterAll();
+			delete this.checkMouseDel;
+			super.destroy();
+			]]>
+		</method>	
+						
+		<!---
+			Handle key down event.
+			@param number k: key code
+		-->
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+			if (k == 27) { // esc key
+		    	this.close();
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Handle selection.
+			@param listitem item: list item
+		-->
+		<handler name="onselect" args="item">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfAddActionPopUp", "onselect", "Start " + item.value.displayName);
+			}
+			var action = item.value;
+			this.editor.doAddAction(action, this.objects);
+			this.close();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfAddActionPopUp", "onselect", "End " + action.displayName);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Open the pop up.
+			@param view editor: parent editor
+			@param array actions: array of actions
+			@param array objects: array of source objects
+		-->
+		<method name="open" args="editor, actions, objects">
+			<![CDATA[
+			if (this.visible) {
+				this.close();
+			}
+			this.editor = editor;
+			this.setAttribute("restoreFocusView", lz.Focus.getFocus());
+			this.oEditor = objects[0].model.oEditor;
+			this.objects = objects;
+			for (var i = 0; i < actions.length; i++) {
+				var action = actions[i];
+				if (this.availableItems.length > 0) {
+					var item = this.availableItems.shift();
+					item.setAttribute("value", action);
+					item.setAttribute("displayName", action.displayName);
+					item.setAttribute("visible", true);
+					this.items.push(item);
+				}
+				else {
+					var item = new lz.wcfListItem(this, {
+						value: action,
+						displayName: action.displayName,
+						icon: null
+					});
+					this.items.push(item);
+				}
+			}
+			this.checkWidth();
+			if (wcfViewUtil.getLastKeyStroke() > wcfViewUtil.getLastMouseMove()) {
+				var targetX = canvas.getMouse("x");
+				var targetY = canvas.getMouse("y");
+			}
+			else {
+				var targetX = editor.getAttributeRelative("x", canvas) + this.width/3;
+				var targetY = editor.getAttributeRelative("y", canvas) + 90;
+			}
+			if (targetX + this.width > canvas.width) {
+				targetX = canvas.width - this.width;
+			}
+			if (targetY + this.height > canvas.height) {
+				targetY = canvas.height - this.height;
+			}
+			this.setAttribute("x", targetX);
+			this.setAttribute("y", targetY);
+			this.bringToFront();
+			this.setAttribute("visible", true);
+			lz.ModeManager.makeModal(this);
+			lz.Focus.setFocus(this);
+			this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+			]]>
+		</method>
+
+		<!---
+			Check the width of the popup to ensure that all items are visible.
+		-->
+		<method name="checkWidth">
+			<![CDATA[
+			var newWidth = 90;
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				var itemWidth = item.title.width;
+				if (itemWidth > newWidth) {
+					newWidth = itemWidth;
+				}
+			}
+			this.setAttribute('width', newWidth + 10);
+			]]>
+		</method>
+
+		<!---
+			Close the pop up.
+		-->		
+		<method name="close">
+			<![CDATA[
+			this.editor = null;
+			this.objects = null;
+			this.checkMouseDel.unregisterAll();
+			this.setAttribute("x", -1000);
+			this.setAttribute("y", -1000);
+			this.setAttribute("visible", false);
+			this.setHilite(null);
+			this.clearSelection();
+			lz.ModeManager.release(this);
+			while (this.items.length > 0) {
+				var item = this.items.pop();
+				item.setAttribute("visible", false);
+				item.setAttribute("value", null);
+				this.availableItems.unshift(item);
+			}
+			if (wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+				if (this.restoreFocusView != null && this.restoreFocusView.visible && wcfViewUtil.getInvisibleAncestor(this.restoreFocusView) == null) {
+					lz.Focus.setFocus(this.restoreFocusView, false);
+				}
+				else {
+					this.oEditor.restoreFocus();
+				}
+			}
+			this.restoreFocusView = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+		<!---
+			Check the mouse down. If it happened outside this view, then close the pop-up.
+		-->
+		<method name="checkMouse" args="e=null">
+			<![CDATA[
+			if (!this.containsPt(this.getMouse("x"), this.getMouse("y"))) {
+				this.close();
+			}
+			]]>
+		</method>
+		
+	</list>
+		
+	<!---
+		@keywords private
+		Add action dialog. This dialog presents the user with a list of possible "add" actions.
+	-->
+	<wcfDialog name="wcfAddActionDialog">
+		<!---
+			Reference to the editor to which the objects are being added.
+		-->
+		<attribute name="editor" value="null"/>
+		<!---
+			Array of source objects. This is a required attribute.
+		-->
+		<attribute name="objects" value="${null}"/>
+		<!---
+			Array of add reference buttons.
+		-->
+		<attribute name="addReferenceButtons" value="${[]}"/>
+		<!---
+			Array of buttons available for reuse.
+		-->
+		<attribute name="availableButtons" value="${[]}"/>
+
+		<!---
+			Open the add action dialog.
+			@param view editor: parent editor
+			@param array actions: array of actions
+			@param array objects: array of source objects
+		-->
+		<method name="openAddActionDialog" args="editor, actions, objects">
+			<![CDATA[
+			this.openWindow();
+			this.editor = editor;
+			this.objects = objects;
+
+			var showMoveBtn = false;
+			var showCopyBtn = false;
+			var showAddToCollectionBtn = false;
+			var showAddReferenceBtns = false;
+			for (var i = 0; i < actions.length; i++) {
+				var action = actions[i];
+				if (action == wcfMoveAction) {
+					showMoveBtn = true;
+				} else if (action == wcfCopyAction) {
+					showCopyBtn = true;
+				} else if (action == wcfAddToCollectionAction) {
+					showAddToCollectionBtn = true;
+				} else {
+					var addReferenceButton = null;
+					if (this.availableButtons.length > 0) {
+						addReferenceButton = this.availableButtons.shift();
+						addReferenceButton.setAttribute("text", action.displayName);
+						addReferenceButton.setAttribute("action", action);
+						addReferenceButton.setAttribute("visible", true);
+					} else {
+						addReferenceButton = new lz.wcfAddReferenceButton(this.viewButtons.addReferenceBtns, {
+							text: action.displayName,
+							action: action,
+							visible: true,
+							addReferenceDialog: this
+						});
+					}
+					this.addReferenceButtons.push(addReferenceButton);
+					showAddReferenceBtns = true;
+				}	
+			}
+			if (this.viewButtons.moveBtn.visible != showMoveBtn) {
+				this.viewButtons.moveBtn.setAttribute("visible", showMoveBtn);
+			}
+			if (this.viewButtons.copyBtn.visible != showCopyBtn) {
+				this.viewButtons.copyBtn.setAttribute("visible", showCopyBtn);
+			}
+			if (this.viewButtons.addToCollectionBtn.visible != showAddToCollectionBtn) {
+				this.viewButtons.addToCollectionBtn.setAttribute("visible", showAddToCollectionBtn);
+			}
+			if (this.viewButtons.addReferenceBtns.visible != showAddReferenceBtns) {
+				this.viewButtons.addReferenceBtns.setAttribute("visible", showAddReferenceBtns);
+			}
+			
+			var questionText = "";
+			if (actions.length == 1 && showCopyBtn) {
+				if (this.objects.length > 1) {
+					questionText = foundationResources.addActionDialogCopyMultipleObjectsText.string;
+				} else {
+					questionText = foundationResources.addActionDialogCopySingleObjectText.string;
+				}
+			}
+			else {
+				if (this.objects.length > 1) {
+					questionText = foundationResources.addActionDialogMultipleObjectsText.string;
+				} else {
+					questionText = foundationResources.addActionDialogSingleObjectText.string;
+				}
+			}
+			this.questionArea.setAttribute("text", questionText);
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Copy button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			var firstButton = this.getFirstVisibleButton();
+			lz.Focus.setFocus(firstButton);
+			]]>
+		</method>
+		
+		<!---
+			Get the first visible button
+		-->
+		<method name="getFirstVisibleButton">
+			<![CDATA[
+			var firstButton = null;
+			var buttonCount = this.viewButtons.subviews.length;
+			for (var i=0; i < buttonCount; i++) {
+				if (this.viewButtons.subviews[i].visible) {
+					firstButton = this.viewButtons.subviews[i];
+					break;
+				}
+			}
+			return firstButton;
+			]]>
+		</method>
+		
+		<!---
+			Close add action dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			while (this.addReferenceButtons.length > 0) {
+				var addReferenceButton = this.addReferenceButtons.pop();
+				addReferenceButton.setAttribute("visible", false);
+				addReferenceButton.setAttribute("text", "");	
+				addReferenceButton.setAttribute("action", "");
+				this.availableButtons.unshift(addReferenceButton);
+			}
+			this.objects = null;
+			this.editor = null;
+			super.closeWindow();
+			]]>
+		</method>
+
+		<!---
+			This method is called when the user selects the action. Perform the action for the specified list of objects.
+		-->
+		<method name="handleAddAction" args="action">
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfAddActionDialog", "handleAddAction", "Start " + action.displayName);
+			}
+			this.editor.doAddAction(action, this.objects);
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfAddActionDialog", "handleAddAction", "End " + action.displayName);
+			}
+		</method>
+
+		<simplelayout spacing="10" axis="x"/>
+		<view name="infoIcon" resource="dialogQuestionIcon"/>		
+		<text name="questionArea" multiline="true" width="400"/>
+		
+		<view placement="footer" name="viewButtons">
+			<simplelayout axis="x"/>
+			<wcfButton name="moveBtn" text="${wcfMoveAction.displayName}" onclick="parent.parent.handleAddAction(wcfMoveAction); parent.parent.closeWindow();" />
+			<wcfButton name="copyBtn" text="${wcfCopyAction.displayName}" onclick="parent.parent.handleAddAction(wcfCopyAction); parent.parent.closeWindow();" />
+			<wcfButton name="addToCollectionBtn" text="${wcfAddToCollectionAction.displayName}" onclick="parent.parent.handleAddAction(wcfAddToCollectionAction); parent.parent.closeWindow();" />
+			<view name="addReferenceBtns" />
+			<wcfButton name="cancelBtn" text="${foundationResources.addActionDialogCancel.string}" onclick="parent.parent.closeWindow();" visible="true" />
+		</view>
+	</wcfDialog>
+	
+	<!---
+		@keywords private
+		This class defines the add reference button.
+	-->
+	<class name="wcfAddReferenceButton" extends="wcfButton">
+		<!---
+			The add reference dialog.
+		-->
+		<attribute name="addReferenceDialog" value="null"/>
+		<!---
+			The add reference action.
+		-->
+		<attribute name="action" value="null"/>
+		
+		<handler name="onclick">
+			<![CDATA[
+			this.addReferenceDialog.handleAddAction(action);
+			this.addReferenceDialog.closeWindow();
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		@keywords private
+
+		Child Object Checkbox Dialog.
+	-->
+	<wcfDialog name="wcfNewChildSearchDialog" title="${foundationResources.childListEditorFindAndAdd.string}">
+		<!---
+			Reference to the new child button from which this dialog was launched.
+		-->
+		<attribute name="newChildButton" />
+
+		<!---
+			Handle OK.
+		-->
+		<method name="onOk">
+			<![CDATA[
+				this.newChildButton.editor.searchWidget.searchTextArea.searchText.setAttribute("text", this.contentView.searchText.getText());
+				this.newChildButton.editor.searchWidget.doSearch();
+				this.closeWindow();
+			]]>
+		</method>
+
+		<!---
+			Handle Cancel.
+		-->
+		<method name="onCancel">
+			<![CDATA[
+				this.closeWindow();
+			]]>
+		</method>
+
+		<!---
+			Open the new child search dialog.
+			@param wcfNewChildButton newChildButton New child button widget.
+			@param wcfSearchDefinition searchDefinition Search definition.
+		-->
+		<method name="openNewChildSearchDialog" args="newChildButton, searchDefinition">
+			<![CDATA[
+				this.openWindow();
+				this.contentView.searchText.setAttribute("text", "");
+				this.newChildButton = newChildButton;
+				this.newChildButton.editor.searchWidget.setAttribute("currentDefinition", searchDefinition);
+			]]>
+		</method>
+
+		<view name="contentView" width="250" height="50">
+			<text text="${foundationResources.childListEditorSearchKeywordPrompt.string}" />
+			<wcfInputText name="searchText" width="230" />
+			<simplelayout axis="y" spacing="2" />
+		</view>
+
+		<view name="buttonSection" placement="footer">
+			<wcfButton name="okButton" text="${foundationResources.simpleDialogOK.string}" isdefault="true">
+				<handler name="onclick">
+					<![CDATA[
+						parent.parent.onOk();
+					]]>
+				</handler>
+			</wcfButton>
+			<wcfButton name="cancelButton" text="${foundationResources.simpleDialogCancel.string}">
+				<handler name="onclick">
+					<![CDATA[
+						parent.parent.onCancel();
+					]]>
+				</handler>
+			</wcfButton>
+			<simplelayout axis="x" />
+		</view>
+	</wcfDialog>
+
+</library>

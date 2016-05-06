@@ -1,0 +1,1684 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		This class defines a base object selector. A base object selector allows an object to be selected by either dragging and
+		dropping the selected object into the base selector, or by using quick add functionality.
+		The selected object is then populated in the object selector's <CODE>object</CODE> attribute.
+		
+		This class should not be instantiated directly. It is used internally by {@link wcfObjectSelector}.
+	-->
+	<class name="wcfBaseObjectSelector">
+		<!---
+			@keywords private
+			This attribute defines the style. By default it is derived by parent properties component.
+		-->
+		<attribute name="style" value="${parent.style}"/>
+		<!---
+			@keywords private
+			Model instance.
+		-->
+		<attribute name="model"/>
+		<!---
+			This attribute provides a comma separated list of reference object types that are supported by this object selector.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string"/>
+		<!---
+			This attribute holds a reference to the instance of {@link wcfModelObject} that is being modified by the
+			properties view that contains this object selector.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			The current reference object that is selected by the base object selector.
+		-->
+ 		<attribute name="object" value="null"/>
+		<!---
+			@keywords private
+			This attribute indicates whether the delete action is currently enabled for this reference editor. The default value of this attribute is "false".
+		-->
+		<attribute name="deleteEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute indicates whether the add action is currently enabled for this reference editor. The default value of this attribute is "true".
+		-->
+		<attribute name="addEnabled" type="boolean" value="true"/>				
+		<!---
+			@keywords private
+		-->
+		<attribute name="propertiesComponent"/>
+		<!---
+			This attribute is an optional string to use as the header for the widget view.
+		-->
+		<attribute name="headerText" type="string"  value="${propertiesComponent.headerText}"/>
+		
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+			this.updateDisplayNameDel = new lz.Delegate(this, "updateDisplayName");
+			this.removeObjectDel = new lz.Delegate(this, "removeObject");
+			this.checkEnabledDel = new lz.Delegate(this, "checkEnabled");
+			super.construct(args, parent);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.createViews();
+			]]>
+		</handler>
+	
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateDisplayNameDel.unregisterAll();
+			delete this.updateDisplayNameDel;
+			this.removeObjectDel.unregisterAll();
+			delete this.removeObjectDel;
+			delete this.objectDefinitions;
+			this.checkEnabledDel.unregisterAll();
+			delete this.checkEnabledDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object for this view to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			this.o = newObject;
+			if (this.o != null) {
+				this.objectDefinitions = this.model.getObjectDefinitions(this.o, this.objectTypes);
+			}
+			else {
+				this.objectDefinitions = null;
+			}
+			this.createActions();
+			this.removeObject();
+			this.checkEnabled();
+			]]>
+		</method>
+		
+		<!---
+			Create object selector views.
+		-->
+		<method name="createViews">
+			<![CDATA[
+			new lz.wcfObjectSelectorViews(this, {
+				name: "editorViews"
+			});
+			this.createActions();
+			this.updateDisplayName();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="createActions">
+			<![CDATA[
+			var primaryDefs = this.objectDefinitions;
+			
+			if (primaryDefs && primaryDefs.length > 0 && !this["_actionsCreated"] && this["editorViews"]) {
+				var searchTypes = {};
+				var searchDefs = [];
+				for (var i = 0; i < primaryDefs.length; i++) {
+					var searchDef = primaryDefs[i]["searchDefinition"];
+					if (searchDef && !searchTypes[searchDef.searchType]) {
+						searchTypes[searchDef.searchType] = true;
+						searchDefs.push(searchDef);
+					}
+				}
+				
+				if(searchDefs.length > 0){
+					this.searchWidget = new lz.wcfObjectSearchWidget(this.editorViews.actionArea, {
+						editor: this,
+						y: 1
+					});
+					this.searchWidget.setAttribute("searchDefinitions",searchDefs);
+				}
+				new lz.wcfRemoveObjectButton(this.editorViews.actionArea, {
+					editor: this
+				});
+				new lz.wcfUtilitiesButton(this.editorViews.actionArea, {
+					editor: this,
+					objectDefinition: primaryDefs[0]
+				});
+				
+				this._actionsCreated = true;
+			}
+			]]>
+		</method>
+
+		<!---
+			This method updates the name displayed based on the value of {@link wcfModelObject#objectLongDisplayName} for
+			{@link wcfBaseObjectSelector#object}.
+		-->
+		<method name="updateDisplayName" args="e=null">
+			<![CDATA[
+			if (!this["editorViews"]) {
+				return;
+			}
+			var displayText = "";
+			if (this.object != null) {
+				displayText = this.object.objectLongDisplayName;
+			}
+			this.editorViews.sideBorders.referenceArea.background.referenceDisplayName.setAttribute('text', displayText);
+			]]>
+		</method>
+		
+		<!---
+			This method updates the reference object that is selected.
+		-->
+		<method name="updateObject">
+			<![CDATA[
+			this.updateDisplayNameDel.unregisterAll();
+			this.removeObjectDel.unregisterAll();
+			if (this.object != null) {
+				this.updateDisplayNameDel.register(this.object, "onobjectLongDisplayName");
+				this.removeObjectDel.register(this.object, "beingDestroyed");
+			}
+			this.updateDisplayName();
+			]]>
+		</method>
+		
+		<!---
+			This method sets the specified object as the new object being selected by the object selector. This method has the effect of changing the value
+			of {@link wcfBaseObjectSelector#object}. The method will call {@link wcfBaseObjectSelector#removeObject} to ensure
+			the removal of what was previously selected.
+			
+			@param wcfModelObject newObject: the new primary object that is being referenced
+		-->
+		<method name="setNewObject" args="newObject">
+			<![CDATA[
+			newObject = newObject.getReferencedObject();
+			this.removeObject();
+			this.setAttribute("object", newObject);
+			this.object.registerObjectView(this);
+			this.object.incrementReferenceCount();
+			this.updateObject();
+			]]>
+		</method>
+		
+		<!---
+			This method removes the current selected object. The current selected object is the current value of {@link wcfBaseObjectSelector#object}.
+			This method is registered to the "beingDestroyed" event for the object.
+		-->
+		<method name="removeObject" args="e=null">
+			<![CDATA[
+			if (this.object != null) {
+				this.object.unregisterObjectView(this);
+				this.object.decrementReferenceCount();
+				this.setAttribute("object", null);
+				this.updateObject();
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method returns true if the object selector has an object that is currently selected and false otherwise.
+			The current selected object is the current value of {@link wcfBaseObjectSelector#object}.
+			
+			@return boolean This method returns true if there is a selected object and false otherwise.
+		-->
+		<method name="hasObject">
+			<![CDATA[
+			return this.object != null;
+			]]>
+		</method>
+		
+		<!---
+			This method checks if the specified object matches one of the object types supported by this object selector.
+			It is used to determine whether copied/dragged objects can be pasted/dropped on this selector.
+			
+			@param wcfModelObject testObject The object to test.
+			@return boolean The method returns true if the object is compatible for this object selector, and false otherwise.
+		-->
+		<method name="isAddEnabled" args="testObject">
+			<![CDATA[
+			var matchFound = false;
+			if (!this.o.readOnly && this.objectDefinitions != null) {
+				var oDef = testObject.getReferencedObject().objectDefinition;
+				var oDefs = this.objectDefinitions;
+				for (var i = 0; i < oDefs.length; i++) {
+					if (oDefs[i] == oDef) {
+						matchFound = true;
+						break;
+					}
+				}
+			}
+			return matchFound;
+			]]>
+		</method>
+		
+		<!---
+			Check if open is enabled.
+			@return boolean: true if open is allowed.
+		-->
+		<method name="isOpenEnabled">
+			<![CDATA[
+			return this.object != null && this.object.isOpenEnabled();
+			]]>
+		</method>
+		
+		<!---
+			Perform open.
+		-->
+		<method name="doOpen">
+			<![CDATA[
+			if (this.object != null) {
+				this.object.doOpen();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method checks the current enablement of the available actions and updates the action buttons accordingly.
+			For example, if the object currently selected is read only, then the delete functionality will be disabled.
+		-->
+		<method name="checkEnabled" args="e=null">
+			<![CDATA[
+			this.checkEnabledDel.unregisterAll();
+			
+			// check delete action
+			var actionEnabled = this.enabled && this.o != null && this.hasObject();
+			if (actionEnabled != this.deleteEnabled) {
+				this.setAttribute("deleteEnabled", actionEnabled);
+			}
+			
+			// check add action
+			actionEnabled = this.enabled && this.o != null;
+			if (actionEnabled != this.addEnabled) {
+				this.setAttribute("addEnabled", actionEnabled);
+			}
+
+			this.checkEnabledDel.register(this, "onenabled");
+			this.checkEnabledDel.register(this, "onobject");
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This class defines an object selector to appear in a properties view.
+		
+		<p>An object selector allows an object to be selected by either dragging and dropping the selected object into the selector,
+		or by using quick add functionality.
+		
+		<p>The selected object is then populated in the object selector's <CODE>object</CODE> attribute. A list of object types
+		supported by the selector must be provided.
+				
+		Sample usage:
+			@START_CODE
+				<ObjectSelector objectTypes="SampleFolder,SampleObject"/>
+			@END_CODE
+	-->
+	<class name="wcfObjectSelector" extends="wcfPropertiesComponent">
+		<!---
+			This attribute provides a comma separated list of reference object types that are supported by this object selector.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string"/>
+		<!---
+			This attribute is an optional string to use as the header for the widget view. If not provided, the value defaults to "Name".
+		-->
+		<attribute name="headerText" type="string" value="${foundationResources.refEditorTableHeader.string}"/>
+	
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			super.createPrompt(parentComponent);
+			
+			if (parentComponent["editor"]) {
+				if (parentComponent["prompt"]) {
+					parentComponent.prompt.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+				
+				if (parentComponent["extendedHelpIcon"]) {			
+					parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates an instance of {@link wcfBaseObjectSelector} to use as the editor for the given property component.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var baseSelector = new lz.wcfBaseObjectSelector(parentComponent, {
+				name: "editor",
+				model: parentComponent.model,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o,
+				enabled: parentComponent.enabled,
+				objectTypes: this.objectTypes,
+				propertiesComponent: this
+			});
+			
+			if (parentComponent["prompt"]) {
+				parentComponent.prompt.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+			}
+			
+			if (parentComponent["extendedHelpIcon"]) {			
+				parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+			}
+			]]>
+		</method>
+	
+	</class>
+
+	<!---
+		@keywords private
+		
+		This is the base class for the reference editor. It is an abstract class and should not be instantiated directly.
+		It is used internally by {@link wcfReferenceEditor}.
+	-->
+	<class name="wcfBaseReferenceEditor">
+		<!---
+			This attribute defines the style. By default it is derived by parent properties component.
+		-->
+		<attribute name="style" value="${parent.style}"/>
+		<!---
+			@keywords private
+			Model instance.
+		-->
+		<attribute name="model"/>
+		<!---
+			This attribute is a comma separated list of reference object types that are supported by this reference editor.
+			This is a required attribute.
+		-->
+		<attribute name="referenceObjectTypes" type="string"/>
+		<!---
+			This attribute is a comma separated list of parent object types of the reference objects being edited.
+			This attribute should only be specified if the object being edited is not the parent of the
+			reference object.
+		-->
+		<attribute name="parentObjectTypes" type="string" value="${null}"/>
+		<!---
+			If it is set to false, then the	reference editor will only allow the declaration of a reference to
+			an existing object. The default is false.
+		-->
+		<attribute name="allowCreate" type="boolean" value="false"/>
+		<!---
+			This attribute holds a reference to the instance of wcfModelObject that is being modified by the
+			properties view that contains this reference editor.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			The reference object that is currently selected.
+		-->
+		<attribute name="referenceObject" value="null"/>
+		<!---
+			@keywords private
+			This attribute indicates whether the delete action is currently enabled. It is updated internaly by
+			{@link wcfBaseReferenceEditor#checkEnabled}.
+		-->
+		<attribute name="deleteEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute indicates whether the add action is currently enabled. It is updated internaly by
+			{@link wcfBaseReferenceEditor#checkEnabled}.
+		-->
+		<attribute name="addEnabled" type="boolean" value="true"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="propertiesComponent"/>
+		<!---
+			An optional string to use as the header for the widget view.
+		-->
+		<attribute name="headerText" type="string" value="${propertiesComponent.headerText}"/>
+		
+		<!---
+			@keywords private
+			Instance of search widget {@link wcfObjectSearchWidget}
+		-->
+		<attribute name="searchWidget"/>
+		<!---
+			@keywords private
+			Instance of utility button {@link wcfUtilitiesButton}
+		-->
+		<attribute name="utilitesButton"/>
+		<!---
+			@keywords private
+			Instance of new button {@link wcfNewObjectButton}
+		-->
+		<attribute name="newButton"/>
+		<!---
+			Resource name of the new button.
+		-->
+		<attribute name="newButtonResource" type="string" value="grid_createNewIconForSingleAction"/>
+
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+			this.updateObjectDel = new lz.Delegate(this, "updateObject");
+			this.updateDisplayNameDel = new lz.Delegate(this, "updateDisplayName");
+			this.checkEnabledDel = new lz.Delegate(this, "checkEnabled");
+			this.checkEnabledIsCreatableDel = new lz.Delegate(this, "checkEnabled");
+			this.checkEnabledIsDeletableDel = new lz.Delegate(this, "checkEnabled");
+			this.releaseReferenceObjectDel = new lz.Delegate(this, "releaseReferenceObject");
+			super.construct(args, parent);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.createViews();
+			]]>
+		</handler>	
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateObjectDel.unregisterAll();
+			delete this.updateObjectDel;
+			this.updateDisplayNameDel.unregisterAll();
+			delete this.updateDisplayNameDel;
+			this.releaseReferenceObjectDel.unregisterAll();
+			delete this.releaseReferenceObjectDel;
+			delete this.objectDefinitions;
+			delete this.parentObjectDefinitions;
+			delete this.referencedObjectDefinitions;
+			this.checkEnabledDel.unregisterAll();
+			delete this.checkEnabledDel;
+			this.checkEnabledIsCreatableDel.unregisterAll();
+			delete this.checkEnabledIsCreatableDel;
+			this.checkEnabledIsDeletableDel.unregisterAll();
+			delete this.checkEnabledIsDeletableDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			this.o = newObject;
+
+			this.parentObjectDefinitions = null;
+			this.referencedObjectDefinitions = null;
+			this.updateObjectDel.unregisterAll();
+			if (this.o != null) {
+				if (this.parentObjectTypes != null) {
+					this.parentObjectDefinitions = this.model.getObjectDefinitions(null, this.parentObjectTypes);
+					this.objectDefinitions = [];
+					for (var i = 0; i < this.parentObjectDefinitions.length; i++) {
+						var parentDef = this.parentObjectDefinitions[i];
+						var types = wcfStringUtil.splitAndTrim(this.referenceObjectTypes, ",");
+						for (var j = 0; j < types.length; j++) {
+							var def = parentDef.getChildDefinition(types[j]);
+							if (def  && def.isReferencedDefinition(this.o.objectDefinition)) {
+								this.objectDefinitions.push(def);
+							}
+						}
+					}
+					this.updateObjectDel.register(this.o, "onreferences");
+				}
+				else {
+					this.objectDefinitions = this.model.getObjectDefinitions(this.o, this.referenceObjectTypes);
+					this.referencedObjectDefinitions = [];
+					for (var i = 0; i < this.objectDefinitions.length; i++) {
+						var defs = this.objectDefinitions[i].referencedDefinitions;
+						if (defs != null) {
+							for (var j = 0; j < defs.length; j++) {
+								this.referencedObjectDefinitions.push(defs[j]);
+							}
+						}
+					}
+					this.updateObjectDel.register(this.o, "onchildObjects");
+				}
+			}
+			else {
+				this.parentObjectDefinitions = null;
+				this.objectDefinitions = null;
+				this.referencedObjectDefinitions = null;
+			}
+			this.createActions();
+			this.updateActions();
+			this.checkEnabled();
+			this.updateObject();
+			]]>
+		</method>
+		
+		<!---
+			This method creates the reference editor views by initializing an instance of {@link wcfObjectSelectorViews}.
+		-->
+		<method name="createViews">
+			<![CDATA[
+			new lz.wcfObjectSelectorViews(this, {
+				name: "editorViews"
+			});
+			this.createActions();
+			this.updateActions();
+			this.updateDisplayName();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="createActions">
+			<![CDATA[
+			if (!this["_actionsCreated"] && this["editorViews"]){
+				this.searchWidget = new lz.wcfObjectSearchWidget(this.editorViews.actionArea, {
+					editor: this,
+					searchDefinitions : null,
+					y: 1
+				});
+				this.newButton = new lz.wcfNewObjectButton(this.editorViews.actionArea, {
+					editor: this,
+					actionDefinitions : null,
+					buttonResourceForSingleAction: this.newButtonResource,
+					y: 5
+				});
+				new lz.wcfRemoveObjectButton(this.editorViews.actionArea, {
+					editor: this,
+					y: 5
+				});
+				this.utilitesButton = new lz.wcfUtilitiesButton(this.editorViews.actionArea, {
+					editor: this,
+					objectDefinitions : null,
+					y: 5
+				});
+				this._actionsCreated = true;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method will update the toolbar actions with the new object object definition			
+		-->
+		<method name="updateActions">
+			<![CDATA[
+			if (this["editorViews"]){
+				var primaryDefs = null;
+				if (this.parentObjectDefinitions != null) {
+					primaryDefs = this.parentObjectDefinitions;
+				} else {
+					primaryDefs = this.referencedObjectDefinitions;
+				}
+				if(!primaryDefs){
+					primaryDefs = [];
+				}
+				
+				var searchDefs = [];
+				var searchTypes = {};
+				for (var i = 0; i < primaryDefs.length; i++) {
+					var searchDef = primaryDefs[i].searchDefinition;
+					if (searchDef && !searchTypes[searchDef.searchType]) {
+						searchTypes[searchDef.searchType] = true;
+						searchDefs.push(searchDef);
+					}
+				}
+				if(searchDefs.length > 0){
+					this.searchWidget.setAttribute("searchDefinitions",searchDefs);
+				}else{
+					this.searchWidget.setAttribute("searchDefinitions",null);
+				}
+				
+				if(primaryDefs.length > 0){
+					this.utilitesButton.setAttribute("objectDefinition",primaryDefs[0]);
+				}else{
+					this.utilitesButton.setAttribute("objectDefinition",null);
+				}
+				
+				if (this.allowCreate){
+					var creatableDefs = [];
+					for(var i = 0; i < primaryDefs.length; i++){
+						if(primaryDefs[i].creatable && !primaryDefs[i].isBaseDefinition){
+							creatableDefs.push(primaryDefs[i]);
+						}
+					}					
+					if(creatableDefs.length > 0){
+						this.newButton.setAttribute("actionDefinitions",creatableDefs);
+					}else{
+						this.newButton.setAttribute("actionDefinitions",null);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method updates the reference objects. This method will be called by a delegate which listens on
+			{@link wcfBaseReferenceEditor#o} for changes in the values of its {@link wcfModelObject#references} if a value for
+			{@link wcfBaseReferenceEditor#parentObjectTypes} was provided, and otherwise listens for changes in values of
+			{@link wcfModelObject#childObjects}.
+		-->
+		<method name="updateObject" args="e=null">
+			<![CDATA[
+			var newReferenceObject = null;
+			if (this.o != null) {
+				var objects = null;
+				if (this.parentObjectDefinitions != null) {
+					objects = this.o.references;
+				}
+				else {
+					objects = this.o.childObjects;
+				}
+				for (var i = 0; i < objects.length && newReferenceObject == null; i++) {
+					var def = objects[i].objectDefinition;
+					for (var j = 0; j < this.objectDefinitions.length; j++) {
+						if (def == this.objectDefinitions[j]) {
+							if (!objects[i].pendingDelete) {
+								newReferenceObject = objects[i];
+								break;
+							}
+						}
+					}
+				}
+			}
+			if (newReferenceObject != this.referenceObject) {
+				this.releaseReferenceObjectDel.unregisterAll();
+				if (this.referenceObject) {
+					this.referenceObject.unregisterObjectView(this);
+				}
+				if (newReferenceObject) {
+					newReferenceObject.registerObjectView(this);
+				}
+				this.setAttribute("referenceObject", newReferenceObject);
+				this.updateDisplayNameDel.unregisterAll();
+				if (this.referenceObject != null) {
+					var displayObject = null;
+					if (this.parentObjectDefinitions != null) {
+						displayObject = this.referenceObject.parentObject;
+					}
+					else {
+						displayObject = this.referenceObject;
+					}
+					if (displayObject != null) {
+						this.updateDisplayNameDel.register(displayObject, "onobjectLongDisplayName");
+						
+					}
+					this.releaseReferenceObjectDel.register(this.referenceObject, "beingDestroyed");
+				}
+				this.updateDisplayName();
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method releases the reference object and sets {@link wcfBaseReferenceEditor#referenceObject} to null.
+		-->
+		<method name="releaseReferenceObject" args="e=null">
+			<![CDATA[
+			this.releaseReferenceObjectDel.unregisterAll();
+			this.referenceObject = null;
+			this.updateDisplayName();
+			this.checkEnabled();
+			]]>
+		</method>
+		
+		<!---
+			This method updates the display name to use for the reference editor based on the current value of
+			{@link wcfBaseReferenceEditor#referenceObject}.
+		-->
+		<method name="updateDisplayName" args="e=null">
+			<![CDATA[
+			if (!this["editorViews"]) {
+				return;
+			}
+			
+			var displayText = "";
+			if (this.referenceObject != null) {
+				var displayObject = null;
+				if (this.parentObjectDefinitions != null) {
+					displayObject = this.referenceObject.parentObject;
+				}
+				else {
+					displayObject = this.referenceObject.getReferencedObject();
+				}
+				if (displayObject != null) {
+					displayText = displayObject.objectLongDisplayName;
+				}
+			}
+			this.editorViews.sideBorders.referenceArea.background.referenceDisplayName.setAttribute('text', wcfStringUtil.escapeText(displayText));
+			]]>
+		</method>
+		
+		<!---
+			This method sets the specified object as the new referenced object.
+			If {@link wcfBaseReferenceEditor#o} is readonly then this method has no effect.
+			
+			@param wcfModelObject newObject The new primary object that is being referenced
+		-->
+		<method name="setNewObject" args="newObject">
+			<![CDATA[
+			newObject = newObject.getReferencedObject();
+			var roDefs = this.objectDefinitions;
+			if (this.parentObjectDefinitions != null) {
+				for (var i = 0; i < roDefs.length; i++) {
+					if (newObject.objectDefinition.isChildDefinition(roDefs[i])
+						&& roDefs[i].isCreatable(newObject, this.o)) {
+						roDef = roDefs[i];
+						break;
+					}
+				}
+				if (roDef != null) {
+					newObject.lock();
+					this.removeObject();
+					var newRO = this.model.createNewObject(roDef, newObject);
+					newRO.addChild(this.o);
+					newObject.unlock();
+				}
+			}
+			else {
+				var roDef = null;
+				for (var i = 0; i < roDefs.length; i++) {
+					if (roDefs[i].isReferencedDefinition(newObject.objectDefinition)
+							&& roDefs[i].isCreatable(this.o, newObject)) {
+						roDef = roDefs[i];
+						break;
+					}
+				}
+				if (roDef != null) {
+					this.o.lock();
+					this.removeObject();
+					var newRO = this.model.createNewObject(roDef, this.o);
+					newRO.addChild(newObject);
+					this.o.unlock();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method removes the current referenced object from the reference editor and deletes it.
+		-->
+		<method name="removeObject">
+			<![CDATA[
+			if (this.referenceObject != null && !this.referenceObject.readOnly) {
+				this.referenceObject.deleteObject();
+				this.checkEnabled();
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method returns true if the reference editor has an object and false otherwise.
+			@return boolean: The method returns true if there is a selected object and false otherwise.
+		-->
+		<method name="hasObject">
+			<![CDATA[
+			return this.referenceObject != null;
+			]]>
+		</method>
+		
+		<!---
+			This method checks if the specified object matches the object types declared for this reference editor.
+			@param wcfModelObject testObject The object to test.
+			@return boolean This method returns true if the object matches one of the supported object types and false otherwise.
+		-->
+		<method name="isAddEnabled" args="testObject">
+			<![CDATA[
+			var matchFound = false;
+			if (this.o != null && (!this.hasObject() || !this.referenceObject.readOnly)) {
+				var po = testObject.getReferencedObject();
+				var roDefs = this.objectDefinitions;
+			
+				if (this.parentObjectDefinitions != null) {
+					for (var i = 0; i < roDefs.length; i++) {
+						if (po.objectDefinition.isChildDefinition(roDefs[i])
+							 && roDefs[i].isCreatable(po, this.o)) {
+							matchFound = true;
+							break;
+						}
+					}
+					if (matchFound && (!this.o.moveable || po == this.o || po == this.o.getParentPrimaryObject() || po.isAncestor(this.o))) {
+						matchFound = false;
+					}
+				}
+				else {
+					for (var i = 0; i < roDefs.length; i++) {
+						if (roDefs[i].isReferencedDefinition(po.objectDefinition)
+								&& roDefs[i].isCreatable(this.o, po)) {
+							matchFound = true;
+							break;
+						}
+					}
+				}
+			}
+			return matchFound;
+			]]>
+		</method>
+		
+		<!---
+			Check if open is enabled.
+			@return boolean: true if open is allowed.
+		-->
+		<method name="isOpenEnabled">
+			<![CDATA[
+			var openEnabled = false;
+			if (this.referenceObject != null) {
+				if (this.parentObjectDefinitions != null) {
+					openEnabled = this.referenceObject.parentObject.isOpenEnabled();
+				}
+				else {
+					openEnabled = this.referenceObject.isOpenEnabled();
+				}
+			}
+			return openEnabled;
+			]]>
+		</method>
+		
+		<!---
+			Perform open.
+		-->
+		<method name="doOpen">
+			<![CDATA[
+			if (this.referenceObject != null) {
+				if (this.parentObjectDefinitions != null) {
+					this.referenceObject.parentObject.doOpen();
+				}
+				else {
+					this.referenceObject.doOpen();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method checks the current enablement of the available actions and updates them accordingly.
+		-->
+		<method name="checkEnabled" args="e=null">
+			<![CDATA[
+			this.checkEnabledDel.unregisterAll();
+			this.checkEnabledIsCreatableDel.unregisterAll();
+			this.checkEnabledIsDeletableDel.unregisterAll();
+			
+			// check delete action
+			var actionEnabled = this.o != null && this.hasObject() && this.referenceObject.isDeletable(this.checkEnabledIsDeletableDel);
+			if (actionEnabled) {
+				if (this.parentObjectDefinitions != null) {
+					this.checkEnabledIsDeletableDel.register(this.o, "onmoveable");
+					actionEnabled = this.o.moveable;
+				}
+				else if (this.referenceObject.objectDefinition.parentReference) {
+					this.checkEnabledIsDeletableDel.register(this.referenceObject.getReferencedObject(), "onmoveable");
+					actionEnabled = this.referenceObject.getReferencedObject().moveable;
+				}
+			}
+			if (actionEnabled != this.deleteEnabled) {
+				this.setAttribute("deleteEnabled", actionEnabled);
+			}
+						
+			// check add action
+			actionEnabled = false;
+			if (this.o != null && (!this.hasObject() || !this.referenceObject.readOnly)) {
+				var roDefs = this.objectDefinitions;
+				if (this.parentObjectDefinitions != null) {
+					if (this.o.moveable) {
+						for (var i = 0; i < roDefs.length; i++) {
+							if (roDefs[i].isCreatable(null, this.o, this.checkEnabledIsCreatableDel)) {
+								actionEnabled = true;
+								break;
+							}
+						}
+					}
+				}
+				else {
+					for (var i = 0; i < roDefs.length; i++) {
+						if (roDefs[i].isCreatable(this.o, null, this.checkEnabledIsCreatableDel)) {
+							actionEnabled = true;
+							break;
+						}
+					}
+				}
+			}
+			
+			if (actionEnabled != this.addEnabled) {
+				this.setAttribute("addEnabled", actionEnabled);
+			}
+
+			this.checkEnabledDel.register(this, "onreferenceObject");
+			if (this.referenceObject != null) {
+				this.checkEnabledDel.register(this.referenceObject, "onreadOnly");
+			}
+			if (this["editorViews"]) {
+				this.editorViews.setAttribute("enabled", this.deleteEnabled || this.addEnabled);
+				if (this.editorViews["onselect"]) {
+					this.editorViews.onselect.sendEvent();
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		This class defines the reference editor.
+		
+		A reference editor is used to provide support for editing the relationship between two primary objects. The reference editor
+		is declared as part of the properties view of one primary object and allows the user to select another primary object.
+		In general, a reference editor can be used to edit any "0..1" or "1..1" relationship to another
+		primary object. If the relationship is "0..*" or "1..*", then you must use a {@link wcfChildListEditor#child list editor}.
+		The related primary object can either be a parent object such as a parent category for a product, or it can be a child object such
+		as a target product for a promotion. The reference editor will create and delete instances of {@link wcfModelObject} described by
+		the object definitions specified by {@link wcfReferenceEditor#referenceObjectTypes}.
+		
+		<p>The business user can select a compatible primary object using drag and drop, copy and paste or with the quick search
+		mechanism that is part of this editor.
+		
+		<p>wcfReferenceEditor extends {@link wcfPropertiesComponent} and can appear in a properties view.
+		
+		<p>Sample usage:
+		@START_CODE
+			<ReferenceEditor
+					parentObjectTypes="SampleParentObject"
+					referenceObjectTypes="SampleObject"
+					allowCreate="true"/>
+		@END_CODE
+	-->
+	<class name="wcfReferenceEditor" extends="wcfPropertiesComponent">
+		<!---
+			A comma separated list of the reference {@link wcfObjectDefinition#objectType object types} that are supported by this
+			reference editor. These object types must correspond to {@link wcfReferenceObjectDefinition reference object definitions} or
+			{@link wcfParentReferenceObjectDefinition parent reference object definitions}. If the reference editor is being used to edit
+			a parent relationship, then the reference object types must match object definitions found under the primary object definitions
+			specified by "parentObjectTypes". If the reference editor is being used to edit a child object, then the reference object types
+			must match object definitions found under the current object's object definition where the "current object" is the object being
+			edited in the properties view. If one or more of the reference object types does not match an object definition found
+			under the current object's object definition, then it will be ignored. This can occur if a properties view is reused for
+			different types of objects. This is a required attribute.
+		-->
+		<attribute name="referenceObjectTypes" type="string"/>
+		<!---
+			A comma separated list of parent {@link wcfObjectDefinition#objectType object types}. This attribute should only be specified
+			if the reference editor is used to edit a parent relationship. The parent object types are used to identify compatible parent
+			{@link wcfPrimaryObjectDefinition primary objects}. The reference object types specified by "referenceObjectTypes" will be used
+			to find reference object definitions declared under the primary object definition. The reference object definitions must specify
+			the current object's object type with {@link wcfReferenceObjectDefinition#referencedType} or {@link wcfReferenceObjectDefinition#referencedTypes}.
+			All combinations of "parentObjectTypes" and "referenceObjectTypes" will be examined for compatible reference object definitions.
+			Incompatible combinations and object types will be ignored. The object types must be declared such that there is at most one valid reference
+			object definition when a specific parent primary object definition is matched with the current object's object definition.
+		-->
+		<attribute name="parentObjectTypes" type="string" value="${null}"/>
+		<!---
+			This attribute indicates that a new object can be created. If it is set to false, then the
+			reference editor will only allow the declaration of a reference to
+			an existing object. The default is false.
+		-->
+		<attribute name="allowCreate" type="boolean" value="false"/>
+		<!---
+			An optional string to use as the header for the widget view. If it is not provided, the value defaults to "Name".
+		-->
+		<attribute name="headerText" type="string" value="${foundationResources.refEditorTableHeader.string}"/>
+		<!---
+			Resource name of the create new object button.
+		-->
+		<attribute name="newButtonResource" type="string" value="grid_createNewIconForSingleAction"/>
+	
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			super.createPrompt(parentComponent);
+			
+			if (parentComponent["editor"]) {
+				if (parentComponent["prompt"]) {
+					parentComponent.prompt.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+				
+				if (parentComponent["extendedHelpIcon"]) {			
+					parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates an instance of {@link wcfBaseReferenceEditor} for the given property component.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var refEditor = new lz.wcfBaseReferenceEditor(parentComponent, {
+				name: "editor",
+				model: parentComponent.model,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o,
+				enabled: parentComponent.enabled,
+				referenceObjectTypes: this.referenceObjectTypes,
+				parentObjectTypes: this.parentObjectTypes,
+				allowCreate: this.allowCreate,
+				newButtonResource: this.newButtonResource,
+				propertiesComponent: this
+			});
+			
+			if (parentComponent["prompt"]) {
+				parentComponent.prompt.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+			}
+			
+			if (parentComponent["extendedHelpIcon"]) {			
+				parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.editorViews.sideBorders.getAttributeRelative("y",parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Reference editors should determine their enablement on its own by looking at their
+			object definitions to find out if they are creatable. Overwrites the
+			{@link wcfPropertiesComponent#updateEnablement} method to do nothing.
+		-->
+		<method name="updateEnablement" args="e=null"/>
+	</class>
+	
+	<!---
+		@keywords private
+		Selected object views for object selector and reference editor.
+	-->
+	<class name="wcfObjectSelectorViews" extends="basecomponent" focusable="false">
+		<attribute name="headerBackgroundColor" type="color" value="0xc3cdef"/>
+		<!---
+			Indicates that this reference editor is the active selection view.
+		-->
+		<attribute name="activated" type="boolean" value="false"/>		
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateActivatedDel = new lz.Delegate(this, "updateActivated");
+			this.updateActivatedDel.register(this.parent.model, "onactiveSelectionView");
+			new lz.wcfReferenceMenu(this, {
+				name: "menu",
+				reference: this.parent
+			});
+			this.menu.addView(this);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateActivatedDel.unregisterAll();
+			delete this.updateActivatedDel;
+			]]>
+		</method>
+
+		<!---
+			Update the activated attribute flag by checking if this is the active selection view.
+		-->		
+		<method name="updateActivated" args="e=null">
+			<![CDATA[
+			this.setAttribute("activated", this.parent.model.activeSelectionView == this);
+			]]>
+		</method>
+		
+		<!---
+			Check if open is enabled.
+			@return boolean: true if open is allowed.
+		-->
+		<method name="isOpenEnabled">
+			<![CDATA[
+			var openEnabled = false;
+			if (parent.o != null) {
+				openEnabled = this.parent.isOpenEnabled();
+			}
+			return openEnabled;
+			]]>
+		</method>
+		
+		
+		<!---
+			Perform open.
+		-->
+		<method name="doOpen">
+			<![CDATA[
+			if (parent.o != null) {
+				parent.doOpen();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check if paste is enabled.
+			@return boolean: true if paste is allowed
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+			var pasteEnabled = false;
+			if (parent.o != null) {
+				var objects = this.parent.model.clipboardObjects;
+				if (objects.length == 1) {
+					pasteEnabled = parent.isAddEnabled(objects[0]);
+				}
+			}
+			return pasteEnabled;
+			]]>
+		</method>
+
+		<!---
+			Perform paste.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			if (parent.o != null) {
+				var objects = this.parent.model.clipboardObjects;
+				if (objects.length == 1) {
+					parent.setNewObject(objects[0]);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check if delete is enabled.
+		-->
+		<method name="isDeleteEnabled">
+			<![CDATA[
+			return parent.deleteEnabled;
+			]]>
+		</method>
+		
+		<!---
+			Perform delete.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+			parent.removeObject();
+			]]>
+		</method>
+		
+		<simplelayout axis="y" spacing="5"/>
+		<view name="actionArea">
+			<simplelayout spacing="3" axis="x"/>
+		</view>
+		<view name="sideBorders" bgcolor="${classroot.parent.style.bordercolor}" width="${Math.max(parent.parent.propertiesComponent.minWidth - 3, parent.actionArea.width)}">
+
+			<view name="referenceArea" x="${parent.x + 1}" width="${parent.width - 2}" focusable="true" clickable="true">
+				<simplelayout axis="y" spacing="0"/>
+				<view name="title"
+					clip="true"
+					width="${parent.width}"
+					bgcolor="${classroot.headerBackgroundColor}"
+					height="21"
+					resource="listHeaderBackground"
+					frame="3">
+					<method name="init">
+						super.init();
+						this.updateResourceDel = new lz.Delegate(this, "updateResource");
+						this.updateResourceDel.register(classroot, "onactivated");
+					</method>
+					<method name="updateResource" args="e=null">
+						if(classroot.activated)
+							this.background.setAttribute('frame', 3);
+						else
+							this.background.setAttribute('frame', 1);
+					</method>
+					<method name="destroy">
+						<![CDATA[
+							this.updateResourceDel.unregisterAll();
+							delete this.updateResourceDel;
+							super.destroy();
+						]]>
+					</method>
+					<view name="background" x="0" y="0" width="${parent.width}" height="${parent.height}" resource="listHeaderBackground" stretches="both"/>
+					<view x="0" y="0" width="${parent.width}" height="${parent.height}">
+						<wcfCenterLayout/>
+						<simplelayout axis="x"/>
+						<view name="leftPadding" x="${parent.x}" height="${parent.height}" width="3" bgcolor="${parent.bgcolor}"/>
+						<text text="${classroot.parent.headerText}" />
+					</view>
+				</view>
+		
+				<view name="background" width="${parent.width}" bgcolor="${classroot.parent.style.forminputbgcolor}" height="${referenceDisplayName.height&lt;21?21:referenceDisplayName.height}">
+					<wcfCenterLayout/>
+					<simplelayout axis="x"/>
+					<view name="leftPadding" x="${parent.x}" height="${parent.height}" width="3" bgcolor="${parent.bgcolor}"/>
+					<text name="referenceDisplayName" width="220" x="${parent.x}" multiline="true"/>
+				</view>
+			
+				<view name="bottomBorder"
+					bgcolor="${classroot.parent.style.bordercolor}"
+					height="1"
+					width="${parent.width}"/>
+
+				<handler name="onfocus">
+					<![CDATA[
+					classroot.parent.model.setAttribute("activeSelectionView", classroot);
+					if (classroot.menu) {
+						wcfContextMenuUtil.setAsDefault(parent.parent.menu);
+					}
+					if (!this["indicator"]){
+						new lz.wcfFocusIndicator(this, {
+							name: "indicator",
+							focusableView: this,
+							indicatorView: this
+						});
+					}
+					]]>
+				</handler>
+				
+				<handler name="onblur">
+					<![CDATA[
+					if (classroot.menu) {
+						wcfContextMenuUtil.resetDefault(parent.parent.menu);
+					}
+					]]>
+				</handler>
+			
+				<handler name="onmousedown">
+					<![CDATA[
+					classroot.parent.model.setAttribute("activeSelectionView", classroot);
+					]]>
+				</handler>
+				
+				<handler name="ondblclick">
+					<![CDATA[
+					if (classroot.parent.o != null && classroot.parent.isOpenEnabled()) {
+						classroot.parent.doOpen();
+					}
+					]]>
+				</handler>
+			</view>
+		</view>
+
+		<wcfDropTarget targetKey="${'element'}" dragAndDropManager="${wcfDndManager}">
+			<handler name="ondroppedintarget" args="sources">
+				<![CDATA[
+				var o = wcfModelUtil.findObjectForView(sources[0]);
+				if (o != null) {
+					classroot.parent.setNewObject(o.getReferencedObject());
+				}
+				]]>
+			</handler>
+			<method name="isEnabled" args="sources">
+				<![CDATA[
+				var dropEnabled = false;
+				if (classroot.parent.o != null && sources.length == 1) {
+					dropEnabled = classroot.parent.isAddEnabled(wcfModelUtil.findObjectForView(sources[0]));
+				}
+				return dropEnabled;
+    			]]>
+    		</method>
+		</wcfDropTarget>
+	</class>
+
+	<!---
+		@keywords private
+		
+		A class that defines a button for creating a new reference button.
+		
+		This button will only appear on a {@link wcfReferenceEditor} whose <CODE>{@link wcfReferenceEditor#allowCreate allowCreate}</CODE> attribute is true.
+		When this button is pressed, a new primary object will be created, and it will call {@link wcfReferenceEditor#setNewObject} on
+		the associated editor, passing in the newly created object as the parameter.
+		
+		wcfNewObjectButton is created by the {@link wcfReferenceEditor} itself. It should not be instantiated on its own.
+	-->
+	<class name="wcfNewObjectButton" extends="wcfActionListButton" buttonResource="grid_createNewIcon" buttonResourceForSingleAction="grid_createNewIconForSingleAction"
+	enabled="${editor.addEnabled}" defaultActionDefinition="${actionDefinitions==null?null:actionDefinitions[0]}" displaySelectedIndicator="true"  visible="${actionDefinitions==null?false:true}">
+		<!---
+			The {@link wcfReferenceEditor reference editor} that this button is associated with.
+		-->
+		<attribute name="editor" value="null"/>
+		
+		<wcfTooltip text="${foundationResources.refEditorNew.string}"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.createdPrimaryObjectDel = new lz.Delegate(this, "createdPrimaryObject");
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			delete this.createdPrimaryObjectDel;
+			super.destroy();
+			]]>
+		</method>
+	
+		<!---
+			This method performs the action of the button.
+			@param wcfObjectDefinition definition The object definition for the new object to create
+		-->
+		<method name="doAction" args="definition">
+			<![CDATA[
+			if (definition == null) {
+				definition = this.actionDefinitions[0];
+			}
+			definition.doCreate({createCallbackDel: this.createdPrimaryObjectDel});
+			]]>
+		</method>
+		
+		<!---
+			This method adds a reference child for the given newly created primary object. It is called by a delegate set up in
+			{@link wcfNewObjectButton#doAction} when it finishes creating the new object.
+			@param wcfModelObject newObject The newly created object.
+		-->
+		<method name="createdPrimaryObject" args="newObject">
+			<![CDATA[
+			this.editor.setNewObject(newObject);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class defines a button for removing a reference from a {@link wcfReferenceEditor} or a {@link wcfObjectSelector}.
+		wcfRemoveObjectButton is created by instances of {@link wcfObjectSelector} and {@link wcfReferenceEditor}.
+		It should not be instantiated on its own.
+	-->
+	<class name="wcfRemoveObjectButton" extends="basebutton" resource="grid_deleteIcon" enabled="${editor.deleteEnabled}" focusable="true">
+		<!---
+			The {@link wcfReferenceEditor reference editor} or {@link wcfObjectSelector object selector} that this button is
+			associated with.
+		-->
+		<attribute name="editor"/>
+	
+		<wcfTooltip text="${foundationResources.refEditorDelete.string}"/>
+		
+		<!---
+			A handler for onlclick. When the button is pressed, the removeObject method is called on the
+			{@link wcfRemoveObjectButton#editor associated editor}.
+			<ul>
+				<li>If {@link wcfRemoveObjectButton#editor} is a {@link wcfReferenceEditor reference editor},
+				{@link wcfReferenceEditor#removeObject} is called. </li>
+				<li>If {@link wcfRemoveObjectButton#editor} is a {@link wcfObjectSelector object selector},
+				{@link wcfObjectSelector#removeObject} is called.
+			</ul>
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			this.editor.removeObject();
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			Handle onfocus event. 
+		-->
+		<handler name="onfocus">
+			<![CDATA[
+			if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class defines the search widget to use for {@link wcfReferenceEditor} and {@link wcfObjectSelector}.
+		This widget is used to search for an object that matches the criteria for the editor or selector.
+		wcfObjectSearchWidget is created by instances of {@link wcfObjectSelector} and {@link wcfReferenceEditor}.
+		It should not be instantiated on its own.
+	-->
+	<class name="wcfObjectSearchWidget" visible="${searchDefinitions==null?false:true}">
+		<!---
+			The {@link wcfReferenceEditor reference editor} or {@link wcfObjectSelector object selector} that this button is
+			associated with.
+		-->
+		<attribute name="editor"/>
+		<!---
+			An array of search definitions that can be used for conducting the search.
+		-->
+		<attribute name="searchDefinitions" value="null"/>
+		<!---
+			The current search definition being used.
+		-->
+		<attribute name="currentDefinition" value="null"/>
+		<!---
+			The search results object.
+		-->
+		<attribute name="searchResults" value="null"/>
+		<!---
+			The string request identifier for the curent search results.
+		-->
+		<attribute name="serviceRequestId" type="string" value=""/>
+		<!---
+			Flag that indicates whether multiple search results is allowed or not. The default value is false.
+		-->
+		<attribute name="allowMultipleResults" type="boolean" value="false" />
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.searchCompleteDel = new lz.Delegate(this, "searchComplete");
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.searchCompleteDel.unregisterAll();
+			delete this.searchCompleteDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sets currentDefinition and defaultActionDefinition.
+		-->
+		<handler name="onsearchDefinitions">
+			<![CDATA[
+			this.resetSearchField();
+			if(this.searchDefinitions != null){
+				this.currentDefinition = this.searchDefinitions[0];
+				var doUpdateSearchDefinitions = false;
+				for (var i = 0; i < this.searchDefinitions.length; i++) {
+					if (!this.searchDefinitions[i].showInUtilitiesView && this.editor.o!=null && !this.editor.o.isContextReadOnly()) {
+						this.searchDefinitions[i].showInUtilitiesView = true;
+						doUpdateSearchDefinitions = true;
+					}
+				}
+				if (doUpdateSearchDefinitions) {
+					this.editor.o.model.oEditor.utilities.updateSearchDefinitions();
+				}
+			}else{
+				this.currentDefinition = null;
+			}
+			this.searchButton.setAttribute("defaultActionDefinition", this.currentDefinition);
+			]]>
+		</handler>
+		
+		<!---
+			This method invokes search action using the current search definition.
+		-->
+		<method name="doSearch">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfObjectSearchWidget doSearch: " + this.searchTextArea.searchText.getText());
+			if (wcfStringUtil.trim(this.searchTextArea.searchText.getText()) == "") {
+				//do not send request to server if the searchText is empty
+				this.serviceRequestId = "-1";
+				var params = {};
+				params.requestIdentifier = "-1";
+				params.searchResultObjects = [];
+				params.statusMessage = foundationResources.searchResultsNoCriteriaMsg.string;
+				this.searchComplete(params);
+			} else {
+				var s = this.editor.model.findSearchResults(this.currentDefinition.searchType);
+				this.searchResults = s;
+				this.searchCompleteDel.unregisterAll();
+				this.searchCompleteDel.register(s, "onsearchComplete");
+				s.doSearch({searchText: this.searchTextArea.searchText.getText()});
+				this.serviceRequestId = s.searchDefinition.searchService.requestIdentifier;
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			This method is called when the search is complete. It behaves in different ways depending on the search results that
+			are returned:
+			<ul>
+				<li>
+					If one result is returned, the <CODE>setNewObject</CODE> method is called on {@link wcfObjectSearchWidget#editor}
+					passing the returned object in as a parameter.
+				</li>
+				<li>
+					If more than one result is returned, a message is logged by the {@link wcfMessageLogger}.
+				</li>
+				<li>
+					If no search results are returned, a message is logged by the {@link wcfMessageLogger}.
+				</li>
+			</ul>
+			
+			@param object args: the arguments containing the search service requestIdentifier and the search result objects
+		-->
+		<method name="searchComplete" args="args">
+			<![CDATA[
+			if (args && args.requestIdentifier == this.serviceRequestId) {
+				this.searchCompleteDel.unregisterAll();
+				var errorMessage = null;
+				if (args) {
+					if (args.searchResultObjects) {
+						var objects = args.searchResultObjects;
+						if (objects.length == 0 ) {
+							errorMessage = args.statusMessage;
+						}
+						else {
+							var doUtilitiesOpen = false;
+							if (objects.length == 1 || (this.allowMultipleResults && objects.length <= this.searchTextArea.searchText.getText().split(",").length)) {
+								var addEnabled = true;
+								for (var i = 0; i < objects.length; i++) {
+									if (!this.editor.isAddEnabled(objects[i])) {
+										addEnabled = false;
+										break;
+									}
+								}
+								if (addEnabled) {
+									for (var i = 0; i < objects.length; i++) {
+										this.editor.setNewObject(objects[i]);
+									}
+									messageLogger.logStatus(args.statusMessage);
+								}
+								else {
+									doUtilitiesOpen = true;
+								}
+							}
+							else {
+								doUtilitiesOpen = true;
+							}
+							if (doUtilitiesOpen) {
+								var utilities = this.editor.o.model.oEditor.utilities;
+								utilities.setContext(this.currentDefinition);
+								utilities.open();
+							}
+						}
+					}
+					else if (args.statusMessage) {
+						errorMessage = args.statusMessage;
+					}
+				}
+				if (errorMessage != null) {
+					messageLogger.logException(null, errorMessage);	
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method clears the text from the search field, and unregisters the delegate listening for results of searches
+			already in progress.
+			
+			This method is called when the <CODE>o</CODE> of the {@link wcfObjectSearchWidget#editor} changes.
+		-->
+		<method name="resetSearchField">
+			<![CDATA[	
+				//If there is a search in progress, we do not want it to affect the widget anymore.
+				this.searchCompleteDel.unregisterAll();			
+				this.searchTextArea.searchText.setAttribute('text', "");							
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="ono" reference="editor">
+			this.resetSearchField();
+		</handler>
+		
+		<simplelayout axis="x" spacing="1"/>
+		<wcfCenterLayout axis="y"/>
+		
+		<wcfBorderedView name="searchTextArea">
+			<view resource="${parent.searchText.enabled ? 'searchTextBackground' : 'searchTextDisabledBackground'}" />
+			<inputtext name="searchText" y="1" x="1" width="133">
+				<attribute name="enabled" type="boolean" value="${classroot.editor.addEnabled}"/>
+				<handler name="onkeydown" args="kc">
+					<![CDATA[
+					if (kc == 13) {			
+						classroot.doSearch();
+					}
+					]]>
+				</handler>				
+			</inputtext>	
+			<!---
+				@keywords private
+				Handle onfocus event. 
+			-->
+			<handler name="onfocus" reference="searchText">
+				<![CDATA[
+				if(!this["indicator"]){
+				    new lz.wcfFocusIndicator(this, {
+				    	name: "indicator",
+				    	focusableView: this.searchText,
+				    	indicatorView: this,
+				    	offset: 1
+				    });
+				   }
+				]]>
+			</handler>
+		</wcfBorderedView>
+
+		<wcfActionListButton name="searchButton" actionDefinitions="${parent.searchDefinitions}" enabled="${classroot.editor.addEnabled &amp;&amp; classroot.searchTextArea.searchText.getText() != ''}" defaultActionDefinition="${classroot.currentDefinition}" displaySelectedIndicator="true">
+			<attribute name="buttonText" value="${foundationResources.refEditorFindAndAdd.string}"/>
+			<attribute name="dropdownResource" value="searchDropdownResource"/>
+			<attribute name="dropdownOffset" value="0"/>
+			
+			<wcfTooltip text="${foundationResources.refEditorFindAndAdd.string}" linkURL="tasks/ttfsearch.htm" extendedText="${foundationResources.refEditorFindAndAddExtendedHelp.string}"/>
+			
+			<method name="doAction" args="definition">
+				if (definition) {
+					classroot.currentDefinition = definition;
+				}
+				// note: definition is passed in only when selecting from action list
+				if (typeof(definition) == "undefined" || definition == null) {
+					classroot.doSearch();
+				}
+			</method>
+		</wcfActionListButton>
+	</class>
+
+</library>

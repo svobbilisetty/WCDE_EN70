@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		@keywords private
+		This class displays the contents and characteristics of a list of {@link Task Task}.
+	-->
+	<ObjectGrid definitionName="wspTaskGrid" preferenceKey="wspTaskGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${wspWorkspaceResources.type}" width="60"/>
+		<GridText editable="false" name="taskIdentifier" propertyName="taskIdentifier" required="true" text="${wspWorkspaceResources.taskIdentifier}" width="140"/>
+		<GridTaskStatus enableFilter="true" name="status" package="wsp" text="${wspWorkspaceResources.status}" width="80"/>
+		<GridText editable="false" name="taskName" propertyName="taskName" text="${wspWorkspaceResources.taskName}" width="180"/>
+		<GridDate editable="false" name="dueDate" propertyName="dueDate" text="${wspWorkspaceResources.dueDate}"/>
+		<GridDate editable="false" name="completionDate" propertyName="completionDate" text="${wspWorkspaceResources.completionDate}" visible="false"/>
+		<GridDate editable="false" name="approvalDate" propertyName="approvalDate" text="${wspWorkspaceResources.approvalDate}" visible="false"/>
+		<GridDisplayName editable="false" enableFilter="true" name="taskGroup" parentObject="true" parentType="TaskGroup" propertyName="" text="${wspWorkspaceResources.taskGroup}" width="180"/>
+		<GridDisplayName editable="false" enableFilter="true" name="wrkspcName" parentObject="true" parentType="Workspace" propertyName="" text="${wspWorkspaceResources.workspace}" width="180"/>
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="wspChildTaskGrid" preferenceKey="wspChildTaskGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${wspWorkspaceResources.type}" width="60"/>
+		<GridText editable="false" name="taskIdentifier" objectPath="Task" propertyName="taskIdentifier" required="true" text="${wspWorkspaceResources.taskIdentifier}" width="140"/>
+		<GridTaskStatus enableFilter="true" name="status" objectPath="Task" package="wsp" text="${wspWorkspaceResources.status}" width="80"/>
+		<GridText name="taskName" objectPath="Task" propertyName="taskName" text="${wspWorkspaceResources.taskName}" width="180"/>
+		<GridDate name="dueDate" objectPath="Task" propertyName="dueDate" text="${wspWorkspaceResources.dueDate}"/>
+		<GridDate editable="false" name="completionDate" objectPath="Task" propertyName="completionDate" text="${wspWorkspaceResources.completionDate}" visible="false"/>
+		<GridDate editable="false" name="approvalDate" objectPath="Task" propertyName="approvalDate" text="${wspWorkspaceResources.approvalDate}" visible="false"/>
+		<GridDisplayName editable="false" enableFilter="true" name="taskGroup" parentObject="true" parentType="TaskGroup" propertyName="" text="${wspWorkspaceResources.taskGroup}" width="180"/>
+		<GridDisplayName editable="false" enableFilter="true" name="wrkspcName" parentObject="true" parentType="Workspace" propertyName="" text="${wspWorkspaceResources.workspace}" width="180"/>
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="wspTaskSearchResultGrid" preferenceKey="wspTaskSearchResultGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${wspWorkspaceResources.type}" width="60"/>
+		<GridText editable="false" name="taskIdentifier" propertyName="taskIdentifier" required="true" text="${wspWorkspaceResources.taskIdentifier}" width="140"/>
+		<GridTaskStatus enableFilter="true" name="status" package="wsp" text="${wspWorkspaceResources.status}" width="80"/>
+		<GridText editable="false" name="taskName" propertyName="taskName" text="${wspWorkspaceResources.taskName}" width="180"/>
+		<GridDate editable="false" name="dueDate" propertyName="dueDate" text="${wspWorkspaceResources.dueDate}"/>
+		<GridDate editable="false" name="completionDate" propertyName="completionDate" text="${wspWorkspaceResources.completionDate}" visible="false"/>
+		<GridDate editable="false" name="approvalDate" propertyName="approvalDate" text="${wspWorkspaceResources.approvalDate}" visible="false"/>
+		<GridDisplayName editable="false" enableFilter="true" name="taskGroup" parentObject="true" parentType="TaskGroup" propertyName="" text="${wspWorkspaceResources.taskGroup}" width="180"/>
+		<GridDisplayName editable="false" enableFilter="true" name="wrkspcName" parentObject="true" parentType="Workspace" propertyName="" text="${wspWorkspaceResources.workspace}" width="180"/>
+	</ObjectGrid>
+	
+	<ChildListEditor definitionName="wspTaskGridEditor" listDefinitionName="wspChildTaskGrid" objectTypes="ChildTask" />
+	<NavigationListDefinition definitionName="wspTaskGridChildList" displayName="${wspWorkspaceResources.taskList}" listDefinitionName="wspTaskGridEditor" listTitle="${wspWorkspaceResources.taskList}"/>
+
+	<!---
+		@keywords private
+	-->
+	<ChildListEditor definitionName="wspToDoTaskGridEditor" listDefinitionName="wspTaskGrid" objectTypes="Task[status=TODO],Task[status=REDO]"/>
+
+	<!---
+		@keywords private
+	-->
+	<ChildListEditor definitionName="wspCompletedTaskGridEditor" listDefinitionName="wspTaskGrid" objectTypes="Task[status=COMPLETED]"/>
+
+	<!---
+		@keywords private
+	-->
+	<ChildListEditor definitionName="wspApprovedTaskGridEditor" listDefinitionName="wspTaskGrid" objectTypes="Task[status=APPROVED]"/>
+
+	<!---
+		@keywords private
+	-->
+	<ChildListEditor definitionName="wspCanceledTaskGridEditor" listDefinitionName="wspTaskGrid" objectTypes="Task[status=CANCELLED]"/>
+
+	<!---
+		@keywords private
+		This navigation list definition is used to display {@link ToDoTasksTop ToDoTasksTop}.
+	-->
+	<NavigationListDefinition definitionName="wspToDoTaskGridChildList" displayName="${wspWorkspaceResources.taskList}" helpLink="tasks/twoworktaskwm.htm" listDefinitionName="wspToDoTaskGridEditor" listTitle="${wspWorkspaceResources.taskList}"/>
+
+	<!---
+		@keywords private
+		This navigation list definition is used to display {@link CompletedTasksTop CompletedTasksTop}.
+	-->
+	<NavigationListDefinition definitionName="wspCompletedTaskGridChildList" displayName="${wspWorkspaceResources.taskList}" helpLink="tasks/twoworktaskwm.htm" listDefinitionName="wspCompletedTaskGridEditor" listTitle="${wspWorkspaceResources.taskList}"/>
+
+	<!---
+		@keywords private
+		This navigation list definition is used to display {@link ApprovedTasksTop ApprovedTasksTop}.
+	-->
+	<NavigationListDefinition definitionName="wspApprovedTaskGridChildList" displayName="${wspWorkspaceResources.taskList}" helpLink="tasks/twoworktaskwm.htm" listDefinitionName="wspApprovedTaskGridEditor" listTitle="${wspWorkspaceResources.taskList}"/>
+
+	<!---
+		@keywords private
+		This navigation list definition is used to display {@link CanceledTasksTop CanceledTasksTop}.
+	-->
+	<NavigationListDefinition definitionName="wspCanceledTaskGridChildList" displayName="${wspWorkspaceResources.taskList}" helpLink="tasks/twoworktaskwm.htm" listDefinitionName="wspCanceledTaskGridEditor" listTitle="${wspWorkspaceResources.taskList}"/>
+
+</Definitions>

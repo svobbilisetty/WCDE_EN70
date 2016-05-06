@@ -1,0 +1,2272 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		Utilities search grid view. The utilities grid view only displays the object icon and display name.  If the attribute
+		<code>objectLongDisplayName</code> is defined for the object, it will be used.
+	-->
+	<class name="wcfUtilitiesSearchGrid" extends="wcfObjectGrid" listBorderSize="1" padding="0" isConfigurable="false" editable="false">
+		<wcfGridIconTypeImage name="typeIcon" text="${foundationResources.utilitiesGrid_type.string}" width="100" propertyName="null"/>
+		<wcfGridDisplayName showLongDisplayName="true" name="displayName" width="170" propertyName="null"/>
+	</class>
+
+	<!---
+		@keywords private
+		Utilities details grid view. The utilities grid view only displays the object icon and display name.
+	-->
+	<class name="wcfUtilitiesDetailsGrid" extends="wcfObjectGrid" listBorderSize="1" padding="0" isConfigurable="false" editable="false">
+		<wcfGridIconTypeImage name="typeIcon" text="${foundationResources.utilitiesGrid_type.string}" width="100" propertyName="null"/>
+		<wcfGridDisplayName name="displayName" width="170" propertyName="null"/>
+	</class>
+
+	<!---
+		@keywords private
+		Utilities clipboard grid view. The utilities grid view only displays the object icon and long display name.  If the attribute
+		<code>objectLongDisplayName</code> is defined for the object, it will be used.
+	-->
+	<class name="wcfUtilitiesClipboardGrid" extends="wcfObjectGrid" listBorderSize="1" padding="0" isConfigurable="false" editable="false">
+		<wcfGridIconTypeImage name="typeIcon" text="${foundationResources.utilitiesGrid_type.string}" width="100" propertyName="null"/>
+		<wcfGridDisplayName showLongDisplayName="true"  text="${foundationResources.utilitiesGrid_name.string}" name="displayName" width="170" propertyName="null"/>
+	</class>
+
+	<!---
+		@keywords private
+		Utilities search widget.
+	-->
+	<class name="wcfUtilitiesSearchWidget">
+		
+		<!---
+			@keywords private
+			Current search definition.
+		-->
+		<attribute name="searchDefinition" value="null"/>
+		
+		<!---
+			@keywords private
+			Reference to utilities panel. This is a required attribute.
+		-->
+		<attribute name="utilities" value="null"/>
+
+		<!---
+			@keywords private
+			
+			Invoke search.
+			@param wcfSearchDefinition definition: search definition
+			@param object options: search options
+		-->
+		<method name="doSearch" args="definition=null, options=null">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfUtilitiesSearchWidget doSearch: " + this.searchTextArea.searchText.getText());
+			if (options == null) {
+				var searchText = this.searchTextArea.searchText.getText();
+				this.searchOptions = {};
+				this.searchOptions.searchText = searchText;
+			}
+			else {
+				this.searchOptions = options;
+			}
+			if (definition == null) {
+				definition = this.searchDefinition;
+			}
+			messageLogger.clearStatusMessage();
+			this.parent.oEditor.model.doSearch(definition.searchType, this.searchOptions);
+			
+			//in the case of an advanced search, we need to change the selection filter to
+			//the corresponding advanced search definition.
+			for (var i=0; i<this.parent.searchTypeSelector.values.length; i++) {
+				if (definition == this.parent.searchTypeSelector.values[i]) {
+					this.parent.searchTypeSelector.setAttribute("selectedValue", this.parent.searchTypeSelector.values[i]);
+				}
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<simplelayout axis="x" spacing="1"/>
+		<wcfCenterLayout axis="y"/>
+		<view name="searchTextArea">
+			<view resource="searchTextBackground" />
+			<inputtext name="searchText" y="1" x="1" width="133">
+				<!--- @keywords private -->
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this["indicator"]){
+				    	new lz.wcfFocusIndicator(this, {
+					    	name: "indicator",
+					    	focusableView: this,
+					    	indicatorView: this
+					    });
+				    	}
+					]]>
+				</handler>
+				<!---
+					Handle keys.
+					@param number kc: key code
+				-->
+				<handler name="onkeydown" args="kc">
+					<![CDATA[
+					if (kc == 13) {
+						classroot.doSearch();
+					}
+					]]>
+				</handler>
+			</inputtext>
+		</view>
+		<wcfFocusableBaseButton name="searchButton" resource="searchButtonResource" onclick="this.doAction();" doesenter="true">
+			<wcfTooltip text="${foundationResources.searchButtonTip.string}"/>
+			
+			<!---
+				Perform the action.
+			-->
+			<method name="doAction">
+				<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfUtilitiesSearchWidget", "doclick", "Start searchButton ");
+				}
+				classroot.doSearch();
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfUtilitiesSearchWidget", "doclick", "End searchButton ");
+				}
+				]]>
+			</method>
+		</wcfFocusableBaseButton>
+	</class>
+
+	<!---
+		@keywords private
+		
+		A Search tab that in the uitlity view.
+	-->
+	<class name="wcfUtilitiesSearch" height="${parent.availableHeight}">
+
+		<!---
+			@keywords private
+			Reference to the business object editor.
+		-->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+		
+		@keywords private
+			Reference to utilities panel. This is a required attribute.
+		-->
+		<attribute name="utilities" value="null"/>
+		
+		<!---
+			@keywords private
+			Current search results.
+		-->
+		<attribute name="searchResults" value="null"/>
+		
+		<!---
+			@keywords private
+			The availableHeight for the list class
+		-->		
+		<attribute name="availableHeight" type="number" value="${this.height - searchGridContainer.y}"/>
+		
+		<!---
+			@keywords private
+			Pane title.
+		-->
+		<attribute name="paneTitle" type="string" value="${foundationResources.utilitiesSearch.string}"/>
+		<!---
+			@keywords private
+			Extended text.
+		-->
+		<attribute name="extendedText" type="text" value="${foundationResources.utilitiesSearchExtendedHelp.string}"/>
+		<!---
+			Icon resource.
+		-->
+		<attribute name="iconResource" type="string" value="utilitySearchIcon"/>
+		
+		
+		<!---
+			Text of the link that appears in the tooltip for extended help.  null or empty string means use framework default.
+		-->
+		<attribute name="linkText" type="text" value=""/>
+		<!---
+			Relative URL for the online help link.
+		-->
+		<attribute name="linkURL" type="text" value="tasks/ttfutilitiespane.htm"/>
+		<!---
+			Search results grid instances. A search definition can be configured with a custom search results view by specifying 
+			the "utilitiesListClass" attribute.
+			@keywords private
+		-->
+		<attribute name="searchGrids" value="${{}}"/>
+
+		<!---
+			@keywords private
+			Initialize utilities search.
+			
+			@param wcfBusinessObjectEditor boe: business object editor instance
+		-->
+		<method name="initializeSearch" args="boe">
+			<![CDATA[
+			this.oEditor = boe;
+			this.updateSearchDefinitions();
+			this.updateResultsMessage();
+			this.updateHeaderText();
+			]]>
+		</method>		
+
+		<!---
+			@keywords private
+			Updates the search definitions.
+		-->
+		<method name="updateSearchDefinitions" args="e=null">
+			<![CDATA[
+			if (this["updateSearchDefinitionsDel"]) {
+				this.updateSearchDefinitionsDel.unregisterAll();
+			}
+			else {
+				this.updateSearchDefinitionsDel = new lz.Delegate(this, "updateSearchDefinitions");
+			}
+			var searchDefinitions = [];
+			var defaultDefinition = this.oEditor.model.defaultSearchDefinition;
+			var currentDefinition = this.searchWidget.searchDefinition;
+			for (var i = 0; i < this.oEditor.model.searchDefinitions.length; i++) {
+				var def = this.oEditor.model.searchDefinitions[i];
+				if (def.showInUtilitiesView) {
+					if (def.enablementCondition == null || def.enablementCondition.isEnabled(null)) {
+						searchDefinitions.push(def);
+						if(def == defaultDefinition) {
+							currentDefinition = null;
+						}
+					}
+					else {
+						if (currentDefinition == def) {
+							currentDefinition = null;
+						}
+						if (defaultDefinition == def) {
+							defaultDefinition = null;
+						}
+					}
+					if (def.enablementCondition != null) {
+						def.enablementCondition.registerDelegate(null, this.updateSearchDefinitionsDel);
+					}
+				}
+			}
+			var advancedSearchDefinitions = [];
+			for (var i = 0; i < searchDefinitions.length; i++) {
+				var def = searchDefinitions[i];
+				if (def.advancedSearchContentClass != null) {
+					advancedSearchDefinitions.push(def);
+				}
+			}
+			if (advancedSearchDefinitions.length != 0) {
+				var advSearchDef = this.searchWidget["advancedSearchActionDefinition"];
+				if (!advSearchDef) {
+					var advSearchDef = new lz.wcfAdvancedSearchActionDefinition(this.searchWidget, {
+						name: "advancedSearchActionDefinition",
+						searchDefinitions: advancedSearchDefinitions,
+						addSeparatorBefore:true,
+						oEditor: this.oEditor
+					});
+				}
+				else {
+					advSearchDef.setAttribute("searchDefinitions", advancedSearchDefinitions);
+				}
+				searchDefinitions.push(advSearchDef);
+			}
+			this.searchTypeSelector.setValues(searchDefinitions);
+			if (currentDefinition == null) {
+				currentDefinition = defaultDefinition == null ? searchDefinitions[0] : defaultDefinition;
+			}
+			this.searchTypeSelector.setAttribute("selectedValue", currentDefinition);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Initialize the object.
+		-->		
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateHeaderTextDel = new lz.Delegate(this, "updateHeaderText");
+			wcfCanvasMenu.addView(this);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the search context.
+			
+			@param string searchType: the search type to select
+		-->
+		<method name="setContext" args="searchType">
+			<![CDATA[
+			if (searchType != null) {
+				var searchDefinition = this.oEditor.model.getSearchDefinition(searchType);
+				this.searchTypeSelector.setAttribute("selectedValue", searchDefinition);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Destroy this object.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.updateHeaderTextDel.unregisterAll();
+			delete this.updateHeaderTextDel;
+			if (this["updateSearchDefinitionsDel"]) {
+				this.updateSearchDefinitionsDel.unregisterAll();
+				delete this.updateSearchDefinitionsDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the search text area to match the current search results.
+		-->
+		<method name="updateSearchText">
+			<![CDATA[
+			if (this.searchResults != null) {
+				//as we are re-using the same search view across the whole tool, we must reflect
+				//the search text as we switch search results
+				if (this.searchResults.searchOptions != null && this.searchResults.searchOptions["searchText"]) {
+					this.searchWidget.searchTextArea.searchText.setAttribute("text", this.searchResults.searchOptions.searchText);
+				} else {
+					this.searchWidget.searchTextArea.searchText.setAttribute("text", "");
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the search result message area with an informational statement about the search results.
+		-->
+		<method name="updateResultsMessage" args="e=null">
+			<![CDATA[
+			if (!this["updateResultsMessageDel"]) {
+				this.updateResultsMessageDel = new lz.Delegate(this, "updateResultsMessage");
+			}
+			if (this.searchResults != null) {
+				this.updateResultsMessageDel.unregisterAll();
+				this.updateResultsMessageDel.register(this.searchResults, "onstatusMessage");
+				this.resultsMessage.setAttribute("text", this.searchResults.statusMessage);
+				if(this.searchResults.hasError){
+					this.resultsMessage.setAttribute('fgcolor', 0xCC0000);
+				}else{
+					this.resultsMessage.setAttribute('fgcolor', 0x0);
+				}
+				var searchGridPos = this.resultsMessage.y;
+				if (wcfStringUtil.trim(this.searchResults.statusMessage).length > 0) {
+					searchGridPos += this.resultsMessage.height + 10; 
+				}
+				this.searchGridContainer.setAttribute("y", searchGridPos);
+				this.updateSearchText();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->		
+		<handler name="onselectedValue" reference="searchTypeSelector">
+			<![CDATA[
+			var def = this.searchTypeSelector.selectedValue;
+			if (def && def == this.searchWidget["advancedSearchActionDefinition"]) {
+				this.searchWidget.advancedSearchActionDefinition.dialog.openWindow();
+					
+				//change back the filter to the current search definition because
+				//advanced search should never stay in the filter
+				for (var i=0; i<this.searchTypeSelector.values.length; i++) {
+					if (this.searchWidget.searchDefinition == this.searchTypeSelector.values[i]) {
+						this.searchTypeSelector.selectedValue = this.searchTypeSelector.values[i];
+					}
+				}
+			} else {
+				if (this.searchResults != null && this.searchResults.searchDefinition != def) {
+					var searchGrid = this.getSearchGrid(this.searchResults.searchDefinition);
+					searchGrid.setAttribute("visible", false);
+					this.searchResults.releaseView(searchGrid);
+					this.searchResults = null;
+				}
+				this.searchWidget.setAttribute("searchDefinition", def);
+				if (this.searchResults == null && def != null){
+					var searchGrid = this.getSearchGrid(def);
+					searchGrid.setAttribute("visible", true);
+					searchGrid.bringToFront();
+					this.searchResults = this.oEditor.model.bindViewToSearchResults(searchGrid, def.searchType);
+				}
+				this.updateResultsMessage();
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Get the search results grid to display inside the search tab
+			@param {@link wcfObjectDefinition} def: The definition for the search.
+			@returns view: The search results grid.
+		-->
+		<method name="getSearchGrid" args="def">
+			<![CDATA[
+			var searchGridClass = def.utilitiesListClass != null ? def.utilitiesListClass : "wcfUtilitiesSearchGrid";
+			var searchGrid = this.searchGrids[searchGridClass];
+			if (!searchGrid) {
+				if (lz[searchGridClass]) {
+					searchGrid = new lz[searchGridClass](this.searchGridContainer, {
+							rowMenuClass: "wcfUtilitiesSearchResultsMenu",
+							menuClass: "wcfUtilitiesSearchResultsBackgroundMenu",
+							listBorderSize: 1,
+							padding: 0,
+							editable: false
+					});
+				}
+				else {
+					searchGrid = wcfDefinitionLoader.getDefinition(searchGridClass, this.searchGridContainer, {
+							rowMenuClass: "wcfUtilitiesSearchResultsMenu",
+							menuClass: "wcfUtilitiesSearchResultsBackgroundMenu",
+							listBorderSize: 1,
+							padding: 0,
+							editable: false
+					});
+				}
+				this.searchGrids[searchGridClass] = searchGrid;
+			}
+			return searchGrid;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the grid column header text, if {@link wcfSearchDefinition} is defined in the searchWidget, the attribute <code>headerText</code>
+			will be used.
+		-->
+		<method name="updateHeaderText" args="e=null">
+			<![CDATA[
+			this.updateHeaderTextDel.unregisterAll();
+			this.updateHeaderTextDel.register(this.searchWidget, "onsearchDefinition");
+			var def = this.searchWidget.searchDefinition;
+			if (def && def.utilitiesListClass == null) {
+				this.updateHeaderTextDel.register(def, "onheaderText");
+				var searchGrid = this.getSearchGrid(def);
+				searchGrid.displayName.setAttribute("text", def.headerText);
+			}
+			]]>
+		</method>
+
+		<wcfBaseComboBox name="searchTypeSelector" defaultTextResourceBundleKey="foundationResources.utilitiesSearchSelectSearchType" 
+		 	width="${parent.searchGridContainer.width - 20}" x="10"/>  
+		<wcfUtilitiesSearchWidget name="searchWidget" x="10" y="25" utilities="${classroot.utilities}"/>
+		<text name="resultsMessage" text=" " multiline="true" x="10" y="55"  width="${parent.searchGridContainer.width - 20}"/>
+		<view name="searchGridContainer" />
+	</class>
+	
+	<!---
+		@keywords private
+		Browse object tree node for the utilities view.
+	-->
+	<class name="wcfUtilitiesBrowseObjectTree" extends="wcfTree" maxObjectViews="20">
+		<!---
+			The class used to create child nodes.
+		-->
+		<attribute name="objectClass" type="string" value="wcfUtilitiesBrowseObjectTree"/>
+		<!---
+			Reference to the business object editor instance.
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			Indicates that the children should be loaded recursively.
+		-->
+		<attribute name="recurse" value="false"/>
+		<!---
+			Indicates that this node is a leaf node.
+		-->
+		<attribute name="isTreeLeaf" type="boolean" value="false"/>
+		<!---
+			The model object associated with this tree node.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			The object being referenced through "o".
+		-->
+		<attribute name="referencedObject" value="null"/>
+		<!---
+			Indicates that the child tree nodes have been created.
+		-->
+		<attribute name="childrenCreated" type="boolean" value="false"/>
+		<!---
+			An array of the filtered child object definitions for this node. Only
+			child object definitions that will be visible in the tree view
+			will be included in this array.
+		-->
+		<attribute name="objectDefinitions" value="null"/>
+		<!---
+			Indicates that this tree node can be used to navigate to the child objects.
+			Navigating to child objects is allowed for primary, organizational, parent reference,
+			and collection reference objects.
+		-->
+		<attribute name="navigationEnabled" type="boolean" value="true"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (this.oEditor == null) {
+				this.oEditor = immediateparent.parent.oEditor;
+			}
+			this.updateDisplayNameDel = new lz.Delegate(this, "updateDisplayName");
+			this.updateDisplayNameStyleDel = new lz.Delegate(this, "updateDisplayNameStyle");
+			this.updateFilterDel = new lz.Delegate(this, "updateFilter");
+			if (this != this.getRoot()) {
+				this.updateFilterDel.register(this.getRoot(), "onfilter");
+			}
+			if (this.item) {
+				new lz.wcfUtilitiesBrowseObjectTreeMenu(this, {
+					name: "menu",
+					tree: this
+				});
+				this.menu.addView(this.item.contextMenuArea);
+			}
+			this.updateReferencedObjectDel = new lz.Delegate(this, "updateReferencedObject");
+			this.checkStatusMessageDel = new lz.Delegate(this, "checkStatusMessage");
+			this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+			this.checkLeafDel = new lz.Delegate(this, "checkLeaf");
+			this.updateExpandedTreesDel = new lz.Delegate(this, "updateExpandedTrees");
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="checkLeaf" args="e=null">
+			<![CDATA[
+			this.checkLeafDel.unregisterAll();
+			var leaf = false;
+			if (this.navigationEnabled) {
+				this.checkLeafDel.register(this, "onstatusMessage");
+				if (this.statusMessage == "" && this.objectDefinitions != null) {
+					var oDef = this.referencedObject.objectDefinition;
+					if (oDef.organizational) {
+						leaf = this.objectDefinitions.length == 0 && oDef.organizedObjectDefinitions != null && oDef.organizedObjectDefinitions.length > 0;
+					}
+					else {
+						leaf = this.objectDefinitions.length == 0;
+					}
+					if (!leaf && this.childrenCreated && this.children.height == 0) {
+						this.checkLeafDel.register(this.children, "onheight");
+						leaf = true;
+					}
+				}
+			}
+			else {
+				leaf = true;
+			}
+			if (leaf != this.isTreeLeaf) {
+				this.setAttribute("isTreeLeaf", leaf);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this.o) {
+				this.releaseChildObjectTree();
+				this.oList = null;
+				this.referencedObject = null;
+				this.o = null;
+			}
+			this.updateDisplayNameDel.unregisterAll();
+			delete this.updateDisplayNameDel;
+			this.updateDisplayNameStyleDel.unregisterAll();
+			delete this.updateDisplayNameStyleDel;
+			this.updateFilterDel.unregisterAll();
+			delete this.updateFilterDel;
+			this.updateReferencedObjectDel.unregisterAll();
+			delete this.updateReferencedObjectDel;
+			this.checkStatusMessageDel.unregisterAll();
+			delete this.checkStatusMessageDel;
+			this.releaseModelObjectDel.unregisterAll();
+			delete this.releaseModelObjectDel;
+			this.checkLeafDel.unregisterAll();
+			delete this.checkLeafDel;
+			this.updateExpandedTreesDel.unregisterAll();
+			delete this.updateExpandedTreesDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			When the oList is updated, we listen to the objectViewsUpdated event to trigger an update.
+		-->		
+		<handler name="onoList">
+			<![CDATA[
+			this.updateExpandedTreesDel.unregisterAll();
+			if (this["oList"]) {
+				this.updateExpandedTreesDel.register(this.oList, "objectViewsUpdated");
+			}
+			this.updateExpandedTrees();
+			]]>
+		</handler>
+
+		<!---
+			Set the model object for this tree node.
+			@param wcfModelObject newObject: the new model object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				this.releaseModelObjectDel.unregisterAll();
+				this.updateDisplayNameDel.unregisterAll();
+				this.updateDisplayNameStyleDel.unregisterAll();
+				this.updateReferencedObjectDel.unregisterAll();
+				if (this["o"]) {
+					if (this.selected) {
+						this.setAttribute("selected", false);
+					}
+					if (this.open) {
+						this.setAttribute("open", false);
+					}
+					this.releaseChildObjectTree();
+					this.referencedObject = null;
+				}
+				this.o = newObject;
+				if (this.o) {
+					var oDef = this.o.objectDefinition;
+					this.navigationEnabled = oDef.primary || oDef.organizational || oDef.parentReference || oDef.collectionReference;
+					this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+					if (this.o.getIcon() != null) {
+						this.setAttribute("icon", this.o.getIcon());
+					}
+					if (this.o.objectDisplayName != null) {
+						this.setAttribute("text", this.o.objectDisplayName);
+					}
+					this.updateDisplayNameDel.register(this.o, "onobjectDisplayName");
+					this.updateDisplayNameStyleDel.register(this.o, "ondisplayNameStyle");
+					this.referencedObject = this.o.getReferencedObject();
+					if (this.referencedObject == null) {
+						this.updateReferencedObjectDel.register(this.o, "onchildObjects");
+					}
+					else {
+						this.updateReferencedObject();
+					}
+					this.updateDisplayNameStyle();
+				}
+				else {
+					this.referencedObject = null;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method releases the {@link wcfModelObject model object} from this tree node.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+			this.setAttribute("o", null);
+			]]>
+		</method>
+		
+		<!---
+			Update the referenced object.
+		-->
+		<method name="updateReferencedObject" args="e=null">
+			<![CDATA[
+			this.referencedObject = this.o.getReferencedObject();
+			if (this.referencedObject != null) {
+				this.updateReferencedObjectDel.unregisterAll();
+				if (this.navigationEnabled) {
+					if (this.open) {
+						this.createChildObjectTree();
+					}
+				}
+				if (this.selected) {
+					this.getRoot().utilitiesDetails.setAttribute("o", this.referencedObject);
+				}
+				this.updateObjectDefinitions();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the child list nodes to match the current filter.
+		-->
+		<method name="updateFilter" args="e=null">
+			<![CDATA[
+			if (this["oList"]) {
+				var newFilter = this.getRoot().filter;
+				if (this.oList.baseFilter != newFilter) {
+					if (this.oList.getViewsLength() > 0) {		
+						this.oList.setAttribute("baseFilter", newFilter);
+					}
+					else if (this.open) {
+						this.setAttribute("open", false);
+					}
+				}
+			}
+			this.updateObjectDefinitions();
+			]]>
+		</method>
+		
+		<!---
+			Update the array of child object definitions that match
+			the current filter.
+		-->
+		<method name="updateObjectDefinitions">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfUtilitiesBrowseObjectTree", "updateObjectDefinitions");				
+			}			
+			if (this.referencedObject != null) {
+				this.objectDefinitions = [];
+				if (this.navigationEnabled && this.getRoot().filter) {
+					var filter = this.getRoot().filter;
+					var oDef = this.referencedObject.objectDefinition;
+					var defs = oDef.organizational ? oDef.organizedObjectDefinitions : oDef.getReferenceObjectDefinitions();
+					if (defs != null) {
+						for (var i = 0; i < defs.length; i++) {
+							var childDef = defs[i];
+							if (filter.objectTypeMatchesFilter(childDef.objectType)) {
+								this.objectDefinitions.push(childDef);
+							}
+						}
+					}
+				}
+				this.checkLeaf();
+			}
+			else {
+				this.objectDefinitions = null;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfUtilitiesBrowseObjectTree", "updateObjectDefinitions");				
+			}			
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="createChildObjectTree">
+			<![CDATA[
+			if (!this.childrenCreated && this.navigationEnabled) {
+				this.childrenCreated = true;
+				this.referencedObject.bindViewToChildren(this, this.getRoot().filter, null, this);
+				this.checkStatusMessage();
+				this.checkLeaf();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="releaseChildObjectTree">
+			<![CDATA[
+			if (this.childrenCreated) {
+				this.childrenCreated = false;
+				for (var i = 0; i < this.children.subviews.length; i++) {
+					var v = this.children.subviews[i];
+					if (v["releaseChildObjectTree"]) {
+						v.releaseChildObjectTree();
+					}
+				}
+				this.referencedObject.releaseViewFromChildren(this);
+				this.checkStatusMessage();
+				this.checkLeaf();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="compare" args="o1,o2,sortAscending">
+			<![CDATA[
+			var compare = false;
+			var currentFilter = this.getRoot().filter;
+			if(currentFilter){
+				compare = currentFilter.objectCompare(o1,o2);
+			}
+			return compare;
+			]]>
+		</method>		
+		
+		<!---
+			Handle the expand event. If this is the first time the
+			object's children have been expanded, then the child nodes will
+			be created.
+		-->
+		<handler name="onopen">
+			<![CDATA[
+			if (this["o"]) {
+				if (this.open) {
+					this.createChildObjectTree();
+				}
+				else {
+					this.releaseChildObjectTree();
+				}
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			When this tree is expanded, we store the time it was expanded with it and its parents.  We also close any other tree nodes
+			in the browse tree when we have more than the maximinum number of tree nodes expanded.
+		-->
+		<method name="updateExpandedTrees" args="e=null">
+			<![CDATA[
+			if (this.open && this["oList"] && this.oList.getViewsLength() > 0) {
+				if (!this["__expandedTime"]) {
+					var rootObjectTree = this.getRootObjectTree();
+					var expandedTime = (new Date()).getTime();
+					var tree = this;
+					tree.__expandedTime = expandedTime;
+					while (tree && !tree.isRoot() && tree != rootObjectTree) {
+						tree = tree.parent;
+						tree.__expandedTime = expandedTime;
+					}
+					if (rootObjectTree) {
+						rootObjectTree.closeChildrenTreesLeastRecent();
+					}
+				}
+			}
+			else {
+				this.__expandedTime = null;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the root object tree, the first tree under the "Top" tree node.
+		-->
+		<method name="getRootObjectTree">
+			<![CDATA[
+			var tree = null;
+			if (this["o"] && this.o.objectDefinition.objectType != "Top") {
+				tree = this;
+				while (tree && !tree.isRoot() && !tree.parent.o.objectDefinition.objectType != "Top") {
+					tree = tree.parent;
+				}
+			}
+			return tree;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Calculates the ordered expanded times and updates the given array.  Iterating through the children of this tree, this method checks
+			the expanded time for expanded child tree nodes and updates the given expandedTimes array by inserting each expanded time in the appropriate
+			ordered position in the array.  This method recurses to this tree's leaf nodes.
+			@param Array expandedTimes: An ordered array of expanded times. The array is ordered in ascending order and does not have duplicate entries.
+		-->
+		<method name="calculateOrderedExpandedTimes" args="expandedTimes">
+			<![CDATA[
+			for (var i = 0; i < this.children.subviews.length; i++) {
+				var child = this.children.subviews[i];
+				if (child instanceof lz.wcfUtilitiesBrowseObjectTree && child["__expandedTime"]) {
+					var insertIdx = expandedTimes.length;
+					for (var j = 0; j < expandedTimes.length; j++) {
+						if (child.__expandedTime == expandedTimes[j]) {
+							insertIdx = -1;
+							break;
+						}
+						if (child.__expandedTime < expandedTimes[j]) {
+							insertIdx = j;
+							break;
+						}
+					}
+					if (insertIdx > -1) {
+						expandedTimes.splice(insertIdx, 0, child.__expandedTime);
+					}
+					child.calculateOrderedExpandedTimes(expandedTimes);
+				}
+			}	
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method closes all the children trees least recently expanded.  Closing trees will occur when we have a number expanded greater than the maximum number
+			of browse tree nodes expanded, the maxBrowseTreesExpanded context value.
+		-->
+		<method name="closeChildrenTreesLeastRecent">
+			<![CDATA[
+			var contextValue = wcfContextUtil.findContextValue(null, "maxBrowseTreesExpanded");
+			if (contextValue) {
+				var maxBrowseTreesExpanded = contextValue.value;
+				if (maxBrowseTreesExpanded && maxBrowseTreesExpanded > 1) {
+					var time = null;
+					var expandedTimes = [];
+					this.calculateOrderedExpandedTimes(expandedTimes);
+					if (expandedTimes.length >= maxBrowseTreesExpanded) {
+						time = expandedTimes[expandedTimes.length - maxBrowseTreesExpanded];
+					}
+					if (time) {
+						this.closeChildrenTreesBeforeTime(time);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method closes all the children trees that were expanded before the given time.
+			@param number time: The given time.
+		-->
+		<method name="closeChildrenTreesBeforeTime" args="time">
+			<![CDATA[
+			if (time) {
+				for (var i = 0; i < this.children.subviews.length; i++) {
+					var child = this.children.subviews[i];
+					if (child instanceof lz.wcfUtilitiesBrowseObjectTree && child["__expandedTime"]) {
+						child.closeChildrenTreesBeforeTime(time);
+						if (child.__expandedTime < time) {
+							child.setAttribute("open", false);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onselected" args="isSelected">
+			<![CDATA[
+			var details = this.getRoot().utilitiesDetails;
+			if (isSelected) {
+				if (this.referencedObject != null) {
+					details.setAttribute("o", this.referencedObject);
+				}
+			}
+			else if (details["o"] != null && details.o == this.referencedObject) {
+				details.setAttribute("o", null);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Update the display name.
+		-->
+		<method name="updateDisplayName" args="e=null">
+			<![CDATA[
+			if (this.o.objectDisplayName != null) {
+				this.setAttribute("text", this.o.objectDisplayName);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the tree node display name style.
+		-->
+		<method name="updateDisplayNameStyle" args="e=null">
+			<![CDATA[
+			var newTextColor = this.style.textcolor;
+			var newTextStyle = "plain";
+			var style = this.o.displayNameStyle;
+			if (style != null) {
+				newTextColor = style.color;
+				if (style.bold && style.italic) {
+					newTextStyle = "bolditalic";
+				}
+				else if (style.bold) {
+					newTextStyle = "bold";
+				}
+				else if (style.italic) {
+					newTextStyle = "italic";
+				}
+			}
+			if (this.textColor != newTextColor) {
+				this.setAttribute("textColor", newTextColor);
+			}
+			if (this.textStyle != newTextStyle) {
+				this.setAttribute("textStyle", newTextStyle);
+			}
+			]]>
+		</method>
+
+		<!---
+			Update the status message.
+		-->
+		<method name="checkStatusMessage" args="e=null">
+			<![CDATA[
+			this.checkStatusMessageDel.unregisterAll();
+			var newMessage = "";
+			if (this.open && this["oList"] && this.navigationEnabled) {
+				this.checkStatusMessageDel.register(this.oList, "onstatusObject");
+				this.checkStatusMessageDel.register(this, "onopen");
+				if (this.oList.statusObject != null) {
+					if (this.oList.statusObject['messageForTree']) { 
+						newMessage = this.oList.statusObject.messageForTree;
+					} else {
+						newMessage = this.oList.statusObject.message;
+					}
+				}
+			}
+			if (this.statusMessage != newMessage) {
+				this.setAttribute("statusMessage", newMessage);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->		
+		<handler name="onactivate">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfUtilitiesBrowseObjectTree", "onactivate");
+			}
+			this.referencedObject.doOpen();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfUtilitiesBrowseObjectTree", "onactivate");
+			}
+			]]>
+		</handler>
+		<wcfDragSource targetKeys="${['browseElement','element']}" dragAndDropManager="${wcfDndManager}" placement="dragtreeitem"/>
+	</class>
+
+	<!---
+		@keywords private
+		Root tree node for the browse tab of the utilities view.
+	-->
+	<class name="wcfUtilitiesRootBrowseTree" extends="wcfUtilitiesBrowseObjectTree" showroot="false" visible="true" maxObjectViews="${null}">
+		
+		<!---
+			The current filter.
+		-->
+		<attribute name="filter" value="null"/>
+		<!---
+			Utilities details.
+		-->
+		<attribute name="utilitiesDetails" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.filter = this.parent.filterSelector.selectedValue;
+			this.updateFilterDel.register(this.parent.filterSelector, "onselectedValue");
+			]]>
+		</method>
+		
+		<!---
+			Returns an array of the currently selected objects.
+		-->
+		<method name="getSelectedObjects">
+			<![CDATA[
+			var s = this.getSelection();
+			var selectedObjects = [];
+			if (s && s["o"]) {
+				selectedObjects.push(s.o);
+			}
+			return selectedObjects;
+			]]>
+		</method>
+		
+		<!---
+			Update the filter to match the currently selected filter.
+		-->
+		<method name="updateFilter" args="e=null">
+			<![CDATA[
+			var newFilter = this.parent.filterSelector.selectedValue;
+			if (newFilter != this.filter) {
+				this.setAttribute("filter", newFilter);
+				if (this["oList"]) {
+					this.oList.setAttribute("baseFilter", newFilter);
+				}
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="onfocus" args="f">
+			<![CDATA[
+			if (f != null && f != this) {
+				this.oEditor.model.setAttribute("activeSelectionView", this);
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onactiveSelectionView" reference="this.oEditor.model">
+			<![CDATA[
+			this.setAttribute("activated", this.oEditor.model.activeSelectionView == this);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="restoreFocus">
+			<![CDATA[
+			lz.Focus.setFocus(this.parent, false);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		A Browse tab that in the uitlity view that uses to Browse object.
+	-->
+	<class name="wcfUtilitiesBrowse">
+	
+		<!---
+			@keywords private
+			Reference to the business object editor instance.
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			@keywords private
+			Indicates that this view is splittable.
+		-->
+		<attribute name="splittable" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Pane title.
+		-->
+		<attribute name="paneTitle" type="string" value="${foundationResources.utilitiesBrowse.string}"/>
+		<!---
+			@keywords private
+			Extended text.
+		-->
+		<attribute name="extendedText" type="text" value="${foundationResources.utilitiesBrowseExtendedHelp.string}"/>
+		<!---
+			Icon resource.
+		-->
+		<attribute name="iconResource" type="string" value="utilityBrowseIcon"/>
+		<!---
+			Text of the link that appears in the tooltip for extended help.  null or empty string means use framework default.
+		-->
+		<attribute name="linkText" type="text" value=""/>
+		<!---
+			Relative URL for the online help link.
+		-->
+		<attribute name="linkURL" type="text" value="tasks/ttfutilitiespane.htm"/>
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the filter selector's width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		
+		<!--- @keywords private -->
+		<method name="checkFilter" args="e=null">
+			<![CDATA[
+			this.checkFilterDel.unregisterAll();
+			var enabledFilters = [];
+			var retrievedFilters = this.oEditor.getBrowseUtilityFilters();
+			
+			for (var i = 0; i < retrievedFilters.length; i++) {
+				var currentFilter = retrievedFilters[i];
+				if (currentFilter["enablementCondition"]) {
+					currentFilter.enablementCondition.registerDelegate(this.oEditor, this.checkFilterDel);
+				}
+				if (currentFilter.isEnabled(this.oEditor)) {
+					enabledFilters.unshift(currentFilter);
+				}
+			}
+
+			if (enabledFilters.length == 0) {
+				this.filterSelector.setAttribute("selectedValue", null);
+				this.filterSelector.setValues(null);
+				this.filterSelector.setAttribute("visible", false);
+			} else if (enabledFilters.length == 1) {
+				this.filterSelector.setAttribute("selectedValue", enabledFilters[0]);
+				this.filterSelector.setValues(enabledFilters);
+				this.filterSelector.setAttribute("visible", false);
+			} else {
+			
+				var selectedValue = null;
+
+				if (this.oEditor.defaultFilter != null) {
+					for (var i = 0; i < enabledFilters.length; i++) {
+						if (enabledFilters[i] === this.oEditor.defaultFilter) {
+							selectedValue = this.oEditor.defaultFilter;
+							break;
+						}
+					}
+				}
+				
+				if (selectedValue == null) {
+					selectedValue = enabledFilters[0];
+				}
+
+				this.filterSelector.setAttribute("selectedValue", selectedValue);
+				this.filterSelector.setValues(enabledFilters);
+				this.filterSelector.setAttribute("visible", true);
+			}
+			this.browseTree.setAttribute('y', this.filterSelector.visible ? 25 : 0);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Initialize utilities browse.
+		-->
+		<method name="initializeBrowse" args="boe">
+			<![CDATA[
+			this.oEditor = boe;
+
+			var filter = new lz.wcfBaseComboBox(this, {
+				name: "filterSelector",
+				x: 10
+			});
+			
+			this.updateFilterSelectorWidthDel = new lz.Delegate(this, "updateFilterSelectorWidth");
+			this.updateFilterSelectorWidthDel.register(this.availableWidthView, "onavailableWidth");
+			this.updateFilterSelectorWidth();
+			
+			this.checkFilterDel = new lz.Delegate(this, "checkFilter");
+
+			new lz.wcfUtilitiesRootBrowseTree(this, {
+				name: "browseTree",
+				utilitiesDetails: boe.utilities.parent.details,
+				oEditor: boe
+			});
+
+			this.checkFilter();
+			
+			this.browseTree.setAttribute("o", boe.navigationTree.o);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateFilterSelectorWidth" args="e=null">
+			<![CDATA[
+			if (this['filterSelector']) {
+				this.filterSelector.setAttribute('width', this.availableWidthView.availableWidth - 20);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.checkFilterDel.unregisterAll();
+			delete this.checkFilterDel;
+			
+			if (this["updateFilterSelectorWidthDel"]) {
+				this.updateFilterSelectorWidthDel.unregisterAll();
+				delete this.updateFilterSelectorWidthDel;
+			}
+			
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the browse context.
+		-->
+		<method name="setContext" args="browseFilterType">
+			<![CDATA[
+			if (browseFilterType != null) {
+				var filters = this.oEditor.filters;
+				var filter = null;
+				for (var i = 0; i < filters.length; i++) {
+					if (filters[i].filterType == browseFilterType && filters[i].isEnabled(this.oEditor)) {
+						filter = filters[i];
+						break;
+					}
+				}
+				this.filterSelector.setAttribute("selectedValue", filter);				
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		A Clipboard tab that in the uitlity view.  This clipboard is different the the system clipboard.
+		For security reasons, Flash applications do not have unrestricted access to the system clipboard.
+		
+		User can drag different objects into the clipboard and use it later.
+	-->
+	<class name="wcfUtilitiesClipboard" height="${parent.availableHeight}">
+		
+		<!---
+			@keywords private
+			List of utilities objects.
+		-->
+		<attribute name="clipboardObjects" value="${[]}"/>
+		<!---
+			@keywords private
+			Model object list.
+		-->
+		<attribute name="modelObjectList" value="null"/>
+		<!---
+			@keywords private
+			Reference to the business object editor instance.
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			@keywords private
+			Reference to utilities panel. This is a required attribute.
+		-->
+		<attribute name="utilities" value="null"/>
+		<!---
+			@keywords private
+			The availableHeight for the list class
+		-->		
+		<attribute name="availableHeight" type="number" value="${this.height-clipboardGrid.y}"/>
+		<!---
+			@keywords private
+			Pane title.
+		-->
+		<attribute name="paneTitle" type="string" value="${foundationResources.utilitiesClipboard.string}"/>
+		<!---
+			@keywords private
+			Extended text.
+		-->
+		<attribute name="extendedText" type="text" value="${foundationResources.utilitiesClipboardExtendedHelp.string}"/>
+		<!---
+			Icon resource.
+		-->
+		<attribute name="iconResource" type="string" value="utilityClipboardIcon"/>
+		<!---
+			Text of the link that appears in the tooltip for extended help.  null or empty string means use framework default.
+		-->
+		<attribute name="linkText" type="text" value=""/>
+		<!---
+			Relative URL for the online help link.
+		-->
+		<attribute name="linkURL" type="text" value="tasks/ttfutilitiespane.htm"/>
+
+		<!---
+			@keywords private
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();			
+			this.modelObjectList = new lz.wcfModelObjectList(this, {
+				v: this.clipboardGrid,
+				modelObjects: this.clipboardObjects
+			});
+			this.removeObjectDel = new lz.Delegate(this, "removeObject");
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.removeObjectDel.unregisterAll();
+			delete this.removeObjectDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Initialize the clipboard.
+		-->
+		<method name="initializeClipboard" args="boe">
+			<![CDATA[
+			this.oEditor = boe;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update clipboard open object list.
+		-->
+		<method name="clearUtilityClipboardObject">
+    		<![CDATA[
+			this.clipboardObjects = [];
+			this.updateClipboardObjects();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Remove the specified object from the clipboard. This method is
+			registered to the "beingDestroyed" event for all the objects
+			in the clipboard.
+		-->
+		<method name="removeObject" args="o">
+    		<![CDATA[
+			var index = this.clipboardObjects.indexOf(o);
+			if (index != -1) {
+    			this.clipboardObjects.splice(index, 1);
+			}
+			this.updateClipboardObjects();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Remove the currently selected objects from the clipboard.
+		-->
+		<method name="doDelete">
+    		<![CDATA[
+    		var objects = this.clipboardGrid.getSelectedObjects();
+    		for (var i = 0; i < objects.length; i++) {
+    			var index = this.clipboardObjects.indexOf(objects[i]);
+    			this.clipboardObjects.splice(index, 1);
+    		}
+			this.updateClipboardObjects();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if the delete action is enabled.
+		-->
+		<method name="isDeleteEnabled">
+    		<![CDATA[
+			return this.clipboardGrid.getSelectedObjects().length > 0;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Paste the objects in the CMC clipboard into the utilities clipboard.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			var objects = this.oEditor.model.clipboardObjects;
+			for (var i = 0; i < objects.length; i++) {
+				var o = objects[i].getReferencedObject();
+				if (o.objectDefinition.primary && this.clipboardObjects.indexOf(o) == -1) {
+					this.clipboardObjects.push(o);
+				}
+			}
+			this.updateClipboardObjects();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if paste is enabled.
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+			var objects = this.oEditor.model.clipboardObjects;
+			var pasteEnabled = objects.length > 0;
+			for (var i = 0; i < objects.length; i++) {
+				var o = objects[i].getReferencedObject();
+				if (!o.objectDefinition.primary) {
+					pasteEnabled = false;
+				}
+			}
+			return pasteEnabled;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if the list of objects can be dropped on the clipboard.
+			
+			@param Array sources: list of drag sources
+		-->
+		<method name="isDropEnabled" args="sources">    		
+			<![CDATA[
+			var dropEnabled = true;
+			for (var i = 0; i < sources.length; i++) {
+				var o = wcfModelUtil.findObjectForView(sources[i]).getReferencedObject();
+				if (!o.objectDefinition.primary) {
+					dropEnabled = false;
+				}
+			}
+			return dropEnabled;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Add the dropped objects to the clipboard.
+		-->
+		<method name="droppedInTarget" args="sources">
+			<![CDATA[
+			for (var i = 0; i < sources.length; i++) {
+				var o = wcfModelUtil.findObjectForView(sources[i]).getReferencedObject();
+				if (this.clipboardObjects.indexOf(o) == -1) {
+					this.clipboardObjects.push(o);
+				}
+			}
+			this.updateClipboardObjects();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Refresh the clipboard view.
+		-->
+		<method name="updateClipboardObjects">
+			<![CDATA[
+			this.removeObjectDel.unregisterAll();
+			for (var i = 0; i < this.clipboardObjects.length; i++) {
+				this.removeObjectDel.register(this.clipboardObjects[i], "beingDestroyed");
+			}
+			this.modelObjectList.setAttribute("modelObjects", this.clipboardObjects);
+			var showClipboard = this.clipboardObjects.length > 0;
+			]]>
+		</method>
+		
+		<wcfButton name="clearButton"
+				x="10"
+				text="${foundationResources.clipboardClear.string}"
+				onclick="parent.clearUtilityClipboardObject()">
+		</wcfButton>
+		<wcfUtilitiesClipboardGrid y="35" name="clipboardGrid" menuClass="wcfUtilitiesClipboardMenu" rowMenuClass="wcfUtilitiesClipboardMenuRow">
+			<wcfDropTarget targetKey="${'element'}" dragAndDropManager="${wcfDndManager}" dropObject="${parent}">
+				<handler name="ondroppedintarget" args="sources">
+					<![CDATA[
+					if (wcfEventTimer.enabled) wcfEventTimer.start("wcfUtilitesClipboard ondroppedintarget");
+					classroot.droppedInTarget(sources);
+					]]>
+				</handler>
+				<method name="isEnabled" args="currentDragSources">
+					<![CDATA[
+	    			return classroot.isDropEnabled(currentDragSources);
+	    			]]>
+	    		</method>
+			</wcfDropTarget>	
+		</wcfUtilitiesClipboardGrid>
+	</class>
+	
+	<!---
+		@keywords private
+		Utilities view tab.
+	-->
+	<class name="wcfUtilityTab" extends="basecomponent">
+		<!---
+			Reference to utilities view.
+		-->
+		<attribute name="utilities"/>
+		<!---
+			Reference to the tab pane associated with this tab. This is a required attribute.
+		-->
+		<attribute name="tabPane"/>
+		<!---
+			Indicates that this is the active tab. This attribute should not be set directly. Changing the "activePane"
+			attribute on the utilities view will cause this attribute to be modified.
+		-->
+		<attribute name="active" type="boolean" value="false"/>
+		<!---
+			Indicates that the mouse is currently hovering over this tab.
+		-->
+		<attribute name="hover" type="boolean" value="false"/>
+		<!---
+			Indicates that the tab can tab focus.
+		-->
+		<attribute name="focusable" value="true"/>
+		<!---
+			Margin size.
+		-->
+		<attribute name="margin" value="10" type="number"/>
+		<!---
+			Icon resource.
+		-->
+		<attribute name="icon" type="string" value="${tabPane.iconResource}"/>
+	
+		<!---
+			Pane title.
+		-->
+		<attribute name="paneTitle" type="string" value="${tabPane.paneTitle}"/>
+		<!---
+			Tab width.
+		-->
+		<attribute name="width" value="${iconDisplay.width + tabTitle.width + this.margin * 2}"/>
+	
+		<!---
+			Extended text that appears in the tooltip.  null or empty string means tooltip will not show.
+		-->
+		<attribute name="extendedText" type="text" value="${tabPane.extendedText}"/>
+
+		<!---
+			Text of the link that appears in the tooltip for extended help.  null or empty string means use framework default.
+		-->
+		<attribute name="linkText" type="text" value="${tabPane.linkText}"/>
+
+		<!---
+			Relative URL for the online help link.  null or empty string means use do not display link.
+		-->
+		<attribute name="linkURL" type="text" value="${tabPane.linkURL}"/>
+		
+		<!---
+			The display name of the tab. Used by overflowbutton
+		-->
+		<attribute name="displayName" value="${tabPane.paneTitle}" type="string"/>
+		
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var tabs = this.utilities["tabs"];
+			if (!tabs) {
+				tabs = [];
+				this.utilities.tabs = tabs;
+			}
+			tabs.push(this);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus">
+			<![CDATA[
+			if(!this["indicator"]){
+		    	new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this,
+			    	offset: 1
+			    });
+		    }
+			]]>
+		</handler>	
+		
+		<!---
+			Update the active state for this tab.
+		-->
+		<method name="updateActive">
+			<![CDATA[
+			this.setAttribute("active", this.utilities.activePane == this.tabPane);
+			if (this.active) {
+				this.tabPane.setAttribute("visible", true);
+				this.tabPane.bringToFront();
+				this.utilities.setAttribute("splittable", this.tabPane["splittable"] == true);
+			}
+			else {
+				this.tabPane.setAttribute("visible", false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Handle changes to the "activePane" attribute of the utilities view.
+		-->
+		<handler name="onactivePane" reference="utilities">
+			<![CDATA[
+			this.updateActive();
+			]]>
+		</handler>
+		
+		<!---
+			Handle mouse over events. The "hover" attribute is set to true.
+		-->
+		<handler name="onmouseover">
+			<![CDATA[
+			this.setAttribute("hover", true);
+			]]>
+		</handler>
+		
+		<!---
+			Handle mouse out events. The "hover" attribute is set to false.
+		-->
+		<handler name="onmouseout">
+			<![CDATA[
+			this.setAttribute("hover", false);
+			]]>
+		</handler>
+		
+		<!---
+			Handle mouse click events. This will activate the current tab.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			this.utilities.setAttribute("activePane", this.tabPane);
+			]]>
+		</handler>
+		
+		<!---
+			Handle key down events. If the tab has focus, then enter or spacebar
+			will cause this tab to be activated.
+		-->
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+			if (k == 13 || k == 32) { // enter or spacebar
+				this.utilities.setAttribute("activePane", this.tabPane);
+			}
+			]]>
+		</handler>
+		
+		<wcfTooltip extendedText="${classroot.extendedText}" linkText="${classroot.linkText}" linkURL="${classroot.linkURL}"/>
+		
+		<view visible="${parent.active}" width="${parent.width}" y="2">
+			<view name="left" resource="resources/property_tab_left_active.png" />
+			<view name="center" resource="resources/property_tab_center_active.png" stretches="width" x="${parent.left.width}" width="${parent.right.x - parent.left.width}" />
+			<view name="right" resource="resources/property_tab_right_active.png" x="${parent.width - this.width}" />
+		</view>
+		<view visible="${!parent.active &amp;&amp; !parent.hover}" resource="resources/property_tab_bg.png" stretches="width" width="${parent.width}" />
+		<view visible="${!parent.active &amp;&amp; parent.hover}" resource="resources/property_tab_hover_bg.swf" stretches="width" width="${parent.width}" />
+		<view name="iconDisplay" x="${parent.margin}" y="4" resource="${parent.icon}" />
+		<text name="tabTitle" x="${parent.margin+parent.iconDisplay.width}" y="4" text="${parent.paneTitle}" />
+	</class>
+	
+	<!---
+		@keywords private
+		
+		This is the Utilities view.  It has three tabs with Find, Browse and Clipboard. {@link wcfUtilitiesSearch},
+		{@link wcfUtilitiesBrowse}, {@link wcfUtilitiesClipboard} to help user manage products.
+		
+		This view can be open/close in the View menu or in the toolbar.
+	-->
+	<class name="wcfUtilities" extends="wcfPanel" headerIconResource="utilityHeaderIcon" addRightSpacing="false">
+	
+		<!---
+			@keywords private
+			The title of the panel
+		-->
+		<attribute name="title" value="${foundationResources.utilitiesTitle.string}" type="string"/>
+		
+		<!---
+			@keywords private
+			Business object editor instance
+		-->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			@keywords private
+			Active utilities pane.
+		-->
+		<attribute name="activePane" value="null"/>
+		
+		<!---
+			@keywords private
+			Array of tabs within the utility view
+		-->
+		<attribute name="tabs" value="${[]}"/>
+		
+		<!---
+			@keywords private
+			Indicates to the frame manager that the utilites view can be split.
+		-->
+		<attribute name="splittable" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			Reference to the details view for the utilities view.
+		-->
+		<attribute name="details"/>
+		
+		<!---
+			@keywords private
+			Indicates that the views have been created.
+		-->
+		<attribute name="viewsCreated" type="boolean" value="false"/>
+
+		<!---
+			Shortcut keys to move to next tab, default is ['Control', 'Pagedown']
+		-->
+		<attribute name="moveToNextTabShortcutKeys" value="['Control', 'Pagedown']"/>
+
+		<!---
+			Shortcut keys to move to previous tab, default is ['Control', 'Pageup']
+		-->
+		<attribute name="moveToPreviousTabShortcutKeys" value="['Control', 'Pageup']"/>
+		
+		<!---
+			Reference to overflow button.
+		-->
+		<attribute name="overflowButton"/>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="init">
+			<![CDATA[
+			this.moveToNextTabDel = new lz.Delegate(this, "moveToNextTab");
+			this.moveToPreviousTabDel = new lz.Delegate(this, "moveToPreviousTab");
+			super.init();
+			this.checkUtilityOverflowTabsDel =  new lz.Delegate(this, "checkUtilityOverflowTabs");
+			this.checkUtilityOverflowTabs();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.moveToNextTabDel.unregisterAll();
+			delete this.moveToNextTabDel;						
+			this.moveToPreviousTabDel.unregisterAll();
+			delete this.moveToPreviousTabDel;	
+			this.checkUtilityOverflowTabsDel.unregisterAll();
+			delete this.checkUtilityOverflowTabsDel;						
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Reset this utilites pane. Called when the business object editor is closed.
+		-->
+		<method name="reset">
+			<![CDATA[
+			this.resetViews();
+			this.parent.details.setModelObject(null);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Registers the shortcut keys.
+		-->
+		<method name="registerShortcutKeys">
+			<![CDATA[
+			if (!this.keysRegistered) {
+				super.registerShortcutKeys();
+				lz.Keys.callOnKeyCombo(this.moveToNextTabDel, moveToNextTabShortcutKeys);
+				lz.Keys.callOnKeyCombo(this.moveToPreviousTabDel, moveToPreviousTabShortcutKeys);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Unregisters the shortcut keys.
+		-->
+		<method name="unregisterShortcutKeys">
+			<![CDATA[
+			if (this.keysRegistered) {
+				super.unregisterShortcutKeys();
+				lz.Keys.removeKeyComboCall(this.moveToNextTabDel, moveToNextTabShortcutKeys);
+				lz.Keys.removeKeyComboCall(this.moveToPreviousTabDel, moveToPreviousTabShortcutKeys);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Move to the next tab.
+		-->
+		<method name="moveToNextTab" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				for (var i = 0; i < this.tabs.length; i++) {
+					if (this.tabs[i].active) {
+						var nextTab = this.tabs[(i+1)%this.tabs.length];
+						nextTab.onclick.sendEvent();
+						lz.Focus.setFocus(nextTab, false);
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Move to the previous tab.
+		-->
+		<method name="moveToPreviousTab" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				for (var i = 0; i < this.tabs.length; i++) {
+					if (this.tabs[i].active) {
+						var previousTab = this.tabs[((i-1)+this.tabs.length)%this.tabs.length];
+						previousTab.onclick.sendEvent();
+						lz.Focus.setFocus(previousTab, false);
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Open the utilities view.
+		-->
+		<method name="open">
+			<![CDATA[
+			this.createViews();
+			if (this.oEditor.content.maximizedPanel != null) {
+				this.oEditor.content.maximizedPanel.setAttribute("maximized", false);
+			}
+			super.open();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the focus to the utilites view.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			if (!wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+				for (var i=0; i<this.tabs.length; i++) {
+					if (this.tabs[i].active) {
+						lz.Focus.setFocus(this.tabs[i], false);
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Set the context of the utility pane based on the specified object definition.
+			
+			@param wcfObjectDefinition objectDefinition: the object definition that describes the context
+		-->
+		<method name="setContext" args="objectDefinition">
+			<![CDATA[
+			if (objectDefinition != null) {
+				this.createViews();
+				if (objectDefinition["browseFilterType"] && objectDefinition.browseFilterType != null) {
+					this.setAttribute("activePane", this.panes.browsePane);
+					this.panes.browsePane.setContext(objectDefinition.browseFilterType);
+				}
+				else if (objectDefinition.searchType != null) {
+					this.setAttribute("activePane", this.panes.searchPane);
+					this.panes.searchPane.setContext(objectDefinition.searchType);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Updates the search definitions.
+		-->
+		<method name="updateSearchDefinitions">
+			<![CDATA[
+			if (this["panes"] && this.panes["searchPane"]) {
+				this.panes.searchPane.updateSearchDefinitions();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Initialize the utilities view.
+			
+			@param wcfBusinessObjectEditor boe: business object editor instance
+		-->
+		<method name="initializeUtilities" args="boe">
+			<![CDATA[
+			this.oEditor = boe;
+			if (!this.closed) {
+				this.createViews();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create the utility views.
+		-->
+		<method name="createViews">
+			<![CDATA[
+			if (!this.viewsCreated && this.oEditor != null) {
+				new lz.wcfUtilitiesSearch(this.panes, {
+					utilities: this,
+					name: "searchPane"
+				});
+				new lz.wcfUtilityTab(this.header.tabs, {
+					utilities: this,
+					tabPane: this.panes.searchPane
+				});
+				this.panes.searchPane.initializeSearch(this.oEditor);
+
+				new lz.wcfUtilitiesBrowse(this.panes, {
+					name: "browsePane"
+				});
+				new lz.wcfUtilityTab(this.header.tabs, {
+					utilities: this,
+					tabPane: this.panes.browsePane
+				});
+				this.panes.browsePane.initializeBrowse(this.oEditor);
+
+				new lz.wcfUtilitiesClipboard(this.panes, {
+					utilities: this,
+					name: "clipboardPane"
+				});
+				new lz.wcfUtilityTab(this.header.tabs, {
+					utilities: this,
+					tabPane: this.panes.clipboardPane
+				});
+				this.panes.clipboardPane.initializeClipboard(this.oEditor);
+
+				this.setAttribute("viewsCreated", true);
+				this.setAttribute("activePane", this.panes.searchPane);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Reset the subviews created by the createViews() method.
+		-->
+		<method name="resetViews">
+			<![CDATA[
+			if("searchPane" in this.panes) {
+				this.panes.searchPane.searchWidget.searchDefinition = null;
+				this.panes.searchPane.updateSearchDefinitions();
+				this.panes.searchPane.searchWidget.searchTextArea.searchText.setAttribute("text", "");
+				this.setAttribute("activePane", this.panes.searchPane);
+			}
+			if("browsePane" in panes && "filterSelector" in panes.browsePane) {
+				this.panes.browsePane.filterSelector.setAttribute("selectedValue",
+						(this.oEditor.defaultFilter == null ? this.oEditor.filters[0] : this.oEditor.defaultFilter));
+			}
+			if("clipboardPane" in panes) {
+				this.panes.clipboardPane.clearUtilityClipboardObject();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Checks the overflow tabs and creates the overflow tabs list button.
+		-->
+		<method name="checkUtilityOverflowTabs" args="e=null">
+			<![CDATA[
+			this.checkUtilityOverflowTabsDel.unregisterAll();
+			this.checkUtilityOverflowTabsDel.register(this, "onwidth");
+			var tabsWidth = this.header.tabs.x;
+			var overflowTabs = [];
+			for (var i=0; i < this.tabs.length; i++) {
+				var tab = this.tabs[i];
+				tabsWidth += tab.width;
+				if (tabsWidth > this.width) {
+					overflowTabs.push(tab);
+					tab.setAttribute("focusable", false);
+				} else {
+					tab.setAttribute("focusable", true);
+				}
+				this.checkUtilityOverflowTabsDel.register(tab, "onwidth");
+			}
+			if (overflowTabs.length > 0) {
+				if (!this["overflowButton"]) {
+					this.overflowButton = new lz.wcfTabOverflowButton(this, {
+						placement: "header",
+						actionDefinitions: overflowTabs
+					});
+				}
+				else {
+					this.overflowButton.setAttribute("actionDefinitions", overflowTabs);
+					this.overflowButton.setAttribute("visible", true);
+				}
+				this.overflowButton.setAttribute('x', this.width - this.overflowButton.width);
+				this.overflowButton.bringToFront();
+				this.overflowButton.setAttribute("focusable", true);
+			}
+			else if (this["overflowButton"]) {
+				this.overflowButton.setAttribute("visible", false);
+				this.overflowButton.setAttribute("focusable", false);
+			}
+			]]>
+		</method>	
+		
+		
+		<view name="header" placement="tabArea" width="${immediateparent.width}">
+			<view name="leftPadding" resource="panelTabsHeaderBackgroundResource" stretches="width" width="8"/>
+			<view name="tabs" x="${parent.leftPadding.x + parent.leftPadding.width}">
+				<simplelayout axis="x" />
+			</view>
+			<view name="rightPadding" resource="panelTabsHeaderBackgroundResource" x="${parent.tabs.x + parent.tabs.width}" stretches="width" width="${parent.width-parent.tabs.x-parent.tabs.width}"/>
+		</view>
+		<view name="panes" x="0" y="8">
+			<attribute name="availableWidth" type="number" value="${immediateparent.availableWidth-this.x}"/>	
+			<attribute name="availableHeight" type="number" value="${immediateparent.availableHeight-this.y}"/>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		Utilities details view. If the utilities view is splittable, then this view will be visible.
+		The details view will show the child objects for the currently selected object.
+	-->
+	<class name="wcfUtilitiesDetails" extends="wcfPanel" closed="${parent.utilities.closed}" addRightSpacing="false">
+		
+		<!---
+			@keywords private
+			The current model object associated with the details view.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			Details grid instances. An object definitions can be configured with a custom details view by specifying the "utilitiesListClass" attribute.
+			@keywords private
+		-->
+		<attribute name="detailsGrids" value="${{}}"/>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateHeaderDel = new lz.Delegate(this, "updateHeader");
+			this.updateDisplayNameStyleDel = new lz.Delegate(this, "updateDisplayNameStyle");
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.updateHeaderDel.unregisterAll();
+			delete this.updateHeaderDel;
+			this.updateDisplayNameStyleDel.unregisterAll();
+			delete this.updateDisplayNameStyleDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Set the new model object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				if (this["detailsGrid"] && this.detailsGrid["oList"] && this["o"]) {
+					if (this.o.getReferencedObject()) {
+						this.o.getReferencedObject().releaseViewFromChildren(this.detailsGrid);
+					}
+					this.detailsGrid.setAttribute("visible", false);
+				}
+				this.o = newObject;
+				if (newObject != null) {
+					var oDef = newObject.objectDefinition;
+					this.detailsGrid = this.getDetailsGrid(oDef);
+					if (oDef.organizational) {
+						if (oDef.objectType != "Top") {
+							newObject.bindViewToChildren(this.detailsGrid);
+							this.detailsGrid.setAttribute("visible", true);
+						}
+					}
+					else if (oDef.filters.length > 0) {
+						newObject.bindViewToChildren(this.detailsGrid, oDef.filters[0]);
+						this.detailsGrid.setAttribute("visible", true);
+					}
+					else {
+						var oDefs = oDef.parentReferenceObjectDefinitions;
+						oDefs = oDefs.concat(oDef.collectionReferenceObjectDefinitions);
+						if (oDefs.length > 0) {
+							var objectTypes = [];
+							for (var i = 0; i < oDefs.length; i++) {
+								objectTypes.push(oDefs[i].objectType);
+							}
+							newObject.bindViewToChildren(this.detailsGrid, null, objectTypes.join());
+							this.detailsGrid.setAttribute("visible", true);
+						}
+					}
+				}
+				this.updateHeader();
+				this.updateDisplayNameStyle();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the details grid to display inside the browse tab
+			@param {@link wcfObjectDefinition} def: The definition for the browse.
+			@returns view: The details grid.
+		-->
+		<method name="getDetailsGrid" args="def">
+			<![CDATA[
+			var detailsGridClass = def.utilitiesListClass != null ? def.utilitiesListClass : "wcfUtilitiesDetailsGrid";
+			var detailsGrid = this.detailsGrids[detailsGridClass];
+			if (!detailsGrid) {
+				if (lz[detailsGridClass]) {
+					detailsGrid = new lz[detailsGridClass](this, {
+							rowMenuClass: "wcfUtilitiesDetailsMenu",
+							menuClass: "wcfChildListBackgroundMenu",
+							listBorderSize: 1,
+							padding: 0,
+							editable: false
+					});
+				}
+				else {
+					detailsGrid = wcfDefinitionLoader.getDefinition(detailsGridClass, this, {
+							rowMenuClass: "wcfUtilitiesDetailsMenu",
+							menuClass: "wcfChildListBackgroundMenu",
+							listBorderSize: 1,
+							padding: 0,
+							editable: false
+					});
+				}
+				this.detailsGrids[detailsGridClass] = detailsGrid;
+			}
+			return detailsGrid;
+			]]>
+		</method>
+
+		<!---
+			Update the panel header
+		-->
+		<method name="updateHeader" args="e=null">
+			<![CDATA[
+			this.updateHeaderDel.unregisterAll();
+			var newTitle = "";
+			var newMessage = "";
+			var newErrorMessage = "";
+			var newHeaderIconResource = null;
+			if (this.o != null) {
+				newTitle = wcfStringUtil.escapeText(this.o.objectDisplayName);
+				newHeaderIconResource = this.o.objectDefinition.headerIcon;
+				this.updateHeaderDel.register(this.o, "onobjectDisplayName");
+				if (this.o.objectDefinition.utilitiesListClass == null) {
+					this.updateHeaderDel.register(this.o.objectDefinition, "ondetailsViewHeaderText");
+					this.detailsGrid.displayName.setAttribute("text", this.o.objectDefinition.detailsViewHeaderText);
+				}
+				if (this["detailsGrid"] && this.detailsGrid["oList"]) {
+					if (this.detailsGrid.oList.statusObject != null) {
+						if (this.detailsGrid.oList.statusObject.hasError) {
+							newErrorMessage = this.detailsGrid.oList.statusObject.message;
+						}else{
+							newMessage = this.detailsGrid.oList.statusObject.message;
+						}
+					}
+					this.updateHeaderDel.register(this.detailsGrid.oList, "onstatusObject");
+				}
+			}
+			this.setAttribute("title", newTitle);
+			this.setAttribute("errorMessage", newErrorMessage);
+			this.setAttribute("titleMessage", newMessage);
+			this.setAttribute("headerIconResource", newHeaderIconResource);
+			]]>
+		</method>
+		
+		<!---
+			Update the panel header style.
+		-->
+		<method name="updateDisplayNameStyle" args="e=null">
+			<![CDATA[
+			var newTextColor = 0x0;
+			var newTextStyle = "plain";
+			this.updateDisplayNameStyleDel.unregisterAll();
+			if (this.o != null) {
+				var style = this.o.displayNameStyle;
+				this.updateDisplayNameStyleDel.register(this.o, "ondisplayNameStyle");
+				if (style != null) {
+					newTextColor = style.color;
+					if (style.bold && style.italic) {
+						newTextStyle = "bolditalic";
+					}
+					else if (style.bold) {
+						newTextStyle = "bold";
+					}
+					else if (style.italic) {
+						newTextStyle = "italic";
+					}
+				}
+			}
+			if (this.textColor != newTextColor) {
+				this.setAttribute("textColor", newTextColor);
+			}
+			if (this.textStyle != newTextStyle) {
+				this.setAttribute("textStyle", newTextStyle);
+			}
+			]]>
+		</method>
+	</class>
+
+</library>

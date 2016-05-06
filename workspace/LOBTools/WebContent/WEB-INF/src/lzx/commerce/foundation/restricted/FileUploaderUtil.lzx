@@ -1,0 +1,195 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		File upload utility. This node contains methods to launch the browse file dialog.
+	-->
+	<node id="wcfFileUploadUtil">
+		<switch>
+			<when property="$as3">
+				<passthrough>
+					import flash.events.Event;
+					import flash.net.FileFilter;
+					import flash.net.FileReference;
+				</passthrough>
+			</when>
+		</switch>
+		
+		<!---
+			@keywords private
+			Event that notifies listeners that a file has been selected.
+		 -->
+		<event name="onfileSelected"/>
+		
+		<!---
+			@keywords private
+			Event that notifies listeners that the browse dialog has been canceled.
+		 -->
+		<event name="onfileCanceled"/>
+				
+		<!---
+			@keywords private
+			The view to which focus will be returned after the browse dialog is closed. If it is not specified then focus will return to the view that was 
+			in focus before the browse dialog was launched.
+		-->
+		<attribute name="restoreView" value="${null}"/>
+		
+		<!---
+			@keywords private
+			The maximum allowable file size in bytes.
+		-->
+		<attribute name="maxSize" value="${null}" type="number"/>		
+		
+		<!--- 
+			@keywords private 
+			
+			This method will pop up the Browse for file Dialog and allow the user to select a file for upload. 
+ 
+			@param fileTypes An array of the {@link wcfFileTypes} that can be selected.
+			@param maximumSize The maximum size permitted for an uploaded file. 
+		-->
+		<method name="browseForFile" args="fileTypes=null,maximumSize=1000000">
+			<![CDATA[	
+				this.restoreView = lz.Focus.getFocus();	
+				var fileref = new flash.net.FileReference();					
+				if ($as3) {
+					fileref.addEventListener(flash.events.Event.CANCEL, handleCancel);
+					fileref.addEventListener(flash.events.Event.SELECT, handleSelect);
+				} else {
+					fileref.addListener(this);
+				}
+					
+				var fileTypeArray = this.buildFileTypeArray(fileTypes);
+				if (fileTypeArray != null) {				
+					fileref.browse(fileTypeArray);
+				} else {
+					fileref.browse();
+				}
+				this.maxSize = maximumSize;					 
+				lz.ModeManager.makeModal(this.modalView);
+
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="buildFileTypeArray" args="fileTypes">
+			<![CDATA[			
+				var fileTypeArray = new Array();
+				if (fileTypes != null) {				
+					for (var i = 0; i < fileTypes.length; i++) {		
+						var curTypeObject;
+						if ($as3) {
+							if (fileTypes[i]["macTypes"] == null) {
+								curTypeObject = new FileFilter(fileTypes[i].description, fileTypes[i].extension);
+							} else {
+								curTypeObject = new FileFilter(fileTypes[i].description, fileTypes[i].extension, fileTypes[i].macTypes);
+							}
+						} else {								
+							curTypeObject = new Object();
+							curTypeObject.description = fileTypes[i].description;
+							curTypeObject.extension = fileTypes[i].extension;
+							if (fileTypes[i]["macTypes"] != null) {
+								curTypeObject.macTypes = fileTypes[i].macTypes;
+							}	
+						}									
+						fileTypeArray.push(curTypeObject);
+					}
+				}
+					
+				if (fileTypeArray.length == 0) {
+					fileTypeArray = null;
+				}				
+				return fileTypeArray;
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private 
+			This method is a handler for the ActionScript onSelect event. It will also send a {@link wcfFileUploadUtil#onfileSelected} event. 
+		-->
+		<method name="onSelect" args="fr">
+			<![CDATA[
+				this.release(fr);
+				if (fr.size == 0) {
+					if (this.restoreView != null) {	
+						wcfFileEmptyDialog.setAttribute("restoreFocusView", this.restoreView);
+					}			
+					wcfFileEmptyDialog.openFileEmptyDialog(fr.name);
+					this.onfileCanceled.sendEvent();
+				} else if (this.maxSize < fr.size) {		
+					if (this.restoreView != null) {				
+						wcfFileTooLargeDialog.setAttribute("restoreFocusView", this.restoreView);
+					}
+					wcfFileTooLargeDialog.openFileTooLargeDialog(fr.name, this.maxSize);
+					this.onfileCanceled.sendEvent();
+				} else {				
+					this.onfileSelected.sendEvent(fr);
+				}
+			]]>
+		</method> 
+		<!---
+			@keywords private
+			This method is a handler for the ActionScript handleSelect event in Action Script 3.
+		-->
+		<method name="handleSelect" args="event">
+			<![CDATA[
+				this.onSelect(event.target);
+			]]>		
+		</method> 
+		
+		<!---
+			@keywords private
+			This method is a handler for the ActionScript onCancel event.
+		-->
+		<method name="onCancel" args="fr">
+			<![CDATA[	
+				this.release(fr);				
+				this.onfileCanceled.sendEvent();							
+			]]>
+		</method> 
+		<!---
+			@keywords private
+			This method is a handler for the ActionScript handleCancel event in Action Script 3.
+		-->
+		<method name="handleCancel" args="event">
+			<![CDATA[
+				this.onCancel(event.target);
+			]]>		
+		</method>
+		
+		<!---
+			@keywords private			
+		-->
+		<method name="release" args="fr">				
+			lz.ModeManager.release(this.modalView);
+			if ($as3) {
+				fr.removeEventListener(flash.events.Event.CANCEL, handleCancel);
+				fr.removeEventListener(flash.events.Event.SELECT, handleSelect);
+			} else {
+				fr.removeListener(this);
+			}		
+			
+			if (this.restoreView != null) {
+				lz.Focus.setFocus(this.restoreView);
+			}
+			this.restoreView = null;
+		</method>
+		<!---
+			@keywords private
+			A view to make modal when the browse dialog is up.   
+		-->
+		<view name="modalView" visible="false"/>				
+	</node>
+</library>

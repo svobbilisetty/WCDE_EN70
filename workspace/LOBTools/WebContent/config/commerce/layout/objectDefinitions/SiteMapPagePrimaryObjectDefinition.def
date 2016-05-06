@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBaseSiteMapPagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglSiteMapPageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglSiteMapPageLayoutAssociationReferencedSiteMapPageLayouts}
+			representing the reference to the site map page layout objects which hold a page layout association with this static site map page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSiteMapPageLayoutAssociationReferencedSiteMapPageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts}
+			representing the reference to the inherited site map page layout objects which hold a page layout association with this static site map page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts}
+			representing the reference to the inherited site map page layout objects which hold a page layout association with this inherited site map page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the static site map page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSiteMapPageReferenceDefaultSiteMapPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglSiteMapPageLayoutAssociationReferencedSiteMapPageLayouts},
+			{@link pglSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts} and {@link pglInheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts}
+			references for this static site map page.
+		-->
+		<GetChildrenService objectTypes="SiteMapPageLayoutAssociationReferencedSiteMapPageLayouts,SiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts,InheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="SiteMapPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this Site Map Page.
+		-->
+		<GetChildrenService objectTypes="SiteMapPageReferenceDefaultSiteMapPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="SiteMapPage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for the site map page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="Sitemap"/>
+		</GetPreviewURLService>		
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Site Map Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseSiteMapPagePrimaryObjectDefinition"
+     	definitionName="SiteMapPage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="SiteMapPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Site Map Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseSiteMapPagePrimaryObjectDefinition"
+     	definitionName="InheritedSiteMapPage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedSiteMapPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglSiteMapPageLayoutAssociationReferencedSiteMapPageLayouts" objectType="SiteMapPageLayoutAssociationReferencedSiteMapPageLayouts" referencedTypes="SiteMapPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" definitionName="pglSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" objectType="SiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" referencedTypes="InheritedSiteMapPageLayout"/>  
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="SiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" definitionName="pglInheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" objectType="InheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" referencedTypes="InheritedSiteMapPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglSiteMapPageReferenceDefaultSiteMapPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="SiteMapPageReferenceDefaultSiteMapPageLayout" 
+		referencedTypes="SiteMapPageLayout,InheritedSiteMapPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

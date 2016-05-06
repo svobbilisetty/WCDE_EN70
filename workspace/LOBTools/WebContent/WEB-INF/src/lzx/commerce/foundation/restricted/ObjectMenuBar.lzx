@@ -1,0 +1,1782 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		Menu item.
+	-->
+	<class name="wcfMenuItem" extends="listitem" focusable="false" placement="menuItemList">
+		<!---
+			Reference to business object editor instance.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			The original parent for the menu item.
+		-->
+		<attribute name="menuItemParent"/>
+		<!---		
+			A flag to indicate whether this menuItem is to be enabled when a store is selected.  By default,
+			the item is enabled when a store is selected and disabled when there is no store selected.
+		-->
+		<attribute name="storeRequired" type="boolean" value="true"/>
+		<!---
+			Indicates that the menu item action is enabled. This is used instead of "enabled".
+		-->
+		<attribute name="actionEnabled" type="boolean" value="true" setter="this.setActionEnabled(actionEnabled)"/>
+		<!---
+			Indicates that a checkbox will be displayed before the menu text.
+		-->
+		<attribute name="showCheckMark" type="boolean" value="false" />
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.menuItemParent = this.parent;
+			this.selectMenuItemCallbackDel = new lz.Delegate(this, "selectMenuItemCallback");
+			var items = parent["menuItems"];
+			if (!items) {
+				items = [];
+				parent.menuItems = items;
+			}
+			
+			items.push(this);
+			this.parent = this.parent.menuItemList;
+			super.init();
+			parent.checkWidth();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["selectCallbackAdded"]) {
+				wcfCallbackUtil.cancelCallback(this.selectMenuItemCallbackDel);
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Set the action enabled state.
+		-->
+		<method name="setActionEnabled" args="e=null">
+			<![CDATA[
+			if (this["actionEnabled"] != e) {
+				this.actionEnabled = e;
+				if (this._initcomplete) {
+					this._applystyle(null);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Apply the style.
+		-->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (this["style"]) {
+				super._applystyle(s);
+				if (typeof(this.title["itemText"]) != "undefined") {
+					if (!this.actionEnabled) {
+						this.title.itemText.setAttribute("fgcolor", this.style.textdisabledcolor);					
+					}
+					else {
+						if (this.hilited) {
+							this.title.itemText.setAttribute("fgcolor", this.style.texthilitecolor);
+						}
+						else {
+							this.title.itemText.setAttribute("fgcolor", this.style.textcolor);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Initialize the menu item. This method is called every time the parent
+			menu is initialized.
+			@param wcfBusinessObjectEditor boe: business object editor
+		-->
+		<method name="initializeMenuItem" args="boe">
+			<![CDATA[
+			this.oEditor = boe;
+			var newActionEnabled = true;
+			if (this.storeRequired) {
+				newActionEnabled = !boe.showStoreSelection || boe.isStoreSelected;
+			}
+			if (newActionEnabled != this.actionEnabled) {
+				this.setAttribute("actionEnabled", newActionEnabled);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="ontext">
+			<![CDATA[
+			/*
+			 *	Adding spacers in order to fit the right arrow icon
+			 *	@see wcfMenuItem#rightArrow
+			 */
+			this.text = this.text + "   ";
+				
+			if (this._initcomplete) {
+				parent.checkWidth();
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onselected">
+			<![CDATA[
+			if (this.selected) {
+				this.selectMenuItem();
+			}
+			else {
+				this.deselectMenuItem();
+			}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="selectMenuItem">
+			<![CDATA[
+			if (!this["selectCalbackAdded"]) {
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfMenuItem selectMenuItem: " + this.text);
+				wcfCallbackUtil.addDeferredCallback(this.selectMenuItemCallbackDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+				this.selectCallbackAdded = true;
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method is called when the menu item is selected. If the
+			action is enabled, then "doAction" is called.
+		-->
+		<method name="selectMenuItemCallback" args="args">
+			<![CDATA[
+			this.selectCallbackAdded = false;
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfMenuItem", "doAction", "Action " + this.text + " Start ");
+			}
+			parent.closeAll();
+			this.oEditor.header.menubar.restoreFocus();
+			if (this.actionEnabled) {
+				this.doAction();
+			}
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfMenuItem", "doAction", "Action " + this.text + " End ");
+			}
+			]]>
+		</method>
+
+		<method name="deselectMenuItem">
+		</method>
+
+		<method name="doAction">
+		</method>
+
+		<view name="title" x="4" valign="middle">
+			<simplelayout axis="x" spacing="3" />
+			<view name="checkMarkArea" width="16" height="16">
+				<image name="checkMark" valign="middle" resource="checkmarkIcon" visible="${classroot.showCheckMark}" />
+			</view>
+			<text name="itemText" valign="middle" text="${classroot.text}" resize="true" visible="${classroot.text ? true : false}" />
+		</view>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfMenuItemList" extends="plainfloatinglist" visible="false">
+		<attribute name="menuParent"/>
+		<attribute name="open" type="boolean" value="false" setter="this.setOpen(open)"/>
+		<attribute name="submenu" type="boolean" value="false"/>
+
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			]]>
+		</method>
+
+		<method name="destroy">
+			<![CDATA[
+			this.checkMouseDel.unregisterAll();
+			delete this.checkMouseDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<method name="updateAttachLocation">
+			<![CDATA[
+			super.updateAttachLocation();
+			var right = this.x + this.width;
+			if (right > canvas.width) {
+				var newX = this.x - (right - canvas.width);
+				if (newX < 0) {
+					newX = 0;
+				}
+				this.setAttribute("x", this.x - (right - canvas.width));
+			}
+			]]>
+		</method>
+		
+		<method name="checkWidth">
+			<![CDATA[
+			var newWidth = 0;
+			var numItems = this.getNumItems();
+			for (var i = 0; i < numItems; i++) {
+				var item = this.getItemAt(i);
+				var itemWidth = item.title.itemText.getTextWidth();
+				itemWidth = itemWidth + item.title.checkMarkArea.width + 3;
+				if (itemWidth > newWidth) {
+					newWidth = itemWidth;
+				}
+			}
+			this.setAttribute('width', newWidth + 10);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getNextVisibleItem">
+			<![CDATA[
+			var nextView = null;
+			while (true) {
+				if (this._selector.getNextSubview(nextView) == nextView) {
+					return null;
+				} else if (nextView != null && nextView.visible) {
+					return nextView;
+				} else {
+					nextView = this._selector.getNextSubview(nextView);
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="setOpen" args="newValue">
+			<![CDATA[
+			if (typeof(this["open"]) == "undefined" || this.open != newValue) {
+				this.open = newValue;
+				if (this.open) {
+					if (this.menuParent.openMenu != this) {
+						this.clearSelection();
+						this.owner.initializeMenu(this.menuParent.oEditor);
+						if (this.menuParent.openMenu != null) {
+							this.menuParent.openMenu.setAttribute("open", false);
+						}
+						this.setAttribute("visible", true);
+						this.bringToFront();
+						lz.ModeManager.makeModal(this);
+						lz.Focus.setFocus(this, false);
+						this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+						menuParent.openMenu = this;
+						var firstMenuItem = this.getNextVisibleItem();
+						if (firstMenuItem) {
+							firstMenuItem.setHilite(true);
+							this._hiliteview = firstMenuItem;
+							this.setAttribute("doesenter", true);
+						}
+					}
+				}
+				else {
+					if (this._initcomplete) {
+						if (this.owner.openMenu != null) {
+							this.owner.openMenu.setAttribute("open", false);
+						}
+						if (this.menuParent.openMenu == this) {
+							this.menuParent.openMenu = null;
+							this.owner.closeMenu();
+						}
+						this.setAttribute("visible", false);
+						lz.ModeManager.release(this);
+						this.checkMouseDel.unregisterAll();
+						if (this.submenu) {
+							lz.Focus.setFocus(this.menuParent.menuItemList, false);
+							this.owner.setAttribute("selected", false);
+							this.owner.setHilite(true);
+							this.menuParent.menuItemList._hiliteview = this.owner;
+						} else {
+							lz.Focus.setFocus(this.owner, false);
+						}
+					}
+				}
+				if (this["onopen"]) {
+					this.onopen.sendEvent();
+				}
+				
+			}
+			]]>
+		</method>
+
+		<method name="passModeEvent" args="e,v">
+			<![CDATA[
+			var result = false;
+			if (v) {
+				if (this.submenu) {
+					result = v.childOf(this.menuParent.menuItemList) || this.menuParent.menuItemList.passModeEvent(e,v);
+				}
+				else {
+					result = v.childOf(this.menuParent);
+				}
+			}
+			return result;
+			]]>
+		</method>
+		
+		<method name="checkMouse" args="e=null">
+			<![CDATA[
+			if (!this.containsPt(this.getMouse("x"), this.getMouse("y"))) {
+				if (this.owner.openMenu != null) {
+					this.owner.openMenu.checkMouse();
+				}
+				else {
+					this.closeAll();
+					this.menuParent.oEditor.header.menubar.restoreFocus();
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="closeAll">
+			<![CDATA[
+			this.setAttribute("open", false);
+			if (this.submenu) {
+				this.menuParent.menuItemList.closeAll();
+			}
+			]]>
+		</method>
+		
+		<method name="_dokeydown" args="kc">
+			<![CDATA[
+			if (kc == 27) { // esc
+				this.setAttribute("open", false);
+			}
+			else if (kc == 39) { // right
+				if (this._hiliteview && this._hiliteview["menuItemList"]) {
+					this._hiliteview.setAttribute("selected", true);
+				}
+				else {
+					this.openNextMenu();
+				}
+			}
+			else if (kc == 37) { // left
+				if (this.submenu) {
+					this.setAttribute("open", false);
+				}
+				else {
+					this.openPreviousMenu();
+				}
+			}
+			else if (kc == 38 || kc == 40) { // up or down
+				this.setAttribute( 'doesenter', true );
+				var s = this._hiliteview;
+
+				if (s == null) {
+					s = getSelection();
+				}
+
+				var dir = kc == 40 ? 1 : -1;
+				var next = _selector.getNextSubview(s, dir);
+				while (s != next && !next.visible) {
+					s = next;
+					next = _selector.getNextSubview(s, dir);
+				}
+				if (next.visible) {
+					if (this._hiliteview && this._hiliteview.setHilite && this._hiliteview != 0) {
+						this._hiliteview['setHilite'](false);
+					}
+					next['setHilite'](true);
+					this._hiliteview = next;
+				}
+             }
+			]]>
+		</method>
+		
+		<!---
+			Open the next menu.
+		-->
+		<method name="openNextMenu">
+			<![CDATA[
+			if (this.submenu) {
+				this.setAttribute("open", false);
+				this.menuParent.menuItemList.openNextMenu();
+			}
+			else {
+				var menus = this.menuParent.menus;
+				for (var i = 0; i < menus.length; i++) {
+					var menu = menus[i];
+					if (menu.menuItemList == this) {
+						i++;
+						if (i == menus.length) {
+							i = 0;
+						}
+						menus[i].menuItemList.setAttribute("open", true);
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Open the previous menu.
+		-->
+		<method name="openPreviousMenu">
+			<![CDATA[
+			if (this.submenu) {
+				this.menuParent.menuItemList.openPreviousMenu();
+			}
+			else {
+				var menus = this.menuParent.menus;
+				for (var i = 0; i < menus.length; i++) {
+					var menu = menus[i];
+					if (menu.menuItemList == this) {
+						i--;
+						if (i < 0) {
+							i = menus.length - 1;
+						}
+						menus[i].menuItemList.setAttribute("open", true);
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<handler name="onkeydown" args="k">
+			<![CDATA[				    	
+			var startIndex = 0;									
+			for (var i = 0; i < this.getNumItems(); i++) {
+				var item = this.getItemAt(i);
+				if (item.hilited == true && String.fromCharCode(k).toUpperCase().charCodeAt(0) == item.text.toUpperCase().charCodeAt(0)) {
+					startIndex = i+1;
+					break;								
+				}
+			}	
+								
+			for (var i = 0; i < this.getNumItems(); i++) {
+				if (startIndex >= this.getNumItems()) {
+					startIndex = 0;
+				}
+				
+				var item = this.getItemAt(startIndex);										
+				if (String.fromCharCode(k).toUpperCase().charCodeAt(0) == item.text.charCodeAt(0)) {
+					this.setHilite(item);
+					this.setAttribute( 'doesenter', true );										
+					break;
+				}						
+				startIndex++;						
+			}		
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="doSpaceDown">
+			<![CDATA[
+				if (this._hiliteview && this._hiliteview['selectMenuItem']) {
+					this._hiliteview.selectMenuItem();
+				}
+			]]>
+		</method>
+		
+		<!---
+			Check if the specified view belongs to the menu.
+		-->
+		<method name="isMenuView" args="v">
+			<![CDATA[
+			var result = v == this;
+			if (!result) {
+				for (var i = 0; i < this.getNumItems(); i++) {
+					var item = this.getItemAt(i);
+					if (item["menuItemList"] && item.menuItemList.isMenuView(v)) {
+						result = true;
+						break;
+					}
+				}	
+			}
+			return result;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getNextSelection" />
+		<!--- @keywords private -->
+        <method name="getPrevSelection" />
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfSubmenuItem" extends="wcfMenuItem">
+		<attribute name="menuItemList"/>
+		<attribute name="openMenu" value="null"/>
+		<attribute name="menuItems"/>
+		
+		<handler name="onconstruct">
+			<![CDATA[
+			this.menuItemList = new lz.wcfMenuItemList(this, {
+				menuParent: this.parent,
+				submenu: true,
+				attach: "right"
+			});
+			]]>
+		</handler>
+
+		<method name="determinePlacement" args="v, p, a">
+			<![CDATA[
+			if (p == "menuItemList") {
+				return this.menuItemList;
+			}
+			return this;
+			]]>
+		</method>
+		
+		<method name="initializeMenu" args="boe">
+			<![CDATA[
+			if (this["menuItems"]) {
+				for (var i = 0; i < this.menuItems.length; i++) {
+					var item = this.menuItems[i];
+					item.initializeMenuItem(boe);
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="closeMenu" args="boe=null">
+			<![CDATA[
+			]]>
+		</method>
+
+		<method name="selectMenuItem">
+			if (this.actionEnabled) {
+				this.menuItemList.setAttribute("open", true);
+			} else {
+				parent.closeAll();
+			}
+		</method>
+		
+		<method name="deselectMenuItem">
+			if (this.actionEnabled) {
+				this.menuItemList.setAttribute("open", false);
+			}
+		</method>
+		
+		<!--- 	
+			View to display the right-arrow-icon for this submenu.
+			By default, views embedded within textlistitems appear in the left-most position (x=0) of the textlistitem.
+			For this reason, we calculate the appropriate position into which to place the view and set it's x co-ordinate
+			appropriately.
+		-->
+		<view name="rightArrow" resource="rightArrowIcon" x="${parent.width - width}"/>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Menu class.
+	-->
+    <class name="wcfMenu" extends="basecomponent" focusable="true" doesenter="true">
+    	<!---
+    		Menu text.
+    	-->
+		<attribute name="text" value="" type="string"/>
+		<!---
+			Reference to object management instance.
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			The menu item list.
+		-->
+		<attribute name="menuItemList" value="null"/>
+		<!---
+			List of menu items.
+		-->
+		<attribute name="menuItems"/>
+		<!---
+			The submenu that is currently open.
+		-->
+		<attribute name="openMenu" value="null"/>
+		<!---
+			Indicates that the mouse is over this menu.
+		-->
+		<attribute name="mouseIn" value="false" type="boolean"/>
+		<!---
+			Indicates that the mouse is down.
+		-->
+		<attribute name="mouseDown" value="false" type="boolean"/>
+		
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			this.menuItemList = new lz.wcfMenuItemList(this, {
+				menuParent: this.parent,
+				attach: "bottom"
+			});
+			]]>
+		</handler>
+		
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var menus = parent["menus"];
+			if (!menus) {
+				menus = [];
+				parent.menus = menus;
+			}
+			menus.push(this);
+			this.showDel = new lz.Delegate(this, "show");
+			this.showDel.register(this.menuItemList, "onopen");
+			]]>
+		</method>
+
+		<method name="destroy">
+			<![CDATA[
+			this.showDel.unregisterAll();
+			delete this.showDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<method name="determinePlacement" args="v, p, a">
+			<![CDATA[
+			if (p == "menuItemList") {
+				return this.menuItemList;
+			}
+			return this;
+			]]>
+		</method>
+		
+		<method name="initializeMenu" args="boe">
+			<![CDATA[
+			this.oEditor = boe;
+			if (this["menuItems"]) {
+				for (var i = 0; i < this.menuItems.length; i++) {
+					var item = this.menuItems[i];
+					item.initializeMenuItem(boe);
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="closeMenu">
+			<![CDATA[
+			]]>
+		</method>
+		
+		<method name="showDown">
+ 			<![CDATA[
+			this.setAttribute("bgcolor", this.style["selectedcolor"]);
+			]]>
+		</method>
+		
+		<method name="showUp">
+ 			<![CDATA[
+			this.setAttribute("bgcolor", undefined);
+			]]>
+		</method>
+		
+		<method name="showOver">
+ 			<![CDATA[
+			this.setAttribute("bgcolor", this.style["hilitecolor"]);
+			]]>
+		</method>
+		
+		<method name="show" args="e=null">
+ 			<![CDATA[
+ 			if (this.menuItemList["open"]) {
+ 				this.showDown();
+ 			}
+ 			else if (this.mouseIn && this.mouseDown) {
+ 				this.showDown();
+			}
+			else if (this.mouseIn) {
+ 				this.showOver();
+ 			}
+ 			else {
+ 				this.showUp();
+ 			}
+			]]>
+		</method>
+		
+		<handler name="onmouseover">
+ 			<![CDATA[
+			this.mouseIn = true;
+			if (this.parent.openMenu != null) {
+				this.menuItemList.setAttribute("open", true);
+			}
+			this.show();
+			]]>
+		</handler>
+		
+		<handler name="onmouseout">
+ 			<![CDATA[
+			this.mouseIn = false;
+			this.show();
+			]]>
+		</handler>
+		
+		<handler name="onmousetrackover">
+ 			<![CDATA[
+			this.mouseDown = true;
+			this.mouseIn = true;
+			this.menuItemList.setAttribute("open", true);
+			this.show();
+			]]>
+		</handler>
+		
+		<handler name="onmousetrackout">
+ 			<![CDATA[
+			this.mouseDown = false;
+			this.mouseIn = false;
+			this.show();
+			]]>
+		</handler>
+		
+		<handler name="onmousetrackup">
+ 			<![CDATA[
+			this.mouseDown = false;
+			this.show();
+			]]>
+		</handler>
+
+		<handler name="onenabled">
+			<![CDATA[
+			if (this["menuItems"]) {
+				for (var i = 0; i < this.menuItems.length; i++) {
+					var item = this.menuItems[i];
+					item.setAttribute("actionEnabled", this.enabled);
+				}
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="doEnterDown">
+			<![CDATA[
+			this.menuItemList.setAttribute("open", true);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="doSpaceDown">
+			<![CDATA[
+			this.menuItemList.setAttribute("open", true);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onkeydown" args="k">
+			<![CDATA[				    	
+			if (k == 27) { // esc
+				parent.restoreFocus();
+			}
+			else if (k == 39 || k == 37) { // right or left
+				for (var i = 0; i < parent.menus.length; i++) {
+					if (parent.menus[i] == this) {
+						if (k == 37) { // left
+							i--;
+							if (i < 0) {
+								i = parent.menus.length - 1;
+							}
+						}
+						else {
+							i++;
+							if (i >= parent.menus.length) {
+								i = 0;
+							}
+						}
+						lz.Focus.setFocus(parent.menus[i], false);
+						break;
+					}
+				}
+			}
+			else if (k == 40) { // down
+				this.menuItemList.setAttribute("open", true);
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onfocus">
+			<![CDATA[
+			parent.saveRestoreFocusView(lz.Focus.lastfocus);
+	 		if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+				});
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Check if the specified view belongs to the menu.
+		-->
+		<method name="isMenuView" args="v">
+			<![CDATA[
+			return v == this || this.menuItemList.isMenuView(v);
+			]]>
+		</method>
+			
+		<text name="menuText" x="4" text="${parent.text}" resize="true"/>
+		<view x="${parent.menuText.x + parent.menuText.width}" width="4"/>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfNewMenuItem" extends="wcfMenuItem" text="${this.objectDefinition.displayName}">
+		<attribute name="objectDefinition"/>
+
+		<method name="initializeMenuItem" args="boe">
+ 			<![CDATA[
+			super.initializeMenuItem(boe);
+			if (this.actionEnabled && !this.objectDefinition.isCreatable()) {
+				this.setAttribute("actionEnabled", false);
+			}
+			]]>
+		</method>
+		
+		<method name="doAction">
+ 			<![CDATA[
+			var contextObject = this.oEditor.getSelectedObject();
+			this.objectDefinition.doCreate({contextObject: contextObject});
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfNewMenu" extends="wcfSubmenuItem" text="${foundationResources.menuNew.string}">
+		<method name="initializeMenuItem" args="boe">
+ 			<![CDATA[
+			super.initializeMenuItem(boe);
+			if (!this["menuItems"]) {
+				var creatableObjectDefinitions = [];
+				for (var i = 0; i < boe.model.objectDefinitions.length; i++) {
+					var def = boe.model.getObjectDefinition(null, boe.model.objectDefinitions[i].objectType);
+					if (def.creatable && !def.isBaseDefinition) {
+						creatableObjectDefinitions.push(def);
+					}
+				}
+				
+				for (var i = 0; i < creatableObjectDefinitions.length; i++) {
+					var def = creatableObjectDefinitions[i];
+					new lz.wcfNewMenuItem(this, {
+						oEditor: boe,
+						objectDefinition: def
+					});
+				}
+			}
+			
+			
+			if (this["menuItems"]) {
+				this.setAttribute("visible", true);
+			}
+			else {
+				this.setAttribute("visible", false);
+			}
+			]]>
+		</method>
+		
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfLogModelMenuItem" extends="wcfMenuItem" text="${foundationResources.menuLogModel.string}">
+		<method name="doAction">
+			<![CDATA[
+			this.oEditor.model.logModel();
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfFileMenu" extends="wcfMenu" text="${foundationResources.menuFile.string}">
+		<attribute name="logModelMenuItem" value="null"/>
+	
+		<method name="initializeMenu" args="boe">
+			<![CDATA[
+			if (wcfLogger.display) {
+				if (this.logModelMenuItem == null) {
+					this.logModelMenuItem = new lz.wcfLogModelMenuItem(this);
+				}
+			}
+			else {
+				if (this.logModelMenuItem != null) {
+					this.logModelMenuItem.destroy();
+					this.logModelMenuItem = null;
+				}
+			}
+			super.initializeMenu(boe);
+			]]>
+		</method>
+
+		<wcfMenuItem text="${foundationResources.menuWorkspaceWorkOnBase.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+					this.setAttribute("visible", boe.name == "workspaceManagement" && !configProperties.readOnlyOnApprovedContent);
+					super.initializeMenuItem(boe);
+				]]>
+			</method>
+			<method name="doAction">
+				<![CDATA[
+					wcfWorkspaceUtil.workOnBase();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.menuWorkspaceWorkOnBaseInReadOnlyMode.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+					this.setAttribute("visible", boe.name == "workspaceManagement" && configProperties.readOnlyOnApprovedContent);
+					super.initializeMenuItem(boe);
+				]]>
+			</method>
+			<method name="doAction">
+				<![CDATA[
+					wcfWorkspaceUtil.workOnBase();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfNewMenu text="${foundationResources.menuNew.string}"/>
+		<wcfMenuItem text="${foundationResources.menuOpen.string}">
+			<method name="initializeMenuItem" args="boe">
+	 			<![CDATA[
+	 			super.initializeMenuItem(boe);
+	 			this.setAttribute("actionEnabled", boe.openEnabled);
+	 			]]>
+			</method>
+
+			<method name="doAction">
+ 				<![CDATA[
+				this.oEditor.doOpen();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="openInCompareViewMenuItem" text="${foundationResources.menuOpenInCompareView.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("visible", boe.showCompareView);
+				this.setAttribute("actionEnabled", boe.openInCompareViewEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doOpenInCompareView();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.menuClose.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				var enable = false;
+				this.setAttribute("actionEnabled", boe.closeEnabled);
+				]]>
+			</method>
+				
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doClose();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.menuCloseAll.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.model.openObjects.length > 0);
+				]]>
+			</method>
+				
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.model.closeOpenObjects(true);
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.menuSave.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.saveEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doSave();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.menuSaveAll.string}">
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doSaveAll();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.menuRefresh.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.refreshEnabled);
+				]]>
+			</method>
+			
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doRefresh();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.menuRefreshAll.string}">
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.model.refreshAll(true);
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem text="${foundationResources.storePreview.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+					this.setAttribute("visible", boe.showStorePreview);
+					super.initializeMenuItem(boe);
+				]]>
+			</method>
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.openStorePreviewDialog();
+				]]>
+			</method>
+		</wcfMenuItem>
+		
+		<wcfMenuItem text="${foundationResources.toolbarLaunchCoremetricsAnalytics.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				var storeConfig = boe.localContext != null ? boe.localContext.storeConfig : null;
+				var coremetricsEnabled = storeConfig != null && storeConfig.analytics != null && storeConfig.analytics.isEnabled == "true" && storeConfig.analytics.provider == "coremetrics";
+				this.setAttribute("visible", coremetricsEnabled);
+				
+				super.initializeMenuItem(boe);
+				]]>
+			</method>
+			
+			<method name="doAction">
+				<![CDATA[
+				getAnalyticsSSOTokenService.doRequest(this.oEditor);
+				]]>
+			</method>
+		</wcfMenuItem>
+		
+		<wcfMenuItem text="${foundationResources.menuExitTool.string}" storeRequired="false">			
+			<method name="doAction">
+				<![CDATA[
+				toolsController.closeTool(this.oEditor.name);
+				]]>
+			</method>
+		</wcfMenuItem>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfCustomServiceMenuItem" extends="wcfMenuItem">
+		<attribute name="customService"/>
+
+		<method name="init">
+ 			<![CDATA[
+			super.init();
+			this.setAttribute("text", this.customService.getMenuDisplayName());
+			]]>
+		</method>
+
+		<method name="doAction">
+			<![CDATA[
+			this.oEditor.doCustomService(this.customService);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="selectMenuItem">
+			<![CDATA[					
+			if (this.customService.isFileUploadService && this.actionEnabled) {
+				this.selectMenuItemCallback(null);			
+			} else {
+				super.selectMenuItem();		
+			}
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfClientActionMenuItem" extends="wcfMenuItem">
+		<attribute name="clientAction"/>
+
+		<method name="init">
+ 			<![CDATA[
+			super.init();
+			this.setAttribute("text", this.clientAction.getMenuDisplayName());
+			]]>
+		</method>
+
+		<method name="doAction">
+			<![CDATA[
+			this.oEditor.doClientAction(this.clientAction);
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfPropertyTreeMenuItem" extends="wcfMenuItem">
+		<attribute name="propertyTreeAction"/>
+		<attribute name="o"/>
+		<attribute name="treeNodeObject"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+ 			<![CDATA[
+			super.init();
+			this.setAttribute("text", this.propertyTreeAction.getMenuDisplayName());
+			]]>
+		</method>
+		<!--- @keywords private -->
+		<method name="doAction">
+			<![CDATA[
+			this.propertyTreeAction.performAction(this.o, this.treeNodeObject);
+			if (this.propertyTreeAction.parent.selectionHandler != null) {
+				this.propertyTreeAction.parent.selectionHandler.handleSelection(this.o, this.treeNodeObject);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->		
+	<class name="wcfEditMenu" extends="wcfMenu" text="${foundationResources.menuEdit.string}">
+		<attribute name="customServiceMenuItems" value="${[]}"/>
+		<attribute name="clientActionMenuItems" value="${[]}"/>
+		<attribute name="propertyTreeActionMenuItems" value="${[]}"/>
+		
+		<method name="initializeMenu" args="boe">
+			<![CDATA[
+			var customServices = boe.enabledCustomServices;
+			for (var i = 0; i < customServices.length; i++) {
+				if(customServices[i].addToEditMenu){
+					this.customServiceMenuItems.push(new lz.wcfCustomServiceMenuItem(this, {
+						customService: customServices[i]
+					}));
+				}
+			}
+			var clientActions = boe.enabledClientActions;
+			for (var i = 0; i < clientActions.length; i++) {
+				if(clientActions[i].addToEditMenu){
+					this.clientActionMenuItems.push(new lz.wcfClientActionMenuItem(this, {
+						clientAction: clientActions[i]
+					}));
+				}
+			}
+			var activeView = boe.model.activeSelectionView;				
+			if (activeView instanceof lz.wcfPropertyBrowseObjectTree && activeView.parent.enabled) {
+				var selectedNode = activeView.getSelection();
+				if (selectedNode && selectedNode["o"]) {
+					var treeNodeObject = selectedNode.o;
+					var o = activeView.parent.o;
+					var propertyTreeActions = activeView.parent.propertyTree.actions;
+					for (var i = 0; i < propertyTreeActions.length; i++) {
+						if (propertyTreeActions[i].isEnabled(o, treeNodeObject)) {
+							this.propertyTreeActionMenuItems.push(new lz.wcfPropertyTreeMenuItem(this, {
+								propertyTreeAction: propertyTreeActions[i],
+								o: o,
+								treeNodeObject: treeNodeObject
+							}));
+						}
+					}
+				}
+			}
+			super.initializeMenu(boe);
+			]]>
+		</method>
+		
+		<method name="closeMenu">
+			<![CDATA[
+			while (this.customServiceMenuItems.length > 0) {
+				this.customServiceMenuItems.shift().destroy();
+			}
+			while (this.clientActionMenuItems.length > 0) {
+				this.clientActionMenuItems.shift().destroy();
+			}
+			while (this.propertyTreeActionMenuItems.length > 0) {
+				this.propertyTreeActionMenuItems.shift().destroy();
+			}
+			]]>
+		</method>
+
+		<wcfMenuItem name="copyMenuItem" text="${foundationResources.menuCopy.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.copyEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doCopy();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="copyToClipboardMenuItem" text="${foundationResources.menuCopyToClipboard.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.copyToClipboardEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doCopyToClipboard();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="pasteMenuItem" text="${foundationResources.menuPaste.string}">
+			<method name="initializeMenuItem" args="boe">
+	 			<![CDATA[
+	 			super.initializeMenuItem(boe);
+	 			this.setAttribute("actionEnabled", boe.pasteEnabled);
+	 			]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doPaste();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="deleteMenuItem" text="${foundationResources.menuDelete.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.deleteEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+ 				<![CDATA[
+ 				this.oEditor.doDelete();				
+				]]>
+			</method>
+		</wcfMenuItem>
+
+		<wcfMenuItem text="${foundationResources.menuSelectAll.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.selectAllEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+ 				<![CDATA[
+				this.oEditor.doSelectAll();
+				]]>
+			</method>
+		</wcfMenuItem>
+		
+		<wcfMenuItem text="${foundationResources.menuDeselectAll.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.deselectAllEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doDeselectAll();
+				]]>
+			</method>
+		</wcfMenuItem>
+		
+		<wcfMenuItem name="editColumnMenuItem" text="${foundationResources.menuEditColumn.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.editColumnEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+ 				<![CDATA[
+ 				this.oEditor.doEditColumn();				
+				]]>
+			</method>
+		</wcfMenuItem>
+		
+		<wcfMenuItem name="findMenuItem" text="${foundationResources.menuFindAndReplace.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.findEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+ 				<![CDATA[
+ 				this.oEditor.doFindAndReplace();			
+				]]>
+			</method>
+		</wcfMenuItem>
+		
+		<wcfMenuItem name="sequenceUpMenuItem" text="${foundationResources.contextMenuSequenceUp.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.sequenceUpEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+ 				<![CDATA[
+ 				this.oEditor.doSequenceUp();				
+				]]>
+			</method>
+		</wcfMenuItem>
+		
+		<wcfMenuItem name="sequenceDownMenuItem" text="${foundationResources.contextMenuSequenceDown.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.sequenceDownEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+ 				<![CDATA[
+ 				this.oEditor.doSequenceDown();				
+				]]>
+			</method>
+		</wcfMenuItem>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfNavigationListMenuItem" extends="wcfMenuItem">
+		<attribute name="navigationListDefinition"/>
+
+		<method name="init">
+ 			<![CDATA[
+			super.init();
+			var menuItemText = foundationResources.replaceValues("menuShowNavigationList", [navigationListDefinition.displayName]);
+			this.setAttribute("text", menuItemText);
+			]]>
+		</method>
+
+		<method name="initializeMenuItem" args="boe">
+			<![CDATA[
+			super.initializeMenuItem(boe);
+			var navSelection = boe.navigationTree.getSelection();
+			this.setAttribute("actionEnabled", (navSelection && navigationListDefinition !== navSelection.navigationListDefinition));
+			]]>
+		</method>
+
+		<method name="doAction">
+			<![CDATA[
+			this.oEditor.showNavigationList(this.navigationListDefinition);
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfPropertiesMenuItem" extends="wcfMenuItem" text="${foundationResources.menuShowProperties.string}">
+		<method name="doAction">
+			<![CDATA[
+			this.oEditor.showProperties();
+			]]>
+		</method>
+
+		<method name="initializeMenuItem" args="boe">
+			<![CDATA[
+			super.initializeMenuItem(boe);
+			var navSelection = boe.navigationTree.getSelection();
+			this.setAttribute("actionEnabled", (navSelection && navSelection.navigationListDefinition != null));
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfViewOptionMenuItem" extends="wcfMenuItem">
+		<attribute name="viewOption"/>
+
+		<method name="init">
+			<![CDATA[
+				super.init();
+				this.setAttribute("text", this.viewOption.displayName);
+				this.setAttribute("showCheckMark", this.viewOption.value);
+			]]>
+		</method>
+
+		<method name="doAction">
+			<![CDATA[
+				if (this.viewOption.viewOptionGroup != null) {
+					this.viewOption.setAttribute("value", true);
+					for (var i = 0; i < this.viewOption.parent.viewOptions.length; i++) {
+						var viewOption = this.viewOption.parent.viewOptions[i];
+						if (viewOption.viewOptionGroup == this.viewOption.viewOptionGroup) {
+							viewOption.setAttribute("value", this.viewOption == viewOption);
+						}
+					}
+				}
+				else {
+					this.viewOption.setAttribute("value", !this.viewOption.value);
+				}
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfViewMenu" extends="wcfMenu" text="${foundationResources.menuView.string}">
+		<attribute name="navigationListMenuItems" value="${[]}"/>
+		<attribute name="propertiesMenuItem" value="null"/>
+		<attribute name="viewOptionMenuItems" value="${[]}"/>
+		<attribute name="clientActionMenuItems" value="${[]}"/>
+		
+		<method name="initializeMenu" args="boe">
+			<![CDATA[
+			var navigationListDefinitions = boe.getNavigationListDefinitions();
+			for (var i = 0; i < navigationListDefinitions.length; i++) {
+				this.navigationListMenuItems.push(new lz.wcfNavigationListMenuItem(this, {
+					navigationListDefinition: navigationListDefinitions[i]
+				}));
+			}
+			if (boe.isShowPropertiesEnabled()) {
+				this.propertiesMenuItem = new lz.wcfPropertiesMenuItem(this);
+			}
+			var viewOptions = boe.enabledViewOptions;
+			for (var i = 0; i < viewOptions.length; i++) {
+				if (viewOptions[i].addToViewMenu) {
+					this.viewOptionMenuItems.push(new lz.wcfViewOptionMenuItem(this, {
+						viewOption: viewOptions[i]
+					}));
+				}
+			}
+			var clientActions = boe.enabledClientActions;
+			for (var i = 0; i < clientActions.length; i++) {
+				if(clientActions[i].addToViewMenu){
+					this.clientActionMenuItems.push(new lz.wcfClientActionMenuItem(this, {
+						clientAction: clientActions[i]
+					}));
+				}
+			}
+			super.initializeMenu(boe);
+			]]>
+		</method>
+		
+		<method name="closeMenu">
+			<![CDATA[
+			while (this.navigationListMenuItems.length > 0) {
+				this.navigationListMenuItems.shift().destroy();
+			}
+			if (this.propertiesMenuItem != null) {
+				this.propertiesMenuItem.destroy();
+				this.propertiesMenuItem = null;
+			}
+			while (this.viewOptionMenuItems.length > 0) {
+				this.viewOptionMenuItems.shift().destroy();
+			}
+			while (this.clientActionMenuItems.length > 0) {
+				this.clientActionMenuItems.shift().destroy();
+			}
+			]]>
+		</method>
+
+		<wcfMenuItem name="backMenuItem" text="${foundationResources.menuBack.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.backEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doBack();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="forwardMenuItem" text="${foundationResources.menuForward.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("actionEnabled", boe.forwardEnabled);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.doForward();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="toggleNavigationViewMenuItem">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				if (boe.navigationViewVisible) {
+					this.setAttribute("text", foundationResources.menuHideNavigationView.string);
+				}
+				else {
+					this.setAttribute("text", foundationResources.menuShowNavigationView.string);
+				}
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.toggleNavigationView();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="toggleUtilitiesViewMenuItem">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				this.setAttribute("visible", boe.showUtilitiesView);
+				super.initializeMenuItem(boe);
+				if (boe.utilitiesViewVisible) {
+					this.setAttribute("text", foundationResources.menuHideUtilitiesView.string);
+				}
+				else {
+					this.setAttribute("text", foundationResources.menuShowUtilitiesView.string);
+				}
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.toggleUtilitiesView();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="toggleWorkAreaDetailsMenuItem">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("visible", !boe.compareViewVisible);
+				this.setAttribute("actionEnabled", boe.workAreaDetailsEnabled);
+				if (boe.workAreaDetailsBelowVisible) {
+					this.setAttribute("text", foundationResources.menuHideDetailsBelowList.string);
+				}
+				else {
+					this.setAttribute("text", foundationResources.menuShowDetailsBelowList.string);
+				}
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.toggleWorkAreaDetailsBelow();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="toggleWorkAreaDetailsBesideMenuItem">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("visible", !boe.compareViewVisible);
+				this.setAttribute("actionEnabled", boe.workAreaDetailsEnabled);
+				if (boe.workAreaDetailsBesideVisible) {
+					this.setAttribute("text", foundationResources.menuHideDetailsBesideList.string);
+				}
+				else {
+					this.setAttribute("text", foundationResources.menuShowDetailsBesideList.string);
+				}
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.toggleWorkAreaDetailsBeside();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="splitCompareViewHorizontallyMenuItem" text="${foundationResources.menuShowDetailsBelowList.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("visible", boe.compareViewVisible);
+				this.setAttribute("actionEnabled", boe.compareViewSplitVertically);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.splitCompareViewVertically(false);
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="splitCompareViewVerticallyMenuItem" text="${foundationResources.menuShowDetailsBesideList.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[
+				super.initializeMenuItem(boe);
+				this.setAttribute("visible", boe.compareViewVisible);
+				this.setAttribute("actionEnabled", !boe.compareViewSplitVertically);
+				]]>
+			</method>
+
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.splitCompareViewVertically(true);
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="configureColumnMenuItem" text="${foundationResources.contextMenuConfigureColumns.string}">
+			<method name="initializeMenuItem" args="boe">
+				<![CDATA[				
+				super.initializeMenuItem(boe);
+				var activeView = this.oEditor.model.activeSelectionView;				
+				if (activeView instanceof lz.wcfGrid && activeView.isConfigurable) {
+					this.setAttribute("visible", true);
+					this.setAttribute("actionEnabled", true);
+				} else {
+					this.setAttribute("visible", false);
+					this.setAttribute("actionEnabled", false);
+				}
+				]]>
+			</method>
+			<method name="doAction">
+				<![CDATA[
+				this.oEditor.model.activeSelectionView.configure();
+				]]>
+			</method>
+		</wcfMenuItem>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfHelpMenu" extends="wcfMenu" text="${foundationResources.menuHelp.string}">
+		<wcfMenuItem name="gettingStartedMenuItem" storeRequired="false" text="${foundationResources.menuGettingStarted.string}">
+			<method name="doAction">
+ 				<![CDATA[
+				helpManager.openGettingStarted();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="informationCenterMenuItem" storeRequired="false" text="${foundationResources.menuInformationCenter.string}">
+			<method name="doAction">
+				<![CDATA[
+				helpManager.openInfoCenter();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="contextSensitiveHelpMenuItem" storeRequired="false" text="${foundationResources.menuContextSensitiveHelp.string}">
+			<method name="doAction">
+				<![CDATA[
+				helpManager.openContextSensitiveHelp();
+				]]>
+			</method>
+		</wcfMenuItem>
+		<wcfMenuItem name="shortcutKeysMenuItem" storeRequired="false" text="${foundationResources.menuShortcutKeyLegend.string}">
+			<method name="doAction">
+				<![CDATA[
+				helpManager.openShortcutKeyLegend();
+				]]>
+			</method>
+		</wcfMenuItem>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Menu bar.
+	-->
+	<class name="wcfMenuBar" extends="basetrackgroup" focusable="false">
+		<attribute name="openMenu" value="null"/>
+		<attribute name="menus" value="${[]}"/>
+		<attribute name="selectedObjects" value="null"/>
+		<attribute name="oEditor" value="null"/>
+		<!---
+			@keywords private
+			
+			This attribute indicates if the shortcutKeys are registered. The default value for this attribute is "false". 
+		-->			
+		<attribute name="keysRegistered" type="boolean" value="false"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="restoreFocusView" value="null" />
+		
+		<!---
+			Initialize the menu bar.
+			@param wcfBusinessObjectEditor boe: Business object editor
+		-->
+		<method name="initializeMenu" args="boe">
+ 			<![CDATA[
+			this.oEditor = boe;
+			]]>
+		</method>
+
+		<!---
+			Open the first menu from the menu list
+		-->
+		<method name="openDefaultMenu">
+			<![CDATA[
+			this.saveRestoreFocusView(lz.Focus.getFocus());
+			this.menus[0].menuItemList.setAttribute("open", true);
+			]]>
+		</method>
+		
+		<!---
+			Save the restore focus view.
+		-->
+		<method name="saveRestoreFocusView" args="v">
+			<![CDATA[
+			if ((v == null || !this.isMenuView(v)) && !lz.Keys.isKeyDown("tab")) {
+				this.setAttribute("restoreFocusView", v);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check if the specified view belongs to the menu.
+		-->
+		<method name="isMenuView" args="v">
+			<![CDATA[
+			var result = false;
+			for (var i = 0; i < this.menus.length; i++) {
+				if (this.menus[i].isMenuView(v)) {
+					result = true;
+					break;
+				}
+			}
+			return result;
+			]]>
+		</method>
+		
+		<!---
+			Restore focus to the previous focused view.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			if (this.restoreFocusView != null && this.restoreFocusView.visible && wcfViewUtil.getInvisibleAncestor(this.restoreFocusView) == null) {
+				lz.Focus.setFocus(this.restoreFocusView, false);
+			}
+			else {
+				this.oEditor.restoreFocus();
+			}
+			this.setAttribute("restoreFocusView", null);
+			]]>
+		</method>
+		
+		<simplelayout axis="x"/>
+		<wcfFileMenu name="fileMenu"/>
+		<wcfEditMenu name="editMenu"/>
+		<wcfViewMenu name="viewMenu"/>
+		<wcfHelpMenu name="helpMenu"/>
+	</class>
+</library>

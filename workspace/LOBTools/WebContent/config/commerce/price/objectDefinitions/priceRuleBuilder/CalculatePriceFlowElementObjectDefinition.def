@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcCalculatePriceElementObject" displayName="${prcPriceResources.calculatePrice_DisplayName}" elemTemplateType="Action" flowIcon="calculatePriceElementIcon" headerIcon="calculatePriceElementHeaderIcon" helpLink="concepts/cpiactcalcprice.htm" objectType="calculatePrice" package="prc" paletteIcon="calculatePricePaletteIcon" propertiesDefinitionName="prcCalculatePriceElementProperties" summaryClass="prcCalculatePriceElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_priceEquationId" objectPath="RefPriceEquationGroup" propertyName="priceEquationId">
+				<EnablementCondition conditionId="usePriceEquationCalculationType" enablementValue="usePriceEquation" propertyName="calculationType"/>
+			</ServiceParam>
+		</CreateService>
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">	
+			<ServiceParam name="PROPERTY_priceEquationId" objectPath="RefPriceEquationGroup" propertyName="priceEquationId">
+				<EnablementCondition conditionId="usePriceEquationCalculationType" enablementValue="usePriceEquation" propertyName="calculationType"/>
+			</ServiceParam>
+		</UpdateService>
+	
+		<PropertyDefinition propertyName="calculationType" required="true">
+			<PropertyValue displayName="${prcPriceResources.markUpPrice}" value="markUp"/>
+			<PropertyValue displayName="${prcPriceResources.markDownPrice}" value="markDown"/>
+			<PropertyValue displayName="${prcPriceResources.usePriceEquation}" value="usePriceEquation"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition displayName="${prcPriceResources.markUp_PromptText}" propertyName="markUpPercentage" type="number" minValue="0">
+			<EnablementCondition conditionId="markUpCalculationType" enablementValue="markUp" propertyName="calculationType"/>
+			<RequiredPropertyValidator validatorId="markUpPercentageRequiredPropertyValidator" />
+		</PropertyDefinition>
+
+		<PropertyDefinition displayName="${prcPriceResources.markDown_PromptText}" propertyName="markDownPercentage" type="number" minValue="0" maxValue="100">
+			<EnablementCondition conditionId="markDownCalculationType" enablementValue="markDown" propertyName="calculationType"/>
+			<RequiredPropertyValidator validatorId="markDownPercentageRequiredPropertyValidator" />
+		</PropertyDefinition>
+		
+		<ReferenceObjectDefinition objectGroups="RefPriceEquationGroup" allowDuplicates="false" derivedId="true" idProperty="priceEquationId" objectType="RefPriceEquation" referencedTypes="PriceEquation" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="RefPriceEquationGroup" allowDuplicates="false" derivedId="true" idProperty="priceEquationId" objectType="InheritedRefPriceEquation" referencedTypes="InheritedPriceEquation" allowedParentTypes="InheritedPriceRule,PriceRule"/>
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceEquation}" objectPath="RefPriceEquationGroup" validatorId="RefPriceEquationValidator" validatorType="noPriceEquationProvided">
+			<EnablementCondition conditionId="RefPriceEquationValidatorCondition" enablementValue="usePriceEquation" propertyName="calculationType"/>
+		</RequiredChildObjectValidator>
+		<Xml name="template">
+			<elemTemplateName>calculatePrice</elemTemplateName>
+			<calculationType>markUp</calculationType>
+			<markUpPercentage></markUpPercentage>
+			<markDownPercentage></markDownPercentage>
+		</Xml>
+	
+	</FlowElementObjectDefinition>
+
+</Definitions>

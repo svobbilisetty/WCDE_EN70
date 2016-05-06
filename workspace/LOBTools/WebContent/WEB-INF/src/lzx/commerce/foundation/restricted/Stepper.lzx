@@ -1,0 +1,540 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This is a basic stepper widget for integer values. An input box is provided for user input of values
+		as well as spinners/arrows to increment and decrement the value based on the defined step.
+	-->
+	<class name="wcfBaseStepper" extends="basevaluecomponent" width="87" focusable="false">
+		<!--- The smallest allowable value for this input -->
+		<attribute name="minimumValue" type="number" value="0"/>
+		<!--- The largest allowable value for this input -->
+		<attribute name="maximumValue" type="number" value="10000"/>
+		<!--- The size of increment or decrement when user clicks on the up/down arrow buttion. Default value is 1. -->
+		<attribute name="step" type="number" value="1"/>					
+		
+		<!---
+			@keywords private
+			Rounds the given value to the nearest multiple of the given step
+			@param number value: the value to be normalized
+			@returns integer: The normalized integer value closest to the step size. If the input value is not a number,
+				or the value is longer than 16 digits, the original value is returned.
+		-->
+		<method name="roundToStep" args="value">
+			<![CDATA[				
+			// need to stop math operations on anything larger than 16 digits
+			// since javascript implementation starts to convert to exponential notation
+			var strValue = String(value);
+			if(strValue.length >= 16) {
+				return value;
+			}
+
+			var isNum = wcfStringUtil.isNumber(strValue);
+			if(!isNum){
+				return value;
+			}
+			else {
+				return Math.round(value / this.step) * this.step;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			If the current value is less than the maximum value, this will increment the value. 
+			If no value is set, then it sets the value to the maximumValue if it is less than 0 
+			or the minimum value if it is greater than 0 or else 0. If the value set is less 
+			than the minimum value, the value will be changed to the minimum. This method is called 
+			when the up arrow icon is clicked and when the user presses the up key on their keyboard.
+		-->
+		<method name="incrementValue">
+			<![CDATA[
+				if (this.value == null || this.value == "" || isNaN(this.value)) {
+					if (this.maximumValue < 0) {
+						this.setAttribute("value", String(this.maximumValue));
+					}
+					else if (this.minimumValue > 0) {
+						this.setAttribute("value", String(this.minimumValue));
+					}
+					else {
+						this.setAttribute("value", 0);
+					}									
+				} else if (Number(this.value) < this.minimumValue) {					
+					this.setAttribute("value", String(this.minimumValue));
+				}				
+				else if(Number(this.value) < this.maximumValue) {
+					var newValue = this.roundToStep(Number(this.value) + step);
+					if(newValue >= this.maximumValue) {
+						this.setAttribute("value", String(this.maximumValue));
+					}
+					else {
+						this.setAttribute("value", String(newValue));
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			If the current value is greater than the minimum value, this will decrement the value. 
+			If no value is set, then it sets the value to the maximumValue if it is less than 0 
+			or the minimum value if it is greater than 0 or else 0. If the value set is greater 
+			than the maximum value, the value will be changed to the maximum. This method is called 
+			when the down arrow icon is clicked and when the user presses the down key on their keyboard.
+		-->
+		<method name="decrementValue">
+			<![CDATA[
+				if (this.value == null || this.value == "" || isNaN(this.value)) {
+					if (this.maximumValue < 0) {
+						this.setAttribute("value", String(this.maximumValue));
+					}
+					else if (this.minimumValue > 0) {
+						this.setAttribute("value", String(this.minimumValue));
+					}
+					else {
+						this.setAttribute("value", 0);
+					}
+				} else if (Number(this.value) > this.maximumValue) {
+					this.setAttribute("value", String(this.maximumValue));
+				}
+				else if(Number(this.value) > this.minimumValue) {
+					var newValue = this.roundToStep(Number(this.value) - step);
+					if(newValue <= this.minimumValue) {
+						this.setAttribute("value", String(this.minimumValue));
+					}
+					else {
+						this.setAttribute("value", String(newValue));
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method updates takes the display value from the input field, formats it into canonical data format
+			and saves it into the <code>value</code> attribute.
+			@listen wcfInputText#ontext When the text in the input field changes either due to user input or by some other method,
+				this method is called to update the display text.
+			@listen wcfInputText#onblur This method is also invoked when the user moves focus from the input field to something else
+				to ensure consistency in the saved value.
+		-->
+		<method name="handleText">
+			<![CDATA[
+				if(this["textInput"]) {
+					this.valueLocked = true;
+					var newValue = wcfGlobalizationUtil.formatNumberToDataFormat(this.textInput.getText());
+					if(newValue != "" && !isNaN(newValue)) {
+						newValue = String(this.roundToStep(Number(newValue)));
+					}
+					this.setAttribute("value", newValue);
+					this.valueLocked = false;
+				}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateInputDel"]) {
+				this.updateInputDel.unregisterAll();
+				delete this.updateInputDel;
+			}			
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Updates the display text in the input field to a globalized value.
+			The display text will only be updated if the user is not typing
+			into the input field.
+		-->
+		<method name="updateInput" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateInputDel) == "undefined") {
+				this.updateInputDel = new lz.Delegate(this, "updateInput");
+			}
+			else {
+				this.updateInputDel.unregisterAll();
+			}
+			this.updateInputDel.register(this, "onvalue");
+			var localizedValue = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.value, null, this.updateInputDel);			
+			if (!this['valueLocked']) {				
+				if(this["textInput"]) {	
+					if (localizedValue != this.textInput.getText()) {
+						this.textInput.setText(localizedValue);
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<simplelayout axis="x" spacing="0"/>
+		
+		<wcfInputText name="textInput" enabled="${classroot.enabled}" width="${parent.width-parent.arrowView.width}" height="${parent.arrowView.height}" pattern="[\-0-9,. ]*" doesenter="true">
+			<handler name="oninit">
+				this["_inited"] = true;
+				classroot.updateInput();
+			</handler>
+
+			<handler name="onkeydown" args="code">
+				<![CDATA[
+				if(code == 38) { // up
+					classroot.incrementValue();
+				}
+				else if(code == 40) { // down
+					classroot.decrementValue();
+				}
+				]]>
+			</handler>
+			
+			<handler name="ontext">
+				<![CDATA[
+				// ontext gets fired with a blank string during initialization but before the oninit event.
+				// We need to ignore this first fire as it's incorrect.
+				if(this["_inited"]) {
+					classroot.handleText();
+				}
+				]]>
+			</handler>
+			
+			<handler name="onblur">
+				<![CDATA[
+				classroot.updateInput();
+				]]>
+			</handler>
+		</wcfInputText>
+		
+		<view name="arrowView">
+			<simplelayout axis="y" spacing="0"/>
+			<basebuttonrepeater name="stepperUpArrow" focusable="false" resource="stepperUpButton">
+				<handler name="onmousedown"><![CDATA[
+					classroot.incrementValue();
+					]]>
+				</handler>
+				<handler name="onmousestilldown">
+					classroot.incrementValue();
+				</handler>
+			</basebuttonrepeater>
+		    <basebuttonrepeater name="stepperDownArrow" focusable="false" resource="stepperDownButton">
+				<handler name="onmousedown"><![CDATA[
+					classroot.decrementValue();
+					]]>
+				</handler>
+				<handler name="onmousestilldown">
+					classroot.decrementValue();
+				</handler>
+			</basebuttonrepeater>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		This class wraps the {@link wcfBaseStepper wcfBaseStepper} widget in order to enable the widget to work
+		within the object model.
+	-->
+	<class name="wcfStepper" extends="wcfBaseStepper">
+		<!---
+			Reference to object property that is being edited.
+			@type wcfModelProperty
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			This setter method for the property will unregister any existing delegates assigned to the old
+			property. A new delegate is registered to the new property so that when the property value
+			changes (either by user input or by the model), the <code>updateValue</code> method is called.
+			
+			@param wcfModelProperty newProperty: The new object property that this widget will modify.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+				else {
+					this.setAttribute("value", "");
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateInput" args="e=null">
+			<![CDATA[
+			super.updateInput(e);
+			if (this.property) {
+				this.updateInputDel.register(this.property.o.openGroupObject, "beingSaved");
+			}
+			]]>
+		</method>
+
+		<!--- Updates the widget value to match the stored property value stored. -->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if(this['property']) {
+				if(this.property.value != this.value) {
+					this.setAttribute("value", this.property.value);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onvalue">
+			<![CDATA[
+			if(this["property"]) {
+				if(this.value == null || this.value == "") {
+					this.property.change("");
+				}
+				else {
+					this.property.change(wcfGlobalizationUtil.formatNumberToDataFormat(this.value));
+				}
+			}
+			]]>
+		</handler>
+	 </class>
+	
+	<!---
+		@keywords final
+		This class extends {@link wcfPropertyEditor wcfPropertyEditor} for use so that it can be used within an
+		object properties view.
+		@see wcfObjectProperties
+	-->
+	<class name="wcfPropertyStepper" extends="wcfPropertyEditor">
+		<!--- The minimum allowable value for this stepper. The default value is "0". -->
+		<attribute name="minimumValue" type="number" value="0"/>
+		<!--- The maximum allowable value for this stepper. The default value is "10000". -->
+		<attribute name="maximumValue" type="number" value="10000"/>
+		
+		<!---
+			@keywords private
+			This method instantiates a {@link wcfStepper wcfStepper} widget with the minimum and maximum
+			values defined in this class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+			@see wcfPropertiesComponent#createEditor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfStepper(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled,
+				minimumValue: this.minimumValue,
+				maximumValue: this.maximumValue,
+				width: 230
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		This class defines a widget to be used as a column in an {@link wcfObjectGrid object grid}.
+		The column cells display property values formatted based on the current setting
+		of the number format preference.
+		When a cell is in edit mode, a stepper widget will be displayed to allow
+		the business user to edit the value.
+	-->
+	<class name="wcfGridStepper" extends="wcfGridColumn">
+		<!---
+			@keywords private
+			The class name of the viewer widget to use in order to display the property value. The default is
+			{@link wcfGridNumericViewer wcfGridNumericViewer}.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridNumericViewer"/>
+		<!---
+			@keywords private
+			The class name of the editor widget to use in order to change the property value. The default is
+			{@link wcfGridStepperEditor wcfGridStepperEditor}.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridStepperEditor"/>
+		<!---
+			@keywords private
+			Use "wcfColumnStepperEditor" to create Column Editor editor.
+		-->
+		<attribute name="columnEditorClass" value="wcfColumnStepperEditor"/>
+		<!--- The minimum allowable value for this stepper. The default value is "0". -->
+		<attribute name="minimumValue" type="number" value="0"/>
+		<!--- The maximum allowable value for this stepper. The default value is "10000". -->
+		<attribute name="maximumValue" type="number" value="10000"/>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				minimumValue: this.minimumValue,
+				maximumValue: this.maximumValue
+			};
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		Use this class to display a stepper widget in a grid cell. Use this class instead of wcfGridStepper
+		if you need to display a stepper for some rows and something else for other rows. 
+	-->
+	<class name="wcfGridStepperCellDescriptor" extends="wcfGridCellDescriptor">
+		<!---
+			@keywords private
+			The class name of the viewer widget to use in order to display the property value. The default is
+			{@link wcfGridNumericViewer wcfGridNumericViewer}.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridNumericViewer"/>
+		<!---
+			@keywords private
+			The class name of the editor widget to use in order to change the property value. The default is
+			{@link wcfGridStepperEditor wcfGridStepperEditor}.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridStepperEditor"/>
+		<!--- The minimum allowable value for this stepper. The default value is "0". -->
+		<attribute name="minimumValue" type="number" value="0"/>
+		<!--- The maximum allowable value for this stepper. The default value is "10000". -->
+		<attribute name="maximumValue" type="number" value="10000"/>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				minimumValue: this.minimumValue,
+				maximumValue: this.maximumValue
+			};
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This class extends {@link wcfStepper wcfStepper} so that it can be used as an editor in an object grid. It provides
+		delegates that listen for mouse and keyboard focus on the grid, and key such as Esc and Tab which will close the
+		editor and redirect the grid focus to another cell.
+	-->
+	<class name="wcfGridStepperEditor" extends="wcfStepper" width="${immediateparent.availableWidth}">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.style = parent.style;					
+			this.updateBGColorDel = new lz.Delegate(this, "updateBGColor");	
+			this.updateBGColor();
+			]]>
+		</method>				
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[	
+			if (this["updateBGColorDel"]){
+				this.updateBGColorDel.unregisterAll();
+				delete this.updateBGColorDel;
+			}
+			super.destroy();			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the background and border color of the editor.
+		-->	
+		<method name="updateBGColor" args="e=null"><![CDATA[		
+			this.updateBGColorDel.unregisterAll();
+			this.updateBGColorDel.register(parent.column, "onvisible");
+			if (parent.column.visible) {
+				var c = this.style.forminputdisabledbgcolor;
+				var b = this.style.disabledbordercolor;
+				if (parent.row.selected) {
+					if (parent.row.parent.activated) {
+						c = this.style.forminputdisabledselectedbgcolor;
+						b = this.style.disabledselectedbordercolor;
+					} else {							
+						c = this.style.forminputdisabledinactiveselectedbgcolor;
+						b = this.style.disabledinactiveselectedbordercolor;
+					}
+				} else  if (parent.row.mouseIn) {
+					c = this.style.forminputdisabledhoverbgcolor;
+					b = this.style.disabledhoverbordercolor;
+				}
+				if (c != this.textInput.disabledBGColor) {
+					this.textInput.setAttribute("disabledBGColor", c);
+				}
+				if (b != this.textInput.disabledBorderColor) {
+					this.textInput.setAttribute("disabledBorderColor", b);
+				}
+				this.updateBGColorDel.register(parent.row, "onselected");
+				this.updateBGColorDel.register(parent.row, "onmouseIn");
+				this.updateBGColorDel.register(parent.row.parent, "onactivated");
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!--- 
+		@keywords private
+		This editor is used to edit the integer type of {@link wcfGridStepper} column
+	 -->
+	<class name="wcfColumnStepperEditor" extends="wcfBaseStepper" value="${''}">
+		<!--- 
+			@keywords private
+			The column being edited by {@link wcfColumnStepperEditor} 
+		 -->
+		<attribute name="column" value="null"/>
+		
+		<!--- Selected objects {@link wcfModelObject} in grid -->
+		<attribute name="selectedObjects" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="getValue">
+			<![CDATA[
+			return (this.value == null || this.value == "") ? "" : wcfGlobalizationUtil.formatNumberToDataFormat(this.value);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="resetValue" args="initialValue">
+			<![CDATA[
+			this.setAttribute("minimumValue", this.column["minimumValue"] ? this.column.minimumValue : 0);
+			this.setAttribute("maximumValue", this.column["maximumValue"] ? this.column.maximumValue : 10000);
+			this.setAttribute("value", initialValue);
+			]]>
+		</method>
+	</class>
+
+</library>

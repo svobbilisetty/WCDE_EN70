@@ -1,0 +1,129 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		This class implements the logout link displayed in the banner area.
+	-->
+	<class name="wcfLogoutLink" extends="basecomponent" focusable="false">
+		<wcfFocusableBaseButton name="logoutLinkButton" maxframes="3" doesenter="true">
+			<view name="logoutLinkButtonView" y="3">
+				<view name="logoutButtonLeft" resource="logoutLeft" />
+				<view name="logoutButtonCenter" resource="logoutCenter" width="${parent.parent.logoutLinkText.width-4}" stretches="width" />
+				<view name="logoutButtonRight" resource="logoutRight"  />
+				<simplelayout axis="x" spacing="0" />
+			</view>
+			<text name="logoutLinkText" x="7" y="4" fontsize="12" fgcolor="${classroot.style.titletextcolor}" text="${shellResourceBundle.logoutLink.string}" />
+
+			<!---
+				@keywords private
+				This method handles the onclick event of the log out link, and opens the
+				log out dialog according to the condition of all the opened tools. The tools
+				may contain unsaved changes.
+			-->
+			<handler name="onclick">
+				<![CDATA[
+					if (wcfLogger.enabled) {
+						wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfLogoutLink", "onclick");
+					}
+					// check if there are any outstanding transactions
+					if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+						wcfTransactionProgressDialog.openWindow();
+					} else {
+						// check if there are any unsaved changes in the tools
+						if (toolsController.hasUnsavedChangesAllTools()) {
+							logoutDialog.setAttribute("currentState", "UNSAVEDCHANGES");
+							if (wcfLogger.enabled) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfLogoutLink", "onclick", "Opening the log out dialog with unsaved changes in the tools.");
+							}
+						}
+						else {
+							logoutDialog.setAttribute("currentState", "NORMAL");
+							if (wcfLogger.enabled) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfLogoutLink", "onclick", "Opening the log out dialog without unsaved changes.");
+							}
+						}
+						logoutDialog.openWindow();
+					}
+					if (wcfLogger.enabled) {
+						wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfLogoutLink", "onclick");
+					}
+				]]>
+			</handler>
+			
+			<!--- @keywords private -->
+			<method name="createFocusIndicator">
+				<![CDATA[
+				 if(!this.parent["indicator"]){
+				    new lz.wcfFocusIndicator(this.parent, {
+			    		name: "indicator",
+			    		focusableView: this,
+			   	 	indicatorView: this
+			  	  });
+		    		 }
+				]]>
+			</method>
+			
+			<method name="showDown" args="e=null">
+				<![CDATA[
+				this.logoutLinkButtonView.logoutButtonLeft.setAttribute('frame', this.downResourceNumber);
+				this.logoutLinkButtonView.logoutButtonCenter.setAttribute('frame', this.downResourceNumber);
+				this.logoutLinkButtonView.logoutButtonRight.setAttribute('frame', this.downResourceNumber);
+				]]>
+			</method>
+			<method name="showUp" args="e=null">
+				<![CDATA[
+				this.logoutLinkButtonView.logoutButtonLeft.setAttribute('frame', this.normalResourceNumber);
+				this.logoutLinkButtonView.logoutButtonCenter.setAttribute('frame', this.normalResourceNumber);
+				this.logoutLinkButtonView.logoutButtonRight.setAttribute('frame', this.normalResourceNumber);
+				]]>
+			</method>
+			<method name="showOver" args="e=null">
+				<![CDATA[
+				this.logoutLinkButtonView.logoutButtonLeft.setAttribute('frame', this.overResourceNumber);
+				this.logoutLinkButtonView.logoutButtonCenter.setAttribute('frame', this.overResourceNumber);
+				this.logoutLinkButtonView.logoutButtonRight.setAttribute('frame', this.overResourceNumber);
+				]]>
+			</method>
+		</wcfFocusableBaseButton>
+	</class>
+
+	<!---
+		This class implements the welcome text displayed in the banner area.
+	-->
+	<class name="wcfWelcomeText" extends="text">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateWelcomeTextDel = new lz.Delegate(this, "updateWelcomeText");
+			this.updateWelcomeText();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateWelcomeText" args="e=null">
+			<![CDATA[
+			this.updateWelcomeTextDel.unregisterAll();
+			var logonIdContext = wcfContextUtil.findContextValue(null, "logonId", this.updateWelcomeTextDel);
+			if (logonIdContext != null) {
+				this.updateWelcomeTextDel.register(shellResourceBundle.welcomeText, "onstring");
+				this.setAttribute("text", shellResourceBundle.welcomeText.string + " " + logonIdContext.value);
+			}
+			]]>
+		</method>
+	</class>
+
+</library>

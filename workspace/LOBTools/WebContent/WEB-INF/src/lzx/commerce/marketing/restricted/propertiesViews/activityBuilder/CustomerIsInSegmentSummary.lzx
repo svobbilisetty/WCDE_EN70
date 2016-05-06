@@ -1,0 +1,75 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktCustomerIsInSegmentElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktCustomerIsInSegmentElementObject} object:
+		<ul>
+			<li>ChildCustomerSegment/CustomerSegment[name]</li>
+		</ul>
+	-->
+	<class name="mktCustomerIsInSegmentSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="segmentNames" objectPath="ChildSegment/CustomerSegmentGroup" propertyName="name" />
+		<wcfFlowSummaryParam name="repeatSchedule" propertyName="repeatSchedule"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerIsInSegmentText, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryRunDailyText, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryRunOnceText, "onstring");			
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktCustomerIsInSegmentElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+
+				var segments = this.getValuesList("segmentNames");
+				if(segments != "") {
+					summary = mktMarketingResources.replaceValues("summaryCustomerIsInSegmentText", [segments]);
+					
+					var scheduleText = this.getScheduleSummaryText();
+					if(scheduleText != "") {
+						summary += "\n" + scheduleText;
+					}
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getScheduleSummaryText">
+			<![CDATA[
+				var summary = "";
+
+				var repeatSchedule = this.resolvedParams["repeatSchedule"]; 
+				if((repeatSchedule == "runDaily")) {
+					summary = mktMarketingResources.summaryRunDailyText.string;
+				}
+				else {
+					summary = mktMarketingResources.summaryRunOnceText.string;
+				}
+
+				return summary;
+			]]>
+		</method>		
+	</class>
+</library>

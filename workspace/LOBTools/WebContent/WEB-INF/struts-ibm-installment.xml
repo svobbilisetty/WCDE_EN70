@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+	<action-mappings>
+
+		<action path="/GetAllInstallmentRules" forward="/jsp/commerce/installment/restricted/GetAllInstallmentRules.jsp" />
+		<action path="/GetInstallmentRule" forward="/jsp/commerce/installment/restricted/GetInstallmentRuleById.jsp" />
+		<action path="/GetInstallmentRuleChildren" forward="/jsp/commerce/installment/restricted/GetInstallmentRuleChildren.jsp" />
+		<action path="/FindInstallmentRules" forward="/jsp/commerce/installment/restricted/FindInstallmentRules.jsp" />
+
+
+		<action path="/CreateInstallmentRule" parameter="InstallmentRule"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processInstallmentRule" />
+			<set-property property="actionCode" value="Add"/>
+			<set-property property="var" value="rules" />
+			<forward name="success" path="/jsp/commerce/installment/restricted/RespondCreateInstallmentRule.jsp"/>
+		</action>
+		<action path="/SaveInstallmentRule" parameter="InstallmentRule"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/DeleteInstallmentRule" parameter="InstallmentRule"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processInstallmentRule" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		<action path="/ActivateInstallmentRule" parameter="InstallmentRule"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processInstallmentRule" />
+			<set-property property="actionCode" value="Activate"/>
+			<set-property property="var" value="rules" />
+			<forward name="success" path="/jsp/commerce/installment/restricted/RespondActivateDeactivateInstallmentRule.jsp"/>
+		</action>
+		<action path="/DeactivateInstallmentRule" parameter="InstallmentRule"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processInstallmentRule" />
+			<set-property property="actionCode" value="Deactivate"/>
+			<set-property property="var" value="rules" />
+			<forward name="success" path="/jsp/commerce/installment/restricted/RespondActivateDeactivateInstallmentRule.jsp"/>
+		</action>
+		
+		<action path="/CreateInstallmentRuleCatalogEntryAssociation" parameter="CatalogEntryAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/DeleteInstallmentRuleCatalogEntryAssociation" parameter="CatalogEntryAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/CreateInstallmentRuleCatalogGroupAssociation" parameter="CatalogGroupAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/DeleteInstallmentRuleCatalogGroupAssociation" parameter="CatalogGroupAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/CreateInstallmentRulePaymentMethodAssociation" parameter="PaymentMethodAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/SaveInstallmentRulePaymentMethodAssociation" parameter="PaymentMethodAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/DeleteInstallmentRulePaymentMethodAssociation" parameter="PaymentMethodAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/CreateInstallmentRuleCondition" parameter="Condition"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/SaveInstallmentRuleCondition" parameter="Condition"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/DeleteInstallmentRuleCondition" parameter="Condition"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/CreateInstallmentOption" parameter="InstallmentOption"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Add"/>
+		</action>
+		<action path="/SaveInstallmentOption" parameter="InstallmentOption"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Change"/>
+		</action>
+		<action path="/DeleteInstallmentOption" parameter="InstallmentOption"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId,langId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.installment.facade.datatypes.InstallmentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.installment.facade.client.InstallmentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeInstallmentRule" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+	</action-mappings>
+
+</struts-config>

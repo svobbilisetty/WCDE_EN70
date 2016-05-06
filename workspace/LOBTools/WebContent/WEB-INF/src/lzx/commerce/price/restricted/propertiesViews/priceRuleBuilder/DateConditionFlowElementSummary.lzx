@@ -1,0 +1,58 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+
+<library>
+	<class name="prcDateConditionElementSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="startDate" propertyName="startDate"/>
+		<wcfFlowSummaryParam name="endDate" propertyName="endDate"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(prcPriceResources.startDate, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.endDate, "onstring");
+			this.updateSummaryDel.register(preferenceManager, "preferenceChanged");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var tooltipText = "";
+				
+				var startDate = this.resolvedParams["startDate"];
+				var endDate = this.resolvedParams["endDate"];
+				var sDate = wcfDateUtil.parse(startDate, wcfDateUtil.DATE_TIME_FORMAT);
+				startDate = wcfDateUtil.formatUI(sDate, wcfDateUtil.UI_DATE_TIME_FORMAT);
+				var eDate = wcfDateUtil.parse(endDate, wcfDateUtil.DATE_TIME_FORMAT);
+				endDate = wcfDateUtil.formatUI(eDate, wcfDateUtil.UI_DATE_TIME_FORMAT);
+				
+				if(startDate!=""){
+					summaryText = prcPriceResources.replaceValues("summary_startDate", [startDate]);
+					tooltipText = prcPriceResources.replaceValues("summary_startDate", [startDate]);
+				}
+				
+				if(endDate!=""){
+					summaryText += ", " + prcPriceResources.replaceValues("summary_endDate", [endDate]);
+					tooltipText += ", " + prcPriceResources.replaceValues("summary_endDate", [endDate]);
+				}
+
+				this.setSummaryText(summaryText);
+				this.setTooltipText(tooltipText);
+			]]>
+		</method>
+		
+	</class>
+</library>

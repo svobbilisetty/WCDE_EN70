@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Customer Segment target. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_segmentIdList as a parameter</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_segmentIdList as a parameter</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildCustomerSegment type which references the CustomerSegment object type</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedCustomerSegment type which references the InheritedCustomerSegment object type</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator wcfRequiredChildObjectValidator} to ensure at least one customer segment is selected</li>
+		</ul>
+		</p>
+
+		<p>
+		This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>containsOperator</b>: required field with a default of "="</li>
+			<li><b>anyOrAll</b>: required field with a default of "any"</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktCustomerSegmentElementObject" displayName="${mktMarketingResources.customerSegmentIdListName}" elemTemplateType="Target" flowIcon="customerSegmentIdListIcon" headerIcon="customerSegmentIdListHeaderIcon" helpLink="concepts/csbtarseg.htm" objectType="customerSegmentIdList" package="mkt" paletteIcon="customerSegmentIdListPaletteIcon" propertiesDefinitionName="mktCustomerSegmentProperties" summaryClass="mktCustomerSegmentSummary">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_segmentIdList" objectPath="ChildSegment/CustomerSegmentGroup" optional="true" propertyName="uniqueId"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_segmentIdList" objectPath="ChildSegment/CustomerSegmentGroup" optional="true" propertyName="uniqueId"/>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>customerSegmentIdList</elemTemplateName>
+			<containsOperator>=</containsOperator>
+			<anyOrAll>any</anyOrAll>
+		</Xml>
+
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate,SearchActivity,SearchActivityTemplate" derivedId="true" idProperty="childCustomerSegmentId" objectGroups="ChildSegment" objectType="ChildCustomerSegment" referencedTypes="CustomerSegment"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCustomerSegmentId" objectGroups="ChildSegment" objectType="ChildInheritedCustomerSegment" referencedTypes="InheritedCustomerSegment"/>
+		
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noCustomerSegmentsSelected}" objectPath="ChildSegment" validatorId="reqChildValidator" validatorType="noCustomerSegmentsSelected"/>
+	</FlowElementObjectDefinition>
+	
+</Definitions>

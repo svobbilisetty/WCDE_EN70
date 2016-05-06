@@ -1,0 +1,537 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		@keywords private
+		Get online stores service. This is used to get online stores which the user
+		has access to.
+	--> 
+	<wcfService name="wcfGetOnlineStores" sendWorkspaceContext="false" sendTimeZoneId="false" url="/cmc/GetOnlineStores">
+		<!---
+			@keywords private
+			Maximum number of items to return.
+		-->
+		<wcfServiceParam name="maxItems" value="1" />
+
+		<!---
+			Parse the response values from the get online store service.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				var nodes = e.childNodes;
+				if (nodes.length > 0) {
+					requestParent.doShowMenuItem();
+					if (requestParent.id == "workspaceManagement" && wcfContextUtil.findContextValue(null, "workspacesEnabled").value == "true" && !toolsController.isToolOpen("workspaceManagement")) {
+						toolsController.openToolById("workspaceManagement");
+					}
+				}
+				else {
+					requestParent.doHideMenuItem();
+					if (requestParent.id == "workspaceManagement" && wcfContextUtil.findContextValue(null, "workspacesEnabled").value == "true") {
+						wcfWorkspaceUtil.workOnBase();
+					}
+				}
+				requestParent.getOnlineStoresRetryCount = 0;
+			]]>
+		</method>
+
+		<!---
+			This method is called when a communication error occurs during the service request.
+			@param wcfServiceDataset ds: dataset
+			@param string message: error message
+		-->
+		<method name="handleServiceError" args="ds, message">
+			<![CDATA[
+				var menuItem = ds.requestParent;
+				// if an exception occurs, attempt one retry
+				if (menuItem.getOnlineStoresRetryCount < 1) {
+					menuItem.getOnlineStoresRetryCount++;
+					ds.doRequest();
+				}
+				else {
+					super.handleServiceError(ds, message);
+				}
+			]]>
+		</method>
+
+		<!---
+			Handle service exception. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param message string: the exception message
+			@param code string: the exception code
+		-->
+		<method name="handleException" args="ds, message, code=null">
+			<![CDATA[
+				var menuItem = ds.requestParent;
+				messageLogger.logException(code, wcfStringUtil.substituteparameters(shellResourceBundle.errorFailedToLoadTool.string, menuItem.displayName));
+				menuItem.doHideMenuItem();
+				menuItem.getOnlineStoresRetryCount = 0;
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		This class implements the items in the Management Center menu. It extends OpenLaszlo
+		standard listitem class to add Commerce specific functions.
+
+		An instance of this class will be created in <code>wcfApplicationMenuItems</code> definition when adding an item to the
+		main application menu.
+
+		Sample usage:
+		@START_CODE
+		<ApplicationMenuItem
+			id="myTool"
+			activeIconSrc="myToolActiveTabIcon"
+			inactiveIconSrc="myToolInactiveTabIcon"
+			displayName="My Tool"
+			toolDefinitionName="myToolDefinition"
+			usage="myToolUsage"
+			actionName="openBusinessObjectEditor" />
+		@END_CODE
+	-->
+	<class name="wcfApplicationMenuItem" extends="listitem" width="${parent.width}" height="25">
+		<!---
+			Flag that determines whether to add a menu separator before this item or not.
+		-->
+		<attribute name="addSeparatorBefore" type="boolean" value="false" />
+		<!---
+			The display name of the menu item. This is a required attribute.
+		-->
+		<attribute name="displayName" type="string" />
+		<!---
+			The icon image to be shown when the tool is active.
+		-->
+		<attribute name="activeIconSrc" type="string" />
+		<!---
+			The icon image to be shown when the tool is inactive.
+		-->
+		<attribute name="inactiveIconSrc" type="string" />
+		<!---
+			The name of the class which implements the tool associated with this item.  This class must
+			extend the business object editor base class (wcfBusinessObjectEditor).
+		-->
+		<attribute name="objectClass" type="string" />
+		<!---
+			The name of the definition that declares the tool associated with this item.  The definition must
+			extend the business object editor base class (wcfBusinessObjectEditor). Only specify this
+			attribute if you do not provide a value for <code>objectClass</code>.
+		-->
+		<attribute name="toolDefinitionName" type="string" />
+		<!---
+			The name of the usage policy used to determine access to this menu item.
+			The Management Center uses the usage policy in the following ways:
+			<UL>
+			<LI>To determine if the menu item is displayed.  If the current user is allowed to use the tool for any store, the menu item will be displayed.
+			<LI>To determine the list of stores that can be selected in this tool.  Any stores which the current user is allowed to use with this tool are displayed in the store selection menu.
+			</UL>
+
+			For additional information on the usage policies and how they are defined, see the <a href="/com.ibm.commerce.management-center_customization.doc/code/Infrastructure/OnlineStore/noun-summary.htm"/>OnlineStore</a> noun.	
+		-->
+		<attribute name="usage" type="string" value="" />
+		<!---
+			The name of the method in this class to invoke when this item is selected.  The available
+			methods to invoke are:
+			<ul>
+				<li>openBusinessObjectEditor</li>
+				<li>openAccelerator</li>
+				<li>openGettingStarted</li>
+				<li>openPreference</li>
+				<li>openLogTrace</li>
+			</ul>
+		-->
+		<attribute name="actionName" type="string" />
+		<!---
+			The short-cut key of this item.
+			@type String[]
+		-->
+		<attribute name="shortCutKey" />
+		<!---
+			Flag that determines whether the tool is available or not when working on a workspace task. The default
+			value of this flag is true.
+		-->
+		<attribute name="availableToWorkspaceTasks" type="boolean" value="true" />
+		<!---
+			@keywords private
+			Indicates the number of times the wcfGetOnlineStores service has been retried for
+			this menu item. This value is reset after a successful request or a second failure.
+		-->
+		<attribute name="getOnlineStoresRetryCount" value="0" />
+		<!---
+			@keywords private
+			Flag that determines whether to display this item in the menu or not. The default value of
+			this flag is false, and it will be changed to true when the user has access to this item.
+		-->
+		<attribute name="visible" value="false" />
+		<!---
+			@keywords private
+			Flag that determines whether this item is initialized or not. The default value of this flag is false.
+		-->
+		<attribute name="initialized" type="boolean" value="false" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "oninit");
+				}
+				if (!this["objectClass"]) {
+					this.objectClass = this["toolDefinitionName"];
+				}
+
+				// add this menu item to the parent array
+				var menuItems = parent["menuItems"];
+				if (!menuItems) {
+					menuItems = [];
+					parent.menuItems = menuItems;
+				}
+				menuItems.push(this);
+
+				// add icon to the menu item
+				if (this["activeIconSrc"] && this["activeIconSrc"] != "") {
+					this.menuItemView.itemIcon.setAttribute("resource", this["activeIconSrc"]);
+				}
+
+				// add lz.command for this menu item if shortCutKey is available
+				if (this["shortCutKey"] && this["shortCutKey"] != "") {
+					var thisCommand = new lz.command(this, {name: this["objectClass"] + this["actionName"], key: this["shortCutKey"]});
+					thisCommand.onselect = this.onselect;
+					var itemKeyValue = "";
+					for (var i=0; i<this.shortCutKey.length; i++) {
+						var key = "";
+						if (this.shortCutKey[i] == 'Control') {
+							key = 'Ctrl';
+						}
+						else {
+							key = this.shortCutKey[i];
+						}
+						itemKeyValue = itemKeyValue == "" ? key : itemKeyValue + "+" + key;
+					}
+					this.menuItemView.itemKey.setAttribute('text', itemKeyValue);
+					this.menuItemView.itemKey.setAttribute('x', 240);
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "oninit");
+				}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="ondestroy">
+			<![CDATA[
+				var index = parent["menuItems"].indexOf(this);
+				parent["menuItems"].splice(index, 1);
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onselect">
+			<![CDATA[
+				if (this.selected) {
+					this.doSelect();
+					
+					if (typeof(this["invokeActionDel"]) == "undefined") {
+						this.invokeActionDel = new lz.Delegate(this, "invokeAction");
+					}
+					wcfCallbackUtil.addDeferredCallback(
+				    	this.invokeActionDel,
+						null,
+						wcfCallbackUtil.PRIORITY_FOREGROUND);
+				}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="invokeAction" args="e=null">
+			<![CDATA[
+				this[this.actionName]();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="construct" args="parent, args">
+			<![CDATA[
+				super.construct(parent, args);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+				if (this['style'] != null) {
+					super._applystyle(s);
+					if (this._enabled) {
+						if (this.hilited) {
+							this.menuItemView.itemText.setAttribute("fgcolor", style.texthilitecolor);
+						}
+						else if (selected) {
+							this.menuItemView.itemText.setAttribute("fgcolor", style.textselectedcolor);
+						}
+						else {
+							// itemText is optional as it is controlled by state below, so we need to make sure it exists first
+							this.menuItemView['itemText'] && this.menuItemView.itemText.setAttribute("fgcolor", style.textcolor);
+						}
+					}
+					else {
+						this.menuItemView.itemText.setAttribute("fgcolor", style.textdisabledcolor);
+					}
+					this.separator.setAttribute('bgcolor', style.bordercolor);
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="initializeItem">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "initializeItem");
+				}
+
+				// remove this menu item if this is the item for Workspace tool and workspace is not enabled in Commerce
+				if (this.id == "workspaceManagement" && wcfContextUtil.findContextValue(null, "workspacesEnabled").value != "true") {
+					this.doHideMenuItem();
+				}
+				// access control check to determine whether this menu item should be shown to the current user or not
+				else if (this.usage != "") {
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "oninit", "Invoking GetOnlineStores request for this usage: " + this.usage);
+					}
+					wcfGetOnlineStores.doRequest(this, {usage: this.usage});
+				}
+				else {
+					this.doShowMenuItem();
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "initializeItem");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method shows this item in the menu when the user satisfies access control
+			requirements and is allowed to access this menu item. This is called when either
+			there is no usage assigned or wcfGetOnlineStores returns a store successfully.
+		-->
+		<method name="doShowMenuItem">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "doShowMenuItem");
+				}
+
+				// activate lz.command for this menu item if it exists
+				if (this[this["objectClass"] + this["actionName"]]) {
+					this[this["objectClass"] + this["actionName"]].setAttribute("active", true);
+				}
+
+				// if the item is access controlled, add it to the accessible tool list in user context
+				if (this.usage != "") {
+					wcfContextUtil.findContextValue(null, "accessibleTools").value = wcfContextUtil.findContextValue(null, "accessibleTools").value == "" ? this.usage : wcfContextUtil.findContextValue(null, "accessibleTools").value + "," + this.usage;
+					canvas.completeMenuItems.sendEvent();
+				}
+
+				// set this menu item to visible
+				this.setAttribute("visible", true);
+
+				// flag this menu item as initialized
+				this.setAttribute("initialized", true);
+
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "doShowMenuItem", "Completed displaying this item in the application menu: " + this["displayName"]);
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "doShowMenuItem");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method hides this item in the menu when the user does not satisfy access control
+			requirements and is not allowed to access this menu item. This is called when no store
+			is returned from wcfGetOnlineStores service.
+		-->
+		<method name="doHideMenuItem">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "doHideMenuItem");
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "doHideMenuItem", "Removing this item from the application menu: " + this["displayName"]);
+				}
+
+				// deactivate lz.command for this menu item if it exists
+				if (this[this["objectClass"] + this["actionName"]]) {
+					this[this["objectClass"] + this["actionName"]].setAttribute("active", false);
+				}
+
+				// set this menu item to be hidden
+				this.setAttribute("visible", false);
+
+				// flag this menu item as initialized
+				this.setAttribute("initialized", true);
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfApplicationMenuItem", "doHideMenuItem");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method is invoked when this menu item is selected and no specified onselect event
+			has been defined.
+		-->
+		<method name="doSelect">
+			<![CDATA[
+				applicationMenu.closeApplicationMenu();
+			]]>
+		</method>
+
+		<!---
+			This method opens the business object editor for the tool specified in the objectClass attribute
+			that is associated with this menu item.  The business object editor will be created and launched
+			in the main work area, or if it is already created, it will be brought to focus.  If the value of
+			{@link wcfApplicationMenuItem#actionName actionName} contains the name of this method, this method
+			will be invoked when this item is selected from the main application menu, or when the short-cut
+			key of this item is entered.
+		-->
+		<method name="openBusinessObjectEditor">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "openBusinessObjectEditor", "Opening this tool in the work area: " + this["displayName"]);
+				}
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.start("openBusinessObjectEditor: " + this.displayName);
+				}
+				if (this.availableToWorkspaceTasks || wcfContextUtil.findContextValue(null, "workspaceTask").value == "") {
+					toolsController.openTool(this.id, this.objectClass, this.usage, this.activeIconSrc, this.inactiveIconSrc, this.availableToWorkspaceTasks);
+				}
+				else {
+					wcfToolNotAvailableToWorkspaceTasksDialog.openWindow();
+				}
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.end();
+				}
+			]]>
+		</method>
+
+		<!---
+			This method opens WebSphere Commerce Accelerator in a separate browser window.  The current
+			session will be maintained in the new browser window with the Single Sign-On mechanism.  If
+			the value of {@link wcfApplicationMenuItem#actionName actionName} contains the name of this
+			method, this method will be invoked when this item is selected from the main application menu,
+			or when the short-cut key of this item is entered.
+		-->
+		<method name="openAccelerator">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "openAccelerator", "Invoking getSSOTokenService request to retrieve SSO token before launching WebSphere Commerce Accelerator.");
+				}
+				getSSOTokenService.doRequest(this, {});
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method uses the SSO token of the current session in context and constructs the URL for
+			WebSphere Commerce Accelerator, and launches it in a separate browser window.
+		-->
+		<method name="launchAccelerator" args="SSOToken">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "launchAccelerator", "Launching WebSphere Commerce Accelerator in a separate window.");
+				}
+
+				// construct the URL to launch accelerator
+				var url = new LzURL(lz.Browser.getLoadURL());
+				var port = url.port == null ? "" : ":" + url.port;
+				var tempUrl = "webapp/wcs/tools/servlet/StoreLanguageSelection?XMLFile=common.mcLogon&URL=StoreLanguageSelection&mcurl=MerchantCenterView?XMLFile=common.merchantCenter&slurl=StoreLanguageSelection&BrowserOk=true&popup=false&customFrameset=common.MerchantCenterFrameset";
+				var acceleratorUrl = url.protocol + "://" + url.host + port + "/" + tempUrl + "&ActivityToken=" + SSOToken;
+
+				// put together an object containing all required parameters
+				var newWindowObj = new Object();
+				newWindowObj.URL = acceleratorUrl;
+				newWindowObj.windowName = "MerchantCenter_" + wcfContextUtil.findContextValue(null, "logonId").value;
+				newWindowObj.windowFeatures = "left=0,top=0,width=1014,height=710,scrollbars=no,toolbar=no,directories=no,status=no,menubar=no,copyhistory=no,resizable=yes";
+
+				// call the javascript method in the parent window to launch accelerator
+				callJSFunction("openNewWindow", newWindowObj);
+			]]>
+		</method>
+
+		<!---
+			This method opens the getting started page of Management Center.
+			If the value of {@link wcfApplicationMenuItem#actionName actionName} contains the name of this
+			method, this method will be invoked when this item is selected from the main application menu.
+		-->
+		<method name="openGettingStarted">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "openGettingStarted", "Launching the getting started page");
+				}
+				toolsController.openTool(this.id, this.objectClass, this.usage, this.activeIconSrc, this.inactiveIconSrc, this.availableToWorkspaceTasks);
+			]]>
+		</method>
+
+		<!---
+			This method opens the Preferences dialog which allows the user to change preferences of
+			the application.  If the value of {@link wcfApplicationMenuItem#actionName actionName} contains
+			the name of this method, this method will be invoked when this item is selected from the main
+			application menu.
+		-->
+		<method name="openPreference">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "openPreference", "Opening the preference window.");
+				}
+				preferenceManager.loadUserPreferenceDialog();
+			]]>
+		</method>
+
+		<!---
+			This method opens the logging and tracing dialog which allows the user to enable/disable
+			logging and tracing of the application and change logging and tracing levels.  If the value of
+			{@link wcfApplicationMenuItem#actionName actionName} contains the name of this method, this
+			method will be invoked when this item is selected from the main application menu.
+		-->
+		<method name="openLogTrace">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenuItem", "openLogTrace", "Opening the Logging and Tracing window.");
+				}
+				wcfLogger.loadLogTraceWindow();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Calculate the width for this menu item.
+		-->
+		<method name="getMenuItemWidth">
+			<![CDATA[
+			return this.menuItemView.width + 30;
+			]]>
+		</method>
+
+		<view name="separator" height="1" width="${parent.width}" visible="${parent.addSeparatorBefore}" />
+		<view name="menuItemView" x="${parent.x+5}" y="5">
+			<view name="itemIcon" width="16" height="16" />
+			<text name="itemText" valign="middle" text="${classroot.displayName}" />
+			<text name="itemKey" valign="middle" />
+			<simplelayout axis="x" spacing="5" />
+		</view>
+	</class>
+
+</library>

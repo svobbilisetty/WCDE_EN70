@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcCompareConditionElementObject" displayName="${prcPriceResources.compareCondition_DisplayName}" elemTemplateType="Condition" flowIcon="compareConditionElementIcon" headerIcon="compareConditionElementHeaderIcon" helpLink="concepts/cpiconcompare.htm" objectType="compareCondition" package="prc" paletteIcon="compareConditionPaletteIcon" propertiesDefinitionName="prcCompareConditionElementProperties" summaryClass="prcCompareConditionElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_inputOperandType" propertyName="inputOperandType"/>
+			<ServiceParam parameterName="PROPERTY_inputOperandReferenceId" objectPath="InputPriceListGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="inputOperandTypeIsPriceList" enablementValue="PriceList" propertyName="inputOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_inputOperandReferenceId" objectPath="InputPriceConstantGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="inputOperandTypeIsPriceConstant" enablementValue="PriceConstant" propertyName="inputOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_inputOperandReferenceId" objectPath="InputPriceEquationGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="inputOperandTypeIsPriceEquation" enablementValue="PriceEquation" propertyName="inputOperandType"/>
+			</ServiceParam>
+			
+			<ServiceParam parameterName="PROPERTY_comparisonOperandType" propertyName="comparisonOperandType" />
+			<ServiceParam parameterName="PROPERTY_comparisonOperandReferenceId" objectPath="ComparisonPriceListGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="comparisonOperandTypeIsPriceList" enablementValue="PriceList" propertyName="comparisonOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_comparisonOperandReferenceId" objectPath="ComparisonPriceConstantGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="comparisonOperandTypeIsPriceConstant" enablementValue="PriceConstant" propertyName="comparisonOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_comparisonOperandReferenceId" objectPath="ComparisonPriceEquationGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="comparisonOperandTypeIsPriceEquation" enablementValue="PriceEquation" propertyName="comparisonOperandType"/>
+			</ServiceParam>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_inputOperandType" propertyName="inputOperandType"/>
+			<ServiceParam parameterName="PROPERTY_inputOperandReferenceId" objectPath="InputPriceListGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="inputOperandTypeIsPriceList" enablementValue="PriceList" propertyName="inputOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_inputOperandReferenceId" objectPath="InputPriceConstantGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="inputOperandTypeIsPriceConstant" enablementValue="PriceConstant" propertyName="inputOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_inputOperandReferenceId" objectPath="InputPriceEquationGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="inputOperandTypeIsPriceEquation" enablementValue="PriceEquation" propertyName="inputOperandType"/>
+			</ServiceParam>
+			
+			<ServiceParam name="PROPERTY_comparisonOperandType" propertyName="comparisonOperandType" />
+			<ServiceParam parameterName="PROPERTY_comparisonOperandReferenceId" objectPath="ComparisonPriceListGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="comparisonOperandTypeIsPriceList" enablementValue="PriceList" propertyName="comparisonOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_comparisonOperandReferenceId" objectPath="ComparisonPriceConstantGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="comparisonOperandTypeIsPriceConstant" enablementValue="PriceConstant" propertyName="comparisonOperandType"/>
+			</ServiceParam>
+			<ServiceParam parameterName="PROPERTY_comparisonOperandReferenceId" objectPath="ComparisonPriceEquationGroup" propertyName="referenceId" optional="true">
+				<EnablementCondition conditionId="comparisonOperandTypeIsPriceEquation" enablementValue="PriceEquation" propertyName="comparisonOperandType"/>
+			</ServiceParam>
+		</UpdateService>
+	
+		<PropertyDefinition propertyName="inputOperandType" required="true">
+			<PropertyValue displayName="${prcPriceResources.priceListInputOperand}" value="PriceList"/>
+			<PropertyValue displayName="${prcPriceResources.priceConstantInputOperand}" value="PriceConstant"/>
+			<PropertyValue displayName="${prcPriceResources.priceEquationInputOperand}" value="PriceEquation"/>
+			<PropertyValue displayName="${prcPriceResources.variableOperand}" value="Variable"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="comparisonOperandType" required="true">
+			<PropertyValue displayName="${prcPriceResources.priceListComparisonOperand}" value="PriceList"/>
+			<PropertyValue displayName="${prcPriceResources.priceConstantComparisonOperand}" value="PriceConstant"/>
+			<PropertyValue displayName="${prcPriceResources.priceEquationComparisonOperand}" value="PriceEquation"/>
+			<PropertyValue displayName="${prcPriceResources.numberOperand}" value="Number"/>
+		</PropertyDefinition>
+	
+		<PropertyDefinition propertyName="operator" required="true">
+			<PropertyValue displayName="${prcPriceResources.equal}" value="="/>
+			<PropertyValue displayName="${prcPriceResources.notEqual}" value="!="/>
+			<PropertyValue displayName="${prcPriceResources.lessThan}" value="&lt;"/>
+			<PropertyValue displayName="${prcPriceResources.noGreaterThan}" value="&lt;="/>
+			<PropertyValue displayName="${prcPriceResources.greaterThan}" value="&gt;"/>
+			<PropertyValue displayName="${prcPriceResources.noLessThan}" value="&gt;="/>
+		</PropertyDefinition>
+		
+		<Xml name="template">
+			<elemTemplateName>compareCondition</elemTemplateName>
+			<inputOperandType>PriceList</inputOperandType>
+			<comparisonOperandType>PriceList</comparisonOperandType>
+			<operator>=</operator>
+		</Xml>
+	
+		<PropertyDefinition displayName="${prcPriceResources.number}" propertyName="numericalValue" type="number" required="true">
+			<EnablementCondition conditionId="comparisonOperandTypeIsNumber" enablementValue="Number" propertyName="comparisonOperandType"/>
+		</PropertyDefinition>
+	
+		<ReferenceObjectDefinition objectGroups="InputPriceListGroup" objectType="InputPriceList" referencedTypes="PriceList" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="InputPriceListGroup" objectType="InheritedInputPriceList" referencedTypes="InheritedPriceList" idProperty="referenceId" allowDuplicates="false" derivedId="true"/>
+		<ReferenceObjectDefinition objectGroups="ComparisonPriceListGroup" objectType="ComparisonPriceList" referencedTypes="PriceList" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="ComparisonPriceListGroup" objectType="InheritedComparisonPriceList" referencedTypes="InheritedPriceList" idProperty="referenceId" allowDuplicates="false" derivedId="true"/>
+		
+		<ReferenceObjectDefinition objectGroups="InputPriceConstantGroup" objectType="InputPriceConstant" referencedTypes="PercentPriceConstant,NumberPriceConstant,CurrencyPriceConstant" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="InputPriceConstantGroup" objectType="InheritedInputPriceConstant" referencedTypes="InheritedPercentPriceConstant,InheritedNumberPriceConstant,InheritedCurrencyPriceConstant" idProperty="referenceId" allowDuplicates="false" derivedId="true"/>
+		<ReferenceObjectDefinition objectGroups="ComparisonPriceConstantGroup" objectType="ComparisonPriceConstant" referencedTypes="PercentPriceConstant,NumberPriceConstant,CurrencyPriceConstant" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="ComparisonPriceConstantGroup" objectType="InheritedComparisonPriceConstant" referencedTypes="InheritedPercentPriceConstant,InheritedNumberPriceConstant,InheritedCurrencyPriceConstant" idProperty="referenceId" allowDuplicates="false" derivedId="true"/>
+		
+		<ReferenceObjectDefinition objectGroups="InputPriceEquationGroup" objectType="InputPriceEquation" referencedTypes="PriceEquation" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="InputPriceEquationGroup" objectType="InheritedInputPriceEquation" referencedTypes="InheritedPriceEquation" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="InheritedPriceRule,PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="ComparisonPriceEquationGroup" objectType="ComparisonPriceEquation" referencedTypes="PriceEquation" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="ComparisonPriceEquationGroup" objectType="InheritedComparisonPriceEquation" referencedTypes="InheritedPriceEquation" idProperty="referenceId" allowDuplicates="false" derivedId="true" allowedParentTypes="InheritedPriceRule,PriceRule"/>
+		
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceList}" objectPath="InputPriceListGroup" validatorId="reqInputPriceListGroup" validatorType="noInputPriceList">
+			<EnablementCondition conditionId="inputOperandTypeIsPriceList" enablementValue="PriceList" propertyName="inputOperandType"/>
+		</RequiredChildObjectValidator>
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceConstant}" objectPath="InputPriceConstantGroup" validatorId="reqInputPriceConstantGroup" validatorType="noInputPriceConstant">
+			<EnablementCondition conditionId="inputOperandTypeIsPriceConstant" enablementValue="PriceConstant" propertyName="inputOperandType"/>
+		</RequiredChildObjectValidator>
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceList}" objectPath="ComparisonPriceListGroup" validatorId="reqComparisonPriceListGroup" validatorType="noComparisonPriceList">
+			<EnablementCondition conditionId="comparisonOperandTypeIsPriceList" enablementValue="PriceList" propertyName="comparisonOperandType"/>
+		</RequiredChildObjectValidator>
+		
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceConstant}" objectPath="ComparisonPriceConstantGroup" validatorId="reqComparisonPriceConstantGroup" validatorType="noComparisonPriceConstant">
+			<EnablementCondition conditionId="comparisonOperandTypeIsPriceConstant" enablementValue="PriceConstant" propertyName="comparisonOperandType"/>
+		</RequiredChildObjectValidator>
+		
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceEquation}" objectPath="InputPriceEquationGroup" validatorId="reqInputPriceEquationGroup" validatorType="noInputPriceEquation">
+			<EnablementCondition conditionId="inputOperandTypeIsPriceEquation" enablementValue="PriceEquation" propertyName="inputOperandType"/>
+		</RequiredChildObjectValidator>
+		
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceEquation}" objectPath="ComparisonPriceEquationGroup" validatorId="reqComparisonPriceEquationGroup" validatorType="noComparisonPriceEquation">
+			<EnablementCondition conditionId="comparisonOperandTypeIsPriceEquation" enablementValue="PriceEquation" propertyName="comparisonOperandType"/>
+		</RequiredChildObjectValidator>
+		
+	</FlowElementObjectDefinition>
+
+</Definitions>

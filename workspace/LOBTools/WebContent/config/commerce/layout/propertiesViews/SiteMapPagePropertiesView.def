@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglSiteMapPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.siteMapPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="SiteMapPageReferenceDefaultSiteMapPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="SiteMapPageReferenceDefaultSiteMapPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="SiteMapPageReferenceDefaultSiteMapPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display site map page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglSiteMapPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localSiteMapPageCondition" enablementValue="InheritedSiteMapPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglSiteMapPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited site map page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedSiteMapPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSiteMapPageCondition" enablementValue="InheritedSiteMapPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedSiteMapPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglSiteMapPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglSiteMapPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_siteMapPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="SiteMapPageLayoutAssociationReferencedSiteMapPageLayouts,SiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglSiteMapPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_siteMapPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="SiteMapPageLayoutAssociationReferencedSiteMapPageLayouts,SiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedSiteMapPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_siteMapPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedSiteMapPageLayoutAssociationReferencedInheritedSiteMapPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

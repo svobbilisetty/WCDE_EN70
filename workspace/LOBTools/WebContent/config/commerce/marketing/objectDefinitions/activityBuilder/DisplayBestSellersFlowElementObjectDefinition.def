@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Display Best Sellers action. This object defines the following child elements:
+			<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_objectGroupId, PROPERTY_adjustmentIdList, and PROPERTY_adjustmentSeqList as parameters</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_objectGroupId, PROPERTY_adjustmentIdList, and PROPERTY_adjustmentSeqList as parameters</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildCatalogGroup type which references the
+				{@link CatalogGroup CatalogGroup} and {@link SalesCatalogGroup SalesCatalogGroup} object types</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedCatalogGroup type which references the
+				{@link InheritedCatalogGroup InheritedCatalogGroup} object type</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator wcfRequiredChildObjectValidator} to ensure at least one category is selected</li>
+			</ul>
+		</p>
+		
+		<p>This object also has the following pre-defined properties and restrictions:
+			<ul>
+				<li><b>repeatSchedule</b>: A pre-defined value set to runDaily to specify that processing of the data associated with this campaign element should occur daily.</li>
+				<li><b>rankingBasedOnOrders</b>: A pre-defined value set to true to specify that processing of the data associated with this campaign element should occur when an order is submitted.</li>
+				<li><b>size</b>: A required value for the number of catalog entries to display in the list.</li>
+				<li><b>intervalUnit</b>: A pre-defined value set to D to specify that the time frame interval is in days.</li>
+				<li><b>intervalNum</b>: A required value for the number of days in the time frame interval.</li>
+				<li><b>location</b>: A required value for location to determine which ranking list to display.</li>
+			</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktDisplayBestSellersElementObject" displayName="${mktMarketingResources.mostSoldRankingName}" elemTemplateType="Action" flowIcon="mostSoldRankingIcon" headerIcon="mostSoldRankingHeaderIcon" helpLink="concepts/csbactdisbestsell.htm" objectType="ranking_MostSold" package="mkt" paletteIcon="mostSoldRankingPaletteIcon" propertiesDefinitionName="mktDisplayBestSellersProperties" summaryClass="mktDisplayBestSellersSummary">
+					
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_objectGroupId" objectPath="ChildCatalogGroup/CatalogGroupAlias" optional="true" propertyName="catgroupId"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_objectGroupId" objectPath="ChildCatalogGroup/CatalogGroupAlias" optional="true" propertyName="catgroupId"/>
+		</UpdateService>
+		
+		<Xml name="template">
+			<elemTemplateName>ranking_MostSold</elemTemplateName>			
+			<repeatSchedule>runDaily</repeatSchedule>			
+			<rankingBasedOnOrders>true</rankingBasedOnOrders>
+			<intervalUnit>D</intervalUnit>
+			<intervalNum>7</intervalNum>
+			<location>specificCategory</location>
+		</Xml>
+				 
+		<PropertyDefinition displayName="${mktMarketingResources.rankingSize}" maxValue="100" minValue="1" propertyName="size" required="true" type="number"/>
+		<PropertyDefinition displayName="${mktMarketingResources.rankingIntervalNum}" maxValue="365" minValue="1" propertyName="intervalNum" required="true" type="number"/>		
+		
+		<PropertyDefinition propertyName="location" required="true">
+			<PropertyValue displayName="${mktMarketingResources.rankingLocationSpecificCategory}" value="specificCategory"/>
+			<PropertyValue displayName="${mktMarketingResources.rankingLocationCurrentCategory}" value="currentCategory"/>
+			<PropertyValue displayName="${mktMarketingResources.rankingLocationCurrentOrSubCategory}" value="currentOrSubCategory"/>
+		</PropertyDefinition>	
+				
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childCatalogGroupId" objectGroups="ChildCatalogGroup,ChildCatalogGroupGroup" objectType="ChildCatalogGroup" referencedTypes="CatalogGroup,SalesCatalogGroup"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCatalogGroupId" objectGroups="ChildCatalogGroup,ChildCatalogGroupGroup" objectType="ChildInheritedCatalogGroup" referencedTypes="InheritedCatalogGroup,InheritedSalesCatalogGroup"/>
+
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noCategoriesSelected}" objectPath="ChildCatalogGroup" validatorId="reqChildValidator" validatorType="noCategoriesSelected"/>
+												    
+	</FlowElementObjectDefinition>
+	
+</Definitions>

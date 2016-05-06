@@ -1,0 +1,136 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktExternalSiteReferralElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text.
+	-->
+	<class name="mktExternalSiteReferralSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="containsOperator" propertyName="containsOperator"/>
+		<wcfFlowSummaryParam name="domainOption" propertyName="domainOption"/>
+		<wcfFlowSummaryParam name="equalsOrEndsWith" propertyName="equalsOrEndsWith"/>
+		<wcfFlowSummaryParam name="referralURLValue" propertyName="referralURLValue"/>
+		<wcfFlowSummaryParam name="urlName" propertyName="urlName"/>
+		<wcfFlowSummaryParam name="comparison" propertyName="comparison"/>
+		<wcfFlowSummaryParam name="urlValueList" objectPath="urlValue" propertyName="urlValue"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryNone, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.PredefinedReferralURLGoogle, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.PredefinedReferralURLYahoo, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsExternalSiteIs, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsExternalSiteContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsExternalSiteEndsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsSearchTermsExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsSearchTermsStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsSearchTermsContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsSearchTermsEndsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsNVPExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsNVPStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsNVPContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsNVPEndsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCustomerBehaviorURLContentsNVPAny, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the flow element.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+			var containsOperator = this.resolvedParams["containsOperator"];
+			var domainOption = this.resolvedParams["domainOption"];
+			var comparisonText = this.resolvedParams["comparison"];
+			var referralURLValue = this.resolvedParams["referralURLValue"];
+			var summary = "";
+
+			var valueText = this.getValuesList("urlValueList");
+			
+			if (domainOption == "predefined") {
+				// If this is one of the predefined search engines
+				var searchEngine = "";
+
+				if (referralURLValue == ".google.") {
+					searchEngine = mktMarketingResources.PredefinedReferralURLGoogle.string;
+				}
+				else if (referralURLValue == ".yahoo.") {
+					searchEngine = mktMarketingResources.PredefinedReferralURLYahoo.string;
+				}
+
+				if((searchEngine != "") && (comparisonText != "") && ((comparisonText == "any") || ((comparisonText != "any") && (valueText != "")))) {
+					summary = summary + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsExternalSiteIs", [searchEngine]);
+					
+					if(comparisonText == "=") {
+						summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsSearchTermsExactly", [valueText]);
+					}
+					else if(comparisonText == "start") {
+						summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsSearchTermsStartsWith", [valueText]);
+					}
+					else if(comparisonText == "contain") {
+						summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsSearchTermsContains", [valueText]);
+					}
+					else if(comparisonText == "end") {
+						summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsSearchTermsEndsWith", [valueText]);
+					}
+				}
+			}
+			else if (domainOption == "other") {
+				// If the business user selected his own domain
+				var equalsOrEndsWithText = this.resolvedParams["equalsOrEndsWith"];
+				var nameText = this.resolvedParams["urlName"];
+
+				if ((referralURLValue != null) && (referralURLValue != "") && (equalsOrEndsWithText != null) && (equalsOrEndsWithText != "")) {
+					if(equalsOrEndsWithText == "=") {
+						summary = summary + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsExternalSiteIs", [referralURLValue]);
+					}
+					else if(equalsOrEndsWithText == "contain") {
+						summary = mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsExternalSiteContains", [referralURLValue]);
+					}
+					else if(equalsOrEndsWithText == "end") {
+						summary = mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsExternalSiteEndsWith", [referralURLValue]);
+					}
+					
+					if ((nameText != null) && (nameText != "") && (comparisonText != null) && (comparisonText != "") && 
+					   ((comparisonText == "any") || ((comparisonText != "any") && (valueText != "")))) {
+
+						if(comparisonText == "=") {
+							summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsNVPExactly", [nameText, valueText]);
+						}
+						else if(comparisonText == "start") {
+							summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsNVPStartsWith", [nameText, valueText]);
+						}
+						else if(comparisonText == "contain") {
+							summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsNVPContains", [nameText, valueText]);
+						}
+						else if(comparisonText == "end") {
+							summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsNVPEndsWith", [nameText, valueText]);
+						}
+						else if(comparisonText == "any") {
+							summary = summary + "\n" + mktMarketingResources.replaceValues("summaryCustomerBehaviorURLContentsNVPAny", [nameText]);
+						}
+					}
+				}
+			}
+
+			if((containsOperator == "!=") && (summary != "")) {
+				summary = mktMarketingResources.summaryNone.string + "\n" + summary;
+			}
+
+			this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,294 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		
+		Base class for storing user preferences. This class implementation
+		does not provide any persistence across user sessions.
+	-->	
+	<class name="wcfPreferenceManager" extends="node">
+		<!--- Instance of the User preference dialog class -->
+		<attribute name="userPreferenceDialogClass" type="string" value="${null}" />
+
+		<!---
+			@keywords private
+			List of user preference objects in the user preference dialog 
+		-->
+		<attribute name="userPreferenceObjects" value="[]" />
+
+		<!---
+			@keywords private
+			Map of user preferences 
+		-->
+		<attribute name="preferenceMap" value="${{}}" />
+
+		<!---			
+			Instance of the user preference dialog
+		-->
+		<attribute name="userPreferenceDialog" value="null" />
+
+		<!--- Flag that determines whether this manager has been initialized or not. -->
+		<attribute name="isInitialized" type="boolean" value="false" />
+
+		<!--- Event that is sent when this manager is loaded. -->
+		<event name="onload" />
+
+		<!--- Event that is sent when this manager is reset. -->
+		<event name="onreset" />
+
+		<!--- Event that is sent when user preferences are changed -->
+		<event name="preferenceChanged" />
+
+		<!---
+			Send a method when a user preference is changed.
+			@param string preferenceName: the name of the changed preference
+		-->
+		<method name="sendPreferenceChangedEvent" args="preferenceName">
+			<![CDATA[
+				this.preferenceChanged.sendEvent(preferenceName);
+				if (this["on" + preferenceName]) {
+					this["on" + preferenceName].sendEvent();
+				}
+			]]>
+		</method>
+
+		<!--- Save preferences service to persist the user preferences -->
+		<wcfService name="savePreferences" url="/cmc/SavePreferences" sendWorkspaceContext="false" serializeRequests="true" sendTimeZoneId="false">
+			<!---
+				This method is called when an element named "object" is found in the service
+				response XML.
+				@param wcfModelObject o: the model object
+				@param XML e: "object" data element
+				@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+			-->
+			<method name="parseObject" args="o,e,reqIdentifier">
+				<![CDATA[
+				
+				]]>
+			</method>
+
+			<!---
+				Handle save preferences service failure exception. The default implementation will log the exception.
+				@param wcfServiceDataset ds: dataset
+				@param message string: the exception message
+				@param code string: the exception code
+			-->
+			<method name="handleException" args="ds, message, code=null">
+				<![CDATA[
+					super.handleException(ds, message, code);
+				]]>
+			</method>
+		</wcfService>
+
+		<!--- Service to retrieve the user preferences. -->
+		<wcfService name="getPreferences" url="/cmc/GetPreferences" sendWorkspaceContext="false" sendTimeZoneId="false" retryOnError="true">
+			<!---
+				Parse the response values from the GetPreferences service.
+				@param node requestParent: the parent node for this service request
+				@param XML e: "values" data element
+				@param number requestIdentifier: unique request identifier
+			-->
+			<method name="parseValues" args="requestParent, e, requestIdentifier">
+				<![CDATA[
+					var key = "";
+					var value = "";
+                    var nodes = e.childNodes;
+                    for (var i=0; i<nodes.length; i++) {
+                        var node = nodes[i];
+                        var key = node.nodeName;
+                        var value = null;
+                        for(var j = 0; node.childNodes && j < node.childNodes.length; j++){
+                            var childChildNode = node.childNodes[j].firstChild;
+                            if(childChildNode != null){
+                                value = childChildNode.toString();// only 1 value expected otherwise the last value will be considered.
+                            }
+                        }
+                        if (value != null) {
+                            classroot.setPreference(key, value);
+                        }
+                    }
+					classroot.loadPreferenceValues();
+					classroot.applyPreferences();
+					classroot.onload.sendEvent();
+					classroot.setAttribute("isInitialized", true);
+				]]>
+			</method>
+
+			<!---
+				Handle get preferences service exception. The default implementation will log the failure exception.
+				@param wcfServiceDataset ds: dataset
+				@param message string: the exception message
+				@param code string: the exception code
+			-->
+			<method name="handleException" args="ds, message, code=null">
+				<![CDATA[
+					super.handleException(ds, message, code);
+				]]>
+			</method>
+		</wcfService>
+
+		<!---
+			Add an user preference object in the panel to userPreferenceObjects list.
+			@param Object newObject: the new user preference object
+		-->
+		<method name="addUserPreferenceObject" args="newObject">
+			<![CDATA[
+				this.userPreferenceObjects.push(newObject);
+			]]>
+		</method>
+
+		<!---
+			Get the preference value with the specified key.
+			@param string key: the preference key
+		-->
+		<method name="getPreference" args="key">
+			<![CDATA[
+				return this.preferenceMap[key];
+			]]>
+		</method>
+		
+		<!---
+			Get the preference value with the specified key.
+			@param string key: the preference key
+			@returns wcfResourceBundleKey: resource key of this preference
+		-->
+		<method name="getPreferenceDisplayKey" args="key">
+			<![CDATA[
+				for (var i=0; i<this.userPreferenceObjects.length; i++) {
+					if (this.userPreferenceObjects[i].preferenceName == key) {
+						return this.userPreferenceObjects[i].getDisplayKey();
+					}
+				}
+				return null;
+			]]>
+		</method>
+
+		<!---
+			Set the specified user preference.
+			@param string key: the preference key
+			@param string value: the preference value
+		-->
+		<method name="setPreference" args="key, value">
+			<![CDATA[
+				if (this.preferenceMap[key] != value) {
+					this.preferenceMap[key] = value;
+					if (this.isInitialized) {
+						var service = this.savePreferences;
+						var url = [];
+						url[key + "_null_r_1"] = value;
+						service.doRequest(this, url);
+					}
+				}
+			]]>
+		</method>
+
+		<!--- Method to load the preferences from database. -->
+		<method name="load">
+			<![CDATA[
+				this.setAttribute("isInitialized", false);
+				if (this.userPreferenceDialog == null && this.userPreferenceDialogClass != null) {
+					this.userPreferenceDialog = new lz[this.userPreferenceDialogClass]();
+					this.userPreferenceDialog.completeInstantiation();
+				}
+				var service = this.getPreferences;
+				service.doRequest();
+			]]>
+		</method>
+
+		<!--- Method to open the user preference dialog when user clicks 'Preferences' menu option. -->
+		<method name="loadUserPreferenceDialog">
+			<![CDATA[
+				this.loadPreferenceValues();
+				this.userPreferenceDialog.openWindow();
+			]]>
+		</method>
+		<!--- 
+			@keywords private
+			Populate the user preferences to preference dialog instance. 
+		-->
+		<method name="loadPreferenceValues">
+			<![CDATA[
+				for (var i=0; i<this.userPreferenceObjects.length; i++) {
+					this.userPreferenceObjects[i].loadValue();
+				}
+			]]>
+		</method>
+
+		<!--- Method to reset preference values when a new session is started. -->
+		<method name="resetPreferenceValues">
+			<![CDATA[
+				this.preferenceMap = {};
+				this.onreset.sendEvent();
+			]]>
+		</method>
+
+		<!--- Method to apply the updated preferences to the UI. -->
+		<method name="applyPreferences">
+			<![CDATA[
+				for (var i=0; i<this.userPreferenceObjects.length; i++) {
+					this.userPreferenceObjects[i].applyValue();
+				}
+			]]>
+		</method>
+
+		<!--- Method to validate preference values and save them to the database. -->
+		<method name="savePreferenceValues">
+			<![CDATA[
+				for (var i=0; i<this.userPreferenceObjects.length; i++) {
+					if (!this.userPreferenceObjects[i].validateValue()) {
+						return;
+					}
+				}
+				var isSavePreferences = false;
+				for (var i=0; i<this.userPreferenceObjects.length; i++) {
+					if (this.getPreference(this.userPreferenceObjects[i].preferenceName) != this.userPreferenceObjects[i].getValue()) {
+						this.preferenceMap[this.userPreferenceObjects[i].preferenceName] = this.userPreferenceObjects[i].getValue();
+						isSavePreferences = true;
+					}
+				}
+				if (isSavePreferences) {
+					// apply changes in preferences to the UI
+					this.applyPreferences();
+					// persist preferences to the database
+					this.submitSavePreferences();
+				}
+				// close the preference dialog
+				this.userPreferenceDialog.closeWindow();
+			]]>
+		</method>
+
+		<!--- 
+			@keywords private
+			Method to submit the request to the save preferences service to persist preferences to the member attribute table. 
+		-->
+		<method name="submitSavePreferences">
+			<![CDATA[
+				var service = this.savePreferences;
+				var url = [];
+				for (var i=0; i<this.userPreferenceObjects.length; i++) {
+					var preferenceNameInURL = this.userPreferenceObjects[i].preferenceName;
+					if (this.userPreferenceObjects[i].customAttribute) {
+						preferenceNameInURL = preferenceNameInURL + "_null_r_1";
+					}
+					url[preferenceNameInURL] = this.getPreference(this.userPreferenceObjects[i].preferenceName);
+				}
+				service.doRequest(this, url);
+			]]>
+		</method>
+	</class>
+
+</library>

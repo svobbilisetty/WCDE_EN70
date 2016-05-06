@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>	
+ 	<ParentReferenceObjectDefinition definitionName="pglChildCatalogGroupPage"
+			idProperty="childCatalogGroupPageId"
+			objectType="ChildCatalogGroupPage"
+			referencedTypes="CatalogGroupPage,InheritedCatalogGroupPage,TopCatalogGroupPage,InheritedTopCatalogGroupPage">
+		<FalseEnablementCondition/>
+	</ParentReferenceObjectDefinition>
+	
+	<ReferenceObjectDefinition definitionName="pglChildCatalogEntryPage"
+			idProperty="childCatalogEntryId"
+			objectType="ChildCatalogEntryPage"
+			referencedTypes="ProductPage,InheritedProductPage,BundlePage,InheritedBundlePage,KitPage,InheritedKitPage,DynamicKitPage,InheritedDynamicKitPage,CatalogGroupSKUPage,InheritedCatalogGroupSKUPage,ProductSKUPage,InheritedProductSKUPage">
+ 		<FalseEnablementCondition/>
+	</ReferenceObjectDefinition>
+		
+	<!---
+		Base service definition for creating store page layout associations.
+	-->
+	<CreateService definitionName="pglBaseCreateStorePageLayoutAssociationService" sendSiblingRequestsInParallel="false" url="/cmc/CreateStorePageLayoutAssociation">
+		<ServiceParam name="objectIdentifier" optional="true" parentProperty="true" propertyName="objectIdentifier"/>
+		<ServiceParam name="pageType" parentProperty="true" propertyName="pageType"/>
+		<ServiceParam name="pageLayoutId" objectPath="PageLayoutAlias" propertyName="pageLayoutId"/>
+	</CreateService>
+	
+	<!---
+		Base service definition for creating local store page layout associations.
+	-->
+	<CreateService definitionName="pglBaseCreateLocalStorePageLayoutAssociationService" baseDefinitionName="pglBaseCreateStorePageLayoutAssociationService">
+		<ServiceParam name="storeId"/>
+	</CreateService>
+
+	<!---
+		Base service definition for creating inherited store page layout associations.
+	-->
+	<CreateService definitionName="pglBaseCreateInheritedStorePageLayoutAssociationService" baseDefinitionName="pglBaseCreateStorePageLayoutAssociationService">
+		<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId"/>
+	</CreateService>
+
+	<!---
+		Base service definition for updating store page layout associations.
+	-->
+	<UpdateService definitionName="pglBaseUpdateStorePageLayoutAssociationService" url="/cmc/UpdateStorePageLayoutAssociation">
+		<ServiceParam name="objectIdentifier" optional="true" parentProperty="true" propertyName="objectIdentifier"/>
+		<ServiceParam name="pageType" parentProperty="true" propertyName="pageType"/>
+		<ServiceParam name="associationID" propertyName="associationID"/>
+	</UpdateService>
+
+	<!---
+		Base service definition for updating local store page layout associations.
+	-->
+	<UpdateService definitionName="pglBaseUpdateLocalStorePageLayoutAssociationService" baseDefinitionName="pglBaseUpdateStorePageLayoutAssociationService">
+		<ServiceParam name="storeId"/>
+	</UpdateService>
+
+	<!---
+		Base service definition for updating inherited store page layout associations.
+	-->
+	<UpdateService definitionName="pglBaseUpdateInheritedStorePageLayoutAssociationService" baseDefinitionName="pglBaseUpdateStorePageLayoutAssociationService">
+		<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId"/>
+	</UpdateService>
+
+	<!---
+		Base service definition for deleting store page layout associations.
+	-->
+	<DeleteService definitionName="pglBaseDeleteStorePageLayoutAssociationService" url="/cmc/DeleteStorePageLayoutAssociation">
+		<ServiceParam name="associationID" propertyName="associationID"/>
+		<ServiceParam name="objectIdentifier" optional="true" parentProperty="true" propertyName="objectIdentifier"/>
+		<ServiceParam name="pageType" parentProperty="true" propertyName="pageType"/>
+	</DeleteService>
+
+	<!---
+		Base service definition for deleting local store page layout associations.
+	-->
+	<DeleteService definitionName="pglBaseDeleteLocalStorePageLayoutAssociationService" baseDefinitionName="pglBaseDeleteStorePageLayoutAssociationService">
+		<ServiceParam name="storeId"/>
+	</DeleteService>
+
+	<!---
+		Base service definition for deleting inherited store page layout associations.
+	-->
+	<DeleteService definitionName="pglBaseDeleteInheritedStorePageLayoutAssociationService" baseDefinitionName="pglBaseDeleteStorePageLayoutAssociationService">
+		<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId"/>
+	</DeleteService>
+	
+    <ReferenceObjectDefinition definitionName="BasePageLayoutAssociation" 
+		displayName="${pglPageLayoutResources.pageLayoutAssociation_DisplayName}" 
+		idProperty="associationID" 
+		isBaseDefinition="true" 
+		newDisplayName="${pglPageLayoutResources.pageLayoutAssociation_NewDisplayName}"
+		objectGroups="PageLayoutAssociationReferenceGroup">
+	
+		<!--- Property to define the priority of the page layout association.-->
+		<PropertyDefinition displayName="${pglPageLayoutResources.priorityPrompt}" maxValue="1000" minValue="0" propertyName="priority" type="number"/>
+	    
+       	<!--- Property to define the start date of the page layout association.-->
+		<PropertyDefinition displayName="${pglPageLayoutResources.pageLayoutAssociationStartDatePrompt}" propertyName="startDate" type="date"/>
+		
+		<!--- Property to define the end date of the page layout association.-->
+		<PropertyDefinition displayName="${pglPageLayoutResources.pageLayoutAssociationEndDatePrompt}" propertyName="endDate" type="date"/>
+		               
+		<StartDateEndDateValidator startDatePropertyName="startDate" endDatePropertyName="endDate" validatorId="dateValidator1"/>
+	   
+	   	<!--- Default Values -->    
+        <Xml name="template">
+			<priority>0</priority>
+        </Xml>  	
+	</ReferenceObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BasePageLayoutAssociation" definitionName="BaseLocalPageLayoutAssociation" initializeObjectStoreId="true" isBaseDefinition="true">
+		<CreateService baseDefinitionName="pglBaseCreateLocalStorePageLayoutAssociationService"/>
+		<UpdateService baseDefinitionName="pglBaseUpdateLocalStorePageLayoutAssociationService"/>
+		<DeleteService baseDefinitionName="pglBaseDeleteLocalStorePageLayoutAssociationService"/>
+		<TrueEnablementCondition/>
+	</ReferenceObjectDefinition>
+	<ReferenceObjectDefinition baseDefinitionName="BasePageLayoutAssociation" definitionName="BaseLocalToInheritedPageLayoutAssociation" initializeObjectStoreId="true" isBaseDefinition="true">
+		<CreateService baseDefinitionName="pglBaseCreateLocalStorePageLayoutAssociationService"/>
+		<UpdateService baseDefinitionName="pglBaseUpdateLocalStorePageLayoutAssociationService"/>
+		<DeleteService baseDefinitionName="pglBaseDeleteLocalStorePageLayoutAssociationService"/>
+		<TrueEnablementCondition/>
+	</ReferenceObjectDefinition>      
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BasePageLayoutAssociation" definitionName="BaseInheritedPageLayoutAssociation" isBaseDefinition="true">
+		<CreateService baseDefinitionName="pglBaseCreateInheritedStorePageLayoutAssociationService"/>
+		<UpdateService baseDefinitionName="pglBaseUpdateInheritedStorePageLayoutAssociationService"/>
+		<DeleteService baseDefinitionName="pglBaseDeleteInheritedStorePageLayoutAssociationService"/>
+	</ReferenceObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglSKUPageLayoutAssociationReferencedSKUPageLayouts" objectType="SKUPageLayoutAssociationReferencedSKUPageLayouts" referencedTypes="SKUPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" definitionName="pglSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" objectType="SKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" referencedTypes="InheritedSKUPageLayout"/>  
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="SKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" definitionName="pglInheritedSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" objectType="InheritedSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" referencedTypes="InheritedSKUPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglSKUPageReferenceDefaultSKUPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="SKUPageReferenceDefaultSKUPageLayout" 
+		referencedTypes="SKUPageLayout,InheritedSKUPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

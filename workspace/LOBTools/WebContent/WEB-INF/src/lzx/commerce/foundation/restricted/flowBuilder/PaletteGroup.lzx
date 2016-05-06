@@ -1,0 +1,225 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!--- 
+		Represents a single group of elements of the palette. A header with the group name is shown over
+		a two column list of PaletteElement's. As input to the class, a datapath to a Group of Elements
+		must be provided. The input reference datapath is assumed to have the format:
+		@START_CODE
+		<Group resourceBundle="resources" name="key">
+			<Element objectType="element1"/>
+			<Element objectType="element2"/>
+		</Group>
+		@END_CODE
+		
+		<p>The <code>name</code> attribute for the Group tag is used to look up the translated display string for the header using the
+		provided <code>resourceBundle</code>. The <code>objectType</code> refers to the object type defined a the element's
+		{@link wcfFlowElementObjectDefinition}.</p>
+		
+		<p>The {@link wcfPaletteElement palette elements} will also be defined as a {@link wcfDragSource} with targetKey 'flowelement'. It is left for the
+		user to define a corresponding {@link wcfDropTarget} to listen for these sources.</p>
+		
+		Sample usage:
+		@START_CODE
+			<PaletteGroup datapath="datapathNode"/>
+		@END_CODE
+		
+		@keywords private
+	-->
+	<class name="wcfPaletteGroup" extends="basetabelement" minheight="21" clip="true">
+		<!---
+			The x position of the text field in the header area relative to the expand/collapse icon. Default is 4.
+			@keywords private
+		-->
+		<attribute name="text_x" value="4"/>
+		
+		<!--- The text to show in the tooltip. -->
+		<attribute name="helpText" type="string" value=""/>
+		<!--- The relative URL to additional help. -->
+		<attribute name="helpLink" type="string" value=""/>
+		<!---
+			The size of the border around the content. Default is 2.
+			@keywords private
+		-->
+		<attribute name="inset" value="2"/>
+		<!--- The height of the content area that is shown/hidden when this tab is opened/closed. -->
+		<attribute name="contentHeight" value="${container.contentBackground.contentBorder.elements.height + 2*this.inset + 2}"/>
+        
+		<handler name="oninit">
+			<![CDATA[
+			var helpTextNode = this.datapath.getNodeAttribute('helpText');
+			var helpLinkNode = this.datapath.getNodeAttribute('helpLink');
+			if(helpLinkNode) {
+				this.setAttribute("helpLink", helpLinkNode);
+			}
+
+  			var resourceBundle = this.datapath.getNodeAttribute('resourceBundle');
+  			if (resourceBundle) {
+  				this.updatePaletteGroupText();
+  				
+  				// make sure we update ourselves when the language changes
+  				var nameKey = (global[resourceBundle][this.datapath.getNodeAttribute('name')]);
+  				this.updatePaletteGroupTextDel = new lz.Delegate(this, "updatePaletteGroupText");
+  				this.updatePaletteGroupTextDel.register(nameKey, "onstring");
+  				
+  				if(helpTextNode) {
+	  				var helpTextKey = (global[resourceBundle][helpTextNode]);
+	  				if(helpTextKey) {
+	  					this.updatePaletteGroupTextDel.register(helpTextKey, "onstring");
+	  				}
+	  			}
+  			}
+  			else {
+  				this.setAttribute("text", this.datapath.getNodeAttribute('name'));
+  				if(helpTextNode) {
+  					this.setAttribute("helpText", helpTextNode);
+  				}
+			}
+	  		]]>
+  		</handler>
+        
+		<!---
+			Closes this tab.
+			@param number h absolute height to resize this tab to
+			@param number d length of the animation in millisecs
+		-->
+		<method name="close" args="h,d">
+			<![CDATA[
+				var anm = this.animate("height", h, d, false);
+				if (this.onclosestart) {
+					this.onclosestart.sendEvent();
+				}
+				if (!this.dlc) {
+					this.dlc = new LzDelegate(this, "closed");
+				}
+				this.dlc.register(anm, "onstop");
+				this.setAttribute("focusable" , true);
+				this.setAttribute("contentvisible" , false);
+			]]>
+		</method>
+		
+		<!---
+			Resizes this tab.
+			@param number h absolute height to resize this tab to
+			@param number d length of the animation in millisecs
+		-->
+		<method name="resize" args="h,d">
+			<![CDATA[
+				this.animate("height", h, d, false);
+			]]>
+		</method>
+
+  		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if(this["updatePaletteGroupTextDel"]) {
+				this.updatePaletteGroupTextDel.unregisterAll();
+				delete this.updatePaletteGroupTextDel;
+			}
+			
+			super.destroy();
+			]]>
+		</method>
+
+		<handler name="oncontentvisible">
+			<![CDATA[
+			this.header.bkgnd._callShow();
+
+			var iconNum = this.contentvisible ? 2 : 1;
+			this.header.twisty.setAttribute('frame', iconNum);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="updatePaletteGroupText" args="e=null">
+			<![CDATA[
+  			var resourceBundle = this.datapath.getNodeAttribute('resourceBundle');
+  			var nameKey = (global[resourceBundle][this.datapath.getNodeAttribute('name')]);
+  			this.setAttribute("text", nameKey.string);
+  			
+  			var helpTextNode = this.datapath.getNodeAttribute('helpText');
+  			if(helpTextNode) {
+	  			var helpTextKey = (global[resourceBundle][helpTextNode]);
+	  			if(helpTextKey) {
+	  				this.setAttribute("helpText", helpTextKey.string);
+	  			}
+	  		}
+			]]>
+		</method>
+
+		<view name="header" width="${parent.width}" height="${classroot.minheight}" oninit="this.bringToFront()" bgcolor="0x838eaa">
+			<basebutton name="bkgnd" resource="wcfPaletteGroupBackground" styleable="false"
+					width="${parent.width}" height="${classroot.minheight}" stretches="width">
+					
+				<handler name="onclick">
+					<![CDATA[
+					classroot.parent.toggleTab(classroot);
+					lz.Focus.setFocus(classroot, false);
+					]]>
+				</handler>
+				
+				<method name="_callShow">
+					<![CDATA[
+					if((this._msdown && this._msin && this.maxframes >= this.downResourceNumber) || classroot.contentvisible) {
+						this.showDown();
+					}
+					else if(this._msin && this.maxframes >= this.overResourceNumber) {
+						this.showOver();
+					}
+					else {
+						this.showUp();
+					}
+					]]>
+				</method>
+			</basebutton>
+			<view name="twisty" resource="wcfPaletteExpandCollapseIcon" x="${classroot.text_x}" valign="middle" clickable="true">
+				<handler name="onclick">
+					<![CDATA[
+						parent.bkgnd.onclick.sendEvent();
+					]]>
+				</handler>
+			</view>
+			<view name="textView" x="${parent.twisty.x + parent.twisty.width + classroot.text_x}" valign="middle" width="100%" height="${classroot.minheight}">
+				<text name="txt" text="${classroot.text}" resize="true"/>
+			</view>
+			
+			<wcfTooltip text="${classroot.helpText}" linkURL="${classroot.helpLink}" enabled="${classroot.helpText != ''}"/>
+		</view>
+		
+		<view name="container" options="releasetolayout" width="${parent.width}" bgcolor="0xffffff" visible="${classroot.contentvisible}">
+			<view name="contentBackground" x="${classroot.inset}" y="${classroot.inset}" width="${Math.max(parent.width - 2*classroot.inset, 0)}" 
+				height="${Math.max(parent.height - 2*classroot.inset, 0)}" clip="true" bgcolor="0xffffff">
+				
+				<view name="contentBorder" x="1" y="1" width="${parent.width - 2}" height="${parent.height - 2}" bgcolor="0xffffff">
+					<wcfVerticalScrollbar name="scrollbar" align="right" scrolltarget="${parent.elements}" visible="${scrollable}"/>
+					<view name="elements" width="${parent.width}" clip="true">
+						<wrappinglayout axis="x" spacing="2" xinset="5" yinset="5">
+							<handler name="oninit">
+								<![CDATA[
+								this.update();
+	  							]]>
+  							</handler>
+  						</wrappinglayout>
+						<wcfPaletteElement datapath="Element" clickable="true" width="32" height="32">
+							<wcfDragSource targetKeys="${['flowelement']}" dragAndDropManager="${wcfDndManager}" />
+						</wcfPaletteElement>
+					</view>
+				</view>
+			</view>
+		</view>
+		<resizelayout axis="y" spacing="0"/>
+	</class>
+	
+</library>

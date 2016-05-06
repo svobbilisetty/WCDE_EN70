@@ -1,0 +1,161 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		You can use a navigation list to navigate to objects related to the current object. A navigation list is associated with a particular 
+		object definition by creating an instance of wcfNavigationListDefinition as a child of the 
+		{@link wcfObjectDefinition object definition} in the source code. When you select an object in the explorer view, 
+		the default navigation list is used to display related objects in a list view. This list is displayed in the main work area. 
+		
+		<p>Since objects can have more than one type of related objects, you can create multiple wcfNavigationListDefinitions. 
+		Each definition should display related objects of specific types or related types. For example, categories can 
+		have subcategories, products, bundles, and kits. You might create two navigation list definitions. The default 
+		definition might display products, bundles, and kits in a single list view since they all have similar properties. 
+		An alternate navigation list might display subcategories of the selected category. 
+		
+		<p>When you select a specific navigation list, an instance of <code>listClass</code> will be instantiated
+		and the appropriate {@link wcfGetChildrenService}s and {@link wcfGetReferencesService}s will be 
+		invoked. The listClass defines the object types and properties that will be displayed in the list view.
+		
+		<p>A single instance of {@link wcfEnablementCondition}, {@link wcfEnablementAndCondition} or
+		{@link wcfEnablementOrCondition} can be declared as a child of a navigation list definition.
+		The enablement condition is used by the framework to determine if the navigation list 
+		is available for the currently selected business object.
+	
+		@see wcfChildListEditor
+		@see wcfReferenceList
+		@see wcfObjectGrid
+		-->
+	<class name="wcfNavigationListDefinition" extends="node">
+		<!---
+			The name of the class that is used to display the list of related objects.  
+			This is typically the name of a class that extends {@link wcfChildListEditor} or {@link wcfReferenceList}.
+			@type string 
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The name of the definition that is used to display the list of related objects.  
+			This is typically the name of a definition that extends {@link wcfChildListEditor} or {@link wcfReferenceList}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string 
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			The title for the navigation list.  This text will appear above the list of objects within the main work area.
+		-->
+		<attribute name="listTitle" value="" type="string"/>
+		<!---
+			Display name for this navigation list type.  This will show up in the context menu of an object within the exporer view.
+		-->
+		<attribute name="displayName" value="" type="string"/>
+		<!---
+			Indicates that this navigation list is the default navigation list. A default navigation list is used when you select an item in the explorer view. You can only have one default navigation list. If isDefault is set to false, you must explicitly select this navigation list using a toolbar button or from the context menu.
+		-->
+		<attribute name="isDefault" type="boolean" value="false"/>
+		<!---
+			The resource of the toolbar button for this navigation list.  When this button is clicked, this navigation list will be displayed in the main work area.
+		-->		
+		<attribute name="toolbarIcon" type="string" value=""/>
+		<!---
+			Relative URL to the help file for this navigation list.
+		-->		
+		<attribute name="helpLink" type="string" value=""/>
+		<!---
+			List view instance.
+			@keywords private
+		-->
+		<attribute name="listView" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (this.listClass == null) {
+				this.listClass = this.listDefinitionName;
+			}
+			var lists = parent["navigationListDefinitions"];
+			if (!lists) {
+				lists = [];
+				parent.navigationListDefinitions = lists;
+			}
+			lists.push(this);
+			if (this.isDefault || parent["defaultNavigationList"] == null) {
+				parent.defaultNavigationList = this;
+			}
+			if (!this.name) {
+				this.name = "navigationList" + lists.length;
+			}
+			]]>
+		</method>
+
+		<!---
+			Get the navigation list view and bind it to the specified model object.
+			@param wcfModelObject o: The parent model object.
+			@returns view: The navigation view.
+			@keywords private
+		-->
+		<method name="getListView" args="o"><![CDATA[
+			if (this.listView == null) {
+				this.listView = new lz.wcfNavigationList(o.model.oEditor.workAreaContainer, {
+					navigationListDefinition: this,
+					o: o,
+					menuType: "navigationListMenu"
+				});
+				this.listView.setAttribute("o", o);
+			}
+			else {
+				if (this.listView["o"] != o) {
+					this.listView.setAttribute("o", o);
+				}
+			}
+			return this.listView;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if this navigation list is enabled for the specified
+			model object by evaluating the associated {@link wcfEnablementCondition} object.
+			
+			@param wcfModelObject o: the model object against which the enablement condition will be evaluated
+			@return boolean: true if the navigation list is enabled
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				return this.enablementCondition.isEnabled(o);
+			}
+			else {
+				return true;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Register a delegate to be executed when the enablement condition changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerEnablementDelegate" args="o,del">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				this.enablementCondition.registerDelegate(o,del);
+			}
+			]]>
+		</method>
+	</class>
+</library>

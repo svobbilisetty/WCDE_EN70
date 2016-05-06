@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PrimaryObjectDefinition baseDefinitionName="mktBaseEMarketingSpotPrimaryObjectDefinition" creatable="true" definitionName="EMarketingSpot" objectType="EMarketingSpot">
+
+		<CreateService url="/cmc/CreateEMarketingSpot">
+			<ServiceParam name="storeId"/>
+		</CreateService>
+		
+		<PopulateNewObjectService url="/cmc/PopulateNewEMarketingSpot">
+			<ServiceParam name="storeId"/>
+		</PopulateNewObjectService>
+
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="mktBaseEMarketingSpotPrimaryObjectDefinition" compatibleObjectTypes="EMarketingSpot" creatable="false" definitionName="InheritedEMarketingSpot" headerIcon="emarketingSpotInheritedHeaderIcon" icon="emarketingSpotInheritedIcon" objectType="InheritedEMarketingSpot">
+
+		<ReferenceObjectDefinition baseDefinitionName="mktInheritedDefaultEMarketingSpotInheritedContentReference"/>
+		<ReferenceObjectDefinition baseDefinitionName="mktInheritedDefaultEMarketingSpotInheritedTitleContentReference"/>
+		
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition creatable="false" definitionName="mktBaseEMarketingSpotPrimaryObjectDefinition" displayName="${mktMarketingResources.eMarketingSpot}" displayNameProperty="name" headerIcon="emarketingSpotHeaderIcon" helpLink="tasks/tsbctespot.htm" icon="emarketingSpotIcon" idProperty="uniqueId" isBaseDefinition="true" newDisplayName="${mktMarketingResources.emarketingSpotNew}" newObjectMenuItemText="${mktMarketingResources.contextMenuNewEmarketingSpot}" objectGroups="EMarketingSpotGroup" propertiesDefinitionName="mktEMarketingSpotProperties" searchType="FindEMarketingSpots" writeUsage="IBM_ManageMarketingTool">
+
+		<RefreshService url="/cmc/GetEMarketingSpot">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</RefreshService>
+		
+		<!--- Retrieves the {@link WebActivity Web Activities} assigned to this e-marketing spot. -->
+		<GetReferencesService primaryObjectTypes="WebActivity,InheritedWebActivity" referenceObjectTypes="ChildEMarketingSpot,ChildInheritedEMarketingSpot" url="/cmc/GetEMarketingSpotReferences">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="emspotId" propertyName="uniqueId"/>
+		</GetReferencesService>
+
+		<UpdateService url="/cmc/SaveEMarketingSpot">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="EMarketingSpot" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="InheritedEMarketingSpot" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="emarketingSpotId" propertyName="uniqueId"/>
+		</UpdateService>
+		<DeleteService url="/cmc/DeleteEMarketingSpot">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="EMarketingSpot" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="InheritedEMarketingSpot" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="emarketingSpotId" propertyName="uniqueId"/>
+		</DeleteService>
+		
+		<!--- Retrieves the {@link mktBaseDefaultEMarketingSpotContentReference default content} and 
+				{@link BaseDefaultEMarketingSpotTitleContentReference default title content} assigned to this e-marketing spot.
+		-->
+		<GetChildrenService objectTypes="DefaultEMarketingSpotContentReference,InheritedDefaultEMarketingSpotContentReference,InheritedDefaultEMarketingSpotInheritedContentReference,DefaultEMarketingSpotTitleContentReference,InheritedDefaultEMarketingSpotTitleContentReference,InheritedDefaultEMarketingSpotInheritedTitleContentReference" url="/cmc/GetEMarketingSpotDefaultContent">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+			<ServiceParam name="masterCatalogId"/>
+		</GetChildrenService>		
+
+		<!---
+			Service defined to retrieve the {@link EMarketingSpotFolder}, {@link InheritedEMarketingSpotFolder} folders that are referenced to the E-Marketing Spot.
+		-->
+		<GetReferencesService primaryObjectTypes="EMarketingSpotFolder,InheritedEMarketingSpotFolder" referenceObjectTypes="EMarketingSpotFolderItemReference,EMarketingSpotFolderInheritedItemReference,InheritedEMarketingSpotFolderInheritedItemReference" url="/cmc/GetFolderReferences">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="referenceId" propertyName="uniqueId"/>
+			<ServiceParam name="objectStoreId" parameterName="objectStoreId" propertyName="objectStoreId" />
+			<ServiceParam name="folderObjectType" value="EMarketingSpotFolder"/>
+			<ServiceParam name="folderItemType" value="MarketingSpotType"/>
+		</GetReferencesService>
+
+		<PropertyDefinition displayName="${mktMarketingResources.objectName}" maximumSize="64" propertyName="name" required="true" trim="true"/>
+		<PropertyDefinition displayName="${mktMarketingResources.description}" maximumSize="254" propertyName="description"/>
+		
+		<ReferenceObjectDefinition baseDefinitionName="mktDefaultEMarketingSpotContentReference"/>
+		<ReferenceObjectDefinition baseDefinitionName="mktInheritedDefaultEMarketingSpotContentReference"/>
+
+		<ReferenceObjectDefinition baseDefinitionName="mktDefaultEMarketingSpotTitleContentReference"/>
+		<ReferenceObjectDefinition baseDefinitionName="mktInheritedDefaultEMarketingSpotTitleContentReference"/>
+
+
+		<NavigationListDefinition baseDefinitionName="mktEMarketingSpotActivityGridList" isDefault="true"/>
+		<NavigationListDefinition baseDefinitionName="mktEMarketingSpotActivityGanttChartList"/>
+	</PrimaryObjectDefinition>
+	<ReferenceObjectDefinition initializeObjectStoreId="true" allowDuplicates="false" definitionName="BaseDefaultEMarketingSpotContentReference" displayName="" idProperty="uniqueId" isBaseDefinition="true" languageSensitive="false" objectType="BaseDefaultEMarketingSpotContentReference" releaseWhenClosed="false">
+
+		<CreateService url="/cmc/CreateDefaultEMarketingSpotContent">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="DefaultEMarketingSpotContentReference" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="InheritedDefaultEMarketingSpotContentReference" propertyName="objectType"/>				
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="InheritedDefaultEMarketingSpotInheritedContentReference" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="content1" objectPath="MarketingContentGroup" optional="false" parameterName="contentId" propertyName="uniqueId">
+			 	<EnablementOrCondition conditionId="orCondition1">
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="MarketingContent" objectPath="MarketingContentGroup" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="InheritedMarketingContent" objectPath="MarketingContentGroup" propertyName="objectType"/>
+				</EnablementOrCondition>				
+			</ServiceParam>	
+			<ServiceParam name="content2" objectPath="CatalogGroupAlias" optional="false" parameterName="contentId" propertyName="catgroupId">
+				 <EnablementOrCondition conditionId="orCondition2">
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="CatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="InheritedCatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition3" enablementValue="SalesCatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition4" enablementValue="InheritedSalesCatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>										
+				</EnablementOrCondition>				
+			</ServiceParam>			
+			<ServiceParam name="content3" objectPath="CatalogEntry" optional="false" parameterName="contentId" propertyName="catentryId">
+				  <EnablementOrCondition conditionId="orCondition3">
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="Product" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="Bundle" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition3" enablementValue="CatalogGroupSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition4" enablementValue="ProductSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition5" enablementValue="Kit" objectPath="CatalogEntry" propertyName="objectType"/>										
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition6" enablementValue="InheritedProduct" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition7" enablementValue="InheritedBundle" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition8" enablementValue="InheritedCatalogGroupSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition9" enablementValue="InheritedProductSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition10" enablementValue="InheritedKit" objectPath="CatalogEntry" propertyName="objectType"/>							
+				</EnablementOrCondition>				
+			</ServiceParam>	
+			<ServiceParam name="content4" optional="false" parameterName="contentType" value="MarketingContent">
+			 	<EnablementOrCondition conditionId="orCondition1">
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="MarketingContent" objectPath="MarketingContentGroup" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="InheritedMarketingContent" objectPath="MarketingContentGroup" propertyName="objectType"/>
+				</EnablementOrCondition>				
+			</ServiceParam>	
+			<ServiceParam name="content5" optional="false" parameterName="contentType" value="CatalogGroup">
+				 <EnablementOrCondition conditionId="orCondition2">
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="CatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="InheritedCatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition3" enablementValue="SalesCatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition4" enablementValue="InheritedSalesCatalogGroup" objectPath="CatalogGroupAlias" propertyName="objectType"/>										
+				</EnablementOrCondition>				
+			</ServiceParam>			
+			<ServiceParam name="content6" optional="false" parameterName="contentType" value="CatalogEntry">
+				  <EnablementOrCondition conditionId="orCondition3">
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="Product" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="Bundle" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition3" enablementValue="CatalogGroupSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition4" enablementValue="ProductSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition5" enablementValue="Kit" objectPath="CatalogEntry" propertyName="objectType"/>										
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition6" enablementValue="InheritedProduct" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition7" enablementValue="InheritedBundle" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition8" enablementValue="InheritedCatalogGroupSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition9" enablementValue="InheritedProductSKU" objectPath="CatalogEntry" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition10" enablementValue="InheritedKit" objectPath="CatalogEntry" propertyName="objectType"/>							
+				</EnablementOrCondition>				
+			</ServiceParam>	
+			<ServiceParam name="emarketingSpotId" parentProperty="true" propertyName="uniqueId"/>							
+		</CreateService>
+		
+		<DeleteService url="/cmc/DeleteDefaultEMarketingSpotContent">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition1" enablementValue="DefaultEMarketingSpotContentReference" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="InheritedDefaultEMarketingSpotContentReference" propertyName="objectType"/>				
+				</EnablementOrCondition>
+			</ServiceParam>		
+			<ServiceParam name="storeId2" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="InheritedDefaultEMarketingSpotInheritedContentReference" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+			<ServiceParam name="emarketingSpotId" parentProperty="true" propertyName="uniqueId"/>
+		</DeleteService>
+	</ReferenceObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseDefaultEMarketingSpotContentReference" definitionName="mktDefaultEMarketingSpotContentReference" objectType="DefaultEMarketingSpotContentReference" referencedTypes="MarketingContent,CatalogGroup,SalesCatalogGroup,Product,Bundle,CatalogGroupSKU,ProductSKU,Kit">
+		<TrueEnablementCondition/>
+	</ReferenceObjectDefinition>
+    	
+	<ReferenceObjectDefinition baseDefinitionName="BaseDefaultEMarketingSpotContentReference" definitionName="mktInheritedDefaultEMarketingSpotContentReference" objectType="InheritedDefaultEMarketingSpotContentReference" referencedTypes="InheritedMarketingContent,InheritedCatalogGroup,InheritedSalesCatalogGroup,InheritedProduct,InheritedBundle,InheritedCatalogGroupSKU,InheritedProductSKU,InheritedKit">
+		<TrueEnablementCondition/>
+	</ReferenceObjectDefinition>	
+            
+	<ReferenceObjectDefinition baseDefinitionName="BaseDefaultEMarketingSpotContentReference" definitionName="mktInheritedDefaultEMarketingSpotInheritedContentReference" objectType="InheritedDefaultEMarketingSpotInheritedContentReference" referencedTypes="InheritedMarketingContent,InheritedCatalogGroup,InheritedSalesCatalogGroup,InheritedProduct,InheritedBundle,InheritedCatalogGroupSKU,InheritedProductSKU,InheritedKit">
+       <EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/>
+    </ReferenceObjectDefinition>
+    
+    <!--- 
+    	Reference definition for the title content for the eMarketing Spot. Only marketing
+    	content is allowed to be referenced for the title.
+    -->
+    <ReferenceObjectDefinition
+    	allowDuplicates="false"
+    	initializeObjectStoreId="true"
+    	definitionName="BaseDefaultEMarketingSpotTitleContentReference"
+    	idProperty="uniqueId"
+    	isBaseDefinition="true"
+    	objectType="BaseDefaultEMarketingSpotTitleContentReference"
+    	releaseWhenClosed="false">
+
+		<CreateService url="/cmc/CreateDefaultEMarketingSpotTitleContent">
+			<ServiceParam name="storeId">
+ 				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedDefaultEMarketingSpotInheritedTitleContentReference" negate="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedDefaultEMarketingSpotInheritedTitleContentReference" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="contentId" objectPath="MarketingContentGroup" optional="false" parameterName="contentId" propertyName="uniqueId"/>
+			<ServiceParam name="emarketingSpotId" parentProperty="true" propertyName="uniqueId"/>
+			<ServiceParam propertyName="sequence" name="sequence"/>
+		</CreateService>
+		
+		<UpdateService url="/cmc/UpdateDefaultEMarketingSpotTitleContent">
+			<ServiceParam name="storeId">
+ 				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedDefaultEMarketingSpotInheritedTitleContentReference" negate="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedDefaultEMarketingSpotInheritedTitleContentReference" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+			<ServiceParam name="emarketingSpotId" parentProperty="true" propertyName="uniqueId"/>
+			<ServiceParam propertyName="sequence" name="sequence"/>
+		</UpdateService>
+		
+		<DeleteService url="/cmc/DeleteDefaultEMarketingSpotTitleContent">
+			<ServiceParam name="storeId">
+ 				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedDefaultEMarketingSpotInheritedTitleContentReference" negate="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedDefaultEMarketingSpotInheritedTitleContentReference" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+			<ServiceParam name="emarketingSpotId" parentProperty="true" propertyName="uniqueId"/>
+		</DeleteService>
+		
+		<PropertyDefinition propertyName="sequence" type="number"/>
+
+		<Xml name="template">
+			<sequence>0</sequence>
+		</Xml>
+		
+	</ReferenceObjectDefinition>
+    
+	<ReferenceObjectDefinition baseDefinitionName="BaseDefaultEMarketingSpotTitleContentReference" definitionName="mktDefaultEMarketingSpotTitleContentReference" objectType="DefaultEMarketingSpotTitleContentReference" referencedTypes="MarketingContent">
+		<TrueEnablementCondition/>
+	</ReferenceObjectDefinition>
+    	
+	<ReferenceObjectDefinition baseDefinitionName="BaseDefaultEMarketingSpotTitleContentReference" definitionName="mktInheritedDefaultEMarketingSpotTitleContentReference" objectType="InheritedDefaultEMarketingSpotTitleContentReference" referencedTypes="InheritedMarketingContent">
+		<TrueEnablementCondition/>
+	</ReferenceObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseDefaultEMarketingSpotTitleContentReference" definitionName="mktInheritedDefaultEMarketingSpotInheritedTitleContentReference" objectType="InheritedDefaultEMarketingSpotInheritedTitleContentReference" referencedTypes="InheritedMarketingContent">
+		<EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/>
+	</ReferenceObjectDefinition>
+    	
+</Definitions>

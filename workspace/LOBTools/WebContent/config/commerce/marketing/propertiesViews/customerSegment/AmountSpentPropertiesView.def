@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyGroup collapsable="false" definitionName="mktAmountSpentProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/AmountSpent" promptText="${mktMarketingResources.cspAmountSpent}" propertyName="template"/>
+        
+		<PropertyGroup collapsable="false" name="singleAmountSpentGroup">
+			<EnablementOrCondition conditionId="singleInput">
+				<EnablementCondition conditionId="greaterThan" enablementValue="greaterThan" objectPath="TopAndList/AmountSpent" propertyName="template"/>
+				<EnablementCondition conditionId="lessThan" enablementValue="lessThan" objectPath="TopAndList/AmountSpent" propertyName="template"/>
+			</EnablementOrCondition>
+			<PropertyCurrencyValueEditor objectPath="TopAndList/AmountSpent/AmountSpentAndOrList/AmountSpentCondition" promptText="${mktMarketingResources.customerSegment_amtSpent}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="multiAmountSpentGroup">
+			<EnablementCondition conditionId="withinRange" enablementValue="between" objectPath="TopAndList/AmountSpent" propertyName="template"/>
+			<PropertyCurrencyValueEditor objectPath="TopAndList/AmountSpent/AmountSpentAndOrList/AmountSpentCondition[conditionOperator=&gt;=]" promptText="${mktMarketingResources.customerSegment_minimumAmtSpent}" propertyName="conditionValue" required="true"/>
+			<PropertyCurrencyValueEditor objectPath="TopAndList/AmountSpent/AmountSpentAndOrList/AmountSpentCondition[conditionOperator=&lt;=]" promptText="${mktMarketingResources.customerSegment_maximumAmtSpent}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+	</PropertyGroup>
+</Definitions>

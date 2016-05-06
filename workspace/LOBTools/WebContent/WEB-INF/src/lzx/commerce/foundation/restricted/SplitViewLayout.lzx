@@ -1,0 +1,175 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<class name="wcfSplitViewLayout" extends="layout">
+		<attribute name="axis" value="x" setter="this.setAxis(axis)" type="string" />
+		<attribute name="resizer" value="null"/>
+		
+		<method name="init">
+			<![CDATA[
+			this.updateDelegate.register(this.immediateparent, "onwidth");
+			this.updateDelegate.register(this.immediateparent, "onheight");
+			super.init();
+			]]>
+		</method>
+		
+		<method name="setAxis" args="a" >
+			<![CDATA[
+			if (this['axis'] == null || this.axis != a) {
+				this.axis = a;
+				this.size = a == "x" ? "width" : "height";
+				this.minSize = a == "x" ? "minWidth" : "minHeight";
+				this.splitSize = a == "x" ? "xSplitSize" : "ySplitSize";
+				if (this.subviews.length) {
+					this.update();
+				}
+				if (this['onaxis']) {
+					this.onaxis.sendEvent(this.axis);
+				}
+			}
+			]]>
+		</method>
+
+		<method name="addSubview" args="v">
+			<![CDATA[
+			if (v instanceof lz.wcfResizer) {
+				this.resizer = v;
+				this.updateDelegate.register(v, "onxSplitSize");
+				this.updateDelegate.register(v, "onySplitSize");
+			}
+			else {
+				this.updateDelegate.register(v, "onsplittable");
+				this.updateDelegate.register(v, "onclosed");
+				this.updateDelegate.register(v, "onmaximized");
+				this.updateDelegate.register(v, "onminimized");
+				this.updateDelegate.register(v, "onminWidth");
+				this.updateDelegate.register(v, "onminHeight");
+			}
+			super.addSubview(v);
+			this.update();
+			]]>
+		</method>
+		
+		<method name="update" args="e=null">
+			<![CDATA[
+			if (!this.locked && this.subviews.length == 3) {
+				this.lock();
+				var v1 = this.subviews[0];
+				var v2 = this.subviews[2];
+				var v2Closed = (v1.splittable || parent.ignoreSplittable) ? v2.closed : true;
+				var parentClosed = v1.closed && v2Closed;
+				var parentMinimized = (v1.minimized || v1.closed) && (v2.minimized || v2Closed);
+				var maximizedPanel = null;
+				if (v1.maximized && !v1.closed) {
+					maximizedPanel = v1["maximizedPanel"] ? v1.maximizedPanel : v1;
+				}
+				else if (v2.maximized && !v2Closed) {
+					maximizedPanel = v2["maximizedPanel"] ? v2.maximizedPanel : v2;
+				}
+				var parentMaximized = maximizedPanel != null;
+				
+				if (parentClosed != parent.closed) {
+					parent.setAttribute("closed", parentClosed);
+				}
+				if (parentMinimized != parent.minimized) {
+					parent.setAttribute("minimized", parentMinimized);
+				}
+				if (parentMaximized != parent.maximized) {
+					parent.setAttribute("maximized", parentMaximized);
+				}
+				if (maximizedPanel != parent.maximizedPanel) {
+					parent.setAttribute("maximizedPanel", maximizedPanel);
+				}
+				var vis1 = !v1.closed;
+				var vis2 = !v2Closed;
+				var s = this.immediateparent[this.size];
+				var min1 = v1[this.minSize];
+				var min2 = v2[this.minSize];
+				if (!v1.closed && !v2Closed && !v1.minimized && !v2.minimized && !v1.maximized && !v2.maximized) {
+					if (!this.resizer.visible) {
+						this.resizer.setAttribute("visible", true);
+					}
+					var resizerSize = this.resizer[this.size];
+					var s1 = this.resizer.reverseSplit ?
+							s - this.resizer[this.splitSize] - resizerSize :
+							this.resizer[this.splitSize];
+					var p2 = s1 + resizerSize;
+					if (!this.resizer.dragging) {
+						if (s1 < min1) {
+							s1 = min1;
+							p2 = s1 + resizerSize;
+						}
+						else if (s - p2 < min2) {
+							s1 = s - min2 - resizerSize;
+							p2 = s1 + resizerSize;
+						}
+						if (this.resizer[this.axis] != s1) {
+							this.resizer.setAttribute(this.axis, s1);
+						}
+					}
+					var s2 = s - p2;
+					if (v1[this.size] != s1) {
+						v1.setAttribute(this.size, s1);
+					}
+					if (v2[this.axis] != p2) {
+						v2.setAttribute(this.axis, p2);
+					}
+					if (v2[this.size] != s2) {
+						v2.setAttribute(this.size, s2);
+					}
+				}
+				else {
+					if (this.resizer.visible) {
+						this.resizer.setAttribute("visible", false);
+					}
+					var vis1 = !v1.closed && (v1.maximized || !v2.maximized);
+					var vis2 = !v2Closed && !v1.maximized;
+					var s1 = vis1 ? ((v1.minimized && !v1.maximized) ? min1 : s) : 0;
+					var s2 = vis2 ? ((v2.minimized && !v2.maximized) ? min2 : s) : 0;
+					if (vis1 && !v1.minimized && !v1.maximized) {
+						s1 = s1 - s2;
+					}
+					if (vis2 && !v2.minimized && !v2.maximized) {
+						s2 = s2 - s1;
+					}
+					if (vis1) {
+						if (v1[this.size] != s1) {
+							v1.setAttribute(this.size, s1);
+						}
+						if (v1.maximized) {
+							vis2 = false;
+						}
+					}
+					if (vis2) {
+						if (v2[this.axis] != s1) {
+							v2.setAttribute(this.axis, s1);
+						}
+						if (v2[this.size] != s2) {
+							v2.setAttribute(this.size, s2);
+						}
+					}
+				}
+				if (vis1 != v1.visible) {
+					v1.setAttribute("visible", vis1);
+				}
+				if (vis2 != v2.visible) {
+					v2.setAttribute("visible", vis2);
+				}
+		        this.locked = false;
+			}
+			]]>
+		</method>
+	</class>
+</library>

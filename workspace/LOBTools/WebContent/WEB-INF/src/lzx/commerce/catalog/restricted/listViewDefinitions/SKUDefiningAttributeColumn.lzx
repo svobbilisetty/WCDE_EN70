@@ -1,0 +1,287 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<!-- 
+
+This library contains a grid column class representing a catalog entry defining
+attribute, with a set of allowed values available for selection via a combo
+box in the grid cell.
+
+This code is not customizable.
+
+Classes contained in this library are:
+
+catSKUAttributeColumn
+
+-->
+<library>
+	
+	<!---
+		This class is a grid column representing a catalog entry defining
+		attribute with a set of allowed values available for selection via a combo
+		box in the grid cell.
+		
+		The CMC property that this column is managing is 'attrValValue', which
+		is a language sensitive property of:
+		CatalogEntryAttribute
+		AttributeDictionaryAttribute
+		
+		This code is not customizable.
+		
+		@keywords private
+	-->
+	 <class name="catSKUAttributeColumn" extends="wcfGridColumn" propertyName="attrValValue">
+
+	 	<!---
+			Use "wcfGridTextViewer" for the viewer class.
+			@keywords private
+		-->
+		<attribute name="cellViewerClass" value="catSKUAttributeComboBoxViewer"/>
+		<!---
+			Use "catSKUAttributeEditor" for the editor class.
+			@keywords private
+		-->
+		<attribute name="cellEditorClass" value="catSKUAttributeEditor"/>
+		<!---
+			The attribute object being managed in this grid column.
+			@keywords private
+		-->		
+		<attribute name="attributeObject" value="null" setter="setAttributeObject(attributeObject)"/>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="setAttributeObject" args="newAttributeObject">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "setAttributeObject",[newAttributeObject]);
+			}
+			
+			this.attributeObject = newAttributeObject;
+			this.updateObjectPath();
+			this.updateHeaderText();
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "setAttributeObject");
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			This method will update the object path of the attribute column based on the attribute's ID.
+			
+			@keywords private
+		-->
+		<method name="updateObjectPath">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "updateObjectPath");
+			}
+
+			if (this["attributeObject"] && this.attributeObject != null ) {
+		
+				var attrIdPropertyValue = null;
+				var newObjectPath = null;
+				var newProperty = null;
+				
+				// get the id property from the 'AttributeDictionaryAttribute"
+				if(this.attributeObject.objectType == "CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues" ||
+					this.attributeObject.objectType == "CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues") {									
+					attrIdPropertyValue = this.attributeObject.getPropertyValue("attrId", "AttributeDictionaryAttributes");
+					newObjectPath = parent.definingAttributeObjectPath + "[attrId="+attrIdPropertyValue+"]";
+					newProperty = "attrValId";
+				} else {
+					attrIdPropertyValue = this.attributeObject.getPropertyValue(this.attributeObject.objectDefinition.idProperty);
+					newObjectPath = parent.definingAttributeObjectPath + "[xdata_attrId="+attrIdPropertyValue+"]";
+					newProperty = "attrValValue";
+				}
+				
+				// Need to set the object path for the property and the property name that we want to associate with the column
+				this.setObjectPath(newObjectPath);
+				this.setPropertyName(newProperty);
+				this.getCellDescriptorMap().setDefaultDisabled(false);
+			}
+			else {
+				this.getCellDescriptorMap().setDefaultDisabled(true);
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "updateObjectPath");
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			This method will update the attribute column's header with the name of the attribute in the store 
+			default language. 
+			
+			Ie. If the attribute name in the store default language is "Color", Color will be displayed as the 
+			header text of the column representing the attribute.
+			
+			@keywords private
+		-->
+		<method name="updateHeaderText" args="e=null">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "updateHeaderText");
+			}
+			
+			if (this["updateHeaderTextDel"]) {
+				this.updateHeaderTextDel.unregisterAll();
+			}
+			else {
+				this.updateHeaderTextDel = new lz.Delegate(this, "updateHeaderText");
+			}
+			
+			if (this["attributeObject"]) {
+				var storeConfig = wcfContextUtil.findStoreConfig(this.attributeObject, this.updateHeaderTextDel);
+				var defaultLanguage = storeConfig != null ? storeConfig.defaultLanguage : null;
+				var attrNameProperty = null;
+				if (defaultLanguage != null) {
+					if(this.attributeObject.objectType=="CatalogEntryDefiningAttribute") {
+						attrNameProperty = this.attributeObject.getProperty("attrName", "DefiningAttributeLanguageSensitiveObject[languageId=" + defaultLanguage.languageId + "]");	
+					}
+					
+					if(this.attributeObject.objectType=="CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues") {
+						attrNameProperty = this.attributeObject.getProperty("attrName", "AttributeDictionaryAttributeWithAllowedValuesAlias/AttributeDictionaryAttributeDescription[languageId=" + defaultLanguage.languageId + "]");					
+					}
+					
+					if(this.attributeObject.objectType=="CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues") {
+						attrNameProperty = this.attributeObject.getProperty("attrName", "AttributeDictionaryAttributeWithAllowedValuesAlias/AttributeDictionaryAttributeDescription[languageId=" + defaultLanguage.languageId + "]");					
+					}
+				}
+									
+				if (attrNameProperty && attrNameProperty!=null) {
+					this.updateHeaderTextDel.register(attrNameProperty, "onvalue");
+					var attrName = attrNameProperty.value;
+					this.setAttribute("text", attrName?attrName:"");
+				}
+				else {
+					this.setAttribute("text", "");
+				}
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "updateHeaderText");
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			This method will cleanup any delegates used throughout this class.
+			@keywords private
+		-->
+		<method name="destroy">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "destroy");
+			}
+			
+			if (this["updateHeaderTextDel"]) {
+				this.updateHeaderTextDel.unregisterAll();
+				delete this.updateHeaderTextDel;
+			}
+		
+			super.destroy();
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catSKUAttributeColumn", "destroy");
+			}
+			
+			]]>
+		</method>
+
+	</class>
+	 
+	 <!---
+		This class represents a combo box viewer used for an attribute value.
+		
+		@keywords private
+	-->
+	<class name="catSKUAttributeComboBoxViewer" extends="wcfGridTextViewer">
+
+	<!---
+			Update and refresh wcfGridTextViewer value with a new {@link wcfModelProperty} value.			
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			var value = this.property.value;
+			var newText = null;
+			// Attribute dictionary attributes
+			if(this.parent.column.attributeObject.objectType == "CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues" ||
+			   this.parent.column.attributeObject.objectType == "CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues")
+			{
+				newText = this.getADDisplayName(value);
+			} else
+			{
+				newText = value;
+			}			
+			if (!html) {
+				newText = this.escapeText(newText);
+			}
+			else {
+				newText = wcfRichTextEditorUtil.removeTags(newText);
+			}
+			if (this.text != newText) {
+				this.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get display name for AD attribute 
+		-->
+		<method name="getADDisplayName" args="attrValId">
+			<![CDATA[
+			var displayName = null;
+			
+			if (attrValId)
+			{
+				// The attribute allowed value type to fetch.
+				var attributeAllowedValueType = null;
+				   				   
+				var attributeDataType = this.parent.column.attributeObject.getPropertyValue("attrDataType","AttributeDictionaryAttributes");
+				
+				// Get the attribute allowed values from the registered attribute object
+				if (attributeDataType == "String") {	
+					attributeAllowedValueType = "AttributeDictionaryAttributeStringValueAlias";
+				}
+				else if (attributeDataType == "Integer") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeIntegerValueAlias";
+				}
+				else if (attributeDataType == "Float") {
+					attributeAllowedValueType = "AttributeDictionaryAttributeFloatValueAlias";
+				}
+
+				// Get the allowed value
+				if(attributeDataType != null)
+				{
+					var definingAttributeAllowedValue = this.parent.column.attributeObject.getObject("AttributeDictionaryAttributeWithAllowedValuesAlias/" + attributeAllowedValueType + "[attrValId=" + attrValId + "]");
+					displayName = definingAttributeAllowedValue.getPropertyValue("value", "AttributeDictionaryAttributeValueDescription");					
+				}
+			}
+			return displayName;
+			]]>
+		</method>
+		
+	</class>
+</library>

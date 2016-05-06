@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktAcctCountryProperties" displayGrouping="true">
+		<PropertyCombobox helpText="${mktMarketingResources.help_customerSegment_AcctCountryRegion}" objectPath="TopAndList/AcctCountry" promptText="${mktMarketingResources.cspAcctCountryRegion}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyOrAllTargetGroup">
+			<EnablementOrCondition conditionId="anyOrAll">
+				<EnablementCondition conditionId="any" enablementValue="any" objectPath="TopAndList/AcctCountry" propertyName="template"/>
+				<EnablementCondition conditionId="all" enablementValue="all" objectPath="TopAndList/AcctCountry" propertyName="template"/>
+			</EnablementOrCondition>
+
+			<PropertyChildListEditor listDefinitionName="mktCSAcctCountryGrid" name="countryGrid" objectPath="TopAndList/AcctCountry/AcctCountryList" objectTypes="AcctCountryEqualsOption" promptText="${mktMarketingResources.customerSegment_acctCountryRegion_Specify}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="notAnyCondition" enablementValue="notAny" objectPath="TopAndList/AcctCountry" propertyName="template"/>
+			<PropertyChildListEditor listDefinitionName="mktCSAcctCountryGrid" name="countryGrid" objectPath="TopAndList/AcctCountry/AcctCountryList" objectTypes="AcctCountryDoesNotEqualOption" promptText="${mktMarketingResources.customerSegment_acctCountryRegion_Specify}"/>
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktCSAcctCountryGrid" preferenceKey="mktCSAcctCountryGrid">		
+		<GridComboBox editable="true" name="countryName" propertyName="conditionValue" required="true" text="${mktMarketingResources.customerSegment_acctCountryRegion_SpecifiedCountry}" visible="true" width="250"/>
+	</ObjectGrid>
+</Definitions>

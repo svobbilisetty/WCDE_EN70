@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the flow element object definition for the View e-Marketing Spot trigger. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_emsId as a parameter</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_emsId as a parameter</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new MarketingSpotStatistics type which references the EMarketingSpot and InheritedEMarketingSpot object types</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildEMarketingSpot type which references the EMarketingSpot object type</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedEMarketingSpot type which references the InheritedEMarketingSpot object type</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator wcfRequiredChildObjectValidator} to ensure at least one e-Marketing Spot is selected</li>
+		</ul>
+	-->
+	<FlowElementObjectDefinition definitionName="mktViewEMarketingSpotElementObject" displayName="${mktMarketingResources.viewEMarketingSpotName}" elemTemplateType="Trigger" flowIcon="viewEMarketingSpotIcon" headerIcon="viewEMarketingSpotHeaderIcon" objectType="viewEMarketingSpot" package="mkt" paletteIcon="viewEMarketingSpotPaletteIcon" propertiesDefinitionName="mktViewEMarketingSpotProperties" summaryClass="mktViewEMarketingSpotSummary">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_emsId" objectPath="ChildSpot/EMarketingSpotGroup" optional="true" propertyName="uniqueId"/>
+		</CreateService>
+
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_emsId" objectPath="ChildSpot/EMarketingSpotGroup" optional="true" propertyName="uniqueId"/>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>viewEMarketingSpot</elemTemplateName>
+		</Xml>
+				
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childEMarketingSpotId" objectType="MarketingSpotStatistics" referencedTypes="EMarketingSpot,InheritedEMarketingSpot">
+			<PropertyDefinition copyProtected="true" propertyName="views"/>
+			<PropertyDefinition copyProtected="true" propertyName="clicks"/>
+			<PropertyDefinition copyProtected="true" propertyName="clickRatio"/>
+		</ReferenceObjectDefinition>
+	
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childEMarketingSpotId" objectGroups="ChildSpot" objectType="ChildEMarketingSpot" referencedTypes="EMarketingSpot"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childEMarketingSpotId" objectGroups="ChildSpot" objectType="ChildInheritedEMarketingSpot" referencedTypes="InheritedEMarketingSpot"/>
+		
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noEMarketingSpotSelected}" objectPath="ChildSpot" validatorId="childObjValidator" validatorType="noEMarketingSpotSelected"/>
+	</FlowElementObjectDefinition>
+</Definitions>

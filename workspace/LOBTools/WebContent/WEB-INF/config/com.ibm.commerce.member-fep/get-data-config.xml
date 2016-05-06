@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<_config:get-data-config 
+	xmlns:_config="http://www.ibm.com/xmlns/prod/commerce/foundation/config" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.ibm.com/xmlns/prod/commerce/foundation/config ../../xsd/get-data-config.xsd ">
+
+    <!-- ============================ PERSON ================================== -->
+
+	<data-type>
+		<name>Person</name>
+		<type>com.ibm.commerce.member.facade.datatypes.PersonType</type>
+	</data-type>
+	<client-facade>
+		<data-type-name>Person</data-type-name>
+		<class>com.ibm.commerce.member.facade.client.MemberFacadeClient</class>
+		<method>getPerson</method>
+	</client-facade>
+	
+	
+	<expression-builder>
+		<name>findByLogonIDOrLastNameOrFirstNameBasedOnUsage</name>
+		<data-type-name>Person</data-type-name>
+		<class>com.ibm.commerce.foundation.internal.client.taglib.util.SearchExpressionBuilder</class>
+		<method>formatExpression</method>
+		<param>
+			<name>template</name>
+      <value>{_wcf.usage='$usage$'}/Person[search(Credential/LogonID='$searchText$' or ContactInfo/ContactName/LastName='$searchText$' or ContactInfo/ContactName/FirstName='$searchText$')]</value>
+    	<!-- This find method supports up to seven fields. OOTB we only use the three fields above.-->
+	    <!-- /Person[search(Credential/LogonID='$searchText$' or ContactInfo/ContactName/LastName='$searchText$' or ContactInfo/ContactName/FirstName='$searchText$' or ContactInfo/Address/City='$searchText$' or ContactInfo/Address/PostalCode='$searchText$' or ContactInfo/EmailAddress1/Value='$searchText$' or ContactInfo/MobilePhone1/Value='$searchText$' or ContactInfo/Telephone1/Value='$searchText$')] -->
+    </param>					
+		<param>
+			<name>accessProfile</name>
+			<value>IBM_Details</value>
+		</param>	
+		<param>
+			<name>usage</name>
+			<value></value>
+		</param>			
+	</expression-builder>	
+	
+	
+	<expression-builder>
+		<name>findBuyerOrganizationsByName</name>
+		<data-type-name>Organization</data-type-name>
+		<class>com.ibm.commerce.foundation.internal.client.taglib.util.SearchExpressionBuilder</class>
+		<method>formatExpression</method>
+		<param>
+			<name>template</name>
+			<value>{_wcf.usage=PriceRuleCondition}/Organization[search(OrganizationName='$searchText$')]</value>
+		</param>			
+		<param>
+			<name>accessProfile</name>
+			<value>IBM_Summary</value>
+		</param>		
+	</expression-builder>
+
+
+	
+</_config:get-data-config>

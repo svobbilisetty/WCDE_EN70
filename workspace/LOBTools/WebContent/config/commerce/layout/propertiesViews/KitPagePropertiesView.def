@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="pglKitPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.kitPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="KitPageReferenceDefaultKitPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="KitPageReferenceDefaultKitPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="KitPageReferenceDefaultKitPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display kit page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglKitPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localKitPageCondition" enablementValue="InheritedKitPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglKitPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited kit page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedKitPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedKitPageCondition" enablementValue="InheritedKitPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedKitPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglKitPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglKitPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_staticKitPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="KitPageLayoutAssociationReferencedKitPageLayouts,KitPageLayoutAssociationReferencedInheritedKitPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglKitPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_staticKitPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="KitPageLayoutAssociationReferencedKitPageLayouts,KitPageLayoutAssociationReferencedInheritedKitPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedKitPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_staticKitPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedKitPageLayoutAssociationReferencedInheritedKitPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

@@ -1,0 +1,3167 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		The object model.
+	-->
+	<class name="wcfModel" extends="node">
+		<!---
+			Business object editor instance.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			A map of all of the objects in the model.
+		-->
+		<attribute name="objectMap" value="${{}}"/>
+		<!---
+			An array of test model object instances.
+		-->
+		<attribute name="testObjects" value="${[]}"/>
+		<!---
+			A map of the latest search results for each search type.
+		-->
+		<attribute name="searchResultsMap" value="${{}}"/>
+		<!---
+			Indicates that all of the initialization services have been loaded.
+		-->
+		<attribute name="initServices" value="${[]}"/>
+		<!---
+			Whether or not this model is fully initialized
+		-->
+		<attribute name="modelInitialized" type="boolean" value="false"/>
+		<!---
+			A map of the object definitions. The keys are the object types.
+		-->
+		<attribute name="objectDefinitions"/>
+		<!---
+			An array of the search definitions.
+		-->
+		<attribute name="searchDefinitions" value="${[]}"/>
+		<!---
+			The default search definition.
+		-->
+		<attribute name="defaultSearchDefinition" value="null"/>
+
+		<!--- @keywords private -->
+		<attribute name="newObjectCount" type="number" value="0"/>
+
+		<!---
+			A list of the open objects.
+		-->
+		<attribute name="openObjects" value="${[]}"/>
+		<!---
+			Array of model object lists that are tied to the list of open objects.
+		-->
+		<attribute name="openObjectLists" value="${[]}"/>
+		<!---
+			The list of the clipboard objects.
+		-->
+		<attribute name="clipboardObjects" value="${[]}"/>
+		<!---
+			A map of all organizational objects in the model.
+		-->
+		<attribute name="organizationalObjectMap" value="${{}}"/>
+		<!---
+			The view that has the active selection.
+		-->
+		<attribute name="activeSelectionView" value="null" setter="this.setActiveSelectionView(activeSelectionView)"/>
+		<!---
+			The active selection view in the main work area.
+		-->
+		<attribute name="workAreaActiveSelectionView" value="null" setter="this.setWorkAreaActiveSelectionView(workAreaActiveSelectionView)"/>
+		<!---
+			Interval to schedule next run of the task to remove objects that are not being referenced.
+		-->
+		<attribute name="removeNotReferencedObjectsInterval" type="number" value="${this.getIntervalValue()}"/>
+		<!---
+			A non-zero value indicates that the model is locked. Updates will not be trigged until the
+			model is unlocked.
+		-->
+		<attribute name="lockCount" type="number" value="0"/>
+		<!---
+			@keywords private
+			Current model object count for this model.
+		-->
+		<attribute name="objectCount" type="number" value="0"/>
+		<!---
+			@keywords private
+			The current initialization identifier, when the model is refreshed this value is updated
+		-->
+		<attribute name="initializationIdentifier" type="number" value="1"/>
+		<!---
+			@keywords private
+			This model's top object
+		-->
+		<attribute name="topObject" value="null"/>
+		<!---
+			@keywords private
+			Current model property count for this model.
+		-->
+		<attribute name="propertyCount" type="number" value="0"/>
+		<!---
+			Maximum number of open objects that have not been changed for this model.
+		-->
+		<attribute name="maximumNotDirtyOpenObjects" type="number" value="${this.getMaximumNotDirtyOpenObjects()}"/>
+		<!---
+			Maximum number of objects that will be saved by the save all action before control is returned to the flash player.
+			Any remaining objects will be saved in batches not exceeding the limit as deferred jobs.
+		-->
+		<attribute name="maximumSaveObjects" type="number" value="${this.getMaximumSaveObjects()}"/>
+		<!--- @keywords private
+			The number of calls to be made to the method updateOpenObjectLists.
+		-->
+		<attribute name="updateOpenObjectListsCallbackCount" type="number" value="0"/>
+		<!--- @keywords private -->
+		<attribute name="isModel" type="boolean" value="true"/>
+		<!---
+			Open objects updated event
+		  -->
+		<event name="openObjectsUpdated"/>
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			this.objectDefinitions = [];
+			this.doParseObjectsBatchDel = new lz.Delegate(this, "doParseObjectsBatch");
+			this.updateOpenObjectListsDel = new lz.Delegate(this, "updateOpenObjectLists");
+			]]>
+		</handler>
+
+		<!---
+			Get the interval value for next run of the task to remove objects that are not being referenced.
+			The value of "removeObjectsInterval" URL parameter will be returned if it is a valid positive integer in sec. Otherwise,
+			the default value of defaultRemoveNotReferencedObjectsInterval attribute (in sec) set in the configProperties
+			instance will be used.
+			@return number: the interval value in millisec
+		-->
+		<method name="getIntervalValue">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+			   		wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getIntervalValue");
+				}
+				var value = lz.Browser.getInitArg('removeObjectsInterval');
+				if ((typeof value != "undefined") && (value != null) && (value != "")) {
+					value = Number(value);
+					if (isNaN(value) || value == 0) {
+						value = configProperties.defaultRemoveNotReferencedObjectsInterval;
+					}
+				}
+				else
+				{
+					value = configProperties.defaultRemoveNotReferencedObjectsInterval;
+				}
+				// Convert to milliseconds
+				value = value * 1000;
+				if (wcfLogger.enabled) {	
+			   		wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getIntervalValue", value);
+				}
+				return value;
+			]]>
+		</method>
+		
+		<!---
+			Get the maximum number of open objects that have not been changed.
+			The value of "maximumNotDirtyOpenObjects" URL parameter will be returned if it is a valid positive integer.
+			Otherwise, the default value of defaultMaximumNotDirtyOpenObjects attribute set in the configProperties
+			instance will be used.
+			@return number: the maximum number of open objects that have not been changed
+		-->
+		<method name="getMaximumNotDirtyOpenObjects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+			   		wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getMaximumNotDirtyOpenObjects");
+				}
+				var value = lz.Browser.getInitArg('maximumNotDirtyOpenObjects');
+				if ((typeof value != "undefined") && (value != null) && (value != "")) {
+					value = Number(value);
+					if (isNaN(value) || value == 0) {
+						value = configProperties.defaultMaximumNotDirtyOpenObjects;
+					}
+				}
+				else
+				{
+					value = configProperties.defaultMaximumNotDirtyOpenObjects;
+				}
+				if (wcfLogger.enabled) {	
+			   		wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getMaximumNotDirtyOpenObjects", value);
+				}
+				return value;
+			]]>
+		</method>
+		
+		<!---
+			Get the maximum number of objects that can be saved immediately by wcfModel.deferredSaveObjects method.
+			Objects over the limit will be added to a deferred job to be saved in next idle.
+			@return number: the maximum number of objects can be saved immediately by wcfModel.deferredSaveObjects method
+		-->
+		<method name="getMaximumSaveObjects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+			   		wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getMaximumSaveObjects");
+				}
+				var value = lz.Browser.getInitArg('maximumSaveObjects');
+				if ((typeof value != "undefined") && (value != null) && (value != "")) {
+					value = Number(value);
+					if (isNaN(value) || value == 0) {
+						value = configProperties.defaultMaximumSaveObjects;
+					}
+				}
+				else
+				{
+					value = configProperties.defaultMaximumSaveObjects;
+				}
+				if (wcfLogger.enabled) {	
+			   		wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getMaximumSaveObjects", value);
+				}
+				return value;
+			]]>
+		</method>
+
+		<!---
+			Initialize the model.
+		-->
+		<method name="initializeModel" args="boe">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "initializeModel(boe)", [boe]);
+			}
+			this.setAttribute("modelInitialized", false);
+			
+			this.oEditor = boe;
+			this.removeObjectFromClipboardDel = new lz.Delegate(this, "removeObjectFromClipboard");
+			
+			this.doParseObjectDel = new lz.Delegate(this, "doParseObject");
+			this.visibleParentDel = new lz.Delegate(this, "checkActiveViewVisible");
+			this.workAreaVisibleParentDel = new lz.Delegate(this, "checkWorkAreaActiveViewVisible");
+			
+			// Schedule to run the method to check and remove not referenced objects
+			this.removeNotReferencedObjectsDel = new lz.Delegate(this, "removeNotReferencedObjects");
+			lz.Timer.addTimer(this.removeNotReferencedObjectsDel, this.removeNotReferencedObjectsInterval);
+			
+			this.setAttribute("modelInitialized", true);
+			if (wcfLogger.enabled) {
+			   wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "initializeModel(boe)");	
+			}
+			]]>
+		</method>
+		
+		<!---
+			Reinitialize model
+		-->
+		<method name="reinitializeModel">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "reinitializeModel");
+			}
+			this.setAttribute("modelInitialized", false);
+			
+			for (var i = 0; i < this.testObjects.length; i++) {
+				wcfModelUtil.releaseModelObject(this.testObjects[i]);
+			}
+			this.testObjects = [];
+			
+			this.refreshAll(false);
+			
+			this.setAttribute("modelInitialized", true);
+			if (wcfLogger.enabled) {
+			   wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "reinitializeModel");	
+			}
+			]]>
+		</method>
+		
+		<!---
+			Destroy the model.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "destroy");
+			}
+			this.removeObjectFromClipboardDel.unregisterAll();
+			delete this.removeObjectFromClipboardDel;
+			this.visibleParentDel.unregisterAll();
+			this.workAreaVisibleParentDel.unregisterAll();
+			delete this.visibleParentDel;
+			delete this.doParseObjectDel;
+			delete this.doParseObjectsBatchDel;
+			delete this.workAreaVisibleParentDel;
+			if (this.updateOpenObjectListsCallbackCount > 0) {
+				wcfCallbackUtil.cancelCallback(this.updateOpenObjectListsDel);
+			}
+			delete this.updateOpenObjectListsDel;
+			if (this["updateChildrenLoadedDel"]) {
+				this.updateChildrenLoadedDel.unregisterAll();
+				delete this.updateChildrenLoadedDel;
+			}
+			if (this["updateChildrenLoadErrorDel"]) {
+				this.updateChildrenLoadErrorDel.unregisterAll();
+				delete this.updateChildrenLoadErrorDel;
+			}
+			if (this["deferredSaveOpenObjectsDel"]) {
+				wcfCallbackUtil.cancelCallback(this.deferredSaveOpenObjectsDel);
+				this.deferredSaveOpenObjectsDel.unregisterAll();
+				delete this.deferredSaveOpenObjectsDel;
+			}
+			this.removeNotReferencedObjectsDel.unregisterAll();
+			delete this.removeNotReferencedObjectsDel;
+			if (wcfLogger.enabled) {
+			   wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "destroy");
+			}
+			]]>
+		</method>
+		
+		<method name="checkActiveViewVisible" args="v">
+			<![CDATA[
+			this.setAttribute('activeSelectionView',null);
+			]]>
+		</method>	
+		
+		<method name="checkWorkAreaActiveViewVisible" args="v">
+			<![CDATA[
+			this.setAttribute("workAreaActiveSelectionView",null);
+			]]>
+		</method>
+		
+		<method name="registerActiveViewVisible" args="v">
+			<![CDATA[
+			this.visibleParentDel.register(v, "onvisible");
+			if (v.immediateparent != this.oEditor && v.immediateparent != canvas) {
+				this.registerActiveViewVisible(v.immediateparent);
+			}
+			]]>
+		</method>
+		
+		<method name="registerWorkAreaActiveViewVisible" args="v">
+			<![CDATA[
+			this.workAreaVisibleParentDel.register(v, "onvisible");
+			if (v.immediateparent != this.oEditor.workAreaContainer && v.immediateparent != canvas) {
+				this.registerWorkAreaActiveViewVisible(v.immediateparent);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set the active selection view.
+		-->
+		<method name="setActiveSelectionView" args="v">
+			<![CDATA[
+			if (!this["activeSelectionView"]) {
+				this.activeSelectionView = null;
+			}
+			if (this.activeSelectionView != v) {
+				this.visibleParentDel.unregisterAll();
+				this.activeSelectionView = v;
+				if(v != null){
+					this.registerActiveViewVisible(this.activeSelectionView);	
+				}
+				if (this["onactiveSelectionView"]) {
+					this.onactiveSelectionView.sendEvent(v);
+				}
+				if (v != null && wcfViewUtil.containsView(this.oEditor.workAreaContainer, v)) {
+					this.setAttribute("workAreaActiveSelectionView", v);
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="setWorkAreaActiveSelectionView" args="v">
+			<![CDATA[
+			if (!this["workAreaActiveSelectionView"]) {
+				this.workAreaActiveSelectionView = null;
+			}
+			if (this.workAreaActiveSelectionView != v) {
+				this.workAreaVisibleParentDel.unregisterAll();
+				this.workAreaActiveSelectionView = v;
+				if(v != null){
+					this.registerWorkAreaActiveViewVisible(v);	
+				}
+				if (this["onworkAreaActiveSelectionView"]) {
+					this.onworkAreaActiveSelectionView.sendEvent(v);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the search definition for the specified search type.
+			@param string searchType: the search type
+			@return wcfSearchDefinition: the search definition.
+		-->
+		<method name="getSearchDefinition" args="searchType">
+			<![CDATA[
+			var sd = null;
+			for (var i = 0; i < this.searchDefinitions.length; i++) {
+				if (this.searchDefinitions[i].searchType == searchType) {
+					sd = this.searchDefinitions[i];
+					break;
+				}
+			}
+			if (!sd && global["searchDefinitionRegistry"]) {
+				var registryEntry = global.searchDefinitionRegistry[searchType];
+				if (registryEntry) {
+					sd = new lz[registryEntry.searchDefinitionClass](this.oEditor, {searchType: searchType, listClass: null, showInUtilitiesView: false, isDefault: false});
+				}
+			}
+			if (!sd) {
+				sd = wcfDefinitionLoader.getDefinition(searchType, this.oEditor, {searchType: searchType, listClass: null, listDefinitionName: null, showInUtilitiesView: false, isDefault: false});
+			}
+			return sd;
+			]]>
+		</method>
+		
+		<!---
+			Get the object definition for the specified object type.
+			@param wcfModelObject parentObject: the parent object
+			@param string objectPath: the object path to the object
+			@param boolean strict: indicates that object group matches will be ignored
+			@return wcfObjectDefinition: the object definition
+		-->
+		<method name="getObjectDefinition" args="parentObject, objectPath, strict=false">
+			<![CDATA[
+			/*
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectDefinition(parentObject, objectPath)", [parentObject, objectPath]);
+			}
+			*/
+			var od;
+			var parentObjectDefinition = null;
+			if (parentObject) {
+				parentObjectDefinition = parentObject.objectDefinition;
+			}
+			var types = objectPath.split("/");
+			var partialObjectPath = null;
+			
+			for (var i = 0; i < types.length; i++) {
+				var type = types[i];
+				if (partialObjectPath != null) {
+					partialObjectPath += "/" + type;
+				}else {
+					partialObjectPath = type;
+				}
+				var index = type.indexOf("[");
+				if (index != -1) {
+					type = type.substring(0, index);
+				}
+				if (parentObjectDefinition != null) {
+					od = parentObjectDefinition.getChildDefinition(type);
+				}
+				if (typeof(od) == "undefined") {
+					for (var j = 0; j < this.objectDefinitions.length; j++) {
+						if (this.objectDefinitions[j].objectType == type) {
+							od = this.objectDefinitions[j].objectDefinition;
+							break;
+						}
+					}
+					if (od) {
+						od.initializeDefinition(this);
+					}
+					else if (global["objectDefinitionRegistry"] && global.objectDefinitionRegistry[type]) {
+						od = new lz[global.objectDefinitionRegistry[type].objectDefinitionClass](this.oEditor, {objectType: type, creatable: false});
+						od.initializeDefinition(this);
+					}
+					else if (lz[type]) {
+						if ($as3) {
+							if (lz[type] instanceof Class) {
+								od = new lz[type](this.oEditor, {objectType: type, creatable: false});
+								od.initializeDefinition(this);
+							}
+						} else {
+							if (typeof(lz[type]) == "function") {
+								od = new lz[type](this.oEditor, {objectType: type, creatable: false});
+								od.initializeDefinition(this);
+							}
+						}
+					}
+					else {
+						if (!od) {
+							od = wcfDefinitionLoader.getDefinition(type, this, {objectType: type, creatable: false});
+							if (od) {
+								od.initializeDefinition(this);
+							}
+						}
+					}
+				}
+				if (!strict && parentObjectDefinition!= null && (od==null || typeof(od) == "undefined")) {
+					var ods = parentObjectDefinition.getChildDefinitions(type);
+					if (ods.length == 1) {
+						od = ods[0];
+					}
+					else {
+						var resolvedObject = parentObject.getObject(partialObjectPath);
+						if (resolvedObject != null) {
+							od = resolvedObject.objectDefinition;
+						}
+					}
+				}
+				parentObjectDefinition = od;
+			}
+			/*
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectDefinition", od);
+			}
+			*/
+			return od;
+			]]>
+		</method>
+		
+		<!---
+			Get the key used to uniquely identify an object with the specified
+			parent object, object type and object ID.
+			@param wcfObjectDefinition objectDefinition: the object definition
+			@param string objectId: the unique object identifier
+			@param string objectVersionId: the unique version identifier of the object
+			@param wcfBaseContext context: the context for this object
+			@return string: the unique object key
+		-->
+		<method name="getObjectKey" args="objectDefinition, objectId, objectVersionId='', context=undefined">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectKey(objectDefinition, objectId, objectVersionId, context)", [objectDefinition, objectId, objectVersionId, context]);
+			}
+			var objectKey;
+			if (objectDefinition.primary || objectDefinition.organizational) {
+				objectKey = "" + this.initializationIdentifier + objectDefinition.objectType + objectId;
+			}
+			else if (objectDefinition.singleInstance) {
+				objectKey = objectDefinition.objectType + "SingleInstance";
+			}
+			else {
+				objectKey = objectDefinition.objectType + objectId;
+			}
+			objectKey = objectKey + objectVersionId;
+			if (context && context != this.oEditor.localContext) {
+				objectKey = objectKey + context.key;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectKey", objectKey);
+			}
+			return objectKey;
+			]]>
+		</method>
+		
+		<!---
+			Find the object with the specified object type and object identifier.
+			@param wcfModelObject parentObject: the parent object
+			@param string objectDefinition: the object definition
+			@param string objectId: the unique object identifier
+			@param string objectVersionId: the unique version identifier of the object
+			@param wcfBaseContext context: the context for this object
+			@return wcfModelObject: the model object
+		-->
+		<method name="findObject" args="parentObject, objectDefinition, objectId, objectVersionId='', context=undefined">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "findObject(parentObject, objectDefinition, objectId, objectVersionId, context)", [parentObject, objectDefinition, objectId, objectVersionId, context]);
+			}
+			var o;
+			if (!context && parentObject != null) {
+				context = parentObject.localContext;
+			}
+			var key = this.getObjectKey(objectDefinition, objectId, objectVersionId, context);
+			o = this.objectMap[key];
+			if (typeof(o) == "undefined" && parentObject) {
+				// The object may be in the child object map
+				o = parentObject.childObjectMap[key];
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "findObject(parentObject, objectDefinition, objectId, objectVersionId, context)", o);
+			}			
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			Load the object with the specified object type and object identifier.
+			@param wcfModelObject parentObject: the parent object
+			@param string objectDefinition: the object definition
+			@param string objectId: the unique object identifier
+			@param string objectVersionId: the unique version identifier of the object
+			@param wcfBaseContext context: the context for this object
+			@return wcfModelObject: the model object
+		-->
+		<method name="loadObject" args="parentObject, objectDefinition, objectId, objectVersionId='', context=undefined">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "loadObject(parentObject, objectDefinition, objectId, objectVersionId, context)", [parentObject, objectDefinition, objectId, objectVersionId, context]);
+			}
+			var o = this.findObject(parentObject, objectDefinition, objectId, objectVersionId, context);
+			if (typeof(o) == "undefined") {
+				o = this.createObject(parentObject, objectDefinition, objectId, (parentObject && parentObject.newObject && !objectDefinition.primary), false, false, objectVersionId, context);
+			}
+			else if (parentObject) {
+				parentObject.addChild(o, false);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "loadObject(parentObject, objectDefinition, objectId, objectVersionId, context)", o);
+			}			
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			Finds the object with the given object identifier and child of the specified object type.
+			@param wcfModelObject ancestorObject: the ancestor object to search from
+			@param childObjectType string: the object type of the child added
+			@param string objectId: the id of the object to find
+			@return wcfModelObject: the model object
+		-->
+		<method name="findParent" args="ancestorObject, childObjectType, objectId">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "findParent(ancestorObject, childObjectType, objectId)", [ancestorObject, childObjectType, objectId]);
+			}
+			var o = null;
+			
+			if (ancestorObject.getPropertyValue(ancestorObject.objectDefinition.idProperty) == objectId && ancestorObject.objectDefinition.getChildDefinition(childObjectType)) {
+				o = ancestorObject;
+			}
+			
+			if (o == null) {
+				for (var key in ancestorObject.childObjectMap) {
+					var co = ancestorObject.childObjectMap[key];
+					if (!co.objectDefinition.primary) {
+						var parentObject = this.findParent(co, childObjectType, objectId);
+						if (parentObject) {
+							o = parentObject;
+							break;
+						}
+					}
+				}
+			}
+
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "findParent(ancestorObject, childObjectType, objectId)", o);
+			}			
+			return o;
+			]]>
+		</method>
+	
+		<!---
+			Get all the child objects that match the specified given parameters.
+			@param wcfModelObject parentObject: The parent object from which to lookup children
+			@param object pathSelector: a path selector with the object type or group and an array of selectors to match child objects
+			@param wcfModelObject descendant optional object instance used to choose between multiple possible objects paths. The resulting object must be an ancestor of this decendant if it is not null.
+			@param boolean defaultLanguage: if true, if the child object is not language sensitive, and if there are no selectors in the path selector,
+											then the default language child object is returned
+			@return array: an array of wcfModelObject instances that match the given parameters
+		-->
+		<method name="getObjects" args="parentObject, pathSelector, descendant, defaultLanguage">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjects(parentObject, pathSelector, descendant, defaultLanguage)", [parentObject, pathSelector, descendant, defaultLanguage]);
+			}
+			parentObject.checkParsedData();
+			var matchingObjects = [];
+			if (descendant) {
+				var parentO = descendant.parentObject ? descendant.parentObject : descendant.getParentPrimaryObject();
+				while (parentO != null && parentO != parentObject) {
+					descendant = parentO;
+					parentO = descendant.parentObject ? descendant.parentObject : descendant.getParentPrimaryObject();
+				}
+				if (parentO != null && wcfModelUtil.matchesPathSelector(descendant, pathSelector)) {
+					matchingObjects.push(descendant);
+				}
+			}
+			else {
+				var isParentVersionObject = parentObject.getIsVersionObject();
+				for (var i = 0; i < parentObject.orderedChildObjectKeys.length; i++) {
+					var key = parentObject.orderedChildObjectKeys[i];
+					var childObject = parentObject.childObjectMap[key];
+					if (childObject && !childObject.pendingDelete && 
+						(isParentVersionObject || !childObject.getIsVersionObject() || (!isParentVersionObject && parentObject.objectDefinition.reference)) &&
+						wcfModelUtil.matchesPathSelector(childObject, pathSelector)) {
+						var match = false;
+						if (defaultLanguage && childObject.objectDefinition.languageSensitive && pathSelector.selectors.length == 0) {
+							if (childObject.getPropertyValue("languageId") == wcfContextUtil.findContextValue(childObject, "defaultLanguageId").value) {
+								match = true;
+							}
+						}
+						else {
+							match = true;
+						}
+						if (match) {
+							matchingObjects.push(childObject);
+						}
+					}
+				}
+			}
+
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjects(parentObject, pathSelector, descendant, defaultLanguage)", matchingObjects);
+			}				
+			return matchingObjects;
+			]]>
+		</method>
+		
+		<!---
+			Create a new model object with the specified object type and object identifier.
+			@param wcfModelObject parentObject: the parent object
+			@param wcfObjectDefinition objectDefinition: the object definition
+			@param string objectId: the unique object identifier
+			@param boolean newObject: mark this new object as a new, unsaved object
+			@param boolean implicitNewObject: true if impicitly created new object
+			@param boolean testObject: true if the object is a testObject
+			@param string objectVersionId: the unique version identifier of the object
+			@param wcfBaseContext context: the context for this object
+			@return wcfModelObject: the new model object
+		-->
+		<method name="createObject" args="parentObject, objectDefinition, objectId, newObject, implicitNewObject=false, testObject=false, objectVersionId='', context=undefined">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "createObject(parentObject, objectDefinition, objectId, newObject, implicitNewObject, testObject, objectVersionId, context)", [parentObject, objectDefinition, objectId, newObject, implicitNewObject, testObject, objectVersionId, context]);
+			}
+			if (!context && parentObject != null) {
+				context = parentObject.localContext;
+			}
+			var objectKey = this.getObjectKey(objectDefinition, objectId, objectVersionId, context);
+			if (objectDefinition) {
+				var o = wcfModelUtil.createModelObject({
+					model: this,
+					objectType: objectDefinition.objectType,
+					objectId: objectId,
+					objectVersionId: objectVersionId,
+					objectKey: objectKey,
+					objectDefinition: objectDefinition,
+					newObject: newObject ? true : false,
+					implicitNewObject: implicitNewObject ? true : false,
+					testObject: testObject ? true : (parentObject ? parentObject.testObject : false),
+					localContext: context
+				});
+				if (o.objectDefinition.primary || o.objectDefinition.organizational) {
+					if (o.testObject) {
+						this.testObjects.push(o);
+					}
+					else if (o.objectDefinition.objectType == "Top") {
+						this.topObject = o;
+					}
+					else {
+						// Object map only keeps track of primary or organizational objects
+						this.objectMap[o.objectKey] = o;
+						o.modelInitializationIdentifier = this.initializationIdentifier;
+					}
+				}
+				else {
+					o.modelInitializationIdentifier = this.initializationIdentifier;
+				}
+				if (parentObject) {
+					parentObject.addChild(o, false);
+				}
+				
+				if(!o.testObject){
+					if (o.objectDefinition.organizational) {
+						this.organizationalObjectMap[o.objectKey] = o;
+					}
+					
+					for (var i in this.organizationalObjectMap) {
+						if (this.organizationalObjectMap[i] != parentObject) {
+							var orgDef = this.organizationalObjectMap[i].objectDefinition;
+							var defs = orgDef.organizedObjectDefinitions;
+							if (defs != null && defs.indexOf(o.objectDefinition) != -1) {
+								this.organizationalObjectMap[i].addChild(o);
+							}
+						}
+					}
+				}
+			}
+			else {
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "WARNING", "wcfModel", "createObject", "no object definition found for "+objectDefinition.objectType);					
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "createObject(parentObject, objectDefinition, objectId, newObject, implicitNewObject, testObject, objectVersionId, context)", o);
+			}				
+			return o;
+			]]>
+		</method>
+
+		<!---
+			Create a new model object with the specified object type.
+			@param wcfObjectDefinition objectDefinition: the object definition
+			@param wcfModelObject parentObject: optional parent object
+			@param boolean update: trigger update. The default is "true".
+			@param wcfModelObject templateObject: optional template object.
+			@param boolean implicitNewObject: true if impicitly created
+			@param boolean testObject: true if the object is a testObject
+			@param wcfBaseContext context: the context for this object
+			@return wcfModelObject: the new model object
+		-->
+		<method name="createNewObject" args="objectDefinition, parentObject=null, update=true, templateObject=null, implicitNewObject=false, testObject=false, context=undefined">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "createNewObject(objectDefinition, parentObject, update, templateObject, implicitNewObject, testObject, context)", [objectDefinition, parentObject, update, templateObject, implicitNewObject, testObject, context]);
+			   wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG","wcfModel", "createNewObject(objectDefinition, parentObject, update, templateObject, implicitNewObject, testObject, context)", [objectDefinition, parentObject, update, templateObject, implicitNewObject, testObject, context]);
+			}
+			
+			if (objectDefinition == null && templateObject) {
+				objectDefinition = this.getObjectDefinition(parentObject, templateObject.objectType);
+			}
+			
+			var	objectId = "new" + ++this.newObjectCount;
+			var o = this.createObject(parentObject, objectDefinition, objectId, true, implicitNewObject, testObject, '', context);
+			if (templateObject) {			
+				o.initFromTemplate(templateObject, true);
+			}
+			if (parentObject && update) {
+				parentObject.updateChildObjects();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "createNewObject(objectDefinition, parentObject, update, templateObject, implicitNewObject, testObject)", o);
+			}				
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			Add the specified object to the list of open objects.
+			@param wcfModelObject o: the object to open
+		-->
+		<method name="addOpenObject" args="o">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "addOpenObject(o)",[o]);
+			}
+			var index = this.openObjects.indexOf(o);
+			if (index == -1) {
+				this.checkOpenObjectsLimit();
+				this.openObjects.push(o);
+				this.updateOpenObjects();
+				var activeWorkTree = this.oEditor.navigationTree.activeWorkTree;
+				if (!activeWorkTree.open) {
+					activeWorkTree.setAttribute("open", true);
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "addOpenObject(o)");
+			}	
+			]]>
+		</method>
+		
+		<!---
+			Remove the specified object from the list of open objects.
+			@param wcfModelObject o: the object to remove from the open list
+		-->
+		<method name="removeOpenObject" args="o">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "removeOpenObject(o)", [o]);
+			}
+			var index = this.openObjects.indexOf(o);
+			if (index != -1) {
+				this.openObjects.splice(index, 1);
+				this.updateOpenObjects();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "removeOpenObject(o)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update open object list.
+		-->
+		<method name="updateOpenObjects" args="immediate=false">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "updateOpenObjects");
+			}
+			if (this.lockCount == 0) {
+				if (this.updateOpenObjectListsCallbackCount > 0) {
+					wcfCallbackUtil.cancelCallback(this.updateOpenObjectListsDel);	
+					this.updateOpenObjectListsCallbackCount--;
+				}	
+	
+				this.updateOpenObjectListsCallbackCount++;
+				if (immediate) {
+					this.updateOpenObjectLists();
+				}
+				else {
+					wcfCallbackUtil.addDeferredCallback(this.updateOpenObjectListsDel);
+				}
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "updateOpenObjects");
+			}				
+			]]>
+		</method>
+		
+		<!---
+			Update open object list.
+		-->
+		<method name="updateOpenObjectLists" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "updateOpenObjectLists");
+			}
+			this.updateOpenObjectListsCallbackCount--;
+			var lists = this.openObjectLists;
+			for (var i = 0; i < lists.length; i++) {
+				lists[i].setAttribute("modelObjects", this.openObjects);
+			}
+			if (this["openObjectsUpdated"]) {
+				this.openObjectsUpdated.sendEvent();
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "updateOpenObjectLists");
+			}				
+			]]>
+		</method>
+				
+		<!---
+			Check if there is still room to add 1 more open object. Remove least viewed open objects that have no
+			unsaved changes if the limit is met.
+		-->
+		<method name="checkOpenObjectsLimit">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "checkOpenObjectsLimit");				
+			}
+			var sortedNotDirtyOpenObjects = this.sortNotDirtyOpenObjectsByLastViewedTimeOrder();
+			var closeCount = sortedNotDirtyOpenObjects.length + 1 - this.maximumNotDirtyOpenObjects;
+			if (closeCount > 0) {
+				this.lock();
+				for (var i=0; i<closeCount; i++) {
+					sortedNotDirtyOpenObjects[i].closeObject();
+				}
+				this.unlock();
+			}
+			if (wcfLogger.enabled) {
+				if (closeCount > 0) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINE", "wcfModelObject", "checkOpenObjectsLimit", "Number of open objects to be removed: " + closeCount);
+				}
+			   	wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "checkOpenObjectsLimit");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Sort the list of open objects that have no unsaved changes in the order that
+			they are last viewed.
+			@return array: an array of sorted open objects that have no unsaved changes
+		-->
+		<method name="sortNotDirtyOpenObjectsByLastViewedTimeOrder">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "sortNotDirtyOpenObjectsByLastViewedTimeOrder");
+			}
+			var sortedObjects = [];
+			for (var i=0; i<this.openObjects.length; i++) {
+				if (!this.openObjects[i].openGroupObject.openGroupDirty && !this.openObjects[i].isOpenInCompareView) {
+					sortedObjects.push(this.openObjects[i]);
+				}
+			}
+			
+			// Compare two objects to determine which is viewed last.
+			// Return negative number if o2 is viewed after o1
+			var compareObjectsByLastViewedOrder = function (o1,o2) {
+				if (o1.lastViewedTime < o2.lastViewedTime) {
+					return -1;
+				}
+				else if (o1.lastViewedTime > o2.lastViewedTime) {
+					return 1;
+				}
+				else {
+					return 0;
+				}
+			}
+			
+			sortedObjects.sort(compareObjectsByLastViewedOrder);
+			if (wcfLogger.enabled) {	
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "sortNotDirtyOpenObjectsByLastViewedTimeOrder", sortedObjects.length);
+			}
+			return sortedObjects;
+			]]>
+		</method>
+		
+		<!---
+			Increment the lock count on this object
+		-->
+		<method name="lock">
+			<![CDATA[
+			this.lockCount++;
+			]]>
+		</method>
+		
+		<!---
+			Decrement the lock count on this object.
+			@param boolean immediateUpdate: true to immediately update the children and references
+		-->
+		<method name="unlock" args="immediateUpdate=false">
+			<![CDATA[
+			if (this.lockCount > 0) {
+				this.lockCount--;
+				if (this.lockCount == 0) {
+					this.updateOpenObjects(immediateUpdate);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Bind the specified view to list of open objects.
+			@param view v: the view
+		-->
+		<method name="bindViewToOpenObjects" args="v">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "bindViewToOpenObjects(v)", [v]);
+			}
+			var list = v["oList"];
+			if (list) {
+				list.setAttribute("modelObjects", this.openObjects);
+			}
+			else {
+				list = new lz.wcfModelObjectList(v, {
+					v: v,
+					modelObjects: this.openObjects
+				});
+			}
+			this.openObjectLists.push(list);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "bindViewToOpenObjects(v)");
+			}				
+			]]>
+		</method>
+		
+		<!---
+			Find the latest search results for the specified search type.
+			@param string searchType: the search type
+			@param wcfBaseContext context: the context
+			@return wcfModelSearchResults: the search results object
+		-->
+		<method name="findSearchResults" args="searchType, context=undefined">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "findSearchResults(searchType)", [searchType]);
+			}
+			var key = searchType;
+			if (context && context != this.oEditor.localContext) {
+				key += context.key;
+			}
+			var s = this.searchResultsMap[key];
+			if (typeof(s) == "undefined") {
+				var searchDefinition = this.getSearchDefinition(searchType);
+				if (typeof(searchDefinition) == "undefined") {
+					searchDefinition = null;
+				}
+				s = new lz.wcfModelSearchResults(this, {
+					model: this,
+					searchDefinition: searchDefinition,
+					localContext: context
+				});
+				this.searchResultsMap[key] = s;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "findSearchResults(searchType)", s);
+			}				
+			return s;
+			]]>
+		</method>
+		
+		<!---
+			Bind the specified view to the search results object with the specified search type.
+			@param view v: the view
+			@param string searchType: the search type
+			@return wcfModelSearchResults: the search results instance
+		-->
+		<method name="bindViewToSearchResults" args="v, searchType">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "bindViewToSearchResults(v, searchType)", [v, searchType]);
+			}
+			var s = null;
+			if (searchType) {
+				s = this.findSearchResults(searchType);
+				s.bindView(v);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "bindViewToSearchResults(v, searchType)", s);
+			}				
+			return s;
+			]]>
+		</method>
+		
+		<!---
+			Perform a search of the specified search type.
+			@param string searchType: the search type
+			@param Object searchOptions: search options
+		-->
+		<method name="doSearch" args="searchType, searchOptions">
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "doSearch(searchType, searchOptions)", [searchType, searchOptions]);
+			   wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfModel", "doSearch(searchType, searchOptions)", [searchType, searchOptions]);				
+			}
+			var s = this.findSearchResults(searchType);
+			if (s) {
+				s.doSearch(searchOptions);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "doSearch(searchType, searchOptions)");
+			    wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfModel", "END ", "doSearch(searchType, searchOptions)" + [searchType, searchOptions]);				
+			}				
+		</method>
+		
+		<!---
+			Save any changed model objects.
+		-->
+		<method name="save" args="prompt">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "save");
+			   wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfModel", "do save", "number of objects: " + this.openObjects.length);				
+			}
+			if(typeof(prompt) == "undefined") {
+				prompt = true;
+			}
+			if(prompt){
+				var hasError = false;
+				for(var i = 0; i < this.openObjects.length; i++){
+					var o = this.openObjects[i];
+					if(o.hasErrors(true) && o.openGroupDirty){
+						hasError = true;
+						break;
+					}
+				}
+				if(hasError){
+					wcfSaveOpenObjectsWithErrorDialog.openSaveOpenObjectsWithErrorDialog(this);
+				}else{
+					this.save(false);
+				}
+			}else{
+				this.saveOpenObjects(this.openObjects);
+			}
+			if (wcfLogger.enabled) {
+			    wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfModel", "END do save", "number of objects: " + this.openObjects.length);				
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "save");
+			}				
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Save open objects in batches not exceeding maximumSaveObjects.
+		-->				
+		<method name="deferredSaveOpenObjects" args="args">
+			<![CDATA[
+			var saveObjects = args.saveObjects;
+			var numToSave = Math.min(this.maximumSaveObjects, saveObjects.length);
+			var saveList = saveObjects.slice(0, numToSave);
+			saveObjects.splice(0, numToSave);
+			var eventId = null;
+			if (args["eventId"]) {
+				eventId = args.eventId;
+				wcfServiceTransactionUtil.activeTransactionEventId = eventId;
+			}
+			this.lock();
+			for (var i = 0; i < saveList.length; i++) {
+				saveList[i].saveObject(false, false);
+			}
+			this.unlock();
+			if (eventId == null) {
+				eventId = wcfServiceTransactionUtil.transactionEventCount;
+			}
+			wcfServiceTransactionUtil.activeTransactionEventId = null;
+			if (saveObjects.length > 0) {
+				wcfCallbackUtil.addDeferredCallback(this.deferredSaveOpenObjectsDel, {saveObjects: saveObjects, eventId: eventId}, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			}
+			]]>
+		</method>
+		<!---
+			Save objects in the order of parent first
+			@param array saveObjects: objects to be saved
+		-->	
+		<method name="saveOpenObjects" args="saveObjects">
+			<![CDATA[
+			saveObjects = saveObjects.slice(0);
+			wcfModelUtil.sortObjectsBySaveOrder(saveObjects);
+			if (!this["deferredSaveOpenObjectsDel"]) {
+				this.deferredSaveOpenObjectsDel = new lz.Delegate(this, "deferredSaveOpenObjects");
+			}
+			wcfCallbackUtil.addDeferredCallback(this.deferredSaveOpenObjectsDel, {saveObjects: saveObjects}, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			]]>
+		</method>
+		
+		<!---
+			Parse the object data element and construct the model object and its children.
+
+			@param XML e: the object data element
+			@param wcfModelObject parentObject: optional parent object
+			@param boolean lazyParse: if true do lazy parsing
+			@param boolean createAsNew: If true created the parsed objects as new objects
+			@param string objectVersionId: the unique version identifier of the object
+			@param wcfBaseContext context: the context for this object
+			@return wcfModelObject: the model object
+		-->
+		<method name="parseObject" args="e, parentObject=null, lazyParse=false, createAsNew=false, objectVersionId='', context=undefined">
+			<![CDATA[
+			/*
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "parseObject(e, parentObject)", [e, parentObject]);
+			}
+			*/
+			var deferParse = false;
+			var o = null;
+			var objectType = e.attributes["objectType"];
+			var objectPath = e.attributes["objectPath"];
+			if (!context && parentObject != null) {
+				context = parentObject.localContext;
+			}
+			if (objectPath && parentObject != null) {
+				o = parentObject.getObject(objectPath);
+				if (o != null) {
+					o.parseDataElement(e, lazyParse);
+				}
+			}
+			else if (objectType) {
+				var parentElement = wcfXMLUtil.getFirstElement(e, "parent");
+				var isParsedInParentObject = false;
+				if (parentElement != null) {
+					var parentObjectDataElement = wcfXMLUtil.getFirstElement(parentElement, "object");
+					var parentObjectObjectType = parentObjectDataElement.attributes["objectType"];
+					if (parentObjectObjectType) {
+						parentObject = this.parseObject(parentObjectDataElement, null, false, false, '', context);
+						isParsedInParentObject = true;
+					}
+					else {
+						var parentObjectObjectId = parentObjectDataElement.attributes["objectId"];
+						var parentObjectObjectPath = parentObjectDataElement.attributes["objectPath"];
+						if (parentObjectObjectId || parentObjectObjectPath) {
+							var eParentObject = parentObjectObjectId ?
+								this.findParent(parentObject, objectType, parentObjectObjectId) :
+								parentObject.getObject(parentObjectObjectPath);
+							if (eParentObject && !eParentObject.implicitNewObject) {
+								parentObject = eParentObject;
+								isParsedInParentObject = true;
+							}
+							else {
+								deferParse = true;
+								
+								var parentPrimaryObject = parentObject.objectDefinition.primary?parentObject:parentObject.getParentPrimaryObject();
+								if (parentPrimaryObject.deferredElements != null) {
+									parentPrimaryObject.deferredElements.push(e);
+								}
+							}
+						}
+					}
+				}
+			
+				if (!deferParse) {
+					var objectDefinition = this.getObjectDefinition(parentObject, objectType, true);
+					if (objectDefinition) {
+						var objectId = null;						
+						if (objectDefinition.idProperty) {
+							var idName = objectDefinition.idProperty;
+							var nodes = e.childNodes;
+							for (var j = 0; j < nodes.length; j++) {
+								if (nodes[j].nodeName == idName) {
+									var textNode = nodes[j].firstChild;
+									if (textNode != null && textNode.nodeType == 3) {
+										objectId = textNode.nodeValue;
+									}
+									break;
+								}
+							}
+						}
+						
+						if (objectDefinition.singleInstance && !objectId) {
+							objectId = "SingleInstance";
+						}
+						
+						if (objectId && !createAsNew) {
+							var versionId = "";
+							if (objectDefinition.primary) {
+								var nodes = e.childNodes;
+								for (var j = 0; j < nodes.length; j++) {
+									if (nodes[j].nodeName == "objectVersionId") {
+										var textNode = nodes[j].firstChild;
+										if (textNode != null && textNode.nodeType == 3) {
+											versionId = textNode.nodeValue;
+										}
+										break;
+									}
+								}
+							} else if (objectDefinition.reference) {
+								versionId= objectVersionId;
+							}
+							o = this.loadObject(parentObject, objectDefinition, objectId, versionId, context);
+							
+							if (o.implicitNewObject) {
+								o.setAttribute("newObject", false);
+								o.setAttribute("implicitNewObject", false);
+								o.openGroupObject.checkUnsavedChanges();
+							}
+			
+							if (isParsedInParentObject) {
+								parentObject.updateChildObjects();
+							}
+
+							o.parseDataElement(e, lazyParse);
+							o.updateDisplayName();
+						}
+						else if (objectDefinition.organizational || (parentObject && parentObject.newObject) || createAsNew){
+							o = this.createNewObject(objectDefinition, parentObject, false, null, false, false, context);
+							o.parseDataElement(e, lazyParse);
+						}
+
+						if (parentObject) {
+							var parentPrimaryObject = parentObject.objectDefinition.primary ? parentObject : parentObject.getParentPrimaryObject();
+							if (parentPrimaryObject && parentPrimaryObject.deferredElements != null && parentPrimaryObject.deferredElements.length > 0) {
+								var deferredElements = parentPrimaryObject.deferredElements;
+								parentPrimaryObject.deferredElements = null;
+								for (var i = 0; i < deferredElements.length; i++) {
+									var deferredElementObject = this.parseObject(deferredElements[i], parentPrimaryObject, lazyParse, createAsNew, '', context);
+									if (deferredElementObject != null) {
+										deferredElements.splice(i, 1);
+										i = -1;
+									}
+								}
+								parentPrimaryObject.deferredElements = deferredElements;
+							}
+						}
+					}
+					else {
+						if (wcfLogger.enabled) {
+							var msg = "No object definition for object type: " + objectType + ".";
+							if (parentObject) {
+								msg += " Parent object: " + parentObject.objectDefinition.objectType;
+							}
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "WARNING", "wcfModel", "parseObject", msg);					
+						}	
+					}
+				}
+			}
+			/*
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "parseObject(e, parentObject)", o);
+			}
+			*/				
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Parse a data element and construct model objects for each child data element that represents an object.
+
+			@param XML dataElement: the parent data element
+			@param wcfModelObject parentObject: optional parent object
+			@param lz.Delegate del: an optional callback delegate
+			@param object delArgs: an optional set of arguments invoked with the callback delegate
+			@param boolean stoppable: an optional paramater indicating whether the deferred parse is stoppable
+			@param lz.Delegate stopDel: an optional callback delegate, invoked when this deferred callback is stopped, it can only be invoked if stoppable is true
+			@param object stopDelArgs: an optional set of arguments invoked with the stop callback delegate
+			@param wcfGetChildrenService getChildrenService: an optional wcfGetChildrenService object. If provided, the types of the parsed objects will be checked against the expected {@linke wcfGetChildrenService#objectTypes objectTypes} specified for the service.
+			@param wcfBaseContext context: the context for this object
+		-->
+		<method name="doDeferredParseObjects" args="dataElement, parentObject, del, delArgs, stoppable, stopDel=null, stopDelArgs=null, getChildrenService=null, context=undefined">
+			<![CDATA[
+			wcfCallbackUtil.addDeferredCallback(this.doParseObjectsBatchDel, {dataElement: dataElement, parentObject: parentObject, del: del, delArgs: delArgs, getChildrenService: getChildrenService, context: context}, wcfCallbackUtil.PRIORITY_BACKGROUND, stoppable, stopDel, stopDelArgs);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Parse a data element and construct model objects for each child data element that represents an object.  This method
+			adds a batch of parse objects onto the deferred call back individually.
+
+			@param Object args: The arguments for adding all the deferred callbacks.  The data element, parent object, callback delegate, and callback delegate arguments.
+		-->
+		<method name="doParseObjectsBatch" args="args">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "doParseObjectsBatch(args)");
+			}
+			
+			var dataElement = args.dataElement;
+			var parentObject = args.parentObject;
+			var del = args.del;
+			var delArgs = args.delArgs;
+			var getChildrenService = args["getChildrenService"];
+			var context = args.context;
+
+			var objects = [];
+            while (dataElement.childNodes.length > 0) {
+                var e = dataElement.childNodes[0];
+                e.removeNode();
+                wcfCallbackUtil.addDeferredCallback(this.doParseObjectDel, {e: e, parentObject: parentObject, objects: objects, getChildrenService: getChildrenService, context: context}, wcfCallbackUtil.PRIORITY_BACKGROUND_IMMEDIATE);
+            }
+			
+			if (del) {
+				delArgs["objects"] = objects;
+				wcfCallbackUtil.addDeferredCallback(del, delArgs, wcfCallbackUtil.PRIORITY_BACKGROUND_IMMEDIATE);
+			}
+
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "doParseObjectsBatch(args)");
+			}				
+			]]>
+		</method>
+		
+		<!---
+			Parses the object for the given args.
+		-->
+		<method name="doParseObject" args="args">
+			<![CDATA[
+			var e = args.e;
+			var parentObject = args.parentObject;
+			var objects = args.objects;
+			var getChildrenService = args["getChildrenService"];
+			var context = args.context;
+			
+			if (e.nodeName == "object") {
+				if (getChildrenService && parentObject && parentObject.implicitNewObject) {
+					parentObject.setAttribute("newObject", false);
+					parentObject.setAttribute("implicitNewObject", false);
+				}
+				var o = this.parseObject(e, parentObject, true, false, '', context);
+				if (o != null) {					
+					objects.push(o);	
+					if (getChildrenService) {
+						getChildrenService.checkReturnedObject(o);
+						// add child object to the list in service's statusObject
+						if (parentObject) {
+							parentObject.addLoadedChild(getChildrenService, o);
+						}
+					}														
+				}
+			}
+			else if (e.nodeName == "reference") {
+				var o = this.parseObject(wcfXMLUtil.getFirstElement(e, "object"), parentObject, false, false, parentObject.objectVersionId, context);
+				if (o == null) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "SEVERE", "wcfModel", "doParseObject", "Error parsing reference " + e);
+				}
+				else {
+					o.addChild(parentObject);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Parses a comma separated list of object types and returns an
+			array of object definitions.
+			@param wcfModelObject parentObject: model object
+			@param string types: comma separated list of object types
+			@returns [wcfObjectDefinition]: an array of object definitions
+		-->
+		<method name="getObjectDefinitions" args="parentObject, types">
+			<![CDATA[
+			/*
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectDefinitions(parentObject, types)", [parentObject, types]);
+			}
+			*/
+			var definitions = [];
+			if (types) {
+				types = wcfStringUtil.splitAndTrim(types, ",");
+				for (var i = 0; i < types.length; i++) {
+					var oDef = this.getObjectDefinition(parentObject, types[i]);
+					if (!oDef) {
+						var msg = "Unable to resolve object type: " + types[i];
+						if (parentObject != null) {
+							msg += " Parent object type: " + parentObject.objectType;
+						}
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "SEVERE", "wcfModel", "getObjectDefinitions", msg);
+					}
+					else {
+						definitions.push(oDef);
+					}
+				}
+			}
+			/*
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectDefinitions(parentObject, types))", definitions);
+			}
+			*/				
+			return definitions;
+			]]>
+		</method>
+		
+		<!---
+			Parses a comma separated list of object types and returns an array of object selectors.
+			An object selector is a map with two fields:
+			<ul>
+				<li>An instance of wcfObjectDefinition accessed by the objectDefinition key.
+				<li>An array of selectors accessed by the selectors key.  This is an array of maps with keys: propertyName, propertyValue.
+			</ul>
+			
+			@param wcfModelObject parentObject: model object
+			@param string types: comma separated list of object types
+			@returns Object: an array of object selectors
+		-->
+		<method name="getObjectSelectors" args="parentObject, types">
+			<![CDATA[
+			/*
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectSelectors(parentObject, types)", [parentObject, types]);
+			}
+			*/
+			var objectSelectors = [];
+			
+			if (types) {
+				types = wcfStringUtil.splitAndTrim(types, ",");
+				for (var i = 0; i < types.length; i++) {
+					var oDef = this.getObjectDefinition(parentObject, types[i]);
+					if (oDef) {
+						var selectors = [];
+						
+						var index = types[i].indexOf("[");
+						if (index != -1) {
+							if (oDef.reference || oDef.parentReference) {
+								var msg = "Object selectors not applicable for reference object definitions.  Object selectors ignored for object type: " + oDef.objectType;
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "SEVERE", "wcfModel", "getObjectSelectors", msg);								
+							}
+							else {
+								var objSelectors = types[i].substring(index+1, types[i].lastIndexOf("]")).split("][");
+								
+								for (var j = 0; j < objSelectors.length; j++) {
+									var selector = objSelectors[j].split("=");
+									selectors.push({propertyName: selector[0], propertyValue: selector[1]});
+								}
+							}
+						}
+						objectSelectors.push({objectDefinition: oDef, selectors: selectors});
+					}
+				}
+			}
+			
+			/*
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "getObjectSelectors(parentObject, types))", objectSelectors);
+			}
+			*/				
+			return objectSelectors;
+			]]>
+		</method>
+		
+		<!---
+			Set the clipboard to the set of specified objects.
+			@param array objects: the array of wcfModelObject objects
+		-->
+		<method name="setClipboardObjects" args="objects">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "setClipboardObjects(objects)", [objects]);
+			}
+			if (this.clipboardObjects) {
+			    // Decrement reference count for old clipboard objects
+			    for (var i=0; i<this.clipboardObjects.length; i++) {
+					var obj = this.clipboardObjects[i];
+					// Get the referenced object
+					obj = obj.getReferencedObject();
+					obj.referenceCount--;
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfModel", "setClipboardObjects(objects)", "Old clipboard objects: Object key=" + this.clipboardObjects[i].objectKey + ". Decrement counter for: Object key=" + obj.objectKey + ", new reference count=" + obj.referenceCount);
+					}
+				}
+			}
+			this.removeObjectFromClipboardDel.unregisterAll();
+			if (typeof(objects) != "undefined"  && objects != null) {		
+				var newObjects = [];		
+			    for (var i=0; i<objects.length; i++) {
+					this.removeObjectFromClipboardDel.register(objects[i], "beingDestroyed");
+					newObjects.push(objects[i]);
+					
+					// Increment reference count for new model object
+					var obj = objects[i];
+					obj = obj.getReferencedObject();
+					obj.referenceCount++;					
+					if (wcfLogger.enabled) {						
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfModel", "setClipboardObjects(objects)", "New clipboard objects: Object key=" + objects[i].objectKey + ". Increment counter for: Object key=" + obj.objectKey + ", new reference count=" + obj.referenceCount);
+					}
+				}
+				// Set to the new clipboard objects
+				this.clipboardObjects = newObjects;
+			}
+			else {
+				this.clipboardObjects = null;
+			}
+			if (this["onclipboardObjects"]) {
+				this.onclipboardObjects.sendEvent(this.clipboardObjects);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "setClipboardObjects(objects)");
+			}				
+			]]>
+		</method>
+		
+		<!---
+			Remove the specified object from the clipboard. This method is
+			registered to the "beingDestroyed" event for all the objects
+			in the clipboard.
+		-->
+		<method name="removeObjectFromClipboard" args="o">
+			<![CDATA[
+			var index = this.clipboardObjects.indexOf(o);
+			if (index >= 0) {
+				this.clipboardObjects.splice(index, 1);
+				o = o.getReferencedObject();
+				o.referenceCount--;
+				this.removeObjectFromClipboardDel.unregisterAll();
+				var objects = this.clipboardObjects;
+			    for (var i=0; i<objects.length; i++) {
+					this.removeObjectFromClipboardDel.register(objects[i], "beingDestroyed");
+				}
+				if (objects.length ==0 && this["onclipboardObjects"]) {
+					this.onclipboardObjects.sendEvent(objects);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close all open objects.
+			@param boolean prompt: Display prompt if there are unsaved changes. The default is false.
+		-->
+		<method name="closeOpenObjects" args="prompt=false">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "closeOpenObjects(prompt)", [prompt]);
+			}
+			if (prompt) {
+				var unsavedChanges = false;
+				for (var i = 0; i < this.openObjects.length; i++) {
+					var o = this.openObjects[i];
+					if (o.openGroupObject.openGroupDirty) {
+						unsavedChanges = true;
+						break;
+					}
+				}
+				if (unsavedChanges) {
+					wcfSaveOpenObjectsDialog.openSaveOpenObjectsDialog(this);
+				}
+				else {
+					this.closeOpenObjects();
+				}
+			}
+			else {
+				var objects = [];
+				for (var i = 0; i < this.openObjects.length; i++) {
+					objects.push(this.openObjects[i]);
+				}
+				this.lock();
+				for (var i = 0; i < objects.length; i++) {
+					objects[i].closeObject();
+				}
+				this.unlock();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "closeOpenObjects(prompt)");
+			}				
+			]]>
+		</method>
+		
+		<!---
+			Returns an array of model objects that are open and unsaved.
+			@return array An array of wcfModelObject that are open and unsaved. Returns an empty array if there are no unsaved open objects.
+		-->
+		<method name="getUnsavedOpenObjects">
+			<![CDATA[
+			var unsavedObjects = [];
+			for (var i = 0; i < this.openObjects.length; i++) {
+				var o = this.openObjects[i];
+				if (o.openGroupObject.openGroupDirty) {
+					unsavedObjects.push(o);
+				}
+			}
+			return unsavedObjects;
+			]]>
+		</method>
+		
+		<!---
+			Refresh all primary objects. This method will send the "beingDestroyed" event on the
+			objects being destroyed at refresh time.
+			@param boolean prompt: Display prompt if there are unsaved changes. The default is false.
+		-->
+		<method name="refreshAll" args="prompt=false">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "refreshAll(prompt)", [prompt]);
+			   wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfModel", "refreshAll(prompt)", [prompt]);
+			}	
+			var numOfObjectsDestroyed = 0;			
+			if (prompt) {
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					// check if there are any unsaved changes			
+					var unsavedObjects = [];
+					for (var i = 0; i < this.openObjects.length; i++) {
+						var o = this.openObjects[i];
+						if (o.openGroupObject.openGroupDirty) {
+							unsavedObjects.push(o);
+						}
+					}
+					if (unsavedObjects.length > 0) {
+						wcfRefreshAllConfirmationDialog.openRefreshAllConfirmationDialog(this, unsavedObjects);
+					}
+					else {
+						this.refreshAll();
+					}
+				}
+			}
+			else {
+				wcfModelUtil.doStop(this);
+				
+				// Clear the navigation history
+				this.oEditor.resetNavigationHistory();
+				
+				// Reset the search results
+				for (var key in this.searchResultsMap) {
+					this.searchResultsMap[key].reset(true);
+				}
+				
+				this.initializationIdentifier++;
+							
+				var objectMapList = [];
+				for (var key in this.objectMap) {
+					objectMapList.push(this.objectMap[key]);
+				}
+				
+				numOfObjectsDestroyed = 0;
+				while (objectMapList.length > 0) {
+					var obj = objectMapList.shift();
+					if (obj.open) {
+						obj.setAttribute("open", false);
+					}
+					if (obj.objectDefinition.organizational) {
+						wcfModelUtil.releaseModelObject(obj);
+						numOfObjectsDestroyed++;
+					} else {
+						obj.beingDestroyed.sendEvent(obj);
+					}
+				}
+				this.setClipboardObjects([]);
+				this.closeOpenObjects(false); // close any non-primary open objects
+				this.topObject.updateChildObjects(true);
+				
+				var topObjectTemplate = this.topObject.objectDefinition.getTemplate();
+				if (topObjectTemplate) {
+					this.topObject.parseDataElement(topObjectTemplate);
+				}
+				this.topObject.refreshChildren();
+			}
+
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfModel", "END refreshAll(prompt)", "Number of primary objects to be removed=" + numOfObjectsDestroyed);	
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "refreshAll(prompt)");
+			}	
+			]]>
+		</method>
+		
+		<!---
+			Refresh the specified object and all of its descendants.
+			@param wcfModelObject refreshObject: The object below which all objects will be updated.
+			@param boolean prompt: Display prompt if there are unsaved changes. The default is false.
+			@param [wcfObjectDefinition] oDefs: optional array of object definitions to reload
+			@param number pageNum: The page number to be loaded.
+		-->
+		<method name="refreshDescendants" args="refreshObject, prompt=false, oDefs=null, pageNum=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "refreshDescendants(refreshObject, prompt)", [refreshObject, prompt]);
+			}
+			if (prompt) {
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					// check if there are any unsaved changes		
+					var unsavedObjects = [];
+					for (var i = 0; i < this.openObjects.length; i++) {
+						var o = this.openObjects[i];
+						if (refreshObject.isDescendant(o) && o.openGroupObject.openGroupDirty) {
+							unsavedObjects.push(o);
+						}
+					}
+					if (unsavedObjects.length > 0) {
+						wcfRefreshAllConfirmationDialog.openRefreshAllConfirmationDialog(this, unsavedObjects, refreshObject, oDefs, pageNum);
+					}
+					else {
+						this.refreshDescendants(refreshObject, false, oDefs, pageNum);
+					}
+				}
+			}
+			else {
+				var refreshObjects = [];
+				for (var i = 0; i < this.openObjects.length; i++) {
+					var o = this.openObjects[i];
+					if (refreshObject.isDescendant(o) && o.openGroupObject.openGroupDirty) {
+						if (!o.objectDefinition.primary) {
+							o = o.getParentPrimaryObject();
+						}
+						refreshObjects.push(o);
+					}
+				}
+				while (refreshObjects.length > 0) {
+					var o = refreshObjects.shift();
+					if (o.newObject) {
+						wcfModelUtil.releaseModelObject(o);
+					}
+					else { 
+						o.refreshObject();
+					}
+				}
+				if (pageNum == null) {
+					if (refreshObject.objectDefinition.refreshService != null) {
+						refreshObject.objectDefinition.refreshService.doRequest(refreshObject);
+					}
+				}
+				refreshObject.refreshChildren(oDefs, pageNum);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "refreshDescendants(refreshObject, prompt)");
+			}	
+			]]>
+		</method>
+		
+		<!---
+			Remove objects in the model that are not being referenced.
+			@param Object args: arguments
+		-->
+		<method name="removeNotReferencedObjects" args="args=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "removeNotReferencedObjects");				
+			}
+			lz.Timer.removeTimer(this.removeNotReferencedObjectsDel);
+			var immediate = (args == null) || "deferredCallback" in args || wcfCallbackUtil.deferredCallbacks.length == 0;
+			
+			// Remove objects in the model that are not being referenced any more	
+			var numOfObjects = 0;
+			var numOfObjectsDestroyed = 0;
+			var moreObjectsToRelease = false;
+			if (immediate) {
+				for (var key in this.objectMap) {	
+					var obj = this.objectMap[key];
+					if (wcfLogger.enabled) {
+						numOfObjects++;
+					}
+					if (numOfObjectsDestroyed > 100) {
+						// To avoid javascript timeout popup, we try to batch the objects release in groups of 100
+						moreObjectsToRelease = true;
+						break;
+					}
+					if (obj.objectDefinition.primary && obj.openChildCount == 0 && !obj.open) {
+						var canRemoveObject = obj.modelInitializationIdentifier != this.initializationIdentifier;
+						if (!canRemoveObject && obj.referenceCount == 0) {
+							// Check to make sure this primary object is not being referenced by other primary objects
+							canRemoveObject = true;
+							for (var referenceKey in obj.referenceMap) {
+								var ref = obj.referenceMap[referenceKey];
+								var refDef = ref.objectDefinition;
+								if (!refDef.organizational) {
+									var parentPrimaryObject = ref.getParentPrimaryObject();
+									if ((!refDef.parentReference && parentPrimaryObject.referenceCount > 0) || parentPrimaryObject.isGetChildrenServicesLoading() || ref.hasUnsavedChanges()) {
+										if (wcfLogger.enabled && parentPrimaryObject != null) {
+											wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfModel", "removeNotReferencedObjects", "Model object key=" + obj.objectKey + " with reference count=" + obj.referenceCount + " is still being referenced by object with key=" + ref.getParentPrimaryObject().objectKey);
+										}
+										canRemoveObject = false;
+										break;
+									}
+								}
+							}
+						}
+					    if (canRemoveObject) {
+							if (wcfLogger.enabled) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfModel", "removeNotReferencedObjects", "Model object key=" + obj.objectKey + " will be destroyed");
+							}
+							numOfObjectsDestroyed++;
+							// Break the link between the "to be destroyed" primary object and its reference objects
+							delete this.objectMap[obj.objectKey];
+							for (var referenceKey in obj.referenceMap) {
+								var referenceObj = obj.referenceMap[referenceKey];
+								if (referenceObj.getReferencedObject() == obj) {
+									var referenceObjParentObject = referenceObj.getParentPrimaryObject();
+									referenceObjParentObject.setGetChildrenServicesStale(referenceObj.objectDefinition);
+									wcfModelUtil.releaseModelObject(referenceObj);
+								}
+								else {
+									referenceObj.setGetChildrenServicesStale(obj.objectDefinition);
+									referenceObj.removeChild(obj);
+								}
+							}
+							wcfModelUtil.releaseModelObject(obj);	
+						}
+						else if (obj.hasReleasableChildren && !obj.hasTransaction() && !obj.isGetChildrenServicesLoading()) {
+							obj.releaseReleasableChildren();
+							obj.hasReleasableChildren = false;
+							obj.releaseReleasableProperties();
+							numOfObjectsDestroyed++;
+						}
+						else if (obj.releaseReleasableProperties()) {
+							numOfObjectsDestroyed++;
+						}
+					}
+				}
+			}
+			if (immediate && !moreObjectsToRelease) {
+				// Schedule to run the method to check and remove not referenced objects
+				lz.Timer.resetTimer(this.removeNotReferencedObjectsDel, this.removeNotReferencedObjectsInterval);
+			}
+			else {
+				wcfCallbackUtil.addDeferredCallback(this.removeNotReferencedObjectsDel, {deferredCallback:true}, (args != null && ("deferredCallback" in args) && args.deferredCallback)?wcfCallbackUtil.PRIORITY_IMMEDIATE:wcfCallbackUtil.PRIORITY_BACKGROUND_IMMEDIATE);
+			}
+			if (wcfLogger.enabled) {				
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINE", "wcfModel", "removeNotReferencedObjects", "Number Of objects before removal=" + numOfObjects);
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINE", "wcfModel", "removeNotReferencedObjects", "Number Of primary objects being destroyed=" + numOfObjectsDestroyed);
+			   	wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModel", "removeNotReferencedObjects");
+			}
+			]]>
+		</method>
+	
+		<!---
+			Capture statistics on the current state of the model and log them.
+		-->
+		<method name="logModel">
+			<![CDATA[
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "--- " + this.oEditor.name + " ---");
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "object count " + this.objectCount);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "released object count " + wcfModelUtil.availableModelObjects.length);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "property count " + this.propertyCount);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "released property count " + wcfModelUtil.availableModelProperties.length);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "deferred callback count " + wcfCallbackUtil.deferredCallbacks.length);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "service dataset count " + wcfServiceUtil.activeServiceDatasetCount);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "released service dataset count " + wcfServiceUtil.availableServiceDatasets.length);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "service transaction count " + wcfServiceTransactionUtil.activeServiceTransactionCount);
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModel", "logModel", "released object stores count " + wcfModelUtil.availableObjectStores.length);
+			wcfLogger.flush();
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		A search results object.
+	-->
+	<class name="wcfModelSearchResults" extends="node">
+		<!---
+			Reference to the parent model.
+		-->
+		<attribute name="model" value="null"/>
+		<!---
+			Reference to search definition.
+		-->
+		<attribute name="searchDefinition" value="null"/>
+		<!---
+			Indicate if the result status message contain errors
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		<!---
+			Array of search results objects.
+		-->
+		<attribute name="searchResultObjects" value="${[]}"/>
+		<!---
+			Array of model object lists that are tied to this list of search results.
+		-->
+		<attribute name="modelObjectLists" value="${[]}"/>
+		
+		<!---
+			Current search options.
+		-->
+		<attribute name="searchOptions" value="null"/>
+		
+		<!--- Status message telling a state of the object. It is displayed in the panel title message area. -->
+		<attribute name="statusMessage" type="string" value=""/>
+		<!---
+			@keywords private
+			The start index of the current page of search results.
+		-->
+		<attribute name="startIndex" type="number" value="0"/>
+		<!---
+			@keywords private
+			The total number of records from the search result.
+		-->
+		<attribute name="totalRecords" type="number" value="0"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="currPageNum" type="number" value="0"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="lastPageNum" type="number" value="0"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="deleteCount" type="number" value="0"/>
+		<!---
+			@keywords private
+			The instance implemented doLoadPage which can be called by the page control.
+		-->
+		<attribute name="pageController" value="$once{this}"/>
+		<!---
+			@keywords private
+			The context associated with this search results object.
+		-->
+		<attribute name="localContext"/>
+
+		
+		<!--- Search complete event. -->
+		<event name="onsearchComplete"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.objectDestroyedDel = new lz.Delegate(this, "objectDestroyed");
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.objectDestroyedDel.unregisterAll();
+			delete this.objectDestroyedDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Bind the specified view to these search results.
+			@param view v: the view
+		-->
+		<method name="bindView" args="v">
+			<![CDATA[
+			var lists = this.modelObjectLists;
+			var alreadyBound = false;
+			for (var i = 0; i < lists.length; i++) {
+				if (lists[i].v == v) {
+					alreadyBound = true;
+					break;
+				}
+			}
+			if (!alreadyBound) {
+				var list = v["oList"];
+				if (list) {
+					list.setAttribute("modelObjects", this.searchResultObjects);
+					list.setAttribute("statusObject", this);
+				}
+				else {
+					list = new lz.wcfModelObjectList(v, {
+						v: v,
+						modelObjects: this.searchResultObjects,
+						statusObject: this
+					});
+				}
+				lists.push(list);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Release the specified view from this object.
+			@param view v: the view
+		-->
+		<method name="releaseView" args="v">
+			<![CDATA[
+			var lists = this.modelObjectLists;
+			for (var i = 0; i < lists.length; i++) {
+				if (lists[i].v == v) {
+					lists[i].setAttribute("modelObjects", []);
+					lists[i].setAttribute("statusObject", null);
+					lists.splice(i, 1);
+					if (lists.length == 0) {
+						// reset the search result objects if no more view is binding to it
+						this.searchResultObjects = [];
+						this.hasError = false;
+						this.statusMessage = "";
+						this.searchOptions = null;
+						this.startIndex = 0;
+						this.totalRecords = 0;
+						this.currPageNum = 0;
+						this.lastPageNum = 0;
+						this.deleteCount = 0;
+					}
+					break;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Invoke the search with the specified search options.
+			@param Object searchOptions: Search options that will be
+				sent to the search service.
+			@param number startIndex: Start index for the search.
+		-->
+		<method name="doSearch" args="searchOptions, startIndex=0">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModelSearchResults", "doSearch(searchOptions, startIndex)", [searchOptions, startIndex]);
+			}
+			this.reset(startIndex == 0);
+			this.searchOptions = searchOptions;
+			this.totalRecords = 0;
+			this.deleteCount = 0;
+			
+			//trim all the fields in searchOptions before we call the search sevice
+			for (var i in searchOptions) {
+				searchOptions[i] = wcfStringUtil.trim(searchOptions[i]);
+			}
+			
+			if (typeof(searchOptions["searchText"]) != "undefined" && searchOptions.searchText == "") {
+				//do not send request to server if the searchText is empty
+				this.hasError = true;
+				this.setAttribute("statusMessage", foundationResources.searchResultsNoCriteriaMsg.string);
+			} else {
+				var service = this.searchDefinition.searchService;
+				service.doRequest(this, searchOptions, {startIndex:startIndex});
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModelSearchResults", "doSearch(searchOptions, startIndex)");
+			}
+			]]>
+		</method>
+
+		<!---
+			Load the page.
+		-->
+		<method name="doLoadPage" args="args">
+			<![CDATA[
+			this.loadByPageNum(args.pageNum);
+			]]>
+		</method>
+		<!---
+			Load the page of search result by page number. The current set of search results is discarded.
+		-->
+		<method name="loadByPageNum" args="pageNum">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModelSearchResults", "loadByPageNum");
+			}
+			var maxRecordSetTotal = this.searchDefinition.searchService.getMaxRecordSetTotal();
+			if (this.currPageNum < pageNum) {
+				var maxItems = this.searchDefinition.searchService.getMaxItems();
+				this.startIndex = this.startIndex + (maxRecordSetTotal * (pageNum - this.currPageNum))
+								- Math.ceil(this.deleteCount/maxItems)*maxItems;
+			} else {
+				this.startIndex = maxRecordSetTotal * (pageNum-1);
+			}
+			this.doSearch(this.searchOptions, this.startIndex);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModelSearchResults", "loadByPageNum");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Invoke the reset the search list
+		-->
+		<method name="reset" args="clearOptions=false">
+			<![CDATA[
+			this.objectDestroyedDel.unregisterAll();
+			this.searchResultObjects = [];
+			if (clearOptions) {
+				this.searchOptions = null;
+				this.startIndex = 0;
+				this.totalRecords = 0;
+				this.currPageNum = 0;
+				this.lastPageNum = 0;
+				this.deleteCount = 0;
+			}
+			this.updateModelObjectLists(true);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateModelObjectLists" args="reset=false">
+			<![CDATA[
+			if (this.searchResultObjects && this.modelObjectLists) {
+				var lists = this.modelObjectLists;
+				for (var i = 0; i < lists.length; i++) {
+					lists[i].setAttribute("modelObjects", this.searchResultObjects);
+					lists[i].setAttribute("statusObject", this);
+					if (reset) {
+						lists[i].onreset.sendEvent();
+					}
+				}
+				if (reset) {
+					this.hasError = false;
+					this.setAttribute("statusMessage", "");
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="objectDestroyed" args="o">
+			<![CDATA[
+			var i = this.searchResultObjects.indexOf(o);
+			if (i != -1) {
+				this.searchResultObjects.splice(i, 1);
+				this.deleteCount++;
+				this.totalRecords--;
+			}
+			this.updateModelObjectLists();
+			]]>
+		</method>
+	</class>
+
+	<script>
+	<![CDATA[
+	if (typeof(Array.prototype.swap) == "undefined") {
+		Array.prototype.swap = function(fromIndex, toIndex) {
+			var temp = this[toIndex];
+			this[toIndex] = this[fromIndex];
+			this[fromIndex] = temp;
+		};
+		Array.prototype.setPropertyIsEnumerable("swap", false);
+	}
+	]]>
+	</script>
+
+	<!--- @keywords private -->
+	<node id="wcfModelUtil">
+		<!---
+			An array of available model property instances. Model properties are reused.
+		-->
+		<attribute name="availableModelProperties" value="${[]}"/>
+		<!---
+			An array of available model object instances. Model objects are reused.
+		-->
+		<attribute name="availableModelObjects" value="${[]}"/>
+		<!---
+			An array of available navigation history entry instances. Navigation history entries are reused.
+		-->
+		<attribute name="availableNavigationHistoryEntries" value="${[]}"/>
+		<!---
+			An array of available object store instances. Object store objects are reused.
+		-->
+		<attribute name="availableObjectStores" value="${[]}"/>
+		<!---
+			Interval to schedule next run of the task to detect unsaved objects.
+		-->
+		<attribute name="detectUnsavedObjectsInterval" type="number" value="${this.getDetectUnsavedObjectsIntervalValue()}"/>
+		<!---
+			Path selector cache.
+		-->
+		<attribute name="pathSelectorsCache" value="${{}}"/>
+		<!--- 
+			@keywords private
+			Map of all of object stores that have been encountered. A key in this map must be a <code>storeId</code> concatenated with 
+			<code>usage</code>, and the value referred to by this key must be an object store object that owns 
+			the same <code>storeId</code>. 
+		-->
+		<attribute name="objectStoreMap" value="${{}}"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			
+			// Schedule to run the method to check unsaved objects
+			this.detectUnsavedObjectsDel = new lz.Delegate(this, "detectUnsavedObjects");
+			lz.Timer.addTimer(this.detectUnsavedObjectsDel, this.detectUnsavedObjectsInterval);
+			]]>
+		</method>
+		
+		<!---
+			Get the interval value for next run of the task to detect unsaved objects.
+			The value of "detectUnsavedObjectsInterval" URL parameter will be returned if it is a valid positive integer in minute. Otherwise,
+			the default value of defaultDetectUnsavedObjectsInterval attribute (in minute) set in the configProperties
+			instance will be used.
+			@return number: the interval value in millisec
+		-->
+		<method name="getDetectUnsavedObjectsIntervalValue">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+			   		wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModelUtil", "getDetectUnsavedObjectsIntervalValue");
+				}
+				var value = lz.Browser.getInitArg('detectUnsavedObjectsInterval');
+				if ((typeof value != "undefined") && (value != null) && (value != "")) {
+					value = Number(value);
+					if (isNaN(value) || value == 0) {
+						value = configProperties.defaultDetectUnsavedObjectsInterval;
+					}
+				}
+				else
+				{
+					value = configProperties.defaultDetectUnsavedObjectsInterval;
+				}
+				// Convert to milliseconds
+				value = value * 60000;
+				if (wcfLogger.enabled) {	
+			   		wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModelUtil", "getDetectUnsavedObjectsIntervalValue", value);
+				}
+				return value;
+			]]>
+		</method>
+		
+		<!---
+			Utility method used to find the model object by searching the view hierarchy
+			until a view with an attribute named "o" is found.
+			@START_CODE
+			wcfModelUtil.findObjectForView(v);
+			@END_CODE
+
+			@param view v: the view from which to start the search
+			@param lz.Delegate del: optional delegate to call when the object changes
+			@returns wcfModelObject: the model object
+		-->
+		<method name="findObjectForView" args="v, del=null">
+			<![CDATA[
+			var o = null;
+			v = this.findObjectView(v);
+			if (v != null) {
+				o = v.o;
+				if (del) {
+					del.register(v, "ono");
+				}
+			}
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			Utility method used to find the closest ancestor view in the view hierarchy
+			that has an "o" attribute.
+			@START_CODE
+			wcfModelUtil.findObjectView(v);
+			@END_CODE
+
+			@param view v: the view from which to start the search
+			@returns view: the view that has the object
+		-->
+		<method name="findObjectView" args="v, objName='o'">
+			<![CDATA[
+			do {
+				if (typeof(v[objName]) != "undefined") {
+					break;
+				}
+				if (v["parent"] && v != v.parent) {
+					v = v.parent;
+				}
+				else {
+					v = null;
+				}
+			} while (v);
+			return v;
+			]]>
+		</method>
+		
+		<!---
+			Utility method used to find the model by searching the view hierarchy
+			until a view with an attribute named "model" is found.
+			@START_CODE
+			wcfModelUtil.findModelForView(v);
+			@END_CODE
+
+			@param view v: the view from which to start the search
+			@returns wcfModelObject: the model object
+		-->
+		<method name="findModelForView" args="v">
+			<![CDATA[
+			var o = null;
+			var model = null;
+			
+			do {
+				if (v["model"]) {
+					model = v.model;
+					break;
+				}
+				if (v["parent"] && v != v.parent) {
+					v = v.parent;
+				}
+				else {
+					v = null;
+				}
+			} while (v);
+			
+			return model;
+			]]>
+		</method>
+ 		
+		<!---
+			Utility method used to find the model object list by searching the view hierarchy
+			until a view with an attribute named "oList" is found.
+			@START_CODE
+			wcfModelUtil.findObjectListForView(v);
+			@END_CODE
+
+			@param view v: the view from which to start the search
+			@returns wcfModelObjectList: the model object list
+		-->
+		<method name="findObjectListForView" args="v">
+			<![CDATA[
+			var oList = null;
+			do {
+				if (v["oList"]) {
+					oList = v.oList;
+					break;
+				}
+				if (v["parent"] && v != v.parent) {
+					v = v.parent;
+				}
+				else {
+					v = null;
+				}
+			} while (v);
+			return oList;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an object {@link wcfModelObject} and a path selector this method determines whether the object
+			matches	the path selector.  An object matches a path selector if the object's object type matches
+			the	path selector's type attribute and the properties specified in the path selector's selectors
+			attribute match the properties in the object.  The object type and path selector type match if the
+			path selector type is the object type of the object or an object group that applies to the object.
+			The path selector selector's match when all the propertyName, propertyValue pairs are set in
+			the object.
+			
+			@param wcfModelObject o: the given object
+			@param object pathSelector: the given path selector
+			@returns boolean: true if the given object matches the path selector
+		-->
+		<method name="matchesPathSelector" args="o, pathSelector">
+			<![CDATA[
+			var match = false;
+			if (o.objectDefinition.matchesType(pathSelector.type)) {
+				match = true;
+				for (var i = 0; i < pathSelector.selectors.length; i++) {
+					var propName = pathSelector.selectors[i].propertyName;
+					var propValue = pathSelector.selectors[i].propertyValue;
+	
+					if (o.getPropertyValue(propName) != propValue) {
+						match = false;
+						break;
+					}
+				}
+			}
+			return match;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an object path this method returns an array of path selectors.  A path selector
+			is an object with two attributes, type, selectors.  Attribute type can be an object
+			type or an object group as used in an object path.  Attribute selectors is an array of
+			propertyName, propertyValue pairs.
+			
+			@param string objectPath: the object path, with which to construct the path selectors
+			@returns Array: an array of path selectors
+		-->
+		<method name="getPathSelectors" args="objectPath">
+			<![CDATA[
+			var pathSelectors = this.pathSelectorsCache[objectPath];
+			if (typeof(pathSelectors) == "undefined") {
+				pathSelectors = [];
+				this.pathSelectorsCache[objectPath] = pathSelectors;
+				var types = objectPath.split("/");
+				for (var i = 0; i < types.length; i++) {
+					var type = types[i];
+					var selectors = [];
+					var index = type.indexOf("[");
+					if (index != -1) {
+						var objSelectors = type.substring(index+1, type.lastIndexOf("]")).split("][");
+						for (var j = 0; j < objSelectors.length; j++) {
+							var equalsIndex = objSelectors[j].indexOf("=");
+							var propName = objSelectors[j].substring(0, equalsIndex);
+							var propValue = objSelectors[j].substring(equalsIndex + 1, objSelectors[j].length);
+							selectors.push({propertyName: propName, propertyValue: propValue});
+						}
+						type = type.substring(0, index);
+					}
+					pathSelectors.push({type: type, selectors: selectors});
+				}
+			}
+			return pathSelectors;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an object {@link wcfModelObject} and selectors this method applies all the
+			selectors' propertyName, propertyValue pairs to the object.  That is it will set all the
+			property's on the object with their corresponding values as specified in the selectors.
+			
+			@param wcfModelObject o: the given object
+			@param Array selectors: the given selectors
+		-->
+		<method name="applySelectors" args="o, selectors">
+			<![CDATA[
+			for (var i = 0; i < selectors.length; i++) {
+				var propName = selectors[i].propertyName;
+				var propValue = selectors[i].propertyValue;
+
+				var property = o.getProperty(propName);
+				property.setAttribute("value", propValue);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an object {@link wcfModelObject}, selectors, and a delegate this method registers all the
+			object's properties for the selectors propertyNames with the given delegate for when the properties'
+			values have changed.
+			
+			@param wcfModelObject o: the given object
+			@param Array selectors: the given selectors
+			@param lz.Delegate del: the given delegate
+		-->
+		<method name="registerDelegateSelectors" args="o, selectors, del">
+			<![CDATA[
+			for (var j = 0; j < selectors.length; j++) {
+				del.register(o.getProperty(selectors[j].propertyName), "onvalue");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an object {@link wcfModelObject}, object selectors, and a delegate this method finds the object
+			selectors that that have the object definition of the given object and registers the corresponding
+			object selectors' selectors	to the given delegate.
+			
+			@param wcfModelObject o: the given object
+			@param Array objectSelectors: the object selectors
+			@param lz.Delegate del: the given delegate
+		-->
+		<method name="objectSelectorsRegisterDelegate" args="o, objectSelectors, del">
+			<![CDATA[
+			if (objectSelectors) {
+				for (var i = 0; i < objectSelectors.length; i++) {
+					var objectSelector = objectSelectors[i];
+					if (objectSelector && objectSelector.objectDefinition == o.objectDefinition) {
+						this.registerDelegateSelectors(o, objectSelector.selectors, del);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an object {@link wcfModelObject} and object selectors this method determines whether the given
+			object matches all the given object selectors.
+			
+			@param wcfModelObject o: the given object
+			@param Array objectSelectors: the object selectors
+		-->
+		<method name="matchesObjectSelectors" args="o, objectSelectors">
+			<![CDATA[
+			var match = true;
+			if (objectSelectors) {
+				match = false;
+				for (var i = 0; i < objectSelectors.length; i++) {
+					match = this.matchesObjectSelector(o, objectSelectors[i]);
+					if (match) {
+						break;
+					}
+				}
+			}
+			return match;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an object {@link wcfModelObject} and an object selector this method determines whether the object
+			matches	the object selector.  An object matches an object selector if the object's object definition is
+			equal to object selector's object definition attribute and the properties specified in the object selector's
+			selectors attribute match the properties in the object. The object selector selector's match when all the
+			propertyName, propertyValue pairs are set in the object.
+			
+			@param wcfModelObject o: the given object
+			@param object objectSelector: the given path selector
+			@returns boolean: true if the given object matches the path selector
+		-->
+		<method name="matchesObjectSelector" args="o, objectSelector">
+			<![CDATA[
+			var match = false;
+			if (objectSelector && objectSelector.objectDefinition == o.objectDefinition) {
+				match = true;
+				for (var i = 0; i < objectSelector.selectors.length; i++) {
+					var propName = objectSelector.selectors[i].propertyName;
+					var propValue = objectSelector.selectors[i].propertyValue;
+
+					if (o.getPropertyValue(propName) != propValue) {
+						match = false;
+						break;
+					}
+				}
+			}
+			return match;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="logEvent" args="event">
+			var eventTimeLapse = 0;
+			if (this["lastEvent"]) {
+				eventTimeLapse = (new Date).getTime() - this.lastEvent;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfModelUtil", "logEvent", event + " " + eventTimeLapse);					
+			}
+			this.lastEvent = (new Date).getTime();
+		</method>
+		
+		<!---
+			Returns a model property instance primed with the specified arguments. This may
+			be a new or recycled instance.
+			@param wcfModelObject o: the new parent model object
+			@param string propertyName: the property name
+			@return wcfModelProperty: the model property
+		-->
+		<method name="createModelProperty" args="o, propertyName">
+			<![CDATA[
+			var prop = null;
+			var propertyPoolLength = this.availableModelProperties.length;
+			var i = 0;
+			while (i < propertyPoolLength) {
+				prop = this.availableModelProperties.shift();
+				if (!prop.isReleaseCandidate()) {
+					this.availableModelProperties.push(prop);
+					prop = null;
+					i++;
+				} else {
+					break;
+				}
+			}
+			if (prop == null) {
+				prop = new lz.wcfModelProperty(this);
+			}
+			prop.initializeProperty(o, propertyName);
+			o.model.propertyCount++;
+			return prop;
+			]]>
+		</method>
+		
+		<!---
+			Release the specified model property.
+			@param wcfModelProperty prop: the model property to release
+		-->
+		<method name="releaseModelProperty" args="prop">
+			<![CDATA[
+			prop.o.model.propertyCount--;
+			prop.release();
+			this.availableModelProperties.push(prop);
+			]]>
+		</method>
+		
+		<!---
+			Returns a model object instance primed with the specified arguments. This may
+			be a new or recycled instance.
+			@param {} args: The initialization arguments
+			@return wcfModelObject: the model object
+		-->
+		<method name="createModelObject" args="args">
+			<![CDATA[
+			var o;
+			if (this.availableModelObjects.length > 0) {
+				o = this.availableModelObjects.pop();
+			}
+			else {
+				o = new lz.wcfModelObject(this);
+			}
+			o.initializeObject(args);
+			o.model.objectCount++;
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			Release the specified model object.
+			@param wcfModelObject o: the model object to release
+		-->
+		<method name="releaseModelObject" args="o">
+			<![CDATA[
+			o.model.objectCount--;
+			o.release();
+			this.availableModelObjects.push(o);
+			]]>
+		</method>
+		
+		<!---
+			Returns a test object for the given object definition
+			@param wcfObjectDefinition objectDefinition: the object definition for the test object
+			@param wcfBaseContext context: the context for this object
+		-->
+		<method name="createTestObject" args="objectDefinition, context=undefined">
+			<![CDATA[
+			var o = null;
+			for (var i = 0; i < objectDefinition.model.testObjects.length; i++) {
+				if (objectDefinition == objectDefinition.model.testObjects[i].objectDefinition) {
+					o = objectDefinition.model.testObjects[i];
+				}
+			}
+			if (o == null) {
+				o = objectDefinition.model.createNewObject(objectDefinition, null, true, null, false, true, context);
+			}
+			return o;
+			]]>
+		</method>
+
+		<!---
+			Returns a navigation history entry primed with the specified arguments. This may
+			be a new or recycled instance.
+			@param {} args: The initialization arguments
+			@return wcfNavigationHistoryEntry: the navigation history entry
+		-->
+		<method name="createNavigationHistoryEntry" args="args">
+			<![CDATA[
+			var o;
+			if (this.availableNavigationHistoryEntries.length > 0) {
+				o = this.availableNavigationHistoryEntries.pop();
+			}
+			else {
+				o = new lz.wcfNavigationHistoryEntry(this);
+			}
+			o.initializeEntry(args);
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			Release the navigation history entry.
+			@param wcfNavigationHistoryEntry o: the navigation history entry to release
+		-->
+		<method name="releaseNavigationHistoryEntry" args="o">
+			<![CDATA[
+			this.availableNavigationHistoryEntries.push(o);
+			]]>
+		</method>
+		
+		<!---
+			True if parse is required for this object
+			@param wcfModelObject o: the model object to check
+		-->
+		<method name="isParseRequired" args="o">
+			<![CDATA[
+			if (o.forceParseData || o.isViewed()) {
+				return true;
+			}
+			var obj = o.getReferencedObject();
+			if (obj == null) {
+				return true;
+			}
+			while (obj) {
+				if (obj.forceParseData || obj.isViewed()) {
+					return true;
+				}
+				obj = obj.parentObject;
+			}
+			
+			return false;
+			]]>
+		</method>
+		
+		<!---
+			Stop all long running activities.
+			@param wcfModel model: object model instance
+		-->
+		<method name="doStop" args="model=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModelUtil", "doStop(model)", "model=" + model);
+				if (model) {	
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "INFO", "wcfModelUtil", "doStop(model)", "model.oEditor=" + model.oEditor);
+				}
+			}
+			wcfActionManager.stopActions(model);
+			wcfServiceTransactionUtil.stopPendingTransactions(model);
+			wcfServiceUtil.stopServiceRequests(model);
+			wcfCallbackUtil.cancelStoppableCallbacks(model);
+			]]>
+		</method>
+		
+		<!---
+			Detect objects in the model that are not saved yet.
+			@param Object args: arguments
+		-->
+		<method name="detectUnsavedObjects" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.model", "wcfModelUtil", "detectUnsavedObjects", [this.detectUnsavedObjectsInterval]);				
+			}
+			if(typeof(toolsController) != 'undefined'){
+				var unsavedObjects = [];
+				var unsavedInterval = 0;
+				var currentTime = (new Date()).getTime();
+				for (var i=0; i<toolsController.toolList.length; i++) {
+					var tool = toolPanesWidget.subviews[toolPanesWidget.findPane(toolsController.toolList[i])];
+					if (tool["model"]) {
+						for (var j=0; j<tool.model.openObjects.length; j++) {
+							var o = tool.model.openObjects[j];
+							if (o.openGroupObject.openGroupDirty) {
+								unsavedObjects.push(o);
+								if (unsavedInterval < this.detectUnsavedObjectsInterval) {
+									var interval = currentTime - o.changeToDirtyTime;
+									if (interval > unsavedInterval) {
+										unsavedInterval = interval;
+									}
+								}
+								if (wcfLogger.enabled) {
+									wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfModelUtil", "detectUnsavedObjects", "Model object key=" + o.objectKey + ", unsavedInterval=" + unsavedInterval);
+								}
+							}
+						}
+					}
+				}
+				var resetInterval = null;
+				if (unsavedInterval >= this.detectUnsavedObjectsInterval) {	
+					if (!canvas.modalContext) {
+						wcfSaveDetectedUnsavedObjectsDialog.openSaveDetectedUnsavedObjectsDialog(unsavedObjects);
+					}
+					else {
+						resetInterval = Math.min(120000, this.detectUnsavedObjectsInterval); //120000 is two minutes
+					}
+				}
+				else {
+					// reset interval to the remaining time for the first dirty object that will meet the configured detectUnsavedObjectsInterval
+					resetInterval = this.detectUnsavedObjectsInterval - unsavedInterval;
+				}
+				if (resetInterval != null) {
+					// Schedule to check unsaved objects
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfModelUtil", "detectUnsavedObjects", "Reset interval to " + resetInterval);
+					}
+					lz.Timer.resetTimer(this.detectUnsavedObjectsDel, resetInterval);
+				}
+			}
+			if (wcfLogger.enabled) {				
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.model", "wcfModelUtil", "detectUnsavedObjects");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Sort the list of objects to the order in the order that they should be
+			saved. Ancestor objects should be saved before descendant objects.
+			Sibling objects will be saved based on save priority.
+			@param array objects: objects to be sorted
+		-->		
+		<method name="sortObjectsBySaveOrder" args="unsortedObjects">
+			<![CDATA[
+			wcfSortUtil.sort(unsortedObjects, wcfObjectSaveOrderComparator);
+			]]>
+		</method>
+			
+		<!---
+			Returns a object store instance primed with the specified arguments. This may
+			be a new or recycled instance.
+			@param {} args: The initialization arguments
+			@return wcfObjectStore: the object store
+		-->
+		<method name="createObjectStore" args="args">
+			<![CDATA[	
+			var o;
+			if (this.availableObjectStores.length > 0) {
+				o = this.availableObjectStores.pop();
+			}
+			else {
+				o = new lz.wcfObjectStore(this);
+			}
+			o.initializeObjectStore(args);
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			Release the specified object store.
+			@param wcfObjectStore o: the object store to release
+		-->
+		<method name="releaseObjectStore" args="o">
+			<![CDATA[
+			this.availableObjectStores.push(o);
+			]]>
+		</method>
+		
+		<!---
+			Clear the object store map.
+		-->
+		<method name="clearObjectStoreMap">
+			<![CDATA[
+			for (var key in this.objectStoreMap) {
+				this.objectStoreMap[key].release();
+			}
+			objectStoreMap = {};
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		
+		Callback utility methods.
+	-->
+	<node id="wcfCallbackUtil">
+		<attribute name="PRIORITY_IMMEDIATE" type="number" value="1"/>
+		<attribute name="PRIORITY_FOREGROUND" type="number" value="2"/>
+		<attribute name="PRIORITY_BACKGROUND_IMMEDIATE" type="number" value="3"/>
+		<attribute name="PRIORITY_BACKGROUND" type="number" value="4"/>
+		<attribute name="deferredCallbacks" value="${[]}"/>
+		<attribute name="skipIdle" type="boolean" value="false"/>
+		<attribute name="progressIndicatorStarted" type="boolean" value="false"/>
+		
+		<!---
+			Add a delegate to the list of deferred calbacks. Callbacks
+			will be called one at a time on idle events.
+		-->
+		<method name="addDeferredCallback" args="del, args=null, priority=false, stoppable=false, stopDel=null, stopDelArgs=null, model=null">
+			<![CDATA[
+			if (!priority) {
+				priority = wcfCallbackUtil.PRIORITY_BACKGROUND;
+			}
+			if (priority == wcfCallbackUtil.PRIORITY_FOREGROUND) {
+				skipIdle = true;
+			}
+			var index = this.deferredCallbacks.length;
+			while (index > 0 && priority < this.deferredCallbacks[index-1].priority) {
+				index--;
+			}
+			var job = {del: del, args: args, priority: priority, stoppable: (stoppable? true: false), stopDel: (stopDel? stopDel: null), stopDelArgs: (stopDelArgs? stopDelArgs: null), model: (model? model: null)};
+			if (wcfEventTimer.enabled) job.eventId = wcfEventTimer.currentEventId;
+			this.deferredCallbacks.splice(index, 0, job);
+			]]>
+		</method>
+		
+		<!---
+			Returns the index in the deferred callback array for the given delegate
+			@param lz.Delegate del: callback delegate
+		-->
+		<method name="indexOfDeferredCallback" args="del">
+			<![CDATA[
+			for (var i = 0; i < this.deferredCallbacks.length; i++) {
+				if (this.deferredCallbacks[i].del == del) {
+					return i;
+				}
+			}
+			return -1;
+			]]>
+		</method>
+		
+		<!---
+			Remove all instances of the specified delegate from the list of callbacks.
+			@param lz.Delegate del: callback delegate
+		-->
+		<method name="cancelCallback" args="del">
+			<![CDATA[
+			var index = this.indexOfDeferredCallback(del);
+			while (index != -1) {
+				this.deferredCallbacks.splice(index, 1);
+				index = this.indexOfDeferredCallback(del);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Returns the index in the deferred callback array for the first stoppable callback
+			@param wcfModel model: object model instance
+		-->
+		<method name="indexOfStoppableCallback" args="model">
+			<![CDATA[
+			for (var i = 0; i < this.deferredCallbacks.length; i++) {
+				if (this.deferredCallbacks[i].stoppable
+				    && (typeof(model) == "undefined" || model == null
+				        || this.deferredCallbacks[i].model == model)
+				   ) {
+					return i;
+				}
+			}
+			return -1;
+			]]>
+		</method>
+		
+		<!---
+			Remove stoppable deferred callbacks.
+			@param wcfModel model: object model instance
+		-->
+		<method name="cancelStoppableCallbacks" args="model">
+			<![CDATA[
+			var index = this.indexOfStoppableCallback(model);
+			while (index != -1) {
+				var callback = this.deferredCallbacks.splice(index, 1)[0];
+				if (callback.stopDel != null) {
+					wcfCallbackUtil.addDeferredCallback(callback.stopDel, callback.stopDelArgs, wcfCallbackUtil.PRIORITY_BACKGROUND, false, null, null, callback.model);
+				}
+				index = this.indexOfStoppableCallback(model);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the next deferred callback.
+		-->
+		<method name="getNextCallback">
+			<![CDATA[
+			var callback = null;
+			if (this.deferredCallbacks.length >= 0) {
+				callback = this.deferredCallbacks.shift();
+			}
+			return callback;
+			]]>
+		</method>
+		
+		<!---
+			Process deferred callbacks on idle
+		-->
+		<handler name="onidle" reference="lz.Idle">
+			<![CDATA[
+			if (this.skipIdle) {
+				this.skipIdle = false;
+			}
+			else {
+				if (this.deferredCallbacks.length > 0) {
+					var startTime = (new Date()).getTime();
+					var callback = this.getNextCallback();
+					var timeThreshold = 65 + (Math.random() * 30);
+					while (callback != null) {
+						if (wcfEventTimer.enabled && callback["eventId"]) wcfEventTimer.restart(callback.eventId);
+						try {
+							if (callback["args"]) {
+								callback.del.execute(callback.args);
+							}
+							else {
+								callback.del.execute(null);
+							}
+						} catch (e) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "SEVERE", "wcfCallbackUtil", "onidle", "onidle failed, exception thrown: " + e.toString() + "; callback delegate: " + callback.del);					
+						}
+						if (wcfEventTimer.enabled) wcfEventTimer.end();
+						var currentTime = (new Date()).getTime();
+						var callbackTime = currentTime - startTime;
+						if (callbackTime > 200) {
+							this.skipIdle = true;
+						}
+						if (callbackTime > timeThreshold) {
+							break;
+						}
+						callback = this.getNextCallback();
+					}
+				}
+			}
+			
+			if (!this.progressIndicatorStarted && this.deferredCallbacks.length > 0) {
+				this.progressIndicatorStarted = true;
+				global.progressIndicator.startAnimation();
+			}
+			else if (this.progressIndicatorStarted && this.deferredCallbacks.length == 0) {
+				global.progressIndicator.stopAnimation();
+				this.progressIndicatorStarted = false;
+			}
+			]]>
+		</handler>
+	</node>
+	
+	<!--- @keywords private -->
+	<node id="wcfObjectSaveOrderComparator">		
+		<!---
+			@keywords private
+			Compare objects by save order
+		-->	
+		<method name="compare" args="o1, o2">
+			<![CDATA[
+				var result = 0;
+				if (o1.isSibling(o2)) {
+				    if (o1.pendingDelete && !o2.pendingDelete) {
+						result = -1;
+					}
+					else if (!o1.pendingDelete && o2.pendingDelete) {
+						result = 1;
+					}
+					else {
+						var savePriority1 = o1.objectDefinition.savePriority;
+						var savePriority2 = o2.objectDefinition.savePriority;
+						if (savePriority1 != null && savePriority2 != null) {
+							result = savePriority1 - savePriority2;
+						}
+						else if (savePriority1 != null) {
+							result = -1;
+						}
+						else if (savePriority2 != null) {
+							result = 1;
+						}
+	
+						if (result == 0) {
+							if (o1.newObject && !o2.newObject) {
+								result = 1;
+							}
+							else if (!o1.newObject && o2.newObject) {
+								result = -1;
+							}
+						}
+					}
+				}
+				else {
+					result = o1.isAncestor(o2) ? 1 : -1;
+				}
+				return result;
+			]]>
+		</method>
+	</node>
+	
+	<!--- @keywords private -->
+	<node id="wcfSortUtil">
+		<!---
+			@keywords private
+			Sort the specified list of objects.
+			@param objects: array of objects to sort
+			@param Object comparator: the comparator object that has the compare(o1, o2) method
+		-->	
+		<method name="sort" args="objects, comparator">
+			<![CDATA[
+			this.mergeSort(comparator, objects.slice(0), objects, 0, objects.length);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Merge sort.
+		-->	
+		<method name="mergeSort" args="comparator, src, dest, low, high">
+			<![CDATA[
+			if(high - low < 7) {
+				for(var i = low; i < high; i++) {
+					for(var j = i; j > low && comparator.compare(dest[j - 1], dest[j]) > 0; j--) {
+						var t = dest[j];
+						dest[j] = dest[j - 1];
+						dest[j - 1] = t;
+					}
+				}
+				return;
+			}
+			var mid = (low + high) >> 1;
+			this.mergeSort(comparator, dest, src, low, mid);
+			this.mergeSort(comparator, dest, src, mid, high);
+			if(comparator.compare(src[mid - 1], src[mid]) <= 0) {
+				for(var i = low; i < high; i++) {
+					dest[i] = src[i];
+				}
+				return;
+			}
+			for(var i = low, p = low, q = mid; i < high; i++) {
+				if(q >= high || p < mid && comparator.compare(src[p], src[q]) <= 0) {
+					dest[i] = src[p++];
+				}
+				else {
+					dest[i] = src[q++];
+				}
+			}
+			]]>
+		</method>
+	</node>
+</library>

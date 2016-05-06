@@ -1,0 +1,2783 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		The wcfBusinessObjectEditor class is the base class for all Management Center tools.
+		The business object editor includes support for the menu, toolbar, search widget, explorer view 
+		and utilities view. It is responsible for managing all user interactions that allow the user to
+		edit the business objects declared with this business object editor. Instances of this class should
+		not be instantiated directly. They must be registered by adding an instance of {@link wcfApplicationMenuItem}
+		to {@link wcfApplicationMenuItems}.
+		
+		<p>A single instance of {@link wcfTopObjectDefinition} must be declared as a child of every business object editor.
+		When the business object editor is initialized, an instance of this top object will be instantiated.
+		If the top object definition includes a template dataset then the organizational objects declared in the dataset
+		will be instantiated as children of the top object. If the top object children declares one or more
+		{@link wcfGetChildrenService} instances, then the get children services will be invoked to load the top
+		object's child objects. Child objects under the top object instance will be displayed in the explorer tree
+		below the "Active Work" node. The child objects under the top object instance will also be visible in the
+		utilities view browse tab.
+		
+		<p>At least one instance of {@link wcfFilter} must be declared as a child of every business object editor.
+		This filter will be used to filter the objects displayed in the explorer view and utilities view browse tab.
+		If more than one filter is declared, then a filter selector drop-down will be visible in the explorer view
+		and in the utilities view browse tab. The filter selector will allow the user to change the set of objects
+		that are currently visible. When declaring a filter for a business object editor that allows the display of
+		{@link wcfPrimaryObjectDefinition primary objects} as children of the top object, it is important to realize
+		that the objects displayed in the tree below these top level primary objects will all be
+		{@link wcfReferenceObjectDefinition reference objects} or {@link wcfParentReferenceObjectDefinition parent reference objects}.
+		The object types used in the declaration of a {@link wcfObjectTypeFilter} instance must include both the primary
+		object types and the reference object types or nothing below the top level primary objects will be visible.
+
+		<p>Multiple instances of {@link wcfOrganizationalObjectDefinition} can be declared as children of a business 
+		object editor. The only way that organization objects can be instantiated is by declaring
+		them in the template dataset of the top object definition or of another organizational object definition.
+		
+		<p>At least one instance of {@link wcfPrimaryObjectDefinition} must be declared as a child of every business
+		object editor. There must be a primary object definition for every type of business object that can be returned
+		through a search request or can be located by browsing for objects through the explorer view or utilities view.
+		If the business object editor allows the creation of new business objects, then the corresponding primary object
+		definitions must have their "creatable" attribute set to "true".
+		
+		<p>Multiple instances of {@link wcfInitService} can be declared as children of a business object editor.
+		If new context values were declared, then at lease one initialization service must be declared to populate
+		the context values. Any declared initialization services will be invoked when the business object editor
+		is initialized or a new store is selected.
+		
+		<p>Multiple instances of {@link wcfSearchDefinition} can be declared as children of a business object editor.
+		The search definitions will be used to populate the list of search types available from the search area and utilities
+		view search tab.
+	-->
+	<class name="wcfBusinessObjectEditor" width="100%" height="100%">
+		<!---
+			@keywords private
+			
+			This attribute specifies if this editor requires a store selector.			
+		-->
+		<attribute name="showStoreSelection" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			
+			This attribute specifies if this editor needs advance editing functions.				
+		-->
+		<attribute name="showUtilitiesView" type="boolean" value="true"/>
+		<!---
+			This attribute specifies whether or not the store preview toolbar and menu action should be shown in the tool.
+			Default value is <code>true</code>.			
+		-->
+		<attribute name="showStorePreview" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			
+			This attribute specifies if this editor needs compare view.				
+		-->
+		<attribute name="showCompareView" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			
+			This attribute specifies the name of the toolbar class to use. The default class is {@link wcfToolbar}.			
+		-->
+		<attribute name="toolbarClass" type="string" value="wcfToolbar"/>
+		<!---
+			@keywords private
+			
+			This attribute holds a reference to the toolbar instance for this business object editor.			
+		-->
+		<attribute name="toolbar" value="null"/>
+		<!---
+			@keywords private
+			
+			This attribute specifies the name of the navigation tree class to use. The default class is {@link wcfNavigationObjectTree}.
+		-->
+		<attribute name="navigationTreeClass" type="string" value="wcfNavigationObjectTree"/>
+		<!---
+			@keywords private
+			
+			This attribute holds a reference to the navigation tree instance for this business object editor.
+		-->
+		<attribute name="navigationTree" value="null"/>
+		<!---
+			@keywords private
+			
+			This attribute holds a reference to the instance of {@link wcfSearchWidget} for this business object editor. 
+		-->
+		<attribute name="searchWidget" value="null"/>
+		<!---
+			@keywords private
+			
+			This attribute holds a reference to the {@link wcfActiveViewContainer} that is the list view.
+		-->
+		<attribute name="workAreaContainer" value="null"/>
+		<!---			
+			@keywords private
+			
+			This attribute holds a reference to the {@link wcfActiveViewContainer} that is the properties view.
+		-->
+		<attribute name="workAreaDetailsContainer" value="null"/>
+		<!---			
+			@keywords private
+			
+			This attribute holds a reference to the first {@link wcfActiveViewContainer} in the compare view.
+		-->
+		<attribute name="compareArea1Container" value="null"/>
+		<!---			
+			@keywords private
+			
+			This attribute holds a reference to the second {@link wcfActiveViewContainer} in the compare view.
+		-->
+		<attribute name="compareArea2Container" value="null"/>
+		<!---
+			@keywords private
+			
+			An array of {@link wcfFilter} instances for the business object editor's navigation list. This list is created from
+			the {@link wcfFilter} that are declared as direct childre of this wcfBusinessObjectEditor. 
+			
+			Filters that are declared as direct children of the wcfBusinessObjectEditor will be applied to the navigation view. 
+			They will be used to filter the visibility of objects that are displayed in the navigation view. 
+			If multiple filters are declared, then they will be selectable through a dropdown at the top of the navigation pane.
+			
+			Filters can be enabled or disabled through the use of {@link wcfEnablementCondition}.  If the filter is disabled 
+			based on the enablement condition, the filter will not be shown in the dropdown at the top of the navigation pane.
+		-->
+		<attribute name="filters" value="${[]}"/>
+		
+		<!---
+			@keywords private
+
+			This attribute holds a reference to the instance of {@link wcfFilter} that is the default for the navigation view.
+		-->
+		<attribute name="defaultFilter" value="null"/>
+		<!---
+			@keywords private
+			
+			This attribute holds a reference to the instance of {@link wcfUtilities} that is this business object editor's 
+			utilities view.
+		-->
+		<attribute name="utilities" value="null"/>
+		<!---
+			@keywords private
+			Usage is a string identifier that is unique to the tool. 
+			
+			The "usage" attribute is used to filter the stores available to the current user for the  
+			business object editor. If there are no stores available to the user for a business object editor instance, 
+			then that tool will not appear in the application menu. Once the tool is opened, then the store selection 
+			drop-down will only be populated with stores that match the current user and usage. This is a required attribute.
+		-->
+		<attribute name="usage" type="string"/>
+
+		<!---		
+			This attribute is a comma separated list of filter types. The specified filters will be used by the
+			browse tab of the utilities view. The filter types will be matched with the <code>filterType</code>
+			attribute of {@link wcfFilter} instances declared as children of this business object editor instance.
+			If no value is specified for this attribute, then all of the declared filters will be used.
+		-->
+		<attribute name="browseUtilityFilterTypes" type="string" value=""/>
+		
+		<!---
+			@keywords private
+			
+			An array used to hold a reference to {@link wcfFilter} defined in the <code>browseUtilityFilterTypes</code>
+			attribute.
+		-->
+		<attribute name="browseUtilityFilters" value="null"/>
+
+		<!---		
+			This attribute is a comma separated list of filter types. The specified filters will be used by the 
+			explorer view. The filter types will be matched with the <code>filterType</code> attribute of 
+			{@link wcfFilter} instances declared as children of this business object editor instance. If no 
+			value is specified for this attribute, then all of the declared filters will be used.
+		-->
+		<attribute name="explorerFilterTypes" type="string" value=""/>
+
+		<!---
+			@keywords private
+			
+			An array used to hold a reference to {@link wcfFilter} defined in the <code>explorerFilterTypes</code>
+			attribute.
+		-->
+		<attribute name="explorerFilters" value="null"/>
+
+		<!---
+			@keywords private
+			A boolean attribute that indicates if the navigation view is visible. The default value for this attribute is "true". 
+		-->
+		<attribute name="navigationViewVisible" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			A boolean attribute that indicates if the utilities view is visible. The default value for this attribute is "false". 
+		-->
+		<attribute name="utilitiesViewVisible" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			A boolean attribute that indicates if the compare view is visible. The default value for this attribute is "false". 
+		-->
+		<attribute name="compareViewVisible" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the compare view is split vertically. If false, then the compare view is split horizontally.
+			The default value is "true". 
+		-->
+		<attribute name="compareViewSplitVertically" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			A boolean attribute that indicates if the properties view is visible below the list view. 
+			The default value for this attribute is "false". 
+		-->
+		<attribute name="workAreaDetailsBelowVisible" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			A boolean attribute that indicates if the properties view is visible beside the list view. 
+			The default value for this attribute is "false". 
+		-->
+		<attribute name="workAreaDetailsBesideVisible" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			A boolean attribute that indicates that the properties view is enabled. When it is enabled, it is possible for 
+			the business user to trigger the main work area to show the properties view. 
+			
+			The default value of this attribute is "false". 
+		-->
+		<attribute name="workAreaDetailsEnabled" type="boolean" value="false"/>
+		<!---
+			This attribute defines the relative URL that contains the main help file for this business editor tool.
+			This URL is launched when "Context Help" is selected from the "Help" menu.
+			There is no value provided by default for this attribute. 
+		-->
+		<attribute name="helpLink" type="string" value=""/>
+		<!---
+			@keywords private
+			
+			This attribute defines if the back button is enabled for this business object editor. The default value for this attribute is
+			"false". 
+			If backEnabled is true, options to move back in the navigation history exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="backEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			
+			This attribute defines if the forward button is enabled for this business object editor. The default value for this attribute is
+			"false". 
+			
+			If forwardEnabled is true, options to move forward in the navigation history exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="forwardEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the open action is enabled. The default value for this attribute is "false". 
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If openEnabled is set to true, then options to open exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="openEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the open in compare view action is enabled. 
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If openInCompareViewEnabled is set to true, then options to open in compare view exist on the menu (as a {@link wcfMenuItem}). 
+		-->
+		<attribute name="openInCompareViewEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the close action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If closeEnabled is set to true, then options to open exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="closeEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the refresh action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If refreshEnabled is set to true, then options to refresh exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="refreshEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the edit column action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+		-->
+		<attribute name="editColumnEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the find action is enabled. The default value for this attribute is "false".
+			This action is enabled if the active view supports find.
+		-->
+		<attribute name="findEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the save action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If saveEnabled is set to true, then options to save exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="saveEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the delete action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If deleteEnabled is set to true, then options to delete exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="deleteEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the sequence up action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If sequenceUpEnabled is set to true, then options to do sequence up exist on the menu (as a {@link wcfMenuItem}). 
+		-->
+		<attribute name="sequenceUpEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the sequence down action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If sequenceDownEnabled is set to true, then options to do sequence down exist on the menu (as a {@link wcfMenuItem}). 
+		-->
+		<attribute name="sequenceDownEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the copy action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If copyEnabled is set to true, then options to copy exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="copyEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the copy to clipboard action is enabled. The default value for this attribute
+			is "false". This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects}
+			as the selected object changes.
+
+			If copyToClipboardEnabled is set to true, then options to copy to clipboard exist on the menu (as a {@link wcfMenuItem}).
+		-->
+		<attribute name="copyToClipboardEnabled" type="boolean" value="false" />
+		<!---
+			@keywords private
+			This attribute defines whether the paste action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If pasteEnabled is set to true, then options to paste exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="pasteEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the select all action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If selectAllEnabled is set to true, then options to select all exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="selectAllEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute defines whether the deselect all action is enabled. The default value for this attribute is "false".
+			This is an object scoped action and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			If deselectAllEnabled is set to true, then options to deselect all exist on the menu (as a {@link wcfMenuItem})
+			and toolbar (as a {@link wcfToolBarButton}). 
+		-->
+		<attribute name="deselectAllEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute is set to true when the Business Object Editor is opened, set to false when the tool is closed or
+			the user logs out of the tool.  This attribute is updated by {@link wcfToolPanes} calling "open" and "close".
+		-->
+		<attribute name="isOpen" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			An array of the custom services that are currently enabled for this business object editor. This array is built from the 
+			{@link wcfCustomService} instances that are defined as children of the active view and the array is updated as the active 
+			view changes. 
+			
+			This array is object scoped and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			These custom services will appear in the menu and toolbar. 
+		-->
+		<attribute name="enabledCustomServices" value="${[]}"/>
+		<!---
+			@keywords private
+			An array of the client actions that are currently enabled for this business object editor. This array is built from the 
+			{@link wcfClientAction} instances that are defined as children of the active view and the array is updated as the active 
+			view changes. 
+			
+			This array is object scoped and is updated by {@link wcfBusinessObjectEditor#checkSelectedObjects} as the selected object
+			changes.
+			
+			These client actions will appear in the menu and toolbar. 
+		-->
+		<attribute name="enabledClientActions" value="${[]}"/>
+		<!---
+			@keywords private
+			Array of possible view options that are currently enabled. This attribute will hold the {@link wcfViewOption} for the
+			object currently selected in the properties view.
+		-->
+		<attribute name="enabledViewOptions" value="${[]}" />
+		<!---
+			@keywords private
+			
+			An array that contains the navigation history as instances of {@link wcfNavigationHistoryEntry} objects. 
+		-->
+		<attribute name="navigationHistoryEntries" value="${[]}"/>
+		<!---
+			@keywords private
+			
+			The current navigation history entry. This variable is an instance of {@link wcfNavigationHistoryEntry}.
+		-->
+		<attribute name="currentNavigationHistoryEntry" value="null"/>
+		<!---
+			@keywords private 
+			
+			This attribute indicates whether a store has been selected in the business object editor. The default value for this
+			attribute is false. 
+		-->		
+		<attribute name="isStoreSelected" type="boolean" value="false"/>		
+		<!---
+			@keywords private
+			
+			This attribute contains a list of frames, or views, in the Business Object Editor. This attribute is used by the shortcut
+			key	command for frame navigation. 
+		-->		
+		<attribute name="framesList" value="${(typeof(bannerAreaWidget) != 'undefined')? [bannerAreaWidget] : []}"/>
+		<!---
+			@keywords private
+			
+			This attribute contains the index of the frame currently in focus in the {@link wcfBusinessObjectEditor#framesList}. 
+		-->		
+		<attribute name="frameOnFocusIndex" type="number" value="-1"/>
+		<!---
+			@keywords private
+			This attribute indicates if this instance of the business object editor is active. The default value of this attribute
+			is "true". This attribute is set to false when the editor is closed. 			
+		-->			
+		<attribute name="active" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			
+			This attribute indicates if the shortcutKeys are registered. The default value for this attribute is "false". 
+		-->			
+		<attribute name="keysRegistered" type="boolean" value="false"/>
+		<!---
+			This attribute indicates if multiple langauge support is enabled. The default value for this attribute is "true". 
+		-->
+		<attribute name="multipleInputLanguages" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			This attribute contains the preferences key for this business object editor which is used to retrieve the business user's
+			preferences by {@link wcfPreferenceManager}. Currently, the default value of this key
+			is {@link wcfBusinessObjectEditor#name}. In Management Center by default, {@link wcfApplicationMenuItem#id} gets passed
+			to be the value of {@link wcfBusinessObjectEditor#name}.  
+			 
+			If the key is null, then the configuration for the business object editor will not be saved.
+		-->
+		<attribute name="preferenceKey" type="string" value="${name}"/>
+		<!---
+			Display name for this business object editor instance. This text will
+			be displayed on the tool tab when the tool is open. This is a required attribute.
+		-->
+		<attribute name="displayName" type="string"/>
+		<!---
+			@keywords private
+			A boolean attribute that indicates if the Business Object Editor respects all the workspace related context set in
+			UserContext.lzx. If this is true, then data in this editor is managed within the context of the selected workspace
+			when it is enabled; otherwise data in this editor will always be managed against the base schema.
+			The default value for this attribute is "true". 
+		-->
+		<attribute name="respectWorkspaceContext" type="boolean" value="true" />
+		
+		<!---
+			@keywords private
+			This attribute contains the name of the view class that is used to display information in the tool when no object is 
+			selected.  If the view is not defined, the "Select an object" page displays.
+		-->
+		<attribute name="gettingStartedPageClass" type="string" value="${null}" />
+
+		<!---
+			@keywords private
+			Flag that determines whether the tool is available or not when working on a workspace task. The default
+			value of this flag is true.
+		-->
+		<attribute name="availableToWorkspaceTasks" type="boolean" value="true" />
+
+		<!---
+			@keywords private
+			This attribute contains an instance of the context class that is used within the scope of this editor.
+		-->
+		<attribute name="localContext" value="${null}" />
+
+		<!---
+			@keywords private
+			A reference to the {@link wcfModel} object instance for the business object editor
+		-->
+		<wcfModel name="model"/>
+
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "postCreateDefinitionChildren");
+			}
+			if (typeof(this.displayName) == "undefined") {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "SEVERE", "wcfBusinessObjectEditor", "postCreateDefinitionChildren", "Tab name is undefined because the tool is missing required attribute 'displayName', it must be defined in class that extends wcfBusinessObjectEditor.");
+			}
+			this.model.initializeModel(this);
+			this.createViews();
+			this.checkSelectedObjectsDel = new lz.Delegate(this, "checkSelectedObjects");
+			this.checkSelectedObjects();
+			this.doKeySaveDel = new lz.Delegate(this, "doKeySave");
+			this.toggleUtilitiesViewDel = new lz.Delegate(this, "toggleUtilitiesView");
+			this.focusOnFrameDel = new lz.Delegate(this, "focusOnFrame");
+			this.openDefaultMenuDel = new lz.Delegate(this, "openDefaultMenu");
+			this.updateShortcutKeys();
+			this.toggleNavigationArea();
+			this.framesList.push(messageLink);
+			this.updateViewOptionsDel = new lz.Delegate(this, "updateViewOptions");
+			this.updateViewOptionsDel.register(this.workAreaContainer, "onactiveView");
+			this.updateViewOptionsDel.register(this.workAreaDetailsContainer, "onactiveView");
+			this.updateViewOptionsDel.register(this.workAreaDetailsContainer, "onclosed");
+			this.updateViewOptions();
+			wcfCanvasMenu.addView(this);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "postCreateDefinitionChildren");
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->		
+		<method name="determinePlacement" args="s, p, args">
+			<![CDATA[
+			if (s instanceof lz.wcfObjectDefinition) {
+				return this.model;
+			}
+			else {
+				return super.determinePlacement(s, p, args);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="checkFilter" args="e=null">
+			<![CDATA[
+			this.checkFilterDel.unregisterAll();
+			var enabledFilters = [];
+			var retrievedFilters = this.getExplorerTreeFilters();
+			
+			for (var i = 0; i < retrievedFilters.length; i++) {
+				var currentFilter = retrievedFilters[i];
+				if (currentFilter["enablementCondition"]) {
+					currentFilter.enablementCondition.registerDelegate(this, this.checkFilterDel);
+				}
+				if (currentFilter.isEnabled(this)) {
+					enabledFilters.unshift(currentFilter);
+				}
+			}
+			if (enabledFilters.length == 0) {
+				this.content.navigationArea.filterSelector.setAttribute("selectedValue", null);
+				this.content.navigationArea.filterSelector.setValues(null);		
+				this.content.navigationArea.filterSelector.setAttribute("visible", false);
+				this.content.navigationArea.padView.setAttribute("visible", false);
+			} else if (enabledFilters.length == 1) {
+				this.content.navigationArea.filterSelector.setAttribute("selectedValue", enabledFilters[0]);
+				this.content.navigationArea.filterSelector.setValues(enabledFilters);
+				this.content.navigationArea.filterSelector.setAttribute("visible", false);	
+				this.content.navigationArea.padView.setAttribute("visible", false);
+			} else {
+			
+				var selectedValue = null;
+
+				if (this.defaultFilter != null) {
+				
+					for (var i = 0; i < enabledFilters.length; i++) {
+						if (enabledFilters[i].isDefault) {
+							selectedValue = enabledFilters[i];
+							break;
+						}
+					}				
+				}
+				
+				if (selectedValue == null) {
+					selectedValue = enabledFilters[0];
+				}
+
+				this.content.navigationArea.filterSelector.setAttribute("selectedValue", selectedValue);
+				this.content.navigationArea.filterSelector.setValues(enabledFilters);
+				this.content.navigationArea.filterSelector.setAttribute("visible", true);
+				this.content.navigationArea.padView.setAttribute("visible", true);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "destroy");
+			}
+
+			this.checkFilterDel.unregisterAll();
+			delete this.checkFilterDel;
+
+			this.doKeySaveDel.unregisterAll();
+			delete this.doKeySaveDel;
+
+			this.toggleUtilitiesViewDel.unregisterAll();
+			delete this.toggleUtilitiesViewDel;
+
+			this.focusOnFrameDel.unregisterAll();
+			delete this.focusOnFrameDel;	
+			
+			this.openDefaultMenuDel.unregisterAll();
+			delete this.openDefaultMenuDel;
+			
+			this.checkViewVisibilityDel.unregisterAll();
+			delete this.checkViewVisibilityDel;
+			
+			this.checkSelectedObjectsDel.unregisterAll();
+			delete this.checkSelectedObjectsDel;
+
+			this.updateViewOptionsDel.unregisterAll();
+			delete this.updateViewOptionsDel;
+
+			super.destroy();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "destroy");	
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="getBrowseUtilityFilters">
+			<![CDATA[
+			if (this.browseUtilityFilters == null) {
+				if (this.browseUtilityFilterTypes == "") {
+					this.browseUtilityFilters = this.filters;
+				}
+				else {
+					this.browseUtilityFilters = [];
+					var filterTypes = wcfStringUtil.splitAndTrim(this.browseUtilityFilterTypes, ",");
+					for (var i = 0; i < this.filters.length; i++) {
+						if (filterTypes.indexOf(this.filters[i].filterType) != -1) {
+							this.browseUtilityFilters.unshift(this.filters[i]);
+						}
+					}
+				}
+			}
+			return this.browseUtilityFilters;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="getExplorerTreeFilters">
+			<![CDATA[
+			if (this.explorerFilters == null) {
+				if (this.explorerFilterTypes == "") {
+					this.explorerFilters = this.filters;
+				}
+				else {
+					this.explorerFilters = [];
+					var filterTypes = wcfStringUtil.splitAndTrim(this.explorerFilterTypes, ",");
+					for (var i = 0; i < this.filters.length; i++) {
+						if (filterTypes.indexOf(this.filters[i].filterType) != -1) {
+							this.explorerFilters.unshift(this.filters[i]);
+						}
+					}
+				}
+			}
+			return this.explorerFilters;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called in order to open this business object editor. It will load the user's preferences, 
+			refresh the shell's header, make the editor visible, ensure that the {@link wcfBusinessObjectEditor#workAreaContainer}
+			displays the correct information, and reset the status of each action button on the object toolbar. 
+		-->
+		<method name="open" args="store=null">
+			<![CDATA[
+			this.header.storeSelectionList.refresh(store);
+			this.setAttribute("isOpen", true);
+			this.checkSelectedObjects(); 
+			this.toggleNavigationArea();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when the business object editor is closed. It has the purpose of reseting the business object
+			editor for subsequent use by doing the following: 
+			<ul>
+				<li>clearing the navigation history</li>
+				<li>resetting the frame focus</li>
+				<li>resetting the subviews</li>
+				<li>marking the editor as inactive</li>
+				<li>resetting the store selection list</li>
+				<li>making the editor invisible</li>
+			</ul>
+		-->
+		<method name="close">
+			<![CDATA[
+			this.setAttribute("isOpen", false);
+			//clear the navigation history
+			this.resetNavigationHistory();
+			//reset the frame focus
+			this.setAttribute("frameOnFocusIndex", -1);
+			//reset the subviews
+			this.resetViews();
+			//reset active flag to false
+			this.setAttribute("active", false);
+			if(this.isStoreSelected) {
+				//reset the selected store to null
+				this.header.storeSelectionList.changeStore(null, false);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method enables and disables the shortcut keys based on the {@link wcfBusinessObjectEditor#active} attribute. It
+			is called by the {@link wcfBusinessObjectEditor#onactive} handler.
+		 -->
+		<method name="updateShortcutKeys">
+			<![CDATA[
+			if (this.active) {
+				this.registerShortcutKeys();
+			}
+			else {
+				this.unregisterShortcutKeys();
+			}
+			]]>		
+		</method>
+
+		<!---
+			@keywords private
+			This handler updates the business object editor when it's {@link wcfBusinessObjectEditor#active} state changes.
+		-->
+		<handler name="onactive">
+			<![CDATA[
+			this.updateShortcutKeys();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			This method registers the shortcut keys if {@link wcfBusinessObjectEditor#keysRegistered} is false. It does nothing
+			otherwise.  
+		-->
+		<method name="registerShortcutKeys">
+			<![CDATA[
+			if (!this.keysRegistered) {
+				this.keysRegistered = true;
+				lz.Keys.callOnKeyCombo(this.focusOnFrameDel, ['f7']);
+				lz.Keys.callOnKeyCombo(this.toggleUtilitiesViewDel, ['f8']);
+				lz.Keys.callOnKeyCombo(this.doKeySaveDel, ['f9']);
+				lz.Keys.callOnKeyCombo(this.openDefaultMenuDel, ['Control', 'Shift', '2']);
+				lz.Keys.callOnKeyCombo(this.focusOnFrameDel, ['Control', 'Shift', '7']);
+				lz.Keys.callOnKeyCombo(this.toggleUtilitiesViewDel, ['Control', 'Shift', '8']);
+				lz.Keys.callOnKeyCombo(this.doKeySaveDel, ['Control', 'Shift', '9']);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method unregisters the shortcut keys if {@link wcfBusinessObjectEditor#keysRegistered} is true. It does nothing
+			otherwise.  
+		-->
+		<method name="unregisterShortcutKeys">
+			<![CDATA[
+			if (this.keysRegistered) {
+				this.keysRegistered = false;
+				lz.Keys.removeKeyComboCall(this.focusOnFrameDel, ['f7']);
+				lz.Keys.removeKeyComboCall(this.toggleUtilitiesViewDel, ['f8']);
+				lz.Keys.removeKeyComboCall(this.doKeySaveDel, ['f9']);
+				lz.Keys.removeKeyComboCall(this.openDefaultMenuDel, ['Control', 'Shift', '2']);
+				lz.Keys.removeKeyComboCall(this.focusOnFrameDel, ['Control', 'Shift', '7']);
+				lz.Keys.removeKeyComboCall(this.toggleUtilitiesViewDel, ['Control', 'Shift', '8']);
+				lz.Keys.removeKeyComboCall(this.doKeySaveDel, ['Control', 'Shift', '9']);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			This method creates the business object editor views.			
+		-->
+		<method name="createViews">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "createViews");				
+			}		
+			this.header.menubar.initializeMenu(this);
+			this.workAreaContainer = this.content.workAreaUtilitiesSplit.workAreaSplit.workArea;
+			this.workAreaDetailsContainer = this.content.workAreaUtilitiesSplit.workAreaSplit.details;
+
+			var searchDefinitionExists = false;
+			for (var i = 0; i < this.model.searchDefinitions.length; i++) {
+				var def = this.model.searchDefinitions[i];
+				if (def.listClass != null) {
+					searchDefinitionExists = true;
+					break;
+				}
+			}
+			if (searchDefinitionExists) {
+				this.searchWidget = new lz.wcfSearchWidget(this.header.search, {
+					oEditor: this
+				});
+			}
+
+			new lz.view(this.content.navigationArea, {
+				name: "headerPadView",
+				placement: "title",
+				height:10
+			});
+			
+			var filter = new lz.wcfBaseComboBox(this.content.navigationArea, {
+				name: "filterSelector",
+				placement: "title"
+			});
+			filter.setAttribute('width', 180);
+			
+			new lz.view(this.content.navigationArea, {
+				name: "padView",
+				placement: "title",
+				height:4
+			});
+			
+			if (this.navigationTreeClass != null) {
+				this.checkFilterDel = new lz.Delegate(this, "checkFilter");
+	
+				this.navigationTree = new lz[this.navigationTreeClass](this.content.navigationArea, {
+					oEditor: this
+				});
+
+				this.checkFilter();
+				this.navigationTree.setAttribute("o", this.model.createNewObject(this.model.getObjectDefinition(null, "Top")));
+			}
+			if (this.toolbarClass != null) {
+				this.toolbar = new lz[this.toolbarClass](this.header.toolbar, {
+					oEditor: this
+				});
+			}
+			
+			if (this.gettingStartedPageClass != null) {
+				new lz[this.gettingStartedPageClass](this.workAreaContainer, {
+					name: "gettingStartedPage",
+					placement: "parent.titleArea.title"
+				});
+			}
+			
+			this.utilities = this.content.workAreaUtilitiesSplit.utilitiesSplit.utilities;
+			this.utilities.initializeUtilities(this);
+	
+			this.checkViewVisibilityDel = new lz.Delegate(this, "checkViewVisibility");
+			this.checkViewVisibilityDel.register(this.content.navigationArea, "onclosed");
+			this.checkViewVisibilityDel.register(this.utilities, "onclosed");
+			this.checkViewVisibilityDel.register(this.workAreaDetailsContainer, "onclosed");
+			this.checkViewVisibilityDel.register(this.content.workAreaUtilitiesSplit.workAreaSplit, "onaxis");
+			this.checkViewVisibilityDel.register(this.workAreaContainer, "onactiveView");
+			this.checkViewVisibilityDel.register(this, "onworkAreaDetailsEnabled");
+			this.checkViewVisibilityDel.register(this.content, "onmaximizedPanel");
+
+			if (this.showCompareView) {
+				new lz.wcfCompareView(this.workAreaContainer, {
+					name: "compareAreaSplit",
+					placement: "nonclippedContent"
+				});
+				
+				this.compareArea1Container = this.workAreaContainer.compareAreaSplit.compareArea1;
+				this.compareArea2Container = this.workAreaContainer.compareAreaSplit.compareArea2;
+			}
+			
+			this.checkViewVisibility();
+						
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "createViews");				
+			}			
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			This method resets the subviews created by {@link wcfBusinessObjectEditor#createViews}.
+		-->
+		<method name="resetViews">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "resetViews");				
+			}
+			//close and reset the details area
+			if(this.workAreaDetailsContainer !== null) {
+				this.workAreaDetailsContainer.close();
+			}
+			if (this.workAreaContainer !== null) {
+				this.workAreaContainer.reset();
+			}
+			//reset the search widget
+			if (this.searchWidget != null) {
+				this.searchWidget.reset();
+			}
+			//close and reset the navigation area
+			this.content.navigationArea.close();
+			this.checkFilter();
+			var subtrees = this.navigationTree.children.subviews;
+			for(var i = 0; i < subtrees.length; i++) {
+				if (subtrees[i].visible) {
+					subtrees[i].setAttribute("open", false);
+					subtrees[i].setAttribute("focused", false);
+					subtrees[i].setAttribute("selected", false);
+				}
+			}
+			//close and reset the utilities pane
+			this.utilities.close();
+			this.utilities.reset();
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "resetViews");				
+			}			
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			This method checks the state of the navigation and utilities view visible.
+		-->
+		<method name="checkViewVisibility" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "checkViewVisibility");	
+			}
+			var isVisible = this.content.maximizedPanel == null && !this.content.navigationArea.closed;
+			if (isVisible != this.navigationViewVisible) {
+				this.setAttribute("navigationViewVisible", isVisible);
+			}
+			isVisible = this.content.maximizedPanel == null && !this.utilities.closed;
+			if (isVisible != this.utilitiesViewVisible) {
+				this.setAttribute("utilitiesViewVisible", isVisible);
+			}
+			var currentAxis = this.content.workAreaUtilitiesSplit.workAreaSplit.axis;
+			isVisible = this.content.maximizedPanel == null && !this.workAreaDetailsContainer.closed && currentAxis == "y" && this.workAreaDetailsEnabled;
+			if (isVisible != this.workAreaDetailsBelowVisible) {
+				this.setAttribute("workAreaDetailsBelowVisible", isVisible);
+			}
+			isVisible = this.content.maximizedPanel == null && !this.workAreaDetailsContainer.closed && currentAxis == "x" && this.workAreaDetailsEnabled;
+			if (isVisible != this.workAreaDetailsBesideVisible) {
+				this.setAttribute("workAreaDetailsBesideVisible", isVisible);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "checkViewVisibility");		
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="doOpenInCompareView">
+			<![CDATA[
+			var activeView = this.model.activeSelectionView;
+			if (activeView != null) {
+				var selectedObjects = activeView.getSelectedObjects();
+				if (selectedObjects.length == 1 || selectedObjects.length == 2) {
+					var o1 = selectedObjects[0];
+					o1 = o1.getReferencedObject();
+					var o2 = null;
+					if (selectedObjects.length == 2) {		
+						o2 = selectedObjects[1];
+						o2 = o2.getReferencedObject();
+					}
+					this.openObjectsInCompareView(o1, o2);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method sets the compare area split to horizontal or vertical.  
+		-->
+		<method name="splitCompareViewVertically" args="splitVertically">
+			<![CDATA[
+			this.workAreaContainer.compareAreaSplit.setAttribute("axis", splitVertically? "x" : "y");
+			this.setAttribute("compareViewSplitVertically", splitVertically);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Open objects in the compare view.
+		-->
+		<method name="openObjectsInCompareView" args="o1, o2=null">
+			<![CDATA[
+			var compareViewTreeNode = this.navigationTree.compareViewTree;
+			if ((o2 != null) || 
+				(this.compareArea1Container.activeView != null && this.compareArea2Container.activeView != null)) {
+				compareViewTreeNode.setAttribute("compareObject1Cache", null);
+				compareViewTreeNode.setAttribute("compareObject2Cache", null);
+			}
+			o1.doOpenInCompareView();
+			if (o2 != null) {
+				o2.doOpenInCompareView();
+			}
+			if (!compareViewTreeNode.selected) {
+				compareViewTreeNode.changeFocus(null);
+				compareViewTreeNode.setAttribute("selected", true);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method check the currently selected object and determine the enablement of object scoped actions. It will update
+			the instances attributes for these object scoped actions:
+			<ul>
+				<li>{@link wcfBusinessObjectEditor#openEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#closeEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#refreshEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#saveEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#deleteEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#copyEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#sequenceUpEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#sequenceDownEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#copyToClipboardEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#pasteEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#selectAllEnabled}</li>
+				<li>{@link wcfBusinessObjectEditor#deselectAllEnabled}</li>
+			</ul>
+																																						
+			It will also refresh the values of the object scoped arrays:
+			<ul>
+				<li>{@link wcfBusinessObjectEditor#enabledCustomServices}</li>
+				<li>{@link wcfBusinessObjectEditor#enabledClientActions}</li>
+			</ul>
+		-->
+		<method name="checkSelectedObjects" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "checkSelectedObjects");
+			}
+			this.checkSelectedObjectsDel.unregisterAll();
+			this.checkSelectedObjectsDel.register(this.model, "onactiveSelectionView");
+			this.checkSelectedObjectsDel.register(this.model, "onclipboardObjects");
+			var activeView = this.model.activeSelectionView;
+			if (activeView != null) {
+				this.checkSelectedObjectsDel.register(activeView, "onselect");
+			}
+ 			var navigationTreeSelection = this.navigationTree.getSelection();
+ 			if (navigationTreeSelection != null && !navigationTreeSelection.selected) {
+ 				navigationTreeSelection = null;
+ 			}
+ 			if (navigationTreeSelection != null && navigationTreeSelection["o"] != undefined) {
+				this.checkSelectedObjectsDel.register(navigationTreeSelection.o, "onreadOnly");
+				this.checkSelectedObjectsDel.register(navigationTreeSelection.o, "onopenGroupDirty");
+				var referencedObject = navigationTreeSelection.o.getReferencedObject();
+				if (referencedObject != null && referencedObject.newObject) {
+					this.checkSelectedObjectsDel.register(referencedObject, "onnewObject");
+				}
+ 			}
+			var objects = [];
+			if (activeView != null && activeView["getSelectedObjects"]) {
+				var selectedObjects = activeView.getSelectedObjects();
+				for (var i = 0; i < selectedObjects.length; i++) {
+					var o = selectedObjects[i];
+					if (o.objectDefinition != null) {
+						objects.push(o);
+						this.checkSelectedObjectsDel.register(o, "onreadOnly");
+					}
+				}
+			}
+
+			// check if "open" is enabled
+			var actionEnabled = false;
+			if (objects.length > 0) {
+				actionEnabled = true;
+				for (var i = 0; i < objects.length; i++) {
+					if (!objects[i].isOpenEnabled(this.checkSelectedObjectsDel)) {
+						actionEnabled = false;
+						break;
+					}
+				}
+			}
+			if (actionEnabled && activeView == this.navigationTree) {
+				var s = activeView.getSelection();
+				if (s.parent == this.navigationTree.activeWorkTree) {
+					actionEnabled = false;
+				}
+			}
+			if (this.openEnabled != actionEnabled) {
+				this.setAttribute("openEnabled", actionEnabled);
+			}
+			
+			// check if "Open in Compare View" is enabled
+			actionEnabled = false;
+			if (this.showCompareView && objects.length > 0 && objects.length < 3) {
+				actionEnabled = true;
+				for (var i = 0; i < objects.length; i++) {
+					var po = objects[i].getReferencedObject();
+					if (!objects[i].isOpenInCompareViewEnabled(this.checkSelectedObjectsDel)) {
+						actionEnabled = false;
+						break;
+					}
+				}
+			}
+			if (this.openInCompareViewEnabled != actionEnabled) {
+				this.setAttribute("openInCompareViewEnabled", actionEnabled);
+			}
+
+			// check if "close" is enabled
+			actionEnabled = false;
+ 			if (navigationTreeSelection != null && navigationTreeSelection.parent == this.navigationTree.activeWorkTree) {
+ 				actionEnabled = true;
+ 			}
+			if (this.closeEnabled != actionEnabled) {
+				this.setAttribute("closeEnabled", actionEnabled);
+			}
+
+			// check if "refresh" is enabled
+			actionEnabled = navigationTreeSelection != null &&
+					navigationTreeSelection != this.navigationTree.activeWorkTree &&
+					navigationTreeSelection["o"] != undefined;
+			if (actionEnabled) {
+				var oDef = navigationTreeSelection.o.objectDefinition;
+				if (oDef.primary || oDef.organizational || oDef.parentReference || oDef.collectionReference) {
+					var referencedObject = navigationTreeSelection.o.getReferencedObject();
+					actionEnabled = !referencedObject.newObject &&
+							(referencedObject.objectDefinition.primary || referencedObject.objectDefinition.organizational) &&
+							(navigationTreeSelection.parent != this.navigationTree.activeWorkTree || referencedObject.objectDefinition.refreshService != null ||
+							 navigationTreeSelection.navigationListDefinition != null);
+				}
+				else {
+					actionEnabled = false;
+				}
+			}
+			if (this.refreshEnabled != actionEnabled) {
+				this.setAttribute("refreshEnabled", actionEnabled);
+			}
+			
+			// check if "save" is enabled
+			actionEnabled = false;
+			if (navigationTreeSelection && navigationTreeSelection != this.navigationTree.activeWorkTree) {
+				actionEnabled = true;
+				if (navigationTreeSelection["o"] != undefined && navigationTreeSelection.o.readOnly) {
+					actionEnabled = false;
+				}
+			}
+			if (this.saveEnabled != actionEnabled) {
+				this.setAttribute("saveEnabled", actionEnabled);
+			}
+			
+			// check if "copy" is enabled
+			actionEnabled = objects.length > 0;
+			if (this.copyEnabled != actionEnabled) {
+				this.setAttribute("copyEnabled", actionEnabled);
+			}
+
+			// check if "copy to clipboard" is enabled
+			actionEnabled = objects.length > 0;
+			if (actionEnabled) {
+				if (!this.showUtilitiesView) {
+					actionEnabled = false;
+				}
+				else {
+					for (var i=0; i<objects.length; i++) {
+						if (!objects[i].getReferencedObject().objectDefinition.primary) {
+							actionEnabled = false;
+							break;
+						}
+					}
+				}
+			}
+			if (this.copyToClipboardEnabled != actionEnabled) {
+				this.setAttribute("copyToClipboardEnabled", actionEnabled);
+			}
+
+			// check if "paste" is enabled
+ 			actionEnabled = false;
+ 			if (activeView != null && activeView["isPasteEnabled"]) {
+ 				actionEnabled = activeView.isPasteEnabled();
+			}
+			if (this.pasteEnabled != actionEnabled) {
+				this.setAttribute("pasteEnabled", actionEnabled);
+			}
+			
+			// check if "delete" is enabled
+			actionEnabled = false;
+			if (activeView != null && activeView["isDeleteEnabled"]) {
+				actionEnabled = activeView.isDeleteEnabled();
+			}
+			if (this.deleteEnabled != actionEnabled) {
+				this.setAttribute("deleteEnabled", actionEnabled);
+			}
+			
+			// check if "sequenceUp" is enabled
+			actionEnabled = false;
+			if (activeView != null && activeView["isSequenceUpEnabled"]) {			
+				actionEnabled = activeView.isSequenceUpEnabled();			
+			}
+			if (this.sequenceUpEnabled != actionEnabled) {
+				this.setAttribute("sequenceUpEnabled", actionEnabled);
+			}
+			
+			// check if "sequenceDown" is enabled
+			actionEnabled = false;
+			if (activeView != null && activeView["isSequenceDownEnabled"]) {
+				actionEnabled = activeView.isSequenceDownEnabled();
+			}
+			if (this.sequenceDownEnabled != actionEnabled) {
+				this.setAttribute("sequenceDownEnabled", actionEnabled);
+			}
+			
+			// check if "select all" is enabled
+			actionEnabled = activeView != null && activeView["selectAll"] != undefined;
+			if (this.selectAllEnabled != actionEnabled) {
+				this.setAttribute("selectAllEnabled", actionEnabled);
+			}
+			
+			// check if "deselect all" is enabled
+			actionEnabled = activeView != null && activeView["deselectAll"] != undefined && objects.length > 0;
+			if (this.deselectAllEnabled != actionEnabled) {
+				this.setAttribute("deselectAllEnabled", actionEnabled);
+			}
+			
+			// check if "edit column" is enabled
+			actionEnabled = false;
+			if (activeView && activeView["isEditColumnEnabled"]) {
+				actionEnabled = activeView.isEditColumnEnabled(this.checkSelectedObjectsDel);
+			}
+			if (this.editColumnEnabled != actionEnabled) {
+				this.setAttribute("editColumnEnabled", actionEnabled);
+			}
+			
+			// check if "find" is enabled
+			actionEnabled = false;
+			if (activeView && activeView["isFindEnabled"]) {
+				actionEnabled = activeView.isFindEnabled(this.checkSelectedObjectsDel);
+			}
+			if (this.findEnabled != actionEnabled) {
+				this.setAttribute("findEnabled", actionEnabled);
+			}
+
+			// update the array of enabled custom services
+			var enabledActions = [];
+			var customServices = null;
+			if (activeView != null && activeView["getCustomServices"] && objects.length > 0) {
+				customServices = activeView.getCustomServices();
+				if (customServices != null && customServices.length > 0) {
+					for (var i = 0; i < customServices.length; i++) {
+						var customService = customServices[i];
+						if (customService.allowMultipleSelection || objects.length == 1) {
+							var serviceEnabled = true;
+							for (var j = 0; j < objects.length; j++) {
+								var po = objects[j].getReferencedObject();
+								if (!po.objectDefinition.isCustomServiceDefined(customService) || !customService.isEnabled(po)) {
+									serviceEnabled = false;
+								}
+								if (po.objectDefinition.isCustomServiceDefined(customService)) {
+									customService.registerEnablementDelegate(po, this.checkSelectedObjectsDel);
+								}
+							}
+							if (serviceEnabled) {
+								enabledActions.push(customService);
+							}
+						}
+					}
+				}
+			}
+			if (enabledActions.length == 0 &&
+				this.navigationTree.getSelection() &&
+				this.navigationTree.getSelection().parent == this.navigationTree.activeWorkTree &&
+				this.navigationTree.getSelection().navigationListDefinition == null) {
+				var po = this.navigationTree.getSelection().o.getReferencedObject();
+				customServices = po.objectDefinition.customServices;
+				if (customServices != null && customServices.length > 0) {
+					for (var i = 0; i < customServices.length; i++) {
+						var customService = customServices[i];
+						if (customService.isEnabled(po)) {
+							enabledActions.push(customService);
+						}
+						customService.registerEnablementDelegate(po, this.checkSelectedObjectsDel);
+					}
+				}
+			}
+			if (!wcfLangUtil.isIdentical(enabledActions, this.enabledCustomServices)) {
+				this.setAttribute("enabledCustomServices", enabledActions);
+			}
+
+			// update the array of enabled client actions
+			var enabledActions = [];
+			var clientActions = null;
+			if (activeView != null && activeView["getClientActions"] && objects.length > 0) {
+				clientActions = activeView.getClientActions();
+				if (clientActions != null && clientActions.length > 0) {
+					for (var i = 0; i < clientActions.length; i++) {
+						var clientAction = clientActions[i];
+						if (clientAction.allowMultipleSelection || objects.length == 1) {
+							var clientActionEnabled = true;
+							
+							for (var j = 0; j < objects.length; j++) {
+
+								var o = objects[j];
+								var po = objects[j].getReferencedObject();
+
+								if (!(o.objectDefinition.isClientActionDefined(clientAction) && clientAction.isEnabled(o)) &&
+									!(po.objectDefinition.isClientActionDefined(clientAction) && clientAction.isEnabled(po))) {
+									clientActionEnabled = false;
+								}
+								
+								if (o.objectDefinition.isClientActionDefined(clientAction)) {
+									clientAction.registerEnablementDelegate(o, this.checkSelectedObjectsDel);
+								}
+
+								if (po.objectDefinition.isClientActionDefined(clientAction)) {
+									clientAction.registerEnablementDelegate(po, this.checkSelectedObjectsDel);
+								}
+							}
+
+							if (clientActionEnabled) {
+								enabledActions.push(clientAction);
+							}
+						}
+					}
+				}
+			}
+			
+			if (enabledActions.length == 0 &&
+				this.navigationTree.getSelection() &&
+				this.navigationTree.getSelection().parent == this.navigationTree.activeWorkTree &&
+				this.navigationTree.getSelection().navigationListDefinition == null) {
+				var po = this.navigationTree.getSelection().o.getReferencedObject();
+				clientActions = po.objectDefinition.clientActions;
+				if (clientActions != null && clientActions.length > 0) {
+					for (var i = 0; i < clientActions.length; i++) {
+						var clientAction = clientActions[i];
+						if (clientAction.availableFromExplorerView) {
+							if (clientAction.isEnabled(po)) {
+								enabledActions.push(clientAction);
+							}
+							clientAction.registerEnablementDelegate(po, this.checkSelectedObjectsDel);
+						}
+					}
+				}
+			}
+			if (!wcfLangUtil.isIdentical(enabledActions, this.enabledClientActions)) {
+				this.setAttribute("enabledClientActions", enabledActions);
+			}
+			
+			actionEnabled = false; 
+			this.checkSelectedObjectsDel.register(this.model, "oncompareViewVisible");
+			if (!this.compareViewVisible) { 
+				this.checkSelectedObjectsDel.register(this.model, "onworkAreaActiveSelectionView"); 
+				var workAreaActiveView = this.model.workAreaActiveSelectionView; 
+				var workAreaObjects = []; 
+				if (workAreaActiveView != null && workAreaActiveView["getSelectedObjects"]) { 
+					this.checkSelectedObjectsDel.register(workAreaActiveView, "onselect");
+					workAreaObjects = workAreaActiveView.getSelectedObjects(); 
+				} 
+				if (workAreaObjects.length == 1) {
+					var o = workAreaObjects[0]; 
+					if (o.getReferencedObject().objectDefinition.propertiesClass != null) { 
+						actionEnabled= true; 
+					} 
+				} 
+			}
+			if (this.workAreaDetailsEnabled!= actionEnabled) { 
+				this.setAttribute("workAreaDetailsEnabled", actionEnabled); 
+			} 
+                        
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "checkSelectedObjects");		
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns the list of navigationListDefinitions for the selected object
+		-->
+		<method name="getNavigationListDefinitions" args="del=null">
+			<![CDATA[
+			var navigationListDefinitions = [];
+			if (this.navigationTree != null) {
+				var navigationTreeSelection = this.navigationTree.getSelection();
+				if (navigationTreeSelection != null && navigationTreeSelection["o"]) {
+					var oDef = navigationTreeSelection.o.objectDefinition;
+					if (oDef.primary || oDef.organizational || oDef.parentReference || oDef.collectionReference) {
+						var o = navigationTreeSelection.o.getReferencedObject();
+						var definitions = o.objectDefinition.navigationListDefinitions;
+						for (var i = 0; i < definitions.length; i++) {
+							var def = definitions[i];
+							if (def.isEnabled(o)) {
+								navigationListDefinitions.push(def);
+							}
+							if (del) {
+								def.registerEnablementDelegate(o, del);
+							}
+						}
+					}
+				}
+			}
+			return navigationListDefinitions;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns true if the selected object has an objectPropertiesClass and list of navigationListDefinitions is > 0
+		-->
+		<method name="isShowPropertiesEnabled">
+			<![CDATA[
+			var showPropertiesEnabled = false;
+			if (this.navigationTree != null) {
+	 			var navigationTreeSelection = this.navigationTree.getSelection();
+	 			
+				showPropertiesEnabled = navigationTreeSelection != null &&
+					this.navigationTree.activeWorkTree == navigationTreeSelection.parent &&
+					navigationTreeSelection.o.objectDefinition.navigationListDefinitions.length > 0 &&
+					navigationTreeSelection.o.objectDefinition.propertiesClass != null;
+			}
+			return showPropertiesEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method takes an input that is a frame's index in {@link wcfBusinessObjectEditor#framesList}, and moves the focus to
+			the next frame in the {@link wcfBusinessObjectEditor#framesList}.
+			
+			@param number frameIndex The index of the current frame that is in focus in the {@link wcfBusinessObjectEditor#framesList}.
+		-->
+		<method name="focusOnFrame" args="frameIndex">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				if(typeof(frameIndex)=="number"){
+					var frame = this.framesList[frameIndex];
+					if(!frame["visible"] || ((frame instanceof lz.wcfPanel) && this.content.maximizedPanel!=null && this.content.maximizedPanel!=frame)){
+						var nextFrameIndex = (frameIndex+1)%this.framesList.length;
+						this.focusOnFrame(nextFrameIndex);
+					}
+					else{
+						this.setAttribute("frameOnFocusIndex",frameIndex);
+						lz.Focus.setFocus(frame,true);
+					}
+				}
+				else if(typeof(toolTabsWidget) == 'undefined' || toolTabsWidget.getCurrentTab()==this.name){// there is no tooltabs defined for test tool as there is only one tool
+					var nextFrameIndex = (this.frameOnFocusIndex+1)%this.framesList.length;
+					this.focusOnFrame(nextFrameIndex);
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method calls {@link wcfModel#setClipboardObjects} to copy the currently selected objects to the clipboard.
+			If {@link wcfBusinessObjectEditor#copyEnabled} is false, this method will do nothing.  
+		-->
+		<method name="doCopy">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doCopy");
+			}
+			if (this.copyEnabled) {
+				var activeView = this.model.activeSelectionView;
+	 			if (activeView != null) {
+	 				var objects = activeView.getSelectedObjects();
+	 				if (wcfEventTimer.enabled) wcfEventTimer.start("doCopy" + " #objects=" + objects.length);
+	 				model.setClipboardObjects(objects);
+	 				if (wcfEventTimer.enabled) wcfEventTimer.end();
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doCopy");
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method calls {@link wcfModel#setClipboardObjects} and {@link wcfUtilitiesClipboard#doPaste} to copy and
+			paste the currently selected objects to the clipboard.
+			If {@link wcfBusinessObjectEditor#copyToClipboardEnabled} is false, this method will do nothing.
+		-->
+		<method name="doCopyToClipboard">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doCopyToClipboard");
+				}
+				if (this.copyToClipboardEnabled) {
+					var activeView = this.model.activeSelectionView;
+					if (activeView != null) {
+						var objects = activeView.getSelectedObjects();
+						if (wcfEventTimer.enabled) wcfEventTimer.start("doCopyToClipboard" + " #objects=" + objects.length);
+						this.model.setClipboardObjects(objects);
+						if (!this.utilitiesViewVisible) {
+							this.utilities.open();
+						}
+						this.utilities.setAttribute("activePane", this.utilities.panes.clipboardPane);
+						this.utilities.panes.clipboardPane.doPaste();
+						if (wcfEventTimer.enabled) wcfEventTimer.end();
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doCopyToClipboard");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method gets the {@link wcfModel#activeSelectionView} and calls its doPaste method.
+			If {@link wcfBusinessObjectEditor#pasteEnabled} is false, this method will do nothing.  
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doPaste");			
+			}
+			if (this.pasteEnabled) {
+	 			var activeView = this.model.activeSelectionView;
+	 			if (activeView != null && activeView["doPaste"] != undefined) {
+	 				if (wcfEventTimer.enabled) wcfEventTimer.start("doPaste");
+	 				activeView.doPaste();
+	 				if (wcfEventTimer.enabled) wcfEventTimer.end();
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doPaste");
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method takes a custom service as a parameter, and calls {@link wcfCustomService#doRequest} on each selected
+			object in the {@link wcfModel#activeSelectionView}. This method ensures changes to the selected objects have been saved
+			prior to invoking the custom service. 
+			
+			@param wcfCustomService customService An instance of {@link wcfCustomService} to perform. 
+		-->
+		<method name="doCustomService" args="customService">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doCustomService");			
+			}
+ 			if (wcfEventTimer.enabled) wcfEventTimer.start("doCustomService: " + customService.displayName);
+ 			var activeView = this.model.activeSelectionView;
+ 			var objects = [];
+ 			if (activeView != null) {
+ 				var selectedObjects = activeView.getSelectedObjects();
+				for (var i = 0; i < selectedObjects.length; i++) {
+					var po = selectedObjects[i].getReferencedObject();
+					if (!po.objectDefinition.isCustomServiceDefined(customService) || !customService.isEnabled(po)) {
+						objects = [];
+						break;
+					}
+					objects.push(po);
+				}
+			}
+			if (objects.length == 0 &&
+				this.navigationTree.getSelection() &&
+				this.navigationTree.getSelection().parent == this.navigationTree.activeWorkTree &&
+				this.navigationTree.getSelection().navigationListDefinition == null) {
+				var po = this.navigationTree.getSelection().o.getReferencedObject();
+				if (po.objectDefinition.isCustomServiceDefined(customService) && customService.isEnabled(po)) {
+					objects.push(po);
+				}
+			}
+				
+			var unSaved=false;
+			for (var i = 0; i < objects.length; i++) {
+				if(objects[i].isOpenGroupDirty(true)){
+					unSaved=true;
+				}
+			}
+			if (unSaved) {
+				wcfCustomServiceUnsavedDialog.openCustomServiceUnsavedDialog(customService);
+			}
+			else {
+ 				for (var i = 0; i < objects.length; i++) {
+					var o = objects[i];
+					if (wcfEventTimer.enabled) wcfEventTimer.appendMsg(o.objectDisplayName);
+					customService.doRequest(o);
+				}
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doCustomService");
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method takes a client action as a parameter, and calls {@link wcfClientAction#performAction} with the selected
+			objects in the {@link wcfModel#activeSelectionView}.
+			
+			@param wcfClientAction clientAction An instance of {@link wcfClientAction} to perform. 
+		-->
+		<method name="doClientAction" args="clientAction">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doClientAction");			
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("doClientAction " + clientAction);
+ 			var activeView = this.model.activeSelectionView;
+ 			var objects = [];
+ 			if (activeView != null) {
+ 				var selectedObjects = activeView.getSelectedObjects();
+				for (var i = 0; i < selectedObjects.length; i++) {
+
+					var o = selectedObjects[i];
+					var po = selectedObjects[i].getReferencedObject();
+					
+					if (o.objectDefinition.isClientActionDefined(clientAction) && clientAction.isEnabled(o)) {						
+						objects.push(o);
+					} else if (po.objectDefinition.isClientActionDefined(clientAction) && clientAction.isEnabled(po)) {						
+						objects.push(po);
+					} else {
+						objects = [];
+						break;
+					}
+ 				}
+ 			}
+ 			 			
+			if (objects.length == 0 &&
+				this.navigationTree.getSelection() &&
+				this.navigationTree.getSelection().parent == this.navigationTree.activeWorkTree &&
+				this.navigationTree.getSelection().navigationListDefinition == null) {
+				var po = this.navigationTree.getSelection().o.getReferencedObject();
+				if (po.objectDefinition.isClientActionDefined(clientAction) && clientAction.isEnabled(po)) {
+					objects.push(po);
+				}
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.appendMsg("#objects="+objects.length);
+			clientAction.performAction(objects);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doClientAction");
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method retrieves the {@link wcfModel#activeSelectionView} and invokes its deselectAll method.
+			If there is no deselectAll method defined for {@link wcfModel#activeSelectionView}, this method does nothing.
+		-->
+		<method name="doDeselectAll">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doDeselectAll");
+			}
+			var activeView = this.model.activeSelectionView;
+			if (activeView["deselectAll"] != undefined) {
+				activeView.deselectAll();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doDeselectAll");
+			}			
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This method retrieves the {@link wcfModel#activeSelectionView} and invokes its selectAll method.
+			If there is no selectAll method defined for {@link wcfModel#activeSelectionView}, this method does nothing.
+		-->		
+		<method name="doSelectAll">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSelectAll");
+			}
+			var activeView = this.model.activeSelectionView;
+			if (activeView["selectAll"] != undefined) {
+				activeView.selectAll();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSelectAll");
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This method gets the {@link wcfModel#activeSelectionView} and invokes its doDelete method.
+			If there is no doDelete method defined for {@link wcfModel#activeSelectionView}, or if there is no
+			{@link wcfModel#activeSelectionView}, this method does nothing.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doDelete");
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("doDelete");
+			var activeView = this.model.activeSelectionView;
+			if (activeView != null && activeView["doDelete"] != undefined) {
+				activeView.doDelete();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doDelete");
+			}
+			]]>
+		</method>
+		
+		
+		<!---
+			@keywords private
+			This method gets the {@link wcfModel#activeSelectionView} and invokes its doSequenceUp method.
+			If there is no doSequenceUp method defined for {@link wcfModel#activeSelectionView}, or if there is no
+			{@link wcfModel#activeSelectionView}, this method does nothing.
+		-->
+		<method name="doSequenceUp">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSequenceUp");
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("doSequenceUp");
+			var activeView = this.model.activeSelectionView;
+			var actionEnabled = false;
+			if (activeView != null && activeView["doSequenceUp"] != undefined) {
+				activeView.doSequenceUp();
+				actionEnabled = activeView.isSequenceUpEnabled();
+			}
+			if (this.sequenceUpEnabled != actionEnabled) {
+				this.setAttribute("sequenceUpEnabled", actionEnabled);
+			}
+			actionEnabled = activeView.isSequenceDownEnabled();			
+			if (this.sequenceDownEnabled != actionEnabled) {
+				this.setAttribute("sequenceDownEnabled", actionEnabled);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSequenceUp");
+			}
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			This method gets the {@link wcfModel#activeSelectionView} and invokes its doSequenceDown method.
+			If there is no doSequenceDown method defined for {@link wcfModel#activeSelectionView}, or if there is no
+			{@link wcfModel#activeSelectionView}, this method does nothing.
+		-->
+		<method name="doSequenceDown">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSequenceDown");
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("doSequenceDown");
+			var activeView = this.model.activeSelectionView;
+			var actionEnabled = false;	
+			if (activeView != null && activeView["doSequenceDown"] != undefined) {
+				activeView.doSequenceDown();
+				actionEnabled = activeView.isSequenceDownEnabled();
+			}			
+			if (this.sequenceDownEnabled != actionEnabled) {
+				this.setAttribute("sequenceDownEnabled", actionEnabled);
+			}
+			actionEnabled = activeView.isSequenceUpEnabled();
+			if (this.sequenceUpEnabled != actionEnabled) {
+				this.setAttribute("sequenceUpEnabled", actionEnabled);
+			}
+			
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSequenceDown");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method launches the edit column dialog.
+		-->
+		<method name="doEditColumn">
+			<![CDATA[
+			var activeView = this.model.activeSelectionView;
+			if (activeView != null) {
+				wcfEditColumnDialog.openEditColumnDialog(activeView);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method launches the find and replace dialog.
+		-->
+		<method name="doFindAndReplace">
+			<![CDATA[
+			if (this.findEnabled) {
+				if (wcfFindAndReplaceDialog.isOpen) {
+					wcfFindAndReplaceDialog.setInitialFocus();
+				}
+				else {
+					wcfFindAndReplaceDialog.openFindDialog(this.model, this);
+				}
+			}
+			]]>
+		</method>
+		
+		
+		<!---
+			@keywords private
+		-->
+		<method name="doKeySave" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				doSave(e);
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This method saves the currently selected objects. It will attempt to retrieve the 
+			{@link wcfNavigationObjectTree#o object} that this tree has selected. If the object exists and is a child of the 
+			{@link wcfNavigationObjectTree#activeWorkTree} delegates the save to {@link wcfModelObject#save}.
+			
+			Otherwise, this method delegates the save to {@link wcfBusinessObjectEditor#doSaveAll}.			 
+		-->
+		<method name="doSave" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSave");
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("doSave");
+			var navigationTree = this.navigationTree;
+			var s = navigationTree.getSelection();
+			if (s && s.parent == navigationTree.activeWorkTree && s.navigationListDefinition == null) {
+				if (wcfEventTimer.enabled) wcfEventTimer.appendMsg(s.o.objectDisplayName);
+				s.o.saveObject();
+			}
+			else {
+				this.doSaveAll();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doSave");
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This method closes the currently selected object. 
+			
+			If {@link wcfBusinessObjectEditor#closeEnabled} is false, this method will do nothing.  
+		-->
+		<method name="doClose">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doClose");			
+			}
+			if (this.closeEnabled) {
+				if (wcfEventTimer.enabled) wcfEventTimer.start("doClose");
+				var navigationTree = this.navigationTree;
+				var s = navigationTree.getSelection();
+				if (s && s.parent == navigationTree.activeWorkTree) {
+					if (wcfEventTimer.enabled) wcfEventTimer.appendMsg(s.o.objectDisplayName);
+					s.o.closeObject(true);
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doClose");				
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method opens the currently selected objects and adds them to the {@link wcfNavigationObjectTree#activeWorkTree} of
+			{@link wcfBusinessObjectEditor#navigationTree}. 
+			
+			If {@link wcfBusinessObjectEditor#openEnabled} is false, this method will do nothing.  
+		-->
+		<method name="doOpen">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doOpen");
+			}
+			if (this.openEnabled) {
+				if (wcfEventTimer.enabled) wcfEventTimer.start("doOpen");
+				var model = this.model;
+	 			if (model.activeSelectionView != null) {
+	 				var objects = model.activeSelectionView.getSelectedObjects();
+	 				if (wcfEventTimer.enabled) wcfEventTimer.appendMsg("#objects=" + objects.length);
+	 				for (var i = 0; i < objects.length; i++) {
+						objects[i].doOpen(i == objects.length - 1);
+	 				}
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doOpen");
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method will refresh the currently selected object. 
+		
+			If {@link wcfBusinessObjectEditor#refreshEnabled} is false, this method will do nothing.  
+		-->
+		<method name="doRefresh">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doRefresh");
+			}
+			if (this.refreshEnabled) {
+				if (wcfEventTimer.enabled) wcfEventTimer.start("doRefresh");
+				var navigationTree = this.navigationTree;
+				var s = navigationTree.getSelection();
+				if (s) {
+					if (wcfEventTimer.enabled && s["o"]) wcfEventTimer.appendMsg(s.o.objectDisplayName);
+					if (s.navigationListDefinition == null) {
+						s.o.refreshObject(true);
+					}
+					else if (s["o"]) {
+						this.model.refreshDescendants(s.o.getReferencedObject(), true);
+					}
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doRefresh");
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method toggles the visibility of the explorer view. If {@link wcfBusinessObjectEditor#navigationViewVisible} is 
+			true, this method will close the explorer view and otherwise it will open the explorer view. 
+		-->
+		<method name="toggleNavigationView">
+			<![CDATA[
+			if (this.isStoreSelected || !this.showStoreSelection) {
+				if (this.navigationViewVisible) {
+					this.content.navigationArea.close();
+				}
+				else {
+					this.content.navigationArea.open();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method toggles the visibility of the utilities view. If {@link wcfBusinessObjectEditor#utilitiesViewVisible} is 
+			true, this method will close the utilities view and otherwise it will open the utilities view. 
+		-->
+		<method name="toggleUtilitiesView" args="e=null">
+			<![CDATA[
+			if (wcfViewUtil.containedInModalView(this) && (this.isStoreSelected || !this.showStoreSelection) && this.showUtilitiesView) {
+				if (this.utilitiesViewVisible) {
+					this.utilities.close();
+				}
+				else {
+					this.utilities.open();
+					this.utilities.restoreFocus();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method toggles the visibility of the properties view below the list view.
+			If {@link wcfBusinessObjectEditor#workAreaDetailsBelowVisible} is 
+			true, this method will close the {@link wcfBusinessObjectEditor#workAreaDetailsContainer}.
+			Otherwise it will split the main work area horizontally, and open the {@link wcfBusinessObjectEditor#workAreaDetailsContainer}
+			below the list view. 
+			
+			If {@link wcfBusinessObjectEditor#workAreaDetailsEnabled} is false, this method will do nothing.  
+		-->
+		<method name="toggleWorkAreaDetailsBelow">
+			<![CDATA[
+			if (this.workAreaDetailsEnabled) {
+				if (this.workAreaDetailsBelowVisible) {
+					this.workAreaDetailsContainer.close();
+				}
+				else {
+					this.content.workAreaUtilitiesSplit.workAreaSplit.setAttribute("axis", "y");
+					this.workAreaDetailsContainer.open();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method toggles the visibility of the properties view beside the list view.
+			If {@link wcfBusinessObjectEditor#workAreaDetailsBesideVisible} is 
+			true, this method will close the {@link wcfBusinessObjectEditor#workAreaDetailsContainer}.
+			Otherwise it will split the main work area vertically, and open the {@link wcfBusinessObjectEditor#workAreaDetailsContainer}
+			beside the list view. 
+			
+			If {@link wcfBusinessObjectEditor#workAreaDetailsEnabled} is false, this method will do nothing.  
+		-->
+		<method name="toggleWorkAreaDetailsBeside">
+			<![CDATA[
+			if (this.workAreaDetailsEnabled) {
+				if (this.workAreaDetailsBesideVisible) {
+					this.workAreaDetailsContainer.close();
+				}
+				else {
+					this.content.workAreaUtilitiesSplit.workAreaSplit.setAttribute("axis", "x");
+					this.workAreaDetailsContainer.open();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method shows the specified navigation list for the selected object in the {@link wcfBusinessObjectEditor#navigationTree}.
+			@param wcfNavigationListDefinition navigationListDefinition The wcfNavigationListDefinition to display for the 
+			selected object.
+		-->
+		<method name="showNavigationList" args="navigationListDefinition">
+			<![CDATA[
+			var s = this.navigationTree.getSelection();
+			if (s && s["o"]) {
+				s.setAttribute("navigationListDefinition", navigationListDefinition);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method will display the properties view for the selected object.
+		-->
+		<method name="showProperties">
+			<![CDATA[
+			var s = this.navigationTree.getSelection();
+			if (s && s["o"] && s.parent == this.navigationTree.activeWorkTree) {
+				s.setAttribute("navigationListDefinition", null);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method will get a {@link wcfModelObject} instance for what is selected in the 
+			{@link wcfBusinessObjectEditor#navigationTree}. 
+			
+			@return wcfModelObject The instance for the currently selected object in the {@link wcfBusinessObjectEditor#navigationTree}. If nothing is selected
+			then this method will return null. 
+		-->
+		<method name="getSelectedObject">
+			<![CDATA[
+			var s = this.navigationTree.getSelection();
+			var selectedObject = null;
+			if (s && s["o"]) {
+				selectedObject = s.o;
+			}
+			return selectedObject;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method saves the open objects in this business object editor. It delegates this work to {@link wcfModel#save}. 
+		-->
+		<method name="doSaveAll">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("doSaveAll");
+			this.model.save(true);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called in order to open an object in the business object editor. 
+			It will select this object and add it to the {@link wcfActiveWorkTree} of this business object editor's 
+			{@link wcfBusinessObjectEditor#navigationTree}. 
+			
+			@param wcfModelObject o The object to open in the business object editor. 
+			@param wcfNavigationListDefinition navigationListDefinition The navigationListDefinition to use for opening this object. If it is null
+			then the properties view will be shown. 
+		-->
+		<method name="selectOpenObject" args="o, navigationListDefinition=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "selectOpenObject(o)", [o]);				
+			}
+			var activeWorkTree = this.navigationTree.activeWorkTree;
+			activeWorkTree.setAttribute("open", true);
+			this.model.updateOpenObjects(true);
+			activeWorkTree.oList.showObjectInView(o);
+			var views = activeWorkTree.children.subviews;
+			for (var i = 0; i < views.length; i++) {
+				var v = views[i];
+				if (v["o"] == o) {
+					v.changeFocus(null);
+					v.setAttribute("selected", true);
+					v.setAttribute("navigationListDefinition", navigationListDefinition);
+					break;
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "selectOpenObject(o)");
+			}		
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			This method adds the specified {@link wcfNavigationHistoryEntry} to the navigation history represented by
+			{@link wcfBusinessObjectEditor#navigationHistoryEntries}. It will ensure that 
+			{@link wcfBusinessObjectEditor#navigationHistoryEntries} does not contain duplicates. 
+			
+			@param wcfNavigationHistoryEntry entry The new navigation history entry. 
+		-->
+		<method name="addNavigationHistoryEntry" args="entry">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "addNavigationHistoryEntry(entry)", [entry]);				
+			}		
+			if (this.currentNavigationHistoryEntry != null) {
+				// adding a new entry should delete all history past the current element
+				var index = this.navigationHistoryEntries.indexOf(this.currentNavigationHistoryEntry);
+				if (index != -1) {
+					var toDelete = this.navigationHistoryEntries.length - (index + 1);
+					for (var j = 0; j < toDelete; j++) {
+						this.navigationHistoryEntries.pop().release();
+					}
+				}
+			}
+			
+			this.navigationHistoryEntries.push(entry);
+			if (this.navigationHistoryEntries.length > 10) {
+				this.navigationHistoryEntries.shift().release();
+			}
+			this.currentNavigationHistoryEntry = entry;
+			this.checkNavigationHistory();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "addNavigationHistoryEntry(entry)");				
+			}		
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			This method resets the navigation history of this business object editor.
+		-->
+		<method name="resetNavigationHistory">
+			<![CDATA[
+			//release the remaining navigation history entries
+			this.setAttribute("currentNavigationHistoryEntry", null);
+			for(var i = 0; i < this.navigationHistoryEntries.length; i++) {
+				this.navigationHistoryEntries[i].release();
+			}
+			this.setAttribute("navigationHistoryEntries", []);
+			this.checkNavigationHistory();
+			]]>
+		</method>		
+		<!---
+			@keywords private
+			
+			This method navigates back one entry in the current navigation history.
+			
+			If {@link wcfBusinessObjectEditor#backEnabled} is false then this method will do nothing. 
+		-->
+		<method name="doBack">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doBack");
+			}
+			if (this.backEnabled) {
+				if (wcfEventTimer.enabled) wcfEventTimer.start("doBack");
+				var index = this.navigationHistoryEntries.length - 1;
+				if (this.currentNavigationHistoryEntry != null) {
+					index = this.navigationHistoryEntries.indexOf(this.currentNavigationHistoryEntry) - 1;
+				}
+				if (index >= 0) {
+					this.navigationHistoryEntries[index].show();
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doBack");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			This method navigates forward one entry in the current navigation history.
+			
+			If {@link wcfBusinessObjectEditor#forwardEnabled} is false then this method will do nothing. 
+		-->
+		<method name="doForward">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doForward");
+			}			
+			if (this.forwardEnabled) {
+				if (this.currentNavigationHistoryEntry != null) {
+					if (wcfEventTimer.enabled) wcfEventTimer.start("doForward");
+					var index = this.navigationHistoryEntries.indexOf(this.currentNavigationHistoryEntry);
+					if (index != -1 && (index + 1) < this.navigationHistoryEntries.length) {
+						this.currentNavigationHistoryEntry = this.navigationHistoryEntries[index + 1];
+						this.currentNavigationHistoryEntry.show();
+					}
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "doForward");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private 
+			
+			This method checks the enablement of the navigation history actions based on the contents of 
+			{@link wcfBusinessObjectEditor#navigationHistoryEntries} and {@link wcfBusinessObjectEditor#currentNavigationHistoryEntry}. 
+			
+			If {@link wcfBusinessObjectEditor#currentNavigationHistoryEntry} is the first entry of {@link wcfBusinessObjectEditor#navigationHistoryEntries}
+			then {@link wcfBusinessObjectEditor#backEnabled} will be set to false. {@link wcfBusinessObjectEditor#backEnabled} will be set to true otherwise.
+			
+			If {@link wcfBusinessObjectEditor#currentNavigationHistoryEntry} is the last entry of {@link wcfBusinessObjectEditor#navigationHistoryEntries}
+			then {@link wcfBusinessObjectEditor#forwardEnabled} will be false. {@link wcfBusinessObjectEditor#forwardEnabled} will be set to true otherwise.		
+		-->
+		<method name="checkNavigationHistory">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "checkNavigationHistory");
+			}
+			var numberOfEntries = this.navigationHistoryEntries.length;
+			var index = -1;
+			if (this.currentNavigationHistoryEntry != null) {
+				var s = this.navigationTree.getSelection();
+				if (!this.currentNavigationHistoryEntry.matchesTreeNode(s)) {
+					this.currentNavigationHistoryEntry = null;
+				}
+				else {
+					index = this.navigationHistoryEntries.indexOf(this.currentNavigationHistoryEntry);
+				}
+			}
+			var backEnabled = numberOfEntries > 0 && index != 0;
+			if (backEnabled != this.backEnabled) {
+				this.setAttribute("backEnabled", backEnabled);
+			}
+			var forwardEnabled = index != -1 && (index + 1) < numberOfEntries;
+			if (forwardEnabled != this.forwardEnabled) {
+				this.setAttribute("forwardEnabled", forwardEnabled);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "checkNavigationHistory");
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="toggleNavigationArea">
+			<![CDATA[
+			if (this.isStoreSelected || !this.showStoreSelection) {
+				this.content.navigationArea.open();			
+			}
+			else {
+				this.content.navigationArea.close();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onisStoreSelected">
+			<![CDATA[
+			toggleNavigationArea();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onshowStoreSelection">
+			<![CDATA[
+			toggleNavigationArea();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Open the first menu from the menu list
+		-->
+		<method name="openDefaultMenu" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this)) {
+				this.header.menubar.openDefaultMenu();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Open the store preview dialog. The method accepts an optional map of context parameters that will be passed 
+			to {@link wcfBaseStorePreviewCustomOption#initializeOption}.
+			@param Object contextParam: a map of name value pair context parameters.
+		-->
+		<method name="openStorePreviewDialog" args="contextParams=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "openStorePreviewDialog");			
+			}
+
+			// check if there are any outstanding transactions
+			if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+				wcfTransactionProgressDialog.openWindow();
+			} else {
+				var unsavedObjects = [];
+
+				if(typeof(toolsController) != 'undefined'){
+					for (var i=0; i<toolsController.toolList.length; i++) {
+						var tool = toolPanesWidget.subviews[toolPanesWidget.findPane(toolsController.toolList[i])];
+						if (tool["model"]) {
+							var toolUnsavedObjects = tool.model.getUnsavedOpenObjects();
+							for( var j = 0; j < toolUnsavedObjects.length; j++){
+								unsavedObjects.push(toolUnsavedObjects[j]);
+							}
+						}
+					}
+				}else{// in case of test editor
+					unsavedObjects = this.model.getUnsavedOpenObjects();
+				}
+
+				if (unsavedObjects.length > 0) {
+					wcfStorePreviewConfirmationDialog.openStorePreviewConfirmationDialog(this, unsavedObjects, contextParams);
+				}
+				else { 
+					wcfStorePreviewDialog.openStorePreviewDialog(this, contextParams); 
+				}
+			} 
+
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBusinessObjectEditor", "openStorePreviewDialog");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Launches the Coremetrics Analytics Commerce dashboard.
+			@param string clientId Coremetrics client identifier
+			@param string username Username to sign into Coremetrics
+			@param number timestamp Current timestamp in seconds after January 1, 1970 UTC
+			@param string token Single sign-on token
+		-->
+		<method name="launchReport" args="clientId, username, timestamp, token">
+			<![CDATA[
+			var mainCoremetricsURL = "https://welcome.coremetrics.com/analyticswebapp/analytics.jsp";
+			var reportUri = "dashboard:/dashboards/commerce.xml";
+			
+			var urlParamValueMap = new Object();
+			urlParamValueMap.uri = reportUri;
+			urlParamValueMap.locale = wcfContextUtil.findContextValue(null, "locale").value;
+				
+			if(clientId && clientId != "" && username && username != "" && timestamp && timestamp != "" && token && token != "") {
+				urlParamValueMap.clientId = clientId;
+				urlParamValueMap.username = username;
+				urlParamValueMap.timestamp = timestamp;
+				urlParamValueMap.token = token;
+				urlParamValueMap.authsrc = "wc";
+			}
+			
+			var newWindowObj = new Object();
+			newWindowObj.URL = "";
+			newWindowObj.windowName = "Coremetrics_Window";
+			newWindowObj.windowFeatures = "scrollbars=yes,toolbar=no,directories=no,status=no,menubar=no,copyhistory=no,resizable=yes";
+			newWindowObj.windowWidth = 1014;
+			newWindowObj.windowHeight = 710;
+			
+			newWindowObj.content = "<html><body><form action=\"" + mainCoremetricsURL + "\" method=\"GET\">";
+			for (var key in urlParamValueMap) {
+  				newWindowObj.content += "<input type=\"hidden\" name=\"" + key + "\" value=\"" + urlParamValueMap[key] + "\">";
+  			}
+			newWindowObj.content += "</form></body></html>";
+			newWindowObj.submitForm = true;
+
+			callJSFunction("openNewCenteredWindow", newWindowObj);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Restore the focus to active selection view if it is defined currently, or to navigation area if it is visible, or else to the menu bar.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			var activeView = this.model.activeSelectionView;
+			if (activeView != null) {
+				lz.Focus.setFocus(activeView, false);
+			}else if (this.content.navigationArea.visible) {
+				lz.Focus.setFocus(this.navigationTree, false);
+			}else{
+				lz.Focus.setFocus(this.header.menubar, false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the details view of the currently selected tree node. If it can't find the details view, it returns null.
+			@return wcfObjectProperties The details view if it can be found, null otherwise.
+		-->
+		<method name="getDetailsView">
+			<![CDATA[			
+			var detailsView = null;			
+			if (this.navigationTree != null) 
+			{
+				var selectedNode = this.navigationTree.getSelection();
+				if (selectedNode && selectedNode["getDetailsView"]) {
+					detailsView = selectedNode.getDetailsView();
+				}
+			}
+			return detailsView;			
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method updates the view options that are available in the View menu when a primary object's properties view
+			is visible.
+		-->
+		<method name="updateViewOptions" args="e=null">
+			<![CDATA[
+				// update the array of enabled view options
+				var enabledOptions = [];
+				var updatedOptions = false;
+				if (this.workAreaContainer.activeView != null && this.navigationTree) {
+					var navigationTreeSelection = this.navigationTree.getSelection();
+					if (navigationTreeSelection != null &&
+						navigationTreeSelection["o"] != undefined &&
+						navigationTreeSelection.parent == this.navigationTree.activeWorkTree &&
+						navigationTreeSelection.navigationListDefinition == null) {
+						enabledOptions = navigationTreeSelection.o.objectDefinition.viewOptions;
+						updatedOptions = true;
+					}
+				}
+				if (!updatedOptions && !this.workAreaDetailsContainer.closed &&
+					this.workAreaDetailsContainer.activeView != null &&
+					this.workAreaDetailsContainer.activeView["o"] != undefined) {
+					enabledOptions = this.workAreaDetailsContainer.activeView.o.objectDefinition.viewOptions;
+				}
+				if (!wcfLangUtil.isIdentical(enabledOptions, this.enabledViewOptions)) {
+					this.setAttribute("enabledViewOptions", enabledOptions);
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" />
+		<view name="header" width="${parent.width}">
+			<view resource="toolbarBackground" width="${parent.width}" stretches="width"/>
+			<wcfMenuBar name="menubar" y="4" x="4" width="${parent.width - x - parent.search.width - 4}" clip="true">
+				<handler name="oninit">
+					classroot.framesList.push(this);
+				</handler>
+			</wcfMenuBar>
+			<wcfStoreSelectionWidget y="4"  name="storeSelectionList" oEditor="${classroot}" xoffset="5" align="right" visible="${classroot.showStoreSelection}" />
+			<view name="toolbar" y="30" x="2" width="${parent.width - x - parent.search.width - 4}" clip="true">
+				<handler name="oninit">
+					classroot.framesList.push(this);
+				</handler>
+			</view>
+			<view name="search" xoffset="5" y="31" align="right" clip="true"/>
+		</view>
+
+		<wcfSplitView name="content" xoffset="-5" yoffset="-2" width="${immediateparent.width-10}" height="${immediateparent.height-immediateparent.header.height-7}" axis="x">
+
+			<wcfPanel name="navigationArea" maximizable="false" closed="true" titleColor="0xf4f6fa" titleImage="${null}" addRightSpacing="false">
+				<handler name="oninit">
+					<![CDATA[
+					// This panel is used to host trees, therefore we need to set tree-specific background
+					this.clippedContent.background.setAttribute('resource', "treePanelBackgroundResource");
+					classroot.framesList.push(this);
+					]]>
+				</handler> 
+				 
+				<method name="open">
+					<![CDATA[
+					if (classroot.content.maximizedPanel != null) {
+						classroot.content.maximizedPanel.setAttribute("maximized", false);
+					}
+					super.open();
+					if (lz.ModeManager.getModalView() == null) {
+						lz.Focus.setFocus(this.classroot.navigationTree, false);
+					}
+					]]>
+				</method>
+				
+				<handler name="onclick">
+					classroot.model.setAttribute('activeSelectionView',null);
+					//classroot.model.setAttribute('activeSelectionView',classroot.navigationTree);
+				</handler>
+				
+			</wcfPanel>
+
+			<wcfSplitView name="workAreaUtilitiesSplit" axis="x" xSplitSize="300" reverseSplit="true">
+				<wcfSplitView name="workAreaSplit" axis="x">
+					<handler name="onwidth"> 
+						<![CDATA[ 
+						this.setAttribute("xSplitSize", this.width/2); 
+						if (this.axis == "x") { 
+							this.splitViewLayout.update(); 
+						} 
+						]]>
+					</handler>
+			
+					<handler name="onheight"> 
+						<![CDATA[ 
+						this.setAttribute("ySplitSize", this.height/2); 
+						if (this.axis == "y") { 
+							this.splitViewLayout.update(); 
+						} 
+			         	]]>
+			         </handler> 
+         
+					<wcfActiveViewContainer name="workArea" addRightSpacing="false" closable="false">
+						<attribute name="details" value="${parent.details}"/>
+				
+						<!--- 
+							@keywords private 
+							A list of help pages that are defined in the object definitions 
+						-->
+						<attribute name="helpPages" value="${[]}"/>
+						
+						<method name="init">
+							<![CDATA[
+							super.init();
+							this.updateTitleDel = new lz.Delegate(this, "updateTitle");
+							this.updateTitleDel.register(classroot, "onisStoreSelected");
+							this.updateTitleDel.register(classroot, "onshowStoreSelection");
+							this.updateTitleDel.register(this, "onactiveView");
+							this.updateTitleDel.register(foundationResources.selectStoreTitle, "onstring");
+							this.updateTitleDel.register(foundationResources.selectStoreMessage, "onstring");
+							this.updateTitleDel.register(foundationResources.selectObjectTitle, "onstring");
+							this.updateTitle();
+							this.setTitleBackground(classroot.isStoreSelected); 
+							classroot.framesList.push(this);
+							]]>
+						</method>
+
+						<method name="destroy">
+							<![CDATA[
+							this.updateTitleDel.unregisterAll();
+							delete this.updateTitleDel;
+							super.destroy();
+							]]>
+						</method>
+						
+						<!--- @keywords private -->
+						<method name="showGettingStartedPage">
+							<![CDATA[
+								if (this["gettingStartedPage"]) {
+									this.gettingStartedPage.setAttribute("visible", true);
+								} else {
+									this.setAttribute("defaultTitle", foundationResources.selectObjectTitle.string);
+								}
+							]]>
+						</method>
+						
+						<!--- @keywords private -->
+						<method name="hideGettingStartedPage">
+							<![CDATA[
+								if (this["gettingStartedPage"]) {
+									this.gettingStartedPage.setAttribute("visible", false);
+								}
+							]]>
+						</method>
+						
+						<!--- @keywords private -->
+						<method name="addHelpPage" args="helpPageClass">
+							<![CDATA[
+							if (typeof(helpPageClass) == "undefined" || helpPageClass == null) {
+								return null;
+							}
+					
+							var helpPage = null;
+							var contained = false;
+							for (var i = 0; i < this.helpPages.length; i++) {
+								if (this.helpPages[i] instanceof lz[helpPageClass]) {
+									contained = true;
+									helpPage = this.helpPages[i];
+									break;
+								}
+							}
+							if (helpPage == null) {
+								helpPage = new lz[helpPageClass](this, {
+									name: "helpPage" + this.helpPages.length,
+									placement: "parent.titleArea.title"
+								})
+								this.helpPages.push(helpPage);
+							}
+
+							return helpPage;
+							]]>
+						</method>
+						
+						<method name="updateTitle" args="e=null">
+							<![CDATA[
+							if (this.activeView == null) {
+								if (classroot.isStoreSelected || !classroot.showStoreSelection) {
+									this.setAttribute("defaultTitle", "");
+									this.setAttribute("defaultTitleMessage", "");
+									this.showGettingStartedPage();
+								}
+								else {
+									this.hideGettingStartedPage();
+									this.setAttribute("defaultTitle", foundationResources.selectStoreTitle.string);
+									this.setAttribute("defaultTitleMessage", foundationResources.selectStoreMessage.string);
+								}
+							} else {
+								this.hideGettingStartedPage();
+							}
+							]]>
+						</method>
+
+						<!--- Reset this work area. Called when the business object editor is closed. -->
+						<method name="reset">
+							<![CDATA[
+							this.setActiveView(null,true);
+							this.setAttribute("splittable", false);							
+							this.setTitleBackground(false);
+							]]>						
+						</method>
+
+						<!---
+							Set the active view.
+							@param view v: the active view
+							@param boolean immediate: if true set the active view call back immediately
+						-->
+						<method name="setActiveView" args="v,immediate=false">
+							<![CDATA[
+							super.setActiveView(v,immediate);
+							if (!this.splittable) {
+								parent.details.setActiveView(null,immediate);
+							} 
+							parent.setAttribute("xSplitSize", parent.xSplitSize);
+							]]>
+						</method>
+					</wcfActiveViewContainer>
+
+					<wcfActiveViewContainer name="details" closed="true" defaultTitle="${foundationResources.selectObjectTitle.string}">
+						<attribute name="showingDetails" type="boolean" value="false"/>
+						<method name="init">
+							<![CDATA[
+							super.init();
+							classroot.framesList.push(this);
+							this.openDetailsDel = new lz.Delegate(this, "openDetails");
+							this.openDetails();
+							]]>
+						</method>
+
+						<method name="open">
+							<![CDATA[
+							this.setAttribute("showingDetails", true);
+							if (classroot.content.maximizedPanel != null) {
+								classroot.content.maximizedPanel.setAttribute("maximized", false);
+							}
+							super.open();
+							]]>
+						</method>
+						
+						<method name="close">
+							<![CDATA[
+							this.setAttribute("showingDetails", false);
+							super.close();
+							]]>
+						</method>
+						
+						<!---
+							Open the details view for the currently selected object. This method
+							will be called when the selection changes.
+						-->
+						<method name="openDetails" args="e=null">
+							<![CDATA[
+							this.openDetailsDel.unregisterAll();
+							this.openDetailsDel.register(this, "onshowingDetails");
+							this.openDetailsDel.register(classroot, "onworkAreaDetailsEnabled");
+							var v = null;
+							if (this.showingDetails && classroot.workAreaDetailsEnabled) {
+								if (classroot.model.workAreaActiveSelectionView != null) {
+									var selectedObjects = classroot.model.workAreaActiveSelectionView.getSelectedObjects();
+									if (selectedObjects.length == 1) {
+										var o = selectedObjects[0].getReferencedObject();
+										v = o.objectDefinition.getPropertiesView(this, o, true);
+									}
+								}
+							}
+							if (v != null) {
+								if (this.closed) {
+									super.open();
+								}
+							} else if (!this.closed) {
+								super.close();
+							}
+							this.setActiveView(v);
+							]]>
+						</method>
+					</wcfActiveViewContainer>
+				</wcfSplitView>
+				
+				<wcfSplitView name="utilitiesSplit" axis="y" ySplitSize="400">
+					<wcfUtilities name="utilities" maximizable="false" closed="true">
+						<handler name="oninit">
+							classroot.framesList.push(this);
+						</handler>
+					</wcfUtilities>
+					<wcfUtilitiesDetails name="details" maximizable="false" closable="false">
+						<handler name="oninit">
+							classroot.framesList.push(this);
+						</handler>
+					</wcfUtilitiesDetails>
+				</wcfSplitView>
+
+			</wcfSplitView>
+		</wcfSplitView>
+
+	</class>
+	
+</library>

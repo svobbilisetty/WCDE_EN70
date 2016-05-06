@@ -1,0 +1,392 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		This class is used to set a context value in an object. Context value is a name-value pair where the name is set in 
+		{@link wcfContextValue#parameterName} and the value in {@link wcfContextValue#value}. Context values are used by
+		{@link wcfServiceParam} to pass parameters to a service. The value of {@link wcfContextValue#parameterName}	is added
+		as a parameter to the service and the value of {@link wcfContextValue#value} is set as the value of this parameter. 
+		To specify which context value is to be used the same value of {@link wcfContextValue#parameterName} is specified in
+		{@link wcfServiceParam#name}.
+	-->
+	<class name="wcfContextValue" extends="node">
+		<!---
+			The parameter name for the context value. This name is the same as the service URL query parameter.
+			This is a required attribute.
+		-->
+		<attribute name="parameterName" type="string" />
+		<!---
+			The context value.
+		-->
+		<attribute name="value" type="string" value="${null}" />
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				super.init();
+				var values = parent["contextValues"];
+				if (!values) {
+					values = {};
+					parent.contextValues = values;
+				}
+				var urlValue = getInitialValue(this.parameterName);
+				if (urlValue != null) {
+					this.value = urlValue;
+				}
+				values[this.parameterName] = this;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the initial value from the URL parameters.
+			@param string name: the name of the attribute
+		-->
+		<method name="getInitialValue" args="name">
+			<![CDATA[
+				var value = lz.Browser.getInitArg(name);
+				if (typeof value == "undefined" || value == null) {
+					return null;
+				}
+				else {
+					return value;
+				}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		<p>wcfBaseContext is the base class of all context classes. A context definition is used to contain context
+		values that are used to resolve {@link wcfServiceParam service parameter} and
+		{@link wcfEnablementCondition enablement condition} values.
+	-->
+	<class name="wcfBaseContext" extends="node" initstage="defer">
+		<!---
+			@keywords private
+		-->
+		<attribute name="parentContext" value="${null}" />
+
+		<!---
+			@keywords private
+			Array of wcfContextValue objects defined in this context.
+		-->
+		<attribute name="contextValues" value="${null}" />
+
+		<!---
+			@keywords private
+			Array of wcfInitService objects defined in this context.
+		-->
+		<attribute name="initServices" value="${[]}" />
+
+		<!---
+			@keywords private
+			The current store. This attribute is a reference to an instance of {@link wcfStore} and is set by the 
+			instance of {@link wcfStoreSelectionWidget}.
+		-->
+		<attribute name="storeConfig" value="${null}" />
+
+		<!---
+			@keywords private
+			The context of a context is itself.
+		-->
+		<attribute name="localContext" value="${this}" />
+		<!---
+			@keywords private
+			The unique key for this context.
+		-->
+		<attribute name="key" type="string" value=""/>
+
+		<!---  @keywords private -->
+		<method name="init">
+			<![CDATA[
+				this.updateStoreConfigurationDel = new lz.Delegate(this, "updateStoreConfiguration");
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				this.updateStoreConfigurationDel.unregisterAll();
+				delete this.updateStoreConfigurationDel;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Gets the value of the given name in the context.
+			@return string The value of the given name in the context.
+		-->
+		<method name="getContextValue" args="parameterName">
+			<![CDATA[
+				if (this.contextValues == null) {
+					this.contextValues = {};
+					this.completeInstantiation();
+					wcfDefinitionLoader.completeCreateDefinitionChildren(this);
+				}
+				var contextValue = this.contextValues[parameterName];
+				if (typeof(contextValue) == "undefined" && this.parentContext != null) {
+					contextValue = this.parentContext.getContextValue(parameterName);
+				}
+				return contextValue;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the store configuration.
+		-->
+		<method name="updateStoreConfiguration" args="e=null">
+			<![CDATA[
+				this.updateStoreConfigurationDel.unregisterAll();
+				this.updateStoreConfigurationDel.register(this.storeConfig, "onconfigurationLoaded");
+				if (this.storeConfig.defaultLanguage != null) {
+					this.getContextValue("defaultLanguageId").setAttribute("value", this.storeConfig.defaultLanguage.languageId);
+					this.getContextValue("defaultLanguageLocale").setAttribute("value", this.storeConfig.defaultLanguage.localeName);
+				}
+				this.getContextValue("storeLanguageIds").setAttribute("value", this.storeConfig.getStoreLanguageIds());
+				if (this.storeConfig.defaultCurrency != null) {
+					this.getContextValue("defaultCurrencyCode").setAttribute("value", this.storeConfig.defaultCurrency.currencyCode);
+				}
+				this.getContextValue("currencyCodes").setAttribute("value", this.storeConfig.getCurrencyCodes());
+				this.getContextValue("remoteWidgetsEnabled").setAttribute("value", this.storeConfig.remoteWidgets != null ? this.storeConfig.remoteWidgets.isEnabled : "false");
+				this.getContextValue("listPriceListEnabled").setAttribute("value", this.storeConfig.listPriceList != null ? this.storeConfig.listPriceList.isEnabled : "false");
+				this.getContextValue("sterlingConfigEnabled").setAttribute("value", this.storeConfig.sterlingConfig != null ? this.storeConfig.sterlingConfig.isEnabled: "false");
+				this.getContextValue("seoEnabled").setAttribute("value", this.storeConfig.seo != null ? this.storeConfig.seo.isEnabled : "false");
+				if (this.storeConfig.staticContent != null && this.storeConfig.staticContent.storeLevel != null) {
+					this.getContextValue("mobileEnabled").setAttribute("value", this.storeConfig.staticContent.storeLevel.indexOf("MOBILE") != -1 ? "true" : "false");
+				}
+				this.updateInputLanguageIds();
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This handler will update the input language IDs for this context when the preferences are loaded.
+		-->
+		<handler name="onload" reference="preferenceManager">
+			<![CDATA[
+				this.updateInputLanguageIds();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			This handler will update the input language IDs for this context when the preferences are reset.
+		-->
+		<handler name="onreset" reference="preferenceManager">
+			<![CDATA[
+				this.updateInputLanguageIds();
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This handler will update the input language IDs for this context when the preferred input languages are changed.
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCInputLanguageIds preference
+				if (preference == "CMCInputLanguageIds") {
+					this.updateInputLanguageIds();
+				}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			Update the input language IDs.
+		-->
+		<method name="updateInputLanguageIds">
+			<![CDATA[
+				if (this.storeConfig != null) {
+					var preferredLanguageIds = [];
+					var savedPreference = preferenceManager.getPreference("CMCInputLanguageIds");
+					if (savedPreference != null) {
+						preferredLanguageIds = savedPreference.split(",");
+					}
+					var inputLanguageIds = "";
+					for(var i = 0; i < this.storeConfig.supportedLanguages.length; i++){
+						var storeLanguage = this.storeConfig.supportedLanguages[i];
+						if (storeLanguage.isDefault || preferredLanguageIds.indexOf(storeLanguage.languageId) != -1) {
+							if (inputLanguageIds.length > 0) {
+								inputLanguageIds += ",";
+							}
+							inputLanguageIds += storeLanguage.languageId;
+						}
+					}
+					this.getContextValue("inputLanguageIds").setAttribute("value", inputLanguageIds);
+				}
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<node id="wcfContextUtil">
+		<!--- @keywords private -->
+		<attribute name="globalContext" value="${null}" />
+		<!--- @keywords private -->
+		<attribute name="storeContexts" value="${{}}" />
+
+		<!---
+			@keywords private
+		-->
+		<method name="findContext" args="node, del=null">
+			<![CDATA[
+				if (this.globalContext == null) {
+					this.createGlobalContext();
+				}
+				var ctx = this.globalContext;
+				while (node) {
+					if (typeof(node["localContext"]) != "undefined") {
+						if (del != null) {
+							del.register(node, "onlocalContext");
+						}
+						ctx = node.localContext;
+						break;
+					}
+					if (node["parent"] && node != node.parent) {
+						node = node.parent;
+					}
+					else {
+						node = null;
+					}
+				}
+				return ctx;
+			]]>
+		</method>
+
+		<!---
+			Searches for a context value.
+			@START_CODE
+			wcfContextUtil.findContextValue(v, "locale");
+			@END_CODE
+
+			@param node node: the node on which to start the search
+			@param string parameterName: the parameter name
+		-->
+		<method name="findContextValue" args="node, parameterName, del=null">
+			<![CDATA[
+				var contextValue = null;
+				var context = this.findContext(node, del);
+				if (context != null) {
+					contextValue = context.getContextValue(parameterName);
+					if (contextValue != null && del != null) {
+						del.register(contextValue, "onvalue");
+					}
+				}
+				return contextValue;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="findStoreConfig" args="node, del=null">
+			<![CDATA[
+				var storeConfig = null;
+				var context = this.findContext(node, del);
+				if (context != null && context.storeConfig != null) {
+					if (del) {
+						del.register(context.storeConfig, "onconfigurationLoaded");
+					}
+					if (context.storeConfig.configurationLoaded) {
+						storeConfig = context.storeConfig;
+					}
+				}
+				return storeConfig;
+			]]>
+		</method>
+
+		<!---
+			Searches for an instance of the store context class by store ID, and also workspace, task
+			group and task ID if the context is accessed within the scope of a workspace task group.
+
+			@param string storeConfig: store configuration
+			@param string workspaceName: Name of the workspace
+			@param string taskGroup: Name of the workspace task group
+			@param string task: Name of the workspace task
+			@param boolean approvedContent: Set to true to get approved content context.
+			@return wcfBaseContext instance of the store context class for the given store
+		-->
+		<method name="findStoreContext" args="storeConfig, workspaceName=null, taskGroup=null, task=null, approvedContent=false">
+			<![CDATA[
+				if (this.globalContext == null) {
+					this.createGlobalContext();
+				}
+				var key = storeConfig.storeId;
+				if (!approvedContent && workspaceName != null) {
+					key += "|" + workspaceName + "|" + taskGroup + "|" + task;
+				}
+				if (approvedContent) {
+					key += "|approvedContent";
+				}
+				var storeContext = this.storeContexts[key];
+				if (storeContext == null) {
+					var workspaceContext = null;
+					if (!approvedContent && workspaceName != null) {
+						workspaceContext = wcfDefinitionLoader.getDefinition("wcfWorkspaceContext", this, {
+							parentContext: this.globalContext
+						});
+						workspaceContext.getContextValue("workspaceName").setAttribute("value", workspaceName);
+						workspaceContext.getContextValue("workspaceTaskGroup").setAttribute("value", taskGroup);
+						workspaceContext.getContextValue("workspaceTask").setAttribute("value", task);
+					}
+					if (approvedContent) {
+						workspaceContext = wcfDefinitionLoader.getDefinition("wcfWorkspaceContext", this, {
+							parentContext: this.globalContext
+						});
+						workspaceContext.getContextValue("workspaceName").setAttribute("value", "");
+						workspaceContext.getContextValue("workspaceTaskGroup").setAttribute("value", "");
+						workspaceContext.getContextValue("workspaceTask").setAttribute("value", "");
+					}
+					storeContext = wcfDefinitionLoader.getDefinition("wcfStoreContext", this, {
+						parentContext: workspaceContext == null ? this.globalContext : workspaceContext,
+						storeConfig: storeConfig,
+						key: key
+					});
+					storeContext.getContextValue("storeId").setAttribute("value",storeConfig.storeId);
+					storeContext.getContextValue("storeType").setAttribute("value", storeConfig.storeType);
+					storeContext.getContextValue("storeName").setAttribute("value", storeConfig.storeName);
+					storeContext.getContextValue("assetStoreId").setAttribute("value",storeConfig.assetStoreId);
+					storeContext.updateStoreConfiguration();
+					this.storeContexts[key] = storeContext;
+				}
+				return storeContext;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="createGlobalContext">
+			<![CDATA[
+				this.globalContext = wcfDefinitionLoader.getDefinition("wcfGlobalContext", this, {});
+				this.globalContext.getContextValue("locale").setAttribute("value", global.locale);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="getGlobalContext">
+			<![CDATA[
+				if (this.globalContext == null) {
+					this.createGlobalContext();
+				}
+				return this.globalContext;
+			]]>
+		</method>
+	</node>
+
+</library>

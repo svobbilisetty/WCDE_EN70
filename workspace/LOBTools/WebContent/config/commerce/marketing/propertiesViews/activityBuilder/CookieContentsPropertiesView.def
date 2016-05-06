@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktCookieContentsElementObject Cookie Contents target}.
+	-->
+	<FlowElementProperties definitionName="mktCookieContentsProperties">
+		<PropertyGroup collapsable="false" name="container">
+			<PropertyRadioGroup helpText="${mktMarketingResources.help_customerbehavior_targetCondition_cookieContents}" name="containsOperator" promptText="${mktMarketingResources.targetCondition}" propertyName="containsOperator"/>
+
+			<PropertyInputText helpText="${mktMarketingResources.help_cookiecontent_name}" promptText="${mktMarketingResources.cookieName}" propertyName="cookie" required="true"/>
+
+			<PropertyCombobox name="cookieComparison" promptText="${mktMarketingResources.cookieMatchingRule}" propertyName="comparison"/>		
+
+			<PropertyGroup collapsable="false" name="cookieValues">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_cookiecontent_values}" listDefinitionName="mktCookieValueGrid" name="cookieNVPEditor" objectTypes="cookieValue" promptText="${mktMarketingResources.cookieValues}" required="true" validatorTypes="noCookieValueProvided"/>	
+			</PropertyGroup>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

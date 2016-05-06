@@ -1,0 +1,89 @@
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2007
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		A layout that will center all of the children on the specified axis.
+	-->
+	<class name="wcfCenterLayout" extends="layout">
+		<!---
+			The axis on which the child views will be centered. This may be either
+			"x" or "y". The default is "y".
+		-->
+		<attribute name="axis" value="y" setter="this.setAxis(axis)" type="string" />
+		
+		<!---
+			Set the layout axis.
+			@param string a: the layout axis
+		-->
+		<method name="setAxis" args="a" >
+			if (this['axis'] == null || this.axis != a) {
+				this.axis = a;
+				this.sizeAxis = a == "x" ? "width" : "height"
+				if (this.subviews.length) {
+					this.update();
+				}
+				if (this['onaxis']) {
+					this.onaxis.sendEvent(this.axis);
+				}
+			}
+		</method>
+
+		<!--- @keywords private -->
+		<method name="addSubview" args="v">
+			this.updateDelegate.register(v,  "on" + this.sizeAxis);
+			this.updateDelegate.register(v,  "onvisible");
+			this.update();
+			super.addSubview( v );
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="update" args="e=null">
+			<![CDATA[
+			if (!this.locked) {
+				this.lock();
+				var l = this.subviews.length;
+				var maxSize = 0;
+				for (var i = 0; i < l; i++) {
+				    var v = this.subviews[i];
+				    if (v.visible) {
+						var size = v[this.sizeAxis];
+						if (size > maxSize) {
+							maxSize = size;
+						}
+					}
+				}
+				for (var i = 0; i < l; i++) {
+				    var v = this.subviews[i];
+				    if (v) {
+				    	var size = v[this.sizeAxis];
+				    	var p = 0;
+				    	if (size < maxSize) {
+				    		// Always snap subviews to the coordinates grid. Otherwise,
+				    		// a subview may get blurred. 
+				    		p = Math.round(maxSize/2 - size/2); 
+				    	}
+						if (p != v[this.axis]) {
+							v.setAttribute(this.axis, p);
+						}
+					}
+				}
+		        this.locked = false;
+			}
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktCityProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/City" promptText="${mktMarketingResources.cspAddrCity}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="any" objectPath="TopAndList/City" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyAddrCity}" listDefinitionName="mktCSCityGrid" name="stateGrid" objectPath="TopAndList/City/CityList" objectTypes="CityEqualsOption" promptText="${mktMarketingResources.customerSegment_addrCity_SpecifyAddrCity}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="notAny" objectPath="TopAndList/City" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyAddrCity}" listDefinitionName="mktCSCityGrid" name="stateGrid" objectPath="TopAndList/City/CityList" objectTypes="CityDoesNotEqualOption" promptText="${mktMarketingResources.customerSegment_addrCity_SpecifyAddrCity}"/>
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktCSCityGrid" preferenceKey="mktCSCityGrid">		
+		<GridText editable="true" name="cityName" propertyName="conditionValue" required="true" text="${mktMarketingResources.customerSegment_addrCity_Specified}" visible="true" width="250"/>
+	</ObjectGrid>
+</Definitions>

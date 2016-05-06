@@ -1,0 +1,144 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		This class provides a basic view for element in formula viewer.
+	-->
+	<class name="wcfFormulaElement">
+		<!---
+			wcfModelObject instances associated with this element instance.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)" />
+
+		<!---
+			@keywords private
+			Name of the resource for this element's icon.
+		-->
+		<attribute name="icon" type="string" value="${null}" />
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				this.updateElementTextDel = new lz.Delegate(this, "updateElementText");
+				super.init();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				this.updateElementTextDel.unregisterAll();
+				delete this.updateElementTextDel;
+				super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Set the model object instance for this element.
+			@param wcfModelObject newObject: the new model object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+				if (this["o"] != newObject) {
+					this.o = newObject;
+				}
+				if (this.o) {
+					var formulaIcon = this.o.getFormulaIcon();
+					if (typeof(formulaIcon) == "undefined") {
+						this.setAttribute("icon", null);
+					}
+					else {
+						this.setAttribute("icon", formulaIcon);
+					}
+					this.updateElementText();
+				}
+				else if (this["updateElementTextDel"]) {
+					this.updateElementTextDel.unregisterAll();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the text of the element, or the label for element icon if the icon is displayed.
+		-->
+		<method name="updateElementText" args="e=null">
+			<![CDATA[
+				this.updateElementTextDel.unregisterAll();
+				var propertyValue = null;
+				var propertyType = null;
+				var oDef = this.o.objectDefinition;
+				if (oDef.formulaTextProperty != null) {
+					var propertyObject = this.o;
+					if (oDef.formulaTextObjectPath != null) {
+						propertyObject = this.o.getObject(oDef.formulaTextObjectPath, false, null, this.updateElementTextDel);
+					}
+					if (propertyObject != null) {
+						var property = propertyObject.getProperty(oDef.formulaTextProperty);
+						propertyValue = property.value;
+						if (property.propertyDefinition) {
+							propertyType = property.propertyDefinition.type;
+						}
+						this.updateElementTextDel.register(property, "onvalue");
+					}
+				}
+				var newText = "";
+				var newPropertyName = "";
+				var newPropertyValue = "";
+				if (this.icon == null) {
+					if (propertyValue != null) {
+						if (propertyType != null && propertyType == "number") {
+							newText = wcfGlobalizationUtil.formatNumberToDisplayFormat(propertyValue, null, this.updateElementTextDel);
+						}
+						else {
+							newText = propertyValue;
+						}
+					}
+				}
+				else {
+					if (oDef.formulaText != null) {
+						newPropertyName = oDef.formulaText;
+						this.updateElementTextDel.register(oDef, "onformulaText");
+						if (propertyValue != null) {
+							newPropertyValue = foundationResources.replaceValues("formulaElementPropertyValue", [propertyValue]);
+							this.updateElementTextDel.register(foundationResources.formulaElementPropertyValue, "onstring");
+						}
+					}
+				}
+				if (newText != this.textView.text) {
+					this.textView.setAttribute("text", newText);
+				}
+				if (newPropertyName != this.iconView.elementPropertyName.text) {
+					this.iconView.elementPropertyName.setAttribute("text", newPropertyName);
+				}
+				if (newPropertyValue != this.iconView.elementPropertyValue.text) {
+					this.iconView.elementPropertyValue.setAttribute("text", newPropertyValue);
+				}
+			]]>
+		</method>
+
+		<view name="iconView" visible="${classroot.icon != null}">
+			<view name="elementIcon" align="center" resource="${classroot.icon}" />
+			<text name="elementPropertyName" align="center" />
+			<text name="elementPropertyValue" align="center" />
+			<simplelayout axis="y" />
+		</view>
+		<text name="textView" fontsize="30" visible="${classroot.icon == null}" />
+	</class>
+
+</library>

@@ -1,0 +1,912 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords abstract
+	
+		This class performs a client side action on selected business objects.
+		The action is written in its <code>performAction</code> method.
+		Instances of wcfClientAction can only be declared as children of an instance
+		of {@link wcfObjectDefinition}.
+		
+		<p>A single instance of {@link wcfEnablementCondition}, {@link wcfEnablementAndCondition} or
+		{@link wcfEnablementOrCondition} can be declared as a child of a client action.
+		The enablement condition will be used by the framework to determine if a client 
+		action is available for the currently selected business objects. If it is available, 
+		the framework will add the action to the context menu. If <code>addToEditMenu</code> 
+		is set to "true", the action is also added to the "Edit" menu. If <code>addToViewMenu</code> 
+		is set to "true", the action is also added to the "View" menu. 
+		If the <code>toolbarIcon</code> attribute has been defined, 
+		then the action will also be available on the toolbar.
+		
+		<p>The following example demonstrates the declaration of a client action.
+		The client action includes an enablement condition that will resolve to "true" 
+		if a property named "state" exists in the business object.
+		Otherwise, this	client action will not be available. 
+
+		@START_CODE
+		<class name="wcfChangeStateAction" extends="wcfClientAction">
+			<method name="performAction" args="objects">
+				<![CDATA[
+				for (var i = 0; i < objects.length; i++) {
+					this.changeState(objects[i]);
+				}
+				]]>
+			</method>
+			<method name="changeState" args="o">
+			...
+			</method>
+		</class>
+		
+		<wcfChangeStateAction displayName="Change State" toolbarIcon="changeStateToolbarIcon">
+			<wcfEnablementCondition propertyName="state" enablementValue="${null}" negate="true"/>
+		</wcfChangeStateAction>
+		@END_CODE
+		
+		<p>If a business object has a client action defined and a property name of "state", 
+		the menu option "Change State" will be available in its context menu. When this option 
+		is selected from the context menu, the <code>changeState</code> method defined inside 
+		the class <code>wcfChangeStateAction</code> class is executed.
+	-->
+	<class name="wcfClientAction" extends="node">
+		<!---
+			The display name for this action. This is a required attribute.
+		-->
+		<attribute name="displayName" type="string"/>
+		
+		<!---
+			The menu display name for this action. This name will appear in both the
+			Edit menu and the context menu. If this attribute is not set,
+			it will default to the displayName attribute.
+		-->
+		<attribute name="menuDisplayName" value="${null}" type="string"/>
+
+		<!---
+			The shortcut keys used to invoke this action from the keyboard 
+			when the object is selected. Reference {@OLlink lz.Keys#callOnKeyCombo} for details
+			on the format in which shortcut keys has to be specified.
+			@type String[]
+		-->
+		<attribute name="shortcutKeys" value="null"/>
+
+		<!---
+			@keywords private
+			Flag to indicate if shortcutKeys are registered
+		-->			
+		<attribute name="keysRegistered" type="boolean" value="false"/>
+
+		<!---
+			Icon resource name. If specified, a button will be added to the toolbar.
+		-->		
+		<attribute name="toolbarIcon" type="string" value=""/>		
+		<!---
+			Icon resource name. If specified, a button will be added to the action area of {@link wcfChildListEditor}.
+		-->		
+		<attribute name="childListEditorIcon" type="string" value="${null}"/>
+		<!---
+			Indicates whether to add the client action to the "Edit" menu when the client action is 
+			available for the currently selected business objects. The default value is "true".
+		-->		
+		<attribute name="addToEditMenu" type="boolean" value="true"/>
+		<!---
+			Indicates whether to add the client action to the "View" menu when the client action is 
+			available for the currently selected business objects. The default value is "false".
+		-->		
+		<attribute name="addToViewMenu" type="boolean" value="false"/>
+		<!---
+			Indicates whether the client action is available when the business object is selected in explorer view. This attribute
+			will only affect the availability of the client action in the "Edit" menu and the toolbar. The context menu will not be affected.
+			The default is "true". 
+		-->
+		<attribute name="availableFromExplorerView" type="boolean" value="true"/>
+
+		<!---
+			Indicates whether the client action is available when the business object is selected in a list view embedded in a properties view.
+			This attribute will only affect the availability of the client action in the "Edit" menu and the toolbar. The context menu will not be affected.
+			The default is "true".
+		-->
+		<attribute name="availableFromEmbeddedListView" type="boolean" value="true"/>
+
+		<!---
+			Indicates whether the client action is available when the business object is selected in a list view in the main work area.
+			This attribute will only affect the availability of the client action in the "Edit" menu and the toolbar. The context menu will not be affected.
+			The default is "true".
+		-->
+		<attribute name="availableFromMainListView" type="boolean" value="true"/>
+		
+		<!---
+			This attribute specifies if this client side action is enabled when multiple objects are selected.
+		-->
+		<attribute name="allowMultipleSelection" type="boolean" value="true"/>	
+
+		<!---
+			Indicates whether this client action is added to the Utilities view context menu. The default is <code>false</code>.
+		-->
+		<attribute name="addToUtilitiesContextMenu" type="boolean" value="false"/>
+
+		<!---
+			Indicates whether this client action is added to the explorer view context menu. The default is <code>true</code>.
+		-->
+		<attribute name="addToExplorerContextMenu" type="boolean" value="true"/>
+
+		<!---
+			Indicates whether this client action is added to the list view context menu. The default is <code>true</code>.
+		-->
+		<attribute name="addToListContextMenu" type="boolean" value="true"/>
+		
+		<!---
+			The type for this action.
+		-->
+		<attribute name="actionType" type="string" value=""/>
+		<!---
+			@keywords private
+			Initialize the client action add this to parent.clientActions
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var actions = parent["clientActions"];
+			if (!actions) {
+				actions = [];
+				parent.clientActions = actions;
+			}
+			actions.push(this);
+			
+			if (this.shortcutKeys != null) {
+
+				this.doClientActionDel = new lz.Delegate(this, "doClientAction");
+				var model = wcfModelUtil.findModelForView(this);
+				if (model != null) {
+					this.checkBusinessObjectEditorDel = new lz.Delegate(this, "checkBusinessObjectEditor");
+					this.checkBusinessObjectEditorDel.register(model, "onmodelInitialized");
+				}
+	
+			}
+
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns the menu display name. If the menuDisplayName attribute has not been set
+			then this method will return the value of the displayName attribute.
+
+			@return boolean: the menu display name
+		-->
+		<method name="getMenuDisplayName">
+			<![CDATA[
+			return this.menuDisplayName == null ? this.displayName : this.menuDisplayName;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method calls the doClientAction method in the business object editor passing its own instance.
+		-->				
+		<method name="doClientAction" args="e=null">
+			<![CDATA[
+			var model = wcfModelUtil.findModelForView(this);
+			if (model != null) {
+				var oEditor = model.oEditor;
+				if(wcfViewUtil.containedInModalView(oEditor)) {
+					oEditor.doClientAction(this);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords abstract
+	
+			This method is invoked by the framework when the client action is executed from the "Edit" menu, toolbar or
+			the context menu. Override this method to implement the action that needs to be performed on the selected
+			business object whenever the client action is executed.
+			
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->				
+		<method name="performAction" args="objects"/>
+
+		<!---
+			@keywords private
+			Check if business object editor is initialized and register shortcutKeys event
+		-->			
+		<method name="checkBusinessObjectEditor" args="e=null">
+			<![CDATA[
+			var model = wcfModelUtil.findModelForView(this);
+			if (model.modelInitialized && !this['checkShortcutKeysDel']) {
+				this.checkShortcutKeysDel = new lz.Delegate(this, "checkShortcutKeys");
+				this.checkShortcutKeysDel.register(model.oEditor, "onactive");
+				this.checkShortcutKeysDel.register(model.oEditor, "onenabledClientActions");
+				this.checkBusinessObjectEditorDel.unregisterAll();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["doClientActionDel"]) {
+				this.doClientActionDel.unregisterAll();
+				delete this.doClientActionDel;
+			}
+			if (this["checkBusinessObjectEditorDel"]) {
+				this.checkBusinessObjectEditorDel.unregisterAll();
+				delete this.checkBusinessObjectEditorDel;
+			}
+			if (this["checkShortcutKeysDel"]) {
+				this.checkShortcutKeysDel.unregisterAll();
+				delete this.checkShortcutKeysDel;
+			}
+			super.destroy();		
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Method to register/unregister shortcut keys
+		-->			
+		<method name="checkShortcutKeys" args="e=null">
+			<![CDATA[
+			var model = wcfModelUtil.findModelForView(this);
+			if (model.oEditor.active && model.oEditor.enabledClientActions != null && model.oEditor.enabledClientActions.indexOf(this) != -1) {
+				this.registerShortcutKey();
+			} else {
+				this.unregisterShortcutKey();
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Registers the shortcut key
+		-->
+		<method name="registerShortcutKey">
+			<![CDATA[
+			if (!this.keysRegistered) {
+				this.keysRegistered = true;
+				lz.Keys.callOnKeyCombo(this.doClientActionDel, this.shortcutKeys);
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Unregisters the shortcut key
+		-->
+		<method name="unregisterShortcutKey">
+			<![CDATA[
+			if (this.keysRegistered) {
+				this.keysRegistered = false;
+				lz.Keys.removeKeyComboCall(this.doClientActionDel, this.shortcutKeys);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns true if this client action is enabled for the specified
+			model object by evaluating the associated {@link wcfEnablementCondition} object.
+			This method is only used to determine if this action is visible to the user.
+			It is not invoked from the {@link wcfClientAction#doClientAction} method.
+			
+			@param wcfModelObject o: the object on which you want to perform this client action
+			@return boolean: true if the client action is enabled
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				return this.enablementCondition.isEnabled(o);
+			}
+			else {
+				return true;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Register a delegate to be executed when the enablement condition changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerEnablementDelegate" args="o,del">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				this.enablementCondition.registerDelegate(o,del);
+			}
+			]]>
+		</method>
+
+	</class>
+
+	<!---
+		@keywords final
+		
+		<p>This class is used to preview a file, an URL, or text in the Management Center.
+		Instances of this class should only be declared as direct children of instances of {@link wcfObjectDefinition}.</p>
+		
+		<p>This action can preview external URLs, text and files stored in the WebSphere Commerce Server.
+		The <code>isExternal</code> and <code>externalObjectTypes</code> attributes are used to indicate whether the file is an external URL.
+		The <code>textObjectPath</code> and <code>textPropertyName</code> attributes are used to determine if the preview action can preview text.</p>
+		
+		<p>When previewing an internal file. The URL is constructed as follows:
+		<ul>
+		    <li>Protocol: The protocol used to load the Management Center. For example, https.
+		    <li>Hostname: The hostname where the Management Center was loaded from. For example, commerce.mycompany.com.
+		    <li>Port: The port number used to load the Management Center from the host. For example, commerce.mycompany.com:8000, 
+		    where 8000 is the port number.
+		    <li>File path: The path to the file prefixed with "/webapp/wcs/preview". The path to the file is determined by 
+		    the properties indicated in the <code>pathPropertyName</code> attribute and optionally the 
+		    <code>filenamePropertyName</code> attribute.		
+		</ul>
+		</p>
+
+		<p>An example of the constructed URL is <code>https://localhost:8000/webapp/wcs/preview/ConsumerDirect/images/catalog/FUDEL_01.jpg</code>.
+		This URL is launched from a new browser pop-up window.</p>
+
+		<p>When previewing an external URL the value of the <code>pathPropertyName</code> property is an URL of an external file.
+		A new browser pop-up window opens to display the URL.</p>
+		
+		<p>When previewing text, the value of the <code>textPropertyName</code> property is displayed in a new browser pop-up window.</p>
+
+		<p>The following example demonstrates the declaration of this class. Let <code>/ConsumerDirect/images/catalog/FUDEL_01.jpg</code> be the
+		value of the property <code>fullPath</code> in the currently selected business object.</p>
+		
+		@START_CODE
+		<PreviewFileClientAction displayName="Preview File in Browser" pathPropertyName="fullPath" />
+		@END_CODE
+
+		<p>When the context menu option "Preview File in Browser" is clicked for the currently selected business object, 
+		an URL such as <code>https://localhost:8000/webapp/wcs/preview/ConsumerDirect/images/catalog/FUDEL_01.jpg</code> is constructed
+		and opens in a new browser pop-up window.</p>
+	-->
+	<class name="wcfPreviewFileClientAction" extends="wcfClientAction" addToEditMenu="false" allowMultipleSelection="false" addToUtilitiesContextMenu="true">
+		<!---
+			Indicates whether the file path is actually an URL of an external resource.
+		-->				
+		<attribute name="isExternal" type="boolean" value="false"/>
+		<!---
+			A comma-separated list of object types that should be considered external. If this value is not empty,
+			then {@link wcfPreviewFileClientAction#isExternal} is ignored.
+		-->
+		<attribute name="externalObjectTypes" type="string" value=""/>
+		<!---
+			The object path to the object containing {@link wcfPreviewFileClientAction#pathPropertyName} and
+			{@link wcfPreviewFileClientAction#filenamePropertyName}. If the object path resolves to more than one object,
+			the first object will be used. If no object path is specified, the current object will be used.
+		-->
+		<attribute name="objectPath" type="string" value=""/>
+		<!---
+			The name of the property in the business object which is used to resolve the file path. This is a mandatory attribute.
+		-->				
+		<attribute name="pathPropertyName" type="string"/>
+		<!---
+			The property name of the object that contains a comma-separated list of language ID's that an asset is associated with.
+		-->
+		<attribute name="languageIdsPropertyName" type="string" value=""/>
+		<!---
+			The name of the property that contains the file name portion of the path. This is an optional attribute. 
+			If this attribute is set, the full path to the file is constructed by combining the values of  both the 
+			<code>filenamePropertyName</code> and <code>pathPropertyName</code> properties. For example:
+			
+			<code>/webapp/wcs/preview/<i>value of the pathPropertyName property</i>/<i>value of filenamePropertyName property</i></code>
+
+			<p>If this value is not set, the full path to the file is constructed only by the value of the <code>pathPropertyName</code> property.</p>
+		-->				
+		<attribute name="filenamePropertyName" type="string" value=""/>		
+		<!---
+			Object path to the child object that contains the text property.
+		-->
+		<attribute name="textObjectPath" type="string" value=""/>
+		<!---
+			Name of the property that contains the text to preview.
+		-->
+		<attribute name="textPropertyName" type="string" value=""/>
+		<!---
+			Name of the property that contains the preview format. The preview format is used to determine if the
+			previewed object is text or a file. The value of the specified property is matched against the
+			types specified by <code>fileTypeValues</code>. If this attribute is not specified, then
+			all objects will be treated as file objects.
+		-->
+		<attribute name="formatPropertyName" type="string" value=""/>
+		<!---
+			Comma-separated list of values that will be considered file types when testing the value of <code>formatPropertyName</code>.
+		-->
+		<attribute name="fileTypeValues" type="string" value=""/>
+
+		<!---
+			This method is invoked by the framework when the client action is executed from the context menu or toolbar.
+			It constructs the URL and launches it in a new browser pop-up window.
+			
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->				
+		<method name="performAction" args="objects">
+			<![CDATA[
+			var o = objects[0];
+			if (o.isOpenGroupDirty(true)) {
+				wcfClientActionUnsavedDialog.openClientActionUnsavedDialog(this);
+			}
+			else {
+				wcfPreviewAttachmentActionHandler.triggerAction(
+					o,
+					this.objectPath,
+					this.pathPropertyName,
+					this.filenamePropertyName,
+					this.isExternal,
+					this.externalObjectTypes,
+					this.languageIdsPropertyName,
+					this.textObjectPath,
+					this.textPropertyName,
+					this.formatPropertyName,
+					this.fileTypeValues);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		<p>This class is used to create a client action that will create a content version for a business object.  Instances of this class should only be declared as direct children of 
+		instances of {@link wcfObjectDefinition}.</p>
+
+		<p>When the business objects are selected with this class defined, a toolbarIcon will appear that allow the user to create a content version.
+		When the icon is clicked, a dialog will open to prompt the user for the version name and comment.</p>
+
+		<p>Object definitions that include this client action must also include a {@link wcfReferenceObjectDefinition reference object definition} with objectType attribute
+		set to "ContentVersion".</p>
+
+		<p>The following example demonstrates the declaration of this class</p>
+		
+		@START_CODE
+		<CreateContentVersionClientAction/>
+		@END_CODE
+	-->
+	<class name="wcfCreateContentVersionClientAction" extends="wcfClientAction" 
+		displayName="${foundationResources.ContentVersionCreateClientAction.string}" 
+		addToListContextMenu="false"
+		addToExplorerContextMenu="false"
+		availableFromExplorerView="false" 
+		availableFromEmbeddedListView="false">
+
+		<wcfEnablementAndCondition conditionType="contentVersionEnabledCondition">
+			<wcfEnablementCondition contextName="contentVersionEnabled" enablementValue="true"/>
+			<wcfEnablementCondition enablementValue="" propertyName="objectVersionId"/>
+		</wcfEnablementAndCondition>
+
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			var objectsDirty = false;
+			for (var i = 0; i < objects.length; i++) {
+				var o = objects[i];
+				if (o.isOpenGroupDirty(true)) {
+					wcfClientActionUnsavedDialog.openClientActionUnsavedDialog(this);
+					objectsDirty = true;
+					break;
+				}
+			}
+			if (!objectsDirty) {
+				wcfCreateContentVersionDialog.openCreateContentVersionDialog(objects);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			return this.contentVersionEnabledCondition.isEnabled(o) && super.isEnabled(o);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="registerEnablementDelegate" args="o,del">
+			<![CDATA[
+			super.registerEnablementDelegate(o, del);
+			this.contentVersionEnabledCondition.registerDelegate(o, del);
+			]]>
+		</method>
+		
+	</class>
+
+	<!---
+		@keywords private
+		<p>This class defines a client action for restoring a Content Version for a business object.</p>
+	-->
+	<class name="wcfRestoreContentVersionClientAction" extends="wcfClientAction" 
+		displayName="${foundationResources.ContentVersionRestoreClientAction.string}" 
+		childListEditorIcon="restoreVersionToolbarIcon"
+		addToExplorerContextMenu="false" 
+		allowMultipleSelection="false">
+ 
+		<wcfEnablementAndCondition>
+			<wcfEnablementCondition contextName="contentVersionEnabled" enablementValue="true" />
+			<wcfEnablementCondition checkReadOnly="true" enablementValue="false"/>
+		</wcfEnablementAndCondition>
+
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			var o = objects[0];
+			if (o.isOpenGroupDirty(true)) {
+				wcfClientActionUnsavedDialog.openClientActionUnsavedDialog(this);
+			} else {
+				wcfRestoreContentVersionConfirmationDialog.openRestoreContentVersionConfirmationDialog(o);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		<p>This class defines a service for creating a Content Version for a business object.</p>
+	-->
+	<wcfService id="wcfCreateContentVersionService" url="/cmc/CreateContentVersion" transactionService="true">
+
+		<wcfServiceParam name="storeId" />
+
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				requestParent.setGetChildrenServicesStale(requestParent.objectDefinition.getChildDefinition("ContentVersion"), true);
+				var msg;
+				var messageType = "createContentVersionSuccessful";
+				var msgCount = 1 + wcfServiceTransactionUtil.getTransactionEventMessageCount(requestParent.transaction, messageType);
+				if (msgCount == 1) {
+					msg = foundationResources.replaceValues("createContentVersionSuccessful", [requestParent.openGroupObject.objectDisplayName]);
+				}else{
+					msg = foundationResources.replaceValues("createMultipleContentVersionsSuccessful", [msgCount]);
+				} 
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg); 
+			]]>
+		</method>
+	</wcfService>
+	
+	<!---
+		@keywords private
+		<p>This class defines a service for restoring a Content Version for a business object.</p>
+	-->
+	<wcfService id="wcfRestoreContentVersionService" url="/cmc/RestoreContentVersion" transactionService="true">
+
+		<wcfServiceParam name="storeId" />
+
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var msg;
+				var messageType = "restoreContentVersionSuccessful";
+				var msg = foundationResources.replaceValues("restoreContentVersionSuccessful", [requestParent.getPropertyValue("versionNumber"), requestParent.openGroupObject.objectDisplayName]);
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg);
+				requestParent.parentObject.getProperty("basedOnVersionNumber").setAttribute("value", requestParent.getPropertyValue("versionNumber"));
+				requestParent.parentObject.getProperty("basedOnVersionName").setAttribute("value", requestParent.getPropertyValue("versionName"));
+				requestParent.parentObject.refreshObject();
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		<p>This class defines a new handler to create a new content version object.</p>
+	-->
+	<class name="wcfContentVersionNewHandler" extends="wcfNewHandler">
+		
+		<!--- @keywords private -->
+		<method name="getClientAction" args="parentObject">
+			<![CDATA[
+			var clientActions = parentObject.objectDefinition.clientActions;
+			for (var i = 0; i < clientActions.length; i++) {
+				if (clientActions[i] instanceof lz.wcfCreateContentVersionClientAction) {
+					return clientActions[i];
+				}
+			}
+			return null;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="createNewObject" args="objectDefinition, parentObject">
+			<![CDATA[
+			var clientAction = this.getClientAction(parentObject);
+			if (clientAction != null) {
+				clientAction.performAction([parentObject]);
+			}
+			return null;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="isEnabled" args="parentObject">
+			<![CDATA[
+			var enabled = true;
+			var clientAction = this.getClientAction(parentObject);
+			if (clientAction != null) {
+				enabled = clientAction.isEnabled(parentObject);
+			}
+			return enabled;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="registerEnablementDelegate" args="parentObject, del">
+			<![CDATA[
+			var clientAction = this.getClientAction(parentObject);
+			if (clientAction != null) {
+				clientAction.registerEnablementDelegate(parentObject, del);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		<p>This class defines a client action for opening a version with current business object in compare view.</p>
+	-->
+	<class name="wcfOpenVersionWithCurrentObjectAction" extends="wcfClientAction" 
+		displayName="${foundationResources.toolbarCompareVersionWithCurrentObject.string}" 
+		childListEditorIcon="compareVersionWithCurrentObjectToolbarIcon"
+		allowMultipleSelection="false">
+
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			var o = objects[0];
+			var parentObject = o.getParentPrimaryObject();
+			o.model.oEditor.openObjectsInCompareView(parentObject, o.getReferencedObject());
+			]]>
+		</method>
+	</class>
+
+	<!---
+		Service that generates and returns a Coremetrics single sign-on token.
+		@keywords private
+	-->
+	<wcfService id="getAnalyticsSSOTokenService" url="/cmc/GetAnalyticsSSOToken"
+		sendLocale="false" sendTimeZoneId="false" sendWorkspaceContext="false">
+		
+		<wcfServiceParam name="storeId" />
+		
+		<!---
+			Parse the response values from the get SSO token service.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				var clientId = "";
+				var username = "";
+				var timestamp = "";
+				var token = "";
+				
+				var nodes = e.childNodes;
+				for (var i = 0; i < nodes.length; i++) {
+					var node = nodes[i];
+					var parameterName = node.nodeName;
+					if (parameterName == "clientId") {
+						clientId = wcfXMLUtil.getNodeValue(node);
+					}
+					else if (parameterName == "username") {
+						username = wcfXMLUtil.getNodeValue(node);
+					}
+					else if (parameterName == "timestamp") {
+						timestamp = wcfXMLUtil.getNodeValue(node);
+					}
+					else if (parameterName == "token") {
+						token = wcfXMLUtil.getNodeValue(node);
+					}
+				}
+				
+				requestParent.launchReport(clientId, username, timestamp, token);
+			]]>
+		</method>
+	</wcfService>
+	
+	<!---
+		<p>This client action exposes the ability to launch a Coremetrics Analytics report on an organization object,
+		such as the E-Marketing Spots or Activities folders, or a primary object like products and SKUs in CMC.</p>
+		
+		<p>For each object that a report should be associated with, the object definition simply needs to be
+		instrumented with an instance of <code>OpenCoremetricsReportClientAction</code> with the appropriate
+		<code>displayName</code> and <code>reportUri</code> parameters set. For example:
+		
+		@START_CODE
+		<OpenCoremetricsReportClientAction displayName="Open e-Marketing spots report" reportUri="report:/websphere/espot.ftl"/>
+		@END_CODE
+		</p>
+	-->
+	<class name="wcfOpenCoremetricsReportClientAction" extends="wcfLaunchURLClientAction" toolbarIcon="analyticsToolbarIcon"
+		displayName="${foundationResources.viewCoremetricsReport.string}" addToViewMenu="true" addToEditMenu="false"
+		url="https://welcome.coremetrics.com/analyticswebapp/analytics.jsp" windowName="Coremetrics_Window"
+		urlRequestMethod="GET">
+		
+		<!---
+			The relative Coremetrics report URI to load, which can be obtained from Coremetrics.
+			For example, <code>report:/merchandising/hierarchy.ftl</code>.
+		-->
+		<attribute name="reportUri" value="" type="string"/>
+		
+		<!---
+			Generates and launches a new window to the fully-qualified URL of the specified Coremetrics report.  
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			if(this.reportUri != "") {
+				getAnalyticsSSOTokenService.doRequest(this);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="launchReport" args="clientId, username, timestamp, token">
+			<![CDATA[
+			this.urlParamValueMap = new Object();
+			this.urlParamValueMap.uri = this.reportUri;
+			this.urlParamValueMap.locale = wcfContextUtil.findContextValue(null, "locale").value;
+				
+			if(clientId && clientId != "" && username && username != "" && timestamp && timestamp != "" && token && token != "") {
+				this.urlParamValueMap.clientId = clientId;
+				this.urlParamValueMap.username = username;
+				this.urlParamValueMap.timestamp = timestamp;
+				this.urlParamValueMap.token = token;
+				this.urlParamValueMap.authsrc = "wc";
+			}
+			this.launchURLWindow();
+			]]>
+		</method>
+		
+		<wcfCoremetricsEnablementCondition/>
+	</class>
+
+
+
+	<!---
+		@keywords private
+		<p>This class defines a client action to launch a specific URL.</p>
+	-->
+	<class name="wcfLaunchURLClientAction" extends="wcfClientAction" allowMultipleSelection="false">
+		<!---  The URL to load -->
+		<attribute name="url" value="" type="string"/>
+		<!---  The property map -->
+		<attribute name="urlParamValueMap" value="null"/>
+		<!---  HTTP request method to use for the request. Allowed values are "GET" or "POST". The default value is "POST". -->
+		<attribute name="urlRequestMethod" type="string" value="POST"/>
+		<!---  The window name -->
+		<attribute name="windowName" value="" type="string"/>
+		
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			this.launchURLWindow();
+			]]>
+		</method>
+		
+		<!---
+			Launches a new window to <code>url</code> with the query parameters defined in <code>urlParamValueMap</code>.
+		-->
+		<method name="launchURLWindow">
+			<![CDATA[
+			if(this.url != "") {
+				var newWindowObj = new Object();
+				newWindowObj.URL = this.url;
+				newWindowObj.windowName = this.windowName;
+				newWindowObj.windowFeatures = "scrollbars=yes,toolbar=no,directories=no,status=no,menubar=no,copyhistory=no,resizable=yes";
+				newWindowObj.windowWidth = 1014;
+				newWindowObj.windowHeight = 710;
+				
+				if (this.urlParamValueMap != null) {
+					newWindowObj.URL = "";
+					newWindowObj.content = "<html><body><form action=\"" + this.url + "\" method=\"" + this.urlRequestMethod + "\">";
+					for (var key in this.urlParamValueMap) {
+					    var value = this.urlParamValueMap[key];
+					    value = decodeURIComponent( value );
+		  				newWindowObj.content += "<input type=\"hidden\" name=\"" + key + "\" value=\"" + value + "\">";
+		  			}
+					newWindowObj.content += "</form></body></html>";
+					newWindowObj.submitForm = true;
+				}
+				callJSFunction("openNewCenteredWindow", newWindowObj);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		<p>This class defines a client action to launch Visual Modeler</p>
+	-->
+	<class name="wcfLaunchVisualModelerClientAction" extends="wcfLaunchURLClientAction" displayName="${catalogResources.kitConfigLaunchVMButton.string}" windowName="VisualModeler_Window">
+		
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+				var storeConfig = wcfContextUtil.findStoreConfig(objects[0]);
+				if (storeConfig != null) {
+					this.url = storeConfig.sterlingConfig.visualModelerServer + "/" + storeConfig.sterlingConfig.sterlingOrganization + "?"
+							+ "cmd=LoginDisplay&validate=true&LoginData-entryPoint=visualModeler&LoginData-messageType=visualModeler";
+					this.urlParamValueMap = {
+						login: storeConfig.sterlingConfig.visualModelerId,
+						passwd: storeConfig.sterlingConfig.visualModelerPassword
+					};
+					super.performAction(objects);
+				}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		<p>This class defines a client action to launch Sterling Configurator </p>
+	-->
+	<class name="wcfLaunchConfiguratorClientAction" extends="wcfLaunchURLClientAction" displayName="${catalogResources.kitConfigLaunchConfiguratorButton.string}" windowName="Configurator_Window">
+		
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+				var storeConfig = wcfContextUtil.findStoreConfig(objects[0]);
+				if (storeConfig != null) {
+					var tempUrl = new LzURL(lz.Browser.getLoadURL());
+					var contextUrl;
+					if (global["serviceContextRoot"]) {
+						contextUrl = global["serviceContextRoot"];
+					}
+					else {
+						contextUrl = "/lobtools";
+					}
+					this.url = storeConfig.sterlingConfig.configuratorURL + "?sfId=" + storeConfig.sterlingConfig.sterlingOrganization;
+					var modelPath = objects[0].getObject("CatalogEntryConfigModel/KitConfigModelAssociationGroup/ConfigModelGroup").getPropertyValue("path");
+					var identityId = wcfContextUtil.findContextValue(null, "identityId").value;
+					var identitySignature = wcfContextUtil.findContextValue(null, "identitySignature").value;
+					var workspaceName = wcfContextUtil.findContextValue(objects[0], "workspaceName").value;
+					var workspaceTask = wcfContextUtil.findContextValue(objects[0], "workspaceTask").value;
+					var workspaceTaskGroup = wcfContextUtil.findContextValue(objects[0], "workspaceTaskGroup").value;
+					var returnUrl = tempUrl.protocol + "://" + tempUrl.host + ":" + tempUrl.port + contextUrl + "/cmc/UpdateDynamicKitPreConfiguration?storeId=" + storeConfig.storeId
+									+ "&catentryId=" + objects[0].objectId
+									+ "&workspaceName=" + workspaceName + "&workspaceTask=" + workspaceTask + "&workspaceTaskGroup=" + workspaceTaskGroup
+									+ "&locale=" + wcfContextUtil.findContextValue(null, "locale").value;
+					var css = tempUrl.protocol + "://" + tempUrl.host + ":" + tempUrl.port + contextUrl + "/css/configurator/configurator.css";
+					var configXML = objects[0].getPropertyValue("xprop_dynamicKitDefaultConfiguration", "CatalogEntryExtraProperties");					
+					configXML = wcfStringUtil.escapeText(configXML);
+
+					this.urlParamValueMap = {
+						organizationCode: storeConfig.sterlingConfig.sterlingOrganization,
+						currency: storeConfig.defaultCurrency != null ? storeConfig.defaultCurrency.currencyCode : null,
+						LocaleCode: storeConfig.defaultLanguage.localeName,
+						Model: modelPath,
+						doneButton: catalogResources.kitConfiguratorSaveButton.string,
+						ReturnURL: returnUrl,
+						identityId: identityId,
+						identitySignature: identitySignature,
+						storeId: storeConfig.storeId,
+						css: css,
+						workspaceName: workspaceName,
+						workspaceTask: workspaceTask,
+						workspaceTaskGroup: workspaceTaskGroup,
+						ConfigXML : configXML
+					};
+					super.performAction(objects);	
+				};
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		<p>This class defines a client action to delete all Preconfigured components.</p>
+	-->
+	<class name="wcfDeletePreconfigClientAction" extends="wcfClientAction" displayName="${catalogResources.kitDeletePreconfigButton.string}" allowMultipleSelection="false">
+		<!--- @keywords private -->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			wcfDeletePreconfigConfirmationDialog.openDeletePreconfigConfirmationDialog(objects[0]);
+			]]>
+		</method>
+	</class>
+</library>

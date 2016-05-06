@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>  
+	<!--
+		The primary objects for price list 
+	-->
+	<PrimaryObjectDefinition creatable="false" definitionName="prcBasePriceListPrimaryObjectDefinition" displayName="${prcPriceResources.priceListPrimaryObject_DisplayName}" displayNameProperty="name" headerIcon="priceListHeaderIcon" icon="priceListIcon" idProperty="priceListId" isBaseDefinition="true" newDisplayName="${prcPriceResources.priceListPrimaryObject_NewDisplayName}" newObjectMenuItemText="${prcPriceResources.contextMenuNewPriceList}" objectGroups="PriceListGroup" propertiesDefinitionName="prcPriceListProperties" searchType="FindPriceListByName">
+		
+		<EnablementOrCondition baseDefinitionName="prcPriceListObjectsCreationRestriction"/>
+		
+		<!-- Property Definitions -->
+		<PropertyDefinition displayName="${prcPriceResources.nameString}" maximumSize="64" propertyName="name" required="true" trim="true"/>
+		<PropertyDefinition displayName="${prcPriceResources.description}" maximumSize="254" propertyName="description"/>
+		
+		<RefreshService url="/cmc/GetPriceList">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceListId" propertyName="priceListId"/>
+		</RefreshService>
+		
+		<GetChildrenService objectTypes="PriceEntry" url="/cmc/GetPriceEntry">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceListId" propertyName="priceListId"/>
+		</GetChildrenService>
+		
+		<UpdateService url="/cmc/SavePriceList">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="PriceList" conditionId="contentCondition"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="InheritedPriceList" conditionId="contentCondition"/>
+			</ServiceParam>
+			<ServiceParam name="priceListId" propertyName="priceListId"/>
+		</UpdateService>
+		
+		<DeleteService url="/cmc/DeletePriceList">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="PriceList" conditionId="contentCondition"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="InheritedPriceList" conditionId="contentCondition"/>
+			</ServiceParam>
+			<ServiceParam name="priceListId" propertyName="priceListId"/>
+		</DeleteService>
+		
+		<GetReferencesService primaryObjectTypes="PriceRule" referenceObjectTypes="RefPriceList,RefInheritedPriceList" url="/cmc/GetPriceRulesReferenceForPriceList">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceListId" propertyName="priceListId"/>
+		</GetReferencesService>
+		
+		<GetReferencesService primaryObjectTypes="PriceEquation" referenceObjectTypes="PriceListEquationEntry,InheritedPriceListEquationEntry" url="/cmc/GetPriceEquationsReferenceForPriceList">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceListId" propertyName="priceListId"/>
+		</GetReferencesService>
+		
+		<ExportPriceListClientAction package="prc" displayName="${prcPriceResources.priceListExport}"/>
+		
+	</PrimaryObjectDefinition>
+
+	<!--
+		The primary objects for price list represents a price list in CMC.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="prcBasePriceListPrimaryObjectDefinition" creatable="true" definitionName="PriceList" objectType="PriceList">
+		<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreatePriceList">
+			<ServiceParam name="storeId"/>
+		</CreateService>
+		<ReferenceObjectDefinition baseDefinitionName="prcPriceEntryObjectDefinition" referencedTypes="Product,Kit,Bundle,ProductSKU,CatalogGroupSKU,InheritedProduct,InheritedKit,InheritedBundle,InheritedProductSKU,InheritedCatalogGroupSKU"/>
+	</PrimaryObjectDefinition>
+
+	<!-- Inherited Price List -->
+	<PrimaryObjectDefinition baseDefinitionName="prcBasePriceListPrimaryObjectDefinition" creatable="false" definitionName="InheritedPriceList" headerIcon="inheritedPriceListHeaderIcon" icon="inheritedPriceListIcon" objectType="InheritedPriceList">
+		<ReferenceObjectDefinition baseDefinitionName="prcPriceEntryObjectDefinition" referencedTypes="InheritedProduct,InheritedKit,InheritedBundle,InheritedProductSKU,InheritedCatalogGroupSKU"/>
+	</PrimaryObjectDefinition>
+
+	<ReferenceObjectDefinition definitionName="prcPriceEntryObjectDefinition" idProperty="priceEntryId" objectType="PriceEntry">
+		
+		<PropertyDefinition copyProtected="true" propertyName="qualifier" serverManaged="true"/>
+		<PropertyDefinition displayName="${prcPriceResources.value}" propertyName="minimumQuantity" type="number"/>
+		<PropertyDefinition displayName="${catalogResources.catalogEntryOfferPriceMaximumQuantity_DisplayName}" propertyName="maximumQuantity" type="number" />
+		<PropertyDefinition displayName="${catalogResources.catalogEntryOfferPriceStartDate_DisplayName}" propertyName="startDate" type="datetime"/> 
+		<PropertyDefinition displayName="${catalogResources.catalogEntryOfferPriceEndDate_DisplayName}" propertyName="endDate" type="datetime"/>
+		<PropertyDefinition displayName="${catalogResources.catalogEntryOfferPricePrecedence_DisplayName}" propertyName="precedence" type="number"/>
+		<DefaultCurrencyPropertyDefinition displayName="${prcPriceResources.currency}" minValue="0" propertyName="defaultCurrencyId" type="currency" required="true"/>   
+		<AlternativeCurrencyPropertyDefinition displayName="${prcPriceResources.currency}" minValue="0" propertyName="alternativeCurrencyId" type="currency"/>            	   
+		
+		<CreateService sendSiblingRequestsInParallel="false" url="/cmc/CreatePriceEntry">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultCurrencyCode"/>
+			<ServiceParam name="currencyCodes"/>
+			<ServiceParam name="priceListId" parentProperty="true"/>
+			<ServiceParam name="catentryId" objectPath="CatalogEntry" propertyName="catentryId"/>
+		</CreateService>
+		
+		<UpdateService sendSiblingRequestsInParallel="false" url="/cmc/UpdatePriceEntry">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceListCondition" enablementValue="PriceList" propertyName="objectType" parentProperty="true"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceListCondition" enablementValue="InheritedPriceList" propertyName="objectType" parentProperty="true"/>
+			</ServiceParam>
+			<ServiceParam name="defaultCurrencyCode"/>
+			<ServiceParam name="currencyCodes"/>
+			<ServiceParam name="priceListId" parentProperty="true"/>
+			<ServiceParam name="qualifier" propertyName="qualifier"/>
+			<ServiceParam name="minimumQuantity" optional="true" propertyName="minimumQuantity"/>
+			<ServiceParam name="maximumQuantity" optional="true" propertyName="maximumQuantity"/>
+			<ServiceParam name="startDate" optional="true" propertyName="startDate"/>
+			<ServiceParam name="endDate" optional="true" propertyName="endDate"/>
+			<ServiceParam name="precedence" optional="true" propertyName="precedence"/>
+			<ServiceParam name="catentryId" objectPath="CatalogEntry" propertyName="catentryId"/>
+		</UpdateService>
+		
+		<DeleteService sendSiblingRequestsInParallel="false" url="/cmc/DeletePriceEntry">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceListCondition" enablementValue="PriceList" propertyName="objectType" parentProperty="true"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceListCondition" enablementValue="InheritedPriceList" propertyName="objectType" parentProperty="true"/>
+			</ServiceParam>
+			<ServiceParam name="priceListId" parentProperty="true"/>
+			<ServiceParam name="catentryId" objectPath="CatalogEntry" propertyName="catentryId"/>
+			<ServiceParam name="qualifier" propertyName="qualifier"/>
+		</DeleteService>
+		
+		<NumberRangeValidator baseDefinitionName="prcPriceEntryQuantityRangeValidator" />       
+		
+		<StartDateEndDateValidator startDatePropertyName="startDate" endDatePropertyName="endDate"/>
+		
+	</ReferenceObjectDefinition>
+	
+	<!---
+		This is a validator definition to validate that the maximum quantity(if not empty) is not less than minimum quantity.	
+	-->
+	<NumberRangeValidator definitionName="prcPriceEntryQuantityRangeValidator" errorMessage="${catalogResources.offerPriceMinMaxQuantityMismatchWarning}" validatorId="offerPriceQuantityRangeValidator" startNumberPropertyName="minimumQuantity" endNumberPropertyName="maximumQuantity"/>
+	
+
+</Definitions>

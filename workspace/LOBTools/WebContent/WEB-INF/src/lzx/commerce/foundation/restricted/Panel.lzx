@@ -1,0 +1,1053 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		Business object editor panel.
+	-->
+	<class name="wcfPanel" extends="basecomponent" styleable="true" focusable="false" clip="true" clickable="true" showhandcursor="false">
+		<!---
+			Minimum width. 
+		-->
+		<attribute name="minWidth" value="60" type="number"/>
+		<!---
+			Minimum height.
+		-->
+		<attribute name="minHeight" value="50" type="number"/>
+		<!---
+			Indicates that this panel can be minimized. The default is "false".
+		-->
+		<attribute name="minimizable" value="false" type="boolean" />
+		<!---
+			Indicates that this panel can be maximized. The default is "true".
+		-->
+		<attribute name="maximizable" value="true" type="boolean" />
+		<!---
+			Indicates that this panel can be closed. The default is "true".
+		-->
+		<attribute name="closable" value="true" type="boolean" />
+		<!---
+			Panel title.
+		-->
+		<attribute name="title" value="" type="string" />
+		<!---
+			Panel title message.
+		-->
+		<attribute name="titleMessage" value="" type="string" />
+		<!---
+			Panel error message.
+		-->
+		<attribute name="errorMessage" value="" type="string" />
+		<!---
+			Panel status message that display behind the title.
+		-->	
+		<attribute name="titleQualifier" value="" type="string" />
+		<!---
+		 	Default placement for views created as children of the panel.
+		-->
+		<attribute name="defaultplacement" value="content" type="string" />
+		<!---
+			Border size.
+		-->
+		<attribute name="bordersize" value="1" type="number" />
+		<!---
+			Border color.
+		-->
+		<attribute name="bordercolor" value="${this.style.panelbordercolor}" type="number"/>
+		<!---
+			Content width.
+		-->
+		<attribute name="contentWidth" value="${width - (2 * bordersize)}"/>
+		<!---
+			Indicates that the horizontal scroll bar is required.
+		-->
+		<attribute name="hScrollRequired" type="boolean" value="false"/>
+		<!---
+			Indicates that the vertical scroll bar is required.
+		-->
+		<attribute name="vScrollRequired" type="boolean" value="false"/>
+		<!---
+			Horizontal scroll bar height.
+		-->
+		<attribute name="hScrollHeight" type="number" value="${(this.hScrollRequired ? this.hScroll.height : 0)}"/>
+		<!---
+			Vertical scroll bar height.
+		-->
+		<attribute name="vScrollWidth" type="number" value="${(this.vScrollRequired ? this.vScroll.width : 0)}"/>
+		<!---
+			Child Views that have vertical scroll bars.
+		-->
+		<attribute name="scrollableDescendants" value="${[]}"/>
+		
+		<!---
+			Indicates that this panel is currently closed.
+		-->
+		<attribute name="closed" value="false" type="boolean"/>
+		<!---
+			Indicates that this panel is currently minimized.
+		-->
+		<attribute name="minimized" value="false" type="boolean"/>
+		<!---
+			Indicates that this panel is currently maximized.
+		-->
+		<attribute name="maximized" value="false" type="boolean"/>
+		<!---
+			Indicates that this panel is splittable.
+		-->
+		<attribute name="splittable" value="true" type="boolean"/>
+		<!---
+			The current header icon resource.
+		-->
+		<attribute name="headerIconResource" type="string" value="${null}"/>
+		<!---
+			Clip view.
+		-->
+		<attribute name="clipView" value="${this.clippedContent.content}"/>
+		<!---
+			Indicates whether or not to add right padding to the content view
+		-->
+		<attribute name="addRightSpacing" value="true" type="boolean"/>
+		<!---
+			Right spacing.
+		-->
+		<attribute name="rightSpacing" value="10" type="number"/>
+		<!---
+			Indicates that this is the active panel.
+		-->
+		<attribute name="active" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Closest invisible ancestor view.
+		-->
+		<attribute name="visibilityView" value="null"/>
+		<!---
+			@keywords private
+			Read-only attribute that indicates that this panel currently has registered shortcut keys.
+		-->
+		<attribute name="keysRegistered" type="boolean" value="false"/>
+		<!---
+			Indicates that this panel has an error.
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		
+		<attribute name="padding" type="number" value="${this.headerIconResource == null &amp;&amp; classroot.title != '' ? this.bordersize + 4 : this.bordersize + 8}"/>
+		
+		<!---
+			@keywords private
+			text color
+		-->
+		<attribute name="textColor" value="0x0" type="color"/>
+
+		<!---
+			@keywords private
+			text style
+		-->
+		<attribute name="textStyle" type="string" value="plain"/>
+
+		<!---
+			Define the background color for @{link wcfPanel#titleBackground}" view.
+			If this is defined, titleImage must be set to null.
+		-->
+		<attribute name="titleColor" type="color" value="${null}"/>
+		<!---
+			Define the background image for @{link wcfPanel#titleBackground} view.
+			It should be defined when titleColor is not defined.
+		-->
+		<attribute name="titleImage" type="string" value="panelHeaderBackground"/>
+		
+		<!---
+			The current show view. The panel will scroll the clipped content view as
+			necessary to ensure that this view remains visible. This view is set
+			by calling the "show" method.
+		-->
+		<attribute name="currentShowView" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.pageUpDel = new lz.Delegate(this, "pageUp");
+			this.pageDownDel = new lz.Delegate(this, "pageDown");
+			this.checkVisibilityDel = new lz.Delegate(this, "checkVisibility");
+			this.checkFocusDel = new lz.Delegate(this, "checkFocus");
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			this.checkShowViewDel = new lz.Delegate(this, "checkShowView");
+			this.checkVisibility();
+			wcfCanvasMenu.addView(this);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.pageUpDel.unregisterAll();
+			delete this.pageUpDel;
+			this.pageDownDel.unregisterAll();
+			delete this.pageDownDel;
+			this.checkVisibilityDel.unregisterAll();
+			delete this.checkVisibilityDel;
+			this.checkFocusDel.unregisterAll();
+			delete this.checkFocusDel;
+			this.checkMouseDel.unregisterAll();
+			delete this.checkMouseDel;
+			this.checkShowViewDel.unregisterAll();
+			delete this.checkShowViewDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if drop is enabled.
+			@param array sources: array of drag sources
+		-->
+		<method name="isDropEnabled" args="sources">
+			<![CDATA[
+			return false;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Perform drop action.
+			@param array sources: array of drag sources
+		-->
+		<method name="droppedInTarget" args="sources"/>
+
+		<!---
+			Show the view in clipped content
+			@param lz.view v: the view that needs to be display
+		-->
+		<method name="show" args="v">
+			<![CDATA[
+			var focusedView = lz.Focus.getFocus();
+			var showFocusView = wcfViewUtil.containsView(v, focusedView);
+			var pad = 10;
+			
+			//if mouse is being used on a base button
+			var keyDown = false;
+			for (var i = 0; i < lz.Keys.downKeysArray.length; i++) {
+				if (lz.Keys.downKeysArray[i] != 16 && lz.Keys.downKeysArray[i] != 17) {
+					keyDown = true;
+					break;
+				}
+			}
+			if (keyDown || !(focusedView instanceof lz.basebutton || focusedView instanceof lz.inputtext || focusedView instanceof lz.list)) {
+				var clipPos = -this.clippedContent.content.y;
+				var clipSize = this.clippedContent.height;
+				var targetPos = v.getAttributeRelative("y", this.clippedContent.content) - this.clippedContent.content.y;
+				var targetSize = v.height;
+				
+				if (targetPos - pad < clipPos || targetSize + 2*pad > clipSize) {
+					clipPos = targetPos - pad;
+				}
+				else if (targetPos + targetSize + pad > clipPos + clipSize) {
+					clipPos = targetPos + targetSize + pad - clipSize;
+				}
+				
+				if (showFocusView) {
+					targetPos = focusedView.getAttributeRelative("y", this.clippedContent.content) - this.clippedContent.content.y;
+					targetSize = focusedView.height;
+					
+					if (targetPos - pad < clipPos || targetSize + 2*pad > clipSize) {
+						clipPos = targetPos - pad;
+					}
+					else if (targetPos + targetSize + pad > clipPos + clipSize) {
+						clipPos = targetPos + targetSize + pad - clipSize;
+					}
+				}
+				
+				if (clipPos < 0 || this.clippedContent.content.height <= clipSize) {
+					clipPos = 0;
+				}
+				else if (clipPos > this.clippedContent.content.height - clipSize) {
+					clipPos = this.clippedContent.content.height - clipSize;
+				}
+				if (clipPos != -this.clippedContent.content.y) {
+					this.clippedContent.content.setAttribute("y", -clipPos);
+				}
+			}
+			if (keyDown) {
+				var clipPos = -this.clippedContent.content.x;
+				var clipSize = this.clippedContent.width;
+				var targetPos = v.getAttributeRelative("x", this.clippedContent.content) - this.clippedContent.content.x;
+				var targetSize = v.width;
+				
+				if (targetPos - pad < clipPos || targetSize + 2*pad > clipSize) {
+					clipPos = targetPos - pad;
+				}
+				else if (targetPos + targetSize + pad > clipPos + clipSize) {
+					clipPos = targetPos + targetSize + pad - clipSize;
+				}
+				
+				if (showFocusView) {
+					targetPos = focusedView.getAttributeRelative("x", this.clippedContent.content) - this.clippedContent.content.x;
+					targetSize = focusedView.width;
+					
+					if (targetPos - pad < clipPos || targetSize + 2*pad > clipSize) {
+						clipPos = targetPos - pad;
+					}
+					else if (targetPos + targetSize + pad > clipPos + clipSize) {
+						clipPos = targetPos + targetSize + pad - clipSize;
+					}
+				}
+				
+				if (clipPos < 0 || this.clippedContent.content.width <= clipSize) {
+					clipPos = 0;
+				}
+				else if (clipPos > this.clippedContent.content.width - clipSize) {
+					clipPos = this.clippedContent.content.width - clipSize;
+				}
+				if (clipPos != -this.clippedContent.content.x) {
+					this.clippedContent.content.setAttribute("x", -clipPos);
+				}
+			}
+			
+			this.currentShowView = v;
+			this.checkShowViewDel.unregisterAll();
+			this.checkShowViewDel.register(v, "onheight");
+			]]>
+		</method>
+		
+		<!---
+			Check the clipped content scroll to ensure that the current show view
+			is visible.
+		-->		
+		<method name="checkShowView" args="e=null">
+			<![CDATA[
+			if (this.currentShowView != null) {
+				this.show(this.currentShowView);
+			}
+			]]>
+		</method>
+		<!---
+			Check panel visibility.
+		-->
+		<method name="checkVisibility" args="e=null">
+			<![CDATA[
+			var isVisible = false;
+			this.checkVisibilityDel.unregisterAll();
+			this.checkFocusDel.unregisterAll();
+			this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+			if (this.visibilityView != null) {
+				this.checkVisibilityDel.register(this.visibilityView, "onvisible");
+			}
+			else if (!this.visible) {
+				this.checkVisibilityDel.register(this, "onvisible");
+			}
+			else {
+				isVisible = true;
+				wcfViewUtil.registerVisibilityDelegate(this, this.checkVisibilityDel);
+			}
+			if (isVisible) {
+				this.checkFocusDel.register(lz.Focus, "onfocus");
+				this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+				this.checkFocus();
+			}
+			else if (wcfPanelManager.activePanel == this) {
+				wcfPanelManager.setAttribute("activePanel", null);
+			}
+			if (!isVisible && wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+				wcfModelUtil.findModelForView(this).oEditor.restoreFocus();
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Check focus.
+		-->
+		<method name="checkFocus" args="e=null">
+			<![CDATA[
+			var containsFocus = wcfViewUtil.containsView(this, lz.Focus.getFocus());
+			if (containsFocus) {
+				wcfPanelManager.setAttribute("activePanel", this);
+				var model = wcfModelUtil.findModelForView(this);
+				if(!wcfViewUtil.containsView(model.activeSelectionView, lz.Focus.getFocus())){
+					model.setActiveSelectionView(null);
+				}
+			}
+			else if (wcfPanelManager.activePanel == this) {
+				wcfPanelManager.setAttribute("activePanel", null);
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			Check mouse down.
+			@param view v: the mouse down view
+		-->
+		<method name="checkMouse" args="v">
+			<![CDATA[
+			var active = false;
+			if (v != null) {
+				active = wcfViewUtil.containsView(this, v);
+			}
+			if (active) {
+				wcfPanelManager.setAttribute("activePanel", this);
+			}
+			else if (wcfPanelManager.activePanel == this) {
+				wcfPanelManager.setAttribute("activePanel", null);
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			Update the active panel.
+		-->
+		<handler name="onactive">
+			<![CDATA[
+			if (this.active) {
+				this.registerShortcutKeys();
+			}
+			else {
+				this.unregisterShortcutKeys();
+			}
+			]]>
+		</handler>
+		
+		<!--- 
+			Registers the shortcut keys.
+		-->
+		<method name="registerShortcutKeys">
+			<![CDATA[
+			if (!this.keysRegistered) {
+				this.keysRegistered = true;
+				lz.Keys.callOnKeyCombo(this.pageDownDel, ["Pagedown"]);
+				lz.Keys.callOnKeyCombo(this.pageUpDel, ["Pageup"]);
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			Unregisters the shortcut keys.
+		-->
+		<method name="unregisterShortcutKeys">
+			<![CDATA[
+			if (this.keysRegistered) {
+				this.keysRegistered = false;
+				lz.Keys.removeKeyComboCall(this.pageDownDel, ["Pagedown"]);
+				lz.Keys.removeKeyComboCall(this.pageUpDel, ["Pageup"]);
+			}
+			]]>
+		</method>
+
+		<!---
+			Open this panel.
+		-->
+		<method name="open">
+			<![CDATA[
+			this.setAttribute("closed", false);
+			]]>
+		</method>
+				
+		<!--- 
+			Closes the panel.
+		-->
+		<method name="close">
+			<![CDATA[
+			if (this.closable) {
+				this.setAttribute("closed", true);
+				this.setAttribute("minimized", false);
+				this.setAttribute("maximized", false);
+			}
+			]]>
+		</method>
+
+		<!--- 
+			Maximizes the panel.
+		-->
+		<method name="maximize">
+			<![CDATA[
+			if (this.maximizable && !this.maximized) {
+				this.setAttribute("maximized", true);
+				this.setAttribute("minimized", false);
+				if (lz.Focus.getFocus() == this.buttons.maximizeButton) {
+					lz.Focus.setFocus(this.buttons.restoreButton);
+				}
+			}
+			]]>
+		</method>
+
+		<!--- 
+			Minimize the panel.
+		-->
+		<method name="minimize">
+			<![CDATA[
+			if (this.minimizable && !this.minimized) {
+				this.setAttribute("minimized", true);
+				this.setAttribute("maximized", false);
+				if (lz.Focus.getFocus() == this.buttons.minimizeButton) {
+					lz.Focus.setFocus(this.buttons.restoreButton);
+				}
+			}
+			]]>
+		</method>
+
+				
+		<!--- 
+			Restores the panel.
+		-->
+		<method name="restore">
+			<![CDATA[
+			if(this.maximizable || this.minimizable){
+				if(this.maximized){
+					this.setAttribute("maximized", !this.maximized);
+					this.setAttribute("minimized", false);
+					if (lz.Focus.getFocus() == this.buttons.restoreButton) {
+						lz.Focus.setFocus(this.buttons.maximizeButton);
+					}
+				}
+				else if(this.minimized) {
+					this.setAttribute("minimized", !this.minimized);
+					this.setAttribute("maximized", false);
+					if (lz.Focus.getFocus() == this.buttons.restoreButton) {
+						lz.Focus.setFocus(this.buttons.minimizeButton);
+					}
+				}
+			}
+			]]>	
+		</method>
+				
+		<!-- We want the panel to be part of the dnd tracking so that its registered on top -->		
+		<wcfTrackingDropTarget dragAndDropManager="${wcfDndManager}"/>
+		
+		<method name="lockAvailableCalcs">
+			this.clipView.updateAvailableSpace(true);
+		</method>
+		
+		<method name="unlockAvailableCalcs">
+			this.clipView.updateAvailableSpace(false);
+		</method>
+		
+		<!---
+			Sets the background of title area. 
+			@param boolean forDetails: true if this panel displays details. False otherwise. 
+		 -->
+		<method name="setTitleBackground" args="forDetails">
+			<![CDATA[
+			this.titleBackground.setAttribute('frame', forDetails? 2: 1); 
+			//this.titleDivider.setAttribute("visible", !forDetails); 
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (this.style != null) {
+				setAttribute("bordersize", s.bordersize);
+				setAttribute("bgcolor", s.bgcolor);
+				if (s.bordercolor) {
+					setAttribute("bordercolor", s.bordercolor);
+				}
+				else {
+					setAttribute("bordercolor", 0x4c4c4c);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Determine the placement for a new view.
+		-->
+		<method name="determinePlacement" args="v, p, a">
+			<![CDATA[
+			if (p == "content") {
+				return this.clippedContent.content;
+			}
+			else if (p == "title") {
+				return this.titleArea.title;
+			} else if (p == "nonclippedContent") {
+				return this.nonclippedContent;
+			}
+			return super.determinePlacement(v, p, a);
+			]]>
+		</method>
+
+		<!---
+			Scroll the panel to the bottom.
+		-->
+		<method name="scrollToBottom">
+			<![CDATA[
+			this.vScroll.step(this.vScroll.scrollmax);
+			]]>
+		</method>
+		
+		<!---
+			Scroll the panel to the top.
+		-->
+		<method name="scrollToTop">
+			<![CDATA[
+			this.vScroll.step(0-(this.vScroll.scrollmax/this.vScroll.stepsize));
+			]]>
+		</method>
+
+		<!---
+			Scroll up a page.
+		-->
+		<method name="pageUp" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this) && !this.hasActiveScrollableDescendant())
+				this.vScroll.step(0-this.vScroll.stepsize);
+			]]>
+		</method>
+
+		<!---
+			Scroll down a page.
+		-->
+		<method name="pageDown" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this) && !this.hasActiveScrollableDescendant())
+				this.vScroll.step(this.vScroll.stepsize);
+			]]>
+		</method>
+		
+		<method name="hasActiveScrollableDescendant">
+			<![CDATA[
+			var activeChild = false;
+			for(var i = 0; i < this.scrollableDescendants.length; i++){
+				if(this.scrollableDescendants[i]["activated"]){
+					activeChild = true;
+					break;
+				}
+			}
+			return activeChild;
+			]]>
+		</method>
+		
+		<!--  This view serves as background of the title area -->
+		<view name="titleBackground" bgcolor="${parent.titleColor}" resource="${parent.titleImage}"
+			y="${classroot.bordersize}" 
+			x="${classroot.bordersize}"
+			height="${parent.activeView == null ? parent.height : parent.titleArea.y + parent.titleArea.height}" 
+			width="${immediateparent.width}" 
+			stretches="both">
+			<wcfDropTarget targetKey="${'element'}" dragAndDropManager="${wcfDndManager}" >
+				<handler name="ondroppedintarget" args="sources">
+					<![CDATA[
+					classroot.droppedInTarget(sources);
+					]]>
+				</handler>
+				<method name="isEnabled" args="currentDragSource">
+					<![CDATA[
+					return classroot.isDropEnabled(currentDragSource);
+	    			]]>
+	    		</method>
+			</wcfDropTarget>
+		</view>
+			
+		<view name="titleArea" clip="true"
+			  width="${parent.contentWidth}"	
+			  y="${classroot.bordersize}">
+			<view name="headerIcon" resource="${classroot.headerIconResource}" visible="${classroot.headerIconResource != null}"/>	
+			<view resource="panelErrorResource" 
+				visible="${classroot.hasError}" 
+				y="${parent.headerIcon.y + parent.headerIcon.height - this.height - 5}" 
+				x="${parent.headerIcon.x + parent.headerIcon.width - this.width - 3}"/>
+			<view name="title" 
+				y="${classroot.padding}" 
+				width="${parent.width - parent.parent.actions.width - 80}"  
+				x="${(classroot.headerIconResource ? parent.headerIcon.width : classroot.padding)}">
+				<simplelayout axis="y" spacing="2"/>
+				<view name="headerPaddingAbove" height="8" visible="${classroot.headerIconResource == null &amp;&amp; classroot.title != ''}"/>				
+				<text name="headerText" 				
+					fgcolor="${classroot.textColor}"
+					fontstyle="${classroot.textStyle}" 
+					multiline="true" fontsize="16" width="${immediateparent.width - 20}" visible="${this.text != ''}">
+					<!--- @keywords private -->
+					<handler name="ontitleQualifier" reference="classroot">
+						<![CDATA[
+						this.updateTitle();
+						]]>
+					</handler>
+					
+					<!--- @keywords private -->
+					<handler name="ontitle" reference="classroot">
+						<![CDATA[
+						this.updateTitle();
+						]]>
+					</handler>
+					
+					<!--- 
+						@keywords private 
+						Update text and append titleQualifier behind the title
+					-->
+					<method name="updateTitle">
+						<![CDATA[
+						this.setAttribute('text', classroot.title + " <font color='#888888' size='11'>" + classroot.titleQualifier + "</font>");
+						]]>
+					</method>
+					
+				</text>
+				<text name="headerMsg" multiline="true" fontsize="11" width="${immediateparent.width - 20}" visible="${this.text != ''}">
+				
+					<!--- @keywords private -->
+					<handler name="ontitleMessage" reference="classroot">
+						<![CDATA[
+						this.updateMessage();
+						]]>
+					</handler>
+					
+					<!--- @keywords private -->
+					<handler name="onerrorMessage" reference="classroot">
+						<![CDATA[
+						this.updateMessage();
+						]]>
+					</handler>	
+					
+					<!--- 
+						@keywords private 
+						Check if there are errorMessage or titleMessage and update the text
+					-->
+					<method name="updateMessage">
+						<![CDATA[
+						
+						var newMessage = "";
+						
+						if (classroot.errorMessage != "") {
+							this.setAttribute('fgcolor', 0xCC0000);
+							newMessage = classroot.errorMessage;
+						
+						// set color to black and display title message if no error message
+						} else {
+							this.setAttribute('fgcolor', 0x0);
+							newMessage = classroot.titleMessage;
+						}
+						
+						if (this.getText() != newMessage) {
+							this.setAttribute('text', newMessage)
+						}
+						]]>
+					</method>
+				</text>
+				<view name="headerPaddingBelow" height="13" visible="${classroot.headerIconResource == null &amp;&amp; classroot.title != ''}"/>
+			</view>
+			<state applied="${classroot.maximizable}">
+				<handler name="ondblclick">
+					classroot.setAttribute("maximized", !classroot.maximized);
+					classroot.setAttribute("minimized", false);
+				</handler>
+			</state>
+		</view>
+		
+		<view name="buttons" y="${classroot.bordersize + 2}" x="${classroot.width - this.width - classroot.bordersize - 2}">
+			<simplelayout axis="x" spacing="2"/>				
+			<basebutton name="minimizeButton" focusable="true" resource="minimizeButtonResource" onclick="classroot.minimize()" visible="${classroot.minimizable &amp;&amp; !classroot.minimized}">
+				<wcfTooltip text="${foundationResources.panelMinTip.string}"/>					
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this["indicator"]){
+					    new lz.wcfFocusIndicator(this, {
+					    	name: "indicator",
+					    	focusableView: this,
+					    	indicatorView: this
+					    });
+				    }
+				    ]]>
+				 </handler>
+			</basebutton>
+						
+			<basebutton name="maximizeButton" focusable="true" resource="maximizeButtonResource" onclick="classroot.maximize()" visible="${classroot.maximizable &amp;&amp; !classroot.maximized}">
+				<wcfTooltip text="${foundationResources.panelMaxTip.string}"/>
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this["indicator"]){
+					    new lz.wcfFocusIndicator(this, {
+					    	name: "indicator",
+					    	focusableView: this,
+					    	indicatorView: this
+					    });
+				    }
+				    ]]>
+				 </handler>
+			</basebutton>
+						
+			<basebutton name="restoreButton" focusable="true" resource="restoreButtonResource" onclick="classroot.restore()" visible="${classroot.maximized || classroot.minimized}">
+				<wcfTooltip text="${foundationResources.panelRestoreTip.string}"/>
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this["indicator"]){
+					    new lz.wcfFocusIndicator(this, {
+					    	name: "indicator",
+					    	focusableView: this,
+					    	indicatorView: this
+					    });
+				    }
+				    ]]>
+				 </handler>
+			</basebutton>
+				
+			<basebutton focusable="true" resource="closeButtonResource" onclick="classroot.close()" visible="${classroot.closable}">
+				<wcfTooltip text="${foundationResources.panelCloseTip.string}"/>
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this["indicator"]){
+					    new lz.wcfFocusIndicator(this, {
+					    	name: "indicator",
+					    	focusableView: this,
+					    	indicatorView: this
+					    });
+				    }
+				    ]]>
+				 </handler>
+			</basebutton>			
+		</view>
+
+		<!--
+			This view contains action widgets. Action widgets are added to the header.
+			For example, a button that closes a object properties view can be an action widget.
+		 -->
+		<view name="actions" x="${classroot.width - classroot.buttons.width - this.width - 12}"  y="${classroot.padding}"> 
+			<simplelayout axis="x" spacing="1"/>
+		</view>
+		<!--
+		<view name="titleDivider" resource="panelHeaderDivider" width="${immediateparent.width}" stretches="width" y="${parent.titleArea.y + parent.titleArea.height}"/>
+		-->
+		<view name="tabArea" x="${classroot.bordersize}" y="${classroot.titleArea.y + classroot.titleArea.height}"/>
+
+		<view name="nonclippedContent" 
+				x="${classroot.bordersize + 5}"
+				y="${parent.tabArea.y + parent.tabArea.height}"
+				width="${parent.contentWidth - 10}"
+				height="${parent.height - y - (2 * classroot.bordersize) + 1 - 5}"
+				visible="${!classroot.minimized}">
+		</view>
+		
+		<view name="clippedContent" clip="true"
+				x="${classroot.bordersize}"
+				y="${parent.tabArea.y + parent.tabArea.height}"
+				width="${parent.contentWidth - parent.vScrollWidth}"
+				height="${parent.height - y - (2 * classroot.bordersize) - classroot.hScrollHeight + 1}"
+				visible="${!classroot.minimized}">
+				
+			<!--  This view stretches to provide panel background -->
+			<view name="background" stretches="both" width="${immediateparent.width}" height="${immediateparent.height}"/>
+			<view name="content">
+				<attribute name="availableWidth" type="number" value="0"/>
+				<attribute name="availableHeight" type="number" value="0"/>
+				
+				<method name="init">
+					<![CDATA[
+					this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+					this.updateAvailableHeightDel = new lz.Delegate(this, "updateAvailableHeight");
+					this.updateAvailableSpaceDel = new lz.Delegate(this, "updateAvailableSpace");
+					
+					this.registerResizers(classroot);
+					this.updateAvailableSpace(false);
+
+					super.init();
+					]]>
+				</method>
+				
+				<method name="registerResizers" args="v">
+					<![CDATA[
+					if (v["splitViewLayout"]) {
+						this.updateAvailableSpaceDel.register(v.splitViewLayout.resizer, "ondragging");
+					}
+					if (v.parent != canvas) {
+						this.registerResizers(v.parent);
+					}
+					]]>
+				</method>
+			
+				<method name="destroy">
+					<![CDATA[
+					if (this["updateAvailableSpaceDel"]) {
+						this.updateAvailableSpaceDel.unregisterAll();
+						delete this.updateAvailableSpaceDel;
+					}
+					if (this["updateAvailableWidthDel"]) {
+						this.updateAvailableWidthDel.unregisterAll();
+						delete this.updateAvailableWidthDel;
+					}
+					if (this["updateAvailableHeightDel"]) {
+						this.updateAvailableHeightDel.unregisterAll();
+						delete this.updateAvailableHeightDel;
+					}
+					super.destroy();
+					]]>
+				</method>
+				
+				<method name="updateAvailableSpace" args="dragging=false">
+					<![CDATA[
+					if (dragging) {
+						this.updateAvailableWidthDel.unregisterAll();
+						this.updateAvailableHeightDel.unregisterAll();
+					}
+					else {
+						this.updateAvailableWidthDel.register(classroot.clippedContent, "onwidth");
+						this.updateAvailableWidthDel.register(this, "onwidth");
+						this.updateAvailableHeightDel.register(classroot.clippedContent, "onheight");
+						this.updateAvailableHeightDel.register(this, "onheight");
+						this.updateAvailableWidth();
+						this.updateAvailableHeight();
+					}
+					]]>
+				</method>
+				
+				<method name="updateAvailableWidth" args="e=null">
+					<![CDATA[
+					var newAvailableWidth = (classroot.addRightSpacing) ? classroot.clippedContent.width - classroot.rightSpacing : classroot.clippedContent.width;
+					if (newAvailableWidth != this.availableWidth) {
+						this.setAttribute("availableWidth", newAvailableWidth);
+					}
+					var scrollRequired = classroot.clippedContent.width < this.width;
+					if (scrollRequired != classroot.hScrollRequired) {
+						classroot.setAttribute("hScrollRequired", scrollRequired);
+						newAvailableWidth = (classroot.addRightSpacing) ? classroot.clippedContent.width - classroot.rightSpacing : classroot.clippedContent.width;
+						if (newAvailableWidth != this.availableWidth) {
+							this.setAttribute("availableWidth", newAvailableWidth);
+						}
+					}
+					classroot.tabArea.setAttribute("width", classroot.contentWidth);
+					]]>
+				</method>
+				
+				<method name="updateAvailableHeight" args="e=null">
+					<![CDATA[
+					var newAvailableHeight = classroot.clippedContent.height;
+					if (newAvailableHeight != this.availableHeight) {
+						this.setAttribute("availableHeight", newAvailableHeight);
+					}
+					var scrollRequired = classroot.clippedContent.height < this.height;
+					if (scrollRequired != classroot.vScrollRequired) {
+						classroot.setAttribute("vScrollRequired", scrollRequired);
+						newAvailableHeight = classroot.clippedContent.height;
+						if (newAvailableHeight != this.availableHeight) {
+							this.setAttribute("availableHeight", newAvailableHeight);
+						}
+					}
+					]]>
+				</method>
+			</view>
+		</view>
+
+		<view name="vScrollBottom" bgcolor="0xE0EAEF"
+			x="${classroot.vScroll.x}"
+			y="${classroot.vScroll.y + classroot.vScroll.height}"
+			height="${classroot.hScroll.height}"
+			width="${classroot.vScroll.width}"
+			visible="${classroot.vScroll.visible &amp;&amp; classroot.hScroll.visible}">
+		</view>	
+				
+		<wcfHorizontalScrollbar name="hScroll" scrolltarget="classroot.clippedContent.content"
+				x="${classroot.clippedContent.x}"
+				y="${classroot.clippedContent.y + classroot.clippedContent.height}"
+				width="${classroot.clippedContent.width+1}"
+				visible="${classroot.hScrollRequired &amp;&amp; !classroot.minimized}"/>
+		
+		<wcfVerticalScrollbar name="vScroll" scrolltarget="classroot.clippedContent.content"
+				x="${classroot.clippedContent.x + classroot.clippedContent.width}"
+				y="${classroot.clippedContent.y}"
+				height="${classroot.clippedContent.height + 1}"
+				visible="${classroot.vScrollRequired &amp;&amp; !classroot.minimized}">
+				
+			<method name="scrollOnMouseWheel" args="k">
+				<![CDATA[
+				if (this['visible']) {
+					var v = this.scrolltarget.immediateparent;
+					if(wcfViewUtil.isMouseOver(v) && wcfViewUtil.containedInModalView(v)){
+						var childrenMouseOver = false;
+						for (var i = 0; i < classroot.scrollableDescendants.length; i++) {
+							if (wcfViewUtil.isMouseOver(classroot.scrollableDescendants[i])) {
+								childrenMouseOver = true;
+							}
+						}
+						if (!childrenMouseOver) {
+							page(-this.wheelstepsize*k);
+						}
+					}
+				}
+				]]>
+			</method>
+		</wcfVerticalScrollbar>
+
+		<view name="t_border" bgcolor="${classroot.style.panelbordercolor}"
+				width="${immediateparent.width}" height="${classroot.bordersize}"/>
+		<view name="l_border" bgcolor="${classroot.style.panelbordercolor}"
+				width="${classroot.bordersize}" height="${immediateparent.height}"/>
+		<view name="r_border" bgcolor="${classroot.style.panelbordercolor}"
+				x="${immediateparent.width - classroot.bordersize}"
+				width="${classroot.bordersize}" height="${immediateparent.height}"/>
+		<view name="b_border" bgcolor="${classroot.style.panelbordercolor}"
+				y="${immediateparent.height - classroot.bordersize}"
+				width="${immediateparent.width}" height="${classroot.bordersize}"/>
+
+		<method name="registerScrollableDescendant" args="scrollableView">
+			<![CDATA[
+			if(this.scrollableDescendants.indexOf(scrollableView) == -1)
+				this.scrollableDescendants.push(scrollableView);	
+			]]>
+		</method>
+		
+		<method name="unregisterScrollableDescendant" args="scrollableView">
+			<![CDATA[
+			var index = this.scrollableDescendants.indexOf(scrollableView);
+        	if(index != -1){
+				this.scrollableDescendants.splice(index,1);
+			}	
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		Singleton that keeps track of the active panel.
+	-->
+	<node id="wcfPanelManager">
+		<!---
+			The active panel.
+		-->
+		<attribute name="activePanel" value="null" setter="this.setActivePanel(activePanel)"/>
+		
+		<!---
+			Set the active panel.
+			@param view panel: panel
+		-->
+		<method name="setActivePanel" args="panel">
+			<![CDATA[
+			if (typeof(this["activePanel"] == "undefined") || this.activePanel != panel) {
+				if (this["activePanel"] != null) {
+					this.activePanel.setAttribute("active", false);
+				}
+				this.activePanel = panel;
+				if (this["onactivePanel"]) {
+					this.onactivePanel.sendEvent(panel);
+				}
+				if (panel != null) {
+					panel.setAttribute("active", true);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Find the ancestor panel for the specified view.
+		-->
+		<method name="findPanel" args="v">
+			<![CDATA[
+			var panel = null;
+			while (v != null && v != canvas) {
+				v = v.immediateparent;
+				if (v instanceof lz.wcfPanel) {
+					panel = v;
+					break;
+				}
+			}
+			return panel;
+			]]>
+		</method>
+
+	</node>
+</library>

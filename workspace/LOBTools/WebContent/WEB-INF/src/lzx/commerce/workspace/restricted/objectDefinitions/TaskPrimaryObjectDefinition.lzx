@@ -1,0 +1,447 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		Client action definition that enables users to work on a task in workspace.
+	-->
+	<class name="wspTaskWorkOnClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.workOn.string}" allowMultipleSelection="false" toolbarIcon="taskWorkOnButton">
+		<!---
+
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method args="objects" name="performAction">
+			<![CDATA[
+				wspTaskRefreshServiceForWorkOnTask.doRequest(objects[0]);
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition enablementValue="TODO" propertyName="status"/>
+				<wcfEnablementCondition enablementValue="REDO" propertyName="status"/>
+			</wcfEnablementOrCondition>
+			<wcfEnablementCondition>
+				<!--- @keywords private -->
+				<method args="o" name="isEnabled">
+					<![CDATA[
+						if (o.getPropertyValue("taskIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTask").value) {
+							return false;
+						}
+						return true;
+					]]>
+				</method>
+				<!--- @keywords private -->
+				<method args="o, del" name="registerDelegate">
+					<![CDATA[
+					del.register(wcfContextUtil.findContextValue(null, "workspaceTask"), "onvalue");
+					]]>
+				</method>
+			</wcfEnablementCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementAndCondition>
+					<wcfEnablementCondition contextName="workspaceContributor" enablementValue="true" />
+					<wcfEnablementCondition contextName="workspaceApprover" enablementValue="false" />
+					<wcfEnablementCondition contextName="workspaceManager" enablementValue="false" />
+				</wcfEnablementAndCondition>
+				<wspLogonIdEnablementCondition propertyName="logonId" objectPath="ContributorAssociation/Contributor" />
+			</wcfEnablementOrCondition>
+		</wcfEnablementAndCondition>
+	</class>
+
+	<!---
+		@keywords private
+		Client action definition that completes a task in workspace.
+	-->
+	<class name="wspTaskCompleteClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.markComplete.string}" toolbarIcon="taskMarkCompleteButton">
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method args="objects" name="performAction">
+			<![CDATA[
+				wcfWorkspaceUtil.completeTasks(objects);
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition enablementValue="TODO" propertyName="status" />
+				<wcfEnablementCondition enablementValue="REDO" propertyName="status" />
+			</wcfEnablementOrCondition>
+			<wcfEnablementCondition enablementValue="1" propertyName="usage" />
+			<wcfEnablementOrCondition>
+				<wcfEnablementAndCondition>
+					<wcfEnablementCondition contextName="workspaceContributor" enablementValue="true" />
+					<wcfEnablementCondition contextName="workspaceApprover" enablementValue="false" />
+					<wcfEnablementCondition contextName="workspaceManager" enablementValue="false" />
+				</wcfEnablementAndCondition>
+				<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<wspLogonIdEnablementCondition propertyName="logonId" objectPath="ContributorAssociation/Contributor" />
+			</wcfEnablementOrCondition>
+		</wcfEnablementAndCondition>
+	</class>
+
+	<!---
+		@keywords private
+		Client action definition that approves a task in workspace.
+	-->
+	<class name="wspTaskApproveClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.approve.string}">
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method args="objects" name="performAction">
+			<![CDATA[
+				var taskGroups = [];
+				for (var i = 0; i < objects.length; i++) {
+					taskGroups.push(objects[i].getParentPrimaryObject());
+				}
+				wcfWorkspaceUtil.approveTaskGroups(taskGroups);
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition enablementValue="TODO" propertyName="status"/>
+				<wcfEnablementCondition enablementValue="REDO" propertyName="status"/>
+			</wcfEnablementOrCondition>
+			<wcfEnablementCondition enablementValue="2" propertyName="usage"/>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<wspLogonIdEnablementCondition propertyName="logonId" objectPath="ContributorAssociation/Contributor" />
+			</wcfEnablementOrCondition>
+		</wcfEnablementAndCondition>
+	</class>
+
+	<!---
+		@keywords private
+		Client action definition that rejects a contributor task in workspace.
+	-->
+	<class name="wspContributorTaskRejectClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.reject.string}" >
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method args="objects" name="performAction">
+			<![CDATA[
+				for (var i = 0; i < objects.length; i++) {
+					wspTaskRejectService.doRequest(objects[i]);
+				}
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementCondition enablementValue="COMPLETED" propertyName="status" />
+			<wcfEnablementCondition enablementValue="1" propertyName="usage" />
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition parentProperty="true" enablementValue="1" propertyName="status" />
+				<wcfEnablementCondition parentProperty="true" enablementValue="2" propertyName="status" />
+			</wcfEnablementOrCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<wspLogonIdEnablementCondition parentProperty="true" parentType="TaskGroup" objectPath="ApproverAssociation/Approver" propertyName="logonId" />
+			</wcfEnablementOrCondition>
+		</wcfEnablementAndCondition>
+	</class>
+
+	<!---
+		@keywords private
+		Client action definition that rejects an approval task in workspace.
+	-->
+	<class name="wspApprovalTaskRejectClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.reject.string}" >
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method args="objects" name="performAction">
+			<![CDATA[
+				var taskGroups = [];
+				for (var i = 0; i < objects.length; i++) {
+					taskGroups.push(objects[i].getParentPrimaryObject());
+				}
+				wcfWorkspaceUtil.rejectTaskGroups(taskGroups);
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition enablementValue="TODO" propertyName="status" />
+				<wcfEnablementCondition enablementValue="REDO" propertyName="status" />
+			</wcfEnablementOrCondition>
+			<wcfEnablementCondition enablementValue="2" propertyName="usage" />
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<wspLogonIdEnablementCondition propertyName="logonId" objectPath="ContributorAssociation/Contributor" />
+			</wcfEnablementOrCondition>
+		</wcfEnablementAndCondition>
+	</class>
+
+	<!---
+		@keywords private
+		Client action definition that returns a task to active in workspace.
+	-->
+	<class name="wspTaskReturnToActiveClientAction" extends="wcfClientAction" displayName="${wspWorkspaceResources.returnToActive.string}">
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action is executed from the "Edit" menu,
+			toolbar or the context menu.
+			@param [wcfModelObject] objects The array of selected model objects.
+		-->
+		<method args="objects" name="performAction">
+			<![CDATA[
+				for (var i = 0; i < objects.length; i++) {
+					wspTaskReturnToActiveService.doRequest(objects[i]);
+				}
+			]]>
+		</method>
+
+		<wcfEnablementAndCondition>
+			<wcfEnablementCondition enablementValue="COMPLETED" propertyName="status" />
+			<wcfEnablementCondition enablementValue="1" propertyName="usage" />
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition parentProperty="true" enablementValue="1" propertyName="status" />
+				<wcfEnablementCondition parentProperty="true" enablementValue="2" propertyName="status" />
+			</wcfEnablementOrCondition>
+			<wcfEnablementOrCondition>
+				<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<wspLogonIdEnablementCondition parentProperty="true" parentType="TaskGroup" objectPath="ApproverAssociation/Approver" propertyName="logonId" />
+			</wcfEnablementOrCondition>
+		</wcfEnablementAndCondition>
+	</class>
+
+	<wcfService id="wspTaskRefreshServiceForWorkOnTask" sendWorkspaceContext="false" url="/cmc/GetTask">
+		<wcfServiceParam parameterName="taskId" propertyName="taskId"/>
+		<wcfServiceParam contextName="workspaceManager" name="workspaceManager" />
+		<wcfServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param wcfModelObject requestParent: The object on which this service was performed.
+		-->
+		<method args="requestParent" name="handleServiceSuccess">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				if (requestParent.getPropertyValue("status") == "TODO" || requestParent.getPropertyValue("status") == "REDO") {
+					wcfWorkspaceUtil.workOnTask(requestParent);
+				}
+				else {
+					messageLogger.logException("", wspWorkspaceResources.workOnTaskWrongStatus.string);
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<wcfService id="wspTaskCompleteService" sendSiblingRequestsInParallel="false" sendWorkspaceContext="false" transactionService="true" url="/cmc/CompleteTask">
+		<wcfServiceParam parameterName="taskId" propertyName="taskId"/>
+		<wcfServiceParam parameterName="taskGroupId" parentProperty="true" propertyName="taskGroupId"/>
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param wcfModelObject requestParent: The object on which this service was performed.
+		-->
+		<method args="requestParent" name="handleServiceSuccess">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var successMessage = foundationResources.replaceValues("customServiceSuccessful", [wspWorkspaceResources.markComplete.string, requestParent.openGroupObject.objectDefinition.displayName, requestParent.openGroupObject.objectDisplayName]);
+				messageLogger.logStatus(successMessage);
+				if (requestParent.getPropertyValue("taskIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTask").value) {
+					wcfWorkspaceUtil.clearContext();
+				}
+				
+				// refresh the parent task group incase taskgroup status change.
+				for (var refKey in requestParent.referenceMap) {
+					if (requestParent.referenceMap[refKey].objectType == "ChildTask"){
+						var parentTaskGroup = requestParent.referenceMap[refKey].parentObject;
+						if (parentTaskGroup.objectType == "TaskGroup") {
+							parentTaskGroup.refreshing = true;
+							parentTaskGroup.objectDefinition.refreshService.doRequest(parentTaskGroup);
+							// refresh children task and approval task
+							parentTaskGroup.refreshChildren();
+						}
+					}
+				}				
+				for (var key in requestParent.model.objectMap) {
+					if (requestParent.model.objectMap[key].objectType == "ToDoTasksTop" ||
+						requestParent.model.objectMap[key].objectType == "CompletedTasksTop") {
+						requestParent.model.objectMap[key].refreshChildren();
+					}
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<wcfService id="wspTaskRejectService" sendSiblingRequestsInParallel="false" sendWorkspaceContext="false" transactionService="true" url="/cmc/RejectTask">
+		<wcfServiceParam parameterName="taskId" propertyName="taskId" />
+		<wcfServiceParam parameterName="taskGroupId" parentProperty="true" propertyName="taskGroupId" />
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param wcfModelObject requestParent: The object on which this service was performed.
+		-->
+		<method args="requestParent" name="handleServiceSuccess">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var successMessage = foundationResources.replaceValues("customServiceSuccessful", [wspWorkspaceResources.reject.string, requestParent.openGroupObject.objectDefinition.displayName, requestParent.openGroupObject.objectDisplayName]);
+				messageLogger.logStatus(successMessage);
+				requestParent.getProperty("status").setAttribute("value", "REDO");
+				// refresh the parent task group.
+				for (var refKey in requestParent.referenceMap) {
+					if (requestParent.referenceMap[refKey].objectType == "ChildTask"){
+						var parentTaskGroup = requestParent.referenceMap[refKey].parentObject;
+						if (parentTaskGroup.objectType == "TaskGroup") {
+							parentTaskGroup.refreshing = true;
+							parentTaskGroup.objectDefinition.refreshService.doRequest(parentTaskGroup);
+							//refresh children to cover approval task status
+							parentTaskGroup.refreshChildren();							
+						}
+					}
+				}
+				for (var key in requestParent.model.objectMap) {
+					if (requestParent.model.objectMap[key].objectType == "CompletedTasksTop") {
+						requestParent.model.objectMap[key].refreshChildren();
+						break;
+					}
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<wcfService id="wspTaskReturnToActiveService" sendSiblingRequestsInParallel="false" sendWorkspaceContext="false" transactionService="true" url="/cmc/ReturnToActiveTask">
+		<wcfServiceParam parameterName="taskId" propertyName="taskId" />
+		<wcfServiceParam parameterName="taskGroupId" parentProperty="true" propertyName="taskGroupId" />
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param wcfModelObject requestParent: The object on which this service was performed.
+		-->
+		<method args="requestParent" name="handleServiceSuccess">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var successMessage = foundationResources.replaceValues("customServiceSuccessful", [wspWorkspaceResources.returnToActive.string, requestParent.openGroupObject.objectDefinition.displayName, requestParent.openGroupObject.objectDisplayName]);
+				messageLogger.logStatus(successMessage);
+				requestParent.getProperty("status").setAttribute("value", "TODO");
+				// refresh the parent task group.
+				for (var refKey in requestParent.referenceMap) {
+					if (requestParent.referenceMap[refKey].objectType == "ChildTask"){
+						var parentTaskGroup = requestParent.referenceMap[refKey].parentObject;
+						if (parentTaskGroup.objectType == "TaskGroup") {
+							parentTaskGroup.refreshing = true;
+							parentTaskGroup.objectDefinition.refreshService.doRequest(parentTaskGroup);
+							//refresh children to cover approval task status
+							parentTaskGroup.refreshChildren();							
+						}
+					}
+				}
+				for (var key in requestParent.model.objectMap) {
+					if (requestParent.model.objectMap[key].objectType == "CompletedTasksTop") {
+						requestParent.model.objectMap[key].refreshChildren();
+						break;
+					}
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<wcfService id="wspTaskGroupApproveService" sendSiblingRequestsInParallel="false" sendWorkspaceContext="false" transactionService="true" url="/cmc/ApproveTaskGroup">
+		<wcfServiceParam parameterName="taskGroupId" propertyName="taskGroupId"/>
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param wcfModelObject requestParent: The object on which this service was performed.
+		-->
+		<method args="requestParent" name="handleServiceSuccess">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var successMessage = foundationResources.replaceValues("customServiceSuccessful", [wspWorkspaceResources.approve.string, requestParent.openGroupObject.objectDefinition.displayName, requestParent.openGroupObject.objectDisplayName]);
+				messageLogger.logStatus(successMessage);
+				if (requestParent.getPropertyValue("taskGroupIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTaskGroup").value) {
+					wcfWorkspaceUtil.clearContext();
+				}
+				requestParent.refreshChildren();
+				for (var key in requestParent.model.objectMap) {
+					if (requestParent.model.objectMap[key].objectType == "ToDoTasksTop") {
+						requestParent.model.objectMap[key].refreshChildren();
+						break;
+					}
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<wcfService id="wspTaskGroupRejectService" sendSiblingRequestsInParallel="false" sendWorkspaceContext="false" transactionService="true" url="/cmc/RejectTaskGroup">
+		<wcfServiceParam parameterName="taskGroupId" propertyName="taskGroupId"/>
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param wcfModelObject requestParent: The object on which this service was performed.
+		-->
+		<method args="requestParent" name="handleServiceSuccess">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var successMessage = foundationResources.replaceValues("customServiceSuccessful", [wspWorkspaceResources.reject.string, requestParent.openGroupObject.objectDefinition.displayName, requestParent.openGroupObject.objectDisplayName]);
+				messageLogger.logStatus(successMessage);
+				if (requestParent.getPropertyValue("taskGroupIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTaskGroup").value) {
+					wcfWorkspaceUtil.clearContext();
+				}
+				requestParent.refreshChildren();
+				for (var key in requestParent.model.objectMap) {
+					if (requestParent.model.objectMap[key].objectType == "ToDoTasksTop") {
+						requestParent.model.objectMap[key].refreshChildren();
+						break;
+					}
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<class name="wspLogonIdEnablementCondition" extends="wcfEnablementCondition" forceResolveAll="true">
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+				var returnValue = false;
+				var propertyValues = this.getValues(o);
+				for (var i = 0; i < propertyValues.length; i++) {
+					if (propertyValues[i] == wcfContextUtil.findContextValue(null, "logonId").value) {
+						returnValue = true;
+					}
+				}
+				if (negate) {
+					returnValue = !returnValue;
+				}
+				return returnValue;
+			]]>
+		</method>
+	</class>
+
+</library>

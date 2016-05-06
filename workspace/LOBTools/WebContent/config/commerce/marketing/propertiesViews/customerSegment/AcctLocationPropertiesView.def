@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktAcctLocationProperties" displayGrouping="true">
+		<PropertyCombobox helpText="${mktMarketingResources.help_customerSegment_AcctLocation}" objectPath="TopAndList/AcctLocation" promptText="${mktMarketingResources.cspAcctLocation}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="any" objectPath="TopAndList/AcctLocation" propertyName="template"/>
+			<PropertyChildListEditor listDefinitionName="mktCSAcctLocationGrid" name="locationGrid" objectPath="TopAndList/AcctLocation/AcctLocationList" objectTypes="AcctLocationEqualsOption" promptText="${mktMarketingResources.customerSegment_acctLocation_Specify}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="notAnyCondition" enablementValue="notAny" objectPath="TopAndList/AcctLocation" propertyName="template"/>
+			<PropertyChildListEditor listDefinitionName="mktCSAcctLocationGrid" name="locationGrid" objectPath="TopAndList/AcctLocation/AcctLocationList" objectTypes="AcctLocationDoesNotEqualOption" promptText="${mktMarketingResources.customerSegment_acctLocation_Specify}"/>
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktCSAcctLocationGrid" preferenceKey="mktCSAcctLocationGrid">		
+		<GridComboBox editable="true" name="locationName" propertyName="conditionValue" required="true" text="${mktMarketingResources.customerSegment_acctLocation_SpecifiedLocation}" visible="true" width="250"/>
+	</ObjectGrid>
+</Definitions>

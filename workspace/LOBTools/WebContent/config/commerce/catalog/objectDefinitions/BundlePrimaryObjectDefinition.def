@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!--- This definition defines the base object from which Bundle and Inherited Bundle are derived.
+		It uses the noun CatalogEntry from the file wc-catalog-clientobjects.xml
+		which contains information on how the parameters in the Create, Update or Delete services 
+	 	are mapped to create the appropriate BOD for the Web services.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogEntryPrimaryObjectDefinition" definitionName="catBaseBundlePrimaryObjectDefinition" detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}" displayName="${catalogResources.bundle_DisplayName}" displayNameProperty="partnumber" helpLink="tasks/tpngrnew.htm" idProperty="catentryId" isBaseDefinition="true" newDisplayName="${catalogResources.bundle_NewDisplayName}" newObjectMenuItemText="${catalogResources.contextMenuNewBundle}" objectGroups="CatalogEntry,Bundles,CatalogEntriesNotASKU" propertiesDefinitionName="catBundleProperties" searchType="FindAllCatalogEntries">
+
+		<!---
+			Retrieves the {@link catBundleComponent} and
+			{@link catInheritedBundleComponen} child objects.
+		-->
+		<GetChildrenService objectTypes="KitComponent,BundleComponent,InheritedKitComponent,InheritedBundleComponent" url="/cmc/GetCatalogEntryChildren-Components">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+			<ServiceParam name="componentType" value="Bundle"/>
+		</GetChildrenService>           
+
+		<!---
+ 			Retrieves the {@link catChildSalesCatalogEntry} and {@link catChildSalesInheritedCatalogEntry}
+ 			reference objects for this catalog entry.
+		-->
+		<GetReferencesService primaryObjectTypes="SalesCatalogGroup,InheritedSalesCatalogGroup" referenceObjectTypes="ChildSalesCatalogEntry,ChildSalesInheritedCatalogEntry" url="/cmc/GetCatalogEntryReferences-SalesCatalogGroups">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="masterCatalogId"/>
+		</GetReferencesService>
+		
+		<!--- 
+			Validator to check and pass the warning message when there is no parent specified for the bundle. 
+		-->
+		<RequiredParentValidator errorMessage="${catalogResources.parentCategoryValidator}" validatorId="parentCategoryExistsCheck" validatorType="requiredParentCategoryValidator">
+		    <EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId"/>
+		</RequiredParentValidator>
+		
+		<RequiredParentValidator errorMessage="${catalogResources.missingRequiredVersionedCategoryParent}" validatorId="versionedParentCategoryExistsCheck" validatorType="requiredParentVersionedCategoryValidator">
+			<EnablementCondition conditionId="objectVersionCondition" enablementValue="" propertyName="objectVersionId" negate="true"/>
+		</RequiredParentValidator>
+		
+
+		<!--- Property definition for the partnumber of the bundle -->
+		<PropertyDefinition displayName="${catalogResources.bundlePartnumber_DisplayName}" maximumSize="64" propertyName="partnumber" required="true" type="string"/>
+
+	</PrimaryObjectDefinition>
+	
+	<!---
+		This definition represents the primary object definition describing a bundle as a business object.
+	-->	
+	<PrimaryObjectDefinition baseDefinitionName="catBaseBundlePrimaryObjectDefinition" definitionName="Bundle" headerIcon="bundleHeaderIcon" icon="bundleIcon" objectType="Bundle">
+		
+		<!--- Condition to disable the object creation in certain store types. -->
+		<EnablementOrCondition baseDefinitionName="catStoreTypeCatalogObjectCreationRestriction"/>
+
+		<!---
+ 			Retrieves the {@link catChildBundle} objects that refer to this object.
+		-->
+		<GetReferencesService url="/cmc/GetCatalogEntryParent-MasterCatalogCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="childType" value="ChildBundle"/>
+		</GetReferencesService>
+		
+		<!---
+			Create service to create a bundle. 
+		-->
+		<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreateCatalogEntry">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="defaultLanguageId" parameterName="descriptionLanguageId"/>
+			<ServiceParam name="catenttypeId" value="BundleBean"/>
+		</CreateService>
+				
+		<!---  
+		    Reference object definition for the attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryAttachmentReference"/>
+
+		<!--- 
+			Reference object definition for the components of the bundle.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catBundleComponent"/>
+		
+		<!---  
+		    Reference object definition for the asset store attachment of the catalog entry
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catCatalogEntryInheritedAttachmentReference"/>	
+
+		<!--- 
+			Retrieves the content version object for this object
+		-->		
+		<GetChildrenService objectTypes="ContentVersion" url="/cmc/GetContentVersions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectId" propertyName="catentryId"/>
+			<ServiceParam name="objectType" value="Bundle"/>
+		</GetChildrenService>
+	
+		<!---
+		    Reference object definition for this object
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="wcfBaseContentVersion" referencedType="Bundle"/>
+	
+		<!---
+			Create Content Version Client Action
+		-->
+		<CreateContentVersionClientAction>
+			<EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/>
+		</CreateContentVersionClientAction>
+
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Bundle as a business object.
+	-->		
+	<PrimaryObjectDefinition baseDefinitionName="catBaseBundlePrimaryObjectDefinition" compatibleObjectTypes="Bundle" definitionName="InheritedBundle" displayName="${catalogResources.inheritedBundle_DisplayName}" headerIcon="inheritedBundleHeaderIcon" icon="inheritedBundleIcon" objectType="InheritedBundle">
+
+		<!---
+ 			Retrieves the {@link catChildInheritedBundle} objects that refer to this object.
+		-->
+		<GetReferencesService url="/cmc/GetCatalogEntryParent-MasterCatalogCatalogGroup">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="catentryId" propertyName="catentryId"/>
+			<ServiceParam name="childType" value="ChildInheritedBundle"/>
+		</GetReferencesService>
+		
+		<!---
+			Reference object definition for the bundle components in the Asset store.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedBundleComponent"/>
+				
+		<!---  
+		    Reference object definition for the asset store attachment of the catalog entry
+		-->	
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedCatalogEntryInheritedAttachmentReference"/>	
+
+
+		<!--- 
+		Retrieves the content version object for this object
+		-->		
+		<GetChildrenService objectTypes="ContentVersion" url="/cmc/GetContentVersions">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="objectId" propertyName="catentryId"/>
+			<ServiceParam name="objectType" value="InheritedBundle"/>
+			<ServiceParam name="basedOnVersionNumber" propertyName="basedOnVersionNumber"/>
+		</GetChildrenService>
+		<!---  
+	    Reference object definition for the versioned catalog group
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="wcfBaseContentVersion" referencedType="InheritedBundle"/>		
+		<!---
+			Create Content Version Client Action
+		-->
+		<CreateContentVersionClientAction>
+		</CreateContentVersionClientAction>	
+		
+			
+	</PrimaryObjectDefinition>
+</Definitions>

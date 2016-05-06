@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	
+	<!---	
+		@keywords private
+		
+		Enablement condition to check the current store type with the list of supported store types for associated store name property in asset information.
+	-->
+	<EnablementOrCondition definitionName="wcfAssetInfoStoreTypesCondition">
+		<EnablementCondition contextName="storeType" enablementValue="RHS"/>
+		<EnablementCondition contextName="storeType" enablementValue="BRH"/>
+		<EnablementCondition contextName="storeType" enablementValue="CHS"/>
+		<EnablementCondition contextName="storeType" enablementValue="SCP"/>
+		<EnablementCondition contextName="storeType" enablementValue="SHS"/>
+		<EnablementCondition contextName="storeType" enablementValue="MHS"/>
+		<EnablementCondition contextName="storeType" enablementValue="BMH"/>
+	</EnablementOrCondition>
+
+	<!---	
+		@keywords private
+		
+		Enablement condition for controlling the visibility of the associated store name property in asset information.
+	-->
+	<EnablementAndCondition definitionName="wcfAssetInfoStoreNameDisplayCondition">
+		<EnablementCondition enablementValue="${null}" negate="true" propertyName="objectStoreId"/>
+		<EnablementOrCondition baseDefinitionName="wcfAssetInfoStoreTypesCondition"/>
+	</EnablementAndCondition>
+
+	<!---
+		In addition to properties and attributes, a business object can contain other important information for the business 
+		user, such as object ownership (a primary object in an extended site store can be owned by an asset store) and the 
+		state of the object in a workspace. This definition groups all of this information under the "Object Properties" property 
+		group within the properties view. Add this property group to the properties view so that it is displayed under the 
+		first tab of any primary business object.
+		
+		<p>The property group displays the following information:
+		<ul>
+			<li>Associated Store: The owner store of the primary business object. This information is only displayed if the 
+			current store is an extended site store and the <code>objectStoreId</code> property exists in the primary business 
+			object. The <code>objectStoreId</code> property contains the store id of the store that owns the primary business 
+			object.
+			</li>
+			<li>Change Made In Workspace: The name of the workspace where the primary business object was edited. 
+			This information is only displayed if a business user makes an unapproved change to the primary business object.
+			</li>
+			<li>Task Group: The name of the task group where the primary business object has undergone a change which has not 
+			been approved. This information is displayed only if the business user cannot make changes to the primary business object.
+			</li>
+			<li>Task: The name of the task where the primary business object has undergone a change which has not been 
+			approved. This information is displayed only if the business user cannot make changes to the primary business object.
+			</li>
+		</ul>
+		
+		Sample usage of this widget:
+		@START_CODE
+		<ObjectProperties definitionName="myProductProperties">
+	    	<PropertyTabs name="tabs">
+       			<PropertyTabPane name="myTab" text="tab1">
+	            	<PropertyPane baseDefinitionName="attManageAttachmentInformation">
+	            		<PropertyAssetInformationGroup />
+						<PropertyGroup groupTitle="General Product Information">
+							...
+						</PropertyGroup>
+	            	</PropertyPane>
+	            </PropertyTabPane>
+            </PropertyTabs>
+        </ObjectProperties>
+		@END_CODE
+	-->
+	<PropertyGroup definitionName="wcfPropertyAssetInformationGroup" groupTitle="${foundationResources.objectProperties_assetProperties_groupTitle}">
+		<DisplayPropertyAssetInformationCondition/>
+		
+		<PropertyGroup collapsable="false">
+			<EnablementAndCondition baseDefinitionName="wcfAssetInfoStoreNameDisplayCondition"/>
+			<AssetPropertiesStore/>
+		</PropertyGroup>
+
+		<PropertyGroup collapsable="false">
+			<EnablementAndCondition>
+				<EnablementCondition enablementValue="false" propertyName="changeControlModifiable"/>
+				<ContextReadOnlyEnablementCondition negate="true"/>
+			</EnablementAndCondition>
+			<PropertyStaticText text="${foundationResources.objectProperties_assetProperties_lockedInWorkspacePrompt}"/>
+			<PropertyViewLongText promptText="${foundationResources.objectProperties_assetProperties_workspacePrompt}" propertyName="changeControlWorkspaceName"/>
+			<PropertyViewLongText promptText="${foundationResources.objectProperties_assetProperties_taskGroupPrompt}" propertyName="changeControlWorkspaceTaskGroup"/>
+			<PropertyViewLongText promptText="${foundationResources.objectProperties_assetProperties_taskPrompt}" propertyName="changeControlWorkspaceTask"/>
+		</PropertyGroup>
+				
+		<PropertyGroup collapsable="false">
+			<EnablementAndCondition>
+				<EnablementCondition negate="true" enablementValue="" propertyName="basedOnVersionNumber"/>
+				<EnablementCondition enablementValue="" propertyName="objectVersionId"/>
+			</EnablementAndCondition>
+			<PropertyViewLongText promptText="${foundationResources.objectProperties_assetProperties_activeVersionIdentifierPrompt}" propertyName="basedOnVersionNumber"/>
+			<PropertyViewLongText promptText="${foundationResources.objectProperties_assetProperties_versionNamePrompt}" propertyName="basedOnVersionName"/>
+		</PropertyGroup>
+	</PropertyGroup>
+	
+</Definitions>

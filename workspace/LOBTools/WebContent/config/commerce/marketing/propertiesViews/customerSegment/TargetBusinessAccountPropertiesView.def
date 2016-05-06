@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktTargetBusinessAccountProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/TargetBusinessAccount" promptText="${mktMarketingResources.cspAccounts}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="any" objectPath="TopAndList/TargetBusinessAccount" propertyName="template"/>
+			<PropertyChildListEditor listDefinitionName="mktBusinessAccountGrid" name="accountGrid" objectPath="TopAndList/TargetBusinessAccount/TargetBusinessAccountList" objectTypes="ChildBusinessAccount" promptText="${mktMarketingResources.customerSegment_accounts_Specify}"/>
+		</PropertyGroup>
+
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="notAnyCondition" enablementValue="notAny" objectPath="TopAndList/TargetBusinessAccount" propertyName="template"/>
+			<PropertyChildListEditor listDefinitionName="mktBusinessAccountGrid" name="accountGrid" objectPath="TopAndList/TargetBusinessAccount/TargetBusinessAccountList" objectTypes="ChildBusinessAccountDoesNotEqual" promptText="${mktMarketingResources.customerSegment_accounts_Specify}"/> 
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktBusinessAccountGrid" preferenceKey="mktBusinessAccountGrid">
+		<GridIconTypeImage name="type" objectPath="BusinessAccountGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+ 		<GridStoreName name="store" objectPath="BusinessAccountGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+        <GridText alignment="right" datatype="number" editable="false" name="accountId" objectPath="BusinessAccountGroup" propertyName="accountId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridText editable="false" name="accountName" objectPath="BusinessAccountGroup" propertyName="accountName" required="true" text="${mktMarketingResources.cspObjectName}" visible="true" width="250"/>
+	</ObjectGrid>
+	
+</Definitions>

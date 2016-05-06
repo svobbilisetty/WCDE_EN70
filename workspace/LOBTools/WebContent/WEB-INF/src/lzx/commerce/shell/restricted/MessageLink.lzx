@@ -1,0 +1,102 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		This class implements the message bar displayed in the status area.
+		The message bar shows the latest Management Center message.  The
+		message console opens when a user clicks the message bar.
+	-->
+	<class name="wcfMessageLink" extends="basecomponent" focusable="false">
+		<!--- @keywords private -->
+		<attribute name="truncationText" type="string" value="${foundationResources.gridTruncationText.string}" />
+		<!--- @keywords private -->
+		<attribute name="truncated" type="boolean" value="${this.messageLinkArea.messageTextView.messageLinkText.getTextWidth() + 5 + (this.messageLinkArea.messageTextView.messageErrorIcon.visible ? this.messageLinkArea.messageTextView.messageErrorIcon.width : 0) + this.messageLinkArea.messageTextView.messageLinkButton.width &gt; this.width}" />
+
+		<!---
+			@keywords private
+			This method sets the text to display in the message bar.
+			@param string messageType: message type.
+			@param string messageText: message text.
+		-->
+		<method name="setDisplayText" args="messageType, messageText">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfMessageLink", "setDisplayText(messageType,messageText)", [messageType, messageText]);
+				}
+				var errorIconVisible = messageType == "ERROR" || messageType == "EXCEPTION";
+				this.messageLinkArea.messageTextView.messageErrorIcon.setAttribute("visible", errorIconVisible);
+				this.messageLinkArea.messageTextView.messageLinkText.setAttribute('text', messageText);
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfMessageLink", "setDisplayText(messageType,messageText)");
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="updateMessageLinkHighlight" args="highlight">
+			<![CDATA[
+				var r = highlight ? 2 : 1;
+				this.messageLinkArea.messageLinkAreaView.messageLinkAreaLeft.setAttribute('frame', r);
+				this.messageLinkArea.messageLinkAreaView.messageLinkAreaCenter.setAttribute('frame', r);
+				this.messageLinkArea.messageLinkAreaView.messageLinkAreaRight.setAttribute('frame', r);
+			]]>
+		</method>
+		
+		<view name="messageLinkArea" y="3">
+			<view name="messageLinkAreaView">
+				<view name="messageLinkAreaLeft" resource="statusMessageLeft" frame="1" />
+				<view name="messageLinkAreaCenter" resource="statusMessageCenter" frame="1" width="${parent.parent.parent.width - 6}" stretches="width" />
+				<view name="messageLinkAreaRight" resource="statusMessageRight" frame="1" />
+				<simplelayout axis="x" spacing="0" />
+			</view>
+			<view name="messageTextView" x="3">
+				<view name="messageErrorIcon" resource="errorIcon" y="2" width="18" visible="false" />
+				<text name="messageLinkText"
+					width="${parent.parent.parent.width - 5 - (parent.messageErrorIcon.visible ? parent.messageErrorIcon.width : 0) - (classroot.truncated ? parent.truncationText.width : 0) - parent.messageLinkButton.width}" 
+					fontsize="12" font="Arial" fgcolor="${classroot.style.statusmessagebaractivetextcolor}" clickable="true" focusable="true">
+					<wcfTooltip name="untruncatedText" enabled="${classroot.truncated}" text="${parent.text}"/>
+					<handler name="onfocus" >
+					    <![CDATA[				
+					    if(!this["indicator"]){
+						    new lz.wcfFocusIndicator(this, {
+						    	name: "indicator",
+						    	focusableView: this,
+						    	indicatorView: this
+						    });
+					    }
+						]]>
+					</handler>					
+				</text>
+				<text name="truncationText" text="${classroot.truncationText}" visible="${classroot.truncated}" y="1" fontsize="12" font="Arial" fgcolor="${classroot.style.statusmessagebaractivetextcolor}" />
+				<wcfFocusableBaseButton name="messageLinkButton" resource="statusMessageButtonResource" y="2" doesenter="true">
+					<handler name="onclick">
+						<![CDATA[
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfMessageLink", "onclick", "Opening the message console.");
+						}
+						messageLogger.openMessageConsoleDialog();
+					]]>
+					</handler>
+					<wcfTooltip text="${shellResourceBundle.messageConsoleButtonTip.string}" />
+				</wcfFocusableBaseButton>
+				<simplelayout axis="x" spacing="0" />
+			</view>
+		</view>
+	</class>
+
+</library>

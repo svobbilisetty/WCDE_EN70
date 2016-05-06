@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+    <ObjectProperties definitionName="catKitProperties">
+        <!-- This is the set of tabs to display on the Kit properties notebook -->
+        <PropertyTabs name="tabs">
+        	  <!-- Tab: Manage Kit. This tab contains general information about the selected kit such as name, description etc. -->
+            <PropertyTabPane name="manageKitTab" text="${catalogResources.manageKitTab}">
+            	 <!-- Property Pane: Manage Kit. This is an instantiation of the property pane which contains general kit details. -->
+                <PropertyPane baseDefinitionName="catManageKit"/>
+            </PropertyTabPane>
+			 <!-- 
+				Tab: Kit components. This tab contains the Search Engine Optimization properties for the selected kit.
+			-->
+            <PropertyTabPane name="searchEngineOptimizationTab" text="${catalogResources.searchEngineOptimizationTab}">
+				<EnablementAndCondition>
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition conditionId="seoEnabledCondition" contextName="seoEnabled" enablementValue="true"/>
+				</EnablementAndCondition>
+				<!-- 
+					Property Pane: Kit components. This is an instantiation of property pane which contains the Search Engine Optimization 
+					properties for the kit component.
+				-->
+                <PropertyPane baseDefinitionName="catSearchEngineOptimization"/>
+            </PropertyTabPane>
+			<!-- Tab: Kit Components. This tab contains all the components the selected kit holds. -->
+            <PropertyTabPane name="kitComponentsTab" text="${catalogResources.bundleComponentsSection}">
+            	<!-- Hide this tab if the catenttypeId Dynamic Kit and Sterling Configuration is enabled -->
+            	<EnablementOrCondition conditionId="kitComponentsTabCondition">
+            		<EnablementCondition contextName="sterlingConfigEnabled" enablementValue="false" conditionId="kitComponentsTabSterlingConfigFalseCondition"/>
+            		<EnablementCondition propertyName="catenttypeId" enablementValue="DynamicKitBean" conditionId="kitComponentsTabNotDynamicKitCondition" negate="true"/>	 
+            	</EnablementOrCondition>
+            	 <!-- Property Pane: Kit Components. This is an instantiation of the property pane which contains the kit components details. -->
+                <PropertyPane baseDefinitionName="catKitComponents"/>
+            </PropertyTabPane>
+			<!-- Tab: Configurator. This tab contains configurator information. -->
+            <PropertyTabPane name="kitConfiguratorTab" text="${catalogResources.kitConfiguratorTab}">
+            	<!-- Only show this tab if catenttypeId is Dynamic Kit and Sterling Configuration is enabled -->
+            	<EnablementAndCondition conditionId="kitConfiguratorTabCondition">
+            		<EnablementCondition contextName="sterlingConfigEnabled" enablementValue="true" conditionId="kitConfiguratorTabSterlingConfigTrueCondition"/>
+            		<EnablementCondition propertyName="catenttypeId" enablementValue="DynamicKitBean" conditionId="kitConfiguratorTabSterlingCatenttypeIdDynamicKitCondition"/>	 
+            	</EnablementAndCondition>
+            	 <!-- Property Pane: Manage Kit. This is an instantiation of the property pane which contains general kit details. -->
+                <PropertyPane baseDefinitionName="catKitConfigurator"/>
+            </PropertyTabPane>			
+            <!-- Tab: Kit Descriptive Attributes. This tab contains descriptive attributes of the selected kit. -->
+            <PropertyTabPane name="kitDescriptiveAttributesTab" text="${catalogResources.descriptiveAttributesTab}">
+                 <!-- Property Pane: Kit Descriptive Attributes. This is an instantiation of the property pane which contains kit attribute details. -->
+                <PropertyPane baseDefinitionName="catCatalogEntryDescriptiveAttributes"/>
+            </PropertyTabPane>            
+            <!-- Tab: Kit Merchandising Associations. This tab contains the merchandising associations of the selected kit. -->
+            <PropertyTabPane name="productMerchandisingAssociationsTab" text="${catalogResources.productMerchandisingAssociationsTab}">
+				<!-- Property Pane: Kit Merchandising Associations. This is an instantiation of the property pane which contains kit merchandising associations details. -->               
+                <PropertyPane baseDefinitionName="catProductMerchandisingAssociations"/>
+            </PropertyTabPane>
+            <!-- Tab: Inventory. This tab contains inventory related information of the selected Kits. -->
+            <!-- This tag is disabled by default. To enable it, uncomment the tag below. For non-inventory store (The value in INVENTORYSYSTEM column of STORE table is -3), it should not be enabled. -->
+            <!-- <PropertyTabPane name="catalogEntryInventoryTab" text="${catalogResources.catalogEntryInventoryTab}"> -->
+                <!-- Property Pane: Kit Inventory. This is an instantiation of the property pane which contains inventory related details. -->
+                <!-- <PropertyPane baseDefinitionName="catCatalogEntryInventoryPane"/>
+            </PropertyTabPane> -->
+            
+            <!-- Tab: the attachment references for the current catalog entry -->
+			<PropertyTabPane name="manageAttachmentTab" text="${catalogResources.manageAttachmentTab}">
+				<!-- Property Pane: Manage Attachment Reference . This is an instantiation of the property pane which contains attachment reference of this catalog entry. -->
+				<PropertyPane baseDefinitionName="catManageAttachment"/>
+			</PropertyTabPane>
+			
+			<!-- Tab: the version reference of the current catalog entry -->
+			<PropertyTabPane name="manageVersionTab" text="${foundationResources.manageVersionTab}">
+				<!-- Only show this tab if the object type is Kit, Content Version is enabled and not new object -->
+				<EnablementAndCondition conditionId="kitManageVersionTabCondition">
+
+					<EnablementOrCondition conditionId="kitManageVersionObjectTypeCondition">
+						<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="Kit" conditionId="kitManageVersionObjectTypeCondition"/>
+						<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="InheritedKit" conditionId="kitManageVersionObjectTypeCondition1"/>
+					</EnablementOrCondition>
+
+				
+ 					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition contextName="contentVersionEnabled" enablementValue="true" conditionId="kitContentVersionContextValueCondition"/>
+					<EnablementCondition checkNewObject="true" enablementValue="false" conditionId="kitContentVersionNewObjectCondition"/>
+				</EnablementAndCondition>	
+				<!-- Property Pane: Manage Version. This is an instantiation of the property pane definition which contains versions. -->
+				<PropertyPane baseDefinitionName="wcfManageContentVersion"/>
+			</PropertyTabPane>
+	
+	
+			<!-- Tab: Kit References. This tab contains various types of references to the selected kit. For example a list of catalog entries that have the selected kit as a merchandising association -->				
+			<!-- Property Pane: Kit References. This is an instantiation of the property pane which contains references properties. -->			
+			<PropertyTabPane name="kitResourcesTab" text="${catalogResources.productReferenceTab}">
+				<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+				<!-- Property Pane: Kit References. This is an instantiation of the property pane which contains kit's references details. -->
+				<PropertyPane baseDefinitionName="catBundleResources"/>
+			</PropertyTabPane>
+
+			
+			
+		</PropertyTabs>
+	</ObjectProperties>
+</Definitions>

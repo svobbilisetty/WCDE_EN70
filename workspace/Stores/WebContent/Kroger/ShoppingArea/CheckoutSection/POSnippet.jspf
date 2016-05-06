@@ -1,0 +1,79 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<%-- 
+  ***
+  *    This JSP fragment is used to display the Purchase Order Number during checkout.
+  *    	- purchaseOrderNumberRequired: This field indicates whether the Purchase Order Number is mandatory. 
+  *				       This is set to true when the Purchase Order Number is part of account TC.
+  *	     
+  ***
+--%>
+
+<!-- BEGIN POSnippet.jspf -->
+<c:choose>
+<c:when test="${PurchaseOrderEntryField == 'true'}">
+<wcbase:useBean id="edp_OrderBean" classname="com.ibm.commerce.order.beans.OrderDataBean" >
+	<c:set property="orderId" value="${order.orderIdentifier.uniqueID}" target="${edp_OrderBean}"  />
+</wcbase:useBean>
+<c:set var="purchaseOrderNumberRequired" value="${edp_OrderBean.purchaseOrderNumberRequired}"/>
+<form name="purchaseOrderNumberInfo"  id="purchaseOrderNumberInfo">
+<c:if test="${purchaseOrderNumberRequired == 'true'}">
+	<div class="body" id="WC_POSnippet_div_1">
+		<div id="purchase_order">
+					<label for="purchase_order_number" class="nodisplay">
+					<fmt:message key="AB_ADDRESS_LABEL_TEXT" >
+						<fmt:param><fmt:message key="EDPPaymentMethods_PO_NUMBER" /></fmt:param>
+						<fmt:param><fmt:message key="Checkout_ACCE_required" /></fmt:param></fmt:message>
+					</label>
+					<div class="required-field" id="WC_POSnippet_div_2">*</div>
+					<div class="title" id="WC_POSnippet_div_3"><fmt:message key="EDPPaymentMethods_PO_NUMBER" /></div>
+					<input type="text" name="purchase_order_number" id="purchase_order_number" value="<c:out value='${WCParam.purchaseorder_id}'/>"/>
+					<input type="hidden" name="purchaseOrderNumberRequired" id="purchaseOrderNumberRequired" value="<c:out value='${purchaseOrderNumberRequired}'/>"/>
+		</div>
+	</div>
+</c:if>
+<c:if test="${purchaseOrderNumberRequired == 'false'}">
+				<input type="hidden" name="purchase_order_number" id="purchase_order_number" value=""/>
+				<input type="hidden" name="purchaseOrderNumberRequired" id="purchaseOrderNumberRequired" value="<c:out value='${purchaseOrderNumberRequired}'/>"/>
+</c:if>
+</form>
+</c:when>
+<c:otherwise>
+	<c:choose>
+		<c:when test="${!empty order.buyerPONumber}">
+			<wcbase:useBean id="purchaseOrderBean" classname="com.ibm.commerce.payment.beans.BuyerPurchaseOrderDataBean">
+				<c:set target="${purchaseOrderBean}" property="dataBeanKeyBuyerPurchaseOrderId" value="${order.buyerPONumber}"/>
+			</wcbase:useBean>
+			<div class="body" id="WC_POSnippet_div_4">
+				<div id="purchase_order">
+				<div id="WC_POSnippet_div_5" class="title"><fmt:message key="EDPPaymentMethods_PO_NUMBER" />:</div>
+					<c:out value='${purchaseOrderBean.purchaseOrderNumber}'/>
+				</div>
+			</div>
+		</c:when>
+		<c:otherwise>
+			<c:if test="${!empty WCParam.purchaseOrderNumber}">
+				<div class="body" id="WC_POSnippet_div_6">
+					<div id="purchase_order">
+						<div id="WC_POSnippet_div_7" class="title"><fmt:message key="EDPPaymentMethods_PO_NUMBER" />:</div>
+						<c:out value='${WCParam.purchaseOrderNumber}'/>
+					</div>
+				</div>
+			</c:if>
+		</c:otherwise>
+	</c:choose>
+</c:otherwise>
+</c:choose>
+<!-- END POSnippet.jspf -->

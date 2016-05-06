@@ -1,0 +1,1040 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<testcase>
+	
+	<!-- Open Marketing tool -->
+	<action name="wcfAutoOpenToolAction">
+		<param name="toolId" value="marketingManagement"/>
+	</action>
+	
+	<!-- Select store -->
+	<action name="wcfAutoSelectStoreAction">
+		<param name="storeKey" value="storeIdentifier"/>
+	</action>
+	
+	<!-- EMarketing Spot -->
+	<!-- Create a new EMarketing Spot -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="EMarketingSpot"/>
+		<param name="objectKey" value="eMarketingSpot"/>
+	</action>
+	
+	<!-- Set the name property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="eMarketingSpot"/>
+		<param name="propertyName" value="name"/>
+		<param name="valueKey" value="eMarketingSpotNameCreate"/>
+	</action>
+	
+	<!-- Save all -->
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<!-- Content -->
+	<!-- Create a new content -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="MarketingContent"/>
+		<param name="objectKey" value="content"/>
+	</action>
+	
+	<!-- Set the name property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="content"/>
+		<param name="propertyName" value="name"/>
+		<param name="valueKey" value="marketingContentNameCreate"/>
+	</action>
+	
+	<!-- Set the format property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="content"/>
+		<param name="propertyName" value="format"/>
+		<param name="valueKey" value="formatCreate"/>
+	</action>
+	
+	<!-- Save all -->
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<!-- Create Web Activity -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="WebActivity"/>
+		<param name="objectKey" value="webActivity"/>
+	</action>
+	
+	<!-- Set the name property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="webActivity"/>
+		<param name="propertyName" value="name"/>
+		<param name="valueKey" value="webActivityNameCreate"/>
+	</action>
+	
+	<!-- Generate a path object -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="path"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="rootPath"/>
+	</action>
+	
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="0"/>
+	</action>
+	
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="rootPath"/>
+		<param name="propertyName" value="sequence"/>
+		<param name="valueKey" value="sequence"/>
+	</action>
+	
+	<!-- Generate a child View Marketing Spot object -->
+	<!--  Set the EMarketing Spot as a referenced object -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="viewEMarketingSpot"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="viewEMarketingSpot"/>
+	</action>
+	
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="1000"/>
+	</action>
+	
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="viewEMarketingSpot"/>
+		<param name="propertyName" value="sequence"/>
+		<param name="valueKey" value="sequence"/>
+	</action>
+	
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="ChildEMarketingSpot"/>
+		<param name="parentObject" value="viewEMarketingSpot"/>
+		<param name="referencedObject" value="eMarketingSpot"/>
+		<param name="objectKey" value="ChildEMarketingSpot"/>
+	</action>
+	
+	<!-- Create SocialCommerceParticipation Target -with review -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="socialCommerceParticipation"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetReview"/>
+	</action>
+		
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="2000"/>
+	</action>
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	<!-- Set SocialCommerceParticipation Target Properties -->
+	<!-- Set the elemTemplateName property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!-- Set the numberOfTimes property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Set the socialActivityType of "review" -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="review"/>
+	</action>
+	
+	<!-- Create a new rating object-->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="rating"/>
+		<param name="parentObject" value="socialCommerceParticipationTargetReview"/>
+		<param name="objectKey" value="ratingObject"/>
+	</action>
+
+	<!-- Set filterOperator property-->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="ratingObject"/>
+		<param name="propertyName" value="filterOperator"/>
+		<param name="value" value=">="/>
+	</action>
+	
+	<!-- Create a new filterValue object -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="filterValue"/>
+		<param name="parentObject" value="ratingObject"/>
+		<param name="objectKey" value="ratingfilterValueObject"/>
+	</action>
+	<!-- Set filterValue property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="ratingfilterValueObject"/>
+		<param name="propertyName" value="filterValue"/>
+		<param name="value" value="2"/>
+	</action>
+	<!-- End SocialCommerceParticipation-with review -->
+	
+	<!-- Create SocialCommerceParticipation Target -with comment -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="socialCommerceParticipation"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetComment"/>
+	</action>
+		
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="3000"/>
+	</action>
+	
+	<!-- Set SocialCommerceParticipation Target Properties -->
+	<!-- Set the elemTemplateName property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!-- Set the numberOfTimes property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Set the socialActivityType of "comment" -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="comment"/>
+	</action>
+	
+	<!-- Find the category. -->	
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="Furniture_searchKey"/>
+		<param name="value" value="Furniture"/>
+	</action>
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="Furniture_searchKey"/>
+		<param name="objectKey" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Verify that the category was found. -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Create a new ChildCatalogGroup object-->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="ChildCatalogGroup"/>
+		<param name="parentObject" value="socialCommerceParticipationTargetComment"/>
+		<param name="referencedObject" value="furnitureCategory"/>
+		<param name="templateObject" value="furnitureCategory"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	<!-- END SocialCommerceParticipation-with comment  -->
+	
+	<!-- Create SocialCommerceParticipation Target -with blog -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="socialCommerceParticipation"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetBlog"/>
+	</action>
+		
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="4000"/>
+	</action>
+	
+	<!-- Set SocialCommerceParticipation Target Properties -->
+	<!-- Set the elemTemplateName property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!-- Set the numberOfTimes property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Set the socialActivityType of "blog" -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="blog"/>
+	</action>
+	
+	<!-- Find the category. -->	
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="Furniture_searchKey"/>
+		<param name="value" value="Furniture"/>
+	</action>
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="Furniture_searchKey"/>
+		<param name="objectKey" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Verify that the category was found. -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Create a new ChildCatalogGroup object-->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="ChildCatalogGroup"/>
+		<param name="parentObject" value="socialCommerceParticipationTargetBlog"/>
+		<param name="referencedObject" value="furnitureCategory"/>
+		<param name="templateObject" value="furnitureCategory"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	<!-- END SocialCommerceParticipation-with blog -->
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<!-- Create SocialCommerceParticipation Target -with photo -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="socialCommerceParticipation"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetPhoto"/>
+	</action>
+		
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="5000"/>
+	</action>
+	
+	<!-- Set SocialCommerceParticipation Target Properties -->
+	<!-- Set the elemTemplateName property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!-- Set the numberOfTimes property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Set the socialActivityType of "photo" -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="photo"/>
+	</action>
+	
+	<!-- Find the category. -->	
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="Furniture_searchKey"/>
+		<param name="value" value="Furniture"/>
+	</action>
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="Furniture_searchKey"/>
+		<param name="objectKey" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Verify that the category was found. -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Create a new ChildCatalogGroup object-->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="ChildCatalogGroup"/>
+		<param name="parentObject" value="socialCommerceParticipationTargetPhoto"/>
+		<param name="referencedObject" value="furnitureCategory"/>
+		<param name="templateObject" value="furnitureCategory"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	<!-- END SocialCommerceParticipation-with photo   -->
+	
+	
+	
+	
+	
+	
+	<!-- Create SocialCommerceParticipation Target -with recommendation -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="socialCommerceParticipation"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetRecommendation"/>
+	</action>
+		
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="6000"/>
+	</action>
+	
+	<!-- Set SocialCommerceParticipation Target Properties -->
+	<!-- Set the elemTemplateName property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!-- Set the numberOfTimes property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Set the socialActivityType of "recommendation" -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="recommendation"/>
+	</action>
+	
+	<!-- Find the category. -->	
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="Furniture_searchKey"/>
+		<param name="value" value="Furniture"/>
+	</action>
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="Furniture_searchKey"/>
+		<param name="objectKey" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Verify that the category was found. -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="furnitureCategory"/>
+	</action>
+	
+	<!-- Create a new ChildCatalogGroup object-->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="ChildCatalogGroup"/>
+		<param name="parentObject" value="socialCommerceParticipationTargetRecommendation"/>
+		<param name="referencedObject" value="furnitureCategory"/>
+		<param name="templateObject" value="furnitureCategory"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	
+
+	
+	
+	
+	
+	
+	<!-- Create SocialCommerceParticipation Target -with likes homepage -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="socialCommerceParticipation"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetLikesHomepage"/>
+	</action>
+		
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="7000"/>
+	</action>
+	
+	<!-- Set SocialCommerceParticipation Target Properties -->
+	<!-- Set the elemTemplateName property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesHomepage"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+		
+	<!-- Set the socialActivityType of "likesHomepage" -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesHomepage"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="likesHomepage"/>
+	</action>
+	<!-- END SocialCommerceParticipation-with likes homepage   -->
+
+
+
+
+
+
+
+
+	<!-- Create SocialCommerceParticipation Target -with likesProduct -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="socialCommerceParticipation"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetLikesProduct"/>
+	</action>
+		
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="8000"/>
+	</action>
+	
+	<!-- Set SocialCommerceParticipation Target Properties -->
+	<!-- Set the elemTemplateName property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!-- Set the numberOfTimes property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="2"/>
+	</action>
+	
+	<!-- Set the socialActivityType of "likesProduct" -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="likesProduct"/>
+	</action>
+	
+	<!-- Create a new manufacturerName object-->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="manufacturerName"/>
+		<param name="parentObject" value="socialCommerceParticipationTargetLikesProduct"/>
+		<param name="objectKey" value="manNameObject"/>
+	</action>
+
+	<!-- Set filterOperator property-->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="manNameObject"/>
+		<param name="propertyName" value="filterOperator"/>
+		<param name="value" value="="/>
+	</action>
+
+	<!-- Create a new filterValue object -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="filterValue"/>
+		<param name="parentObject" value="manNameObject"/>
+		<param name="objectKey" value="manNameFilterValueObject"/>
+	</action>
+	
+	<!-- Set filterValue property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="manNameFilterValueObject"/>
+		<param name="propertyName" value="filterValue"/>
+		<param name="value" value="MapleWear"/>  
+	</action>
+	<!-- END SocialCommerceParticipation-with likes Product   -->
+	
+	<!-- Generate a child Display Content object -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="displayContent"/>
+		<param name="parentObject" value="rootPath"/>
+		<param name="objectKey" value="displayContent"/>
+	</action>
+	
+	<!--  Set sequence -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="sequence"/>
+		<param name="value" value="9000"/>
+	</action>
+	
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="displayContent"/>
+		<param name="propertyName" value="sequence"/>
+		<param name="valueKey" value="sequence"/>
+	</action>
+	
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="ChildMarketingContent"/>
+		<param name="parentObject" value="displayContent"/>
+		<param name="referencedObject" value="content"/>
+		<param name="objectKey" value="ChildMarketingContent"/>
+	</action>
+	
+	
+	<!-- Save all -->
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<!-- Refresh all -->
+	<action name="wcfAutoRefreshAllAction"/>
+	
+	<!-- Find the Web Activity -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindActivities"/>
+		<param name="searchKey" value="webActivityNameCreate"/>
+		<param name="objectKey" value="webActivity"/>
+	</action>
+	
+	<!-- Verify that the Web Activity was found -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="webActivity"/>
+	</action>
+	
+	<!-- Verify the name property of the Web Activity -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="webActivity"/>
+		<param name="propertyName" value="name"/>
+		<param name="valueKey" value="webActivityNameCreate"/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="webActivity"/>
+	</action>
+	
+	<!-- Verify socialCommerceParticipation - Review  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="propertyName" value="socialActivityType"/> 
+  		<param name="propertyValue" value="review"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetReview"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+	</action>
+	
+	<!-- Verify the elemTemplateName property of the socialCommerceParticipationTargetReview -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+	</action>
+	
+	<!-- Verify the numberOfTimes property of the socialCommerceParticipationTargetReview -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Verify the socialActivityType property of the socialCommerceParticipationTargetReview -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetReview"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="review"/>
+	</action>
+	
+	<!-- Verify rating object  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/rating"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="ratingObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="ratingObject"/>
+	</action>
+	
+	<!-- Verify the filterOperator property of the socialCommerceParticipationTargetReview -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="ratingObject"/>
+		<param name="propertyName" value="filterOperator"/>
+		<param name="value" value=">="/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="ratingObject"/>
+	</action>
+	
+	<!-- Verify filterValue  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/rating/filterValue"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="filterValueObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="filterValueObject"/>
+	</action>
+	
+	<!-- Verify the filterValue property of the socialCommerceParticipationTargetReview -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="filterValueObject"/>
+		<param name="propertyName" value="filterValue"/>
+		<param name="value" value="2"/>
+	</action>
+	<!-- END Verify socialCommerceParticipation - Review  -->
+	
+	<!-- Verify socialCommerceParticipation  - Comment  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="propertyName" value="socialActivityType"/> 
+  		<param name="propertyValue" value="comment"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetComment"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+	</action>
+	
+	<!-- Verify the elemTemplateName property of the socialCommerceParticipationTargetComment -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+	</action>
+	
+	<!-- Verify the numberOfTimes property of the socialCommerceParticipationTargetComment -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Verify the socialActivityType property of the socialCommerceParticipationTargetComment -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetComment"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="comment"/>
+	</action>
+	
+	<!-- Verify ChildCatalogGroup object  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/ChildCatalogGroup"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="ChildCatalogGroupObject"/>
+	</action>
+	<!-- END Verify socialCommerceParticipation  - Comment  -->
+	
+	<!-- Verify socialCommerceParticipation  - Blog -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="propertyName" value="socialActivityType"/> 
+  		<param name="propertyValue" value="blog"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetBlog"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+	</action>
+	
+	<!-- Verify the elemTemplateName property of the socialCommerceParticipationTargetBlog -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+	</action>
+	
+	<!-- Verify the numberOfTimes property of the socialCommerceParticipationTargetBlog -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Verify the socialActivityType property of the socialCommerceParticipationTargetBlog -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetBlog"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="blog"/>
+	</action>
+	
+	<!-- Verify ChildCatalogGroup object  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/ChildCatalogGroup"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="ChildCatalogGroupObject"/>
+	</action>
+	<!-- END Verify socialCommerceParticipation  - Blog -->
+	
+	<!-- Verify socialCommerceParticipation  - Photo -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="propertyName" value="socialActivityType"/> 
+  		<param name="propertyValue" value="photo"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetPhoto"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+	</action>
+	
+	<!-- Verify the elemTemplateName property of the socialCommerceParticipationTargetPhoto -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+	</action>
+	
+	<!-- Verify the numberOfTimes property of the socialCommerceParticipationTargetPhoto -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Verify the socialActivityType property of the socialCommerceParticipationTargetPhoto -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetPhoto"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="photo"/>
+	</action>
+	
+	<!-- Verify ChildCatalogGroup object  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/ChildCatalogGroup"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="ChildCatalogGroupObject"/>
+	</action>
+	<!-- END Verify socialCommerceParticipation  - Photo -->
+	
+	<!-- Verify socialCommerceParticipation  - Recommendation-->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="propertyName" value="socialActivityType"/> 
+  		<param name="propertyValue" value="recommendation"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetRecommendation"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+	</action>
+	
+	<!-- Verify the elemTemplateName property of the socialCommerceParticipationTargetRecommendation -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+	</action>
+	
+	<!-- Verify the numberOfTimes property of the socialCommerceParticipationTargetRecommendation -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="1"/>
+	</action>
+	
+	<!-- Verify the socialActivityType property of the socialCommerceParticipationTargetRecommendation -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetRecommendation"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="recommendation"/>
+	</action>
+	
+	<!-- Verify ChildCatalogGroup object  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/ChildCatalogGroup"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="ChildCatalogGroupObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="ChildCatalogGroupObject"/>
+	</action>
+	<!-- END Verify socialCommerceParticipation  - Recommendation-->
+	
+	
+	
+	
+	<!-- Verify socialCommerceParticipation  - likesHomepage-->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="propertyName" value="socialActivityType"/> 
+  		<param name="propertyValue" value="likesHomepage"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetLikesHomepage"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesHomepage"/>
+	</action>
+	
+	<!-- Verify the elemTemplateName property of the socialCommerceParticipationTargetLikesHomepage -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesHomepage"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	<!-- END Verify socialCommerceParticipation  - likesHomepage-->
+
+
+
+
+	<!-- Verify socialCommerceParticipation  - likesProduct -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="propertyName" value="socialActivityType"/> 
+  		<param name="propertyValue" value="likesProduct"/>
+		<param name="objectKey" value="socialCommerceParticipationTargetLikesProduct"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+	</action>
+	
+	<!-- Verify the elemTemplateName property of the socialCommerceParticipationTargetLikesProduct -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+		<param name="propertyName" value="elemTemplateName"/>
+		<param name="value" value="socialCommerceParticipation"/>
+	</action>
+	
+	<!--  Load child objects -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+	</action>
+	
+	<!-- Verify the numberOfTimes property of the socialCommerceParticipationTargetLikesProduct -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+		<param name="propertyName" value="numberOfTimes"/>
+		<param name="value" value="2"/>
+	</action>
+	
+	<!-- Verify the socialActivityType property of the socialCommerceParticipationTargetLikesProduct -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="socialCommerceParticipationTargetLikesProduct"/>
+		<param name="propertyName" value="socialActivityType"/>
+		<param name="value" value="likesProduct"/>
+	</action>
+	
+	<!-- Verify ChildCatalogGroup object  -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/manufacturerName"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="ManufacturerNameObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="ManufacturerNameObject"/>
+	</action>
+
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="ManufacturerNameObject"/>
+		<param name="propertyName" value="filterOperator"/>
+		<param name="value" value="="/>
+	</action>	
+	
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="path/socialCommerceParticipation/manufacturerName/filterValue"/>
+		<param name="parentObject" value="webActivity"/>
+		<param name="objectKey" value="ManufacturerNameFilterValueObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="ManufacturerNameFilterValueObject"/>
+	</action>
+	
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="ManufacturerNameFilterValueObject"/>
+		<param name="propertyName" value="filterValue"/>
+		<param name="value" value="MapleWear"/>
+	</action>	
+	<!-- END Verify socialCommerceParticipation  - likesProduct -->		
+		
+		
+		
+		
+		
+	<!-- Delete Web Activity -->
+	<!-- Find the Web Activity -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindActivities"/>
+		<param name="searchKey" value="webActivityNameCreate"/>
+		<param name="objectKey" value="webActivity"/>
+	</action>
+	
+	<!-- Verify that the Web Activity was found  -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="webActivity"/>
+	</action>
+	
+	<action name="wcfAutoDeleteObjectAction">
+		<param name="object" value="webActivity"/>
+	</action>
+	
+	<!-- Save all -->
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindActivities"/>
+		<param name="searchKey" value="webActivityNameCreate"/>
+		<param name="objectKey" value="webActivity"/>
+	</action>
+	 
+	<action name="wcfAutoVerifyNoObjectAction">
+		<param name="object" value="webActivity"/>
+	</action>	
+		
+</testcase>

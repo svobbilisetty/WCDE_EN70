@@ -1,0 +1,1027 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		Base class for tree node.
+	-->
+	<class name="wcfTree" extends="basetree" layout="spacing: 1">
+		<!---
+			Tree node icon.
+		-->
+		<attribute name="icon" type="string" value="treeFolderResource"/>
+		<!---
+			Indicates that this view is the active view. This value
+			is only valid on the root tree node.
+		-->
+		<attribute name="activated" type="boolean" value="false"/>
+		<!---
+			Indicates that this tree node has an error.
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		<!---
+			Indicates that this tree node is a leaf
+		-->
+		<attribute name="isTreeLeaf" type="boolean" value="false"/>
+		<!--- 
+			Indicates that whether this tree node contains mouse
+		-->
+		<attribute name="mousein" type="boolean" value="false"/>
+		<!---
+			Activate event. This event is sent when the tree node is activated.
+		-->
+		<event name="onactivate" />
+		<!---
+			The maximum number of child nodes to allow.
+		-->
+		<attribute name="maxObjectViews" value="${null}" type="number"/>
+		<!---
+			The status message to display when the tree node is expanded.
+		-->
+		<attribute name="statusMessage" value="" type="string"/>
+		<!---
+			The tree node that currently has the maximum width. This value is only valid
+			in the root tree node.
+		-->
+		<attribute name="widestTree" value="null"/>
+		<!---
+			The width of the widest tree node. This value is only valid
+			in the root tree node.
+		-->
+		<attribute name="widestTreeWidth" type="number" value="0"/>		
+		
+		<!---
+			@keywords private
+			text color
+		-->
+		<attribute name="textColor" value="0x0" type="color"/>
+
+		<!---
+			@keywords private
+			text style
+		-->
+		<attribute name="textStyle" type="string" value="plain"/>
+
+		<!---
+			@keywords private
+		-->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (s != null && this.textColor != s.textcolor) {
+				this.setAttribute("textColor", s.textcolor);
+			}
+			]]>
+		</method>
+
+		<!---
+			Check that there is a focusable tree node.
+		-->
+		<method name="checkFocusable">
+			<![CDATA[
+			var root = this.getRoot();
+			if (root._lastfocused == null || root._lastfocused == root || !root._lastfocused.visible) {
+				if (root._lastfocused) {
+					root._lastfocused.setTreeFocus(false, root);
+				}
+				if (root.children.subviews != null) {
+					for (var i = 0; i < root.children.subviews.length; i++) {
+						if (root.children.subviews[i].visible) {
+							root.setAttribute("_currentChild", i);
+							var focusableTree = root.children.subviews[i];
+							focusableTree.setTreeFocus(true, root);
+							root.setAttribute("_lastfocused", focusableTree);
+							break;
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+				
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			// TODO: remove this workaround when the problem in basetree is fixed.
+			if ($as3 && this.isRoot() && !this.showroot){
+				this.showroot = true;
+				super.init();
+				this.showroot = false;
+				this.item.destroy();
+				this.item = null;
+				this.setAttribute("open", true);
+				this.children.setAttribute("x", 0);
+				this.children.setAttribute("y", 0);
+			} else {
+				super.init();
+			}
+			// TODO: uncomment this call when the problem in basetree is fixed.
+			// super.init();
+			if (this.selected) {
+				this.setAttribute("selected", false);
+			}
+			
+			this.updateBGColorDel = new lz.Delegate(this, "updateBGColor");
+			this.updateBGColorDel.register(this, "onselected");
+			this.updateBGColorDel.register(this, "onfocused");
+			this.updateBGColorDel.register(this.getRoot(), "onactivated");
+			this.updateBGColorDel.register(this, "onmousein");
+			
+			var clipView = this.getClipView();
+			this.adjustWidthDel = new lz.Delegate(this, "adjustWidth");
+			if (this["treeitem"]) {
+				var indentWidth = this.treeitem.getAttributeRelative("x", clipView) - clipView.x;
+				this.treeitem.indent.setAttribute("x", -indentWidth);
+				this.treeitem.indent.setAttribute("width", indentWidth);
+				this.adjustWidthDel.register(this.treeitem.icons, "onwidth");
+				this.adjustWidthDel.register(this.treeitem.text, "onwidth");
+			}
+			this.adjustWidthDel.register(clipView, "onavailableWidth");
+			this.adjustWidthDel.register(this.getRoot(), "onwidestTreeWidth");
+			this.adjustWidth();
+			this.checkFocusable();			
+			this.checkWidestTree();	
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<handler name="onvisible">
+			<![CDATA[
+			this.checkFocusable();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" reference="item">
+			<![CDATA[
+			var root = this.getRoot();
+			if (root != this) {
+				this.oEditor.model.setAttribute("activeSelectionView", root);
+			}
+			this.setAttribute("focused", true);
+			if(parent["children"]){
+				parent.setAttribute("_currentChild", parent.children.subviews.indexOf(this));
+			}
+			if (this["menu"]) {
+				wcfContextMenuUtil.setAsDefault(this.menu);
+			}
+			
+			if(this["item"] && !this.item["indicator"]){
+			    new lz.wcfFocusIndicator(this.item, {
+			    	name: "indicator",
+			    	focusableView: this.item,
+			    	indicatorView: this.treeitem
+			    });
+		    }
+			]]>
+		</handler>	
+		
+		<!--- @keywords private -->
+		<handler name="onblur" reference="item">
+			<![CDATA[
+			this.setAttribute("focused", false);
+			if (this["menu"]) {
+				wcfContextMenuUtil.resetDefault(this.menu);
+			}
+			]]>
+		</handler>		
+		
+		<!---
+			@keywords private
+			Handle opening a modal dialog.
+		-->
+		<handler name="onmode" reference="lz.ModeManager" args="m">
+			<![CDATA[
+			this.setAttribute("mousein", false);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateBGColorDel.unregisterAll();
+			delete this.updateBGColorDel;
+			this.adjustWidthDel.unregisterAll();
+			delete this.adjustWidthDel;
+			if (this["checkWidestTreeDel"]) {
+				this.checkWidestTreeDel.unregisterAll();
+				delete this.checkWidestTreeDel;
+			}
+			if (this.selected) {
+				this.setAttribute("selected", false);
+			}
+			if (this.focused) {
+				this.changeFocus(this.getRoot());
+			}
+			if (this["clipView"]) {
+				delete this.clipView;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			overrides OL keyboardNavigate for shortcutkey support
+		-->
+		<method name="keyboardNavigate" args="key">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfTree keyboardNavigate: " + this.treeitem.text.getText() + "/key=" + key);
+			if (key == 35){
+				this.end();
+			} else if(key == 36){
+				this.home();
+			} else if (key == 40) {
+				if ((this.open &&
+					this.children.subviews && this.children.subviews.length > 0 &&
+					(this.children.subviews[0]) instanceof lz.basetree) &&
+					(!this["oList"] || this.oList.objectViewOffset != 0 || this.oList.getView(0) != null)) {
+					this._focusFirstChild();
+				} else {
+					this._focusNextSibling();
+				}
+			} else {
+				super.keyboardNavigate(key);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Change focus to a new tree node
+		-->
+		<method name="changeFocus" args="treeNode">
+			<![CDATA[
+			super.changeFocus(treeNode);
+			if(typeof(treeNode)!="undefined" && treeNode != null && treeNode["item"]){			
+				var panel = wcfPanelManager.findPanel(treeNode);
+				panel.show(treeNode.item);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="restoreFocus">
+			<![CDATA[
+			if (this.visible || this.isRoot()) {
+				this.changeFocus(null);
+			}
+			else {
+				parent.restoreFocus();
+			}
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			Focus on last tree node and scroll to bottom
+		-->
+		<method name="end">
+			this.getRoot()._focusLastChild();
+		</method>
+
+		<!---
+			@keywords private
+			Focus on first tree node and scroll to top
+		-->
+		<method name="home">
+			this.getRoot()._focusFirstChild();			
+		</method>
+								
+		<!---
+			Get the clip view.
+		-->
+		<method name="getClipView">
+			<![CDATA[
+			var root = this.getRoot();
+			if (!root["clipView"]) {
+				var v = this;
+				do {
+					if (typeof(v["availableWidth"]) != "undefined") {
+						break;
+					}
+					v = v.immediateparent;
+				} while (v && v != canvas);
+				if (v != canvas) {
+					root.clipView = v;
+				}
+			}
+			return root.clipView;
+			]]>
+		</method>
+		
+		<!---
+			Update the background color.
+		-->
+		<method name="updateBGColor" args="e=null">
+			<![CDATA[
+			if (this["treeitem"]) {
+				var c = this.parent.bgcolor;
+				if (this.selected) {
+					if (this.getRoot().activated) {
+						c = this.style["selectedcolor"];
+					}
+					else {
+						c = this.style["inactiveselectedcolor"];
+					}
+				}
+				else if (this.getRoot().activated && this.mousein) {
+					c = this.style["hilitecolor"];
+				}
+				this.treeitem.setAttribute("bgcolor", c);
+				this.treeitem.indent.setAttribute("bgcolor", c);
+			}
+			]]>
+		</method>
+
+		<!---
+			Adjust the width of the tree node so it matches the widest tree node.
+		-->
+		<method name="adjustWidth" args="e=null">
+			<![CDATA[
+			var root = this.getRoot();
+			if (this != root) {
+				var newWidth = root.clipView.availableWidth > root.widestTreeWidth ? root.clipView.availableWidth : root.widestTreeWidth;
+				var treeWidth = this.getTreeWidth();
+				if (newWidth < treeWidth) {
+					newWidth = treeWidth;
+				}
+				this.treeitem.setAttribute('width', newWidth - this.treeitem.indent.width);
+				if (root.widestTree == this) {
+					if (treeWidth > root.widestTreeWidth) {
+						root.setAttribute("widestTreeWidth", treeWidth);
+					}
+					else if (treeWidth < root.widestTreeWidth) {
+						root.setAttribute("widestTree", null);
+					}
+				} else if (treeWidth > root.widestTreeWidth) {
+					root.setAttribute("widestTree", null);
+				}
+				this.treeitem.tooltip.setAttribute("enabled", this.treeitem.text.width + this.treeitem.icons.width > root.clipView.availableWidth);
+			}
+			]]>
+		</method>
+
+		<!---
+			Update the widest tree.
+		-->
+		<method name="checkWidestTree" args="e=null">
+			<![CDATA[
+			if (this.isRoot()) {
+				if (typeof this["checkWidestTreeDel"] == "undefined") {
+					this.checkWidestTreeDel = new lz.Delegate(this, "checkWidestTree");
+				}
+				this.checkWidestTreeDel.unregisterAll();
+				this.setAttribute("widestTree", this.getWidestTree());
+				this.checkWidestTreeDel.register(this, "onwidestTree");
+				var newWidth = 0;
+				if (this.widestTree != null) {
+					this.checkWidestTreeDel.register(this.widestTree.treeitem.text, "onwidth");
+					this.checkWidestTreeDel.register(this.widestTree.treeitem.icons, "onwidth");
+					this.checkWidestTreeDel.register(this.widestTree.treeitem.indent, "onwidth");
+					this.checkWidestTreeDel.register(this.widestTree, "onvisible");
+					this.checkWidestTreeDel.register(this.widestTree.parent, "onopen");
+					newWidth = this.widestTree.getTreeWidth();
+				}
+				this.setAttribute("widestTreeWidth", newWidth);
+			}
+			]]>
+		</method>
+
+		<!---
+			Get the widest tree node.
+		-->
+		<method name="getWidestTree">
+			<![CDATA[
+			var widestTree = null;
+			var widestTreeWidth = 0;
+			if (this.open) {
+				for (var i = 0; i < this.children.subviews.length; i++) {
+					var v = this.children.subviews[i];
+					if (v.visible) {
+						var treeWidth = v.getTreeWidth();
+						if (treeWidth > widestTreeWidth) {
+							widestTree = v;
+							widestTreeWidth = treeWidth;
+						}
+						var widestChildTree = v.getWidestTree();
+						if (widestChildTree != null) {
+							treeWidth = widestChildTree.getTreeWidth();
+							if (treeWidth > widestTreeWidth) {
+								widestTree = widestChildTree;
+								widestTreeWidth = treeWidth;
+							}
+						}
+					}
+				}
+			}
+			return widestTree;
+			]]>
+		</method>
+
+		<!---
+			Get the width of this tree node.
+		-->
+		<method name="getTreeWidth">
+			<![CDATA[
+			var treeWidth = 0;
+			if (this["treeitem"]) {
+				treeWidth = this.treeitem.text.width + this.treeitem.icons.width + this.treeitem.indent.width + 10;
+			}
+			return treeWidth;
+			]]>
+		</method>
+
+		<!--- Handle setting the model object list -->
+		<handler name="onoList">
+			<![CDATA[
+			if (this.oList && this.maxObjectViews != null) {
+				if (!this["pageUp"]) {
+					new lz.wcfTreePageUp(this, {
+						name: "pageUp",
+						oList: this.oList
+					});
+				}
+				if (!this["pageDown"]) {
+					new lz.wcfTreePageDown(this, {
+						name: "pageDown",
+						oList: this.oList
+					});
+				}
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Put keyboard focus on parent. This method is overridden from
+			basetree to allow for the view recycling behaviour in wcfModelObjectList.
+			@keywords private
+		-->
+		<method name="_focusParent">
+			<![CDATA[
+			super._focusParent();
+			if (this["oList"] && this.oList.objectViewOffset == 0) {
+				this.setAttribute("_currentChild", this.children.subviews.indexOf(this.oList.getView(0)));
+			}
+			]]>
+		</method>
+
+		<!---
+			Put keyboard focus on the first child. This method is overridden from
+			basetree to allow for the view recycling behaviour in wcfModelObjectList.
+			@keywords private
+		-->
+		<method name="_focusFirstChild">
+			<![CDATA[
+			if (this["oList"]) {
+				var childView = null;
+				if (this.oList.objectViewOffset > 0) {
+					childView = this.children.subviews[0];
+				}
+				else {
+					childView = this.oList.getView(0);
+				}
+				if (childView != null) {
+					this.changeFocus(childView);
+				}
+			}
+			else {
+				super._focusFirstChild();
+			}
+        	]]>
+        </method>
+
+		<!---
+			Put keyboard focus on the last child. This method is overridden from
+			basetree to allow for the view recycling behaviour in wcfModelObjectList.
+			@keywords private
+		-->
+		<method name="_focusLastChild">
+			<![CDATA[
+			if (this["oList"]) {
+				var childView = null;
+				var viewCount = this.oList.getViewsLength();
+				if (viewCount == 0 && this.oList.objectViewOffset > 0) {
+					childView = this.children.subviews[0];
+				}
+				else {
+					childView = this.oList.getView(viewCount - 1);
+				}
+				if (childView != null) {
+					if (!childView.open || !childView["oList"] || (childView.oList.getViewsLength() == 0 && childView.oList.objectViewOffset == 0)) {
+						this.setAttribute("_currentChild", this.children.subviews.indexOf(childView));
+						this.changeFocus(childView);
+					}
+					else {
+						childView._focusLastChild();
+					}
+				}
+			}
+			else {
+				super._focusLastChild();
+			}
+			]]>
+		</method>
+
+		<!---
+			Put keyboard focus on previous sibling. This method is overridden from
+			basetree to allow for the view recycling behaviour in wcfModelObjectList.
+			@keywords private
+		-->
+		<method name="_focusPreviousSibling">
+			<![CDATA[
+			if (parent["oList"] && !this.isRoot()) {
+				if (parent._currentChild < parent.oList.objectViewOffset) {
+					super._focusPreviousSibling();
+				}
+				else {
+					var previousView = null;
+					var objects = parent.oList.filteredObjects;
+					var index = objects.indexOf(this.o) - 1;
+					if (index >= 0) {
+						var previousObject = objects[index];
+						parent.oList.showObjectInView(previousObject);
+						for (var i = 0; i < parent.children.subviews.length; i++) {
+							if (parent.children.subviews[i]["o"] == previousObject) {
+								previousView = parent.children.subviews[i];
+								break;
+							}
+						}
+					}
+					else if (parent.oList.objectViewOffset > 0) {
+						previousView = parent.children.subviews[parent.oList.objectViewOffset - 1];
+					}
+					if (previousView != null) {
+						parent.setAttribute("_currentChild", parent.children.subviews.indexOf(previousView));
+						if (previousView.open && previousView["oList"] && (previousView.oList.getViewsLength() > 0 || previousView.oList.objectViewOffset > 0)) {
+							previousView._focusLastChild();
+						}
+						else {
+							this.changeFocus(previousView);
+						}
+					}
+					else {
+						this._focusParent();
+					}
+				}
+			}
+			else {
+				super._focusPreviousSibling();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Put keyboard focus on next sibling. This method is overridden from
+			basetree to allow for the view recycling behaviour in wcfModelObjectList.
+			@keywords private
+		-->
+		<method name="_focusNextSibling">
+			<![CDATA[
+			if (parent["oList"] && !this.isRoot()) {
+				var nextView = null;
+				if (parent._currentChild < parent.oList.objectViewOffset - 1) {
+					super._focusNextSibling();
+				}
+				else {
+					var nextView = null;
+					var objects = parent.oList.filteredObjects;
+					var index = 0;
+					if (this["o"]) {
+						index = objects.indexOf(this.o) + 1;
+					}
+					if (objects.length > index) {
+						var nextObject = objects[index];
+						parent.oList.showObjectInView(nextObject);
+						for (var i = 0; i < parent.children.subviews.length; i++) {
+							var v = parent.children.subviews[i];
+							if (v["o"] == nextObject) {
+								nextView = v;
+								break;
+							}
+						}
+					}
+				}
+				if (nextView != null) {
+					parent.setAttribute("_currentChild", parent.children.subviews.indexOf(nextView));
+					this.changeFocus(nextView);
+				}
+				else {
+					parent._focusNextSibling();
+				}
+			}
+			else {
+				super._focusNextSibling();
+			}
+			]]>
+		</method>
+		
+		<view name="treeitem" placement="item">
+		
+			<wcfTooltip name="tooltip" text="${parent.text.text}" enabled="false"/>
+			
+			<handler name="onclick">
+				<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfTree onclick: " + this.text.getText());
+				wcfCallbackUtil.addDeferredCallback(this.doClickDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+				]]>
+			</handler>
+			
+			<method name="doClick" args="e=null">
+				<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfTree", "doClick", "treeitem: " + classroot.treeitem.text.getText() + " Start");
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "CONFIG", "wcfTree", "doClick", "treeitem: " + classroot.treeitem.text.getText());				
+				}			
+				classroot.changeFocus(null);
+				if (!classroot.selected) {
+					classroot.setAttribute('selected', true);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "CONFIG", "wcfTree", "END doClick", "treeitem: " + classroot.treeitem.text.getText());				
+				}			
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfTree", "doClick", "treeitem: " + classroot.treeitem.text.getText() + " End");
+				}
+				]]>
+			</method>
+
+			<handler name="ondblclick">
+				<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfTree ondblclick: " + this.text.getText());
+				wcfCallbackUtil.addDeferredCallback(this.doDoubleClickDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+				]]>
+			</handler>
+			
+			<!--- @keywords private -->
+			<handler name="oninit">
+				<![CDATA[
+				this.doClickDel = new lz.Delegate(this, "doClick");	
+				this.doDoubleClickDel = new lz.Delegate(this, "doDoubleClick");	
+				]]>
+			</handler>
+			
+			<!--- @keywords private -->
+			<method name="destroy">
+				<![CDATA[
+				this.doClickDel.unregisterAll();
+				this.doDoubleClickDel.unregisterAll();
+				delete this.doClickDel;
+				delete this.doDoubleClickDel;
+				super.destroy();
+				]]>
+			</method>
+
+			<method name="doDoubleClick" args="e=null">
+				<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "CONFIG", "wcfTree", "doDoublelick", "treeitem: " + classroot.treeitem.text.getText());				
+				}			
+				if (classroot.onactivate) {
+					classroot.onactivate.sendEvent();
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "CONFIG", "wcfTree", "END doDoublelick", "treeitem: " + classroot.treeitem.text.getText());				
+				}
+				]]>
+			</method>
+			
+			<handler name="onmouseover">
+				<![CDATA[
+				classroot.setAttribute("mousein", true);
+				]]>
+			</handler>
+			
+			<handler name="onmouseout">
+				<![CDATA[
+				classroot.setAttribute("mousein", false);
+				]]>
+			</handler>
+			
+			<view name="indent" height="${Math.max(parent.icons.y + parent.icons.height, parent.statusMessage.y + parent.statusMessage.height)}"/>
+			<view name="icons" y="3">
+				<view name="expander"
+					x="1"
+					y="3"
+					resource="objectTreeExpander"
+					frame="${classroot.open ? 2 : 1}"
+					opacity="${classroot.isTreeLeaf ? 0.00001 : 1.0}">
+				</view>
+				<view name="icon" x="11" y="0" resource="${classroot.icon}"/>
+				<view name="errorIcon"
+					y="${parent.icon.y + parent.icon.height - this.height}"
+					x="${parent.icon.x + parent.icon.width - this.width - 1}"
+					resource="treeErrorResource"
+					visible="${classroot.hasError}"/>
+				<handler name="onclick">
+					<![CDATA[
+					if (wcfLogger.perfTraceEnabled) {
+						wcfLogger.perfTrace("wcfTree", "Expand", "treeitem: " + classroot.treeitem.text.getText() + " Start");
+					}
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "CONFIG", "wcfTree", "onclick", "treeitem: " + classroot.treeitem.text.getText());				
+					}
+					if (classroot.isTreeLeaf) {
+						classroot.treeitem.doClick();
+					}
+					else {
+						if (wcfEventTimer.enabled) wcfEventTimer.start("wcfTree onclick: " + classroot.treeitem.text.getText());
+						classroot.setAttribute("open", !classroot.open);
+						if (wcfEventTimer.enabled) wcfEventTimer.end();
+					}
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "CONFIG", "wcfTree", "END onclick", "treeitem: " + classroot.treeitem.text.getText());				
+					}			
+					if (wcfLogger.perfTraceEnabled) {
+						wcfLogger.perfTrace("wcfTree", "Expand", "treeitem: " + classroot.treeitem.text.getText() + " End");
+					}
+					]]>
+				</handler>
+				
+				<handler name="onmouseover">
+					<![CDATA[
+					classroot.setAttribute("mousein", true);
+					]]>
+				</handler>
+					
+				<handler name="onmouseout">
+					<![CDATA[
+					classroot.setAttribute("mousein", false);
+					]]>
+				</handler>
+			</view>
+			<text name="text"
+					resize="true"
+					x="29"
+					y="${parent.icons.y-1}"
+					text="${this.escapeText(classroot.text)}"
+					fgcolor="${classroot.textColor}"
+					fontstyle="${classroot.textStyle}"/>
+			<text name="statusMessage"
+					text="${classroot.statusMessage}"
+					visible="${text != ''}"
+					width="${Math.max(classroot.width - 20, 50)}"
+					multiline="true"
+					x="20"
+					y="${visible ? parent.icons.y + parent.icons.height + 1 : 0}"/>
+		</view>
+
+		<view name="contextMenuArea" placement="item"
+									 bgcolor="yellow"
+									 height="${classroot.treeitem.height}"
+									 width="${classroot.treeitem.width}"
+									 x="${classroot.treeitem.x}"
+									 y="${classroot.treeitem.y}"
+									 opacity="0.0001"/>
+		
+		<method name="determinePlacement" args="v , p, a">
+			<![CDATA[
+			if(p=="dragtreegroup"){
+				return this;
+				
+			}
+			if(p=="dragtreeitem"){
+				return this.item.treeitem;
+			}
+			if(p=="treeitem"){
+				return this.treeitem;
+			}
+			if(p=="children"){
+				return this.children;
+			}
+			if(p=="item"){
+				return this.item;
+			}
+
+			return this;
+			]]>
+		</method>		
+		
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Tree page up button.
+	-->
+	<class name="wcfTreePageUp" extends="basebuttonrepeater" placement="tree"
+			resource="stepperUpButton"
+			normalResourceNumber="1"
+			overResourceNumber="2"
+			x="45"
+			visible="false">
+		<attribute name="oList"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			wcfCanvasMenu.addView(this);
+			this.updateVisibilityDel = new lz.Delegate(this, "updateVisibility");
+			this.updateVisibility();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateVisibilityDel.unregisterAll();
+			delete this.updateVisibilityDel;
+			]]>
+		</method>
+	
+		<!---
+			Handle mouse still down event.
+		-->
+		<handler name="onmousestilldown">
+			<![CDATA[
+			this.pageUp();
+			]]>
+		</handler>
+
+		<!---
+			Handle mouse down event.
+		-->
+		<handler name="onmousedown">
+			<![CDATA[
+			this.pageUp();
+			]]>
+		</handler>
+
+		<!---
+			Handle onopen event of parent.
+		-->
+		<handler name="onopen" reference="parent">
+			<![CDATA[
+			this.updateVisibility();
+			]]>
+		</handler>
+		
+		<!---
+			Update the visibility of the scroll button.
+		-->
+		<method name="updateVisibility" args="e=null">
+			<![CDATA[
+			this.updateVisibilityDel.unregisterAll();
+			var newVisible = parent.open && this.oList.filteredObjects.length > 0 && this.oList.fromIndex > 0;
+			var newY = 0;
+			var newHeight = 0;
+			var newYIndent = parent.item.y + parent.item.height + 1;
+			if (newVisible) {
+				newY = parent.item.height + 1;
+				newHeight = this.resourceheight;
+				newYIndent = parent.item.y + parent.item.height + newHeight + 1;
+			}
+			if (newY != this.y) {
+				this.setAttribute("y", newY);
+			}
+			if (newHeight != this.height) {
+				this.setAttribute("height", newHeight);
+			}
+			if (newYIndent != parent.yindent) {
+				parent.setAttribute("yindent", newYIndent);
+			}
+			if (newVisible != this.visible) {
+				this.setAttribute("visible", newVisible);
+			}
+			if (parent.open) {
+				this.updateVisibilityDel.register(parent.item, "onheight");
+				this.updateVisibilityDel.register(parent.item, "ony");
+				this.updateVisibilityDel.register(this.oList, "objectViewsUpdated");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Scroll up a page.
+		-->
+		<method name="pageUp">
+			<![CDATA[
+			parent.children.setAttribute('height', parent.children.height);
+			this.oList.setFromIndex(this.oList.fromIndex - parent.maxObjectViews);
+			parent.children.setAttribute('height', null);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Tree page down button.
+	-->
+	<class name="wcfTreePageDown" extends="basebuttonrepeater" placement="tree"
+			resource="stepperDownButton"
+			normalResourceNumber="1"
+			overResourceNumber="2"
+			x="45"
+			y="${parent.children.y + parent.children.height}"
+			visible="false">
+		<attribute name="oList"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			wcfCanvasMenu.addView(this);
+			this.updateVisibilityDel = new lz.Delegate(this, "updateVisibility");
+			this.updateVisibility();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateVisibilityDel.unregisterAll();
+			delete this.updateVisibilityDel;
+			]]>
+		</method>
+	
+		<!---
+			Handle mouse still down event.
+		-->
+		<handler name="onmousestilldown">
+			<![CDATA[
+			this.pageDown();
+			]]>
+		</handler>
+		
+		<!---
+			Handle mouse down event.
+		-->
+		<handler name="onmousedown">
+			<![CDATA[
+			this.pageDown();
+			]]>
+		</handler>
+		
+		<!---
+			Handle onopen event of parent.
+		-->
+		<handler name="onopen" reference="parent">
+			<![CDATA[
+			this.updateVisibility();
+			]]>
+		</handler>
+		
+		<!---
+			Update the visibility of the scroll button.
+		-->
+		<method name="updateVisibility" args="e=null">
+			<![CDATA[
+			this.updateVisibilityDel.unregisterAll();
+			var newVisible = parent.open && this.oList.filteredObjects.length > (this.oList.toIndex + 1);
+			var newY = 0;
+			var newHeight = 0;
+			if (newVisible) {
+				newY = parent.children.y + parent.children.height + 1;
+				newHeight = this.resourceheight;
+			}
+			if (newY != this.y) {
+				this.setAttribute("y", newY);
+			}
+			if (newHeight != this.height) {
+				this.setAttribute("height", newHeight);
+			}
+			if (newVisible != this.visible) {
+				this.setAttribute("visible", newVisible);
+			}
+			if (parent.open) {
+				this.updateVisibilityDel.register(parent.children, "onheight");
+				this.updateVisibilityDel.register(parent.children, "ony");
+				this.updateVisibilityDel.register(this.oList, "objectViewsUpdated");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Scroll down a page.
+		-->
+		<method name="pageDown">
+			<![CDATA[
+			parent.children.setAttribute('height', parent.children.height);
+			this.oList.setToIndex(this.oList.toIndex + parent.maxObjectViews);
+			parent.children.setAttribute('height', null);
+			]]>
+		</method>
+	</class>
+	
+	
+</library>

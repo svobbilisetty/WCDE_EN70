@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	 
+	<FlowElementProperties definitionName="prcPriceRuleProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="general"  text="${prcPriceResources.generalProperties}">
+				<PropertyPane name="generalPane">
+					<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+					<PropertyGroup groupTitle="${prcPriceResources.priceRuleProperties}" hideHeaderWhenOnlyGroup="true" name="group" open="true">
+						<PropertyInputText promptText="${prcPriceResources.nameString}" propertyName="name"/>
+						<PropertyInputMultiLineText promptText="${prcPriceResources.description}" propertyName="description"/>
+						<PropertyGroup collapsable="false" name="dependentProperty">
+							<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+							<PropertyViewLongText promptText="${prcPriceResources.dependency}" propertyName="dependent"/>
+						</PropertyGroup>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<PropertyTabPane name="reference"  text="${prcPriceResources.references}">
+				<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+				<PropertyPane name="referencePane">
+					<PropertyGroup name="priceRuleRef" groupTitle="${prcPriceResources.priceRules}" open="true">
+						<PropertyReferenceList promptText="${prcPriceResources.priceRules}" listDefinitionName="prcPriceRuleRefGrid" name="priceRuleRefList" referenceObjectPaths="*/RefPriceRuleGroup" helpText="${prcPriceResources.helpText_priceRuleRefPriceRule}"/>
+					</PropertyGroup>
+					<PropertyGroup name="contractRef" groupTitle="${prcPriceResources.contracts}" open="true">
+						<PropertyReferenceList promptText="${prcPriceResources.contracts}" listDefinitionName="prcContractRefGrid" name="contractRefList" referenceObjectPaths="Contract/RefPriceRule" helpText="${prcPriceResources.helpText_contractRefPriceRule}"/>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</FlowElementProperties>
+	
+	<FlowBuilder definitionName="prcPriceRuleBuilder" flowConnectorClass="prcPriceRuleFlowConnector" flowPathClass="prcFlowPath" generalPropertiesDefinitionName="prcPriceRuleProperties">
+		<Xml name="palette">
+			<Group name="actions" resourceBundle="prcPriceResources" helpText="help_palette_actions" helpLink="concepts/cpiactions.htm">
+				<Element objectType="priceList"/>
+				<Element objectType="calculatePrice"/>
+				<Element objectType="nestedPriceRule"/>
+				<Element objectType="roundingPrice"/>
+			</Group>
+			<Group name="conditions" resourceBundle="prcPriceResources" helpText="help_palette_conditions" helpLink="concepts/cpiconditions.htm">
+				<Element objectType="catalogCondition"/>
+				<Element objectType="compareCondition"/>
+				<Element objectType="priceListCondition"/>
+				<Element objectType="customerCondition"/>
+				<Element objectType="dateCondition"/>
+			</Group>
+			<Group name="branches" resourceBundle="prcPriceResources" helpText="help_palette_branches" helpLink="concepts/cpibranches.htm">
+				<Element objectType="simpleBranch"/>
+				<Element objectType="coordinatorBranch"/>
+				<Element objectType="dynamicKitBranch"/>
+			</Group>
+		</Xml>
+	</FlowBuilder>
+
+</Definitions>

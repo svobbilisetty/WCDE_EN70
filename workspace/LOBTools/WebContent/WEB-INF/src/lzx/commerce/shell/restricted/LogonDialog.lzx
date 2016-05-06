@@ -1,0 +1,755 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!--- Logon service. -->
+	<wcfService id="logonService" sendIdentity="false" sendWorkspaceContext="false" sendTimeZoneId="false" url="/cmc/Logon" retryOnError="true">
+		<!---
+			Parse the response values from the logon service.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				super.parseValues(requestParent, e, requestIdentifier);
+				requestParent.logonComplete();
+			]]>
+		</method>
+
+		<!---
+			Handle service exception. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param message string: the exception message
+			@param code string: the exception code
+		-->
+		<method name="handleException" args="ds, message, code=null">
+			<![CDATA[
+				if (ds.requestParent.isPasswordExpired) {
+					ds.requestParent.changePasswordFailed(message, code);
+				}
+				else {
+					ds.requestParent.logonFailed(message, code);
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<!--- Change password service. -->
+	<wcfService id="changePasswordService" sendWorkspaceContext="false" sendTimeZoneId="false" url="/cmc/ChangePassword">
+		<!---
+			Parse the response values from the change password service.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				super.parseValues(requestParent, e, requestIdentifier);
+				requestParent.changePasswordComplete();
+			]]>
+		</method>
+
+		<!---
+			Handle service exception. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param message string: the exception message
+			@param code string: the exception code
+		-->
+		<method name="handleException" args="ds, message, code=null">
+			<![CDATA[
+				ds.requestParent.changePasswordFailed(message, code);
+			]]>
+		</method>
+	</wcfService>
+
+	<!--- Resolve Identity service. -->
+	<wcfService id="resolveIdentityService" sendIdentity="false" sendTimeZoneId="false" sendWorkspaceContext="false" url="/cmc/ResolveIdentity">
+		<!---
+			Parse the response values from the resolve identity service.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				super.parseValues(requestParent, e, requestIdentifier);
+				var identityId = wcfContextUtil.findContextValue(null, "identityId").value;
+				var identitySignature = wcfContextUtil.findContextValue(null, "identitySignature").value;
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.shell.LogonDialog", "INFO", "resolveIdentityService", "parseValues", "identityId is " + identityId);
+				}
+				if (identityId != null && identitySignature != null) {
+					applicationMenu.initializeMenu();
+					logonSuccessful();
+				}
+				else {
+					if (!global["logonPanel"]) {
+						global.logonPanel = new lz.wcfLogonPanel(canvas);
+					}
+					else if (!global.logonPanel.visible) {
+						global.logonPanel.setAttribute("visible", true);
+					}
+					if ($debug && Debug["console"]) {
+						if (Debug.console["window"] && Debug.console.window["bringToFront"]) {
+							Debug.console.window.bringToFront();
+						} else if (Debug.console["bringToFront"]) {
+							Debug.console.bringToFront();
+						}
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			Handle service exception. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param message string: the exception message
+			@param code string: the exception code
+		-->
+		<method name="handleException" args="ds, message, code=null">
+			<![CDATA[
+				if (!global["logonPanel"]) {
+					global.logonPanel = new lz.wcfLogonPanel(canvas);
+				}
+				else if (!global.logonPanel.visible) {
+					global.logonPanel.setAttribute("visible", true);
+				}
+				if ($debug && Debug["console"]) {
+					if (Debug.console["window"] && Debug.console.window["bringToFront"]) {
+						Debug.console.window.bringToFront();
+					} else if (Debug.console["bringToFront"]) {
+						Debug.console.bringToFront();
+					}
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		
+		This class implements the buttons in Management Center log on dialog.
+	-->
+	<class name="wcfLogonButton" extends="wcfFocusableBaseButton" clickable="true" enabled="true" pixellock="true" styleable="true">
+		<!--- @keywords private -->
+		<attribute name="buttonstate" type="number" value="1" />
+		<!--- @keywords private -->
+		<attribute name="activeState" type="number" value="1" />
+		<!--- @keywords private -->
+		<attribute name="hoverState" type="number" value="2" />
+		<!--- @keywords private -->
+		<attribute name="pressedState" type="number" value="3" />
+		<!--- @keywords private -->
+		<attribute name="buttonState" type="number" setter="setButtonState(buttonState)" />
+		<!--- @keywords private -->
+		<attribute name="doesenter" value="true" />
+
+		<!--- @keywords private -->
+		<method name="setButtonState" args="state">
+			<![CDATA[
+				wcfLangUtil.forEach([this.leftBorder, this.centerBackground, this.rightBorder], function (v) {
+					v.setAttribute('frame', state);
+				}, this);
+				if (state == this.activeState) {
+					this.textcolor = this.style.logonbuttonactivetextcolor;
+				}
+				else if (state == this.hoverState || state == this.pressedState) {
+					this.textcolor = this.style.logonbuttonhovertextcolor;
+				}
+				buttonTitle.setAttribute("fgcolor", this.textcolor);
+				this.buttonState = state;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onkeydown" reference="lz.Keys" args="key">
+			<![CDATA[
+				if ((key == 32 || key == 13 ) && lz.Focus.getFocus() == this) {
+					setButtonState(this.pressedState);
+				}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onkeyup" reference="lz.Keys" args="key">
+			<![CDATA[
+				// space down or enter down
+				if ((key == 32 || key == 13) && lz.Focus.getFocus() == this && this.buttonState == this.pressedState) {
+					setButtonState(this.activeState);
+				}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onmouseover">
+			<![CDATA[
+				setButtonState(this.hoverState);
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onmouseout">
+			<![CDATA[
+				setButtonState(this.activeState);
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onmousedown">
+			<![CDATA[
+				setButtonState(this.pressedState);
+				lz.Focus.setFocus(this);
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onmouseup">
+			<![CDATA[
+				if (this.buttonState == this.pressedState) {
+					setButtonState(this.hoverState);
+				}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+				if (this.style != null) {
+					this.textcolor = s.logonbuttonactivetextcolor;
+					buttonTitle.setAttribute("fgcolor", this.textcolor);
+				}
+			]]>
+		</method>
+
+		<view name="leftBorder" resource="logonButtonLeft" />
+		<view name="centerBackground" resource="logonButtonCenter" x="${parent.leftBorder.width}" stretches="width" width="${parent.buttonTitle.width + 2}" />
+		<view name="rightBorder" resource="logonButtonRight" x="${parent.leftBorder.width + parent.centerBackground.width}" />
+		<text name="buttonTitle" text="${parent.text}" x="${parent.leftBorder.width + 1}" y="4" resize="true" font="Arial" fontsize="11" />
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class implements the main input area within Management Center log on dialog.
+		It also handles all the log on related events.
+	-->
+	<class name="wcfLogonInputWidget" extends="basecomponent" focusable="false">
+		<!---
+			@keywords private
+			Flag that determines whether this input widget is for re-logon or not. The default
+			value is set to false.
+		-->
+		<attribute name="reLogon" type="boolean" value="false" />
+
+		<!---
+			@keywords private
+			Flag that determines whether the logon service is currently running or not. The
+			default value is set to false, and it will be set to true when this flag is false
+			and the user clicks on the logon button to start the logon process.
+		-->
+		<attribute name="isLogonServiceRunning" type="boolean" value="false" />
+
+		<!---
+			@keywords private
+			Flag that determines whether to proceed with change password when the logon process
+			completed successfully or not. The default value is set to false, and it will be set
+			to true when the change password checkbox is checked at the time logon process starts.
+		-->
+		<attribute name="isChangePassword" type="boolean" value="false" />
+
+		<!---
+			@keywords private
+			Flag that determines whether the password that the user entered has been expired or
+			not. The default value is set to false, and it will be set to true when the logon
+			service failed and indicated that the user's password is expired.
+		-->
+		<attribute name="isPasswordExpired" type="boolean" value="false" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "FINER", "wcfLogonInputWidget", "oninit", "Initializing log on dialog in Management Center.");
+				}
+				this.resetForm();
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="logon">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfLogonInputWidget", "logon", "Starts log on process by invoking logonService.");
+				}
+				this.logonErrorMessageView.setAttribute("visible", false);
+				if (!this["isLogonServiceRunning"]) {
+					if (wcfEventTimer.enabled) wcfEventTimer.start("logon");
+					this.setAttribute("isLogonServiceRunning", true);
+					this.isChangePassword = this.logonInputView.logonInputDetailsView.changePassword.getValue();
+					var logonId = this.logonInputView.logonInputDetailsView.logonId.getText();
+					if (wcfContextUtil.findContextValue(null, "logonIdDN").value != null) {
+						logonId = wcfContextUtil.findContextValue(null, "logonIdDN").value;
+					}
+					logonService.doRequest(this, {
+						logonId: logonId,
+						password: this.logonInputView.logonInputDetailsView.password.getText(),
+						channelId: wcfContextUtil.findContextValue(null, "channelId").value
+					});
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+				}
+				else {
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfLogonInputWidget", "logon", "Log on process has already begun and logonService is currently running.");
+					}
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="resetForm">
+			<![CDATA[
+				// reset views
+				this.logonInputView.changePasswordInputDetailsView.setAttribute("visible", false);
+				this.logonInputView.logonInputDetailsView.setAttribute("visible", true);
+				this.logonErrorMessageView.setAttribute("visible", false);
+
+				// reset attribute values in the class
+				this.isChangePassword = false;
+				this.isPasswordExpired = false;
+
+				// reset values in the form
+				this.logonInputView.changePasswordInputDetailsView.newPasswordVerify.setText("");
+				this.logonInputView.changePasswordInputDetailsView.newPassword.setText("");
+				this.logonInputView.changePasswordInputDetailsView.oldPassword.setText("");
+				this.logonInputView.logonInputDetailsView.changePassword.setValue(false);
+				this.logonInputView.logonInputDetailsView.password.setText("");
+
+				// update logon ID field based on re-logon flag
+				if (this.reLogon) {
+					this.logonInputView.logonInputDetailsView.logonId.setText(wcfContextUtil.findContextValue(null, "logonId").value);
+				}
+				else {
+					this.logonInputView.logonInputDetailsView.logonId.setText("");
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "FINER", "wcfLogonInputWidget", "resetForm", "Completed initializing log on dialog in Management Center.");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method handles the event when log on completed successfully.
+		-->
+		<method name="logonComplete">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "FINER", "wcfLogonInputWidget", "logonComplete", "Log on process completed successfully, start loading the main application.");
+				}
+				wcfContextUtil.findContextValue(null, "logonId").setAttribute("value", this.logonInputView.logonInputDetailsView.logonId.getText());
+				if (this.isChangePassword) {
+					this.showChangePassword();
+				}
+				else {
+					if (!this.reLogon) {
+						startToolAccessControlCheck();
+					}
+					else {
+						logonSuccessful();
+					}
+				}
+
+				// reset the flag that indicates whether the logon service is running or not
+				this.setAttribute("isLogonServiceRunning", false);
+			]]>
+		</method>
+
+		<!---
+			This method handles the event when log on failed. It takes the reason code of the
+			failure and display its associated error message in the error message area.
+			@param string message: message for logon failure
+			@param string code: reason code for logon failure
+		-->
+		<method name="logonFailed" args="message, code">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfLogonInputWidget", "logonFailed(message,code)", "Log on process failed due to the following reason (" + code + "): " + message);
+				}
+
+				// check for the reason of failure and display the corresponding error message
+				var errorMessage = "";
+				if (code == wcfFoundationConstants.ERROR_LOGON_WRONG_LOGON_ID || 
+						code == wcfFoundationConstants.ERROR_LOGON_WRONG_PASSWORD ||
+						code == wcfFoundationConstants.ERROR_LOGON_MISSING_LOGON_ID ||
+						code == wcfFoundationConstants.ERROR_LOGON_MISSING_PASSWORD ||
+						code == wcfFoundationConstants.ERROR_LOGON_PASSWORD_LENGTH) { 				// logon ID or password is missing or invalid
+					errorMessage = shellResourceBundle.errorLogonUserWrongIDPassword.string;
+				}  
+				else if (code == wcfFoundationConstants.ERROR_LOGON_USER_ACCOUNT_DISABLED) {		// user account is disabled
+					errorMessage = shellResourceBundle.errorLogonUserAccountDisabled.string;
+				}
+				else if (code == wcfFoundationConstants.ERROR_LOGON_PARENT_ORG_LOCKED) {			// parent organization that owns the user is locked
+					errorMessage = shellResourceBundle.errorLogonUserParentOrgLocked.string;
+				}
+				else if (code == wcfFoundationConstants.ERROR_LOGON_USER_NOT_REGISTERED_IN_STORE) {	// user is not registered in any stores
+					errorMessage = shellResourceBundle.errorLogonUserNotRegisteredInStore.string;
+				}
+				else if (code == wcfFoundationConstants.ERROR_LOGON_USER_PENDING_APPROVAL) {		// user account is not approved
+					errorMessage = shellResourceBundle.errorLogonUserInPendingApproval.string;
+				}
+				else if (code == wcfFoundationConstants.ERROR_LOGON_NOT_ALLOWED_NOW) { 				// user is not allowed to logon now due to repeated invalid password
+					errorMessage = message;
+				} 
+				else if (code == wcfFoundationConstants.ERROR_LOGON_PASSWORD_EXPIRED) {				// user password has expired
+					errorMessage = shellResourceBundle.errorLogonUserPasswordExpired.string;
+					this.isPasswordExpired = true;
+					this.showChangePassword();
+				}
+				else {
+					errorMessage = message;
+				}
+
+				// set the error message to the view
+				this.logonErrorMessageView.errorMessage.setAttribute("text", errorMessage);
+				this.logonErrorMessageView.setAttribute("visible", true);
+
+				// reset the flag that indicates whether the logon service is running or not
+				this.setAttribute("isLogonServiceRunning", false);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="showChangePassword">
+			<![CDATA[
+				this.logonInputView.logonInputDetailsView.setAttribute("visible", false);
+				this.logonInputView.changePasswordInputDetailsView.setAttribute("visible", true);
+				lz.Focus.setFocus(this.logonInputView.changePasswordInputDetailsView.oldPassword);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Set the initial focus
+		-->
+		<method name="setInitialFocus">
+			<![CDATA[
+				if (this.reLogon) {
+					lz.Focus.setFocus(this.logonInputView.logonInputDetailsView.password, false);
+				} else {
+					lz.Focus.setFocus(this.logonInputView.logonInputDetailsView.logonId, false);
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="submitChangePassword">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfLogonInputWidget", "submitChangePassword", "Starts change password process by invoking changePasswordService.");
+				}
+				this.logonErrorMessageView.setAttribute("visible", false);
+				if (!this["isLogonServiceRunning"]) {
+					this.setAttribute("isLogonServiceRunning", true);
+					if (this.isPasswordExpired) {
+						logonService.doRequest(this, {
+							logonId: this.logonInputView.logonInputDetailsView.logonId.getText(),
+							password: this.logonInputView.changePasswordInputDetailsView.oldPassword.getText(),
+							logonPasswordNew: this.logonInputView.changePasswordInputDetailsView.newPassword.getText(),
+							logonPasswordVerify: this.logonInputView.changePasswordInputDetailsView.newPasswordVerify.getText(),
+							channelId: wcfContextUtil.findContextValue(null, "channelId").value
+						});
+					}
+					else {
+						changePasswordService.doRequest(this, {
+							logonPasswordOld: this.logonInputView.changePasswordInputDetailsView.oldPassword.getText(),
+							logonPassword: this.logonInputView.changePasswordInputDetailsView.newPassword.getText(),
+							logonPasswordVerify: this.logonInputView.changePasswordInputDetailsView.newPasswordVerify.getText()
+						});
+					}
+				}
+				else {
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfLogonInputWidget", "submitChangePassword", "Change password process has already begun and changePasswordService is currently running.");
+					}
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="cancelChangePassword">
+			<![CDATA[
+				if (this.isPasswordExpired) {
+					this.resetForm();
+					this.setInitialFocus();
+				}
+				else {
+					startToolAccessControlCheck();
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="changePasswordComplete">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "FINER", "wcfLogonInputWidget", "changePasswordComplete", "Change password process completed successfully, start loading the main application.");
+				}
+				startToolAccessControlCheck();
+
+				// reset the flag that indicates whether the change password service is running or not
+				this.setAttribute("isLogonServiceRunning", false);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="changePasswordFailed" args="message, code">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfLogonInputWidget", "changePasswordFailed(message,code)", "Change password process failed due to the following reason (" + code + "): " + message);
+				}
+
+				// check for the reason of failure and display the corresponding error message
+				var errorMessage = "";
+				if (code == wcfFoundationConstants.ERROR_CHANGE_PASSWORD_MISSING_OLD_PASSWORD || code == wcfFoundationConstants.ERROR_CHANGE_PASSWORD_WRONG_OLD_PASSWORD) {
+					errorMessage = shellResourceBundle.errorChangePasswordWrongOldPassword.string;
+				}
+				else if (code == wcfFoundationConstants.ERROR_CHANGE_PASSWORD_MISSING_NEW_PASSWORD || code == wcfFoundationConstants.ERROR_CHANGE_PASSWORD_MISSING_NEW_PASSWORD_VERIFY) {
+					errorMessage = shellResourceBundle.errorChangePasswordWrongNewPassword.string;
+				}
+				else if (code == wcfFoundationConstants.ERROR_CHANGE_PASSWORD_NEW_PASSWORD_DO_NOT_MATCH) {
+					errorMessage = shellResourceBundle.errorChangePasswordNewPasswordDoNotMatch.string;
+				}
+				else {
+					errorMessage = message;
+				}
+
+				// set the error message to the view
+				this.logonErrorMessageView.errorMessage.setAttribute("text", errorMessage);
+				this.logonErrorMessageView.setAttribute("visible", true);
+
+				// reset the flag that indicates whether the change password service is running or not
+				this.setAttribute("isLogonServiceRunning", false);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="startToolAccessControlCheck">
+			<![CDATA[
+				this.finishToolAccessControlCheckDel = new lz.Delegate(this, "finishToolAccessControlCheck");
+				this.finishToolAccessControlCheckDel.register(applicationMenu, "onnumberOfAccessibleTools");
+				applicationMenu.initializeMenu();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="finishToolAccessControlCheck" args="e=null">
+			<![CDATA[
+				if (applicationMenu.numberOfAccessibleTools == 0) {
+					logonFailed(shellResourceBundle.errorLogonNoAccessibleTools.string, null);
+				}
+				else {
+					logonSuccessful();
+				}
+				if (this["finishToolAccessControlCheckDel"]) {
+					this.finishToolAccessControlCheckDel.unregisterAll();
+					delete this.finishToolAccessControlCheckDel;
+				}
+			]]>
+		</method>
+
+		<view height="5" />
+		<view name="logonErrorMessageView" visible="false">
+			<view resource="errorIcon" valign="top" />
+			<text name="errorMessage" width="365" valign="top" multiline="true" fgcolor="${classroot.style.logonerrortextcolor}" font="Arial" fontsize="11" />
+			<simplelayout axis="x" spacing="4" />
+		</view>
+		<view height="5" />
+		<view name="logonInputView" x="14">
+			<view resource="logonIcon" valign="top" />
+			<view name="logonInputDetailsView" y="13">
+				<text text="${shellResourceBundle.logonDialogUserNamePrompt.string}" fgcolor="${classroot.style.logonlabeltextcolor}" font="Arial" fontstyle="bold" fontsize="11" />
+				<wcfInputText name="logonId" width="220" enabled="${!classroot.reLogon}">
+					<!--- @keywords private -->
+					<handler name="onkeydown" args="k">
+						<![CDATA[
+							if (k == 13) { parent.classroot.logon(); }
+						]]>
+					</handler>
+				</wcfInputText>
+				<view height="12" />
+				<text text="${shellResourceBundle.logonDialogPasswordPrompt.string}" fgcolor="${classroot.style.logonlabeltextcolor}" font="Arial" fontstyle="bold" fontsize="11" />
+				<wcfInputText name="password" width="220" password="true">
+					<!--- @keywords private -->
+					<handler name="onkeydown" args="k">
+						<![CDATA[
+							if (k == 13) { parent.classroot.logon(); }
+						]]>
+					</handler>
+				</wcfInputText>
+				<view height="12" />
+				<wcfBaseCheckbox name="changePassword" text="${shellResourceBundle.logonDialogChangePasswordPrompt.string}">
+					<!--- @keywords private -->
+					<handler name="onkeydown" args="k">
+						<![CDATA[
+							if (k == 13) { parent.classroot.logon(); }
+						]]>
+					</handler>
+				</wcfBaseCheckbox>
+				<view height="20" />
+				<wcfLogonButton text="${shellResourceBundle.logonButton.string}" onclick="classroot.logon();" x="-4" enabled="${!classroot.isLogonServiceRunning}" />
+				<simplelayout axis="y" spacing="0" />
+			</view>
+			<view name="changePasswordInputDetailsView" y="13" visible="false">
+				<text text="${shellResourceBundle.changePasswordDialogSectionHeader.string}" width="220" multiline="true" fgcolor="${classroot.style.logonlabeltextcolor}" fontsize="11" />
+				<view height="12" />
+				<text text="${shellResourceBundle.changePasswordDialogOldPasswordPrompt.string}" fgcolor="${classroot.style.logonlabeltextcolor}" font="Arial" fontstyle="bold" fontsize="11" />
+				<wcfInputText name="oldPassword" width="220" password="true">
+					<!--- @keywords private -->
+					<handler name="onkeydown" args="k">
+						<![CDATA[
+							if (k == 13) { parent.classroot.submitChangePassword(); }
+						]]>
+					</handler>
+				</wcfInputText>
+				<view height="12" />
+				<text text="${shellResourceBundle.changePasswordDialogNewPasswordPrompt.string}" fgcolor="${classroot.style.logonlabeltextcolor}" font="Arial" fontstyle="bold" fontsize="11" />
+				<wcfInputText name="newPassword" width="220" password="true">
+					<!--- @keywords private -->
+					<handler name="onkeydown" args="k">
+						<![CDATA[
+							if (k == 13) { parent.classroot.submitChangePassword(); }
+						]]>
+					</handler>
+				</wcfInputText>
+				<view height="12" />
+				<text text="${shellResourceBundle.changePasswordDialogNewPasswordVerifyPrompt.string}" fgcolor="${classroot.style.logonlabeltextcolor}" font="Arial" fontstyle="bold" fontsize="11" />
+				<wcfInputText name="newPasswordVerify" width="220" password="true">
+					<!--- @keywords private -->
+					<handler name="onkeydown" args="k">
+						<![CDATA[
+							if (k == 13) { parent.classroot.submitChangePassword(); }
+						]]>
+					</handler>
+				</wcfInputText>
+				<view height="20" />
+				<view name="changePasswordButtonView" x="-4">
+					<wcfLogonButton text="${shellResourceBundle.changeButton.string}" onclick="classroot.submitChangePassword()" enabled="${!classroot.isLogonServiceRunning}" />
+					<wcfLogonButton text="${shellResourceBundle.cancelButton.string}" onclick="classroot.cancelChangePassword()" enabled="${!classroot.isLogonServiceRunning}" />
+					<simplelayout axis="x" spacing="5" />
+				</view>
+				<simplelayout axis="y" spacing="0" />
+			</view>
+			<simplelayout axis="x" spacing="20" />
+		</view>
+		<view height="20" />
+		<simplelayout axis="y" spacing="0" />
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class defines the dialog for Management Center log on when the session has expired
+		and the user is forced to log on again.
+	-->
+	<class name="wcfLogonDialog" extends="wcfDialog" title="${shellResourceBundle.logonDialogTitle.string}" closeable="false">
+		<wcfLogonInputWidget name="logonInputWidget" reLogon="true" />
+		
+		<!---
+			@keywords private
+			Set the initial focus
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			this.logonInputWidget.setInitialFocus();
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class defines the log on page in Management Center. It consists of the title of the
+		page, the main log on input area, and Management Center copyright statement as the footer.
+	-->
+	<class name="wcfLogonPanel" extends="basecomponent" focusable="false">
+		<!--- @keywords private -->
+		<method name="resetForm">
+			<![CDATA[
+				this.logonPane.logonFrame.logonArea.logonInputWidgetView.logonInputWidget.resetForm();
+				this.logonPane.logonFrame.logonArea.logonInputWidgetView.logonInputWidget.setInitialFocus();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.logonPane.logonFrame.logonArea.logonInputWidgetView.logonInputWidget.setInitialFocus();
+			]]>
+		</handler>
+
+		<view width="${canvas.width}" height="${canvas.height}" bgcolor="${classroot.style.workareacolor}" resource="workAreaBackground" />
+		<view name="logonPane" width="452" align="center">
+			<view height="147" />
+			<text x="5" text="${shellResourceBundle.applicationTitle.string}" fgcolor="${classroot.style.logontitletextcolor}" font="Arial" fontstyle="bold" fontsize="16" multiline="true" width="${parent.width}" />
+			<view height="18" />
+			<view name="logonFrame">
+				<view>
+					<view resource="logonFrameTopLeft" />
+					<view resource="logonFrameTop" width="420" stretches="width" />
+					<view resource="logonFrameTopRight" />
+					<simplelayout axis="x" spacing="0" />
+				</view>
+				<view name="logonArea">
+					<view resource="logonFrameLeft" height="${parent.logonInputWidgetView.logonInputWidget.height}" stretches="height" />
+					<view name="logonInputWidgetView">
+						<view resource="logonFrameCenter" width="420" height="${parent.logonInputWidget.height}" stretches="both" />
+						<wcfLogonInputWidget name="logonInputWidget" x="4" />
+					</view>
+					<view resource="logonFrameRight" height="${parent.logonInputWidgetView.logonInputWidget.height}" stretches="height" />
+					<simplelayout axis="x" spacing="0" />
+				</view>
+				<view>
+					<view resource="logonFrameBottomLeft" />
+					<view resource="logonFrameBottom" width="420" stretches="width" />
+					<view resource="logonFrameBottomRight" />
+					<simplelayout axis="x" spacing="0" />
+				</view>
+				<simplelayout axis="y" spacing="0" />
+			</view>
+			<view height="18" />
+			<view x="8">
+				<view y="6" resource="logonLogo" />
+				<text text="${shellResourceBundle.logonDialogLicenseStatement.string}" width="379" valign="top" multiline="true" fgcolor="${classroot.style.logonlicensetextcolor}" font="Arial" fontsize="11" />
+				<simplelayout axis="x" spacing="17" />
+			</view>
+			<simplelayout axis="y" spacing="0" />
+		</view>
+	</class>
+
+</library>

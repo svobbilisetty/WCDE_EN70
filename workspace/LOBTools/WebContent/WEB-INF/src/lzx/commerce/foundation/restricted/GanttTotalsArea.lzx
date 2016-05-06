@@ -1,0 +1,607 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!--- @keywords private -->
+	<class name="wcfGanttMonthCell">
+		<attribute name="text" type="string" value="Default Value"/>
+		<attribute name="startdate" value="null"/>
+		<attribute name="width" value="0"/>
+		<attribute name="weekheight" value="10"/>
+		<attribute name="textheight" value="20"/>
+		<attribute name="totalsArea" value="null" />
+		
+		<handler name="oninit">
+			if (startdate!=null){
+				this.setAttribute("width", wcfDateUtil.daysleftinmonth(this.startdate)*2);
+			}
+		</handler>
+		
+		<handler name="onstartdate">
+			if( startdate != null){
+				this.setAttribute("width", wcfDateUtil.daysleftinmonth(this.startdate)*2);
+				
+				this.content.monthtextview.monthtext.setAttribute('text', wcfStringUtil.substituteparameters(foundationResources['monthYear'+this.startdate.getMonth()].string, this.startdate.getFullYear()));
+			}
+		</handler>
+			
+		<simplelayout axis="x"/>
+		<view height="${classroot.height}" bgcolor="${wcfGanttChartStyle.ganttselectedarea}" width="1"/>
+		<view name="content" width="${classroot.width}" height="${classroot.weekheight + classroot.textheight}" clip="true">
+			<simplelayout axis="y"/>
+			<!-- view height="1" bgcolor="black" width="${parent.width}"/ -->
+			<view height="${classroot.weekheight-1}">
+				<simplelayout axis="x"/>
+				<view height="${parent.height}" width="13" onclick="classroot.clickWeek(1,7)" onmouseover="classroot.doMouseOver(this)" onmouseout="classroot.doMouseOut(this)"/>
+				<view height="${parent.height}" width="1" bgcolor="${wcfGanttChartStyle.ganttselectedarea}"/>
+				<view height="${parent.height}" width="13" onclick="classroot.clickWeek(8,14)" onmouseover="classroot.doMouseOver(this)" onmouseout="classroot.doMouseOut(this)"/>								
+				<view height="${parent.height}" width="1" bgcolor="${wcfGanttChartStyle.ganttselectedarea}"/>
+				<view height="${parent.height}" width="13" onclick="classroot.clickWeek(15,21)" onmouseover="classroot.doMouseOver(this)" onmouseout="classroot.doMouseOut(this)"/>
+				<view height="${parent.height}" width="1" bgcolor="${wcfGanttChartStyle.ganttselectedarea}" />
+				<view height="${parent.height}" width="13" onclick="classroot.clickWeek(22,28)" onmouseover="classroot.doMouseOver(this)" onmouseout="classroot.doMouseOut(this)"/>
+				<view height="${parent.height}" width="1" bgcolor="${wcfGanttChartStyle.ganttselectedarea}"/>
+				<view height="${parent.height}" width="13" onclick="classroot.clickWeek(29,31)" onmouseover="classroot.doMouseOver(this)" onmouseout="classroot.doMouseOut(this)"/>												
+			</view>
+			<view height="1" bgcolor="${wcfGanttChartStyle.ganttselectedarea}" width="${parent.width}"/>	
+			<view name="monthtextview" width="${parent.width}" height="${classroot.textheight-2}" onclick="classroot.clickMonth()" onmouseover="classroot.doTextMouseOver(this)" onmouseout="classroot.doTextMouseOut(this)">	
+				<text align="left" name="monthtext" text="${wcfStringUtil.substituteparameters(foundationResources['monthYear'+classroot.startdate.getMonth()].string, classroot.startdate.getFullYear())}" fontsize="10" font="Arial" fgcolor="${wcfGanttChartStyle.ganttfontcolor}" />
+			</view>
+			<view height="1" bgcolor="${wcfGanttChartStyle.ganttselectedarea}" width="${parent.width}"/>
+		</view>
+		
+		<method name="doMouseOver" args="v">
+			v.setAttribute("bgcolor",wcfGanttChartStyle.ganttselectedarea);
+		</method>
+		
+		<method name="doTextMouseOver" args="v">
+			v.monthtext.setAttribute('fgcolor', 0xffffff); // set to white
+			v.setAttribute("bgcolor",wcfGanttChartStyle.ganttselectedarea);
+		</method>
+		
+		<method name="doMouseOut" args="v">
+			v.setAttribute("bgcolor",null);
+		</method>
+		
+		<method name="doTextMouseOut" args="v">
+			v.monthtext.setAttribute('fgcolor', wcfGanttChartStyle.ganttfontcolor);
+			v.setAttribute("bgcolor",null);
+		</method>
+		
+		<method name="clickWeek" args="start,end">
+			start = start - 1;
+			end = end + startdate.getDate() - 1;
+			var numDaysInMonth = wcfDateUtil.daysinmonth(startdate);
+			if (end > numDaysInMonth){
+				end = numDaysInMonth;
+			}
+			
+			var newStartDate = wcfDateUtil.copydate(startdate);
+			var newEndDate = new Date(startdate.getFullYear(), startdate.getMonth(), end);
+			
+			wcfDateUtil.adddays(newStartDate, start);
+			newEndDate.setDate(end);
+
+			totalsArea.updateSelectedDates(newStartDate, newEndDate);
+		</method>
+		
+		<method name="clickMonth">
+			var newStartDate = wcfDateUtil.copydate(startdate);
+			
+			var numDaysInMonth = wcfDateUtil.daysinmonth(startdate);
+			
+			var newEndDate = wcfDateUtil.copydate(newStartDate);
+			wcfDateUtil.adddays(newEndDate, numDaysInMonth-1);
+
+			totalsArea.updateSelectedDates(newStartDate, newEndDate);
+		</method>
+		
+		<method name="setText" args="text">
+			this.monthtext.setAttribute('text', text);
+		</method>
+		
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttMonthArea">
+		<attribute name="startdate" value="null"/>
+		<attribute name="enddate" value="null"/>
+		<attribute name="totalsArea" value="null" />
+		
+		<method name="renderMonthCells">
+			<![CDATA[
+			if (startdate!= null && enddate != null){
+				var numberMonths = wcfDateUtil.datemonthsdiff(startdate,enddate) + 1;
+				
+				var date = this.startdate.getDate();
+				var month = this.startdate.getMonth();
+				var year = this.startdate.getFullYear();
+				
+				for (var i = 0; i < numberMonths; i++) {
+					if (i >= this.container.subviews.length) {
+						var mc = new lz.wcfGanttMonthCell(this.container,{startdate : new Date(year,month,date), totalsArea: this.totalsArea, height: this.height});
+					}
+					else {
+						this.container.subviews[i].setAttribute("startdate", new Date(year,month,date));
+					}
+					
+					month += 1;
+					if (month == 12){
+						year += 1;
+						month = 0;
+					}
+					date = 1;
+					
+					
+				}
+				
+				for (var i = numberMonths; i < this.container.subviews.length; i++) {
+					this.container.subviews[i].setAttribute("visible", false);
+				}
+			}
+			]]>
+		</method>
+		<view name="container">
+			<simplelayout axis="x"/>
+		</view>
+		
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttSelectedAreaDivider">
+		<attribute name="resizing" type="boolean" value="false"/>
+		<attribute name="minDragRange" type="number" value="-1"/>
+		<attribute name="maxDragRange" type="number" value="-1"/>
+	
+		<method name="startDragging">
+	        this.deltaX = parent.getMouse("x") - this.getAttributeRelative("x", this.parent);
+		    dragging.setAttribute('applied', true);
+	    </method>	    
+	
+		<method name="stopDragging">
+			dragging.setAttribute('applied', false);
+	    </method>	    
+	    
+		<handler name="onmouseover">
+			lz.Cursor.setCursorGlobal('horizontalResizeCursor');
+		</handler>
+		<handler name="onmouseout">
+			lz.Cursor.restoreCursor();
+		</handler>
+		<handler name="onmousedown">
+			lz.Cursor.lock();
+			this.startDragging();
+			this.resizing = true;
+		</handler>
+		<handler name="onmouseup">
+			lz.Cursor.unlock();
+			this.stopDragging();
+			this.resizing = false;
+		</handler>
+		<method name="checkDrag" args="mouseX">
+			<![CDATA[
+			if(maxDragRange!=-1 && mouseX > maxDragRange){
+				return maxDragRange-1;
+			}
+			if (minDragRange != -1 && mouseX < minDragRange){
+				return minDragRange+1;
+			}
+			return mouseX;
+			]]>
+		</method>
+	    <state name="dragging">
+	      <attribute name="x" 
+				value="${this.checkDrag(parent.getMouse('x')-this.deltaX)}"/>
+	    </state>
+	    
+
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttUnselectedArea" bgcolor="${wcfGanttChartStyle.ganttnonselectedareabackground}" opacity="0.4" stretches="both" />
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttTotalsSelectArea">
+		<attribute name="totalsArea" value="null" />
+		
+		<method name="setDividerPositions" args="leftX, rightX"> 
+			leftDivider.setAttribute('x', leftX-leftDivider.width);
+			rightDivider.setAttribute('x', rightX);
+		</method>	
+		
+		<view name="scrollback" resource="ganttScrollBack" stretches="width" y="${classroot.height-this.height}" x="0" width="${classroot.width}"/>	
+		
+		<wcfGanttUnselectedArea name="leftUnselectedArea" y="0" x="0" 
+			width="${classroot.leftDivider.x+classroot.leftDivider.width}" 
+			height="${classroot.height}" />
+		
+		<wcfGanttUnselectedArea name="rightUnselectedArea" y="0" 
+			x="${classroot.rightDivider.x}"
+			width="${classroot.width-this.x}" 
+			height="${classroot.height}" />
+		
+		<wcfGanttSelectedAreaDivider name="leftDivider" resource="ganttFilterGripLeft" y="4" height="${classroot.scrollback.y-this.y}"  maxDragRange="${classroot.rightDivider.x}">
+			<method name="stopDragging"> 
+				super.stopDragging();
+				classroot.totalsArea.setLeftX(this.x+this.width);
+				classroot.totalsArea.updatevisiblelist();
+			</method>	
+		</wcfGanttSelectedAreaDivider>
+		
+		<wcfGanttSelectedAreaDivider name="rightDivider" resource="ganttFilterGripRight" y="4" height="${classroot.scrollback.y-this.y}"  minDragRange="${classroot.leftDivider.x}">
+			<method name="stopDragging">
+				super.stopDragging();
+				classroot.totalsArea.setRightX(this.x);
+				classroot.totalsArea.updatevisiblelist();
+			</method>	
+		</wcfGanttSelectedAreaDivider>
+
+		<view y="0" x="${classroot.leftDivider.x+classroot.leftDivider.width-this.lft.width}" width="${classroot.rightDivider.x-this.x+this.rght.width}" >
+			<view name="lft" resource="ganttFilterCrnrTL" x="0"/>
+			<view name="mid" resource="ganttFilterHoriz" x="${parent.lft.width}" width="${parent.width-parent.lft.width-parent.rght.width}" stretches="width"/>
+			<view name="rght" resource="ganttFilterCrnrTR" x="${parent.lft.width+parent.mid.width}"/>
+		</view>
+
+		<view y="${classroot.scrollback.y-this.height}" x="${classroot.leftDivider.x+classroot.leftDivider.width-this.lft.width}" width="${classroot.rightDivider.x-this.x+this.rght.width}" >
+			<view name="lft" resource="ganttFilterCrnrBL" x="0"/>
+			<view name="mid" resource="ganttFilterHoriz" x="${parent.lft.width}" width="${parent.width-parent.lft.width-parent.rght.width}" stretches="width"/>
+			<view name="rght" resource="ganttFilterCrnrBR" x="${parent.lft.width+parent.mid.width}"/>
+		</view>
+
+		<view x="${-classroot.totalsArea.x}" y="0" width="1" height="${classroot.scrollback.y}" bgcolor="0xc2cad7"/>
+		<view name="ganttScrollLeft" resource="ganttScrollLeft" x="${classroot.ganttScroll.x-this.width}" y="${classroot.height-this.height-2}"/>
+		<view name="ganttScrollRight" resource="ganttScrollRight" x="${classroot.ganttScroll.x+classroot.ganttScroll.width}" y="${classroot.height-this.height-2}"/>
+
+		<view name="ganttScroll" resource="ganttScrollMid" stretches="width"
+			y="${classroot.height-this.height-2}"
+	  		x="${classroot.leftDivider.x+6}"
+			width="${classroot.rightDivider.x-classroot.leftDivider.x-4}" >
+			
+			<handler name="oninit">
+				this.trackMouseDel = new lz.Delegate(this, "trackMouse");
+				this.setAttribute('frame', 1);
+			</handler>
+
+			<method name="destroy">
+				if (this.trackMouseDel) {
+					this.trackMouseDel.unregisterAll();
+					delete this.trackMouseDel;
+				}
+
+				super.destroy();
+			</method>
+		    
+			<handler name="onmouseover">
+				this.setAttribute('frame', 2);
+			</handler>
+			
+			<handler name="onmouseout">
+				this.setAttribute('frame', 1);
+			</handler>
+			
+			<handler name="onmousedown">
+				this.trackMouseDel.register(lz.Idle, "onidle");
+				lz.Cursor.lock();
+				classroot.leftDivider.startDragging();
+				classroot.rightDivider.startDragging();
+			</handler>	    
+		
+			<handler name="onmouseup">
+				lz.Cursor.unlock();
+				classroot.leftDivider.stopDragging();
+				classroot.rightDivider.stopDragging();
+				this.trackMouseDel.unregisterAll();
+			</handler>	    
+		    
+			<method name="trackMouse" args="e=null">
+				classroot.totalsArea.setLeftX(classroot.leftDivider.x+classroot.leftDivider.width);
+				classroot.totalsArea.setRightX(classroot.rightDivider.x);
+				classroot.totalsArea.rescale();
+			</method>
+		</view>
+
+		<basebutton resource="ganttScrollLeftArrow" y="${classroot.height-this.height}" x="${-classroot.totalsArea.x}">
+			<handler name="onclick">
+				<![CDATA[
+				var delta = classroot.rightDivider.x - classroot.leftDivider.x - classroot.leftDivider.width;
+				classroot.leftDivider.x -= delta;
+				classroot.rightDivider.x -= delta;
+	
+				classroot.leftDivider.setAttribute('x', classroot.leftDivider.x);
+				classroot.rightDivider.setAttribute('x', classroot.rightDivider.x);
+				
+				classroot.totalsArea.setLeftX(classroot.leftDivider.x+classroot.leftDivider.width);
+				classroot.totalsArea.setRightX(classroot.rightDivider.x);
+				classroot.totalsArea.updatevisiblelist();
+				]]>
+			</handler>	    
+		</basebutton>
+			
+		<basebutton resource="ganttScrollRightArrow" y="${classroot.height-this.height}" x="${-classroot.totalsArea.x+classroot.totalsArea.parent.width-this.width}">
+			<handler name="onclick">
+				<![CDATA[
+				var delta = classroot.rightDivider.x - classroot.leftDivider.x - classroot.leftDivider.width;
+				classroot.leftDivider.x += delta;
+				classroot.rightDivider.x += delta;
+	
+				classroot.leftDivider.setAttribute('x', classroot.leftDivider.x);
+				classroot.rightDivider.setAttribute('x', classroot.rightDivider.x);
+				
+				classroot.totalsArea.setLeftX(classroot.leftDivider.x+classroot.leftDivider.width);
+				classroot.totalsArea.setRightX(classroot.rightDivider.x);
+				classroot.totalsArea.updatevisiblelist();
+				]]>
+			</handler>	    
+		</basebutton>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttTotalsChart">
+		<simplelayout axis="x" spacing="1" />
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttTotalsBar" valign="bottom" bgcolor="${wcfGanttChartStyle.ganttbarchartcolor}" width="1" />
+	
+	<!--- @keywords private -->
+	<class name="wcfGanttTotalsArea" height="83" clip="true">
+	
+		<attribute name="ganttControl" value="null"/>
+	
+		<attribute name="startDate" value="null"/>
+		<attribute name="endDate" value="null"/>
+		<attribute name="selectedStartDate" value="null"/>
+		<attribute name="selectedEndDate" value="null"/>
+		
+		<attribute name="countsDatapath" value="null"/>
+		<attribute name="maximumCount" type="number" value="1"/>
+		<attribute name="numberOfDays" type="number" value="1"/>
+		
+		<method name="init">
+			<![CDATA[
+			this.renderMonthRangeDel = new lz.Delegate(this, "renderMonthRange");
+			super.init();
+			]]>
+		</method>
+		
+		<method name="destroy">
+			<![CDATA[
+			delete this.renderMonthRangeDel;
+			super.destroy();
+			]]>
+		</method>		
+		
+		<wcfGanttMonthArea name="montharea" 
+			valign="top" 
+			height="64" 
+			totalsArea="${classroot}" />
+		
+		<!-- 30 is the sum of the week height and month height -->
+		<wcfGanttTotalsChart name="barchart" y="30" height="${classroot.height-30-classroot.selectarea.scrollback.height}"/>
+		
+		<wcfGanttTotalsSelectArea name="selectarea" 
+			valign="bottom" 
+			height="83" 
+			totalsArea="${classroot}" />
+
+	
+		<method name="updateTotalsArea">
+			this.calculateCounts();
+		</method>
+		
+		<method name="getLeftX">
+			<![CDATA[
+				return wcfDateUtil.datedaysdiff(this.selectedStartDate, this.startDate) * 2;
+			]]>
+		</method>
+		
+		<method name="getRightX">
+			<![CDATA[
+				return (wcfDateUtil.datedaysdiff(this.selectedEndDate, this.startDate) + 1) * 2;
+			]]>
+		</method>
+		
+		<method name="setLeftX" args="leftX">
+			<![CDATA[
+				this.selectedStartDate = wcfDateUtil.copydate(this.startDate);
+				wcfDateUtil.adddays(this.selectedStartDate, Math.floor(leftX/2));
+			]]>
+		</method>
+		
+		<method name="setRightX" args="rightX">
+			<![CDATA[
+				this.selectedEndDate = wcfDateUtil.copydate(this.startDate);
+				wcfDateUtil.adddays(this.selectedEndDate, Math.floor((rightX-1)/2));
+			]]>
+		</method>
+		
+		<method name="rescale">
+			<![CDATA[
+				ganttControl.rescale(this.selectedStartDate, this.selectedEndDate);
+			]]>
+		</method>
+		
+		<method name="updateSelectedDates" args="newStartDate, newEndDate">
+			<![CDATA[
+				this.selectedStartDate = newStartDate;
+				this.selectedEndDate = newEndDate;
+				this.selectarea.setDividerPositions(this.getLeftX(), this.getRightX());
+				this.updatevisiblelist();
+			]]>
+		</method>
+	
+		<method name="updatevisiblelist">
+			<![CDATA[
+				ganttControl.updatevisiblelist(this.selectedStartDate, this.selectedEndDate);
+			]]>
+		</method>
+		
+		<method name="getDatesList">
+			<![CDATA[
+			var resultDatesList = [];
+
+			if (this.ganttControl.grid.oList != null) {
+				var modelObjects = this.ganttControl.grid.oList.getMatchingModelObjects();
+
+				for (var i = 0; i < modelObjects.length; i++) {
+					var cellDescriptor = this.ganttControl.grid.getCellDescriptor(modelObjects[i]);
+					var dates = new Object();
+					dates["startDate"] = wcfDateUtil.getCachedTimeDay(modelObjects[i].getPropertyValue(cellDescriptor.propertyName, cellDescriptor.objectPath));
+					dates["endDate"] = wcfDateUtil.getCachedTimeDay(modelObjects[i].getPropertyValue(cellDescriptor.propertyName2, cellDescriptor.objectPath));
+					resultDatesList.push(dates);
+				}
+			}
+			
+			return resultDatesList;
+			]]>
+		</method>
+		
+		<method name="updateDataNums" args="a, s, e">
+			<![CDATA[
+			var totalDays = 0;
+			var i = 0;
+			var startIndexFound = s < 0;
+			var endIndexFound = e < 0;
+			while (i < a.length && !endIndexFound) {
+				if (startIndexFound) {
+					a[i].count++;
+				}
+				else {
+					if (s > (totalDays-1) && s < (totalDays + a[i].days)) {
+						startIndexFound = true;
+						if (s > totalDays) {
+							var aiCount = a[i].count;
+							var aiDays = a[i].days;
+							a.splice(i+1,0,{count: (aiCount+1), days:(totalDays + aiDays  - s)});
+							a[i].days = aiDays - a[i+1].days;
+							totalDays += a[i].days;
+							i++;
+						}
+						else {
+							a[i].count++;
+							if (i > 0 && a[i-1].count == a[i].count) {
+								totalDays -= a[i-1].days;
+								a[i-1].days = a[i-1].days + a[i].days;
+								a.splice(i,1);
+								i--;
+							}
+							if (i < (a.length-1) && a[i].count == a[i+1].count) {
+								a[i].days = a[i].days + a[i+1].days;
+								a.splice(i+1,1);
+							}
+						}
+					}
+				}
+				
+				if (startIndexFound && e > (totalDays-1) && e < (totalDays + a[i].days)) {
+					endIndexFound = true;
+					if (e < (totalDays + a[i].days - 1)) {
+						var aiCount = a[i].count;
+						var aiDays = a[i].days;
+						a.splice(i+1,0,{count: aiCount-1, days:(totalDays + aiDays  - e - 1)});
+						a[i].days = aiDays - a[i+1].days;
+						i++;
+					}
+				}
+				totalDays += a[i].days;
+				i++;
+			}
+			]]>
+		</method>
+		
+		<method name="renderMonthRange" args="e=null">
+			<![CDATA[
+			var startDateTime = wcfDateUtil.getTimeDay(this.startDate);
+			var endDateTime = wcfDateUtil.getTimeDay(this.endDate);
+			this.numberOfDays = endDateTime - startDateTime + 1;
+			
+			var ganttChartDataNums = [];
+			ganttChartDataNums.push({count: 0, days: this.numberOfDays});
+			
+			var datesList = this.getDatesList();
+			for (var i = 0; i < datesList.length; i++) {
+				var startCountIndex = -1;
+				if (datesList[i].startDate != null) {
+					startCountIndex = datesList[i].startDate - startDateTime;
+				}
+				var endCountIndex = this.numberOfDays;
+				if (datesList[i].endDate != null) {
+					endCountIndex = datesList[i].endDate - startDateTime;
+				}
+				
+				this.updateDataNums(ganttChartDataNums, startCountIndex, endCountIndex);
+			}
+			
+			this.maximumCount = 1;
+			for (var i = 0; i < ganttChartDataNums.length; i++) {
+				if (ganttChartDataNums[i].count > this.maximumCount) {
+					this.maximumCount = ganttChartDataNums[i].count;
+				}
+			}
+			
+			var scaleH = barchart.height / this.maximumCount;
+			
+			var totalDays = 0;
+			for (var i = 0; i < ganttChartDataNums.length; i++) {
+				var newHeight = scaleH * ganttChartDataNums[i].count;
+				for (var j = 0; j < ganttChartDataNums[i].days; j++) {
+					if (totalDays >= barchart.subviews.length) {
+						barchart.addSubview(new lz.wcfGanttTotalsBar(barchart, {height: newHeight}));
+					}
+					else {
+						if (barchart.subviews[totalDays].height != newHeight) {
+							barchart.subviews[totalDays].setAttribute('height', newHeight);
+						}
+					}
+					totalDays++;
+				}
+			}
+			
+			var renderMonthCells = false;
+			if (montharea.startdate != this.startDate) {
+				montharea.setAttribute("startdate", this.startDate);
+				renderMonthCells = true;
+			}
+			if (montharea.enddate != this.endDate) {
+				montharea.setAttribute("enddate", this.endDate);
+				renderMonthCells = true;
+			}
+			if (renderMonthCells) {
+				montharea.renderMonthCells();
+			}
+			
+			var newAreaWidth = this.numberOfDays * 2;
+			if (selectarea.width != newAreaWidth) {
+				selectarea.setAttribute('width', newAreaWidth);
+			}
+			
+			selectarea.setDividerPositions(this.getLeftX(), this.getRightX());
+			
+			if (this.width != newAreaWidth) {
+				this.setAttribute('width', newAreaWidth);
+			}
+			]]>
+		</method>
+		
+		<method name="calculateCounts">
+			<![CDATA[
+			if (this.startDate) {
+				wcfCallbackUtil.cancelCallback(this.renderMonthRangeDel);
+				wcfCallbackUtil.addDeferredCallback(this.renderMonthRangeDel, null, wcfCallbackUtil.PRIORITY_BACKGROUND);
+			}
+			]]>
+		</method>
+	
+	</class>
+	
+</library>

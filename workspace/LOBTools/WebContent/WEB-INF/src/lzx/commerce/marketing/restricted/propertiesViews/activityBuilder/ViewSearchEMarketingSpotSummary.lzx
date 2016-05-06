@@ -1,0 +1,87 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktViewSearchEMarketingSpotElementObject} flow element.
+		The generated text is shown beneath the element on the Activity Builder flow diagram.
+	-->
+	<class name="mktViewSearchEMarketingSpotSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="searchOperator" propertyName="searchOperator"/>
+		<wcfFlowSummaryParam name="searchKeyword" objectPath="searchKeyword" propertyName="searchKeyword"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchESpotExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchESpotStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchESpotContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchESpotEndsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchESpotAny, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var dateText = "";
+				
+				summaryText = this.getEventSummary();
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getEventSummary">
+			<![CDATA[
+				var summary = "";
+				
+				var searchKeywordName = this.resolvedParams["searchKeyword"];
+				var searchOperator = this.resolvedParams["searchOperator"];
+						
+				if ((searchKeywordName != null) && (searchKeywordName != "") && (searchOperator != null) && (searchOperator != "")) {
+					
+			  		var compText = "";
+				
+			  		switch(searchOperator) {
+						case "=":
+							compText = "Exactly";
+							break;
+						case "start":
+							compText = "StartsWith";
+							break;
+						case "contain":
+							compText = "Contains";
+							break;
+						case "end":
+							compText = "EndsWith";
+							break;
+						case "any":
+							compText = "Any";
+							break;
+			  		}
+				  	
+			  		var valueText = this.getValuesList("searchKeyword");
+				
+			  		if(((valueText != null) && (valueText != "")) || (compText == "Any")) {
+						summary = mktMarketingResources.replaceValues("summarySearchESpot" + compText, [valueText]);
+					
+			  		} // end valueText
+			  	} // end searchKeywordName
+
+				return summary;
+			]]>
+		</method>
+	</class>
+
+</library>

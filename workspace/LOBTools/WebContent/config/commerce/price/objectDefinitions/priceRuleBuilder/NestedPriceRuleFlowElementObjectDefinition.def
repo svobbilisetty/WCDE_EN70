@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcNestedPriceRuleElementObject" displayName="${prcPriceResources.nestedPriceRule_DisplayName}" elemTemplateType="Action" flowIcon="nestedPriceRuleElementIcon" headerIcon="nestedPriceRuleElementHeaderIcon" helpLink="concepts/cpiactnestrule.htm" objectType="nestedPriceRule" package="prc" paletteIcon="nestedPriceRulePaletteIcon" propertiesDefinitionName="prcNestedPriceRuleElementProperties" summaryClass="prcNestedPriceRuleElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_priceRuleId" objectPath="RefPriceRuleGroup" propertyName="priceRuleId"/>
+		</CreateService>
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_priceRuleId" objectPath="RefPriceRuleGroup" propertyName="priceRuleId"/>
+		</UpdateService>
+	
+		<Xml name="template">
+			<elemTemplateName>nestedPriceRule</elemTemplateName>
+		</Xml>
+	
+		<ReferenceObjectDefinition objectGroups="RefPriceRuleGroup" allowDuplicates="false" derivedId="true" idProperty="priceRuleId" objectType="RefPriceRule" referencedType="PriceRule,WrappedPriceRule" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="RefPriceRuleGroup" allowDuplicates="false" derivedId="true" idProperty="priceRuleId" objectType="RefInheritedPriceRule" referencedType="InheritedPriceRule,InheritedWrappedPriceRule"/>
+	
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingPriceRule}" objectPath="RefPriceRuleGroup" validatorId="reqPriceRuleValidator" validatorType="noPriceRuleProvided"/>
+		<NestedPriceRuleInDynamicKitBranchValidator package="prc" validatorId="nestedPriceRuleInDynamicKitBranchValidator" validatorType="nestedPriceRuleConstraintInDynamicKitBranch"/>
+	</FlowElementObjectDefinition>
+
+</Definitions>

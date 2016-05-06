@@ -1,0 +1,290 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		Validator for a {@link cftAttributeWithAssignedValuesObjectDefinition cftAttributeWithAssignedValuesObjectDefinition} or {@link cftInheritedAttributeWithAssignedValuesObjectDefinition cftInheritedAttributeWithAssignedValuesObjectDefinition} 
+		or {@link cftPropertyAttributeObjectDefinition  cftPropertyAttributeObjectDefinition}object. 
+		This ensures the following case: 
+		<ul>
+			<li>
+				When the condition operator is changed from multiple value to single value(or the reverse), clear all existing condition values.				
+			</li>
+			<li>
+				Keep the single value in UI in sync with the condition value child object.
+			</li>
+			<li>
+				Prompt error message when there is none condition value.
+			</li>
+		</ul>		
+	-->
+	<class name="catCatalogFilterConditionWithAssignedValueValidator" extends="wcfValidator">
+		<!-- Comma-seperated list of single-value operators. -->
+		<attribute name="singleValueOperators" type="string" value="NUMBER_LESS_THAN,NUMBER_NOT_LESS_THAN,NUMBER_GREATER_THAN,NUMBER_NOT_GREATER_THAN" />
+		<!-- The property name for single assigned value of condition. -->
+		<attribute name="singleValuePropertyName" type="string" value="attrValue" />
+		<!-- The property name for condition operator -->
+		<attribute name="operatorPropertyName" type="string" value="operator" />
+		<!-- The property name for previous condition operator -->
+		<attribute name="prevOperatorPropertyName" type="string" value="previousOperator" />
+		<!-- The property name for data type -->
+		<attribute name="attrtypePropertyName" type="string" value="attrType" />
+		<!-- The property name for previous data type  -->
+		<attribute name="prevAttrtypePropertyName" type="string" value="previousType" />
+		<!-- The object type of the child object for condition value. -->
+		<attribute name="conditionValueObjectType" type="string" />
+		<!-- The property name of the child object for condition value. -->
+		<attribute name="conditionValuePropertyName" type="string" value="conditionAssignedValue" />
+		<!--- @keywords private -->		
+		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o) {
+				return; // nothing to validate
+			}
+			o.clearValidationError(this);
+			
+			//handle data type changes
+			var attrType = o.getPropertyValue(this.attrtypePropertyName);
+			if (attrType){
+				var prevType = o.getPropertyValue(this.prevAttrtypePropertyName);
+				//Debug.write("attrType="+attrType+", prevType="+prevType); 
+				if (prevType != ""){
+					if (attrType != prevType){
+						// if data type changes, remove all existing values.
+						var otds = o.getObjects(this.conditionValueObjectType);
+						for (var i=0; i<otds.length; i++){
+							otds[i].deleteObject();
+						}
+						// if data type become incompatible, clear operator.
+						if ( (attrType == 'String' && prevType != 'String') 
+								|| (attrType != 'String' && prevType == 'String')){
+							o.setPropertyValue('operator', null, "");
+							o.setPropertyValue(this.prevAttrtypePropertyName, null, attrType);
+						}
+						return;
+					}
+				}
+				// save the original dirty status of the open group object.
+				var prop = o.propertyMap[this.attrtypePropertyName];
+				var OGDirty = false;
+				if (prop!=null && prop.o.openGroupObject != null) {
+					OGDirty = prop.o.openGroupObject.openGroupDirty;
+				} 
+				o.setPropertyValue(this.prevAttrtypePropertyName, null, attrType);
+				// restore the open group object to clean if it becomes dirty due to previous operation. 
+				prop = o.propertyMap[this.prevAttrtypePropertyName];
+				prop.setAttribute("dirty", false);
+				if (OGDirty == false && prop.o.openGroupObject != null) {
+					prop.o.openGroupObject.setAttribute("openGroupDirty", false);
+				}								
+			}
+			
+			// handle operator changes.
+			var operator = o.getPropertyValue(this.operatorPropertyName);
+			var prevOperator = o.getPropertyValue(this.prevOperatorPropertyName);
+			//Debug.write("previous Operator="+prevOperator+", current Operator="+operator);
+			if (operator == null || operator == ""){
+				return;
+			}
+			
+			var singleOps = wcfStringUtil.splitAndTrim(this.singleValueOperators, ",");
+			var isSingleOp = false;
+			for(var i = 0; i < singleOps.length; i++) {
+				if (operator == singleOps[i]){
+					isSingleOp = true;
+				}
+			}						
+			
+			if (isSingleOp){
+				// check if operator just changed from multiple to single.
+				var statusChanged = false;
+				if (prevOperator == ""){
+					// save the original dirty status of the open group object.
+					var prop = o.propertyMap[this.operatorPropertyName];
+					var OGDirty = false;
+					if (prop!=null && prop.o.openGroupObject != null) {
+						OGDirty = prop.o.openGroupObject.openGroupDirty;
+					} 
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'single');
+					// restore the open group object to clean if it becomes dirty due to previous operation. 
+					prop = o.propertyMap[this.prevAttrtypePropertyName];
+					prop.setAttribute("dirty", false);
+					if (OGDirty == false && prop.o.openGroupObject != null) {
+						prop.o.openGroupObject.setAttribute("openGroupDirty", false);
+					}								
+				}
+				else if (prevOperator == "multiple"){
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'single');
+					statusChanged = true;
+				}
+				//Debug.write("Operator is single value. status Changed=" + statusChanged);
+				// check the current single value
+				var currentValue = o.getPropertyValue(this.singleValuePropertyName);
+				if (currentValue == null || currentValue.length == 0){
+						var errmsg = foundationResources.replaceValues("requiredPropertyMissing", [cftCatalogFilterResources.catalogFilterAttributeValue.string]);
+						o.addValidationError(this, errmsg);	
+				}				
+				var otds = o.getObjects(this.conditionValueObjectType);
+				if (statusChanged){
+					for (var i=0; i<otds.length; i++){
+						//Debug.write("Delete multi-value: "+otds[i].getPropertyValue(this.conditionValuePropertyName));
+						otds[i].deleteObject();
+					}
+					if (currentValue != null && currentValue.length > 0){
+						o.setPropertyValue(this.singleValuePropertyName, null, "");
+					}
+				}
+				else {
+					if (otds == null || otds.length == 0){
+						if (currentValue != null && currentValue.length > 0){
+							var childObjDef = o.model.getObjectDefinition(o, this.conditionValueObjectType);
+							var newChild = o.model.createNewObject(childObjDef, o, false);
+							newChild.setPropertyValue(this.conditionValuePropertyName, null, currentValue);
+							//Debug.write("newChild."+this.conditionValuePropertyName+"="+newChild.getPropertyValue(this.conditionValuePropertyName));
+							o.updateChildObjects(true);
+						}
+					}
+					else {
+						if (currentValue != null){
+							otds[0].setPropertyValue(this.conditionValuePropertyName, null, currentValue);
+						}
+						else {
+							otds[0].setPropertyValue(this.conditionValuePropertyName, null, "");
+						}
+						//Debug.write("oldChild.conditionAssignedValue="+otds[0].getPropertyValue(this.conditionValuePropertyName));
+						o.updateChildObjects(true);
+					}	 
+				}
+			}
+			else {
+				var statusChanged = false;
+				if (prevOperator == ""){
+					// save the original dirty status of the open group object.
+					var prop = o.propertyMap[this.operatorPropertyName];
+					var OGDirty = false;
+					if (prop!=null && prop.o.openGroupObject != null) {
+						OGDirty = prop.o.openGroupObject.openGroupDirty;
+					} 
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'multiple');
+					// restore the open group object to clean if it becomes dirty due to previous operation. 
+					prop = o.propertyMap[this.prevAttrtypePropertyName];
+					prop.setAttribute("dirty", false);
+					if (OGDirty == false && prop.o.openGroupObject != null) {
+						prop.o.openGroupObject.setAttribute("openGroupDirty", false);
+					}								
+				}
+				else if (prevOperator == "single"){
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'multiple');
+					statusChanged = true;
+				}
+				//Debug.write("Operator is multiple value. status Changed="+statusChanged);				
+				var otds = o.getObjects(this.conditionValueObjectType);
+				if (statusChanged){
+					// clear single value child objects.
+					for (var i=0; i<otds.length; i++){
+						var value = otds[i].getPropertyValue("conditionAssignedValue");
+						//Debug.write("Delete single-value: "+value);
+						otds[i].deleteObject();
+					}
+					// clear the single value property on condition object.
+					o.setPropertyValue(this.singleValuePropertyName, null, "");
+				}
+				else {
+					if (otds.length == 0){
+					  var errmsg = foundationResources.replaceValues("requiredPropertyMissing", [cftCatalogFilterResources.catalogFilterAttributeValue.string]);
+						o.addValidationError(this, errmsg);					
+					}
+				}
+			}
+
+			
+			]]>
+		</method>
+	</class>
+
+	<!---
+		Validator for a {@link cftAttributeWithAllowedValuesObjectDefinition cftAttributeWithAllowedValuesObjectDefinition} or {@link cftInheritedAttributeWithAllowedValuesObjectDefinition cftInheritedAttributeWithAllowedValuesObjectDefinition} object. 
+		This ensures the following case: 
+		<ul>
+			<li>
+				When the condition operator is of single value but multiple values are specified, report an error.				
+			</li>
+		</ul>		
+	-->
+	<class name="catCatalogFilterConditionWithAllowableValueValidator" extends="wcfValidator">
+		<!-- Comma-seperated list of single-value operators. -->
+		<attribute name="singleValueOperators" type="string" value="NUMBER_LESS_THAN,NUMBER_NOT_LESS_THAN,NUMBER_GREATER_THAN,NUMBER_NOT_GREATER_THAN" />
+		<!-- The property name for condition operator -->
+		<attribute name="operatorPropertyName" type="string" value="operator" />
+		<!-- The property name for previous condition operator -->
+		<attribute name="prevOperatorPropertyName" type="string" value="previousOperator" />
+		<!-- The object type of the child object for condition value. -->
+		<attribute name="conditionValueObjectType" type="string" />
+
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o) {
+				return; // nothing to validate
+			}
+			o.clearValidationError(this);
+			
+			//Debug.write("CatalogFilterConditionWithAllowableValueValidator enter. ");
+			var operator = o.getPropertyValue(this.operatorPropertyName);
+			var prevOperator = o.getPropertyValue(this.prevOperatorPropertyName);
+			//Debug.write("previousOperator="+prevOperator);
+			
+			var singleOps = wcfStringUtil.splitAndTrim(this.singleValueOperators, ",");
+			var isSingleOp = false;
+			for(var i = 0; i < singleOps.length; i++) {
+				if (operator == singleOps[i]){
+					isSingleOp = true;
+				}
+			}				
+			var statusChanged = false;
+			if (isSingleOp){
+				// check if operator just changed from multiple to single.
+				if (prevOperator == ""){
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'single');
+				}
+				else if (prevOperator == "multiple"){
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'single');
+					statusChanged = true;
+				}
+			}
+			else {
+				if (prevOperator == ""){
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'multiple');
+				}
+				else if (prevOperator == "single"){
+					o.setPropertyValue(this.prevOperatorPropertyName, null, 'multiple');
+					statusChanged = true;
+				}
+			}
+			var otds = o.getObjects(this.conditionValueObjectType);
+			if (otds.length == 0){
+						var errmsg = foundationResources.replaceValues("requiredPropertyMissing", [cftCatalogFilterResources.catalogFilterAttributeValue.string]);
+						o.addValidationError(this, errmsg);						
+			}
+			if (statusChanged) {
+				for (var i=0; i<otds.length; i++){
+					otds[i].deleteObject();
+				}
+			}
+			
+			]]>
+		</method>
+	</class>
+
+</library>

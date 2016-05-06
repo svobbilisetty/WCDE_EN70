@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktCatalogBrowsingBehaviorElementObject Catalog Browsing Behavior target}.
+	-->
+	<FlowElementProperties definitionName="mktCatalogBrowsingBehaviorProperties">
+		<PropertyGroup collapsable="false" name="container">
+			<PropertyCombobox helpText="${mktMarketingResources.help_customerbehavior_targetCondition_catalogBrowsingBehavior}" promptText="${mktMarketingResources.customerBehavior}" propertyName="elemTemplateName"/>
+			
+			<PropertyGroup collapsable="false" name="groupProductBrowsed">
+				<EnablementCondition conditionId="productBrowsingElement" enablementValue="recordedCustomerBehaviorProductBrowsed" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_products}" name="anyOrAll" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.browsedAnyProducts}" name="any">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.browsedAllProducts}" name="all">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.browsedNotAnyProducts}" name="notAny">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyChildListEditor listDefinitionName="mktProductGrid" name="prodEditor" objectTypes="ChildCatentry,ChildInheritedCatentry" promptText="${mktMarketingResources.products}" required="true"/>
+			</PropertyGroup>
+
+			<PropertyGroup collapsable="false" name="groupCategoryBrowsed">
+				<EnablementCondition conditionId="categoryBrowsingElement" enablementValue="recordedCustomerBehaviorCategoryBrowsed" propertyName="elemTemplateName"/>
+
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_categories}" name="anyOrAll" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.browsedAnyCategories}" name="any">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.browsedAllCategories}" name="all">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.browsedNotAnyCategories}" name="notAny">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyChildListEditor listDefinitionName="mktCategoryGrid" name="catEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.categories}" required="true"/>
+					
+				<PropertyCheckbox falseValue="NVP" promptText="${mktMarketingResources.includeSubCategories}" propertyName="type" trueValue="PARENTCATEGORY"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="groupProductInCatgoryBrowsed">
+				<EnablementCondition conditionId="catProductElement" enablementValue="recordedCustomerBehaviorProductInCategoryBrowsed" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_productsincategories}" name="anyOrAll" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.browsedAnyProductInCategories}" name="any">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.browsedAllProductInCategories}" name="all">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.browsedNotAnyProductInCategories}" name="notAny">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyChildListEditor listDefinitionName="mktCategoryGrid" name="catEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.categories}" required="true"/>
+			</PropertyGroup>
+
+			<MultiValueSelector helpText="${mktMarketingResources.help_catalogbehavior_frequency}" name="numTimes" promptText="${mktMarketingResources.frequency}">
+				<MultiValueSelection displayName="${mktMarketingResources.anyNumberTimes}" name="any">
+					<Xml name="values">
+						<numberOfTimesOperator/>
+						<numberOfTimes/>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.lessThanNumberTimes}" name="lessThan">
+					<Xml name="values">
+						<numberOfTimesOperator><![CDATA[<]]></numberOfTimesOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.atLeastNumberTimes}" name="atLeast">
+					<Xml name="values">
+						<numberOfTimesOperator><![CDATA[>=]]></numberOfTimesOperator>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+
+			<PropertyGroup collapsable="false" name="groupTimes">
+				<EnablementCondition conditionId="notAny" enablementValue="" negate="true" propertyName="numberOfTimesOperator"/>
+				<PropertyStepper minimumValue="1" promptText="${mktMarketingResources.times}" propertyName="numberOfTimes"/>
+			</PropertyGroup>
+			
+			<BaseDateProperties helpText="${mktMarketingResources.help_timeframe_catalogBrowsingBehavior}" package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

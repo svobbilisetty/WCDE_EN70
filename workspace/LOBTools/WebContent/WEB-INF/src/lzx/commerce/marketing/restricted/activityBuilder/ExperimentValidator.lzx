@@ -1,0 +1,100 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2008 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for an {@link mktExperimentElementObject Experiment} or {@link mktBranchElementObject Branch} element. This validator ensures that:<ol>
+		<li>the given percentages total 100% if the experiment is a random experiment</li>
+		<li>the provided path names are unique and not empty within the experiment</li>
+		<li>if the element is an Experiment, at least one of the ending conditions - maximum number of customers or an end date - is specified</li>
+		</ol>
+	-->
+	<class name="mktExperimentValidator" extends="wcfValidator">
+		<!--- Warning message to show when the ending conditions are not specified. -->
+		<attribute name="endConditionErrorMessage" value="${mktMarketingResources.experimentEndConditionRequired.string}" type="string"/>
+
+		<!--- Warning message to show when path percentages are not correct. -->
+		<attribute name="percentagesIncorrectMessage" value="${mktMarketingResources.experimentPercentagesIncorrect.string}" type="string"/>
+
+		<!--- Warning message to show when path names are duplicated or empty. -->
+		<attribute name="duplicateNameErrorMessage" value="${mktMarketingResources.experimentDuplicateNames.string}" type="string"/>
+
+		<!--- @keywords private -->
+		<attribute name="uniqueCustomerPropertyName" value="uniqueCustomerCount" type="string"/>
+
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o){
+				return; // nothing to validate
+			}
+			
+			// make sure the property is readOnly
+			var countProp = o.getProperty(this.uniqueCustomerPropertyName);
+			if(countProp.propertyReadOnly != "true") {
+				countProp.setAttribute("propertyReadOnly", "true");
+			}
+			
+			var maxCustomers = o.getPropertyValue("maxCustomers");
+			var endDate = o.getPropertyValue("endDate");
+			var isRandomBranch = (o.getPropertyValue("branchtype") == "random");
+			
+			var pathPercentError = false;
+			var totalPercent = 0;
+			var pathNameError = false;
+			var pathNameMap = {};
+			
+			// loop through child paths to get the names and sum up percentages
+			var childPaths = o.getObjects("path");
+			for(var i = 0; i < childPaths.length; i++) {
+				var percent = childPaths[i].getPropertyValue("pctg");
+				if(percent == "") {
+					pathPercentError = isRandomBranch;
+				}
+				else if(wcfStringUtil.isNumber(percent)) {
+					totalPercent += Number(percent);
+				}
+
+				var name = childPaths[i].getPropertyValue("name");
+				if(name != "") {
+					if(pathNameMap[name]) {
+						pathNameError = true;
+					}
+					else {
+						pathNameMap[name] = true;
+					}
+				}
+				else {
+					pathNameError = true;
+				}
+			}
+			
+			if(isRandomBranch) {
+				pathPercentError = pathPercentError || (totalPercent != 100);
+			}
+			
+			o.clearValidationError(this);
+			
+			if ((maxCustomers == "") && (endDate == "") && (o.objectType == "branch")){
+				o.addValidationError(this, this.endConditionErrorMessage);
+			}
+			else if(pathNameError) {
+				o.addValidationError(this, this.duplicateNameErrorMessage);
+			}
+			else if(pathPercentError) {
+				o.addValidationError(this, this.percentagesIncorrectMessage);
+			}
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,59 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!--- @keywords private -->
+	<class name="wcfDraggerClippedView" clip="true" />
+	
+	<!--- @keywords private -->
+	<class name="wcfDraggerClippedText" extends="text" clip="true" />
+
+	<!--- @keywords private -->
+	<class name="wcfDragger" initstage="normal" visible="false" options="ignorelayout">
+	
+		<attribute name="deltaX" value="0" />
+		<attribute name="deltaY" value="0" />
+		
+        <dragstate name="dragst">
+            <attribute name="x" value="${this.immediateparent.getMouse('x')-this.deltaX}"/>
+            <attribute name="y" value="${this.immediateparent.getMouse('y')-this.deltaY}"/>
+        </dragstate>
+
+		<!---
+			Dragging has started
+		-->		  
+        <method name="startDragging">
+	    	<![CDATA[
+	            dragst.setAttribute('applied', true);
+		        this.setAttribute("visible", true);
+				this.bringToFront();
+           ]]>
+        </method>
+        
+		<!---
+			Dragging has stopped
+		-->		  
+        <method name="stopDragging">
+	    	<![CDATA[
+	            dragst.setAttribute('applied', false);
+		        this.setAttribute("visible", false);
+		        
+				for (var i = 0; i < this.subviews.length; i++) {
+					wcfDragAndDropManagerUtils.release(this.subviews[i]);
+				}
+           ]]>
+        </method>
+	</class>
+
+</library>

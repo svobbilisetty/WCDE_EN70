@@ -1,0 +1,239 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		This class defines a grid column for status property of {@link wspTaskPrimaryObjectDefinition Task}.
+	-->
+	<class alignment="center" cellViewerClass="wspGridTaskStatusImageViewer" editable="false" extends="wcfGridColumn" name="wspGridTaskStatus">
+		<!---
+			@keywords private
+			Gets the column filter display value.
+			@param wcfModelObject o: the model object instance
+		-->
+		<method args="o" name="getColumnFilterDisplayValue">
+			<![CDATA[
+				var cellDescriptor = this.getCellDescriptor(o);
+				if (cellDescriptor) {
+					var statusValue = o.getPropertyValue("status", cellDescriptor.objectPath);
+					switch (statusValue) {
+						case "TODO":
+							if (o.getPropertyValue("taskIdentifier", cellDescriptor.objectPath) != wcfContextUtil.findContextValue(null, "workspaceTask").value) {
+								var usageValue = o.getPropertyValue("usage", cellDescriptor.objectPath);
+								if (usageValue == "1") {
+									return wspWorkspaceResources.todoTasks.string;
+								}
+								else if (usageValue == "2") {
+									return wspWorkspaceResources.pendingApprovalTasks.string;
+								}
+							}
+							else {
+								return wspWorkspaceResources.workingTasks.string;
+							}
+							break;
+
+						case "REDO":
+							if (o.getPropertyValue("taskIdentifier", cellDescriptor.objectPath) != wcfContextUtil.findContextValue(null, "workspaceTask").value) {
+								var usageValue = o.getPropertyValue("usage", cellDescriptor.objectPath);
+								if (usageValue == "1") {
+									return wspWorkspaceResources.redoTasks.string;
+								}
+								else if (usageValue == "2") {
+									return wspWorkspaceResources.pendingApprovalTasks.string;
+								}
+							}
+							else {
+								return wspWorkspaceResources.workingTasks.string;
+							}
+							break;
+
+						case "INACTIVE":
+							return wspWorkspaceResources.taskGroupStatusInactive.string;
+						
+						case "COMPLETED":
+							return wspWorkspaceResources.completedTasks.string;
+
+						case "APPROVED":
+							return wspWorkspaceResources.approvedTasks.string;
+
+						case "CANCELLED":
+							return wspWorkspaceResources.canceledTasks.string;
+					}
+				}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Viewer class for wspGridTaskStatus which displays the appropriate image for task status.
+	-->
+	<class name="wspGridTaskStatusImageViewer">
+		<!--- @keywords private -->
+		<attribute name="icon" type="string" value="${null}"/>
+		<!--- @keywords private -->
+		<attribute name="o" setter="setModelObject(o)" value="null"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateIcon();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateIconDel"]) {
+				this.updateIconDel.unregisterAll();
+				delete this.updateIconDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Sets the model object for this viewer.
+			@param wcfModelObject newModelObject: The new model object instance.
+		-->
+		<method args="newModelObject" name="setModelObject">
+			<![CDATA[
+				if (newModelObject != this["o"]) {
+					this.o = newModelObject;
+					this.updateIcon();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Updates the icon image for this column when the registered event(s) is triggered.
+		-->
+		<method name="updateIcon" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateIconDel) == "undefined") {
+				this.updateIconDel = new lz.Delegate(this, "updateIcon");
+			}
+			this.updateIconDel.unregisterAll();
+
+			if (this.o) {
+				this.updateIconDel.register(this.o.getProperty("status"), "onvalue");
+				this.updateIconDel.register(this.o.getProperty("usage"), "onvalue");
+				this.updateIconDel.register(wcfContextUtil.findContextValue(null, "workspaceTask"), "onvalue");
+			}
+
+			var resourceBundleKey = null;
+			
+			if (this.o != null) {
+				var statusValue = this.o.getPropertyValue("status");
+				switch (statusValue) {
+					case "TODO":
+						if (this.o.getPropertyValue("taskIdentifier") != wcfContextUtil.findContextValue(null, "workspaceTask").value) {
+							var usageValue = this.o.getPropertyValue("usage");
+							if (usageValue == "1") {
+								this.setAttribute("icon", "todoIcon");
+								resourceBundleKey = wspWorkspaceResources.todoTasks;
+							}
+							else if (usageValue == "2") {
+								this.setAttribute("icon", "pendingApprovalIcon");
+								resourceBundleKey = wspWorkspaceResources.pendingApprovalTasks;
+							}
+						}
+						else {
+							this.setAttribute("icon", "workingIcon");
+							resourceBundleKey = wspWorkspaceResources.workingTasks;
+						}
+						break;
+
+					case "REDO":
+						if (this.o.getPropertyValue("taskIdentifier") != wcfContextUtil.findContextValue(null, "workspaceTask").value) {
+							var usageValue = this.o.getPropertyValue("usage");
+							if (usageValue == "1") {
+								this.setAttribute("icon", "redoIcon");
+								resourceBundleKey = wspWorkspaceResources.redoTasks;
+							}
+							else if (usageValue == "2") {
+								this.setAttribute("icon", "pendingApprovalIcon");
+								resourceBundleKey = wspWorkspaceResources.pendingApprovalTasks;
+							}
+						}
+						else {
+							this.setAttribute("icon", "workingIcon");
+							resourceBundleKey = wspWorkspaceResources.workingTasks;
+						}
+						break;
+
+					case "INACTIVE":
+						this.setAttribute("icon", "taskGroupInactiveIcon");
+						resourceBundleKey = wspWorkspaceResources.taskGroupStatusInactive;
+						break;
+							
+					case "COMPLETED":
+						this.setAttribute("icon", "completedIcon");
+						resourceBundleKey = wspWorkspaceResources.completedTasks;
+						break;
+
+					case "APPROVED":
+						this.setAttribute("icon", "approvedIcon");
+						resourceBundleKey = wspWorkspaceResources.approvedTasks;
+						break;
+
+					case "CANCELLED":
+						this.setAttribute("icon", "canceledIcon");
+						resourceBundleKey = wspWorkspaceResources.canceledTasks;
+						break;
+					
+					default:
+						this.setAttribute("icon", null);
+				}
+			}
+
+			if (resourceBundleKey != null) {
+				if (typeof(this.display) != "undefined") {
+					this.display.tip.setAttribute("text", resourceBundleKey.string);
+				}
+				this.updateIconDel.register(resourceBundleKey, "onstring");
+			}
+			else {
+				if (typeof(this.display) != "undefined") {
+					this.display.tip.setAttribute("text", "");
+				}
+			}
+			]]>
+		</method>
+
+		<image clickable="true" name="display" resource="${classroot.icon}" stretches="both" visible="${classroot.icon ? true : false}">
+			<wcfTooltip name="tip"/>
+
+			<handler name="onclick">
+				<![CDATA[
+				if(parent.parent["onclick"]){
+					parent.parent.onclick.sendEvent();
+				}
+				]]>
+			</handler>
+
+			<handler name="ondblclick">
+				<![CDATA[
+				if(parent.parent["ondblclick"]){
+					parent.parent.ondblclick.sendEvent();
+				}
+				]]>
+			</handler>
+		</image>
+	</class>
+</library>

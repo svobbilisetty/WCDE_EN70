@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		This definition defines the properties of an attribute dictionary attribute.
+	-->
+	<ObjectProperties definitionName="catAttributeDictionaryAttributePropertiesPage">
+		<PropertyTabs name="manageAttributeDictionaryAttributePropertyTab">
+			<PropertyTabPane name="manageAttributeDictionaryAttributeProperties" text="${catalogResources.manageAttributeTab}">
+				<PropertyPane baseDefinitionName="catManageAttributeDictionaryAttributePane"/>
+			</PropertyTabPane>
+			<PropertyTabPane name="manageAttributeDictionaryAttributeReferences" text="${catalogResources.attributeReferencesPrompt}">
+				<PropertyPane name="attributeReferencesPane">
+					<PropertyGroup collapsable="false" name="attributeFoldersGroup">
+	             		<!-- Reference List: A table to display attribute folders that this attribute belongs to. -->
+	                	<PropertyReferenceList listDefinitionName="catAttributeFolderReferenceGrid" name="attributeFolderRefList" promptText="${catalogResources.attributeFolderReference}" referenceObjectPaths="*/AttributeFolderItemReference,*/AttributeFolderInheritedItemReference,*/InheritedAttributeFolderInheritedItemReference"/>
+					 </PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+
+  <!---
+		This definition defines the property details displayed in the properties of an attribute dictionary attribute.
+	-->
+	<PropertyPane definitionName="catManageAttributeDictionaryAttributePane">
+		
+		<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>
+		
+		<PropertyGroup groupTitle="${catalogResources.attributeProperties}" name="mainAttributeDictionaryAttributePropertyGroup" open="true">
+			<!-- Attribute Unique ID -->
+			<PropertyViewLongText promptText="${catalogResources.attributeDictionaryId}" propertyName="attrId">
+				<FalseEnablementCondition/>
+			</PropertyViewLongText>
+			<PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_Code}" promptText="${catalogResources.attributeCodePrompt}" propertyName="attributeCode" required="true"/>
+			<PropertyInputText objectPath="AttributeDictionaryAttributeDescription" promptText="${catalogResources.attributeDisplayNamePrompt}" propertyName="attrName" required="true"/>
+			<PropertyCombobox extendedHelpText="${catalogResources.extendedHelpText_AttributeDataType}" promptText="${catalogResources.attributeDataType_ColumnHeader}" propertyName="attrDataType" required="true"/>
+			<PropertyInputMultiLineText objectPath="AttributeDictionaryAttributeDescription" promptText="${catalogResources.attributeDescriptionPrompt}" propertyName="attrDescription"/><PropertyInputMultiLineText propertyName="xdescdata_SecondaryDescription" objectPath="AttributeDictionaryAttributeDescription" promptText="${catalogResources.attributeSecondaryDescriptionPrompt}"/>
+			<PropertyCheckbox name="displayable" propertyName="displayable" extendedHelpText="${catalogResources.extendedHelpText_displayable}" promptText="${catalogResources.attributeDisplayable}"/>			
+			<PropertyCheckbox name="comparable" propertyName="comparable" extendedHelpText="${catalogResources.extendedHelpText_comparable}" promptText="${catalogResources.attributeComparable}"/>	
+			<PropertyGroup open="true" collapsable="false" name="merchandisableCheckBoxInformationGroup">
+				<EnablementAndCondition conditionId="enableMerchandisableCondition">
+					<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+					<EnablementOrCondition>
+						<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="AttributeDictionaryAttributeWithAllowedValues" conditionId="allowedValuesCondition"/>
+						<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="InheritedAttributeDictionaryAttributeWithAllowedValues" conditionId="inheritedAllowedValuesCondition"/>
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+				<PropertyCheckbox name="merchandisable" propertyName="merchandisable" extendedHelpText="${catalogResources.extendedHelpText_merchandisable}" 
+					promptText="${catalogResources.attributeMerchandisable}"/>
+			</PropertyGroup>
+
+			<PropertyGroup open="true" collapsable="false" name="facetableCheckBoxInformationGroup">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+				<PropertyCheckbox name="facetable" propertyName="facetable" extendedHelpText="${catalogResources.extendedHelpText_facetable}" 
+					promptText="${catalogResources.attributeFacetable}"/>
+			</PropertyGroup>
+			<PropertyGroup open="true" collapsable="false" name="searchableCheckBoxInformationGroup">
+				<EnablementAndCondition conditionId="facetableCondition1">
+					<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>			
+					<EnablementCondition conditionId="facetableTypeCondition" enablementValue="false" propertyName="facetable"/>
+				</EnablementAndCondition>
+				<PropertyCheckbox name="searchable" propertyName="searchable" extendedHelpText="${catalogResources.extendedHelpText_searchable}" 
+					promptText="${catalogResources.attributeSearchable}"/>
+			</PropertyGroup>
+			<PropertyInputText propertyName="xdescdata_Footnote" objectPath="AttributeDictionaryAttributeDescription" promptText="${catalogResources.attributeFootnotePrompt}"/>
+			<PropertyCombobox propertyName="xdescdata_UnitOfMeasure" objectPath="AttributeDictionaryAttributeDescription" promptText="${catalogResources.attributeValueUnitOfMeasure}"/>
+			<PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_AttributeGroupName}" propertyName="xdescdata_DisplayGroupName" objectPath="AttributeDictionaryAttributeDescription" promptText="${catalogResources.attributeGroupNamePrompt}"/>
+		</PropertyGroup>
+
+		<!--- 
+			This property group contains properties for a facetable attribute.
+			This will only be displayed on the property group if the property 'facetable' is set to 'true'.
+		-->
+		<PropertyGroup open="true" name="facetableInformationGroup" groupTitle="${catalogResources.facetableProperties}">	
+			<!---
+				An enablement condition that evaluates to true if 'facetable' is 'true' and the attribute has allowed values.
+			 -->
+			 <EnablementAndCondition conditionId="facetableCondition1">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>				
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+			</EnablementAndCondition>
+			<PropertyCheckbox  name="xfacet_includeInKeywordSearch" propertyName="xfacet_includeInKeywordSearch" 
+					extendedHelpText="${catalogResources.extendedHelpText_includeInKeywordSearch}" 
+					promptText="${catalogResources.attributeFacetableIncludeInKeywordSearch}"
+					trueValue="true"
+					falseValue="false"
+					/>
+			<PropertyCheckbox name="xfacet_allowMultipleValueSelection" propertyName="xfacet_allowMultipleValueSelection" 
+				extendedHelpText="${catalogResources.extendedHelpText_allowMultipleValueSelection}" 
+				promptText="${catalogResources.attributeFacetableAllowMultipleValueSelection}"
+				trueValue="true"
+				falseValue="false"
+				/>
+			<PropertyCheckbox name="xfacet_displayZeroCountValues" propertyName="xfacet_displayZeroCountValues" 
+				extendedHelpText="${catalogResources.extendedHelpText_displayZeroCountValues}"
+				promptText="${catalogResources.attributeFacetableDisplayZeroCountValues}"
+				trueValue="true"
+				falseValue="false"/>
+			<PropertyRadioGroup name="xfacet_noMaximum" propertyName="xfacet_noMaximum" 
+				extendedHelpText="${catalogResources.extendedHelpText_maximumValuesToDisplay}" 
+				promptText="${catalogResources.attributeFacetableMaximumValuesToDisplay}"/>
+			<PropertyGroup open="true" collapsable="false">	
+				<EnablementCondition conditionId="facetableNoMaxValueCondition" enablementValue="false" propertyName="xfacet_noMaximum"/>
+				<PropertyStepper name="xfacet_maximumValuesToDisplay" 
+					propertyName="xfacet_maximumValuesToDisplay" 
+					minimumValue="1"/>
+			</PropertyGroup>
+			<PropertyRadioGroup name="xfacet_valueOrder" propertyName="xfacet_valueOrder" extendedHelpText="${catalogResources.extendedHelpText_attributeFacetableValueOrder}" promptText="${catalogResources.attributeFacetableValueOrder}"/>
+		</PropertyGroup>
+		
+		<!---
+			This property group contains the list of String/Text allowed values for a defining attribute.
+			This will only be display on the property group if the property 'attrDataType' is set to 'String'.
+		 -->		
+		<PropertyGroup groupTitle="${catalogResources.attributeValuesGroupPrompt}" name="stringDefiningAttributePropGroup" open="true">
+			<!---
+				An enablement condition that evaluates to true if 'attrDataType' is 'String' and the attribute has allowed values.
+			 -->
+			<EnablementAndCondition conditionId="stringDataTypeCondition1">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="allowedValuesCondition11" enablementValue="AttributeDictionaryAttributeWithAllowedValues" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="allowedValuesCondition12" enablementValue="InheritedAttributeDictionaryAttributeWithAllowedValues" propertyName="objectType"/>
+				</EnablementOrCondition>
+				<EnablementCondition conditionId="stringDataTypeCondition" enablementValue="String" propertyName="attrDataType"/>
+			</EnablementAndCondition>
+		
+			<PropertyChildListEditor baseDefinitionName="catAttributeDictionaryAttributeStringValueList"/>
+		</PropertyGroup>
+		
+		<!---
+			This property group contains the list of Integer/Whole Number allowed values for a defining attribute.
+			This will only be display on the property group if the property 'attrDataType' is set to 'Integer'.
+		 -->		
+		<PropertyGroup groupTitle="${catalogResources.attributeValuesGroupPrompt}" name="intDefiningAttributePropGroup" open="true">
+			<!---
+				An enablement condition that evaluates to true if 'attrDataType' is 'Integer' and the attribute has allowed values.
+			 -->
+			 <EnablementAndCondition conditionId="integerDataTypeCondition1">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="allowedValuesCondition21" enablementValue="AttributeDictionaryAttributeWithAllowedValues" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="allowedValuesCondition22" enablementValue="InheritedAttributeDictionaryAttributeWithAllowedValues" propertyName="objectType"/>
+				</EnablementOrCondition>
+				<EnablementCondition conditionId="integerDataTypeCondition" enablementValue="Integer" propertyName="attrDataType"/>
+			</EnablementAndCondition>
+	
+			<PropertyChildListEditor baseDefinitionName="catAttributeDictionaryAttributeIntegerValueList"/>
+		</PropertyGroup>
+				
+		<!---
+			This property group contains the list of Float/Decimal Number allowed values for a defining attribute.
+			This will only be display on the property group if the property 'attrDataType' is set to 'Float'.
+		 -->		
+		<PropertyGroup groupTitle="${catalogResources.attributeValuesGroupPrompt}" name="floatDefiningAttributePropGroup" open="true">
+			<!---
+				An enablement condition that evaluates to true if 'attrDataType' is 'Float' and the attribute has allowed values.
+			 -->
+			 <EnablementAndCondition conditionId="floatDataTypeCondition1">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="allowedValuesCondition31" enablementValue="AttributeDictionaryAttributeWithAllowedValues" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="allowedValuesCondition32" enablementValue="InheritedAttributeDictionaryAttributeWithAllowedValues" propertyName="objectType"/>
+				</EnablementOrCondition>
+				<EnablementCondition conditionId="floatDataTypeCondition" enablementValue="Float" propertyName="attrDataType"/>
+			</EnablementAndCondition>
+	
+			<PropertyChildListEditor baseDefinitionName="catAttributeDictionaryAttributeFloatValueList"/>
+		</PropertyGroup>
+		
+		<PropertyGroup open="false" name="customAttributeDictionaryAttributePropertyGroup" groupTitle="${catalogResources.attributeCustomProperties}">
+			<PropertyInputText propertyName="xdescdata_Field1" extendedHelpText="${catalogResources.extendedHelpText_attributeDescriptionField1}" objectPath="AttributeDictionaryAttributeDescription" promptText="${catalogResources.attributeField1Prompt}"/>
+			<PropertyStepper propertyName="xdata_Field1" extendedHelpText="${catalogResources.extendedHelpText_attributeField1}" promptText="${catalogResources.attributePropertiesField1_DisplayName}" minimumValue="-2147483648" maximumValue="2147483647"/>
+			<PropertyStepper propertyName="xdata_Field2" extendedHelpText="${catalogResources.extendedHelpText_attributeField2}" promptText="${catalogResources.attributePropertiesField2_DisplayName}" minimumValue="-2147483648" maximumValue="2147483647"/>		
+			<PropertyInputText propertyName="xdata_Field3" extendedHelpText="${catalogResources.extendedHelpText_attributeField3}" promptText="${catalogResources.attributePropertiesField3_DisplayName}"/>
+		</PropertyGroup>
+		
+	</PropertyPane>
+
+	<!---
+		This definition is used to display the allowed values of a string attribute dictionary attribute.
+	-->
+	<PropertyChildListEditor
+		definitionName="catAttributeDictionaryAttributeStringValueList"
+		helpLinkText="${foundationResources.helpDefaultLinkText}"
+		helpLinkURL="tasks/tpnadatv.htm"
+		listDefinitionName="catAttributeDictionaryAttributeStringValueGrid"
+		objectTypes="AttributeDictionaryAttributeStringValue,InheritedAttributeDictionaryAttributeStringValue"
+		promptText="${catalogResources.attributeValuesPrompt}">		
+	</PropertyChildListEditor>	
+				
+  	<!---
+		This definition is used to display the allowed values of a string attribute dictionary attribute.
+	-->	
+	<ObjectGrid definitionName="catAttributeDictionaryAttributeStringValueGrid" preferenceKey="catAttributeDictionaryAttributeStringValueGrid">
+		<GridNumeric editable="true" numDecimalPlaces="1" languageSensitive="true" name="displaySequence" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="sequence" text="${catalogResources.displaySequence}" visible="true" width="220"/>
+        <GridText editable="false" name="attrValId" propertyName="attrValId" text="${catalogResources.productUniqueId_ColumnHeader}" visible="false" width="150"/>			
+        <GridIconTypeImage name="typeIcon" propertyName="typeIcon" required="true" text="${catalogResources.catalogGroupType_ColumnHeader}" visible="true" width="60"/>			
+		<GridStoreName name="store"/>
+		<GridText editable="false" name="xvaldata_AttributeValueIdentifier" propertyName="xvaldata_AttributeValueIdentifier" text="${catalogResources.attributeCodePrompt}" visible="false" width="250"/>
+		<GridText editable="true" sortable="true" datatype="string" languageSensitive="true" name="value" required="true" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value" text="${catalogResources.attributeValueValue}" width="220"/>
+		<GridCheckbox enableFilter="true" name="default" propertyName="default" text="${catalogResources.attributeValueUsage}" trueValue="true" falseValue="false" editable="true" visible="true" width="125" alignment="center"/>
+		<!-- Extended fields for attribute allowed value -->
+		<GridStepper editable="true" name="xvaldata_AttributeValueField1" datatype="number" propertyName="xvaldata_AttributeValueField1" text="${catalogResources.attributeValue_Field1}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>		
+		<GridStepper editable="true" name="xvaldata_AttributeValueField2" datatype="number" propertyName="xvaldata_AttributeValueField2" text="${catalogResources.attributeValue_Field2}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>		
+		<GridText editable="true" name="xvaldata_AttributeValueField3" propertyName="xvaldata_AttributeValueField3" text="${catalogResources.attributeValue_Field3}" visible="false" width="250"/>			
+		<!-- Language sensitive Extended fields for attribute allowed value -->
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Image1" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Image1" text="${catalogResources.attributeValueImage1}" visible="false" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Image2" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Image2" text="${catalogResources.attributeValueImage2}" visible="false" width="250"/>		
+		<GridComboBox enableFilter="true" editable="true" languageSensitive="true" name="xvaldescdata_UnitOfMeasure" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_UnitOfMeasure" text="${catalogResources.attributeValueUnitOfMeasure}" visible="false" width="200"/>
+		<GridStepper editable="true" languageSensitive="true" name="xvaldescdata_Field1" datatype="number" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field1" text="${catalogResources.attributeValueDescription_Field1}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Field2" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field2" text="${catalogResources.attributeValueDescription_Field2}" visible="false" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Field3" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field3" text="${catalogResources.attributeValueDescription_Field3}" visible="false" width="250"/>			
+	</ObjectGrid>
+	
+	<!---
+		This definition is used to display the allowed values of an integer attribute dictionary attribute.
+	-->
+	<PropertyChildListEditor
+		definitionName="catAttributeDictionaryAttributeIntegerValueList"
+		helpLinkText="${foundationResources.helpDefaultLinkText}"
+		helpLinkURL="tasks/tpnadatv.htm"
+		listDefinitionName="catAttributeDictionaryAttributeIntegerValueGrid"
+		objectTypes="AttributeDictionaryAttributeIntegerValue,InheritedAttributeDictionaryAttributeIntegerValue"
+		promptText="${catalogResources.attributeValuesPrompt}">
+	</PropertyChildListEditor>
+		
+  	<!---
+		This definition is used to display the allowed values of an integer attribute dictionary attribute.
+	-->	
+	<ObjectGrid definitionName="catAttributeDictionaryAttributeIntegerValueGrid" preferenceKey="catAttributeDictionaryAttributeIntegerValueGrid">
+		<GridNumeric editable="true" numDecimalPlaces="1" languageSensitive="true" name="displaySequence" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="sequence" text="${catalogResources.displaySequence}" visible="true" width="220"/>
+        <GridText editable="false" name="attrValId" propertyName="attrValId" text="${catalogResources.productUniqueId_ColumnHeader}" visible="false" width="150"/>			
+        <GridIconTypeImage name="typeIcon" propertyName="typeIcon" required="true" text="${catalogResources.catalogGroupType_ColumnHeader}" visible="true" width="60"/>			
+		<GridStoreName name="store"/>
+		<GridText editable="false" name="xvaldata_AttributeValueIdentifier" propertyName="xvaldata_AttributeValueIdentifier" text="${catalogResources.attributeCodePrompt}" visible="false" width="250"/>
+		<GridStepper editable="true" sortable="true" datatype="number" languageSensitive="true" name="value" required="true" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value" text="${catalogResources.attributeValueValue}" minimumValue="-2147483648" maximumValue="2147483647" width="220"/>			
+		<GridCheckbox enableFilter="true" name="default" propertyName="default" text="${catalogResources.attributeValueUsage}" trueValue="true" falseValue="false" editable="true" visible="true" width="125" alignment="center"/>
+		<!-- Extended fields for attribute allowed value -->
+		<GridStepper editable="true" name="xvaldata_AttributeValueField1" datatype="number" propertyName="xvaldata_AttributeValueField1" text="${catalogResources.attributeValue_Field1}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>		
+		<GridStepper editable="true" name="xvaldata_AttributeValueField2" datatype="number" propertyName="xvaldata_AttributeValueField2" text="${catalogResources.attributeValue_Field2}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>		
+		<GridText editable="true" name="xvaldata_AttributeValueField3" propertyName="xvaldata_AttributeValueField3" text="${catalogResources.attributeValue_Field3}" visible="false" width="250"/>			
+		<!-- Language sensitive Extended fields for attribute allowed value -->
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Image1" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Image1" text="${catalogResources.attributeValueImage1}" visible="false" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Image2" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Image2" text="${catalogResources.attributeValueImage2}" visible="false" width="250"/>		
+		<GridComboBox enableFilter="true" editable="true" languageSensitive="true" name="xvaldescdata_UnitOfMeasure" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_UnitOfMeasure" text="${catalogResources.attributeValueUnitOfMeasure}" visible="false" width="200"/>
+		<GridStepper editable="true" languageSensitive="true" name="xvaldescdata_Field1" datatype="number" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field1" text="${catalogResources.attributeValueDescription_Field1}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Field2" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field2" text="${catalogResources.attributeValueDescription_Field2}" visible="false" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Field3" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field3" text="${catalogResources.attributeValueDescription_Field3}" visible="false" width="250"/>			
+	</ObjectGrid>
+	
+	<!---
+		This definition is used to display the allowed values of a float attribute dictionary attribute.
+	-->
+	<PropertyChildListEditor
+		definitionName="catAttributeDictionaryAttributeFloatValueList"
+		helpLinkText="${foundationResources.helpDefaultLinkText}"
+		helpLinkURL="tasks/tpnadatv.htm"
+		listDefinitionName="catAttributeDictionaryAttributeFloatValueGrid"
+		objectTypes="AttributeDictionaryAttributeFloatValue,InheritedAttributeDictionaryAttributeFloatValue"
+		promptText="${catalogResources.attributeValuesPrompt}">
+	</PropertyChildListEditor>
+		
+  	<!---
+		This definition is used to display the allowed values of a float attribute dictionary attribute.
+	-->	
+	<ObjectGrid definitionName="catAttributeDictionaryAttributeFloatValueGrid" preferenceKey="catAttributeDictionaryAttributeFloatValueGrid">
+		<GridNumeric editable="true" numDecimalPlaces="1" languageSensitive="true" name="displaySequence" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="sequence" text="${catalogResources.displaySequence}" visible="true" width="220"/>
+        <GridText editable="false" name="attrValId" propertyName="attrValId" text="${catalogResources.productUniqueId_ColumnHeader}" visible="false" width="150"/>			
+        <GridIconTypeImage name="typeIcon" propertyName="typeIcon" required="true" text="${catalogResources.catalogGroupType_ColumnHeader}" visible="true" width="60"/>			
+		<GridStoreName name="store"/>
+		<GridText editable="false" name="xvaldata_AttributeValueIdentifier" propertyName="xvaldata_AttributeValueIdentifier" text="${catalogResources.attributeCodePrompt}" visible="false" width="250"/>
+		<GridNumeric editable="true" sortable="true" datatype="number" numDecimalPlaces="1" languageSensitive="true" name="value" required="true" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value" text="${catalogResources.attributeValueValue}" width="220"/>
+		<GridCheckbox enableFilter="true" name="default" propertyName="default" text="${catalogResources.attributeValueUsage}" trueValue="true" falseValue="false" editable="true" visible="true" width="125" alignment="center"/>
+		<!-- Extended fields for attribute allowed value -->
+		<GridStepper editable="true" name="xvaldata_AttributeValueField1" datatype="number" propertyName="xvaldata_AttributeValueField1" text="${catalogResources.attributeValue_Field1}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>		
+		<GridStepper editable="true" name="xvaldata_AttributeValueField2" datatype="number" propertyName="xvaldata_AttributeValueField2" text="${catalogResources.attributeValue_Field2}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>		
+		<GridText editable="true" name="xvaldata_AttributeValueField3" propertyName="xvaldata_AttributeValueField3" text="${catalogResources.attributeValue_Field3}" visible="false" width="250"/>			
+		<!-- Language sensitive Extended fields for attribute allowed value -->
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Image1" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Image1" text="${catalogResources.attributeValueImage1}" visible="false" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Image2" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Image2" text="${catalogResources.attributeValueImage2}" visible="false" width="250"/>		
+		<GridComboBox enableFilter="true" editable="true" languageSensitive="true" name="xvaldescdata_UnitOfMeasure" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_UnitOfMeasure" text="${catalogResources.attributeValueUnitOfMeasure}" visible="false" width="200"/>
+		<GridStepper editable="true" languageSensitive="true" name="xvaldescdata_Field1" datatype="number" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field1" text="${catalogResources.attributeValueDescription_Field1}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Field2" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field2" text="${catalogResources.attributeValueDescription_Field2}" visible="false" width="250"/>
+		<GridText editable="true" languageSensitive="true" name="xvaldescdata_Field3" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="xvaldescdata_Field3" text="${catalogResources.attributeValueDescription_Field3}" visible="false" width="250"/>			
+	</ObjectGrid>
+	
+</Definitions>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="pglSKUPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.skuPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="SKUPageReferenceDefaultSKUPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="SKUPageReferenceDefaultSKUPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="SKUPageReferenceDefaultSKUPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display SKU page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglSKUPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementOrCondition conditionId="localSKUObjectTypesCondition" negate="true">
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupSKUPageCondition" enablementValue="InheritedCatalogGroupSKUPage" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedProductSKUPageCondition" enablementValue="InheritedProductSKUPage" propertyName="objectType"/>
+					</EnablementOrCondition>
+					<PropertyChildListEditor baseDefinitionName="pglSKUPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited SKU page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedSKUPageLayoutAssociationPropertyGroupList">
+					<EnablementOrCondition conditionId="inheritedSKUObjectTypesCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCatalogGroupSKUPageCondition" enablementValue="InheritedCatalogGroupSKUPage" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedProductSKUPageCondition" enablementValue="InheritedProductSKUPage" propertyName="objectType"/>
+					</EnablementOrCondition>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedSKUPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglSKUPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglSKUPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_skuPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="SKUPageLayoutAssociationReferencedSKUPageLayouts,SKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>				
+	<PropertyChildListEditor definitionName="pglSKUPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_skuPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="SKUPageLayoutAssociationReferencedSKUPageLayouts,SKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedSKUPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_skuPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedSKUPageLayoutAssociationReferencedInheritedSKUPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

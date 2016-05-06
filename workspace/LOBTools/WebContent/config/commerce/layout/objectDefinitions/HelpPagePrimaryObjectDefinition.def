@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBaseHelpPagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglHelpPageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglHelpPageLayoutAssociationReferencedHelpPageLayouts}
+			representing the reference to the help page layout objects which hold a page layout association with this static help page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglHelpPageLayoutAssociationReferencedHelpPageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts}
+			representing the reference to the inherited help page layout objects which hold a page layout association with this help page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts}
+			representing the reference to the inherited help page layout objects which hold a page layout association with this inherited help page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the static help page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglHelpPageReferenceDefaultHelpPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglHelpPageLayoutAssociationReferencedHelpPageLayouts},
+			{@link pglHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts} and {@link pglInheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts}
+			references for this static help page.
+		-->
+		<GetChildrenService objectTypes="HelpPageLayoutAssociationReferencedHelpPageLayouts,HelpPageLayoutAssociationReferencedInheritedHelpPageLayouts,InheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="HelpPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this Help page.
+		-->
+		<GetChildrenService objectTypes="HelpPageReferenceDefaultHelpPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="HelpPage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for the help page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="Help"/>
+		</GetPreviewURLService>
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a help Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseHelpPagePrimaryObjectDefinition"
+     	definitionName="HelpPage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="HelpPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Help Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseHelpPagePrimaryObjectDefinition"
+     	definitionName="InheritedHelpPage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedHelpPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglHelpPageLayoutAssociationReferencedHelpPageLayouts" objectType="HelpPageLayoutAssociationReferencedHelpPageLayouts" referencedTypes="HelpPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" definitionName="pglHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" objectType="HelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" referencedTypes="InheritedHelpPageLayout"/>  
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="HelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" definitionName="pglInheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" objectType="InheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" referencedTypes="InheritedHelpPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglHelpPageReferenceDefaultHelpPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="HelpPageReferenceDefaultHelpPageLayout" 
+		referencedTypes="HelpPageLayout,InheritedHelpPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

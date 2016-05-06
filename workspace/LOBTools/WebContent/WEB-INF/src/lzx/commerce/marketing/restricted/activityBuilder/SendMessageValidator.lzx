@@ -1,0 +1,65 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		<p>Validator for {@link mktSendMessageElementObject Current Page target}. Based on the selected option,
+		this validator ensures that an E-mail template or an Text message for SMS are provided.</p>
+		
+		<p>There should only be one instance of this class defined for each {@link mktSendMessageElementObject}.</p>
+	-->
+	<class name="mktSendMessageValidator" extends="wcfValidator">
+		<!--- Warning message to show when no Email Template are provided -->
+		<attribute name="noEmailSelectedErrorMessage" value="${mktMarketingResources.noEmailTemplateSelected.string}" type="string"/>
+		<!--- Warning message to show when no SMS content are provided -->
+		<attribute name="noContentSelectedErrorMessage" value="${mktMarketingResources.noMarketingContentSelected.string}" type="string"/>
+		<!--- Warning message to show when the wrong type of Marketing Content is selected for SMS -->
+		<attribute name="wrongContentTypeSelectedErrorMessage" value="${mktMarketingResources.wrongContentTypeSelectedForSMS.string}" type="string"/>
+		
+		<!--- The object path for email template objects -->
+		<attribute name="emailObjectPath" value="ChildEmailTemplate" type="string"/>
+		<!--- The object path for SMS content objects -->
+		<attribute name="SMSObjectPath" value="ChildContent/MarketingContentGroup" type="string"/>
+				
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o) {
+				return; // nothing to validate
+			}
+			o.clearValidationError(this);
+
+			var elementTemplate = o.getProperty("elemTemplateName");
+			if(elementTemplate.value == "sendIndividualEmail") {
+				var childObjects = o.getObjects(this.emailObjectPath);
+				
+				if(childObjects.length != 1) {
+					o.addValidationError(this, this.noEmailSelectedErrorMessage);
+				}
+			}
+			else {
+				var childObjects = o.getObjects(this.SMSObjectPath);
+				if(childObjects.length != 1) {
+					o.addValidationError(this, this.noContentSelectedErrorMessage);
+				}
+				else {
+					var contentType = childObjects[0].getPropertyValue("format");
+					if(contentType != "Sms") {
+						o.addValidationError(this, this.wrongContentTypeSelectedErrorMessage);
+					}
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

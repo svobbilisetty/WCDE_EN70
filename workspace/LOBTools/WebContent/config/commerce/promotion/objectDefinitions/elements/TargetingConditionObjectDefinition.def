@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the promotion element object definition for the TargetingCondition object type.
+		Targeting Condition is used to specify the member groups to which the promotion will apply.		
+	-->	
+	<PromotionElementObjectDefinition definitionName="proTargetingConditionObjectDefinition" displayName="${promotionResources.promotionElement_TargetingCondition}" isTopElement="true" objectType="TargetingCondition" package="pro">
+		
+		<!--- Creates the object with the service parameter PROPERTY_elementType with value TargetingCondition. -->
+		<CreateService baseDefinitionName="proPromotionElementCreateService">
+			<ServiceParam name="PROPERTY_elementType" value="TargetingCondition"/>
+		</CreateService>
+		
+		<!--- Updates the object with the service parameter PROPERTY_elementType with value TargetingCondition. -->		
+		<UpdateService baseDefinitionName="proPromotionElementUpdateService">
+			<ServiceParam name="PROPERTY_elementType" value="TargetingCondition"/>
+		</UpdateService>
+		
+		<!--- The member group to be targeted by the promotion. -->
+		<PromotionElementReferenceObjectDefinition baseDefinitionName="proIdentifierMemberGroupObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>IncludeMemberGroupIdentifier</elementType>
+			</Xml>
+		</PromotionElementReferenceObjectDefinition>		
+		<!--- The inherited member group to be targeted by the promotion. -->
+		<PromotionElementReferenceObjectDefinition baseDefinitionName="proIdentifierInheritedMemberGroupObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>IncludeMemberGroupIdentifier</elementType>
+			</Xml>
+		</PromotionElementReferenceObjectDefinition>
+	</PromotionElementObjectDefinition>
+
+</Definitions>

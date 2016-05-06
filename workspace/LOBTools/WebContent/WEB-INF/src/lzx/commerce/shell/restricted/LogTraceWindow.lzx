@@ -1,0 +1,399 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!--- 
+		@keywords private
+		 
+		The combox for setting the log levels for each component.
+	 -->
+	<class name="wcfLogLevelComboBox" extends="wcfBaseComboBox" width="90">
+		<attribute name="component"/>
+		<handler name="oninit">
+			for (var type in wcfLogger.levelValues) {
+				this.addItem(type, wcfLogger.levelValues[type]); 
+			}
+		</handler>
+		<handler name="onselectedValue">
+			wcfLogger.componentsLevel[component] = this.getValue();
+		</handler>
+		
+	</class>
+	<!---
+		@keywords private
+		The wcfLogLevelEditor is used for managing the log levels for a component. It consists of 
+		a text label for displaying component name and a wcfLogLevelComboBox for setting the log level.
+	 -->
+	<class name="wcfLogLevelEditor" extends="view">
+		<attribute name="component"/>
+		<attribute name="text"/>
+		<attribute name="comboBox"/>
+		<handler name="oninit">
+				this.text = new lz.text(this, {
+								text: component,
+								width:320
+							});
+				this.comboBox = new lz.wcfLogLevelComboBox(this, {
+								component: component
+							});
+			
+		</handler>
+		<method name="destroy">
+			<![CDATA[
+			this.text.destroy();
+			this.comboBox.destroy();
+			super.destroy();
+			]]>
+		</method>
+		<method name="selectItem" args="item">
+			<![CDATA[
+				this.comboBox.selectItem(item);
+			]]>
+		</method>
+
+		<simplelayout axis="x" spacing="2" />
+	</class>
+	<!---
+		@keywords private
+		A floating window for configuring logging and tracing settings.
+	 -->
+	<class name="wcfLogTraceWindow" extends="wcfWindow" title="${foundationResources.logTraceWindowTitle.string}"
+			x="$once{(canvas.width - 500)/2}" 
+			y="$once{(canvas.height - 350)/3}"
+		    	focustrap="true"
+		    	visible="false"
+		    	initstage="late"
+		    	minWidth="500"
+		    	minHeight="100">
+		    
+		<!---
+			@keywords private
+			A map to store the log level editors for components
+		-->
+		<attribute name="componentEditors"  value="${{}}"/>
+		
+		<!--- @keywords private  -->
+		<attribute name="showDebuggerOptions" type="boolean" value="false" />
+		
+		 <!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateComponentsLevel();
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Update the log level editors for components.
+		-->
+		<method name="updateComponentsLevel">
+			<![CDATA[
+			for (var i = 0; i < wcfLogger.components.length; i++) 
+			{
+				var component = wcfLogger.components[i];
+				var componentEditor = this.componentEditors[component];
+				if (componentEditor == null)
+				{
+					componentEditor = new lz.wcfLogLevelEditor(componentsDetailLevelView, {component: component});
+					this.componentEditors[component] = componentEditor;	
+				}
+				var levelVal = wcfLogger.componentsLevel[component];
+				if (levelVal != null)
+				{
+					componentEditor.selectItem(levelVal);
+				}
+				else
+				{
+					componentEditor.selectItem(wcfLogger.levelValue);
+					wcfLogger.componentsLevel[component] = null;
+				}
+			}
+			]]>
+		</method>		
+		
+		<!---
+			@keywords private
+			Set the focus to header text
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.windowcontent.levelOptionArea.headertext);
+			]]>
+		</method>
+        <view name="windowcontent">
+        	<view name="levelOptionArea">
+        		<attribute name="open" type="boolean" value="true"/>
+				<simplelayout spacing="3"/>
+
+				<view name="headertext" focusable="true" height="20" bgcolor="0xDFE8FB" width="${Math.max(parent.content.width, parent.parent.sendOptionArea.content.width) + 20}">
+					<simplelayout axis="x"/>
+					<basebutton name="headbutton" bgcolor="${parent.bgcolor}" visible="true" resource="propertyDrawerResource"
+							width="20"
+							onmouseover="this.setAttribute('frame', (parent.parent.open?5:2))"
+							onmouseout="this.setAttribute('frame', (parent.parent.open?4:1))"
+							onmousedown="this.setAttribute('frame', (parent.parent.open?6:3))"
+							onclick="parent.onclick.sendEvent()">
+						<method name="init">
+							<![CDATA[
+							super.init();
+							this.setAttribute('frame', (parent.parent.open ? 4 : 1));
+							]]>
+						</method>
+					</basebutton>
+	
+					<statictext text="${foundationResources.logTraceWindowLogLevelOptions.string}" y="${parent.height/2 - this.height/2}"/>
+	
+					<handler name="onkeydown" args="code">
+						<![CDATA[
+						if (code == 32) { // space bar
+							this.headbutton.onclick.sendEvent();
+						}
+						]]>
+					</handler>
+	
+					<handler name="onclick">
+						<![CDATA[
+						parent.setAttribute("open", !parent.open);
+						this.headbutton.setAttribute('frame', (parent.open?4:1));
+						]]>
+					</handler>
+										
+					<!--- @keywords private -->
+					<handler name="onfocus" >
+					    <![CDATA[				
+					    if(!this["indicator"]){
+						    new lz.wcfFocusIndicator(this, {
+						    	name: "indicator",
+						    	focusableView: this,
+						    	indicatorView: this.headbutton
+						    });
+					    }
+						]]>
+					</handler>
+				</view>
+     	
+				<view name="content" x="20" visible="${parent.open}">			
+					<view id="componentsLevelView" y="5">
+						<view>
+							<text text="${foundationResources.logTraceWindowDefaultLogLevel.string}"/>
+							<wcfBaseComboBox name="defaultLevel" width="90">
+								<handler name="oninit">
+									for (var type in wcfLogger.levelValues) {
+										this.addItem(type, wcfLogger.levelValues[type]); 
+									}
+								
+									this.selectItem(wcfLogger.levelValue);
+								</handler>
+
+								<handler name="onselectedValue">
+									<![CDATA[
+									wcfLogger.setLevelValue(this.getValue());
+									classroot.updateComponentsLevel();
+									]]>
+								</handler>
+							</wcfBaseComboBox>
+							
+							<simplelayout axis="x" spacing="5" />
+						</view>
+						<text text="${foundationResources.logTraceWindowComponentLogLevels.string}"/>						
+						<view id="componentsDetailLevelView" x="20">
+							<simplelayout axis="y" spacing="2" />
+						</view>	
+						<simplelayout axis="y" spacing="5" />				
+					</view>
+				</view>
+			</view>
+			
+        	<view name="sendOptionArea">
+        		<attribute name="open" type="boolean" value="true"/>
+				<simplelayout spacing="3"/>
+
+				<view name="headertext" focusable="true" height="20" bgcolor="0xDFE8FB" width="${Math.max(parent.content.width, parent.parent.levelOptionArea.content.width) + 20}">
+					<simplelayout axis="x"/>
+					<basebutton name="headbutton" bgcolor="${parent.bgcolor}" visible="true" resource="propertyDrawerResource"
+							width="20"
+							onmouseover="this.setAttribute('frame', (parent.parent.open?5:2))"
+							onmouseout="this.setAttribute('frame', (parent.parent.open?4:1))"
+							onmousedown="this.setAttribute('frame', (parent.parent.open?6:3))"
+							onclick="parent.onclick.sendEvent()">
+						<method name="init">
+							<![CDATA[
+							super.init();
+							this.setAttribute('frame', (parent.parent.open ? 4 : 1));
+							]]>
+						</method>
+					</basebutton>
+	
+					<statictext text="${foundationResources.logTraceWindowLogTargetOptions.string}" y="${parent.height/2 - this.height/2}"/>
+	
+					<handler name="onkeydown" args="code">
+						<![CDATA[
+						if (code == 32) { // space bar
+							this.headbutton.onclick.sendEvent();
+						}
+						]]>
+					</handler>
+	
+					<handler name="onclick">
+						<![CDATA[
+						parent.setAttribute("open", !parent.open);
+						this.headbutton.setAttribute('frame', (parent.open?4:1));
+						]]>
+					</handler>
+										
+					<!--- @keywords private -->
+					<handler name="onfocus" >
+					    <![CDATA[				
+					    if(!this["indicator"]){
+						    new lz.wcfFocusIndicator(this, {
+						    	name: "indicator",
+						    	focusableView: this,
+						    	indicatorView: this.headbutton
+						    });
+					    }
+						]]>
+					</handler>
+				</view>
+				<view name="content" x="20" visible="${parent.open}">		
+					<view>
+					<state applied="${$debug &amp;&amp; classroot.showDebuggerOptions}">
+						<text text=""/>
+			            <radiogroup id="targetRadioGroup" layout="axis:x; spacing:30">
+			                <radiobutton id="sendToDebuggerWindowOption" value="2" selected="${wcfLogger.target == 'debugger'}" text="${foundationResources.logTraceWindowSendToDebuggerWindow.string}"/>
+			                <handler name="onvalue">
+			                	if (this.value == 2) {
+				                	wcfLogger.setTarget('debugger');
+				                } 
+				                else {
+				                	sendImmediatelyCheckBox.setValue(false);
+					                wcfLogger.setTarget('server');
+				                }
+			                </handler>
+			                <radiobutton id="sendToServerOption" value="1" text="${foundationResources.logTraceWindowSendToServer.string}"/>
+			            </radiogroup>
+						<checkbox x="20" y="10" id="sendImmediatelyCheckBox" value="${wcfLogger.sendImmediately}" text="${foundationResources.logTraceWindowSendImmediately.string}" enabled="${targetRadioGroup.value == 2}">	
+				                <handler name="oninit">
+				                	this.value = wcfLogger.sendImmediately;
+				                </handler>
+
+				                <handler name="onchanged">
+				                	wcfLogger.setSendImmediately(this.value);
+				                </handler>
+						</checkbox>
+						<simplelayout axis="y" spacing="5" />			            
+					</state>
+					</view>
+					<view>						
+						<view>
+							<text text="${foundationResources.logTraceWindowMessageBufferSize.string}" />
+							<wcfBaseStepper name="bufferSize" minimumValue="100" maximumValue="5000" step="100" width="70" value="${String(wcfLogger.bufferSize)}">
+							 	<handler name="onvalue">
+									wcfLogger.setBufferSize(Number(this.getValue()));
+								</handler>
+							</wcfBaseStepper>				
+							<simplelayout axis="x" spacing="5" />				
+						</view>
+						<view>
+							<text text="${foundationResources.logTraceWindowSendFrequency.string}" />
+							<wcfBaseStepper name="flushInterval" minimumValue="10" maximumValue="600" step="5" width="60" value="${String(wcfLogger.flushInterval)}">
+							 	<handler name="onvalue">
+									wcfLogger.setFlushInterval(Number(this.getValue()));
+								</handler>
+							</wcfBaseStepper>				
+							<simplelayout axis="x" spacing="5" />				
+						</view>
+						<simplelayout axis="x" spacing="20" />
+					</view>
+					<!--
+					<view>
+						<text text="${foundationResources.logTraceWindowServerURL.string}" />
+						<edittext name="serverURL" width="250" text="${wcfLogger.serverURL}" doesenter="true">
+							<method name="doEnterDown">
+								wcfLogger.setServerURL(this.getValue());
+							</method>
+						 	<handler name="onblur">
+								wcfLogger.setServerURL(this.getValue());
+							</handler>
+						</edittext>
+						<simplelayout axis="y" spacing="2" />				
+					</view>
+					-->
+					<simplelayout axis="y" spacing="15" />
+				</view>		
+        	</view>
+        	<simplelayout axis="y" spacing="10" />
+		</view>
+		<view name="buttonSection" placement="footer">
+			<wcfButton name="enableButton" text="${wcfLogger.enabled?foundationResources.logTraceWindowDisableLogTrace.string:foundationResources.logTraceWindowEnableLogTrace.string}" minWidth="100">
+				<handler name="oninit">			 
+					if (wcfLogger.enabled) {
+						this.setAttribute("text", foundationResources.logTraceWindowDisableLogTrace.string);
+					}
+					else {
+						this.setAttribute("text", foundationResources.logTraceWindowEnableLogTrace.string);
+					}
+				</handler>
+				<handler name="onclick">
+					if (wcfLogger.enabled) {
+						wcfLogger.setEnabled(false);
+						this.setAttribute("text", foundationResources.logTraceWindowEnableLogTrace.string);
+					}
+					else
+					{
+						wcfLogger.setEnabled(true);
+						this.setAttribute("text", foundationResources.logTraceWindowDisableLogTrace.string);
+					
+					}
+				</handler>
+			</wcfButton>
+
+			<wcfButton name="perfTraceEnableButton" text="${wcfLogger.perfTraceEnabled?foundationResources.logTraceWindowDisablePerfTrace.string:foundationResources.logTraceWindowEnablePerfTrace.string}" minWidth="200">
+				<handler name="onclick">
+					if (wcfLogger.perfTraceEnabled) {
+						wcfLogger.setPerfTraceEnabled(false);
+						this.setAttribute("text", foundationResources.logTraceWindowEnablePerfTrace.string);
+					}
+					else
+					{
+						wcfLogger.setPerfTraceEnabled(true);
+						this.setAttribute("text", foundationResources.logTraceWindowDisablePerfTrace.string);
+					
+					}
+				</handler>
+			</wcfButton>
+
+			<wcfButton name="perfTimingEventEnableButton" text="${wcfEventTimer.enabled? foundationResources.timingEventRegistryDisableTimingEvent.string:foundationResources.timingEventRegistryEnableTimingEvent.string}" minWidth="200">
+				<handler name="onclick">
+				<![CDATA[
+					wcfEventTimer.setAttribute("enabled", !wcfEventTimer.enabled);				
+				]]>
+				</handler>
+			
+			</wcfButton>
+			
+			<wcfButton id="flushButton" text="${foundationResources.logTraceWindowSendNow.string}" minWidth="100">
+				<handler name="onclick">
+				<![CDATA[
+					if (wcfLogger.enabled || wcfLogger.perfTraceEnabled ) {
+						wcfLogger.flush();
+					}
+				]]>
+				</handler>
+			</wcfButton>
+			<simplelayout axis="x" spacing="10" />				
+		</view>
+		
+	</class>
+
+</library>

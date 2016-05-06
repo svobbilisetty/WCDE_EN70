@@ -1,0 +1,48 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<class name="prcPriceListConditionElementSummary" extends="wcfFlowElementSummary">
+
+		<wcfFlowSummaryParam name="inPriceLists" propertyName="inPriceLists"/>
+		
+		<wcfFlowSummaryParam name="priceListNames" objectPath="RefPriceListGroup/PriceListGroup" propertyName="name"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(prcPriceResources.inPriceLists, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.notInPriceLists, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				
+				var priceLists = this.getValuesList("priceListNames");
+				if (priceLists != "") { 	
+					if(this.resolvedParams["inPriceLists"] == "yes") {
+						summaryText = prcPriceResources.replaceValues("summary_inPriceLists", [priceLists]);
+					} else if(this.resolvedParams["inPriceLists"] == "no") {
+						summaryText = prcPriceResources.replaceValues("summary_notInPriceLists", [priceLists]);
+					}	
+				}	
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+	</class>
+</library>

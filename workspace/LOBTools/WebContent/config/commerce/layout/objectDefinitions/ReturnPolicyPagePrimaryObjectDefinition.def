@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBaseReturnPolicyPagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglReturnPolicyPageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts}
+			representing the reference to the return policy page layout objects which hold a page layout association with this static return policy page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts}
+			representing the reference to the inherited return policy page layout objects which hold a page layout association with this static return policy page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts}
+			representing the reference to the inherited return policy page layout objects which hold a page layout association with this inherited return policy page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the static return policy page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglReturnPolicyPageReferenceDefaultReturnPolicyPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts},
+			{@link pglReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts} and {@link pglInheritedReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts}
+			references for this static return policy page.
+		-->
+		<GetChildrenService objectTypes="ReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts,ReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts,InheritedReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ReturnPolicyPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this Return Policy Page.
+		-->
+		<GetChildrenService objectTypes="ReturnPolicyPageReferenceDefaultReturnPolicyPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ReturnPolicyPage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for the return policy page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="ReturnPolicy"/>
+		</GetPreviewURLService>		
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Return Policy Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseReturnPolicyPagePrimaryObjectDefinition"
+     	definitionName="ReturnPolicyPage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="ReturnPolicyPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Return Policy Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseReturnPolicyPagePrimaryObjectDefinition"
+     	definitionName="InheritedReturnPolicyPage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedReturnPolicyPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts" objectType="ReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts" referencedTypes="ReturnPolicyPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" definitionName="pglReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" objectType="ReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" referencedTypes="InheritedReturnPolicyPageLayout"/>  
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="ReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" definitionName="pglInheritedReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" objectType="InheritedReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" referencedTypes="InheritedReturnPolicyPageLayout"/>
+
+	<ReferenceObjectDefinition definitionName="pglReturnPolicyPageReferenceDefaultReturnPolicyPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="ReturnPolicyPageReferenceDefaultReturnPolicyPageLayout" 
+		referencedTypes="ReturnPolicyPageLayout,InheritedReturnPolicyPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="mktMarketingContentProperties" componentObjectNames="selectedImageMapArea">
+		<PropertyTabs name="tabs">	
+			<PropertyTabPane name="general" text="${mktMarketingResources.generalProperties}">
+				<PropertyPane name="pane">
+					<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+					<PropertyGroup groupTitle="${mktMarketingResources.contentProperties}" hideHeaderWhenOnlyGroup="true" name="group1" open="true">
+						<PropertyInputText helpText="${mktMarketingResources.help_content_name}" promptText="${mktMarketingResources.objectName}" propertyName="name" required="true"/>
+						<PropertyCombobox promptText="${mktMarketingResources.formatLabel}" propertyName="format"/>
+						
+						<PropertyGroup collapsable="false" name="group2">
+							<EnablementCondition conditionId="formatCondition" enablementValue="File" propertyName="format"/>
+							<PropertyChildListEditor helpText="${mktMarketingResources.help_content_attachment}" listDefinitionName="mktContentAttachmentGrid" name="attachmentList" newButtonResource="URLListToolbarIcon" objectTypes="AttachmentReference,InheritedAttachmentReference" promptText="${mktMarketingResources.associatedAsset}" required="true" singleChild="true"/>
+						</PropertyGroup>
+						
+						<PropertyGroup collapsable="false" name="group2_text1">															
+							<EnablementOrCondition>
+								<EnablementCondition conditionId="formatCondition" enablementValue="File" propertyName="format"/>
+								<EnablementCondition conditionId="formatCondition2" enablementValue="Text" propertyName="format"/>
+							</EnablementOrCondition>
+							<PropertyRichTextEditor objectPath="MarketingContentDescription" promptText="${mktMarketingResources.contentDescriptionText}" propertyName="text"/>
+						</PropertyGroup>
+						<PropertyGroup collapsable="false" name="group2_text2">
+							<PropertyInputMultiLineText objectPath="MarketingContentDescription" promptText="${mktMarketingResources.contentDescriptionText}" propertyName="text"/>
+							<EnablementCondition conditionId="formatCondition" enablementValue="Sms" propertyName="format"/>				
+						</PropertyGroup>
+				
+						<!-- Property group for choosing the click action for the marketing conent -->
+						<PropertyGroup collapsable="false" name="group_clickAction">
+							<EnablementOrCondition>
+								<EnablementCondition conditionId="formatCondition" enablementValue="File" propertyName="format"/>
+								<EnablementCondition conditionId="formatCondition2" enablementValue="Text" propertyName="format"/>
+							</EnablementOrCondition>	
+							<!-- Combo box for select number of actions: None, Single Action or Multiple Actions (Image Map) -->							
+							<PropertyCombobox promptText="${mktMarketingResources.numberOfClickActions}" propertyName="clickAction"/>
+						</PropertyGroup>
+				
+						<!-- Property Group to manage single click action -->	
+						<PropertyGroup collapsable="false" name="group3">
+							<EnablementAndCondition>
+								<EnablementOrCondition>
+									<EnablementCondition conditionId="formatCondition" enablementValue="File" propertyName="format"/>
+									<EnablementCondition conditionId="formatCondition2" enablementValue="Text" propertyName="format"/>
+								</EnablementOrCondition>	
+								<EnablementCondition conditionId="clickActionCondition" enablementValue="Single" propertyName="clickAction"/>
+							</EnablementAndCondition>		
+							<!-- URL generator widget to generate one single URL for whole image -->					
+							<PropertyURLGenerator helpText="${mktMarketingResources.help_content_clickaction}" package="mkt" promptText="${mktMarketingResources.clickActionType}" propertyName="url"/>
+						</PropertyGroup>
+				
+						<!-- Property Group to manage multiple click actions (image map)-->			
+						<PropertyGroup collapsable="false" name="group_imageMap">
+							<EnablementAndCondition>
+								<EnablementCondition conditionId="formatCondition" enablementValue="File" propertyName="format"/>
+								<EnablementCondition conditionId="clickActionCondition" enablementValue="Multiple" propertyName="clickAction"/>
+							</EnablementAndCondition>			
+							<!-- The combo box to let user choose input the image maps by Areas grid or by HTML source  -->				
+							<PropertyCombobox promptText="${mktMarketingResources.inputOption}" helpText="${mktMarketingResources.help_content_inputOption}" propertyName="inputOption"/>
+							
+							<!-- Property group for manage image map areas using Areas grid -->
+							<PropertyGroup collapsable="false" name="group_imageMapGrid">
+								<EnablementCondition conditionId="inputOptionCondition" enablementValue="Area" propertyName="inputOption"/>
+								<!-- List Editor to manage image map areas -->	
+								<PropertyChildListEditor baseDefinitionName="mktMarketingContentImageMapAreaList" selectedObjectName="selectedImageMapArea"/>
+								<!-- URL generator widget to generate URL for each image map area -->
+								<PropertyURLGenerator helpText="${mktMarketingResources.help_content_clickaction}" package="mkt" promptText="${mktMarketingResources.clickActionType}" propertyName="areaUrl" componentObjectName="selectedImageMapArea" enablePromotionURL="false"/>
+							</PropertyGroup>
+							<!-- Property group for directly input image map HTML source -->
+							<PropertyGroup collapsable="false" name="group_imageMapHTML">
+								<EnablementCondition conditionId="inputOptionCondition" enablementValue="Source" propertyName="inputOption"/>
+								<PropertyInputMultiLineText required="true" objectPath="MarketingContentImageMap" helpText="${mktMarketingResources.help_content_imageMapSource}" helpLinkURL="tasks/tsbmccreate.htm" promptText="${mktMarketingResources.html}" propertyName="source"/>
+							</PropertyGroup>
+						</PropertyGroup>
+							
+						<PropertyCombobox promptText="${mktMarketingResources.contentBehaviorLabel}" helpText="${mktMarketingResources.help_content_behavior}" propertyName="behavior"/>																
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<!--  This property tab pane displays the references of a Marketing Content -->
+			<PropertyTabPane name="mktContentFolderReferencesTabPane" text="${mktMarketingResources.references}">
+				<PropertyPane name="mktContentFolderReferencesPane">
+					<PropertyGroup collapsable="false" name="mktContentFoldersGroup">
+						<!--- The reference list for a list of {@link ContentFolder Content folder} which are associated with a {@link MarketingContent Marketing Content}. -->
+			         	<PropertyReferenceList listDefinitionName="mktContentFolderReferenceGrid" name="mktMarketingContentFolderReferenceList" promptText="${mktMarketingResources.ContentFolderReferences}" referenceObjectPaths="*/ContentFolderItemReference,*/ContentFolderInheritedItemReference,*/InheritedContentFolderInheritedItemReference"/>
+					 </PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>	
+	</ObjectProperties>
+	
+	<!--- 
+		This grid displays the contents and characteristics of a list of {@link ContentFolder Content folder}. This grid is used in the 
+		{@link mktContentFolderReferencesTabPane References Tab} to list the Content folders that have references to a Marketing Content.	
+	-->
+	<ObjectGrid definitionName="mktContentFolderReferenceGrid" preferenceKey="mktContentFolderReferenceGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.ContentFolderType}" width="60"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.ContentFolderStore}" width="125"/>
+		<GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId" text="${mktMarketingResources.ContentFolderList_uniqueID}" visible="false" width="100"/>
+		<GridText editable="false" name="folderName" propertyName="identifier" required="true" text="${mktMarketingResources.ContentFolderList_identifier}" visible="true" width="150"/>
+		<GridText editable="false" name="description" propertyName="description" text="${mktMarketingResources.ContentFolderList_description}" visible="false" width="250"/>
+		<GridText editable="false" name="path" propertyName="path" text="${mktMarketingResources.ContentFolderList_path}" visible="true" width="250"/>
+ 	</ObjectGrid>
+	<!---
+		This definition is used to display the area of a image map.
+	-->
+	<PropertyChildListEditor
+		definitionName="mktMarketingContentImageMapAreaList"
+		sequencePropertyName="sequence"
+		helpLinkText="${foundationResources.helpDefaultLinkText}"
+		helpLinkURL="tasks/tsbmccreate.htm"
+		listDefinitionName="mktMarketingContentImageMapAreaGrid"
+		objectTypes="MarketingContentImageMapArea"
+		objectPath="MarketingContentImageMap"
+		validatorTypes="reqChildAreasValidator"
+		promptText="${mktMarketingResources.areas}"
+		helpText="${mktMarketingResources.help_content_areas}">		
+	</PropertyChildListEditor>	
+		
+	<!--- 
+		This grid displays the contents and characteristics of a list of {@link MarketingContentImageMap marketing conent image map}. This grid is used in the 
+		{@link general General Tab} to list the image map areas of an image map.	
+	-->
+	<ObjectGrid definitionName="mktMarketingContentImageMapAreaGrid" preferenceKey="mktMarketingContentImageMapAreaGrid">
+		<GridText editable="false" name="imgMapAreaId" propertyName="imgMapAreaId" text="${mktMarketingResources.uniqueId}" visible="false" width="100"/>
+		<GridComboBox required="true" editable="true" enableFilter="true" name="shape" propertyName="shape" text="${mktMarketingResources.shape}" visible="true" width="90"/>
+		<GridText required="true" editable="true" name="coordinates" propertyName="coordinates" text="${mktMarketingResources.coordinates}" visible="true" width="200"/>
+		<GridText required="true" editable="true" name="title" propertyName="title" text="${mktMarketingResources.hoverText}" visible="true" width="150"/>
+		<GridText required="true" editable="false" name="areaUrl" propertyName="areaUrl" text="${mktMarketingResources.url}" visible="true" width="500"/>
+		<GridText editable="true" name="target" propertyName="target" text="${mktMarketingResources.target}" visible="false" width="100"/>
+		<GridText editable="true" name="alt" propertyName="alt" text="${mktMarketingResources.alternateText}" visible="false" width="150"/>
+		<GridText editable="true" name="field1" propertyName="xarea_field1" text="${mktMarketingResources.field1}" visible="false" width="100"/>
+		<GridText editable="true" name="field2" propertyName="xarea_field2" text="${mktMarketingResources.field2}" visible="false" width="100"/>
+		<GridText editable="true" name="field3" propertyName="xarea_field3" text="${mktMarketingResources.field3}" visible="false" width="100"/>
+		<GridText editable="true" name="field4" propertyName="xarea_field4" text="${mktMarketingResources.field4}" visible="false" width="100"/>
+		<GridText editable="true" name="field5" propertyName="xarea_field5" text="${mktMarketingResources.field5}" visible="false" width="100"/>
+	</ObjectGrid>
+	
+</Definitions>

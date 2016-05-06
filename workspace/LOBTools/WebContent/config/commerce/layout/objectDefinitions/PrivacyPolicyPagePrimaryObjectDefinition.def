@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBasePrivacyPolicyPagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglPrivacyPolicyPageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglPrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts}
+			representing the reference to the privacy policy page layout objects which hold a page layout association with this static privacy policy page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglPrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts}
+			representing the reference to the inherited privacy policy page layout objects which hold a page layout association with this static privacy policy page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts}
+			representing the reference to the inherited privacy policy page layout objects which hold a page layout association with this inherited privacy policy page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the static privacy policy page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglPrivacyPolicyPageReferenceDefaultPrivacyPolicyPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglPrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts},
+			{@link pglPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts} and {@link pglInheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts}
+			references for this static privacy policy page.
+		-->
+		<GetChildrenService objectTypes="PrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts,PrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts,InheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="PrivacyPolicyPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this Privacy Policy Page.
+		-->
+		<GetChildrenService objectTypes="PrivacyPolicyPageReferenceDefaultPrivacyPolicyPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="PrivacyPolicyPage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for privacy policy page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="Privacy"/>
+		</GetPreviewURLService>			
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Privacy Policy Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBasePrivacyPolicyPagePrimaryObjectDefinition"
+     	definitionName="PrivacyPolicyPage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="PrivacyPolicyPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Privacy Policy Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBasePrivacyPolicyPagePrimaryObjectDefinition"
+     	definitionName="InheritedPrivacyPolicyPage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedPrivacyPolicyPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglPrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts" objectType="PrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts" referencedTypes="PrivacyPolicyPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" definitionName="pglPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" objectType="PrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" referencedTypes="InheritedPrivacyPolicyPageLayout"/>    
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="PrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" definitionName="pglInheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" objectType="InheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" referencedTypes="InheritedPrivacyPolicyPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglPrivacyPolicyPageReferenceDefaultPrivacyPolicyPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="PrivacyPolicyPageReferenceDefaultPrivacyPolicyPageLayout" 
+		referencedTypes="PrivacyPolicyPageLayout,InheritedPrivacyPolicyPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglHomePageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.homePageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="HomePageReferenceDefaultHomePageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="HomePageReferenceDefaultHomePageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="HomePageReferenceDefaultHomePageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display home page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglHomePageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localHomePageCondition" enablementValue="InheritedHomePage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglHomePageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited home page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedHomePageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedHomePageCondition" enablementValue="InheritedHomePage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedHomePageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglHomePageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglHomePageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_homePageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="HomePageLayoutAssociationReferencedHomePageLayouts,HomePageLayoutAssociationReferencedInheritedHomePageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglHomePageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_homePageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="HomePageLayoutAssociationReferencedHomePageLayouts,HomePageLayoutAssociationReferencedInheritedHomePageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedHomePageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_homePageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

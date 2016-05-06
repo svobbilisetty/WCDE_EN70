@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the object definition which is the parent for the customer segment account business type condition. This definition provides
+		a {@link wcfObjectDefinition#templateTypeProperty template property} with the name <code>template</code> which may have
+		the following {@link wcfObjectTemplate object templates}:
+		<ul>
+			<li><code>ignore</code> - used when the customer segment should ignore the business type of the account</li>
+			<li><code>notIgnore</code> - used to target customers in an account that is based on their business type</li>
+		</ul>
+		</p>
+		
+		<p>An instance of {@link mktAcctBusinessOrListObjectDefinition} is defined as a child object.</p>
+	-->
+	<ChildObjectDefinition definitionName="mktAcctBusinessObjectDefinition" idProperty="elementName" objectType="AcctBusiness" singleInstance="true" templateTypeProperty="template">
+		<Xml name="template">
+			<elementName>AcctBusiness</elementName>
+			<template>ignore</template>
+		</Xml>
+		
+   		<ChildObjectDefinition baseDefinitionName="mktAcctBusinessOrListObjectDefinition"/>
+   		
+   		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_acctBusiness_Ignore}" templateType="ignore">
+			<Xml name="template"/>
+		</ObjectTemplate>
+		
+		<ObjectTemplate displayName="${mktMarketingResources.customerSegment_acctBusiness_Target}" templateType="notIgnore">
+			<Xml name="template">
+				<object objectType="AcctBusinessOrList"/>
+			</Xml>	
+		</ObjectTemplate>
+	</ChildObjectDefinition>
+
+	<!---
+		<p>This is the wrapper orList for the customer segment account business type condition. This definition defines
+		a {@link wcfChildObjectDefinition child object} with objectType <code>AcctBusinessCondition</code> that represents the
+		account business type simple condition with the following properties:
+		<ul>
+			<li><code>conditionVariable</code> - always has the value <code>accountBusiness</code></li>
+			<li><code>conditionOperator</code> - always has the value <code>=</code></li>
+			<li><code>conditionValue</code> - required string value which must be one of <code>manufacturer</code>, <code>distributor</code>, <code>wholesaler</code>, <code>consulting</code>, or <code>retailer</code></li>
+		</ul>
+		</p>
+	-->
+	<ChildObjectDefinition baseDefinitionName="mktCSElementAndOrListConditionObjectDefinition" definitionName="mktAcctBusinessOrListObjectDefinition" objectType="AcctBusinessOrList">
+    	<Xml name="template">
+    		<elementName>accountBusiness</elementName>
+			<conditionUsage>orListCondition</conditionUsage>
+    	</Xml>
+    	
+		<ChildObjectDefinition baseType="mktCSElementSimpleConditionObjectDefinition" objectType="AcctBusinessCondition">
+			<Xml name="template">
+				<conditionVariable>accountBusiness</conditionVariable>
+				<conditionOperator>=</conditionOperator>
+			</Xml>
+	
+			<PropertyDefinition propertyName="conditionValue">
+				<PropertyValue displayName="${mktMarketingResources.customerSegment_acctBusiness_manufacturer}" value="manufacturer"/>
+				<PropertyValue displayName="${mktMarketingResources.customerSegment_acctBusiness_distributor}" value="distributor"/>
+				<PropertyValue displayName="${mktMarketingResources.customerSegment_acctBusiness_wholesaler}" value="wholesaler"/>
+				<PropertyValue displayName="${mktMarketingResources.customerSegment_acctBusiness_consulting}" value="consulting"/>
+				<PropertyValue displayName="${mktMarketingResources.customerSegment_acctBusiness_retailer}" value="retailer"/>
+			</PropertyDefinition>
+		</ChildObjectDefinition>
+	</ChildObjectDefinition>
+</Definitions>

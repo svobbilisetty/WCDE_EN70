@@ -1,0 +1,78 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktWaitElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktWaitElementObject} object:
+		<ul>
+			<li>durationValue</li>
+			<li>durationUnits</li>
+		</ul>
+	-->
+	<class name="mktWaitSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="durationValue" propertyName="durationValue"/>
+		<wcfFlowSummaryParam name="durationUnits" propertyName="durationUnits"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.updateSummaryDel.register(mktMarketingResources.summaryWaitForMinutes, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryWaitForHours, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryWaitForDays, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryWaitForWeeks, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryWaitForMonths, "onstring");												
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktWaitElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = this.getDuration();
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+
+		<!--- @keywords private -->
+		<method name="getDuration">
+			<![CDATA[
+				var summary = "";
+
+				if(this.resolvedParams["durationValue"] != "" && this.resolvedParams["durationUnits"] != "") {
+					var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["durationValue"]);
+					
+					if (this.resolvedParams["durationUnits"] == "MIN") {
+						summary = mktMarketingResources.replaceValues("summaryWaitForMinutes", [value1]);
+					} else if (this.resolvedParams["durationUnits"] == "H") {
+						summary = mktMarketingResources.replaceValues("summaryWaitForHours", [value1]);
+					} else if (this.resolvedParams["durationUnits"] == "D") {
+						summary = mktMarketingResources.replaceValues("summaryWaitForDays", [value1]);
+					} else if (this.resolvedParams["durationUnits"] == "W") {
+						summary = mktMarketingResources.replaceValues("summaryWaitForWeeks", [value1]);
+					} else if (this.resolvedParams["durationUnits"] == "M") {
+						summary = mktMarketingResources.replaceValues("summaryWaitForMonths", [value1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+
+	</class>
+</library>

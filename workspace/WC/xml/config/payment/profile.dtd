@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ****************************************************************************** -->
+<!-- *  Licensed Materials - Property of IBM                                      * -->
+<!-- *  WebSphere Commerce                                                                  * -->
+<!-- *  (C) Copyright IBM Corporation 2000  All Rights Reserved.                  * -->
+<!-- *                                                                            * -->
+<!-- *  US Government Users Restricted Rights - Use, duplication or               * -->
+<!-- *  disclousure restricted by GSA ADP Schedule Contract with IBM Corp.        * -->
+<!-- ****************************************************************************** -->
+
+<!ELEMENT Profile (PaymentManagerConfiguration |
+                   SelectStatement |
+                   CollectPayment  | Command
+                   )*
+>
+<!ATTLIST Profile
+  useWallet         (true|false)     #IMPLIED
+  enableTrace       (true|false)     #IMPLIED
+>
+
+<!ELEMENT PaymentManagerConfiguration EMPTY>
+<!ATTLIST PaymentManagerConfiguration
+  hostname          CDATA            #REQUIRED
+  port              NMTOKEN          #REQUIRED
+  userid            CDATA            #REQUIRED
+  password          CDATA            #REQUIRED
+  useSSL            (true|false)     #REQUIRED
+  socksHostname     CDATA            #IMPLIED
+  socksPort         NMTOKEN          #IMPLIED
+  dtdPath           CDATA            #IMPLIED
+>
+
+<!ELEMENT SelectStatement (#PCDATA)>
+<!ATTLIST SelectStatement
+  id                CDATA            #REQUIRED
+  allowMultiples    (true|false)     #IMPLIED
+>
+
+<!ELEMENT CollectPayment (BuyPageInformation |
+                          Parameter)*
+>
+
+<!ELEMENT BuyPageInformation (#PCDATA)>
+<!ATTLIST BuyPageInformation
+  reference         CDATA            #IMPLIED
+>
+
+<!ELEMENT Parameter (CharacterText|ExtensionValue|DatabaseValue)?>
+<!ATTLIST Parameter
+  name              CDATA            #REQUIRED
+  encoding          CDATA            #IMPLIED
+  maxBytes          CDATA            #IMPLIED
+  sensitive         CDATA            #IMPLIED
+  allowNullValue    (true|false)     #IMPLIED
+>
+
+<!ELEMENT CharacterText (#PCDATA)>
+
+<!ELEMENT ExtensionValue EMPTY>
+<!ATTLIST ExtensionValue
+  name              CDATA            #REQUIRED
+>
+
+<!ELEMENT DatabaseValue EMPTY>
+<!ATTLIST DatabaseValue
+  statementID       CDATA            #REQUIRED
+  columnName        CDATA            #REQUIRED
+>
+
+
+<!ELEMENT Command (BuyPageInformation | Parameter)*
+>
+
+<!ATTLIST Command
+  name              CDATA            #REQUIRED
+>

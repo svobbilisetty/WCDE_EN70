@@ -1,0 +1,262 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktRecurringOrderTriggerElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktRecurringOrderTriggerElementObject} object:
+		<ul>
+			<li>repeatSchedule</li>
+			<li>recurringOrderTriggerType</li>
+			<li>numberOfDays</li>
+			<li>startsBetweenDateRange</li>
+			<li>startDate</li>
+			<li>startDate2</li>
+			<li>endsBetweenDateRange</li>
+			<li>endDate</li>
+			<li>endDate2</li>
+			<li>checkOrderTotalRange</li>
+			<li>amountOperator1</li>
+			<li>amountOperator2</li>
+			<li>amountValue1</li>
+			<li>amountValue2</li>
+			<li>amountCurrency</li>
+		</ul>
+	-->
+	<class name="mktRecurringOrderTriggerSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="repeatSchedule" propertyName="repeatSchedule"/>
+		<wcfFlowSummaryParam name="recurringOrderTriggerType" propertyName="recurringOrderTriggerType"/>
+		<wcfFlowSummaryParam name="numberOfDays" propertyName="numberOfDays"/>
+		
+		<wcfFlowSummaryParam name="startsBetweenDateRange" propertyName="startsBetweenDateRange"/>
+		<wcfFlowSummaryParam name="startDate" propertyName="startDate"/>
+		<wcfFlowSummaryParam name="startDate2" propertyName="startDate2"/>
+		
+		<wcfFlowSummaryParam name="endsBetweenDateRange" propertyName="endsBetweenDateRange"/>
+		<wcfFlowSummaryParam name="endDate" propertyName="endDate"/>
+		<wcfFlowSummaryParam name="endDate2" propertyName="endDate2"/>
+		
+		<wcfFlowSummaryParam name="checkOrderTotalRange" propertyName="checkOrderTotalRange"/>
+		<wcfFlowSummaryParam name="amountOperator1" propertyName="amountOperator1"/>
+		<wcfFlowSummaryParam name="amountOperator2" propertyName="amountOperator2"/>
+		<wcfFlowSummaryParam name="amountValue1" propertyName="amountValue1"/>
+		<wcfFlowSummaryParam name="amountValue2" propertyName="amountValue2"/>
+		<wcfFlowSummaryParam name="amountCurrency" propertyName="amountCurrency"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderRepeatScheduleDaily, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderRepeatScheduleOnce, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderBeforeEnd, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderAfterStart, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderAfterEnd, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderAfterCancel, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderStartRange, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecurringOrderEndRange, "onstring");
+				
+				this.updateSummaryDel.register(mktMarketingResources.summaryTotalsBetweenXAndY, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryTotalsAtLeastX, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryTotalsExactlyX, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryTotalsLessThanX, "onstring");
+			]]>
+		</handler>
+		
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var scheduleText = "";
+				var triggerTypeText = "";
+				var startRangeText = "";
+				var endRangeText = "";
+				var orderTotalText = "";
+				
+				scheduleText = this.getScheduleSummary();
+				triggerTypeText = this.getTriggerTypeAndDaysSummary();
+				startRangeText = this.getStartRangeSummary();
+				endRangeText = this.getEndRangeSummary();
+				orderTotalText = this.getOrderTotalSummary();
+
+				if((scheduleText != "")) {
+					summaryText += scheduleText;
+				}
+				if((triggerTypeText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}
+					summaryText += triggerTypeText;
+				}	
+				if((startRangeText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}
+					summaryText += startRangeText;
+				}
+				if((endRangeText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}				
+					summaryText += endRangeText;
+				}
+				if((orderTotalText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}				
+					summaryText += orderTotalText;
+				}				
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getScheduleSummary">
+			<![CDATA[
+				var summary = "";
+				var repeatSchedule = this.resolvedParams["repeatSchedule"];
+						
+				if (repeatSchedule != null && repeatSchedule != "") {
+			  		var scheText = "";
+			  		switch(repeatSchedule) {
+						case "runDaily":
+							scheText = "summaryRecurringOrderRepeatScheduleDaily";
+							break;
+						case "runOnce":
+							scheText = "summaryRecurringOrderRepeatScheduleOnce";
+							break;
+			  		}
+				
+			  		if(scheText != null && scheText != "") {
+						summary = mktMarketingResources[scheText].string;
+			  		}
+			  	}
+			  
+				return summary;
+			]]>
+		</method>			
+		
+		<!--- @keywords private -->
+		<method name="getTriggerTypeAndDaysSummary">
+			<![CDATA[
+				var summary = "";
+				var triggerType = this.resolvedParams["recurringOrderTriggerType"];				
+						
+				if (triggerType != null && triggerType != "" && this.resolvedParams["numberOfDays"] != null && this.resolvedParams["numberOfDays"] != "") {
+					var numberOfDays = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfDays"]);
+			  		var summaryText = "";
+			  		
+			  		switch(triggerType) {
+						case "beforeEnd":
+							summaryText = "summaryRecurringOrderBeforeEnd";
+							break;
+						case "afterStart":
+							summaryText = "summaryRecurringOrderAfterStart";
+							break;
+						case "afterEnd":
+							summaryText = "summaryRecurringOrderAfterEnd";
+							break;
+						case "afterCancel":
+							summaryText = "summaryRecurringOrderAfterCancel";
+							break;	
+			  		}
+				
+			  		if(summaryText != null && summaryText != "") {
+						summary = mktMarketingResources.replaceValues(summaryText, [numberOfDays]);	
+			  		}
+			  	}
+			  
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getStartRangeSummary">
+			<![CDATA[
+				var summary = "";
+				var checkStartRange = this.resolvedParams["startsBetweenDateRange"];
+
+				if (checkStartRange == "true"){
+					if(this.resolvedParams["startDate"] != null && this.resolvedParams["startDate2"] != null && this.resolvedParams["startDate"] != "" && this.resolvedParams["startDate2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["startDate"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["startDate2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryRecurringOrderStartRange", [date1, date2]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getEndRangeSummary">
+			<![CDATA[
+				var summary = "";
+				var checkEndRange = this.resolvedParams["endsBetweenDateRange"];
+
+				if (checkEndRange == "true") {
+					if(this.resolvedParams["endDate"] != null && this.resolvedParams["endDate2"] != null && this.resolvedParams["endDate"] != "" && this.resolvedParams["endDate2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["endDate"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["endDate2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryRecurringOrderEndRange", [date1, date2]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>	
+		
+		<!--- @keywords private -->
+		<method name="getOrderTotalSummary">
+			<![CDATA[
+				var summary = "";
+				var checkOrderTotal = this.resolvedParams["checkOrderTotalRange"];
+				
+				if(checkOrderTotal != null && checkOrderTotal == "true"){
+					var currency = this.resolvedParams["amountCurrency"];
+	
+					if(currency != null && currency != "" && this.resolvedParams["amountValue1"] != null && this.resolvedParams["amountValue1"] != "") {
+						var currencyDecimals = wcfGlobalizationUtil.getCurrencyDecimalPlaces(currency);
+						currencyDecimals = (currencyDecimals == null) ? 2 : currencyDecimals;
+						
+						var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["amountValue1"], currencyDecimals);
+						var operator1 = this.resolvedParams["amountOperator1"];
+						
+						if(operator1 != null && operator1 != ""){
+							if (operator1 == ">=") {
+								var operator2 = this.resolvedParams["amountOperator2"];
+								
+								if(operator2 != null && operator2 == "<="){
+									if(this.resolvedParams["amountValue2"] != null && this.resolvedParams["amountValue2"] != "") {
+										var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["amountValue2"], currencyDecimals);
+										summary = mktMarketingResources.replaceValues("summaryTotalsBetweenXAndY", [value1, value2, currency]);
+									}
+								} else {
+									summary = mktMarketingResources.replaceValues("summaryTotalsAtLeastX", [value1, currency]);
+								}
+							} else if (operator1 == "=") {
+								summary = mktMarketingResources.replaceValues("summaryTotalsExactlyX", [value1, currency]);
+							} else if (operator1 == "<") {
+								summary = mktMarketingResources.replaceValues("summaryTotalsLessThanX", [value1, currency]);
+							}
+						}
+					}
+				}
+
+				return summary;
+			]]>
+		</method>					
+		
+	</class>
+</library>

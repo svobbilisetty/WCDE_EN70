@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+    <!---	
+    	This definition displays a list of
+    	{@link catCatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValue} and
+    	{@link catCatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues}.
+	-->
+	<PropertyChildListEditor
+		definitionName="catCatalogEntryAttributeDictionaryDefiningAttributeList"
+		extendedHelpText="${catalogResources.extendedHelpText_DefiningAttribute}"
+		helpLinkText="${foundationResources.helpDefaultLinkText}"
+		helpLinkURL="tasks/tpnadatt.htm"
+		listDefinitionName="catCatalogEntryAttributeDictionaryDefiningAttributeGrid"
+		objectTypes="CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues,CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues"
+		promptText="${catalogResources.definingDictionaryAttributesSection}">
+	</PropertyChildListEditor>
+	
+    <!---	
+    	This definition displays the contents and characteristics of a list of
+    	{@link catCatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValue} and
+    	{@link catCatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues}.
+	-->
+	<ObjectGrid definitionName="catCatalogEntryAttributeDictionaryDefiningAttributeGrid" preferenceKey="catCatalogEntryAttributeDictionaryDefiningAttributeGrid">
+		<GridNumeric editable="true" name="attrDisplaySequence" numDecimalPlaces="1" propertyName="attrDisplaySequence" text="${catalogResources.displaySequence}" width="120"/>		
+        <GridText editable="false" name="attrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId" text="${catalogResources.productUniqueId_ColumnHeader}" visible="false" width="150"/>            
+        <GridIconTypeImage name="typ eIcon" propertyName="typeIcon" required="true" text="${catalogResources.attributeType_ColumnHeader}" visible="true" width="60"/>
+        <GridStoreName name="store" objectPath="AttributeDictionaryAttributes"/>
+        <GridText editable="false" name="attributeCode" objectPath="AttributeDictionaryAttributes" propertyName="attributeCode" required="true" text="${catalogResources.attributeCodePrompt}" visible="true" width="90"/>
+		<GridText editable="false" name="attrName" languageSensitive="true" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="attrName" required="true" text="${catalogResources.attributeDisplayNamePrompt}" visible="true" width="170"/>
+		<GridComboBox editable="false" enableFilter="true" name="attrDataType" objectPath="AttributeDictionaryAttributes" text="${catalogResources.attributeDataType_ColumnHeader}" propertyName="attrDataType" required="true" visible="true" width="130"/>
+
+		<!-- Extended fields for catalog entry / attribute relationship-->
+		<GridStepper editable="true" name="xreldata_AttributeRelationshipField1" datatype="number" propertyName="xreldata_AttributeRelationshipField1" text="${catalogResources.attributeRelationship_Field1}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>
+		<GridStepper editable="true" name="xreldata_AttributeRelationshipField2" datatype="number" propertyName="xreldata_AttributeRelationshipField2" text="${catalogResources.attributeRelationship_Field2}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="250"/>
+		<GridText editable="true" name="xreldata_AttributeRelationshipField3" propertyName="xreldata_AttributeRelationshipField3" text="${catalogResources.attributeRelationship_Field3}" visible="false" width="250"/>
+		<GridCheckbox editable="false" enableFilter="true" alignment="center" name="displayable" objectPath="AttributeDictionaryAttributes" propertyName="displayable" text="${catalogResources.attributeDisplayable}" visible="true" width="125"/>
+		<GridCheckbox editable="false" enableFilter="true" alignment="center" name="comparable" objectPath="AttributeDictionaryAttributes" propertyName="comparable" text="${catalogResources.attributeComparable}" visible="true" width="125"/>
+		<GridCheckbox editable="false" enableFilter="true" alignment="center" name="merchandisable" objectPath="AttributeDictionaryAttributes" propertyName="merchandisable" text="${catalogResources.attributeMerchandisable}" visible="true" width="125">
+			<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+		</GridCheckbox>
+		<GridCheckbox editable="false" enableFilter="true" alignment="center" name="searchable" objectPath="AttributeDictionaryAttributes" propertyName="searchable" text="${catalogResources.attributeSearchable}" visible="true" width="125">
+			<EnablementAndCondition conditionId="showSearchColumnsCondition">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+			</EnablementAndCondition>			
+		</GridCheckbox>
+		<GridCheckbox editable="false" enableFilter="true" alignment="center" name="facetable" objectPath="AttributeDictionaryAttributes" propertyName="facetable" text="${catalogResources.attributeFacetable}" visible="true" width="125">
+			<EnablementAndCondition conditionId="showSearchColumnsCondition">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+			</EnablementAndCondition>			
+		</GridCheckbox>
+		<GridText editable="false" languageSensitive="true" name="attrDescription" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="attrDescription" text="${catalogResources.attributeDescriptionPrompt}" visible="false" width="200"/>
+		<GridText editable="false" languageSensitive="true" name="xdata_SecondaryDescription" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="xdata_SecondaryDescription" text="${catalogResources.attributeSecondaryDescriptionPrompt}" visible="false" width="200"/>
+		<GridComboBox editable="false" languageSensitive="true" enableFilter="true" name="xdata_UnitOfMeasure" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" text="${catalogResources.attributeValueUnitOfMeasure}" propertyName="xdata_UnitOfMeasure" required="false" visible="false" width="130"/>
+		<GridText editable="false" languageSensitive="true" name="xdata_Footnote" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="xdata_Footnote" text="${catalogResources.attributeFootnotePrompt}" visible="false" width="200"/>
+		<GridText editable="false" languageSensitive="true" name="xdata_DisplayGroupName" objectPath="AttributeDictionaryAttributes/AttributeDictionaryAttributeDescription" propertyName="xdata_DisplayGroupName" text="${catalogResources.attributeGroupNamePrompt}" visible="false" width="200"/>
+	</ObjectGrid>
+	
+</Definitions>

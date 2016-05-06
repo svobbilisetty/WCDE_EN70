@@ -1,0 +1,429 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+ 
+	<!---
+		@keywords private
+		Get SSO token service. This is used to retrieve the SSO token for the current session.
+	-->
+	<wcfService id="getSSOTokenService" sendIdentity="true" sendWorkspaceContext="false" url="/cmc/GetSSOToken">
+		<!---
+			Parse the response values from the get SSO token service.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				var SSOToken = null;
+				var nodes = e.childNodes;
+				for (var i = 0; i < nodes.length; i++) {
+					var node = nodes[i];
+					var parameterName = node.nodeName;
+					if (parameterName == "SSOToken") {
+						SSOToken = wcfXMLUtil.getNodeValue(node);
+						break;
+					}
+				}
+				if(SSOToken != null){
+					requestParent.launchAccelerator(SSOToken);
+				}
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		This class implements the Management Center menu drop-down list.  Individual items
+		in the menu are defined as children of this class and are instances of
+		{@link wcfApplicationMenuItem} objects.
+	-->
+	<class name="wcfBaseApplicationMenuItems" extends="plainfloatinglist" doesenter="true">
+		<!---
+			@keywords private
+			Array of application menu items.
+		-->
+		<attribute name="menuItems" value="${[]}"/>
+		
+		<!---
+			@keywords private
+			Adjust the attach-location of the list by 1 pixel to the right
+		-->	
+		<method name="updateAttachLocation">
+			<![CDATA[
+			super.updateAttachLocation();
+			if (this.visible) {
+				this.setAttribute("x", this.x + 1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Method to set the width of the application menu based on maximum width
+			of the menu items.
+		-->	
+		<method name="setMenuWidth" args="minWidth=0">
+			<![CDATA[
+			var maxWidth = 0;
+			for(var i = 0; i < this.menuItems.length; i++) {
+				maxWidth = Math.max(maxWidth, this.menuItems[i].getMenuItemWidth());
+			}
+			this.setAttribute('width', maxWidth > minWidth ? maxWidth : minWidth );
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="select" args="item">
+			<![CDATA[
+				super.select(item);
+				this.setAttribute("doesenter",true);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+				if (k == 37 || k == 38) {
+					var nextHiliteItemIndex = -1;
+					for (var i=0; i<this.menuItems.length; i++) {
+						if (this.menuItems[i].hilited && !this.menuItems[i]["visible"]) {
+							for (var j=i-1; j>=0; j--) {
+								if (this.menuItems[j]["visible"]) {
+									nextHiliteItemIndex = j;
+									break;
+								}
+							}
+							if (nextHiliteItemIndex == -1) {
+								for (var j=i+1; j<this.menuItems.length; j++) {
+									if (this.menuItems[j]["visible"]) {
+										nextHiliteItemIndex = j;
+										break;
+									}
+								}
+							}
+							if (nextHiliteItemIndex == -1) {
+								this.setHilite(null);
+							}
+							else {
+								this.setHilite(this.menuItems[nextHiliteItemIndex]);
+							}
+						}
+					}
+				}
+				else if (k == 39 || k == 40) {
+					var nextHiliteItemIndex = -1;
+					for (var i=0; i<this.menuItems.length; i++) {
+						if (this.menuItems[i].hilited && !this.menuItems[i]["visible"]) {
+							for (var j=i+1; j<this.menuItems.length; j++) {
+								if (this.menuItems[j]["visible"]) {
+									nextHiliteItemIndex = j;
+									break;
+								}
+							}
+							if (nextHiliteItemIndex == -1) {
+								for (var j=i-1; j>=0; j--) {
+									if (this.menuItems[j]["visible"]) {
+										nextHiliteItemIndex = j;
+										break;
+									}
+								}
+							}
+							if (nextHiliteItemIndex == -1) {
+								this.setHilite(null);
+							}
+							else {
+								this.setHilite(this.menuItems[nextHiliteItemIndex]);
+							}
+						}
+					}
+				}
+				else if (k == 27) {
+					this.applicationMenu.closeApplicationMenu();
+				}
+				else {
+					var startIndex = 0;
+					for (var i=0; i<this.menuItems.length; i++) {
+						var item = this.menuItems[i];
+						if (item.hilited == true && String.fromCharCode(k).toUpperCase().charCodeAt(0) == item.displayName.toUpperCase().charCodeAt(0)) {
+							startIndex = i+1;
+							break;
+						}
+					}
+
+					for (var i=0; i<this.menuItems.length; i++) {
+						if (startIndex >= this.menuItems.length) {
+							startIndex = 0;
+						}
+						var item = this.menuItems[startIndex];
+						if (String.fromCharCode(k).toUpperCase().charCodeAt(0) == item.displayName.toUpperCase().charCodeAt(0)) {
+							this.setHilite(item);
+							this.setAttribute("doesenter", true);
+							break;
+						}
+						startIndex++;
+					}
+				}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="getNextSelection" />
+		<!--- @keywords private -->
+        <method name="getPrevSelection" />
+        
+	</class>
+
+	<!---
+		This class implements the Management Center menu and consists of a title bar and a drop-down
+		menu. The drop-down menu provides access to the available tools and is implemented by the
+		{@link wcfApplicationMenuItems} class.  Individual items in the menu are defined by instances
+		of {@link wcfApplicationMenuItem} objects.
+	-->
+	<class name="wcfApplicationMenu" extends="basecomponent" focusable="false">
+		<!--- @keywords private -->
+		<attribute name="numberOfAccessibleTools" type="number" value="0" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				wcfDefinitionLoader.getDefinition("wcfApplicationMenuItems", this.cmcToolsView, {
+					name: "applicationMenuItems",
+					attach: "bottom",
+					visible: false,
+					attachoffset: -3,
+					applicationMenu: this
+				});
+				if (global["isIE"] == "false") {
+					if (typeof(global["accelerator"]) != "undefined") {
+						global.accelerator.destroy();
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenu", "oninit", "WebSphere Commerce Accelerator is disabled in the application menu for non-IE browser.");
+						}
+					}
+				}
+				if (!wcfLogger.display) {
+					if (typeof(global["logTrace"]) != "undefined") {
+						global.logTrace.destroy();
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfApplicationMenu", "oninit", "Removing trace option from application menus");
+						}
+					}
+				}
+				this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+				this.openApplicationMenuDel = new lz.Delegate(this, "openApplicationMenu");
+				lz.Keys.callOnKeyCombo(this.openApplicationMenuDel, ['control', 'shift', '1']);
+				immediateparent.bringToFront();
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="initializeMenu">
+			<![CDATA[
+				// reset the accessible tool list in user context
+				wcfContextUtil.findContextValue(null, "accessibleTools").value = "";
+
+				// run initialization steps for each menu item
+				this.checkInitializationCompletionDel = new lz.Delegate(this, "checkInitializationCompletion");
+				for (var i=0; i<this.cmcToolsView.applicationMenuItems.menuItems.length; i++) {
+					this.cmcToolsView.applicationMenuItems.menuItems[i].setAttribute("initialized", false);
+					this.checkInitializationCompletionDel.register(this.cmcToolsView.applicationMenuItems.menuItems[i], "oninitialized");
+					this.cmcToolsView.applicationMenuItems.menuItems[i].initializeItem();
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="checkInitializationCompletion" args="e=null">
+			<![CDATA[
+				var accessibleToolsCount = 0;
+				var initializationCompleted = true;
+				// check if all items in the menu are initialized or not
+				for (var i=0; i<this.cmcToolsView.applicationMenuItems.menuItems.length; i++) {
+					if (this.cmcToolsView.applicationMenuItems.menuItems[i].initialized) {
+						if (this.cmcToolsView.applicationMenuItems.menuItems[i].usage != "" && this.cmcToolsView.applicationMenuItems.menuItems[i].visible) {
+							accessibleToolsCount++;
+						}
+					}
+					else {
+						initializationCompleted = false;
+						break;
+					}
+				}
+				if (initializationCompleted) {
+					this.setAttribute("numberOfAccessibleTools", accessibleToolsCount);
+					if (this["checkInitializationCompletionDel"]) {
+						this.checkInitializationCompletionDel.unregisterAll();
+						delete this.checkInitializationCompletionDel;
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method checks the current mouse position and determines whether to close the main
+			application menu or not.  This method is called on onmousedown event.
+		-->
+		<method name="checkMouse" args="e=null">
+			<![CDATA[
+				if (!this.cmcToolsView.applicationMenuItems.containsPt(this.cmcToolsView.applicationMenuItems.getMouse("x"), this.cmcToolsView.applicationMenuItems.getMouse("y"))) {
+					this.closeApplicationMenu();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method handles the onmouseover event on the main application menu.  If the menu is currently hidden,
+			then it will be displayed; otherwise it will do nothing.
+		-->
+		<method name="doOpenMenu">
+			<![CDATA[
+				if (!this.cmcToolsView.applicationMenuItems["visible"]) {
+					this.openApplicationMenu();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method handles the onmouseout event on the main application menu.  If the mouse cursor is currently placed
+			away from the menu, then it will be hidden; otherwise it will do nothing.
+		-->
+		<method name="doCloseMenu">
+			<![CDATA[
+				if ((this.getMouse("y") > this.cmcToolsView.applicationMenuView.height || this.getMouse("x") > this.cmcToolsView.applicationMenuView.width) && !this.cmcToolsView.applicationMenuItems.containsPt(this.cmcToolsView.applicationMenuItems.getMouse("x")+1, this.cmcToolsView.applicationMenuItems.getMouse("y")+2)) {
+					this.closeApplicationMenu();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method opens the main application menu in Management Center.
+		-->
+		<method name="openApplicationMenu" args="e=null">
+			<![CDATA[
+				for (var i=0; i<this.cmcToolsView.applicationMenuItems.menuItems.length; i++) {
+					this.cmcToolsView.applicationMenuItems.menuItems[i].setHilite(false);
+				}
+				if (wcfViewUtil.containedInModalView(this)) {
+					this.cmcToolsView.applicationMenuItems.setMenuWidth(this.cmcToolsView.applicationMenuView.width-4);
+					this.cmcToolsView.applicationMenuItems.clearSelection();
+					this.cmcToolsView.applicationMenuItems.setAttribute("visible", true);
+					this.cmcToolsView.applicationMenuItems.bringToFront();
+					lz.Focus.setFocus(this.cmcToolsView.applicationMenuItems);
+					this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+					lz.ModeManager.makeModal(this.cmcToolsView.applicationMenuItems);
+					this.cmcToolsView.applicationMenuView.setAttribute("enabled", false);
+				}
+				this.cmcToolsView.applicationMenuItems.menuItems[0].setHilite(true);
+				this.cmcToolsView.applicationMenuItems._hiliteview = this.cmcToolsView.applicationMenuItems.menuItems[0];
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method closes the main application menu in Management Center.
+		-->
+		<method name="closeApplicationMenu">
+			<![CDATA[
+				this.cmcToolsView.applicationMenuView.setAttribute("enabled", true);
+				lz.ModeManager.release(this.cmcToolsView.applicationMenuItems);
+				this.cmcToolsView.applicationMenuItems.setAttribute("visible", false);
+				lz.Focus.setFocus(applicationMenu, false);
+				this.checkMouseDel.unregisterAll();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="getNextSelection">
+			<![CDATA[
+				return null;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="resolveSelection">
+			<![CDATA[
+				return null;
+			]]>
+		</method>
+	
+		<simplelayout axis="x" spacing="3" />
+		<view name="applicaitonLogo" resource="applicationLogo"/>
+		<view name="cmcToolsView">
+			<basebutton name="applicationMenuView" maxframes="3" focusable="true" doesenter="true">
+				<view name="applicationMenuButtonView">
+					<view name="applicationMenuButtonLeft" resource="appMenuLeft" />
+					<view name="applicationMenuButtonCenter" resource="appMenuCenter" width="${parent.parent.appMenuTitle.width}" stretches="width" />
+					<view name="applicationMenuButtonRight" resource="appMenuRight"  />
+					<simplelayout axis="x" spacing="0" />
+				</view>
+		
+				<text name="appMenuTitle" y="4" x="7" font="Arial" fontsize="13" fontstyle="bold"
+					fgcolor="${classroot.style.titletextcolor}" text="${shellResourceBundle.applicationMenuLabel.string}" />
+	
+				<!--- @keywords private -->
+				<handler name="onclick">
+					<![CDATA[
+						classroot.doOpenMenu();
+					]]>
+				</handler>
+				
+				<!--- @keywords private -->
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this.parent["applicationMenuViewIndicator"]){
+				    	new lz.wcfFocusIndicator(this.parent, {
+					    	name: "applicationMenuViewIndicator",
+					    	focusableView: this,
+					    	indicatorView: this
+					    });
+				    }
+					]]>
+				</handler>
+				<method name="showDown" args="sd=null">
+					<![CDATA[
+					this.applicationMenuButtonView.applicationMenuButtonLeft.setAttribute('frame', this.downResourceNumber);
+					this.applicationMenuButtonView.applicationMenuButtonCenter.setAttribute('frame', this.downResourceNumber);
+					this.applicationMenuButtonView.applicationMenuButtonRight.setAttribute('frame', this.downResourceNumber);
+					]]>
+				</method>
+				<method name="showUp" args="sd=null">
+					<![CDATA[
+					if (this.enabled) {
+						this.applicationMenuButtonView.applicationMenuButtonLeft.setAttribute('frame', this.normalResourceNumber);
+						this.applicationMenuButtonView.applicationMenuButtonCenter.setAttribute('frame', this.normalResourceNumber);
+						this.applicationMenuButtonView.applicationMenuButtonRight.setAttribute('frame', this.normalResourceNumber);
+					}
+					else {
+						this.applicationMenuButtonView.applicationMenuButtonLeft.setAttribute('frame', this.downResourceNumber);
+						this.applicationMenuButtonView.applicationMenuButtonCenter.setAttribute('frame', this.downResourceNumber);
+						this.applicationMenuButtonView.applicationMenuButtonRight.setAttribute('frame', this.downResourceNumber);
+					}
+					]]>
+				</method>
+				<method name="showOver" args="sd=null">
+					<![CDATA[
+					this.applicationMenuButtonView.applicationMenuButtonLeft.setAttribute('frame', this.overResourceNumber);
+					this.applicationMenuButtonView.applicationMenuButtonCenter.setAttribute('frame', this.overResourceNumber);
+					this.applicationMenuButtonView.applicationMenuButtonRight.setAttribute('frame', this.overResourceNumber);
+					]]>
+				</method>
+			</basebutton>
+		</view>
+	</class>
+</library>

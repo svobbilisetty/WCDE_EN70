@@ -1,0 +1,116 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		This class implements the progress indicator in the status area in Management
+		Center. Animation will start when one or more requests to the server is in
+		progress, and it will stop when all those requests are completed.
+	-->
+	<class name="wcfProgressIndicator" extends="basecomponent" focusable="false">
+		<!--- @keywords private -->
+		<attribute name="progressCounter" type="number" value="0" />
+		<!--- @keywords private -->
+		<attribute name="totalActions" type="number" value="0"/>
+		<!--- @keywords private -->
+		<attribute name="pendingActions" type="number" value="0"/>
+		<!--- @keywords private -->
+		<attribute name="messageText" type="string" value="${shellResourceBundle.systemApplicationServerProcessing.string}" />
+
+		<view name="loadbar" width="25" height="${parent.height}" align="center" resource="statusAnimationOff" />
+
+		<!---
+			@keywords private
+			This method starts the animation of the progress indicator. It increments
+			an internal counter to record the number of processes running in the background.
+		-->
+		<method name="startAnimation">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfProgressIndicator", "startAnimation");
+				}
+				if (this.progressCounter == 0) {
+					this.loadbar.setAttribute('resource', "statusAnimationOn");
+					messageLogger.serverProcessStart();
+				}
+				this.progressCounter++;
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfProgressIndicator", "startAnimation", "Number of processes in progress now: " + this.progressCounter);
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfProgressIndicator", "startAnimation");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method stops the animation of the progress indicator. It decrements
+			an internal counter that records the number of processes running in the
+			background. The animation will stop when the counter is 0.
+		-->
+		<method name="stopAnimation">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfProgressIndicator", "stopAnimation");
+				}
+				if (this.progressCounter > 0) {
+					this.progressCounter--;
+				}
+				if (this.progressCounter == 0) {
+					this.loadbar.setAttribute('resource', "statusAnimationOff");
+					messageLogger.serverProcessComplete();
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfProgressIndicator", "stopAnimation", "Number of processes in progress now: " + this.progressCounter);
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfProgressIndicator", "stopAnimation");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method keeps track of the total number of actions and the number of pending actions.
+		-->		
+		<method name="addAction">
+			<![CDATA[
+				this.totalActions += 1;
+				this.pendingActions += 1;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method keeps track of the number of pending actions, calculates the percentage of overall
+			operation completion, then display the progress status in the message bar.   
+		-->			
+		<method name="removeAction">
+			<![CDATA[
+				if (this.pendingActions > 0) {
+					this.pendingActions -= 1;
+				}
+				if (this.pendingActions == 0 || this.totalActions == 0) {
+					this.totalActions = 0;
+					this.messageText = shellResourceBundle.systemApplicationServerProcessing.string;
+				}
+				else {
+					var percentDone = Math.round((this.totalActions - this.pendingActions) / this.totalActions * 100);
+					this.messageText = shellResourceBundle.replaceValues("systemActionsCompleted", [percentDone]);
+				}
+				messageLogger.updateProcessingMsg();
+			]]>
+		</method>
+
+	</class>
+
+</library>

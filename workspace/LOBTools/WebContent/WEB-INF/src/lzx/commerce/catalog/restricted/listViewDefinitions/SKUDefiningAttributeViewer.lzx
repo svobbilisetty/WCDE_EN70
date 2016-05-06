@@ -1,0 +1,363 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<!--
+
+This library contains classes for the cell viewers used with the product sku properties
+defining attribute tab (CMC object ProductSKU).
+
+This code is not customizable.
+
+Classes contained in this library are:
+
+catPropertySKUDefiningAttributesViewer
+catNoSKUDefiningAttributesViewer
+catBaseSKUDefiningAttributesViewer
+
+-->
+<library>
+
+	<!---
+		This class is a properties component used for displaying sku defining attributes
+		in the ProductSKU properties page.
+		
+		This class extends 'wcfPropertiesComponent', and will instantiate two other viewers.
+		
+		If the parent product contains defining attributes then the 'catBaseSKUDefiningAttributesViewer'
+		will be shown, to display a dynamic list of defining attributes.
+		
+		If the parent product contains NO defining attributes then the 'catNoSKUDefiningAttributesViewer'
+		will be shown.  This viewer simply displays a message informing the user that there are no
+		defining attributes to be displayed.
+		
+		This class is not customizable.
+		
+		@keywords private
+	-->
+	<class name="catPropertySKUDefiningAttributesViewer" extends="wcfPropertiesComponent">
+	
+		<!---
+			This method creates the editor for the property component.
+			
+			This is an abstract method inherited from the superclass 'wcfPropertiesComponent'
+			and must be implemented by classes that extend wcfPropertiesComponent.
+			
+			@param wcfPropertiesComponent parentComponent The parent properties component for the new editor view.
+			@keywords private
+			@see wcfPropertiesComponent#createEditor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[	
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "catPropertySKUDefiningAttributesViewer", "createEditor",[parentComponent]);
+			}	
+			
+			new lz.catBaseSKUDefiningAttributesViewer(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o
+			});
+			
+			new lz.catNoSKUDefiningAttributesViewer(parentComponent, {
+				name: "editor2",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				editor: parentComponent.editor
+			});
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "catPropertySKUDefiningAttributesViewer", "createEditor");
+			}
+			
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		This class is a used by the properties component 'catPropertySKUDefiningAttributesViewer' to display
+		a message to the user that there are no defining attributes for a product level sku.
+		
+		This class is not customizable.
+		
+		@keywords private
+	-->
+	<class name="catNoSKUDefiningAttributesViewer">
+	
+		<!---
+			The editor that that this viewer is associated with.
+			@keywords private
+		-->
+		<attribute name="editor"/>
+		
+		<!--
+			Text to display to the user that there are no defining attributes
+			for this SKU.  This text is translatable.
+		-->
+		<text text="${catalogResources.skuNoDefiningAttributes.string}"/>
+		
+		<!--
+			Initialization.
+			@keywords private
+		-->
+		<handler name="oninit">
+			this.setAttribute("visible", !this.editor.visible);
+		</handler>
+		
+		<!--
+			Onvisible event handler.
+			@keywords private
+		-->
+		<handler name="onvisible" reference="editor">
+			this.setAttribute("visible", !this.editor.visible);
+		</handler>
+		
+	</class>
+	
+	<!---
+		This class is a used by the properties component 'catPropertySKUDefiningAttributesViewer' to display
+		sku defining attributes in a grid in the ProductSKU properties page.
+		
+		This class is not customizable.
+		
+		@keywords private
+	-->
+	<class name="catBaseSKUDefiningAttributesViewer">
+	
+		
+		<!---
+			The style, derived by parent properties component
+			@keywords private
+		-->
+		<attribute name="style" value="${parent.style}"/>
+		
+		<!---
+			Reference to the instance of wcfModelObject that is being modified by the
+			properties view that contains this child list viewer.
+			@keywords private
+		-->
+		<attribute name="o" setter="this.setModelObject(o)"/>
+		
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableHeight" attribute. This
+			is used to calculate the list view's available height.
+		-->
+		<attribute name="availableHeightView" value="${wcfViewUtil.getAvailableHeightView(this)}" when="once"/>
+		
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the list view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		
+		<!--
+			Initialization.
+			@keywords private
+		-->
+		<handler name="oninit">
+			<![CDATA[
+			if (this.availableHeightView != null) {
+				this.updateAvailableHeightDel = new lz.Delegate(this, "updateAvailableHeight");
+				this.updateAvailableHeightDel.register(this.availableHeightView, "onavailableHeight");
+				this.updateAvailableHeight();
+			}
+			if (this.availableWidthView != null) {
+				this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+				this.updateAvailableWidthDel.register(this.availableWidthView, "onavailableWidth");
+				this.updateAvailableWidth();
+			}
+			
+			this.attributeColumnsUpdatedDel = new lz.Delegate(this, "attributeColumnsUpdated");
+			
+			this.list = new lz.catBaseSKUDefiningAttributeColumnGrid(this, {
+				name: "list",
+				rowMenuClass: null,
+				menuClass: null,
+				fitExistingRows: true,
+				padding: 0
+			});	
+			
+			this.attributeColumnsUpdatedDel.register(this.list, "onattributeColumns");
+			
+			this.oList = new lz.wcfModelObjectList(this.list, {
+				v: this.list,
+				filterList: [],
+				objectDefinitions: null,
+				modelObjects: [],
+				sortComparator: null
+			});
+
+			if (this["o"]) {
+				this.updateProductObject();
+				this.oList.setAttribute("modelObjects", [this.o]);
+			}
+			
+			]]>			
+		</handler>
+
+		<!---
+			This method will cleanup any delegates used throughout this class.
+			
+			@keywords private
+		-->
+		<method name="destroy">
+			<![CDATA[			
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catBaseSKUDefiningAttributesViewer", "destroy");
+			}
+			
+			if (this["updateAvailableHeightDel"]) {
+				this.updateAvailableHeightDel.unregisterAll();
+				delete this.updateAvailableHeightDel;
+			}
+			if (this["updateAvailableWidthDel"]) {
+				this.updateAvailableWidthDel.unregisterAll();
+				delete this.updateAvailableWidthDel;
+			}
+			if (this["updateProductObjectDel"]) {
+				this.updateProductObjectDel.unregisterAll();
+				delete this.updateProductObjectDel;
+			}
+			if (this["attributeColumnsUpdated"]) {
+				this.attributeColumnsUpdatedDel.unregisterAll();
+				delete this.attributeColumnsUpdatedDel;
+			}
+			
+			if (this["oList"]) {
+				this.oList.destroy();
+			}
+			
+			super.destroy();
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catBaseSKUDefiningAttributesViewer", "destroy");
+			}
+			
+			]]>
+		</method>	
+		
+		<!---
+			This method checks the number of attribute columns and if there are none,
+			sets the attribute 'visible' to false, otherwise sets it to 'true'.
+			
+			@keywords private
+		-->
+		<method name="attributeColumnsUpdated" args="e=null">
+			<![CDATA[
+			this.setAttribute("visible", this.list.attributeColumns.length > 0);
+			]]>
+		</method>
+		
+		<!---
+			Update the available height of the grid.			
+			@keywords private
+		-->
+		<method name="updateAvailableHeight" args="e=null">
+			<![CDATA[
+						
+			var newHeight = this.availableHeightView.availableHeight - 2;
+			if (this["availableHeight"] != newHeight) {
+				this.setAttribute("availableHeight", newHeight);
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			Update the available width of the grid.
+			@keywords private
+		-->
+		<method name="updateAvailableWidth" args="e=null">
+			<![CDATA[
+			var newWidth = this.availableWidthView.availableWidth - this.x - 2;
+			if (this["availableWidth"] != newWidth) {
+				this.setAttribute("availableWidth", newWidth);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "catBaseSKUDefiningAttributesViewer", "setModelObject(newObject)",[newObject]);
+			}					
+
+			if (this["o"] != newObject) {
+				this.o = newObject;
+				
+				if (this["oList"]) {
+					this.oList.setAttribute("modelObjects", []);
+				}
+				this.updateProductObject();
+			
+				if (this["oList"] && this.o) {
+					this.oList.setAttribute("modelObjects", [this.o]);
+				}			
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "catBaseSKUDefiningAttributesViewer", "setModelObject");
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Updates the product object to the given list
+			@param wcfModelObject newObject: the new object
+			@keywords private
+		-->
+		<method name="updateProductObject" args="e=null">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "catBaseSKUDefiningAttributesViewer", "updateProductObject");
+			}					
+			
+			if (this["updateProductObjectDel"]) {
+				this.updateProductObjectDel.unregisterAll();
+			}
+			else {
+				this.updateProductObjectDel = new lz.Delegate(this, "updateProductObject");
+			}
+			
+			if (this["list"]) {
+				var productObject = null;
+				
+				if (this["o"]) {
+					productObject = this.o.getParentPrimaryObject("InheritedProduct");
+					if(productObject==null) {
+						productObject = this.o.getParentPrimaryObject("Product");
+					}
+					this.updateProductObjectDel.register(this.o, "onreferences");
+				}
+				
+				this.list.setAttribute("productObject", productObject);
+			}
+
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "catBaseSKUDefiningAttributesViewer", "updateProductObject");
+			}			
+			]]>
+		</method>
+	</class>
+
+</library>

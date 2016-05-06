@@ -1,0 +1,99 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<class name="wcfResizer" extends="basecomponent" clickable="true" focusable="false">
+		<attribute name="reverseSplit" type="boolean" value="false"/>
+		<attribute name="xSplitSize" value="200" type="number"/>
+		<attribute name="ySplitSize" value="200" type="number"/>
+		<attribute name="axis" value="x" type="string" setter="setAxis(axis)"/>
+		<attribute name="v1" value="null"/>
+		<attribute name="v2" value="null"/>		
+		<attribute name="size" value="5"/>
+		<attribute name="hoverColor" type="color" value="0xe0e5f0"/>
+		<attribute name="selectedColor" type="color" value="0xe0e5f0"/>
+		<attribute name="hovering" value="false" type="boolean"/>
+		<attribute name="dragging" value="false" type="boolean"/>
+
+		<dragstate name="dragger" drag_axis="${axis}"
+			drag_min_x="${v1.minWidth}" drag_min_y="${v1.minHeight}"
+			drag_max_x="${parent.width - (axis == 'x'? size : 5) - v2.minWidth}"
+			drag_max_y="${parent.height - (axis == 'y'? size : 5) - v2.minHeight}"/>
+		
+		<method name="setAxis" args="a">
+			<![CDATA[
+			if (this["axis"] != a) {
+				this.axis = a;
+				if (a == "x") {
+					this.setAttribute('width', this.size);
+				}
+				else {
+					this.setAttribute('height', this.size);
+				}
+			}
+			]]>
+		</method>
+		
+		<handler name="onmouseover">
+			<![CDATA[
+			this.hover = true;
+			this.setAttribute("bgcolor", hoverColor);
+			]]>
+		</handler>
+
+		<handler name="onmouseout">
+			<![CDATA[
+			this.hover = false;
+			if (!dragging) {
+				this.setAttribute("bgcolor", undefined);
+			}
+			]]>
+		</handler>
+
+		<handler name="onmousedown">
+			<![CDATA[
+			lz.Cursor.lock();
+			this.setAttribute("dragging", true);
+			this.setAttribute("bgcolor", selectedColor);
+			dragger.setAttribute('applied', true);
+			]]>
+		</handler>
+
+		<handler name="onmouseup">
+			<![CDATA[
+			lz.Cursor.unlock();
+			this.setAttribute("dragging", false);
+			this.setAttribute("bgcolor", this.hover ? this.hoverColor : undefined);
+			dragger.setAttribute('applied', false);
+			]]>
+		</handler>
+		
+		<handler name="onx">
+			<![CDATA[
+			if (this.dragging && parent.axis == "x") {
+				this.setAttribute("xSplitSize", this.reverseSplit ? parent.width - this.x - this.size : this.x);
+			}
+			]]>
+		</handler>
+		
+		<handler name="ony">
+			<![CDATA[
+			if (this.dragging && parent.axis == "y") {
+				this.setAttribute("ySplitSize", this.reverseSplit ? parent.height - this.y - this.size : this.y);
+			}
+			]]>
+		</handler>
+	</class>
+
+</library>

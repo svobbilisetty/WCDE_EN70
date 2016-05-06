@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktStateProvinceProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/StateProvince" promptText="${mktMarketingResources.cspAddrStateProvince}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="any" objectPath="TopAndList/StateProvince" propertyName="template"/>
+			<PropertyChildListEditor listDefinitionName="mktCSStateProvinceGrid" name="stateGrid" objectPath="TopAndList/StateProvince/StateProvinceList" objectTypes="StateProvinceEqualsOption" promptText="${mktMarketingResources.customerSegment_addrStateProvince_Specify}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="notAny" objectPath="TopAndList/StateProvince" propertyName="template"/>
+			<PropertyChildListEditor listDefinitionName="mktCSStateProvinceGrid" name="stateGrid" objectPath="TopAndList/StateProvince/StateProvinceList" objectTypes="StateProvinceDoesNotEqualOption" promptText="${mktMarketingResources.customerSegment_addrStateProvince_Specify}"/>
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktCSStateProvinceGrid" preferenceKey="mktCSStateProvinceGrid">		
+		<GridComboBox editable="true" name="stateName" propertyName="conditionValue" required="true" text="${mktMarketingResources.customerSegment_addrStateProvince_Specified}" visible="true" width="250"/>
+	</ObjectGrid>
+</Definitions>

@@ -1,0 +1,31 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<class name="prcNestedPriceRuleElementSummary" extends="wcfFlowElementSummary">
+		
+		<wcfFlowSummaryParam name="priceRuleName" objectPath="RefPriceRuleGroup/PriceRuleGroup" propertyName="name"/>
+		
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var priceRule = this.getValuesList("priceRuleName");
+				if (priceRule != "") {
+					this.setSummaryText(prcPriceResources.replaceValues("summary_nestedPriceRule", [priceRule]));
+				} else {
+					this.setSummaryText("");
+				}
+			]]>
+		</method>
+	</class>
+</library>

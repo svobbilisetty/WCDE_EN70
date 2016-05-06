@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		@keywords private
+	-->
+	<PrimaryObjectDefinition creatable="true" initializeObjectStoreId="false" definitionName="Task" displayName="${wspWorkspaceResources.task}" 
+		displayNameProperty="taskName" headerIcon="taskHeaderIcon" helpLink="tasks/twocreatet.htm" icon="taskIcon" idProperty="taskId" 
+		objectType="Task" propertiesDefinitionName="wspTaskProperties" saveParentPrimaryObject="true" searchType="FindTasks"
+		newObjectMenuItemText="${wspWorkspaceResources.newTask}" >
+
+		<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+
+		<!--- Retrieves the {@link wspTaskGroupPrimaryObjectDefinition Task Group} object that refers to this object. -->
+		<GetReferencesService sendWorkspaceContext="false" url="/cmc/GetTaskGroupByTaskId">
+			<ServiceParam name="taskId" propertyName="taskId" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetReferencesService>
+
+		<!--- Retrieves the Contributors for this task. -->
+		<GetChildrenService sendWorkspaceContext="false" objectTypes="ContributorAssociation" url="/cmc/GetTaskContributors">
+			<ServiceParam name="taskId" propertyName="taskId" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetChildrenService>
+
+		<!--- Retrieves the {@link wspTaskGroupComments TaskGroupComment} child objects. -->
+		<GetChildrenService objectTypes="TaskGroupComment" sendWorkspaceContext="false" url="/cmc/GetTaskGroupComments">
+			<ServiceParam name="taskGroupId" parentType="TaskGroup" parentProperty="true" propertyName="taskGroupId" />
+		</GetChildrenService>
+		
+		<RefreshService url="/cmc/GetTask">
+			<ServiceParam name="taskId" propertyName="taskId" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</RefreshService>
+
+		<CreateService url="/cmc/CreateTask" sendMultiValues="true">
+			<ServiceParam name="taskGroupId" optional="false" parentProperty="true" parentType="TaskGroup" propertyName="taskGroupId" />
+			<ServiceParam name="taskMemberId" objectPath="ContributorAssociation/Contributor" propertyName="memberId" optional="true" />
+		</CreateService>
+
+		<UpdateService url="/cmc/UpdateTask" sendMultiValues="true">
+			<ServiceParam name="taskId" propertyName="taskId" />
+			<ServiceParam name="taskMemberId" objectPath="ContributorAssociation/Contributor" propertyName="memberId" optional="true" />
+		</UpdateService>
+
+		<DeleteService url="/cmc/DeleteTask">
+			<ServiceParam name="taskId" propertyName="taskId" />
+		</DeleteService>
+
+		<ChildObjectDefinition baseDefinitionName="wspTaskGroupComments">
+			<EnablementAndCondition>
+				<EnablementOrCondition>
+					<EnablementCondition propertyName="status" enablementValue="1" parentProperty="true" parentType="TaskGroup" />
+					<EnablementCondition propertyName="status" enablementValue="2" parentProperty="true" parentType="TaskGroup" />
+					<EnablementCondition propertyName="status" enablementValue="3" parentProperty="true" parentType="TaskGroup" />
+				</EnablementOrCondition>
+				<EnablementOrCondition>
+					<EnablementCondition contextName="workspaceManager" enablementValue="true"/>
+					<EnablementCondition contextName="workspaceContributor" enablementValue="true"/>
+					<EnablementAndCondition>
+						<EnablementCondition contextName="workspaceApprover" enablementValue="true"/>
+						<EnablementOrCondition>
+							<LogonIdEnablementCondition package="wsp" parentProperty="true" parentType="TaskGroup" objectPath="ApproverAssociation/Approver" propertyName="logonId" conditionId="approverIdCondition1"/>
+							<LogonIdEnablementCondition package="wsp" objectPath="ApproverAssociation/Approver" propertyName="logonId" conditionId="approverIdCondition2"/>
+						</EnablementOrCondition>
+					</EnablementAndCondition>
+				</EnablementOrCondition>
+			</EnablementAndCondition>
+		</ChildObjectDefinition>
+		
+		<Xml name="template">
+			<status>INACTIVE</status>
+		</Xml>
+
+		<TaskWorkOnClientAction package="wsp" />
+		<TaskCompleteClientAction package="wsp" />
+		<TaskApproveClientAction package="wsp" />
+		<ContributorTaskRejectClientAction package="wsp" />
+		<ApprovalTaskRejectClientAction package="wsp" />
+		<TaskReturnToActiveClientAction package="wsp" />
+
+		<PropertyDefinition propertyName="status" displayName="${wspWorkspaceResources.status}" copyProtected="true" send="false"/>
+		<PropertyDefinition displayName="${wspWorkspaceResources.taskName}" maximumSize="254" propertyName="taskName" required="true" trim="true" />
+		<PropertyDefinition displayName="${wspWorkspaceResources.dueDate}" propertyName="dueDate" type="datetime" />
+
+		<RequiredParentValidator errorMessage="${wspWorkspaceResources.missingTaskGroupParent}" validatorId="parentExistsCheck" validatorType="requiredParentTaskGroupValidator">
+		</RequiredParentValidator>
+
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="associationId" objectType="ContributorAssociation" referencedTypes="Contributor"/>
+		
+	</PrimaryObjectDefinition>
+
+</Definitions>

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>  
+	<!--- This primary object definition defines the base object from which all price constants are derived.
+		It uses the noun PriceConstant from the file wc-catalog-clientobjects.xml
+		which contains information on how the parameters in the Update or Delete services 
+	 	are mapped to create the appropriate BOD for the Web services.
+	-->
+	<PrimaryObjectDefinition definitionName="prcBasePriceConstantPrimaryObjectDefinition" displayNameProperty="name" idProperty="priceConstantId" isBaseDefinition="true" propertiesDefinitionName="prcPriceConstantProperties" searchType="FindPriceConstantByName">
+	
+		<EnablementOrCondition baseDefinitionName="prcPriceRuleObjectsCreationRestriction"/>
+		
+		<!-- Property Definitions -->
+		<PropertyDefinition displayName="${prcPriceResources.nameString}" maximumSize="64" propertyName="name" required="true" trim="true"/>
+		<PropertyDefinition displayName="${prcPriceResources.description}" maximumSize="254" propertyName="description"/>
+
+		<PropertyDefinition displayName="${prcPriceResources.createDate}" propertyName="createDate" type="datetime"/>
+		<PropertyDefinition displayName="${prcPriceResources.lastUpdate}" propertyName="lastUpdate" type="datetime"/>
+    	
+    	<PropertyDefinition propertyName="format">
+			<PropertyValue displayName="${prcPriceResources.percent}" value="Percent"/>
+			<PropertyValue displayName="${prcPriceResources.number}" value="Number"/>
+			<PropertyValue displayName="${prcPriceResources.currency}" value="Currency"/>
+		</PropertyDefinition>
+   
+		<!-- Services -->
+
+		<!-- Refresh service -->
+    	<RefreshService url="/cmc/GetPriceConstant">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceConstantId" propertyName="priceConstantId"/>
+		</RefreshService>
+
+    	<!--- 
+			Update Service to update a price constant.
+		-->
+    	<UpdateService url="/cmc/SavePriceConstant">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition1" enablementValue="PercentPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition2" enablementValue="NumberPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition3" enablementValue="CurrencyPriceConstant" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition1" enablementValue="InheritedPercentPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition2" enablementValue="InheritedNumberPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition3" enablementValue="InheritedCurrencyPriceConstant" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="priceConstantId" propertyName="priceConstantId"/>
+		</UpdateService>
+    	
+    	<!---
+			Delete service to delete a price constant. 
+		-->
+    	<DeleteService url="/cmc/DeletePriceConstant">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition1" enablementValue="PercentPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition2" enablementValue="NumberPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition3" enablementValue="CurrencyPriceConstant" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition1" enablementValue="InheritedPercentPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition2" enablementValue="InheritedNumberPriceConstant" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition3" enablementValue="InheritedCurrencyPriceConstant" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="priceConstantId" propertyName="priceConstantId"/>
+		</DeleteService>
+    	
+    	<GetReferencesService primaryObjectTypes="PriceRule,InheritedPriceRule" referenceObjectTypes="InputPriceConstant,InheritedInputPriceConstant,ComparisonPriceConstant,InheritedComparisonPriceConstant" url="/cmc/GetPriceRulesReferenceForPriceConstant">
+			<ServiceParam name="storeId" parameterName="storeId"/>
+			<ServiceParam name="priceConstantId" propertyName="priceConstantId"/>
+        </GetReferencesService>  
+        
+       	<GetReferencesService primaryObjectTypes="PriceEquation,InheritedPriceEquation" referenceObjectTypes="PriceConstantEquationEntry,InheritedPriceConstantEquationEntry" url="/cmc/GetPriceEquationsReferenceForPriceConstant">
+			<ServiceParam name="storeId" parameterName="storeId"/>
+			<ServiceParam name="priceConstantId" propertyName="priceConstantId"/>
+        </GetReferencesService>  
+    	
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition definitionName="prcBasePercentPriceConstantPrimaryObjectDefinition" baseDefinitionName="prcBasePriceConstantPrimaryObjectDefinition" displayName="${prcPriceResources.percentConstant_DisplayName}" newObjectMenuItemText="${prcPriceResources.contextMenuNewPercentageConstant}" isBaseDefinition="true" objectGroups="PriceConstant,PercentPriceConstantGroup">
+		
+		<PropertyDefinition displayName="${prcPriceResources.valueInPercent}" propertyName="numericalValue" type="number" minValue="0" required="true" />
+		
+    	<Xml name="template">
+    		<format>Percent</format>
+		</Xml>
+		
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="prcBasePercentPriceConstantPrimaryObjectDefinition" creatable="true" definitionName="PercentPriceConstant" headerIcon="percentPriceConstantHeaderIcon" icon="percentPriceConstantIcon" objectType="PercentPriceConstant">
+		
+		<CreateService url="/cmc/CreatePriceConstant">
+    		<ServiceParam name="storeId"/>
+    	</CreateService> 
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="prcBasePercentPriceConstantPrimaryObjectDefinition" creatable="false" definitionName="InheritedPercentPriceConstant" headerIcon="inheritedPercentPriceConstantHeaderIcon" icon="inheritedPercentPriceConstantIcon" objectType="InheritedPercentPriceConstant">
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition definitionName="prcBaseNumberPriceConstantPrimaryObjectDefinition" baseDefinitionName="prcBasePriceConstantPrimaryObjectDefinition" displayName="${prcPriceResources.numberConstant_DisplayName}" newObjectMenuItemText="${prcPriceResources.contextMenuNewFixedConstant}" isBaseDefinition="true" objectGroups="PriceConstant,NumberPriceConstantGroup">
+		
+		<PropertyDefinition displayName="${prcPriceResources.number}" propertyName="numericalValue" type="number" required="true"/>
+		
+		<CreateService url="/cmc/CreatePriceConstant">
+    		<ServiceParam name="storeId"/>
+    		<ServiceParam name="format" propertyName="format"/>
+    	</CreateService> 
+    	
+    	<Xml name="template">
+    		<format>Number</format>
+		</Xml>
+    	
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseNumberPriceConstantPrimaryObjectDefinition" creatable="true" definitionName="NumberPriceConstant" headerIcon="numberPriceConstantHeaderIcon" icon="numberPriceConstantIcon" objectType="NumberPriceConstant">
+		
+		<CreateService url="/cmc/CreatePriceConstant">
+    		<ServiceParam name="storeId"/>
+    	</CreateService> 
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseNumberPriceConstantPrimaryObjectDefinition" creatable="false" definitionName="InheritedNumberPriceConstant" headerIcon="inheritedNumberPriceConstantHeaderIcon" icon="inheritedNumberPriceConstantIcon" objectType="InheritedNumberPriceConstant">
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition definitionName="prcBaseCurrencyPriceConstantPrimaryObjectDefinition" baseDefinitionName="prcBasePriceConstantPrimaryObjectDefinition" displayName="${prcPriceResources.currencyConstant_DisplayName}" newObjectMenuItemText="${prcPriceResources.contextMenuNewCurrencyConstant}" isBaseDefinition="true" objectGroups="PriceConstant,CurrencyPriceConstantGroup">
+		
+		<ChildObjectDefinition baseDefinitionName="prcPriceConstantCurrencyValue"/>
+    	
+ 		<Xml name="template">
+    		<format>Currency</format>
+    		<object objectType="PriceConstantCurrencyValue" />
+		</Xml>
+		
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseCurrencyPriceConstantPrimaryObjectDefinition" creatable="true" definitionName="CurrencyPriceConstant" headerIcon="currencyPriceConstantHeaderIcon" icon="currencyPriceConstantIcon" objectType="CurrencyPriceConstant">
+		
+		<CreateService url="/cmc/CreatePriceConstant">
+    		<ServiceParam name="storeId"/>
+    	</CreateService> 
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseCurrencyPriceConstantPrimaryObjectDefinition" creatable="false" definitionName="InheritedCurrencyPriceConstant" headerIcon="inheritedCurrencyPriceConstantHeaderIcon" icon="inheritedCurrencyPriceConstantIcon" objectType="InheritedCurrencyPriceConstant">
+	</PrimaryObjectDefinition>
+	
+	<ChildObjectDefinition definitionName="prcPriceConstantCurrencyValue" idProperty="priceConstantCurrencyValueId" displayName="${prcPriceResources.currency}" objectType="PriceConstantCurrencyValue" releaseWhenClosed="false" singleInstance="true">
+        
+        <CreateService url="/cmc/CreatePriceConstantMonetaryValue">
+            <ServiceParam name="storeId"/>
+            <ServiceParam name="defaultCurrencyCode"/>
+            <ServiceParam name="currencyCodes"/>
+            <ServiceParam name="priceConstantId" parentProperty="true"/>
+        </CreateService>
+
+        <UpdateService url="/cmc/SavePriceConstantMonetaryValue">
+            <ServiceParam name="storeId" parameterName="storeId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition1" enablementValue="PercentPriceConstant" propertyName="objectType" parentProperty="true"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition2" enablementValue="NumberPriceConstant" propertyName="objectType" parentProperty="true"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition3" enablementValue="CurrencyPriceConstant" propertyName="objectType" parentProperty="true"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition1" enablementValue="InheritedPercentPriceConstant" propertyName="objectType" parentProperty="true"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition2" enablementValue="InheritedNumberPriceConstant" propertyName="objectType" parentProperty="true"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceConstantCondition3" enablementValue="InheritedCurrencyPriceConstant" propertyName="objectType" parentProperty="true"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+            <ServiceParam name="defaultCurrencyCode"/>
+            <ServiceParam name="currencyCodes"/>            
+            <ServiceParam name="priceConstantId" parentProperty="true"/>
+        </UpdateService>
+               
+        <DefaultCurrencyPropertyDefinition displayName="${prcPriceResources.currency}" minValue="0" propertyName="defaultCurrencyId" type="currency"/>
+       
+        <AlternativeCurrencyPropertyDefinition displayName="${prcPriceResources.currency}" minValue="0" propertyName="alternativeCurrencyId" type="currency"/>            
+        
+        <CurrencyConstantValidator package="prc" validatorId="currencyConstantValidator" validatorType="noCurrencyValueProvided"/>
+        
+    </ChildObjectDefinition>
+
+
+</Definitions>

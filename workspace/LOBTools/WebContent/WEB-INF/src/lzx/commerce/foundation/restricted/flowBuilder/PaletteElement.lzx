@@ -1,0 +1,95 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		This class represents an element and is instantiated by {@link wcfPaletteGroup}. It simply provides
+		a 32x32 pixel icon which is loaded from the {@link wcfFlowElementObjectDefinition#paletteIcon object definition}
+		of the provided {@link wcfPaletteElement#objectType}.
+		
+		@keywords private
+	-->
+	<class name="wcfPaletteElement">
+		<!--- @keywords private -->
+		<attribute name="objectType" type="string" value=""/>
+		<!--- @keywords private -->
+		<attribute name="icon" type="string" value="${null}" />
+		<!--- @keywords private -->
+		<attribute name="displayName" type="string" value="" />
+		<!--- @keywords private -->
+		<attribute name="helpLink" type="string" value="" />
+
+		<!---
+			@keywords private
+		-->
+		<attribute name="oView" value="${wcfModelUtil.findObjectView(this)}" when="once"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+			this.objectType = this.datapath.getNodeAttribute("objectType");
+			this.palettecontent.completeInstantiation();
+			this.updateObjectDel = new lz.Delegate(this, "updateObject");
+			this.updateObject();
+			]]>
+		</handler>
+
+		<handler name="ondestroy">
+			<![CDATA[
+			if (this["updateObjectDel"]) {
+				this.updateObjectDel.unregisterAll();
+				delete this.updateObjectDel;
+			}
+			]]>
+		</handler>
+
+		<method name="updateObject" args="e=null">
+			<![CDATA[
+			this.updateObjectDel.unregisterAll();
+			this.updateObjectDel.register(this.oView, "ono");
+			if (this.oView.o != null) {
+				var pathObject = this.oView.o.getObject("path",false,null,this.updateObjectDel);
+				if (pathObject != null) {
+					var objectDefinition = pathObject.objectDefinition.getChildDefinition(this.objectType);
+					if (objectDefinition != null) {
+						var newIcon = objectDefinition.paletteIcon;
+						var newDisplayName = objectDefinition.displayName;
+						var newHelpLink = objectDefinition.helpLink;
+						var newVisibility = objectDefinition.isCreatable(pathObject, null, this.updateObjectDel);
+						if (newIcon != this.icon) {
+							this.setAttribute("icon", newIcon);
+						}
+						if (newDisplayName != this.displayName) {
+							this.setAttribute("displayName", newDisplayName);
+						}
+						if (newHelpLink != this.helpLink) {
+							this.setAttribute("helpLink", newHelpLink);
+						}
+						if (newVisibility != this.visible) {
+							this.setAttribute("visible", newVisibility);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<view name="palettecontent" initstage="defer">
+			<attribute name="dndclip" value="false" type="boolean"/>
+			<simplelayout axis="x" spacing="0" />
+			<view name="iconview" width="32" height="32" resource="${classroot.icon}"/>
+		</view>
+		<wcfTooltip name="tooltip" text="${classroot.displayName}" linkURL="${classroot.helpLink}"/>
+	</class>
+
+</library>

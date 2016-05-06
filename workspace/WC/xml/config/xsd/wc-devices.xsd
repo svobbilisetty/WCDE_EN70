@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--********************************************************************-->
+<!--  Licensed Materials - Property of IBM                              -->
+<!--                                                                    -->
+<!--  WebSphere Commerce                                                -->
+<!--                                                                    -->
+<!--  (c) Copyright IBM Corp. 2009                                      -->
+<!--                                                                    -->
+<!--  US Government Users Restricted Rights - Use, duplication or       -->
+<!--  disclosure restricted by GSA ADP Schedule Contract with IBM Corp. -->
+<!--                                                                    -->
+<!--********************************************************************-->
+
+<xsd:schema targetNamespace="http://www.ibm.com/xmlns/prod/commerce/foundation/config"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:_config="http://www.ibm.com/xmlns/prod/commerce/foundation/config"
+	elementFormDefault="qualified"
+	attributeFormDefault="unqualified">
+
+	<xsd:element name="Devices">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="_config:DeviceGroup" minOccurs="0" maxOccurs="unbounded" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="DeviceGroup">
+		<xsd:complexType>
+			<xsd:annotation>
+			<xsd:documentation>
+			Defines a logical group of mobile devices with the same internal device ID and channel ID.
+			Several attributes are defined for this element.
+			internalID: The internal device ID for this device group.
+			channelID: The channel ID for this device group.
+			</xsd:documentation>
+			</xsd:annotation>
+			
+			<xsd:sequence>
+				<xsd:element ref="_config:Device" minOccurs="0" maxOccurs="unbounded" />
+			</xsd:sequence>
+
+			<xsd:attribute name="internalID" type="xsd:int" use="required" />
+			<xsd:attribute name="channelID" type="xsd:int" use="required" />
+
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="Device">
+		<xsd:complexType>
+			<xsd:annotation>
+			<xsd:documentation>
+			Defines a mobile device.  This mobile device configuration is for mapping a User-Agent http header to its internal device ID.
+			Several attributes are defined for this element.
+			name: The name of the device
+			userAgentPattern: Regular expression used to pattern match the http header.  Return this device if it matches.		
+			</xsd:documentation>
+			</xsd:annotation>
+			
+			<xsd:attribute name="name" type="xsd:string" use="required" />
+			<xsd:attribute name="userAgentPattern" type="xsd:string" use="required" />
+
+		</xsd:complexType>
+	</xsd:element>
+
+</xsd:schema>

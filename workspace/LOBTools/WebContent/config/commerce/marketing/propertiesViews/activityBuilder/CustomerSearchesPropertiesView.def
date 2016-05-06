@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktCustomerSearchesElementObject Customer Searches trigger}.
+	-->
+	<FlowElementProperties definitionName="mktCustomerSearchesProperties">
+		<PropertyGroup collapsable="false" name="container">
+
+			<PropertyCombobox name="searchTermComparison" promptText="${mktMarketingResources.searchCondition}" propertyName="comparison"/>
+			
+			<PropertyGroup collapsable="false" name="searchTermValues">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+				<PropertyChildListEditor helpLinkURL="concepts/csbtricustsearch.htm" helpText="${mktMarketingResources.help_customersearches_searchtermvalue}" listDefinitionName="mktSearchTermValueGrid" name="searchTermEditor" objectTypes="searchTerm" promptText="${mktMarketingResources.searchTerms}" required="true" validatorTypes="nosearchTermValueProvided"/>	
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="synonymMatch">
+				<EnablementAndCondition conditionId="showSynonyms">
+					<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+					<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+				</EnablementAndCondition>
+				<PropertyCheckbox helpText="${mktMarketingResources.help_synonymMatch}" propertyName="synonymMatch" promptText="${mktMarketingResources.synonymMatch}" trueValue="true" falseValue="false" />
+			</PropertyGroup>
+			
+			<PropertyStepper helpText="${mktMarketingResources.help_customersearches_times}" minimumValue="1" maximumValue="5" promptText="${mktMarketingResources.times}" propertyName="numberOfTimes"/>
+			
+			<BaseTriggerDateProperties helpText="${mktMarketingResources.help_customersearches_timeframe}" package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

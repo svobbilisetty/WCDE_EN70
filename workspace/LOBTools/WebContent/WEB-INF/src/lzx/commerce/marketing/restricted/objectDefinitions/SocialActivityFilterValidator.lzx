@@ -1,0 +1,65 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for {@link mktCustomerParticipatesInSocialCommerceElementObject Customer Participates In Social Commerce} and 
+		{@link mktSocialCommerceParticipationElementObject Social Commerce Participation}. This ensures that 
+		the socialActivityFilter objects are deleted when socialActivityType is changed.
+	-->
+	<class name="mktSocialActivityFilterValidator" extends="wcfValidator"  validatorType="socialActivityFilterValidator">
+		<!--- Object path of the socialActivityRatingFilter objects -->
+		<attribute name="socialActivityRatingFilterObjectPath" value="rating" type="string"/>
+		<!--- Object path of the socialActivityManufacturerNameFilter objects -->
+		<attribute name="socialActivityManufacturerNameFilterObjectPath" value="manufacturerName" type="string"/>
+		<!--- Object path of the socialActivityManufacturerNameFilter objects -->
+		<attribute name="childCatentryObjectPath" value="ChildCatentry" type="string"/>
+		<!--- Object path of the socialActivityManufacturerNameFilter objects -->
+		<attribute name="childCatalogGroupObjectPath" value="ChildCatalogGroup" type="string"/>
+		<!--- Property for socialActivityType value -->
+		<attribute name="socialActivityTypePropertyName" value="socialActivityType" type="string"/>
+		
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			
+			if(!o){
+				return; // nothing to validate
+			}
+			var selectedActivityType = o.getPropertyValue(this.socialActivityTypePropertyName);
+
+			if ((selectedActivityType != "*") && (selectedActivityType != "review") && (selectedActivityType != "likesProduct")){
+				var socialActivityRatingFilters = o.getObjects(this.socialActivityRatingFilterObjectPath);
+				var socialActivityManufacturerNameFilters = o.getObjects(this.socialActivityManufacturerNameFilterObjectPath);
+				var childCatentry = o.getObjects(this.childCatentryObjectPath);
+				for(var i = 0; i < socialActivityRatingFilters.length; i++) {
+					socialActivityRatingFilters[i].deleteObject();
+				}
+				for(var i = 0; i < socialActivityManufacturerNameFilters.length; i++) {
+					socialActivityManufacturerNameFilters[i].deleteObject();
+				}
+				for(var i = 0; i < childCatentry.length; i++) {
+					childCatentry[i].deleteObject();
+				}
+				if (selectedActivityType == "flagInappropriate"){
+					var childCatalogGroup = o.getObjects(this.childCatalogGroupObjectPath);
+					for(var i = 0; i < childCatalogGroup.length; i++) {
+						childCatalogGroup[i].deleteObject();
+					}
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+</library>

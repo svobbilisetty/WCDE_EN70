@@ -1,0 +1,221 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE menu SYSTEM "Menu.dtd">
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2003
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+
+<!-- 
+    Commerce Accelerator menus for Commerce Plaza (Business Indirect - Supplier Marketplace Business Model)
+    Note: user roles are defeined in Roles.xml
+-->
+
+<menu resourceBundle="common.mccNLS"
+      frameset="common.MerchantCenterFrameset"
+      helpMap="common.MerchantCenterHelpMap"
+      arrowGif="$wcs_accelerator$images/tools/mcc/arrow.gif"
+      startPos="20"
+      space="20"
+      homepage="$webapp_accelerator$tools/common/AcceleratorHomeSCP.jsp"
+      bannerTitle=""
+      logoutPage="$webapp_accelerator$Logoff?URL=$wcs_accelerator$tools/common/blank.html&amp;storeId=0"
+      storeGif="$wcs_accelerator$images/tools/mcc/store_icon.jpg"
+      storeSelectionPage="$webapp_accelerator$StoreLanguageSelection?mcurl=MerchantCenterView?XMLFile=common.merchantCenter" >
+
+   <menuitem name="hub"
+             enabled="true"
+             users="chnMgr makMgr">
+
+      <node  name="preview"
+             taskUsages="all"
+             keepBCT="true"
+             url="$webapp_accelerator$DialogView?XMLFile=preview.PreviewDialog"
+             users="chnMgr makMgr"/>
+
+      <node  name="separator"
+             url=""/>
+
+      <node  name="openClose"
+             url="$webapp_accelerator$DialogView?XMLFile=store.openclose"
+             users="chnMgr"/>             
+
+      <node  name="changeProfile"
+             url="$webapp_accelerator$NotebookView?XMLFile=devtools.StoreProfileNotebook"
+             users="chnMgr"/>
+
+   </menuitem>
+   
+   <menuitem name="suppliers"
+             enabled="true"
+             users="chnMgr">
+             
+      <!-- This Business Model does not have distributors -->
+      <!-- node  name="distributors"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=contract.DistributorList&amp;cmd=ContractListView&amp;contractUsage=4"
+             users="chnMgr"/ -->
+
+      <node  name="hostedResellers"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=contract.ResellerList&amp;cmd=ContractListView&amp;contractUsage=2"
+             users="chnMgr"/>
+        
+      <node  name="newHostedReseller"
+             url="$webapp_accelerator$WizardView?XMLFile=contract.StoreCreationWizard&amp;fromAccelerator=true&amp;storetype=SPS"
+             users="chnMgr"/>
+                          
+      <node  name="importHostedReseller"
+             url="$webapp_accelerator$DialogView?XMLFile=contract.ResellerImportPanel&amp;contractUsage=2"
+             users="chnMgr"/>
+
+      <node  name="findHostedResellers"
+             url="$webapp_accelerator$SearchDialogView?ActionXMLFile=contract.ResellerSearchDialog&amp;contractUsage=2"
+             users="chnMgr"/>
+
+      <node  name="reportDeliverySetup"
+             url="$webapp_accelerator$DialogView?XMLFile=store.PeriodicReportSetup"
+             users="chnMgr"/>
+             
+      <node  name="broadcast"
+             url="$webapp_accelerator$DialogView?XMLFile=store.BroadcastAdmin"
+             users="chnMgr"/>
+
+   </menuitem>
+   
+
+   
+   <menuitem name="marketing"
+             enabled="true"
+		 taskUsages="all"
+             users="chnMgr makMgr">
+
+      <node  name="customerProfiles"
+             url="$webapp_accelerator$SegmentsView?ActionXMLFile=segmentation.SegmentList&amp;cmd=SegmentListView&amp;orderby=name"
+		 taskUsages="all"
+             users="chnMgr makMgr"/>
+
+      <node  name="campaigns"
+             url="$webapp_accelerator$CampaignsView?ActionXMLFile=campaigns.CampaignList&amp;cmd=CampaignListView&amp;orderby=name"
+		 taskUsages="all"
+             users="chnMgr makMgr"/>
+
+      <node  name="campaignInitiatives"
+             url="$webapp_accelerator$CampaignInitiativesView?ActionXMLFile=campaigns.InitiativeList&amp;cmd=CampaignInitiativeListView&amp;orderby=name"
+		 taskUsages="all"
+             users="chnMgr makMgr"/>
+<!--
+      <node  name="promotions"
+             component="RulesBasedDiscount"
+ 	     url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=RLPromotion.RLPromotionList&amp;cmd=RLDiscountListView"
+		 taskUsages="all"
+             users="chnMgr makMgr"/>          
+-->             
+      <node  name="ems"
+             url="$webapp_accelerator$CampaignsEmsView?ActionXMLFile=campaigns.CampaignEmsList&amp;cmd=CampaignEmsListView"
+		 taskUsages="all"
+             users="chnMgr makMgr"/>
+
+      <node  name="collateral"
+             url="$webapp_accelerator$CampaignsCollateralView?ActionXMLFile=campaigns.CampaignCollateralList&amp;cmd=CampaignCollateralListView"
+		 taskUsages="all"
+             users="chnMgr makMgr"/>
+
+      <node  name="experiment"
+             component="MarketingExperiment"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=experiment.ExperimentList&amp;cmd=ExperimentListView&amp;orderby=name"
+             taskUsages="all"
+             users="chnMgr makMgr"/>
+
+   </menuitem>
+
+
+   <menuitem name="products"
+             enabled="true"
+             taskUsages="all"             
+             users="makMgr">
+
+      <!-- <node  name="productManagement"
+             url="$webapp_accelerator$ProductUpdateDialog"
+             users="makMgr"/> -->
+             
+      <node  name="catalogManagement"
+             url="$webapp_accelerator$CategoryTreeView?sku=false"
+             taskUsages="all"             
+             users="makMgr"/>
+             
+      <node  name="findCatalogEntries"
+          url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;actionEP=PLU&amp;redirectXML=catalog.KitContentsDialog"
+             taskUsages="all"          
+             users="makMgr"/>
+
+      <node  name="findCategories"
+             url="$webapp_accelerator$DialogView?XMLFile=catalog.categoryFindDialog"
+             taskUsages="all"             
+             users="makMgr"/>
+
+      <node  name="packagesBundles"
+             url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;searchType=package&amp;redirectURL=DialogView&amp;redirectXML=catalog.KitContentsDialog&amp;actionEP=PB"
+             taskUsages="all"             
+             users="makMgr"/>
+
+      <node  name="merchandiseAssoc"
+             url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;searchType=catentry&amp;redirectURL=DialogView&amp;redirectXML=catalog.MAssociationDialog&amp;actionEP=MA"
+             taskUsages="all"             
+             users="makMgr"/>
+<!--
+      <node  name="CatalogDesign"
+      		 component="CatalogDesign"	
+	     	 url="$webapp_accelerator$NavCatCatalogListDialog?displayNumberOfProducts=true&amp;extendedFunction=(categoryTemplate=false, masterCatalog=false, sku=false)"	
+             taskUsages="all"	     	 
+             users="makMgr"/>
+-->
+
+   </menuitem>
+
+
+   <menuitem name="reports"
+             enabled="true"
+             users="chnMgr makMgr">
+
+      <node  name="storeLevelReports"
+             url="$webapp_accelerator$SearchDialogView?ActionXMLFile=contract.StoreLevelReportSearchDialog&amp;contractUsage=2&amp;hostingMode=1"
+             users="chnMgr makMgr"/>
+
+      <node  name="siteLevelReports"
+             url="$webapp_accelerator$SiteLevelReportsHomeView"
+             users="chnMgr makMgr"/>
+             
+      <node  name="biReports"
+             component="CommerceAnalyzer"
+             url="$webapp_accelerator$ShowContextList?context=store&amp;contextConfigXML=bi.biContext&amp;ActionXMLFile=bi.biRptStoreContextList"
+             users="chnMgr makMgr"/>
+   </menuitem>
+
+   <menuitem name="tasks"
+             component="WorkspaceTaskList"
+             taskUsages="all"
+             enabled="true"
+             users="wsMgr wsTGApprover wsCtntContributor podMgr makMgr catMgr">
+
+      <node  name="viewTasks"
+             component="WorkspaceTaskList"
+             taskUsages="all"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=workspaceadmin.TaskListActions&amp;cmd=TaskListView"
+             users="wsMgr wsTGApprover wsCtntContributor podMgr makMgr catMgr"/>
+             
+   </menuitem>
+
+   <menuitem name="help"
+             enabled="true"
+             type="help"
+             taskUsages="all"
+             users="all"/>
+
+</menu>

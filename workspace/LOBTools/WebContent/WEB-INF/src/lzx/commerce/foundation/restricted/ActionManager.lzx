@@ -1,0 +1,2266 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		The action manager is a utility that will serialize user actions. Many user actions trigger
+		many services and deferred callbacks and involve multiple steps. The action manager ensures
+		that only one action is active at time.
+	-->
+	<node id="wcfActionManager">
+		<!---
+			An array of pending actions. Actions are simple objects that have properties required to
+			complete the action. Every action must have a property named "actionHandler". The action
+			handler is a utility instance that will handle the details of the action. The first action
+			in the list is the active action.
+		-->
+		<attribute name="pendingActions" value="${[]}" />
+
+		<!---
+			@keywords private
+		-->
+		<handler name="oninit">
+			<![CDATA[
+				this.actionCallbackDel = new lz.Delegate(this, "actionCallback");
+			]]>
+		</handler>
+
+		<!---
+			Add the specified action to the list of pending actions.
+			@param object action: action instance
+		-->
+		<method name="addAction" args="action">
+			<![CDATA[
+				if (wcfEventTimer.enabled) action.eventId = wcfEventTimer.currentEventId;
+				this.pendingActions.push(action);
+				progressIndicator.addAction();
+				if (this.pendingActions.length == 1) {
+					wcfCallbackUtil.addDeferredCallback(this.actionCallbackDel);
+				}
+			]]>
+		</method>
+
+		<!---
+			Remove the specified action from the list of pending actions.
+			@param object action: action instance
+		-->
+		<method name="removeAction" args="action">
+			<![CDATA[
+				var index = this.pendingActions.indexOf(action);
+				if (index != -1) {
+					action.actionHandler.releaseAction(action);
+					this.pendingActions.splice(index, 1);
+					progressIndicator.removeAction();
+					if (index == 0) {
+						this.actionCallbackDel.unregisterAll();
+						wcfCallbackUtil.cancelCallback(this.actionCallbackDel);
+						if (this.pendingActions.length > 0) {
+							wcfCallbackUtil.addDeferredCallback(this.actionCallbackDel);
+						}
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			Handle action callback.
+		-->
+		<method name="actionCallback" args="e=null">
+			<![CDATA[
+			this.actionCallbackDel.unregisterAll();
+			if (lz.ModeManager.getModalView() == null) {
+				var action = this.pendingActions[0];
+				if (wcfEventTimer.enabled && action["eventId"]) wcfEventTimer.restart(action.eventId);
+				action.actionHandler.performAction(action);
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			else {
+				this.actionCallbackDel.register(lz.ModeManager, "onmode");
+			}
+			]]>
+		</method>
+
+		<!---
+			Stop any pending actions.
+			@param wcfModel model: object model instance
+		-->
+		<method name="stopActions" args="model">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfActionManager", "stopActions(model)", "model=" + model);
+					if (model) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfActionManager", "stopActions(model)", "model.oEditor=" + model.oEditor);
+					}
+				}
+				var stoppablePendingActions = [];
+				var remainingPendingActions = [];
+				var currentActionStopped = false;
+				for (var i = 0; i < this.pendingActions.length; i++) {
+					var action = this.pendingActions[i];
+					if (typeof(model) == "undefined" || model == null || action.model == model) {
+						stoppablePendingActions.push(action);
+						if (i == 0) {
+							currentActionStopped = true;
+						}
+					}
+					else {
+						remainingPendingActions.push(action);
+					}
+				}
+				this.pendingActions = remainingPendingActions;
+				while (stoppablePendingActions.length > 0) {
+					var action = stoppablePendingActions.shift();
+					action.actionHandler.releaseAction(action);
+				}
+				if (currentActionStopped) {
+					this.actionCallbackDel.unregisterAll();
+					wcfCallbackUtil.cancelCallback(this.actionCallbackDel);
+					if (this.pendingActions.length > 0) {
+						wcfCallbackUtil.addDeferredCallback(this.actionCallbackDel);
+					}
+				}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		Handles the copy action.
+	-->
+	<node id="wcfCopyActionHandler">
+		<!---
+			Current copy action. A copy action must be deferred until the source object is loaded.
+		-->
+		<attribute name="currentAction" value="null" />
+
+		<!---
+			@keywords private
+		-->
+		<handler name="oninit">
+			<![CDATA[
+				this.checkChildrenLoadedDel = new lz.Delegate(this, "checkChildrenLoaded");
+				this.checkChildrenErrorDel = new lz.Delegate(this, "checkChildrenError");
+			]]>
+		</handler>
+
+		<!---
+			Trigger the copy action.
+			@param wcfModelObject sourceObject: the object that is to be copied
+			@param wcfModelObject targetObject: the target object for the copy action
+			@param wcfObjectDefinition targetDefinition: the target object definition
+			@param boolen doOpen: open the properties view for the copied object
+			@param lz.Delegate callbackDelegate: a callback delegate that will be executed when the copy completes successfully
+			@param transactionEventId: The transaction event ID under which the copy of the object will be saved
+			@param transactionGroupId: The transaction group ID of an open group object.
+			@param boolean saveCopy: save the copied object
+			@param boolean isLastSaveInGroup: Indicates that this is the last object to be saved under the transactionGroupId.
+			@param boolean isLastSaveObject: Indicates that this is the last object to be saved with this transaction event
+			@param string sequencePropertyName: The sequence property of the source object. This is not null when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param string sequencePropertyPath: The object path for the sequence property of the source object.
+			@param number nextSeq: The value for the next sequence in the list. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param object newObjectOptions: an object that contains the arguments to be passed to the populate new object service
+		-->
+		<method name="triggerAction" args="sourceObject, targetObject, targetDefinition, doOpen, callbackDelegate=undefined, transactionEventId=-1, transactionGroupId=-1, saveCopy=false, isLastSaveInGroup=false, isLastSaveObject=false, sequencePropertyName=null, sequencePropertyPath=null, nextSeq=-1, newObjectOptions=null">
+			<![CDATA[
+				sourceObject.incrementReferenceCount();
+				if (targetObject != null) {
+					targetObject.incrementReferenceCount();
+				}
+				var action = {
+					actionHandler: this,
+					sourceObject: sourceObject,
+					targetObject: targetObject,
+					targetDefinition: targetDefinition,
+					doOpen: doOpen,
+					callbackDelegate: callbackDelegate,
+					model: sourceObject.model,
+					transactionEventId: transactionEventId,
+					transactionGroupId: transactionGroupId,
+					saveCopy: saveCopy,
+					isLastSaveInGroup: isLastSaveInGroup,
+					isLastSaveObject: isLastSaveObject,
+					sequencePropertyName: sequencePropertyName, 
+					sequencePropertyPath: sequencePropertyPath, 
+					nextSeq: nextSeq,
+					newObjectOptions: newObjectOptions
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the specified copy action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+				action.sourceObject.decrementReferenceCount();
+				if (action.targetObject != null) {
+					action.targetObject.decrementReferenceCount();
+				}
+				if (action == this.currentAction) {
+					this.checkChildrenLoadedDel.unregisterAll();
+					this.checkChildrenErrorDel.unregisterAll();
+					this.currentAction = null;
+				}
+				if (action.isLastSaveInGroup) {
+					wcfServiceTransactionUtil.releaseLongRunningTransactionGroup(action.transactionGroupId);
+				}
+				if (action.isLastSaveObject) {
+					wcfServiceTransactionUtil.activeTransactionEventId = null;
+					wcfServiceTransactionUtil.releaseLongRunningTransactionEvent(action.transactionEventId);
+				}
+			]]>
+		</method>
+
+		<!---
+			Handle the callback and perform the copy action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+				if (action.targetDefinition.primary) {
+					if (!action.sourceObject.isGetChildrenServicesLoaded(action.sourceObject.objectDefinition.getCopyObjectDefinitions(), true)) {
+						this.currentAction = action;
+						this.checkChildrenLoadedDel.register(action.sourceObject, "onGetChildrenServiceCompleted");
+						this.checkChildrenErrorDel.register(action.sourceObject, "onGetChildrenServiceError");
+						action.sourceObject.checkParsedData();
+						action.sourceObject.forceParseData = true;
+						action.sourceObject.setHasReleasableChildren();
+						action.sourceObject.loadChildren(action.sourceObject.objectDefinition.getCopyObjectDefinitions(), true);
+					}
+					else {
+						this.copyPrimaryObject(action);
+						wcfActionManager.removeAction(action);
+					}
+				}
+				else {
+					var target = action.targetObject;
+					var dirty = target != null ? target.openGroupDirty : false;
+					var copy = action.sourceObject.model.createNewObject(action.targetDefinition, target, true, action.sourceObject);
+					if (action.sequencePropertyName != null) {
+						copy.setPropertyValue(action.sequencePropertyName, action.sequencePropertyPath, action.nextSeq);
+					}
+					if (action.saveCopy) {
+						wcfServiceTransactionUtil.activeTransactionEventId = action.transactionEventId;
+						if (dirty || copy.getReferencedObject().openGroupDirty) {
+							target.saveObject(false,true);
+						}
+						else{
+							copy.saveObject(false, false);
+							if (!target.viewed) {
+								target.closeObject(false);
+							}
+							target.setAttribute("openGroupDirty", false);
+						}
+					}
+					wcfActionManager.removeAction(action);
+				}
+			]]>
+		</method>
+		
+		<!---
+			Copy primary object.
+			@param object action: the action instance
+		-->
+		<method name="copyPrimaryObject" args="action">
+			<![CDATA[
+				var newObject = action.sourceObject.model.createNewObject(action.targetDefinition, null, true, action.sourceObject);
+				newObject.viewed = true;
+				if (action.targetObject != null) {
+					var parentDef = null;
+					var definitions = action.targetObject.objectDefinition.parentReferenceObjectDefinitions;
+					definitions = definitions.concat(action.targetObject.objectDefinition.collectionReferenceObjectDefinitions);
+					for (var i = 0; i < definitions.length; i++) {
+						var oDef = definitions[i];
+						if (oDef.isReferencedDefinition(action.targetDefinition)) {
+							parentDef = oDef;
+							break;
+						}
+					}
+					if (parentDef != null) {
+						var newRO = action.targetObject.model.createNewObject(parentDef, action.targetObject);
+						if (action.sequencePropertyName != null) {
+							newRO.setPropertyValue(action.sequencePropertyName, action.sequencePropertyPath, action.nextSeq);
+						}
+						newRO.addChild(newObject);
+					}
+				}
+				if (action["newObjectOptions"] && newObject.objectDefinition.populateNewObjectService != null) {
+					newObject.objectDefinition.populateNewObjectService.doRequest(newObject, action.newObjectOptions);
+				}
+				if (action["doOpen"]) {
+					newObject.model.oEditor.selectOpenObject(newObject);
+				}
+				if (action["callbackDelegate"]) {
+					action.callbackDelegate.execute(newObject);
+				}
+				if (action && action["objectKey"] && wcfAutomationUtil.active) {
+					wcfAutomationUtil.setObject(action.objectKey, newObject);
+				}
+			]]>
+		</method>
+
+		<!---
+			Check current copy action to see if the source object's children have been loaded.
+			If they've been loaded, then the copy can proceed.
+		-->
+		<method name="checkChildrenLoaded" args="e=null">
+			<![CDATA[
+				var action = this.currentAction;
+				if (action.sourceObject.isGetChildrenServicesLoaded(action.sourceObject.objectDefinition.getCopyObjectDefinitions(), true)) {
+					this.copyPrimaryObject(action);
+					this.loadComplete();
+				}
+				else if (!action.sourceObject.isGetChildrenServicesLoading()) {
+					this.loadComplete();
+				}
+			]]>
+		</method>
+
+		<!---
+			Check current copy action to see if the source object's children requests have an error.
+			If there was an error loading the children, then the copy will be aborted.
+		-->
+		<method name="checkChildrenError" args="service">
+			<![CDATA[
+				var action = this.currentAction;
+				if (service.matchesObjectDefinitions(action.sourceObject.objectDefinition, action.sourceObject.objectDefinition.getCopyObjectDefinitions()) || !action.sourceObject.isGetChildrenServicesLoading()) {
+					this.loadComplete();
+				}
+			]]>
+		</method>
+
+		<!---
+			Called when the load is complete to clean up the action handler. This is called on both the
+			success and error case.
+		-->
+		<method name="loadComplete">
+			<![CDATA[
+				var action = this.currentAction;
+				action.sourceObject.forceParseData = false;
+				this.checkChildrenLoadedDel.unregisterAll();
+				this.checkChildrenErrorDel.unregisterAll();
+				this.currentAction = null;
+				wcfActionManager.removeAction(action);
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		Handle move action.
+	-->
+	<node id="wcfMoveActionHandler">
+		<!---
+			Trigger the move action.
+			@param wcfModelObject sourceObject: the object to be moved
+			@param wcfModelObject targetObject: the target parent object for the move
+			@param wcfObjectDefinition targetDefinition: the target object definition
+			@param string sequencePropertyName: The sequence property of the source object. This is not null when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param string sequencePropertyPath: The object path for the sequence property of the source object.
+			@param number nextSeq: The value for the next sequence in the list. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+		-->
+		<method name="triggerAction" args="sourceObject, targetObject, targetDefinition, sequencePropertyName=null, sequencePropertyPath=null, nextSeq=-1">
+			<![CDATA[
+				targetObject.incrementReferenceCount();
+				sourceObject.incrementReferenceCount();
+				var action = {
+					actionHandler: this,
+					sourceObject: sourceObject,
+					targetObject: targetObject,
+					targetDefinition: targetDefinition,
+					model: sourceObject.model,
+					sequencePropertyName: sequencePropertyName, 
+					sequencePropertyPath: sequencePropertyPath, 
+					nextSeq: nextSeq
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the move action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+				if (action.sourceObject != null) {
+					action.sourceObject.decrementReferenceCount();
+				}
+				action.targetObject.decrementReferenceCount();
+			]]>
+		</method>
+
+		<!---
+			Perform the move action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+				var sourceDef = action.sourceObject.objectDefinition;
+				if (sourceDef.primary) {
+					var newRO = action.targetObject.model.createNewObject(action.targetDefinition, action.targetObject);
+					if (action.sequencePropertyName != null) {
+						newRO.setPropertyValue(action.sequencePropertyName, action.sequencePropertyPath, action.nextSeq);
+					}
+					newRO.addChild(action.sourceObject);
+			  	} else {
+			  		var doDelete = !sourceDef.parentReference;
+					var newRO = action.sourceObject.model.createNewObject(action.targetDefinition, action.targetObject, true, action.sourceObject);
+					if (action.sequencePropertyName != null) {
+						newRO.setPropertyValue(action.sequencePropertyName, action.sequencePropertyPath, action.nextSeq);
+					}
+					if (doDelete) {
+						action.sourceObject.deleteObject();
+					}
+			  	}
+				wcfActionManager.removeAction(action);
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		Handle add reference action.
+	-->
+	<node id="wcfAddReferenceActionHandler">
+		<!---
+			Trigger the add reference action.
+			@param wcfModelObject sourceObject: the primary object being referenced
+			@param wcfModelObject targetObject: the parent object for the new reference
+			@param wcfObjectDefinition targetDefinition: reference object definition
+			@param wcfObjectDefinition primaryDefinition: primary object definition for the intermediary implicitly created object
+			@param wcfObjectDefinition childDefinition: child object definition for the intermediary implicitly created primary object
+			@param boolean update: whether to update the targetObject after adding the reference object
+			@param string sequencePropertyName: The sequence property of the new object. This is not null when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param string sequencePropertyPath: The object path for the sequence property of the new object.
+			@param number nextSeq: The next sequence value in the list. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+		-->
+		<method name="triggerAction" args="sourceObject, targetObject, targetDefinition, primaryDefinition, childDefinition,update=true,sequencePropertyName=null, sequencePropertyPath=null, nextSeq=-1">
+			<![CDATA[
+				targetObject.incrementReferenceCount();
+				sourceObject.incrementReferenceCount();
+				var action = {
+					actionHandler: this,
+					sourceObject: sourceObject,
+					targetObject: targetObject,
+					targetDefinition: targetDefinition,
+					primaryDefinition: primaryDefinition?primaryDefinition:null,
+					childDefinition: childDefinition?childDefinition:null,
+					model: sourceObject.model,
+					update:update,
+					sequencePropertyName: sequencePropertyName, 
+					sequencePropertyPath: sequencePropertyPath, 
+					nextSeq: nextSeq
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the add reference action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+				action.sourceObject.decrementReferenceCount();
+				action.targetObject.decrementReferenceCount();
+			]]>
+		</method>
+
+		<!---
+			Perform the add reference action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+				if (!action.targetDefinition.isReferencedDefinition(action.sourceObject.objectDefinition)) {
+					var model = action.targetObject.model;
+					var newPO = model.createNewObject(action.primaryDefinition);
+					
+					if (action.sourceObject.objectDefinition.primary) {
+						var newRO = model.createNewObject(action.childDefinition, newPO);
+						newRO.addChild(action.sourceObject);
+					}
+					else {
+						var newCO = model.createNewObject(action.childDefinition, newPO, true, action.sourceObject);
+					}
+					
+					var newRO = model.createNewObject(action.targetDefinition, action.targetObject);
+					newRO.addChild(newPO);
+					if (action.sequencePropertyName != null) {
+						newPO.setPropertyValue(action.sequencePropertyName, action.sequencePropertyPath, action.nextSeq);
+					}
+					wcfActionManager.removeAction(action);
+				}
+				else {
+					var newRO = action.targetObject.model.createNewObject(action.targetDefinition, action.targetObject, action.update);
+					newRO.addChild(action.sourceObject);
+					if (action.sequencePropertyName != null) {
+						newRO.setPropertyValue(action.sequencePropertyName, action.sequencePropertyPath, action.nextSeq);
+					}
+					wcfActionManager.removeAction(action);
+				}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		Handle add to collection action.
+	-->
+	<node id="wcfAddToCollectionActionHandler">
+		<!---
+			Trigger the add to collection action.
+			@param wcfModelObject sourceObject: the primary object to be added
+			@param wcfModelObject targetObject: the collection object
+		-->
+		<method name="triggerAction" args="sourceObject, targetObject">
+			<![CDATA[
+				targetObject.incrementReferenceCount();
+				sourceObject.incrementReferenceCount();
+				var action = {
+					actionHandler: this,
+					sourceObject: sourceObject,
+					targetObject: targetObject,
+					model: sourceObject.model
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the add to collection action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+				action.sourceObject.decrementReferenceCount();
+				action.targetObject.decrementReferenceCount();
+			]]>
+		</method>
+
+		<!---
+			Perform the add to collection action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+				var sourceDef = action.sourceObject.objectDefinition;
+				var collectionDef = null;
+				var definitions = action.targetObject.objectDefinition.collectionReferenceObjectDefinitions;
+				for (var i = 0; i < definitions.length; i++) {
+					var oDef = definitions[i];
+					if (oDef.isReferencedDefinition(sourceDef)) {
+						collectionDef = oDef;
+						break;
+					}
+				}
+				if (collectionDef != null) {
+					var ro = action.targetObject.getMatchingReferenceObject(collectionDef, action.sourceObject);
+					if (ro != null) {
+						if (ro.pendingDelete) {
+							ro.undeleteObject();
+						}
+					}
+					else {
+						ro = action.targetObject.model.createNewObject(collectionDef, action.targetObject);
+						ro.addChild(action.sourceObject);
+					}
+				}
+				wcfActionManager.removeAction(action);
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		Handles the preview action.
+	-->
+	<node id="wcfPreviewAttachmentActionHandler">
+		<!---
+			@keywords private
+			Reference to the current preview action.
+		-->
+		<attribute name="currentAction" value="null" />
+
+		<!---
+			@keywords private
+		-->
+		<handler name="oninit">
+			<![CDATA[
+				this.checkChildrenLoadedDel = new lz.Delegate(this, "checkChildrenLoaded");
+				this.checkChildrenErrorDel = new lz.Delegate(this, "checkChildrenError");
+			]]>
+		</handler>
+
+		<!---
+			Trigger the preview action.
+			
+			@param wcfModelObject sourceObject The object that is to be preview
+			@param String objectPath The object path to the object containing pathPropertyName and filenamePropertyName. If the object path
+				resolves to more than one object, the first object will be used. If no object path is specified, the current object will be used.
+			@param String pathPropertyName The name of the property in the business object which is used to resolve the file path. This is a mandatory attribute.
+			@param String filenamePropertyName The name of the property that contains the file name portion of the path. This is an optional attribute. 
+				If this attribute is set, the full path to the file is constructed by combining the values of both the filenamePropertyName and pathPropertyName properties.
+			@param boolean isExternal Indicates whether the file path is actually an URL of an external resource.
+			@param String externalObjectTypes A comma-separated list of object types that should be considered external. If this value is not empty,
+				then isExternal is ignored.
+			@param String languageIdsPropertyName The property name of the object that contains a comma-separated list of language ID's that an asset is associated with.
+			@param String textObjectPath Object path to the child description object
+			@param String textPropertyName Name of the property that contains the content to preview
+			@param String formatPropertyName Name of the property that contains the format
+			@param String fileTypeValues Comma-separated list of values of formatPropertyName that should be considered a file type
+		-->
+		<method name="triggerAction" args="sourceObject, objectPath, pathPropertyName, filenamePropertyName, isExternal, externalObjectTypes, languageIdsPropertyName, textObjectPath, textPropertyName, formatPropertyName, fileTypeValues">
+			<![CDATA[
+				var doFilePreview = true;
+				if(textPropertyName && textPropertyName != "" && formatPropertyName && formatPropertyName != "" && fileTypeValues && fileTypeValues != "") {
+					doFilePreview = false;
+					var fileValues = wcfStringUtil.splitAndTrim(fileTypeValues, ",");
+					var filePropValue = sourceObject.getPropertyValue(formatPropertyName);
+					for(var i = 0; i < fileValues.length; i++) {
+						if(fileValues[i] == filePropValue) {
+							doFilePreview = true;
+							break;
+						}
+					}
+				}
+
+				var objectTypes = [];
+				if(doFilePreview) {
+					if (objectPath != "") {
+						objectTypes = objectPath.split("/");
+					}
+				}
+				else {
+					if (textObjectPath != "") {
+						objectTypes = textObjectPath.split("/");
+					}
+				}
+
+				sourceObject.incrementReferenceCount();
+				var action = {
+					actionHandler: this,
+					sourceObject: sourceObject,
+					o: sourceObject,
+					objectTypes: objectTypes,
+					pathPropertyName: pathPropertyName,
+					filenamePropertyName: filenamePropertyName,
+					isExternal: isExternal,
+					externalObjectTypes: externalObjectTypes,
+					languageIdsPropertyName: languageIdsPropertyName,
+					textObjectPath: textObjectPath,
+					textPropertyName: textPropertyName,
+					formatPropertyName: formatPropertyName,
+					fileTypeValues: fileTypeValues,
+					doFilePreview: doFilePreview
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the specified preview action.
+			@param Object action the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+				action.sourceObject.decrementReferenceCount();
+				if (action.o != action.sourceObject) {
+					action.o.decrementReferenceCount();
+				}
+				if (action == this.currentAction) {
+					this.checkChildrenLoadedDel.unregisterAll();
+					this.checkChildrenErrorDel.unregisterAll();
+					this.currentAction = null;
+				}
+			]]>
+		</method>
+
+		<!---
+			Handle the callback and perform the preview action.
+			@param Object action the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+				if(action.objectTypes.length > 0) {
+					var objectDefs = action.o.objectDefinition.getChildDefinitions(action.objectTypes[0]);
+					if(objectDefs.length > 0) {
+						action.childObjectDefinitions = objectDefs;
+						this.currentAction = action;
+						if(!action.o.isGetChildrenServicesLoaded(objectDefs, true)) {
+							this.checkChildrenLoadedDel.register(action.o, "onGetChildrenServiceCompleted");
+							this.checkChildrenErrorDel.register(action.o, "onGetChildrenServiceError");
+							action.o.checkParsedData();
+							action.o.forceParseData = true;
+							action.o.setHasReleasableChildren();
+							action.o.loadChildren(objectDefs, true);
+						}
+						else {
+							this.checkChildrenLoaded();
+						}
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "SEVERE", "wcfPreviewAttachmentActionHandler", "performAction",
+							"Unable to find child object definition that matches " + action.objectTypes[0]);
+						wcfActionManager.removeAction(action);
+					}
+				}
+				else {
+					this.doPreview(action);
+					wcfActionManager.removeAction(action);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Given an action, construct and launch a URL based on the object type, file path property, file name property and whether or not
+			workspaces has been enabled. 
+			@param Object action the action instance
+		-->
+		<method name="doPreview" args="action">
+			<![CDATA[
+			if(!action.doFilePreview && action.textPropertyName != "") {
+				var defaultLangObj = action.sourceObject.getObject(action.textObjectPath, false);
+				var text = defaultLangObj.getPropertyValue(action.textPropertyName);
+				this.launchText(text);
+			}
+			else {
+				if(action.externalObjectTypes && (action.externalObjectTypes != "")) {
+					var externalTypes = wcfStringUtil.splitAndTrim(action.externalObjectTypes, ",");
+					for(var i = 0; i < externalTypes.length; i++) {
+						if(action.o.objectType == externalTypes[i]) {
+							action.isExternal = true;
+							break;
+						}
+					}
+				}
+				
+				var o = action.o.getReferencedObject();
+				var url = wcfStringUtil.trim(o.getPropertyValue(action.pathPropertyName));
+				var parameterMap = null;
+				
+				if(!action.isExternal){
+					var fileRelativePath = url;
+					if(action.filenamePropertyName.length > 0){
+						fileRelativePath = (fileRelativePath.charAt(fileRelativePath.length - 1) != '/')? fileRelativePath + "/" : fileRelativePath;
+						fileRelativePath += wcfStringUtil.trim(o.getPropertyValue(action.filenamePropertyName));
+					}
+					
+					var tokens = fileRelativePath.split("/");
+					for (var i = 0; i < tokens.length; i++) {
+						tokens[i] = encodeURIComponent(tokens[i]);
+					}
+					fileRelativePath = tokens.join("/");
+
+					url = this.getPreviewUrl() + fileRelativePath;
+					
+					if (wcfContextUtil.findContextValue(null, "workspacesEnabled").value == "true") {
+						var paramSeparator = "?";
+						var index = url.indexOf("?");
+						if (index != -1) {
+							paramSeparator = "&";
+						}
+						if (wcfContextUtil.findContextValue(o, "workspaceName").value != "") {
+							url += paramSeparator;
+							paramSeparator = "&";
+							url += "workspace.name=" + wcfContextUtil.findContextValue(o, "workspaceName").value;
+						}
+						if (wcfContextUtil.findContextValue(o, "workspaceTaskGroup").value != "") {
+							url += paramSeparator;
+							paramSeparator = "&";
+							url += "workspace.taskGroup=TG-1";
+						}
+						if (wcfContextUtil.findContextValue(o, "workspaceTask").value != "") {
+							url += paramSeparator;
+							url += "workspace.task=T-1";
+						}
+					}
+					if (configProperties.loadContentSecurely) {
+						parameterMap = {
+							identityId: wcfContextUtil.findContextValue(null, "identityId").value,
+							identitySignature: wcfContextUtil.findContextValue(null, "identitySignature").value
+						};
+					}
+				}else{
+					if(url.indexOf("://") == -1){
+						url = "http://" + url;
+					}
+				}
+				this.launchUrl(url, parameterMap);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			<p>Checks to ensure the source object's children have been loaded. If so, check to see if we need to further
+			load children down the object path. If all levels of children have been loaded, launch the preview with the
+			resolved object.</p>
+			
+			<p>If multiple assets are resolved and languageIdsPropertyName is provided, this client action will select one asset
+			to preview based on the following rules:
+			<ol>
+				<li>Look for the first asset that is associated with the store default language.</li>
+				<li>If such a store default language asset can not be found, look for the first language-insensitive asset.</li>
+				<li>If such a language-insensitive asset can not be found, use the first asset.</li>
+			</ol>
+			</p>
+		-->
+		<method name="checkChildrenLoaded" args="e=null">
+			<![CDATA[
+				var action = this.currentAction;
+				
+				if(action.o.isGetChildrenServicesLoaded(action.childObjectDefinitions, true)) {
+					var o = action.o;
+					while (action.objectTypes.length > 0) {
+						var type = action.objectTypes.shift();
+						var childObjects = o.getObjects(type);
+						o = null;
+						if (childObjects.length > 0) {
+							o = childObjects[0];
+							if (childObjects.length > 1) {
+								if(action.languageIdsPropertyName != "") {
+									var defaultLangIdContext = wcfContextUtil.findContextValue(o, "defaultLanguageId");
+									var defaultLangId = defaultLangIdContext != null ? defaultLangIdContext.value : "";
+									var defaultLangObject = null;
+									var langInsensitiveObject = null;
+									for(var i = 0; i < childObjects.length; i++) {
+										var langIds = childObjects[i].getPropertyValue(action.languageIdsPropertyName);
+										if((langIds == "") && (langInsensitiveObject == null)) {
+											langInsensitiveObject = childObjects[i];
+										}
+										else if((langIds != "") && (defaultLangObject == null)) {
+											var langs = wcfStringUtil.splitAndTrim(langIds, ",");
+											for(var j = 0; j < langs.length; j++) {
+												if(defaultLangId == langs[j]) {
+													defaultLangObject = childObjects[i];
+													break;
+												}
+											}
+										}
+									}
+								}
+							
+								if(defaultLangObject) {
+									o = defaultLangObject;
+								}
+								else if(langInsensitiveObject) {
+									o = langInsensitiveObject;
+								}
+							
+							}
+						}
+						if (o == null || o.objectDefinition.primary) {
+							break;
+						}
+					}
+					
+					if(o != null && action.objectTypes.length > 0) {
+						// in the middle of the objectPath. Re-perform with new values
+						if (action.o != action.sourceObject) {
+							action.o.decrementReferenceCount();
+						}
+						action.o.forceParseData = false;
+						this.checkChildrenLoadedDel.unregisterAll();
+						this.checkChildrenErrorDel.unregisterAll();
+						action.o = o;
+						this.performAction(action);
+					}
+					else {
+						// at the last level of objectPath
+						if(o != null) {
+							if (action.o != action.sourceObject) {
+								action.o.decrementReferenceCount();
+							}
+							action.o = o;
+							action.o.incrementReferenceCount();
+							this.doPreview(action);
+						}
+						else {
+							var message = foundationResources.replaceValues("noAssetToPreview", [action.sourceObject.objectDisplayName]);
+							messageLogger.logException(null, message);
+						}
+						this.loadComplete();
+					}
+				}
+				else if(!action.o.isGetChildrenServicesLoading()) {
+					var message = foundationResources.replaceValues("noAssetToPreview", [action.sourceObject.objectDisplayName]);
+					messageLogger.logException(null, message);
+					this.loadComplete();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Checks to see if the source object's children requests have an error.
+			If there was an error loading the children, then the copy will be aborted.
+			@param wcfService the service that generated an error
+		-->
+		<method name="checkChildrenError" args="service">
+			<![CDATA[
+				var action = this.currentAction;
+				if (service.matchesObjectDefinitions(action.o.objectDefinition, action.childObjectDefinitions) || !action.o.isGetChildrenServicesLoading()) {
+					this.loadComplete();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Called when the load is complete to clean up the action handler. This is called on both the
+			success and error case.
+		-->
+		<method name="loadComplete">
+			<![CDATA[
+				var action = this.currentAction;
+				action.o.forceParseData = false;
+				this.checkChildrenLoadedDel.unregisterAll();
+				this.checkChildrenErrorDel.unregisterAll();
+				this.currentAction = null;
+				wcfActionManager.removeAction(action);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns the preview URL. Preview URL is in the form of "<previewProtocol>://<hostname>:<previewPort>/webapp/wcs/preview".
+		-->				
+		<method name="getPreviewUrl">
+			<![CDATA[
+			if (!this["previewUrl"]){
+				var url = new LzURL(lz.Browser.getLoadURL());
+				var previewProtocol = (typeof(global["previewProtocol"]) != "undefined" ? global["previewProtocol"] : url.protocol);
+				var previewPort = (typeof(global["previewPort"]) != "undefined" ? global["previewPort"] : url.port);
+				var previewWebAlias = (global["previewWebAlias"] ? global.previewWebAlias : "/webapp/wcs/preview");
+				
+				if (typeof(global["previewPort"]) != "undefined") {
+					// this is coming from the WebServer SSL PreviewPort 
+					previewProtocol = "https";
+				}
+				
+				this.previewUrl = previewProtocol
+								+ "://" 
+								+ url.host
+								+ ((previewPort != null && previewPort != "") ? (":" + previewPort) : "")
+								+ previewWebAlias;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfPreviewAttachmentActionHandler", "getPreviewUrl()", "URL=" + this.previewUrl);
+			}
+			return this.previewUrl;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Launches a new browser window with the given URL
+			@param String url URL to launch browser window to.
+			@param Object parameterMap Additional parameters to post
+		-->
+		<method name="launchUrl" args="url,parameterMap=null">
+			<![CDATA[
+				if(url && url != "") {
+					var newWindowObj = new Object();
+					newWindowObj.URL = url;
+					newWindowObj.windowName = "FilePreview";
+					newWindowObj.windowFeatures = "scrollbars=yes,toolbar=no,directories=no,status=no,menubar=no,copyhistory=no,resizable=yes";
+					newWindowObj.windowWidth = 550;
+					newWindowObj.windowHeight = 500;
+					
+					if (parameterMap != null) {
+						newWindowObj.URL = "";
+						newWindowObj.content = "<html><body><form action=\"" + url + "\" method=\"POST\">";
+						for (var key in parameterMap) {
+						    var value = parameterMap[key];
+						    value = decodeURIComponent(value);
+							newWindowObj.content += "<input type=\"hidden\" name=\"" + key + "\" value=\"" + value + "\">";
+			  			}
+						newWindowObj.content += "</form></body></html>";
+						newWindowObj.submitForm = true;
+					}
+					
+					callJSFunction("openNewCenteredWindow", newWindowObj);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Launches a new browser window with the given text
+			@param String text the content to display in the preview window
+		-->
+		<method name="launchText" args="text">
+			<![CDATA[
+				if(text && text != "") {
+					var newWindowObj = new Object();
+					newWindowObj.content = text;
+					newWindowObj.windowName = "FilePreview";
+					newWindowObj.windowFeatures = "scrollbars=yes,toolbar=no,directories=no,status=no,menubar=no,copyhistory=no,resizable=yes";
+					newWindowObj.windowWidth = 550;
+					newWindowObj.windowHeight = 500;
+					callJSFunction("openNewCenteredWindow", newWindowObj);
+				}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		Action utility methods.
+	-->
+	<node id="wcfActionUtil">
+		<!---
+			@keywords private
+			Check if the move action is enabled for the specified list of source objects.
+			@param array objects: source objects
+			@param wcfModelObject targetObject: target object
+			@param array objectSelectors: array of target object selectors
+			@param boolean referenceMoveable: indicates that reference object is moveable
+		-->
+		<method name="isMoveActionEnabled" args="objects, targetObject, objectSelectors, referenceMoveable">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isMoveActionEnabled(objects,targetObject,objectSelectors,referenceMoveable)", [objects,targetObject,objectSelectors,referenceMoveable]);
+				}
+				var actionEnabled = false;
+				if (objects.length > 0) {
+					actionEnabled = true;
+					for (var i = 0; i < objects.length; i++) {
+						var sourceObject = this.getSourceObject(objects[i], objectSelectors);
+						var sourceDef = sourceObject.objectDefinition;
+						if (sourceDef.reference && !sourceDef.parentReference && !sourceDef.collectionReference) {
+							if (!referenceMoveable || !sourceObject.isDeletable()) {
+								actionEnabled = false;
+								break;
+							}
+							else {
+								var refObject = sourceObject.getReferencedObject();
+								if (!sourceDef.isCreatable(targetObject, refObject) ||
+									(!sourceDef.allowDuplicates && targetObject.isDuplicateReference(sourceDef, refObject))) {
+									actionEnabled = false;
+									break;
+								}
+								
+								var definitionFound = false;
+								for (var j = 0; j < objectSelectors.length; j++) {
+									if (sourceDef == objectSelectors[j].objectDefinition) {
+										definitionFound = true;
+									}
+								}
+								if (!definitionFound) {
+									actionEnabled = false;
+									break;
+								}
+							}
+						}
+						else {
+							var parentRefObj = sourceObject.getParentReferenceObject();
+							if (parentRefObj == null) {
+								if (objects[i].objectDefinition.collectionReference) {
+									parentRefObj = objects[i];
+								}
+							}
+							if (!sourceObject.moveable || sourceObject == targetObject || (parentRefObj != null && parentRefObj.readOnly)) {
+								actionEnabled = false;
+								break;
+							}
+							else {
+								var parentReferenceFound = false;
+								for (var j = 0; j < objectSelectors.length; j++) {
+									var oDef = objectSelectors[j].objectDefinition;
+									if ((oDef.parentReference || oDef.collectionReference) && oDef.isReferencedDefinition(sourceObject.objectDefinition) && oDef.isCreatable(targetObject, sourceObject)) {
+										parentReferenceFound = true;
+										break;
+									}
+								}
+								if (!parentReferenceFound) {
+									actionEnabled = false;
+									break;
+								}
+								else {
+									var parentObject = parentRefObj ? parentRefObj.parentObject : null;
+									if (parentObject == targetObject) {
+										actionEnabled = false;
+										break;
+									}
+									else if (!objects[i].objectDefinition.collectionReference && targetObject.isAncestor(sourceObject)) {
+										actionEnabled = false;
+										break;
+									}
+									else if (objects[i].objectDefinition.collectionReference) {
+										var parentObjs = sourceObject.getCollectionPrimaryObjects();
+										var k = 0;
+										while (k < parentObjs.length && parentObjs[k] != targetObject) {
+											k++;
+										}
+										if (k < parentObjs.length && parentObjs[k] == targetObject) {
+											actionEnabled = false;
+											break;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isMoveActionEnabled", actionEnabled);
+				}
+				return actionEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if the copy action is enabled for the specified list of source objects.
+			@param array objects: source objects
+			@param wcfModelObject targetObject: target object
+			@param array objectSelectors: array of target object selectors
+		-->
+		<method name="isCopyActionEnabled" args="objects, targetObject, objectSelectors">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isCopyActionEnabled(objects,targetObject,objectSelectors)", [objects,targetObject,objectSelectors]);
+				}
+				var actionEnabled = false;
+				if (objects.length > 0) {
+					actionEnabled = true;
+					for (var i = 0; i < objects.length; i++) {
+						var sourceObject = this.getSourceObject(objects[i], objectSelectors);
+						var sourceDef = sourceObject.objectDefinition;
+						var definitionFound = false;
+						if (sourceDef.reference && !sourceDef.parentReference && !sourceDef.collectionReference) {
+							var refObject = sourceObject.getReferencedObject();
+							var refDef = refObject.objectDefinition;
+							for (var j = 0; j < objectSelectors.length; j++) {
+								var oDef = objectSelectors[j].objectDefinition; 
+								if (!oDef.parentReference && !oDef.collectionReference 
+									&& oDef.referencedDefinitions != null && oDef.isReferencedDefinition(refDef) 
+									&& oDef.newHandler == null
+									&& oDef.isCreatable(targetObject, refObject)
+									&& (oDef.allowDuplicates || !targetObject.isDuplicateReference(oDef, refObject))
+									&& (oDef == sourceDef || sourceDef.isCompatibleType(oDef.objectType)))
+								{
+									definitionFound = true;
+									break;
+								}
+							}
+						} else {
+							if (sourceDef.primary && sourceDef.copyProtected) {
+								actionEnabled = false;
+								break;
+							}
+							for (var j = 0; j < objectSelectors.length; j++) {
+								var objectSelector = objectSelectors[j];
+								var oDef = objectSelector.objectDefinition;
+								if (oDef.isCreatable(targetObject)) {
+									if (oDef.parentReference || oDef.collectionReference) {
+										for (var k = 0; k < oDef.referencedDefinitions.length; k++) {
+											var referencedDef = oDef.referencedDefinitions[k];
+											if (referencedDef.isCreatable(targetObject) && (referencedDef == sourceDef || sourceDef.isCompatibleType(referencedDef.objectType))) {
+												definitionFound = true;
+												break;
+											}
+										}
+									} else if (oDef == sourceDef || sourceDef.isCompatibleType(oDef.objectType)) {
+										definitionFound = true;
+									}
+									if (!oDef.primary && !oDef.reference && !oDef.parentReference && !oDef.collectionReference && !wcfModelUtil.matchesObjectSelector(objects[i], objectSelector)) {
+										definitionFound = false;
+									}
+									if (definitionFound) {
+										break;
+									}
+								}
+							}
+						}
+						if (!definitionFound) {
+							actionEnabled = false;
+							break;
+						}
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isCopyActionEnabled", actionEnabled);
+				}
+				return actionEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if the add to collection action is enabled for the specified objects.
+			@param array objects: source objects
+			@param wcfModelObject targetObject: target object
+			@param array objectSelectors: array of target object selectors
+		-->
+		<method name="isAddToCollectionActionEnabled" args="objects, targetObject, objectSelectors">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isAddToCollectionActionEnabled(objects,targetObject,objectSelectors)", [objects,targetObject,objectSelectors]);
+				}
+				var actionEnabled = false;
+				if (objects.length > 0) {
+					actionEnabled = true;
+					for (var i = 0; i < objects.length; i++) {
+						var sourceObject = this.getSourceObject(objects[i], objectSelectors);
+						if (sourceObject.objectDefinition.primary) {
+							var collectionDef = null;
+							for (var j = 0; j < objectSelectors.length; j++) {
+								var oDef = objectSelectors[j].objectDefinition;
+								if (oDef.collectionReference && oDef.isReferencedDefinition(sourceObject.objectDefinition)) {
+									collectionDef = oDef;
+									break;
+								}
+							}
+							if (collectionDef == null || !collectionDef.isCreatable(targetObject, sourceObject) || targetObject.isDuplicateReference(collectionDef, sourceObject)) {
+								actionEnabled = false;
+								break;
+							}
+						} else {
+							actionEnabled = false;
+							break;
+						}
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isAddToCollectionActionEnabled", actionEnabled);
+				}
+				return actionEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if the add reference action is enabled for the specified parent object, reference object definition
+			and list of source objects.
+			@param array objects: array of wcfModelObject instances to be referenced.
+			@param wcfModelObject targetObject: target object
+			@param array objectSelectors: array of target object selectors
+			@param wcfObjectDefinition targetDefinition: the target object definition
+		-->
+		<method name="isAddReferenceActionEnabled" args="objects, targetObject, objectSelectors, targetDefinition">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isAddReferenceActionEnabled(objects, targetObject, objectSelectors, targetDefinition)", [objects, targetObject, objectSelectors, targetDefinition]);
+				}
+				var actionEnabled = false;
+				if (targetDefinition.isCreatable(targetObject) && objects.length > 0) {
+					actionEnabled = true;
+					for (var i = 0; i < objects.length; i++) {
+						var sourceObject = this.getSourceObject(objects[i], objectSelectors);
+						var sourceDef = sourceObject.objectDefinition;
+						if (!sourceDef.primary) {
+							actionEnabled = false;
+							break;
+						}
+						if (!targetDefinition.allowDuplicates && targetObject.isDuplicateReference(targetDefinition, sourceObject)) {
+							actionEnabled = false;
+							break;
+						}
+						if (!targetDefinition.isReferencedDefinition(sourceDef)) {
+							actionEnabled = false;
+							break;
+						}
+						if (!targetDefinition.isCreatable(targetObject, sourceObject)) {
+							actionEnabled = false;
+							break;
+						}
+						if (targetDefinition.newHandler != null) {
+							actionEnabled = false;
+							break;
+						}
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfActionUtil", "isAddReferenceActionEnabled", actionEnabled);
+				}
+				return actionEnabled;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Trigger a move action for each of the specified objects.
+			@param array objects: array of wcfModelObject instances to be moved.
+			@param wcfModelObject targetObject: target object
+			@param array objectSelectors: array of target object selectors
+			@param string sequencePropertyName: The sequence property of the target object. This is not null when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param string sequencePropertyPath: The object path for the sequence property of the target object.
+			@param number nextSeq: The next sequence value in the list. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param number sequenceIncrement: The value used when incrementing sequence values. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+		-->
+		<method name="triggerMove" args="objects, targetObject, objectSelectors, sequencePropertyName=null, sequencePropertyPath=null, nextSeq=-1, sequenceIncrement=1">
+			<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerMove", "Start move");
+				}
+				var startSequence = parseInt(nextSeq);
+				for (var i = 0; i < objects.length; i++) {
+					var sourceObject = this.getSourceObject(objects[i], objectSelectors);
+					var sourceDef = sourceObject.objectDefinition;
+					var targetDefinition = null;
+					for (var j = 0; j < objectSelectors.length; j++) {
+						var oDef = objectSelectors[j].objectDefinition;
+						var childObject = oDef.reference ? sourceObject.getReferencedObject() : null;
+						if (oDef.isCreatable(targetObject, childObject)) {
+							if (oDef.parentReference || oDef.collectionReference) {
+								var isSourceDef = false;
+								for (var k = 0; k < oDef.referencedDefinitions.length; k++) {
+									var referencedDef = oDef.referencedDefinitions[k];
+									if (referencedDef == sourceDef) {
+										targetDefinition = oDef;
+										isSourceDef = true;
+										break;
+									}
+									else if (sourceDef.isCompatibleType(referencedDef.objectType)) {
+										targetDefinition = oDef;
+									}
+								}
+								if (isSourceDef)  {
+									break;
+								}
+							}
+							else if (oDef == sourceDef) {
+								targetDefinition = oDef;
+								break;
+							}
+							else if (sourceDef.isCompatibleType(oDef.objectType)) {
+								targetDefinition = oDef;
+							}
+						}						
+					}
+					if (targetDefinition != null) {
+						wcfMoveActionHandler.triggerAction(objects[i], targetObject, targetDefinition, sequencePropertyName, sequencePropertyPath, startSequence.toString());
+						startSequence = startSequence + parseInt(sequenceIncrement);
+					}
+				}
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerMove", "End move");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Trigger a copy action for each of the specified objects.
+			@param array objects: array of wcfModelObject instances to be copied.
+			@param wcfModelObject targetObject: target object
+			@param array objectSelectors: array of target object selectors
+			@param string sequencePropertyName: The sequence property of the target object. This is not null when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param string sequencePropertyPath: The object path for the sequence property of the target object.
+			@param number nextSeq: The next sequence value in the list. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param number sequenceIncrement: The value used when incrementing sequence values. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+		-->
+		<method name="triggerCopy" args="objects, targetObject, objectSelectors, sequencePropertyName=null, sequencePropertyPath=null, nextSeq=-1, sequenceIncrement=1">
+			<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerCopy", "Start copy");
+				}
+				var startSequence = parseInt(nextSeq);
+				for (var i = 0; i < objects.length; i++) {
+					var sourceObject = this.getSourceObject(objects[i], objectSelectors);
+					var sourceDef = sourceObject.objectDefinition;
+					var targetDefinition = null;
+					if (sourceDef.reference && !sourceDef.parentReference && !sourceDef.collectionReference) {
+						var refObject = sourceObject.getReferencedObject();
+						var refDef = refObject.objectDefinition;
+						for (var j = 0; j < objectSelectors.length; j++) {
+							var oDef = objectSelectors[j].objectDefinition;
+							if (!oDef.parentReference && !oDef.collectionReference 
+								&& oDef.referencedDefinitions != null && oDef.isReferencedDefinition(refDef) 
+								&& oDef.isCreatable(targetObject, refObject)
+								&& (oDef.allowDuplicates || !targetObject.isDuplicateReference(oDef, refObject)))
+							{
+								if (oDef == sourceDef) {
+									targetDefinition = oDef;
+									break;
+								} else if (sourceDef.isCompatibleType(oDef.objectType)) {
+									targetDefinition = oDef;
+								}	
+							}
+						}
+					} else {
+						for (var j = 0; j < objectSelectors.length; j++) {
+							var oDef = objectSelectors[j].objectDefinition;
+							if (oDef.isCreatable(targetObject)) {
+								if (oDef.parentReference || oDef.collectionReference) {
+									var isSourceDef = false;
+									for (var k = 0; k < oDef.referencedDefinitions.length; k++) {
+										var referencedDef = oDef.referencedDefinitions[k];
+										if (referencedDef.isCreatable(targetObject)) {
+											if (referencedDef == sourceDef) {
+												targetDefinition = referencedDef;
+												isSourceDef = true;
+												break;
+											}
+											else if (sourceDef.isCompatibleType(referencedDef.objectType)) {
+												targetDefinition = referencedDef;
+											}
+										}
+									}
+									if (isSourceDef)  {
+										break;
+									}
+								}
+								else if (oDef == sourceDef) {
+									targetDefinition = oDef;
+									break;
+								}
+								else if (sourceDef.isCompatibleType(oDef.objectType)) {
+									targetDefinition = oDef;
+								}
+							}
+						}
+					}
+					if (targetDefinition != null) {
+						wcfCopyActionHandler.triggerAction(sourceObject, targetObject, targetDefinition, i == 0, undefined, -1, -1, false, false, false, sequencePropertyName, sequencePropertyPath, startSequence.toString());
+						startSequence = startSequence + parseInt(sequenceIncrement);
+					}
+				}
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerCopy", "End copy");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Trigger an add to collection action for each of the specified objects.
+			@param array objects: array of wcfModelObject instances to be added
+			@param wcfModelObject targetObject: target object
+		-->
+		<method name="triggerAddToCollection" args="objects, targetObject">
+			<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerAddToCollection", "Start add to collection");
+				}
+				for (var i = 0; i < objects.length; i++) {
+					wcfAddToCollectionActionHandler.triggerAction(objects[i].getReferencedObject(), targetObject);
+				}
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerAddToCollection", "End add to collection");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Trigger an add reference action for each of the specified objects.
+			@param action: A map with the target definition and reference definition
+			@param array objects: array of wcfModelObject instances to be referenced.
+			@param wcfModelObject targetObject: target object
+			@param string sequencePropertyName: The sequence property of the new object. This is not null when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param string sequencePropertyPath: The object path for the sequence property of the new object.
+			@param number nextSeq: The next sequence value in the list. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+			@param number sequenceIncrement: The value used when incrementing sequence values. This is expected when {@link wcfBaseChildListEditor#sequencePropertyName} is defined.
+		-->
+		<method name="triggerAddReference" args="action, objects, targetObject, sequencePropertyName=null, sequencePropertyPath=null, nextSeq=-1, sequenceIncrement=1">
+			<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerAddReference", "Start add reference");
+				}
+				var numChild = 0;
+				for (var key in targetObject.childObjectMap) {
+					numChild++;
+				}
+				var updateInterval = 25;
+				if (numChild > 0) {
+					updateInterval = 25 * Math.ceil(numChild/100);
+				}
+				
+				var startSequence = parseInt(nextSeq);
+				for (var i = 0; i < objects.length; i++) {
+					//It takes long time to update the target object after adding each reference
+					//so always update first 25 items in view, and update for adding every
+					//25 references when the current total number of the target's child reference < 100, or
+					//50 references when the current total number of the target's child reference < 200, and so on...
+					var update = false;
+					if ((i < 25 && numChild <= 25) ||
+						(i == objects.length-1) ||
+						(i % updateInterval == 0))
+					{
+						update = true;
+					}
+					wcfAddReferenceActionHandler.triggerAction(objects[i].getReferencedObject(), targetObject, action.targetDefinition, action.primaryDefinition, action.childDefinition, update, sequencePropertyName, sequencePropertyPath, startSequence.toString());
+					startSequence = startSequence + parseInt(sequenceIncrement);
+				}
+				
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionUtil", "triggerAddReference", "End add reference");
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the source object for the action.
+			@param wcfModelObject object: wcfModelObject instance to be acted on.
+			@param array objectSelectors: array of target object selectors
+		-->
+		<method name="getSourceObject" args="object, objectSelectors">
+			<![CDATA[
+				var sourceObject = object.getReferencedObject();
+				var objectDef = object.objectDefinition;
+				if (objectSelectors != null && objectDef.reference && !objectDef.parentReference && !objectDef.collectionReference) {
+					for (var i = 0; i < objectSelectors.length; i++) {
+						var oDef = objectSelectors[i].objectDefinition;
+						if (objectDef == oDef || objectDef.isCompatibleType(oDef.objectType)) {
+							sourceObject = object;
+							break;
+						}
+					}
+				}
+				return sourceObject;
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		Handles the release action.
+	-->
+	<node id="wcfReleaseObjectHandler">
+		<!---
+			@keywords private
+			Trigger a release object action
+			@param object: object to be released
+		-->
+		<method name="triggerAction" args="object">
+			<![CDATA[
+				object.incrementReferenceCount();
+				var action = {
+					actionHandler: this,
+					object: object,
+					model: object.model
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the add reference action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+			action.object.decrementReferenceCount();
+			wcfModelUtil.releaseModelObject(action.object);
+			]]>
+		</method>
+
+		<!---
+			Perform the add reference action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+			wcfActionManager.removeAction(action);
+			]]>
+		</method>
+	</node>
+		
+	<!---
+		@keywords private
+		Wait until all pending transactions are complete.
+	-->
+	<node id="wcfWaitForTransactionsHandler">
+		
+		<!---@keywords private-->
+		<attribute name="currentAction" value="null"/>
+		
+		<!---
+			@keywords private
+		-->
+		<handler name="oninit">
+			<![CDATA[
+				this.allTransactionsCompleteDel = new lz.Delegate(this, "allTransactionsComplete");
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			Trigger a wait action
+		-->
+		<method name="triggerAction" args="model">
+			<![CDATA[
+				this.currentAction = {
+					actionHandler: this,
+					model: model
+				};
+				
+				wcfActionManager.addAction(this.currentAction);
+			]]>
+		</method>
+
+		<!---
+			Release the add reference action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+			this.allTransactionsCompleteDel.unregisterAll();
+			this.currentAction = null; 
+			]]>
+		</method>
+		
+		<method name="allTransactionsComplete" args="e=null">
+			<![CDATA[
+			wcfActionManager.removeAction(this.currentAction);
+			]]>
+		</method>
+
+		<!---
+			Perform the add reference action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+			if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+				this.allTransactionsCompleteDel.register(wcfServiceTransactionUtil, "allTransactionsComplete");
+			}
+			else {
+				wcfActionManager.removeAction(action);
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		Handles the open action.
+	-->
+	<node id="wcfOpenObjectActionHandler">
+		<!---
+			Current find and open action.
+		-->
+		<attribute name="currentAction" value="null" />
+
+		<!---
+			@keywords private
+		-->
+		<handler name="oninit">
+			<![CDATA[
+			this.getStorePathStoresServiceCompleteDel = new lz.Delegate(this, "getStorePathStoresServiceComplete");
+			this.triggerSearchDel = new lz.Delegate(this, "triggerSearch");
+			this.searchCompleteDel = new lz.Delegate(this, "searchComplete");
+			]]>
+		</handler>
+
+		<!---
+			Trigger the find and open action.
+			@param wcfModel model: the model
+			@param string searchType: the search type
+			@param object searchOptions: the search options
+			@param boolean select: select the opened object
+			@param boolean openInCompareView: set to true to indicate that the object is to be opened in the compare view
+			@param wcfBaseContext context: the search context
+			@param string toolId: tool identifier
+			@param string storeId: store identifier
+			@param string storeSelection: store selection option (assetStore, eSite, prompt)
+			@param string languageId: language ID
+		-->
+		<method name="triggerAction" args="model, searchType, searchOptions, select=true, openInCompareView=false, context=undefined, toolId=undefined, storeId=undefined, storeSelection=undefined, languageId=undefined">
+			<![CDATA[
+			var action = {
+				actionHandler: this,
+				model: model,
+				searchType: searchType,
+				searchOptions: searchOptions,
+				select: select,
+				openInCompareView: openInCompareView,
+				context: context,
+				toolId: toolId,
+				storeId: storeId,
+				storeSelection: storeSelection,
+				languageId: languageId
+			};
+			wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the specified open object action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+			if (action == this.currentAction) {
+				this.getStorePathStoresServiceCompleteDel.unregisterAll();
+				this.triggerSearchDel.unregisterAll();
+				this.searchCompleteDel.unregisterAll();
+				this.currentAction = null;
+			}
+			]]>
+		</method>
+
+		<!---
+			Handle the callback and perform the open action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+			this.currentAction = action;
+			if (action.context && !action.context.storeConfig.configurationLoaded) {
+				this.triggerSearchDel.unregisterAll();
+				this.triggerSearchDel.register(action.context.storeConfig, "onconfigurationLoaded");
+				action.boe = action.model.oEditor;
+				action.context.storeConfig.loadConfiguration();
+			}
+			else if (action.toolId && action.storeId) {
+				if (typeof(global[action.toolId]) != "undefined") {
+
+					wcfGetStorePathStoresService.doRequest(this, {
+						storeId: action.storeId,
+						usage: global[action.toolId].usage,
+						assetStoreOnly: action.storeSelection == "assetStore",
+						eSiteOnly: action.storeSelection == "eSite"
+					});
+					this.getStorePathStoresServiceCompleteDel.unregisterAll();
+					this.getStorePathStoresServiceCompleteDel.register(wcfGetStorePathStoresService, "onserviceComplete");
+					action.serviceRequestId = wcfGetStorePathStoresService.requestIdentifier;
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfOpenObjectActionHandler", "performAction",
+							"Unable to find tool with ID: " + action.toolId);
+					wcfActionManager.removeAction(this.currentAction);
+				}
+			}
+			else {
+				action.boe = action.model.oEditor;
+				this.triggerSearch();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Change the current store to the specified store.
+			@param wcfStore newStore: the new store
+			@param boolean prompt: Prompt the user if there are unsaved changes. The default is "true".
+		-->
+		<method name="changeStore" args="newStore, prompt=true">
+			<![CDATA[
+			if (this.currentAction != null) {
+				this.getStorePathStoresServiceCompleteDel.unregisterAll();
+				var action = this.currentAction;
+				if (prompt && toolsController.isToolOpen(action.toolId)) {
+					toolsController.focusTool(action.toolId);
+					action.boe = toolsController.getTool(action.toolId);
+					if (action.boe.localContext != null && action.boe.localContext.storeConfig != null && action.boe.localContext.storeConfig.storeId == newStore.storeId) {
+						toolsController.focusTool(action.toolId);
+						this.triggerSearch();
+					}
+					else if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+						wcfTransactionProgressDialog.openWindow();
+						wcfActionManager.removeAction(this.currentAction);
+					}
+					else {
+						// check if there are any unsaved changes		
+						var unsavedObjects = [];
+						var openObjects = action.boe.model.openObjects;
+						for (var i = 0; i < openObjects.length; i++) {
+							var o = openObjects[i];
+							if (o.openGroupObject.openGroupDirty) {
+								unsavedObjects.push(o);
+							}
+						}
+						if (unsavedObjects.length > 0) {
+							wcfChangeStoreConfirmationDialog.openChangeStoreConfirmationDialog(this, newStore, unsavedObjects);
+						}
+						else {
+							this.changeStore(newStore, false);
+						}
+					}
+				}
+				else {
+					if (!newStore.configurationLoaded) {
+						this.triggerSearchDel.unregisterAll();
+						this.triggerSearchDel.register(newStore, "onconfigurationLoaded");
+					}
+					if (!toolsController.isToolOpen(action.toolId)) {
+						toolsController.openToolById(action.toolId, newStore);
+						action.boe = toolsController.getTool(action.toolId);
+					}
+					else {
+						action.boe.header.storeSelectionList.changeStore(newStore, false);
+					}
+					if (newStore.configurationLoaded) {
+						this.triggerSearch();
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			The method that is called when wcfGetStorePathStoresService does not return a store.
+		-->
+		<method name="handleStoreNotAvailable">
+			<![CDATA[
+			this.getStorePathStoresServiceCompleteDel.unregisterAll();
+			messageLogger.logException(null, foundationResources.openFailed.string);
+			wcfActionManager.removeAction(this.currentAction);
+			]]>
+		</method>
+		
+		<!---
+			The method that is called when wcfGetStorePathStoresService returns more than one store.
+			@param Array stores: array of stores
+		-->
+		<method name="handleMultipleStores" args="stores">
+			<![CDATA[
+			this.getStorePathStoresServiceCompleteDel.unregisterAll();
+			wcfSelectStoreDialog.openSelectStoreDialog(this, stores);
+			]]>
+		</method>
+		
+		<!---
+			The method that is called when the wcfGetStorePathStoresService completes. If
+			the service completes normally, then the action will no longer be listening to this event.
+			If it completes abnormally, this method is called and the action is released.
+		-->
+		<method name="getStorePathStoresServiceComplete" args="args">
+			<![CDATA[
+			if (args && this.currentAction && args.requestIdentifier == this.currentAction.serviceRequestId) {
+				this.getStorePathStoresServiceCompleteDel.unregisterAll();
+				wcfActionManager.removeAction(this.currentAction);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Method that is called by the wcfChangeStoreConfirmationDialog or wcfSelectStoreDialog when the user chooses not to change the store.
+		-->
+		<method name="cancelChangeStore">
+			<![CDATA[
+			wcfActionManager.removeAction(this.currentAction);
+			]]>
+		</method>
+		
+		<!---
+			Trigger the search.
+		-->
+		<method name="triggerSearch" args="e=null">
+			<![CDATA[
+			var action = this.currentAction;
+			action.model = action.boe.model;
+			this.triggerSearchDel.unregisterAll();
+			if (action.languageId) {
+				var languages = action.boe.localContext.storeConfig.supportedLanguages;
+				for (var i = 0; i < languages.length ; i++) {
+					var language = languages[i];
+					if (language.languageId == action.languageId) {
+						if (!language.isDefault) {
+							preferenceManager.setPreference("CMCInputLanguageIds", action.languageId);
+							preferenceManager.sendPreferenceChangedEvent("CMCInputLanguageIds");
+						}
+						break;
+					}
+				}
+			}
+			var searchDefinition = action.model.getSearchDefinition(action.searchType);
+			if (searchDefinition != null) {
+				if (action.searchOptions != null) {
+					action.searchResults = action.model.findSearchResults(action.searchType, action.context);
+					this.searchCompleteDel.unregisterAll();
+					this.searchCompleteDel.register(action.searchResults, "onsearchComplete");
+					action.searchResults.doSearch(action.searchOptions);
+					action.serviceRequestId = searchDefinition.searchService.requestIdentifier;
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfOpenObjectActionHandler", "triggerSearch",
+							"Missing searchOptions");
+					wcfActionManager.removeAction(this.currentAction);
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfOpenObjectActionHandler", "triggerSearch",
+						"Unable to find search definition with searchType: " + action.searchType);
+				wcfActionManager.removeAction(this.currentAction);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Called when the search is complete. If the completed search is for this action, then the object is opened.
+		-->
+		<method name="searchComplete" args="args=null">
+			<![CDATA[
+			var action = this.currentAction;
+			if (args && args.requestIdentifier == action.serviceRequestId) {
+				this.searchCompleteDel.unregisterAll();
+				var errorMessage = null;
+				if (args && args.searchResultObjects) {
+					var objects = args.searchResultObjects;
+					var objectToOpen = null;
+					if (objects.length > 0) {
+						if (action.context != null || typeof(action.searchOptions.searchUniqueId) == "undefined") {
+							objectToOpen = objects[0];
+						}
+						if (typeof(action.searchOptions.searchUniqueId) != "undefined") {
+							for (var i = 0; i < objects.length; i++) {
+								var o = objects[i];
+								if (o.objectId == action.searchOptions.searchUniqueId) {
+									objectToOpen = o;
+									break;
+								}
+							}
+						}
+					}
+					if (objectToOpen == null) {
+						if (objects.length == 0) {
+							errorMessage = args.statusMessage;
+						}
+						else {
+							errorMessage = foundationResources.replaceValues("searchObjectNotFoundMsg", [action.searchOptions.searchText]);
+						}
+					}
+					else {
+	 					if (this.currentAction.openInCompareView) {
+	 						objectToOpen.doOpenInCompareView();
+	 					}
+	 					else {
+							objectToOpen.doOpen(action.select);
+						}
+						if (action && action["objectKey"] && wcfAutomationUtil.active) {
+							wcfAutomationUtil.setObject(action.objectKey, objectToOpen);
+						}
+					}
+				} 
+				else if (args && args.statusMessage) {
+					errorMessage = args.statusMessage;
+				}
+				
+				if (errorMessage != null) {
+					messageLogger.logException(null, errorMessage);	
+				}
+				wcfActionManager.removeAction(action);
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		Handles the create object action.
+	-->
+	<node id="wcfCreateObjectActionHandler">
+		<!---
+			Current create new object action.
+		-->
+		<attribute name="currentAction" value="null" />
+
+		<!---
+			@keywords private
+		-->
+		<handler name="oninit">
+			<![CDATA[
+			this.getStorePathStoresServiceCompleteDel = new lz.Delegate(this, "getStorePathStoresServiceComplete");
+			this.doCreateDel = new lz.Delegate(this, "doCreate");
+			]]>
+		</handler>
+
+		<!---
+			Trigger the create object action.
+			@param wcfModel model: the model
+			@param string objectType: the object type
+			@param object newObjectOptions: parameters that will be passed to the populate new object service
+			@param string toolId: tool identifier
+			@param string storeId: store identifier
+			@param string storeSelection: store selection option (assetStore, eSite, prompt)
+			@param string languageId: language ID
+		-->
+		<method name="triggerAction" args="model, objectType, newObjectOptions=null, toolId=undefined, storeId=undefined, storeSelection=undefined, languageId=undefined">
+			<![CDATA[
+			var action = {
+				actionHandler: this,
+				model: model,
+				objectType: objectType,
+				newObjectOptions: newObjectOptions,
+				toolId: toolId,
+				storeId: storeId,
+				storeSelection: storeSelection,
+				languageId: languageId
+			};
+			wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the specified create object action.
+			@param Object action: the action instance
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+			if (action == this.currentAction) {
+				this.getStorePathStoresServiceCompleteDel.unregisterAll();
+				this.doCreateDel.unregisterAll();
+				this.currentAction = null;
+			}
+			]]>
+		</method>
+
+		<!---
+			Handle the callback and perform the create action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+			this.currentAction = action;
+			if (wcfContextUtil.findContextValue(null, "readOnlyMode").value == "true") {
+				wcfActionManager.removeAction(this.currentAction);
+				if (configProperties.readOnlyOnApprovedContent) {
+					wcfApplicationInReadOnlyModeInApprovedContentDialog.openWindow();
+				}
+				else {
+					wcfApplicationInReadOnlyModeDialog.openWindow();
+				}
+			}
+			else if (action.toolId && action.storeId) {
+				if (typeof(global[action.toolId]) != "undefined") {
+					wcfGetStorePathStoresService.doRequest(this, {
+						storeId: action.storeId,
+						usage: global[action.toolId].usage,
+						assetStoreOnly: action.storeSelection == "assetStore",
+						eSiteOnly: action.storeSelection == "eSite"
+					});
+					this.getStorePathStoresServiceCompleteDel.unregisterAll();
+					this.getStorePathStoresServiceCompleteDel.register(wcfGetStorePathStoresService, "onserviceComplete");
+					action.serviceRequestId = wcfGetStorePathStoresService.requestIdentifier;
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfCreateObjectActionHandler", "performAction",
+							"Unable to find tool with ID: " + action.toolId);
+					wcfActionManager.removeAction(this.currentAction);
+				}
+			}
+			else {
+				action.boe = action.model.oEditor;
+				action.storeId = action.boe.localContext.storeConfig.storeId;
+				this.doCreate();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Change the current store to the specified store.
+			@param wcfStore newStore: the new store
+			@param boolean prompt: Prompt the user if there are unsaved changes. The default is "true".
+		-->
+		<method name="changeStore" args="newStore, prompt=true">
+			<![CDATA[
+			if (this.currentAction != null) {
+				this.getStorePathStoresServiceCompleteDel.unregisterAll();
+				var action = this.currentAction;
+				action.storeId = newStore.storeId;
+				if (prompt && toolsController.isToolOpen(action.toolId)) {
+					toolsController.focusTool(action.toolId);
+					action.boe = toolsController.getTool(action.toolId);
+					if (action.boe.localContext != null && action.boe.localContext.storeConfig != null && action.boe.localContext.storeConfig.storeId == newStore.storeId) {
+						toolsController.focusTool(action.toolId);
+						this.doCreate();
+					}
+					else if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+						wcfTransactionProgressDialog.openWindow();
+						wcfActionManager.removeAction(this.currentAction);
+					}
+					else {
+						// check if there are any unsaved changes		
+						var unsavedObjects = [];
+						var openObjects = action.boe.model.openObjects;
+						for (var i = 0; i < openObjects.length; i++) {
+							var o = openObjects[i];
+							if (o.openGroupObject.openGroupDirty) {
+								unsavedObjects.push(o);
+							}
+						}
+						if (unsavedObjects.length > 0) {
+							wcfChangeStoreConfirmationDialog.openChangeStoreConfirmationDialog(this, newStore, unsavedObjects);
+						}
+						else {
+							this.changeStore(newStore, false);
+						}
+					}
+				}
+				else {
+					if (!newStore.configurationLoaded) {
+						this.doCreateDel.unregisterAll();
+						this.doCreateDel.register(newStore, "onconfigurationLoaded");
+					}
+					if (!toolsController.isToolOpen(action.toolId)) {
+						toolsController.openToolById(action.toolId, newStore);
+						action.boe = toolsController.getTool(action.toolId);
+					}
+					else {
+						action.boe.header.storeSelectionList.changeStore(newStore, false);
+					}
+					if (newStore.configurationLoaded) {
+						this.doCreate();
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			The method that is called when wcfGetStorePathStoresService does not return a store.
+		-->
+		<method name="handleStoreNotAvailable">
+			<![CDATA[
+			this.getStorePathStoresServiceCompleteDel.unregisterAll();
+			messageLogger.logException(null, foundationResources.createFailed.string);
+			wcfActionManager.removeAction(this.currentAction);
+			]]>
+		</method>
+		
+		<!---
+			The method that is called when wcfGetStorePathStoresService returns more than one store.
+			@param Array stores: array of stores
+		-->
+		<method name="handleMultipleStores" args="stores">
+			<![CDATA[
+			this.getStorePathStoresServiceCompleteDel.unregisterAll();
+			wcfSelectStoreDialog.openSelectStoreDialog(this, stores);
+			]]>
+		</method>
+		
+		<!---
+			The method that is called when the wcfGetStorePathStoresService completes. If
+			the service completes normally, then the action will no longer be listening to this event.
+			If it completes abnormally, this method is called and the action is released.
+		-->
+		<method name="getStorePathStoresServiceComplete" args="args">
+			<![CDATA[
+			if (args && this.currentAction && args.requestIdentifier == this.currentAction.serviceRequestId) {
+				this.getStorePathStoresServiceCompleteDel.unregisterAll();
+				wcfActionManager.removeAction(this.currentAction);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Method that is called by the wcfChangeStoreConfirmationDialog or wcfSelectStoreDialog when the user chooses not to change the store.
+		-->
+		<method name="cancelChangeStore">
+			<![CDATA[
+			wcfActionManager.removeAction(this.currentAction);
+			]]>
+		</method>
+		
+		<!---
+			Create the new object.
+		-->
+		<method name="doCreate" args="e=null">
+			<![CDATA[
+			this.doCreateDel.unregisterAll();
+			var action = this.currentAction;
+			action.model = action.boe.model;
+			if (action.languageId) {
+				var languages = action.boe.localContext.storeConfig.supportedLanguages;
+				for (var i = 0; i < languages.length ; i++) {
+					var language = languages[i];
+					if (language.languageId == action.languageId) {
+						if (!language.isDefault) {
+							preferenceManager.setPreference("CMCInputLanguageIds", action.languageId);
+							preferenceManager.sendPreferenceChangedEvent("CMCInputLanguageIds");
+						}
+						break;
+					}
+				}
+			}
+			var oDef = action.model.getObjectDefinition(null, action.objectType, true);
+			if (oDef != null) {
+				var usage = oDef.writeUsage;
+				if (usage == null) {
+					usage = action.boe.usage;
+				}
+				var objectStore = wcfModelUtil.objectStoreMap[action.storeId + usage];
+				if (objectStore == null) {
+					// Object store with the usage is not in the object store map. Need to retrieve the information and add it to the object store map.
+					objectStore = wcfModelUtil.createObjectStore({
+						storeId: action.storeId,
+						usage: usage
+					});
+					wcfModelUtil.objectStoreMap[action.storeId + usage] = objectStore;
+				}
+				if (!objectStore.accessRightChecked){
+					// Don't know the access right yet.
+					this.doCreateDel.register(objectStore, "onaccessRightChecked");
+				}
+				else if (!oDef.isCreatable()) {
+					var activeDataset = false;
+					for (var i = 0; i < wcfServiceUtil.serviceDatasets.length; i++) {
+						var ds = wcfServiceUtil.serviceDatasets[i];
+						if (ds.submitted && ds.service != null) {
+							this.doCreateDel.register(ds.service, "onserviceComplete");			
+							activeDataset = true;
+							break;
+						}
+					}
+					if (!activeDataset) {
+						messageLogger.logException(null, foundationResources.createFailed.string);
+						wcfActionManager.removeAction(this.currentAction);
+					}
+				}
+				else {
+					oDef.doCreate({newObjectOptions: action.newObjectOptions, objectKey: action.objectKey});
+					wcfActionManager.removeAction(this.currentAction);
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfCreateObjectActionHandler", "doCreate",
+						"Unable to find object definition with objectType: " + action.objectType);
+				wcfActionManager.removeAction(this.currentAction);
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		GetStorePathStores service. This services expects storeId and usage parameters and returns
+		the list of store path stores in that match the specified usage.
+	-->
+	<wcfService id="wcfGetStorePathStoresService" url="/cmc/GetStorePathStores" sendWorkspaceContext="false" retryOnError="true">
+		<!---
+			Parse the specified data element and return a wcfStore instance.
+		-->
+		<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfGetStorePathStoresService", "parseObjects(requestParent, dataElement)", [requestParent, dataElement]);
+			}
+			var stores = wcfStoreUtil.parseStores(dataElement);
+			if (stores.length == 0) {
+				requestParent.handleStoreNotAvailable();
+			}
+			else if (stores.length == 1) {
+				requestParent.changeStore(stores[0]);
+			}
+			else {
+				requestParent.handleMultipleStores(stores);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfGetStorePathStoresService", "parseObjects(requestParent, dataElement)", [stores]);
+			}
+			]]>
+		</method>
+	</wcfService>
+
+</library>

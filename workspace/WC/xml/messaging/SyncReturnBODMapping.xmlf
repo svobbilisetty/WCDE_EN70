@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sync Return BOD Mapping for Websphere Commerce Telesales -->
+	<TemplateDocument>
+		<DocumentType version="8.1">SyncReturn</DocumentType>
+		<StartElement>SyncReturn</StartElement>
+		<TemplateTagName>SyncReturn81</TemplateTagName>
+		<CommandMapping>
+			<Command CommandName="com.ibm.commerce.ordermanagement.commands.ReturnEditBeginCmd" TemplateTagName="UpdateReturn81" Condition='action="BeginEdit" AND commerceObject="Return"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.ordermanagement.commands.ReturnEditEndCmd" TemplateTagName="UpdateReturn81" Condition='action="EndEdit" AND commerceObject="Return"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="takeOverLock">Y</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.ReturnUpdateCmd" TemplateTagName="UpdateReturn81" Condition='action="Change" AND commerceObject="Return"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.ReturnItemAddCmd" Condition='action="Add" AND commerceObject="ReturnItem"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="outRMAName">OutRMAId</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.ReturnItemUpdateCmd" Condition='action="Change" AND commerceObject="ReturnItem"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="allocate">**</Constant>
+				<Constant Field="backorder">**</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.ReturnItemComponentUpdateCmd" TemplateTagName="UpdateSerialTemplate81" Condition='action="UpdateSerial" AND commerceObject="ReturnItem"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="outRMAName">OutRMAId</Constant>
+				<Constant Field="SNdelete">true</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.ReturnItemDeleteCmd" 
+			TemplateTagName="DeleteReturnItemTemplate" Condition='action="Delete" AND commerceObject="ReturnItem"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="outRMAName">OutRMAId</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.AdminReturnApproveCmd" Condition='action="Approve" AND commerceObject="Return"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>				
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.ReturnPrepareCmd" Condition='action="Prepare" AND commerceObject="Return"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+				<Constant Field="allocate">**</Constant>
+				<Constant Field="backorder">**</Constant>
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.returns.commands.ReturnProcessCmd" Condition='action="Process" AND commerceObject="Return"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>				
+				<Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+			</Command>
+		</CommandMapping>
+	</TemplateDocument>
+	<TemplateTag name="SyncReturn81">
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Return/Header/RMA_Id" Field="RMAId"/>
+		<Tag XPath="DataArea/Return/Header/ForUserId" Field="forUserId"/>
+		<Tag XPath="DataArea/Return/Header/Refund/Currency" Field="currency"/>
+		<Tag XPath="DataArea/Return/Header/Refund/RefundPolicyIdUsed" Field="refundPolicyId"/>
+		<Tag XPath="DataArea/Return/Header/Refund/RefundPaymentIdUsed" Field="PaymentMethodId"/>
+		<Tag XPath="DataArea/Return/Header/Customer/UserId" Field="customerId"/>
+		<Tag XPath="DataArea/Return/Line" XPathType="VECTOR" Field = "RMAItem"/>
+		<Tag XPath="DataArea/Return/Line/RmaItemId"  Field="RMAItemId"/>
+		<Tag XPath="DataArea/Return/Line/CatEntryId" Field="catEntryId"/>
+		<Tag XPath="DataArea/Return/Line/Quantity"  Field="quantity"/>
+		<Tag XPath="DataArea/Return/Line/ReturnReason" Field="reason"/>
+		<Tag XPath="DataArea/Return/Line/OrderItemId"  Field="orderItemId"/>
+		<Tag XPath="DataArea/Return/Line/PhysicalReturn" Field="receive"/>
+		<Tag XPath="DataArea/Return/Line/RefundAmount/CreditAdjustment" Field="creditAdjustment"/>
+		<Tag XPath="DataArea/Return/Line/Comment" Field="comment"/>
+		<Tag XPath="DataArea/Return/Line/SerialNumber" Field="serialNumber"/>
+	</TemplateTag>
+	<TemplateTag name="UpdateReturn81">
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Return/Header/RMA_Id" Field="RMAId"/>
+		<Tag XPath="DataArea/Return/Header/ForUserId" Field="forUserId"/>
+		<Tag XPath="DataArea/Return/Header/Comment" Field="comment"/>
+	      <Tag XPath="DataArea/Return/Header/Refund/RefundPolicyIdUsed" Field="policyId"/>
+		<Tag XPath="DataArea/Return/Header/TakeOverLock" Field="takeOverLock"/>
+	</TemplateTag>
+
+	<TemplateTag name="UpdateSerialTemplate81">
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Return/Header/RMA_Id" Field="RMAId"/>
+		<Tag XPath="DataArea/Return/Header/ForUserId" Field="forUserId"/>
+		<Tag XPath="DataArea/Return/Header/Customer/UserId" Field="customerId"/>
+		<Tag XPath="DataArea/Return/Line/SerialNumber" XPathType="VECTOR" Field = "Serial"/>
+		<Tag XPath="DataArea/Return/Line/SerialNumber/RmaItemComponentId"  Field="RMAItemCmpId"/>
+		<Tag XPath="DataArea/Return/Line/SerialNumber/SerialNumber" Field = "serialNumber"/>
+	</TemplateTag>
+	<TemplateTag name="DeleteReturnItemTemplate">
+	<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Return/Header/RMA_Id" Field="RMAId"/>
+		<Tag XPath="DataArea/Return/Header/ForUserId" Field="forUserId"/>
+		<Tag XPath="DataArea/Return/Header/Refund/Currency" Field="currency"/>
+		<Tag XPath="DataArea/Return/Header/Comment" Field="comment"/>
+		<Tag XPath="DataArea/Return/Header/Customer/UserId" Field="customerId"/>
+		<Tag XPath="DataArea/Return/Line/RmaItemId"  Field="RMAItemId"/>
+	</TemplateTag>
+

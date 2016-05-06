@@ -1,0 +1,332 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords flash-only
+		@keywords private
+		
+		The class wcfBaseFileUploader implements a basic file upload widget. A file uploader allows a file to be uploaded to the server. 
+		In order to do this, an Action Script FileReference object is used. 
+	-->
+	<class name="wcfBaseFileUploader">     	
+		<!--- 
+			@keywords private 
+			ActionScript FileReference object. This reference points to the {@link wcfModelObject#fileref fileref}
+			attribute of the {@link wcfModelObject} that this editor is being used by. 
+		-->            
+       	<attribute name="fileref" value="${null}" setter="this.setFileref(fileref)"/>            	
+		<!---
+       		@keywords private
+       		The {@link wcfModelProperty } named sourceFileName is marked as dirty when a file is chosen to be uploaded. 
+       		This ensures that a save is triggered on the {@link wcfModelObject object}.
+       	-->
+		<attribute name="sourceFileNamePropertyName" value="sourceFileName" type="string"/>
+
+       	<!--- 
+       		@keywords private
+       		This method has the logic for resetting the editor when the fileref object is changed.
+       	-->
+       	<method name="setFileref" args="newFileref">
+       		<![CDATA[
+       		if (this["fileref"] != newFileref || newFileref == null) {       		
+       			
+       			this.fileref = newFileref; 
+       			   			
+       			//If there is already a file selected, want to set the text to its name. Otherwise, clear the text. 
+	           	if (this["fileNameField"]) {
+		            if (this.fileref != null && typeof(this.fileref.name)!= "undefined") {
+			            this.fileNameField.setText(this.fileref.name);
+			            
+		            } else {
+		            	this.fileNameField.setText("");
+		            }	            	            
+       				this.fileNameField.setAttribute("enabled", false);       			       			       			       			
+       			}
+       		}
+       		]]>
+       	</method>
+			
+		
+		<!---
+			@keywords private
+			This method will be called when the {@link wcfFileUploadUtil#onfileSelected} event is sent. 
+			
+			It will set the text of the input field	and will also update the properties of o specified by {@link wcfObjectDefinition#fileNamePropertyName} and
+			{@link wcfObjectDefinition#fileSizePropertyName}.
+			
+			Note that this method will respect the {@link wcfModelObject#readOnly readOnly} flag of the {@link wcfModelProperty} 
+			identified by {@link wcfObjectDefinition#fileNamePropertyName} but will always update the 
+			{@link wcfModelProperty} identified by {@link wcfObjectDefinition#fileSizePropertyName}. 
+		-->
+		<method name="handleSelect" args="selectedFileref=null">
+			<![CDATA[	
+				if (selectedFileref != null) {
+					this.o.setAttribute("fileref", selectedFileref);					
+					this.fileNameField.setText(selectedFileref.name);	
+					if (this.o.objectDefinition.fileNamePropertyName != null) {
+						var nameProperty = this.o.getProperty(this.o.objectDefinition.fileNamePropertyName);
+						
+						//Only update the nameProperty if it's not readonly. 
+						if (nameProperty != null && !nameProperty.readOnly) {
+							this.o.setPropertyValue(this.o.objectDefinition.fileNamePropertyName, null, this.o.fileref.name);
+						}
+					}
+					if (this.o.objectDefinition.fileSizePropertyName != null) {
+						this.o.setPropertyValue(this.o.objectDefinition.fileSizePropertyName, null, this.o.fileref.size);
+					}
+					
+					this.o.setPropertyValue(sourceFileNamePropertyName, null, this.o.fileref.name);					
+					//Mark our special property as dirty to ensure that the save happens				
+					var sourceFileNameProperty = this.o.getProperty(sourceFileNamePropertyName);
+					sourceFileNameProperty.setAttribute("dirty", true);		
+						
+				}
+				this.reset();
+			]]>
+		</method>  
+		
+		<!---
+			@keywords private
+			This method will be called when the {@link wcfFileUploadUtil#onfileCanceled} event is sent.
+		-->
+		<method name="handleCancel" args="e=null">
+			<![CDATA[
+				this.reset();									
+			]]>
+		</method> 
+		
+		<!---
+			@keywords private
+			This method will reset the widget by:
+			<ol>
+				<li>Unregistering listeners from the delegates listening to events from {@link wcfFileUploadUtil}.</li>				
+			 </ol>
+		-->
+		<method name="reset">
+			this.handleCancelDel.unregisterAll();
+			this.handleSelectDel.unregisterAll();
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["handleCancelDel"]) {
+				this.handleCancelDel.unregisterAll();
+				delete this.handleCancelDel;
+			}
+			if (this["handleSelectDel"]) {
+				this.handleSelectDel.unregisterAll();
+				delete this.handleSelectDel;
+			}
+			 
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="browseForFile">
+			<![CDATA[				
+				if (this["handleCancelDel"] == null) {
+					this.handleCancelDel = new lz.Delegate(this, "handleCancel");
+				}			
+				this.handleCancelDel.register(wcfFileUploadUtil, "onfileCanceled");
+					
+				if (this["handleSelectDel"] == null) {
+					this.handleSelectDel = new lz.Delegate(this, "handleSelect");
+				}	
+				this.handleSelectDel.register(wcfFileUploadUtil, "onfileSelected");
+																	
+				wcfFileUploadUtil.browseForFile(this.o.objectDefinition.fileTypes, this.o.objectDefinition.maximumFileSize);	
+				
+			]]>
+		</method>
+		
+		
+		<simplelayout axis="x" spacing="3"/>
+			
+		<!--- The text field to hold the file name. -->
+		<wcfInputText name="fileNameField" enabled="false"/>
+		<!--- The button for browsing to a file. -->	
+		<wcfFocusableBaseButton resource="browseButtonResource" name="browseButton" y="-1" doesenter="true">
+			<!--- @keywords private --> 	
+			<attribute name="discardKeyUp" type="boolean" value="false"/>  
+			<!--- @keywords private -->
+			<handler name="onclick">
+				<![CDATA[											
+					classroot.browseForFile();
+				]]>
+			</handler>					
+			<!---  @keywords private 
+				  In Flash 10 the FileReference.browse method needs to be called from a user triggered event. 
+				  OL normally triggers the onclick event with a timer and not a user event so the FileReference.browse event
+				  would not execute. By generating the onclick in this method, we guarantee a user generated onclick event will happen so 
+				  that the FileReference.browse method can execute successfully.   
+			 -->
+			<handler name="onkeyup" args="kc">				
+				if (kc == 32 || kc == 13) {
+					if (this.discardKeyUp) {
+						this.discardKeyUp = false;
+					} else if (this._enabled) {	
+						this.onclick.sendEvent();
+						this.showUp();				
+					}
+				}
+			</handler>	
+			
+			<!--- 	@keywords private
+					Need to override this method so that it does not generate an onclick event. This method is called 
+					by a timer, so the generated onclick event would not be user generated and the file browse dialog window 
+					would not be launched, and the application would become unresponsive. 
+			-->	
+			<method name="doSpaceUp">			
+			</method>
+			
+			<!--- 	@keywords private
+			
+					Need to override this method so that it does not generate an onclick event. This method is called 
+					by a timer, so the generated onclick event would not be user generated and the file browse dialog window 
+					would not be launched, and the application would become unresponsive.										
+			-->	
+			<method name="doEnterUp">
+			</method>
+			<!--- 	@keywords private
+			
+					In the case that someone uses the space/enter key to discard an alert button, we want to ensure
+					that we don't trigger the browse dialog right away.										
+			-->	
+			<handler name="onfocus">				
+				if (lz.Keys.isKeyDown('enter') || lz.Keys.isKeyDown('spacebar')) {	
+					this.discardKeyUp = true;
+				}
+			</handler>
+		</wcfFocusableBaseButton>		
+		
+	</class>
+	<!---
+		@keywords final
+		@keywords flash-only
+	
+		<p>This class defines a widget that allows business users to select a file to upload. This widget can only be used with objects that 
+		have {@link wcfObjectDefinition#isFileObject isFileObject} set to true. This widget associates the selected file with the 
+		{@link wcfModelObject} instance. The file will be uploaded when the object is saved using the object's {@link wcfCreateService} 
+		or {@link wcfUpdateService}. An instance of wcfPropertyFileUploader can only be declared as a child of an instance of 
+		{@link wcfPropertyGroup}.</p>
+
+		<p>This widget will update the following properties of the {@link wcfModelObject model object}:
+		<ul>
+			<li>The property defined by {@link wcfObjectDefinition#fileNamePropertyName} will be updated with the fileName of the selected file. This value will include the name and extension of the file
+			but will not include the full path of the file.
+			<li>The property defined by {@link wcfObjectDefinition#fileSizePropertyName} will be updated with the fileSize of the selected file in bytes. To display this value in kilobytes use {@link wcfPropertyKilobyte}
+			to display the value.
+		</ul></p>
+
+		<p>For example, consider the following object definition for a managed file:</p>
+			@START_CODE
+		<PrimaryObjectDefinition
+			definitionName="attBaseManagedFilePrimaryObjectDefinition"
+			isBaseDefinition="true"
+			objectType="BaseManagedFile"
+			objectGroups="ManagedFileGroup"
+			creatable="false"
+			displayName="${attachmentResources.managedFileObjectName}"
+			displayNameProperty="fileName"
+			newDisplayName="${attachmentResources.attachment_newManagedFileDisplayName}"
+			idProperty="fullPath"
+			propertiesDefinitionName="attManagedFileProperties"
+			copyProtected="true"
+			searchType="FindManagedFile"
+			isFileObject="true"
+			fileSizePropertyName="fileSize"
+			fileNamePropertyName="fileName"
+			maximumFileSize="10000000"
+			helpLink="tasks/tttcreatemf.htm"
+			longDisplayNameProperty="fullPath"
+			browseFilterType="ManagedContentsFilter">
+			newObjectMenuItemText="${attachmentResources.contextMenuNewFile}"
+			propertiesDefinitionName="attManagedFileProperties"
+			>
+			...
+		</PrimaryObjectDefinition>
+			@END_CODE
+		 <p>To display the managed file in a properties view, define the following two widgets:</p>
+			@START_CODE		 	
+	        <PropertyInputText
+	            name="fileName"
+	            propertyName="fileName"
+	            extendedHelpText="${attachmentResources.extendedHelpText_fileName}"
+	            promptText="${attachmentResources.managedFile_fileName}"
+	            required="true"/>
+	            	      
+			<PropertyKilobyte
+	            name="fileSize"
+	            propertyName="fileSize"
+	            promptText="${attachmentResources.managedFile_size}"/>
+	       	@END_CODE	
+		<p>Whenever a new file is selected, the values displayed in these two widgets will be updated to reflect the name and size
+		of the newly selected file.</p>
+	-->
+
+	<class name="wcfPropertyFileUploader" extends="wcfPropertiesComponent">								
+		<!---
+			@keywords private 
+			File uploaders have a validator of the type {@link wcfFileRequiredValidator} that is automatically in use
+			for the widget. This validator ensures that if this is a new object, a file is selected to be uploaded. Otherwise
+			the widget will be in an error state.  
+		-->		
+		<attribute name="validatorTypes" value="fileRequiredValidator" type="string"/>							
+
+       	<!---
+			@keywords private
+			Create the check box editor for the given property component. This method overrides the createEditor method in 
+			the wcfPropertiesComponent class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfBaseFileUploader(parentComponent, {
+				name: "editor",
+				model: parentComponent.model,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o
+			});
+			]]>
+		</method>			
+		
+		
+		<!---
+			@keywords private
+			This handler listens for a new {@link wcfModelObject} to be assigned for the widget, and updates
+			the widget accordingly.
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[						
+			if (newObject != null) {				
+			    if (newObject.objectDefinition.isFileObject == false) {                    
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "SEVERE", 
+							      "wcfPropertyFileUploader", "setModelObject", 
+							      "This model object is invalid for wcfPropertyFileUploader: the object definition for "+newObject.objectType+" is not marked as a file object.");
+	            }
+	            if (this["editor"] != null && typeof(newObject["fileref"]) != "undefined") {
+	            	this.editor.setAttribute("fileref", newObject.fileref);  
+				}				
+            } else if (this["editor"] != null) {
+            	this.editor.setAttribute("fileref", null);
+            }                       
+            super.setModelObject(newObject);
+            
+            ]]>
+		</method>			
+	</class>
+
+</library>

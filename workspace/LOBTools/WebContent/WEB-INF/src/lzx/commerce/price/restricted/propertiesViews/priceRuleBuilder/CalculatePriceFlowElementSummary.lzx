@@ -1,0 +1,60 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<class name="prcCalculatePriceElementSummary" extends="wcfFlowElementSummary">
+
+		<wcfFlowSummaryParam name="calculationType" propertyName="calculationType"/>
+		<wcfFlowSummaryParam name="markUpPercentage" propertyName="markUpPercentage"/>
+		<wcfFlowSummaryParam name="markDownPercentage" propertyName="markDownPercentage"/>
+		<wcfFlowSummaryParam name="priceEquationName" objectPath="RefPriceEquationGroup/PriceEquationGroup" propertyName="name"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(prcPriceResources.markUpPrice, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.markDownPrice, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.usePriceEquation, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var value;
+				
+				if(this.resolvedParams["calculationType"] == "markUp") {
+					value = this.getValuesList("markUpPercentage");
+					if(value != null && value != "") {
+						summaryText = prcPriceResources.replaceValues("summary_markUp", [wcfGlobalizationUtil.formatNumberToDisplayFormat(value)]);
+					}
+				}
+				else if(this.resolvedParams["calculationType"] == "markDown") {
+					value = this.getValuesList("markDownPercentage");
+					if(value != null && value != "") {
+						summaryText = prcPriceResources.replaceValues("summary_markDown", [wcfGlobalizationUtil.formatNumberToDisplayFormat(value)]);
+					}
+				}
+				else if(this.resolvedParams["calculationType"] == "usePriceEquation") {
+					value = this.getValuesList("priceEquationName");
+					if(value != null && value != "") {
+						summaryText = prcPriceResources.replaceValues("summary_usePriceEquation", [wcfGlobalizationUtil.formatNumberToDisplayFormat(value)]);
+					}
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+	</class>
+</library>

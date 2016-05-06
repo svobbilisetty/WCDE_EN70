@@ -1,0 +1,135 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---  
+		This validator checks that the value of the "attrValueValue" property is acceptable based on the current value of the "attrDataType" 
+		property. A message will be added to the "attrValueValue" property if the "attrDataType" property's value is 
+		"Integer" and the "attrValueValue" property's value does not match boundary.
+		@keywords deprecated
+	 -->
+	<class name="catDescriptiveAttributeNumericValueValidator" extends="wcfPropertyRangeValidator">
+	
+		<!---
+			The maximum value for this property. This value is used by the property range 
+			validator.
+		-->
+		<attribute name="maxValue" type="number" value="2147483647"/>
+		<!---
+			Th minimum value for this property. This value is used by the property range 
+			validator.
+		-->
+		<attribute name="minValue" type="number" value="-2147483648"/>	
+		
+		<!---  
+			An unique identifier string for this validator within a node. 
+		-->
+		<attribute name="validatorId" type="string" value="catDescriptiveAttributeNumericValueValidator"/>		
+
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+			
+			var minIsAcceptable = false;
+			var maxIsAcceptable = false;
+			
+			if(!o){
+				return; // nothing to validate
+			}
+			
+			// Get the data type set for the attribute
+			var attributeDataType = o.parentObject.getPropertyValue("attrDataType");
+			
+			// Log the data type
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.catalog",
+							  "INFO", 
+							  "catDescriptiveAttributeNumericValueValidator", 
+							  "validate", 
+							  "attributeDataType=" + attributeDataType + ".");
+			}
+			
+			// For whole number type, check the min and max boundary
+			if (attributeDataType == "Integer") {
+				minIsAcceptable = verifyMinRangeNotExceeded(changedProperty, this.minValue);
+				maxIsAcceptable = verifyMaxRangeNotExceeded(changedProperty, this.maxValue);
+				
+				// if both are acceptable remove the warning 
+				if(minIsAcceptable && maxIsAcceptable) {
+					changedProperty.clearValidationError(this);
+				}
+				// if max is not acceptable add warning
+				if(minIsAcceptable && !maxIsAcceptable) {
+					changedProperty.addValidationError(this, 
+						foundationResources.replaceValues("propertyValueTooLarge", 
+							[changedProperty.propertyDefinition.getDisplayName(), this.maxValue]));
+				}
+				// if min is not acceptable add warning
+				if(maxIsAcceptable && !minIsAcceptable) {
+					changedProperty.addValidationError(this, 
+						foundationResources.replaceValues("propertyValueTooSmall", 
+							[changedProperty.propertyDefinition.getDisplayName(), this.minValue]));
+				}				
+			}
+			
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="verifyMinRangeNotExceeded" args="property, minValue">
+			<![CDATA[		
+			if(!property || !property.value){
+				return true;
+			}
+
+			var value = property.value;
+			if(isNumeric(value)==true){
+				value = parseFloat(value);
+				minValue = parseFloat(minValue);	
+				if(value < minValue){
+					return false;
+				}
+			}
+			return true;
+				
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="verifyMaxRangeNotExceeded" args="property, maxValue">
+			<![CDATA[
+			
+			if(!property || !property.value){
+				return true;
+			}
+
+			var value = property.value;
+			if(isNumeric(value)==true){
+				value = parseFloat(value);
+				maxValue = parseFloat(maxValue);
+				if(value > maxValue){		
+					return false;
+				}
+			}
+			return true;	
+			
+			]]>
+		</method>		
+		
+	</class>
+	
+</library>
+

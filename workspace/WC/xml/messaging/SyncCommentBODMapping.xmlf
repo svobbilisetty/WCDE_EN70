@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sync Comment BOD Mapping for Websphere Commerce Telesales -->
+	<TemplateDocument>
+		<DocumentType version="8.1">SyncComment</DocumentType>
+		<StartElement>SyncComment</StartElement>
+		<TemplateTagName>SyncComment81</TemplateTagName>
+		<CommandMapping>
+			<Command CommandName="com.ibm.commerce.customercomment.commands.CustomerCommentUpdateCmd" Condition='action="Change" AND commerceObject="CustomerComment"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+			</Command>
+			<Command CommandName="com.ibm.commerce.customercomment.commands.CustomerCommentDeleteCmd" Condition='action="Delete" AND commerceObject="CustomerComment"'>
+				<Constant Field="URL">NoURL</Constant>
+				<Constant Field="ReURL">NoReURL</Constant>
+			</Command>
+		</CommandMapping>
+	</TemplateDocument>
+	<TemplateTag name="SyncComment81">
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+		<Tag XPath="DataArea/Comment/CustCommentId" Field="customerCommentId"/>
+		<Tag XPath="DataArea/Comment/Description" Field="commentDetail"/>
+		<Tag XPath="DataArea/Comment/appendOrReplace" Field="appendOrReplace"/>
+		<Tag XPath="x" Field="field1"/>
+		<Tag XPath="x" Field="field2"/>
+		<Tag XPath="x" Field="field3"/>
+		<Tag XPath="DataArea/Comment/UserData/UserDataField" XPathType="USERDATA"/>
+	</TemplateTag>
+

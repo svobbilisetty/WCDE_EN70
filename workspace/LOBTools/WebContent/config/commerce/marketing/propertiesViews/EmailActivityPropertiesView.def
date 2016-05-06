@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="mktEmailActivityProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane text="${mktMarketingResources.emailGeneralPropertiesTab}">
+			  	<PropertyPane name="pane">
+					<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+					<PropertyGroup groupTitle="${mktMarketingResources.emailActivityProperties}" hideHeaderWhenOnlyGroup="true" name="group" open="true">
+						<PropertyInputText helpText="${mktMarketingResources.help_activity_name}" promptText="${mktMarketingResources.objectName}" propertyName="name" required="true"/>
+						<PropertyInputMultiLineText promptText="${mktMarketingResources.description}" propertyName="description"/>
+						
+						<PropertyChildListEditor listDefinitionName="mktCustomerSegmentGrid" name="segmentEditor" objectPath="path/sendBulkEmail" objectTypes="ChildCustomerSegment,ChildInheritedCustomerSegment" promptText="${mktMarketingResources.customerSegmentLabel}" required="true" singleChild="true" validatorTypes="noCustomerSegmentSelected"/>
+						
+						<PropertyChildListEditor listDefinitionName="mktActivityEmailTemplateGrid" name="template" objectPath="path/sendBulkEmail" objectTypes="ChildEmailTemplate,ChildInheritedEmailTemplate" promptText="${mktMarketingResources.emailTemplateLabel}" required="true" singleChild="true" validatorTypes="noEmailTemplateSelected"/>
+						
+						<PropertyInputText helpText="${mktMarketingResources.help_email_replyTo}" objectPath="path/sendBulkEmail" promptText="${mktMarketingResources.replyToEmailAddress}" propertyName="replyTo" required="true"/>
+				
+						<PropertyDatePicker helpText="${mktMarketingResources.help_email_sendDate}" promptText="${mktMarketingResources.sendDate}" propertyName="startdate" required="true"/>
+		
+						<PropertyTimePicker helpText="${mktMarketingResources.help_email_sendTime}" promptText="${mktMarketingResources.sendTime}" propertyName="sendtime"/>
+		
+						<ReferenceEditor name="campaign" parentObjectTypes="Campaign,InheritedCampaign" promptText="${mktMarketingResources.campaign}" referenceObjectTypes="ChildActivity,ChildInheritedActivity"/>
+					</PropertyGroup>
+			  	</PropertyPane>
+			</PropertyTabPane>			
+			<PropertyTabPane name="statistics" text="${mktMarketingResources.statistics}">
+				<EnablementAndCondition conditionId="andCondition">
+					<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+					<EnablementOrCondition conditionId="orCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="emailActivityCondition" enablementValue="EmailActivity" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedEmailActivityCondition" enablementValue="InheritedEmailActivity" propertyName="objectType"/>
+					</EnablementOrCondition>
+				</EnablementAndCondition> 	
+				<PropertyPane name="pane">		
+					<PropertyGroup collapsable="false" name="statisticsGroup"> 
+						<PropertyViewLongText objectPath="EmailStatistics" promptText="${mktMarketingResources.emailSentLabel}" propertyName="sent"/>				
+						<ChildListViewer helpText="${mktMarketingResources.help_emailStatistics_delivery}" listDefinitionName="mktEmailDeliveryStatisticsGrid" name="emailDeliveryStatisticsViewer" objectTypes="EmailStatistics" promptText="${mktMarketingResources.emailDelivery}"/>
+						<ChildListViewer helpText="${mktMarketingResources.help_emailStatistics_effectiveness}" listDefinitionName="mktEmailEffectivenessStatisticsGrid" name="emailEffectivenessStatisticsViewer" objectTypes="EmailStatistics" promptText="${mktMarketingResources.emailEffectiveness}"/> 
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<!--- 
+				This property tab pane displays references of a email activity.	
+			-->
+			<PropertyTabPane name="mktEmailActivityReferencesTabPane" text="${mktMarketingResources.references}">
+				<!--- 
+					This property pane displays folder references of a email activity.	
+				-->
+				<PropertyPane name="mktEmailActivityReferencesPane">
+					<PropertyGroup baseDefinitionName="mktActivityFolderPropertyGroup" name="mktEmailActivityFoldersGroup"/>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+	
+	<ObjectGrid definitionName="mktEmailDeliveryStatisticsGrid" preferenceKey="mktEmailDeliveryStatisticsGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="attemptedRecipients" propertyName="totalRecipients" text="${mktMarketingResources.attempted}" width="75"/>
+		<GridText alignment="right" datatype="number" editable="false" name="bounced" propertyName="bounced" text="${mktMarketingResources.bounced}" width="75"/>
+		<GridText alignment="right" datatype="number" editable="false" name="bouncedOverAttempted" propertyName="percentageBounced" text="${mktMarketingResources.bouncedOverAttempted}" width="175"/>
+		<GridText alignment="right" datatype="number" editable="false" name="delivered" propertyName="received" text="${mktMarketingResources.delivered}" width="75"/>
+		<GridText alignment="right" datatype="number" editable="false" name="deliveredOverAttempted" propertyName="percentageReceived" text="${mktMarketingResources.deliveredOverAttempted}" width="175"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="mktEmailEffectivenessStatisticsGrid" preferenceKey="mktEmailEffectivenessStatisticsGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="opened" propertyName="open" text="${mktMarketingResources.opened}" width="75"/>
+		<GridText alignment="right" datatype="number" editable="false" name="openedOverDelivered" propertyName="percentageOpened" text="${mktMarketingResources.openedOverDelivered}" width="175"/>
+		<GridText alignment="right" datatype="number" editable="false" name="clicked" propertyName="clicked" text="${mktMarketingResources.clicked}" width="75"/>		
+		<GridText alignment="right" datatype="number" editable="false" name="clickedOverDelivered" propertyName="percentageClicked" text="${mktMarketingResources.clickedOverDelivered}" width="175"/>
+		<GridText alignment="right" datatype="number" editable="false" name="clickedOverOpened" propertyName="percentageClickedOverOpened" text="${mktMarketingResources.clickedOverOpened}" width="175"/>
+	</ObjectGrid>
+	
+</Definitions>

@@ -1,0 +1,862 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		Declares an enablement condition to indicate whether the parent object is enabled.
+		The algorithm used to determine this condition is in {@link wcfValueResolver}.
+		
+		Sample usage for service:		
+		@START_CODE
+		<CustomService
+			url="/cmc/MyObjectCustomService" 
+			displayName="MyCustomService">
+			
+			<EnablementCondition propertyName="status" enablementValue="Active" />
+			<ServiceParam name="objectId" propertyName="objectId"/>
+			
+		</CustomService>
+		@END_CODE
+		
+		In this sample, the custom service is enabled if the propertyName "status"
+		is equal to "Active".
+
+		Sample usage for widget:
+		@START_CODE
+		<PropertyInputText promptText="MyProperty" propertyName="MyOProperty">			
+			<EnablementCondition propertyName="display" enablementValue="true" />
+		</PropertyInputText>
+		@END_CODE
+		
+		In this sample, the MyProperty input text widget is visible in the Management Center
+		if the "display" property of the object associated with the MyProperty widget
+		is set to "true".
+	-->
+	<class name="wcfEnablementCondition" extends="wcfValueResolver">
+		<!---  An unique identifier string for this condition within a node. -->
+		<attribute name="conditionId" type="string" value=""/>
+		
+		<!---
+			The enablement value for this enablement condition. If the enablement value is equal to the resolved value, 
+			then the condition will be enabled.
+		-->
+		<attribute name="enablementValue" type="string"/>
+
+		<!---
+			If this is set to "true", the result will be negated.
+		-->
+		<attribute name="negate" type="boolean" value="false"/>
+		
+		<!---
+			 Enablement condition type. This attribute should only be set if the parent accepts more than one type of enablement condition. For 
+			 example, {@link wcfObjectDefinition} instances accept three possible enablement condition types: "parentObjectCondition", 
+			 "childObjectCondition", and "refreshCondition".
+		-->
+		<attribute name="conditionType" type="string" value="enablementCondition"/>
+	
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (parent instanceof lz.wcfBaseListEnablementCondition) {
+				parent["enablementConditions"].push(this);
+			}
+			else {
+				parent[this.conditionType] = this;
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var val = this.getValue(o);
+			if (this.negate) {
+				return !(val == this.enablementValue || (!val && !this.enablementValue));
+			}
+			else {
+				return val == this.enablementValue || (!val && !this.enablementValue);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		This class is an enablement condition that always returns "false" unless the negate attribute is set to "true". 
+		You can use this enablement condition as a child of {@link wcfObjectDefinition} to prevent the creation of such 
+		objects under any circumstances.
+	-->
+	<class name="wcfFalseEnablementCondition" extends="wcfEnablementCondition">
+			
+		<!--- 
+			@keywords private
+			Return false unless negate is true 
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			if (this.negate) {
+				return true;
+			}
+			return false;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		This class is an enablement condition that always returns "true" unless the negate attribute is set to "true".
+		You can use this enablement condition as a child of {@link wcfObjectDefinition} to override the default
+		enablement behaviour of an object definition and allow the creation of such objects under any circumstance.
+	-->
+	<class name="wcfTrueEnablementCondition" extends="wcfEnablementCondition">
+			
+		<!--- 
+			@keywords private
+			Return false unless negate is true 
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			if (this.negate) {
+				return false;
+			}
+			return true;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		Declares an enablement condition that is contains a list of other enablement conditions
+	-->
+	<class name="wcfBaseListEnablementCondition" extends="node">
+		<!---  An unique identifier string for this condition within a node. -->
+		<attribute name="conditionId" type="string" value=""/>
+		
+		<attribute name="enablementConditions" value="${[]}"/>
+		
+		<!---
+			If this is set to "true", the result will be negated.
+		-->
+		<attribute name="negate" type="boolean" value="false"/>
+		
+		<!---
+			 Enablement condition type. This attribute should only be set if the parent accepts more than one type of enablement condition. For 
+			 example, {@link wcfObjectDefinition} instances accept two possible enablement condition types: "parentObjectCondition" and 
+			 "childObjectCondition"
+		-->
+		<attribute name="conditionType" type="string" value="enablementCondition"/>
+	
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (parent instanceof lz.wcfBaseListEnablementCondition) {
+				parent["enablementConditions"].push(this);
+			}
+			else {
+				parent[this.conditionType] = this;
+			}
+			]]>
+		</method>
+	
+		<!---
+			Register a delegate to be executed when the resolved value changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerDelegate" args="o, del">
+			<![CDATA[
+			for (var i = 0; i < enablementConditions.length; i++) {
+				enablementConditions[i].registerDelegate(o, del);
+			}
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		Declares an enablement condition to indicate whether the parent object is enabled.
+		The parent object is enabled if the logical AND of the result of all child
+		enablement conditions is true.
+				
+		Sample usage:		
+		@START_CODE
+		<EnablementAndCondition>
+			<EnablementCondition propertyName="p1" enablementValue="true" />
+			<EnablementCondition propertyName="p2" enablementValue="true" />
+		</EnablementAndCondition>
+		
+		@END_CODE
+
+		This sample will enable the parent object if the both the property "p1"
+		and "p2" are set to "true"
+	-->
+	<class name="wcfEnablementAndCondition" extends="wcfBaseListEnablementCondition">
+		
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var result = true;
+			for (var i = 0; i < enablementConditions.length; i++) {
+				if (!enablementConditions[i].isEnabled(o)) {
+					result = false;
+				}
+			}
+			if(negate){
+				result = !result;
+			}
+			return result;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		Declares an enablement condition to indicate whether the parent object is 
+		enabled.  The parent object is enabled if the logical OR of the result of 
+		all child enablement conditions is true.
+				
+		Sample usage:		
+		@START_CODE
+		<EnablementOrCondition>
+			<EnablementCondition propertyName="p1" enablementValue="true" />
+			<EnablementCondition propertyName="p2" enablementValue="true" />
+		</EnablementOrCondition>
+		
+		@END_CODE
+
+		This sample will enable the parent object property "p1"
+		or "p2" is set to "true"
+	-->
+	<class name="wcfEnablementOrCondition" extends="wcfBaseListEnablementCondition">
+	
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var result = false;
+			for (var i = 0; i < enablementConditions.length; i++) {
+				if (enablementConditions[i].isEnabled(o)) {
+					result = true;
+				}
+			}
+			if(negate){
+				result = !result;
+			}
+			return result;
+			]]>
+
+		</method>
+	</class>
+
+
+	<!---
+		Defines the text style that the framework will use when displaying 
+		the display name of a business object. Declare instances of 
+		wcfDisplayNameStyle as children of wcfObjectDefinition. Each instance 
+		must include an enablement condition (wcfEnablementCondition) that 
+		will determine when the specified text style will be used. If none 
+		of the instances of wcfDisplayNameStyle are enabled, then the display 
+		name will be displayed using the default text style. 
+		If multiple instances of wcfDisplayNameStyle are enabled, 
+		then the first declared style will be used.
+				
+		Sample usage:		
+		@START_CODE
+		<PrimaryObjectDefinition definitionName="CatalogGroup"
+				objectType="CatalogGroup" 
+				baseType="catBaseCatalogGroupPrimaryObjectDefinition"
+				icon="catalogGroupIcon"
+				headerIcon="catalogGroupHeaderIcon">
+			...
+
+			<DisplayNameStyle color="green">
+            	<EnablementCondition propertyName="xdesc_published" objectPath="CatalogGroupDescription" enablementValue="1"/>
+			</DisplayNameStyle>
+		</PrimaryObjectDefinition>
+		
+		@END_CODE
+
+		This sample will change the display name color of published categories to green.
+	-->
+	<class name="wcfDisplayNameStyle" extends="node">
+	
+		<!--- 
+			The color that will be used by the framework when displaying 
+			the display name of the business object defined by the parent 
+			object definition. 
+		-->
+		<attribute name="color" type="color" value="0x0"/>
+		
+		<!---
+			Set this value to true to indicate to the framework that the display name is to be displayed in bold.
+		-->
+		<attribute name="bold" type="boolean" value="false"/>
+		<!---
+			Set this value to true to indicate to the framework that the display name is to be displayed in italics.
+		-->
+		<attribute name="italic" type="boolean" value="false"/>
+				
+		<!--- @keywords private -->
+		<attribute name="enablementCondition" value="${null}"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var displayNameStyles = this.parent["displayNameStyles"];
+			if (!displayNameStyles) {
+				displayNameStyles = [];
+				this.parent.displayNameStyles = displayNameStyles;
+			}
+			displayNameStyles.push(this);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var result = true;
+			if (this.enablementCondition != null) {
+				result = this.enablementCondition.isEnabled(o);
+			}
+			return result;
+			]]>
+		</method>
+	
+		<!---
+			Register a delegate to be executed when the resolved value changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerDelegate" args="o, del">
+			<![CDATA[
+			if (this.enablementCondition != null) {
+				enablementCondition.registerDelegate(o, del);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		<p>This service performs a custom action on the WebSphere Commerce
+		server for a business object by invoking the URL specified in
+		the <code>url</code> attribute. Instances of wcfCustomService can only be declared as 
+		children of an instance of {@link wcfObjectDefinition}. Custom services will only
+		be called when the custom action is explicitly requested by the user for
+		a selected business object.</p>
+		
+		<p>The <code>isFileUploadService</code> flag exists to denote a custom service which will perform a file
+		upload. If the flag is set to true, then {@link wcfFileTypes} can be declared as children of the custom
+		service to indicate which files can be uploaded by this service. A parameter indicating the file name will be passed on the 
+		url. The name of the parameter can be controlled using the {@link wcfCustomService#fileNameParameter fileNameParameter} attribute.</p>
+		
+		<p>A single instance of {@link wcfEnablementCondition}, {@link wcfEnablementAndCondition} or 
+		{@link wcfEnablementOrCondition} can be declared as a child of a custom service. 
+		The enablement condition will be used by the framework to determine if a custom action 
+		is available for the currently selected business objects.
+		If it is available, then the framework will add the action to
+		the context menu and "Edit" menu. If the <code>toolbarIcon</code>
+		attribute has been defined, then the action will also be available
+		on the toolbar.
+		
+		<p>If the custom service request is successful, then a status message will be displayed
+		in the message logger and any properties returned in the response
+		will be updated in the wcfModelObject instance associated with
+		the request. If the request fails, the 
+		error message returned by the request will be displayed
+		in the message logger.
+
+		<p>The following example demonstrates the declaration of a custom service.
+		The service includes an enablement condition that will resolve to "true" if
+		the property named "state" has a value of "Inactive". Otherwise, this
+		custom service will not be available. The service includes two
+		required parameters. The "storeId" parameter is resolved from the "storeId"
+		context value. The "activityId" parameter is resolved from the business object property
+		named "activityId".
+
+		@START_CODE
+		<CustomService url="/cmc/ActivateActivity" displayName="${mktMarketingResources.activate}" toolbarIcon="activateToolbarIcon">
+			<EnablementCondition conditionId="activate" propertyName="state" enablementValue="Inactive"/>
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="activityId" propertyName="activityId"/>
+		</CustomService>
+		@END_CODE
+		
+		<p>The successful response from a custom service must be an XML document
+		that has "object" as the name of the root element. If the response document includes
+		properties, then the properties will be applied to the client side representation
+		of the business object. Typically custom services will return at least one updated
+		property that reflects the state change caused by the service. 
+		The following sample demonstrates the expected format
+		for a successful response. It returns an updated value for the "state" property
+		and marks the object as "readonly". When an object is marked
+		as read-only, the framework will prevent the user from making changes to the object.
+
+		@START_CODE
+		<object readonly="true">
+			<state>Active</state>
+		</object>
+		@END_CODE
+		
+		<p>If the request is not successful, then the response must be an XML document
+		that has "errors" as the name of the root element. The XML document must include
+		at least one element named "validationError" or an element named "exception". Validation
+		errors should be returned if the problem can be corrected by the business user. An example
+		of a validation error is a missing required parameter. Validation errors can either be "property"
+		level validation errors or "object" level validation errors. Property level validation errors
+		include the name of the specific property that was found to be a problem. Object level validation
+		errors do not include a property name and are not mapped to a specific problem.
+		An exception should be returned if the problem cannot be corrected by the business user.
+		An example of an exception is the user does not have the required access rights to perform
+		the action.
+		
+		<p>The following sample demonstrates an error response that includes an object level validation
+		error and a property level validation error.
+		
+		@START_CODE
+		<errors>
+			<validationError propertyName="categoryName">A category name must be specified.</validationError>
+			<validationError>The activity could not be activated. Please check any additional error messages for details.</validationError>
+		</errors>
+		@END_CODE
+		
+		<p>The following sample demonstrates an error response that includes an exception.
+		
+		@START_CODE
+		<errors>
+			<exception>You do not have the correct access rights to complete this operation.</exception>
+		</errors>
+		@END_CODE
+	-->
+	<class name="wcfCustomService" extends="wcfService" transactionService="true">	
+		<!---
+			The display name for this service. This is a required attribute.
+		-->
+		<attribute name="displayName" type="string"/>
+		
+		<!---
+			The menu display name for this service. This name will appear in both the
+			Edit menu and the context menu. If this attribute is not set, 
+			it will default to the displayName attribute.
+		-->
+		<attribute name="menuDisplayName" value="${null}" type="string"/>
+
+		<!---
+			The shortcut keys used to invoke this service from the keyboard 
+			when the object is selected.
+			@type String[]
+		-->
+		<attribute name="shortcutKeys" value="null"/>
+
+		<!---
+			@keywords private
+			Flag to if shortcutKeys are registered
+		-->			
+		<attribute name="keysRegistered" type="boolean" value="false"/>
+
+		<!---
+			The name of the resource that is used for the toolbar
+			icon for this custom service.
+		-->		
+		<attribute name="toolbarIcon" type="string" value=""/>	
+		
+		<!---
+			This attribute specifies if this custom service is enabled when multiple objects are selected. The default value is true. 
+		-->
+		<attribute name="allowMultipleSelection" type="boolean" value="true"/>	
+				
+		<!---
+			A flag to indicate that this is a file upload service. The default is false.
+		-->		
+		<attribute name="isFileUploadService" type="boolean" value="false"/>			
+		
+		<!---
+       		When the service is flagged as a file upload service, the selected file's name will automatically be passed as a url parameter.
+       		This variable specifies the name to use for that url parameter. The default value is <code>fileName</code>. 
+       	-->
+       	<attribute name="fileNameParameter" type="string" value="fileName"/>       	
+       	
+       	<!---
+			@keywords private
+			The file types that can be uploaded by this custom action. It is initialized to an empty array.			
+		-->
+		<attribute name="fileTypes" value="${[]}"/>		
+		
+		<!---
+			The maximum size permitted for a file that is being uploaded. This file size is in bytes.
+		-->
+		<attribute name="maximumFileSize"  type="number" value="1000000"/>	
+		
+		<!---
+			@keywords private
+			This is a holder for use by file upload custom services. It will keep track of the requestParent for use after the file has been 
+			selected. 
+		-->
+		<attribute name="requestParent"/>
+		
+		<!---
+			@keywords private
+			This is a holder for use by file upload custom services. It will keep track of the arguments for use after the file has been 
+			selected. 
+		-->
+		<attribute name="args"/>
+		
+		<!---
+			@keywords private
+			This is a holder for use by file upload custom services. It will keep track of the startIndex for use after the file has been 
+			selected. 
+		-->
+		<attribute name="startIndex"/>		
+
+		<!---
+			Indicates whether to add the custom service to the "Edit" menu when the custom service is
+			available for the currently selected business objects. The default value is "true".
+		-->
+		<attribute name="addToEditMenu" type="boolean" value="true"/>
+
+		<!---
+			Indicates whether this custom service is added to the Utilities view context menu. The default is <code>false</code>.
+		-->
+		<attribute name="addToUtilitiesContextMenu" type="boolean" value="false"/>
+
+		<!---
+			Indicates whether this custom service is added to the explorer view context menu. The default is <code>true</code>.
+		-->
+		<attribute name="addToExplorerContextMenu" type="boolean" value="true"/>
+
+		<!---
+			Indicates whether this custom service is added to the list view context menu. The default is <code>true</code>.
+		-->
+		<attribute name="addToListContextMenu" type="boolean" value="true"/>
+
+		<!---
+			@keywords private
+			Initialize the service add this to parent.customService
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var services = parent["customServices"];
+			if (!services) {
+				services = [];
+				parent.customServices = services;
+			}
+			services.push(this);
+			
+			if (this.shortcutKeys != null) {
+
+				this.doCustomServiceDel = new lz.Delegate(this, "doCustomService");
+				var model = wcfModelUtil.findModelForView(this);
+				if (model != null) {
+					this.checkBusinessObjectEditorDel = new lz.Delegate(this, "checkBusinessObjectEditor");
+					this.checkBusinessObjectEditorDel.register(model, "onmodelInitialized");
+				}
+	
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the menu display name. If the menuDisplayName attribute has not been set
+			then this method will return the value of the displayName attribute.
+
+			@return boolean: the menu display name
+		-->
+		<method name="getMenuDisplayName">
+			<![CDATA[
+			return this.menuDisplayName == null ? this.displayName : this.menuDisplayName;
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			This method is overloaded for use by a file upload custom service. 
+		-->		
+		<method name="doRequest" args="requestParent=null,args=undefined,extraArgs=undefined">
+			<![CDATA[
+			if (this.isFileUploadService) {
+				if (typeof(extraArgs) == "undefined") {
+					extraArgs = {};
+				}
+				var startIndex = 0;
+				if(extraArgs["startIndex"]){
+					startIndex = extraArgs.startIndex;
+				}
+				this.requestParent = requestParent;		
+				this.args = args;	
+				this.startIndex = startIndex;					
+				
+				if (this["handleCancelDel"] == null) {
+					this.handleCancelDel = new lz.Delegate(this, "handleCancel");
+				}			
+				this.handleCancelDel.register(wcfFileUploadUtil, "onfileCanceled");
+					
+				if (this["handleSelectDel"] == null) {
+					this.handleSelectDel = new lz.Delegate(this, "handleSelect");
+				}	
+				this.handleSelectDel.register(wcfFileUploadUtil, "onfileSelected");
+										
+				wcfFileUploadUtil.browseForFile(this.fileTypes, this.maximumFileSize);
+			} else {
+				super.doRequest(requestParent, args, extraArgs);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is used when there are shortcut keys declared for this custom action.
+		-->				
+		<method name="doCustomService" args="e=null">
+			<![CDATA[	
+			var model = wcfModelUtil.findModelForView(this);
+			if (model != null) {
+				var oEditor = model.oEditor;
+				if(wcfViewUtil.containedInModalView(oEditor)) {
+					oEditor.doCustomService(this);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if business object editor is initialized and register shortcutKeys event
+		-->			
+		<method name="checkBusinessObjectEditor" args="e=null">
+			<![CDATA[
+			var model = wcfModelUtil.findModelForView(this);
+			if (model.modelInitialized && !this['checkShortcutKeysDel']) {
+				this.checkShortcutKeysDel = new lz.Delegate(this, "checkShortcutKeys");
+				this.checkShortcutKeysDel.register(model.oEditor, "onactive");
+				this.checkShortcutKeysDel.register(model.oEditor, "onenabledCustomServices");
+				this.checkBusinessObjectEditorDel.unregisterAll()
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+		
+			if (this["doCustomServiceDel"]) {
+				this.doCustomServiceDel.unregisterAll();
+				delete this.doCustomServiceDel;
+			}
+			if (this["checkBusinessObjectEditorDel"]) {
+				this.checkBusinessObjectEditorDel.unregisterAll();
+				delete this.checkBusinessObjectEditorDel;
+			}
+			if (this["checkShortcutKeysDel"]) {
+				this.checkShortcutKeysDel.unregisterAll();
+				delete this.checkShortcutKeysDel;
+			}
+			
+			if (this["handleCancelDel"]) {
+				this.handleCancelDel.unregisterAll();
+				delete this.handleCancelDel;
+			}
+			if (this["handleSelectDel"]) {
+				this.handleSelectDel.unregisterAll();
+				delete this.handleSelectDel;
+			}
+				
+			super.destroy();		
+		</method>
+
+		<!---
+			@keywords private
+			Method to register/unregister shortcut keys
+		-->			
+		<method name="checkShortcutKeys" args="e=null">
+			<![CDATA[
+			var model = wcfModelUtil.findModelForView(this);
+			if (model.oEditor.active && model.oEditor.enabledCustomServices != null && model.oEditor.enabledCustomServices.indexOf(this) != -1) {
+				this.registerShortcutKey();
+			} else {
+				this.unregisterShortcutKey();
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Registers the shortcut key
+		-->
+		<method name="registerShortcutKey">
+			<![CDATA[
+			if (!this.keysRegistered) {
+				this.keysRegistered = true;
+				lz.Keys.callOnKeyCombo(this.doCustomServiceDel, this.shortcutKeys);
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Unregisters the shortcut key
+		-->
+		<method name="unregisterShortcutKey">
+			<![CDATA[
+			if (this.keysRegistered) {
+				this.keysRegistered = false;
+				lz.Keys.removeKeyComboCall(this.doCustomServiceDel, this.shortcutKeys);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns true if this custom service is enabled for the specified
+			model object by evaluating the associated {@link wcfEnablementCondition} object.
+			In addition to the associated {@link wcfEnablementCondition} object, three conditions will also 
+			be checked to verify that this service is enabled:
+			<ol><li>Check that <code>readOnlyMode</code> is false if workspaces are enabled. 
+				<li>Verify that the user has access rights.
+				<li>Ensure that <code>changeControlModifiable</code> is not set to false.
+			</ol>
+			The associated {@link wcfEnablementCondition} object and all three of the above conditions must be true 
+			for the custom service to be enabled. 
+			
+			This method is only used to determine if this service is visible to the user.
+			It is not invoked from the {@link wcfCustomService#doCustomService} method.
+			
+			@param wcfModelObject o: the object on which you want to perform this custom service
+			@return boolean: true if the custom service is enabled
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var enabled = true;			
+			
+			if (enabled && o.model.oEditor.respectWorkspaceContext) {
+				var readOnlyModeContextValue = wcfContextUtil.findContextValue(null, "readOnlyMode");				
+				enabled = (readOnlyModeContextValue.value != "true");
+			}
+			
+			if (enabled && o.isContextReadOnly()) {
+				enabled = false;
+			}
+			
+			if (enabled) {	
+				enabled = o.hasAccessRight;
+			}
+			
+			if (enabled && o.changeControlModifiable != null && o.changeControlModifiable == "false") {	
+				enabled = false;
+			}
+			
+			if (enabled && o.objectVersionId != null && o.objectVersionId != "") {
+				enabled = false;
+			}
+			
+			if (enabled && this["enablementCondition"]) {
+				return this.enablementCondition.isEnabled(o);
+			}
+			
+			return enabled;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Register a delegate to be executed when the enablement condition changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerEnablementDelegate" args="o,del">
+			<![CDATA[
+			if (o.model.oEditor.respectWorkspaceContext) {
+				wcfContextUtil.findContextValue(null, "readOnlyMode", del);
+			}
+			del.register(o, "onhasAccessRight");
+			del.register(o, "onchangeControlModifiable");
+						
+			if (this["enablementCondition"]) {
+				this.enablementCondition.registerDelegate(o,del);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when this custom service completed successfully.
+			If you want to perform additional logic after the service has completed,
+			override this method.
+			
+			@param wcfModelObject requestParent: the object on which this custom service was performed
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var msg;
+				var messageType = "customServiceSuccessful" + "_" + this.displayName + "_" + requestParent.openGroupObject.objectDefinition.displayName;
+				var msgCount = 1 + wcfServiceTransactionUtil.getTransactionEventMessageCount(requestParent.transaction, messageType);
+				if (msgCount == 1) {
+					msg = foundationResources.replaceValues("customServiceSuccessful", [this.displayName, requestParent.openGroupObject.objectDefinition.displayName, requestParent.openGroupObject.objectDisplayName]);
+				}else{
+					msg = foundationResources.replaceValues("multiCustomServiceSuccessful", [this.displayName, msgCount, requestParent.openGroupObject.objectDefinition.displayName]);
+				}
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg); 
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			This method will be called when the {@link wcfFileUploadUtil#onfileCanceled} event is sent.
+		-->
+		<method name="handleCancel" args="e=null">
+			<![CDATA[
+				this.releaseFileUpload();			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method will be called when the {@link wcfFileUploadUtil#onfileSelected} event is sent.
+		-->
+		<method name="handleSelect" args="fileref=null">
+			<![CDATA[	
+				var msg = "";
+				if (fileref != null) {
+					msg = fileref.name;
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfCustomService handleSelect: " + msg);
+				if (fileref != null) {					
+					if (typeof(this["args"]) == "undefined" || this.args == null){
+						this.args = new Object();						
+					}
+					this.args[this.fileNameParameter] = fileref.name;
+					super.doRequest(this.requestParent, this.args, {startIndex:this.startIndex,fileref:fileref});
+				}
+				this.releaseFileUpload();
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method> 
+		
+		<!---
+			@keywords private
+			This method releases resources associated with the file upload. 
+		-->
+		<method name="releaseFileUpload">
+			this.requestParent = null;
+			this.args = null;
+			this.startIndex = null;
+			this.handleCancelDel.unregisterAll();
+			this.handleSelectDel.unregisterAll();
+		</method>
+	</class>	
+</library>

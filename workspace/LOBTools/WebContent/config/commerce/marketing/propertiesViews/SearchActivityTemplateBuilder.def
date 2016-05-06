@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for a {@link SearchActivityTemplate Marketing Search Activity Template}.
+	-->
+	<FlowElementProperties definitionName="mktGeneralSearchActivityTemplateProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${mktMarketingResources.searchActivityTemplateProperties}" hideHeaderWhenOnlyGroup="true" name="group" open="true">
+				<PropertyInputText helpText="${mktMarketingResources.help_activity_name}" promptText="${mktMarketingResources.objectName}" propertyName="name"/>
+				<PropertyInputMultiLineText promptText="${mktMarketingResources.description}" propertyName="description"/>
+				<PropertyStepper helpText="${mktMarketingResources.help_activity_priority}" maximumValue="1000" minimumValue="0" promptText="${mktMarketingResources.priority}" propertyName="priority"/>
+				<PropertyDateTimePicker promptText="${mktMarketingResources.startDate}" propertyName="startdate"/>
+				<PropertyDateTimePicker endOfDay="true" promptText="${mktMarketingResources.endDate}" propertyName="enddate"/>
+			</PropertyGroup>
+		</PropertyPane>
+	</FlowElementProperties>
+
+	<!---
+		For Search activity templates, this definition defines a palette in the Activity Builder containing the following elements:
+		<ul>
+			<li>Targets:
+				<ul>
+					<li>Customer Segment</li>
+					<li>Shopping Cart</li>
+					<li>Purchase History</li>
+					<li>Catalog Browsing Behavior</li>
+					<li>Online Behavior</li>
+					<li>External Site Referral</li>
+					<li>Social Commerce Participation</li>
+					<li>Day and Time</li>
+					<li>Search Criteria And Result</>
+				</ul>
+			</li>
+			<li>Actions:
+				<ul>
+					<li>Add To or Remove From Customer Segment</li>
+					<li>Order Search Result</li>
+					<li>Show At The Top</li>
+					<li>Add or Replace Search Criteria</li>
+				</ul>
+			</li>
+			<li>Branch</li>
+		</ul>
+	-->
+	<ActivityBuilder definitionName="mktSearchActivityTemplateBuilder" flowConnectorClass="mktWebActivityFlowConnector" generalPropertiesDefinitionName="mktGeneralSearchActivityTemplateProperties" package="mkt">
+		<Xml name="palette">
+			<Group helpLink="concepts/csbsearchtargets.htm" helpText="help_palette_targets" name="targets" resourceBundle="mktMarketingResources">
+				<Element objectType="customerSegmentIdList"/>
+				<Element objectType="shoppingCart"/>
+				<Element objectType="purchaseHistory"/>
+				<Element objectType="catalogBrowsingBehavior"/>
+				<Element objectType="onlineBehavior"/>
+				<Element objectType="externalSiteReferral"/>
+				<Element objectType="socialCommerceParticipation"/>
+				<Element objectType="time"/>
+				<Element objectType="searchCriteriaAndResultV7FEP6"/>
+			</Group>
+			<Group helpLink="concepts/csbsearchactions.htm" helpText="help_palette_actions" name="actions" resourceBundle="mktMarketingResources">
+				<Element objectType="addToRemoveFromCustomerSegment"/>
+				<Element objectType="orderSearchResultV7FEP6"/>
+				<Element objectType="specifyTopSearchResult"/>
+				<Element objectType="replaceOrAddSearchCriteriaV7FEP6"/>
+			</Group>
+			<Group helpLink="concepts/csbbranchvsexp.htm" helpText="help_palette_branching" name="branching" resourceBundle="mktMarketingResources">
+				<Element objectType="simpleBranch"/>
+				<Element objectType="branch"/>
+			</Group>
+		</Xml>
+	</ActivityBuilder>
+</Definitions>

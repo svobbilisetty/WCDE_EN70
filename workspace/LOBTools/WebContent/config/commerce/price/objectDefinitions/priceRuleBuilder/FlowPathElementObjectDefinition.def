@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for a path element for use within a price rule.
+		This object defines the following child elements:
+		<ul>
+			<li>{@link prcFlowElementCreateService}</li>
+			<li>{@link prcFlowElementUpdateService}</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>name</b>: Required string field with a maximum of 254 characters. This property is only defined when
+				{@link prcFlowElementObjectDefinition#isTopElement} is <code>false</code>.</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition baseDefinitionName="prcBaseFlowPathElementObject" definitionName="prcFlowPathElementObject" elemTemplateType="Path" flowIcon="priceRuleIcon" headerIcon="priceRuleHeaderIcon" objectType="path" package="prc">
+	 	
+		<CreateService baseDefinitionName="prcFlowElementCreateService"/>
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService"/>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.objectName}" maximumSize="254" propertyName="name" required="true" trim="true">
+			<EnablementCondition checkObjectDefinition="true" conditionId="nameCondition" enablementValue="false" propertyName="isTopElement"/>
+				<PropertyValue displayName="${prcPriceResources.pathName_nonDKPriceRulePath}" value="nonDKPriceRulePath">
+					<EnablementCondition conditionId="dynamicKitBranchCondition" parentProperty="true" resolvePrimaryParent="false"
+						checkObjectDefinition="true" propertyName="dynamicKitBranch"/>
+				</PropertyValue>
+				<PropertyValue displayName="${prcPriceResources.pathName_dKPriceRulePath}" value="dKPriceRulePath">
+					<EnablementCondition conditionId="dynamicKitBranchCondition" parentProperty="true" resolvePrimaryParent="false"
+						checkObjectDefinition="true" propertyName="dynamicKitBranch"/>
+				</PropertyValue>
+		</PropertyDefinition>
+	 </FlowElementObjectDefinition>
+	
+	<!---
+		<p>This is the base flow element object definition for a path element for use within a price rule.</p>
+	-->
+	<ChildObjectDefinition definitionName="prcBaseFlowPathElementObject" displayName="${prcPriceResources.branchPath}" isBaseDefinition="true">
+		
+		<Xml name="template">
+			<elemTemplateName>path</elemTemplateName>
+		</Xml>
+		
+	
+		<FlowElementObjectDefinition baseDefinitionName="prcPriceListElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcRoundingElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcCalculatePriceElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcExternalPriceRuleElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcCatalogConditionElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcSimpleBranchElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcCompareConditionElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcNestedPriceRuleElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcCoordinatorBranchElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcDynamicKitBranchElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcPriceListConditionElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcCustomerConditionElementObject" package="prc"/>
+		<FlowElementObjectDefinition baseDefinitionName="prcDateConditionElementObject" package="prc"/>
+	</ChildObjectDefinition>
+	
+</Definitions>

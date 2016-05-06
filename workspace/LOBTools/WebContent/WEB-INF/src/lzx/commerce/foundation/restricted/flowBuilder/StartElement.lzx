@@ -1,0 +1,63 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!--- @keywords private -->
+	<class name="wcfStartElement" extends="wcfElement">
+		<attribute name="iconWidth" value="32"/>
+		<attribute name="iconHeight" value="32"/>
+		
+		<method name="setModelObject" args="newObject">
+			if(this.o != newObject) {
+				this.o = newObject;
+				if(this.o) {
+					this.o.validate();
+				}
+				this.updateComplete();
+			}
+		</method>
+	
+		<view name="MainView" y="-10">
+			<view name="iconcontentview">
+				<view name="iconcontent">
+					<wcfFlowElementContextMenu name="menu" flowElement="${classroot}"/>
+					<handler name="oninit">
+						this.menu.addView(this.wrapper.iconview.startIcon);
+					</handler>
+					<handler name="onclick">
+						classroot.loadProperties();
+					</handler>
+					<handler name="onmouseover">
+						// only animate if we're not the current selection
+						if(!classroot.selected) {
+							classroot.setIconBackground(classroot.hoverBorderColour, classroot.hoverFillColour);
+						}
+					</handler>
+					<handler name="onmouseout">
+						if(!classroot.selected) {
+							classroot.setIconBackground(null, null);
+						}
+					</handler>
+					<view name="wrapper" width="${classroot.iconWidth + 6}" height="${classroot.iconHeight + 6}">
+						<view name="iconview" width="${parent.width - 2}" height="${parent.height - 2}" x="1" y="1">
+							<view name="startIcon" align="center" valign="middle" resource="wcfFlowBuilderStart"/>
+						</view>
+					</view>
+					<view resource="wcfFlowElementIncomplete" visible="${!classroot.complete}"/>
+					<simplelayout axis="y" spacing="6"/>
+				</view>
+			</view>
+		</view>
+	</class>
+</library>

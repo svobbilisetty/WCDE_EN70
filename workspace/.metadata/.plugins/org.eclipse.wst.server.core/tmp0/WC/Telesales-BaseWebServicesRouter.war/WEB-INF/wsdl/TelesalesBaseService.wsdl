@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://baseif.server.telesales.commerce.ibm.com" xmlns:impl="http://baseif.server.telesales.commerce.ibm.com" xmlns:intf="http://baseif.server.telesales.commerce.ibm.com" xmlns:tns2="http://contextservice.component.commerce.ibm.com" xmlns:tns3="http://exception.component.commerce.ibm.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+ <wsdl:types>
+  <schema elementFormDefault="qualified" targetNamespace="http://contextservice.component.commerce.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:impl="http://baseif.server.telesales.commerce.ibm.com" xmlns:intf="http://baseif.server.telesales.commerce.ibm.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <complexType name="ActivityToken">
+    <sequence>
+     <element name="activityGUID" nillable="true" type="tns2:ActivityGUID"/>
+     <element name="signature" nillable="true" type="xsd:string"/>
+     <element name="temporary" type="xsd:boolean"/>
+     <element name="temporaryLock" type="xsd:boolean"/>
+     <element name="cloneCounter" type="xsd:int"/>
+    </sequence>
+   </complexType>
+   <complexType name="ActivityGUID">
+    <sequence>
+     <element name="GUID" nillable="true" type="xsd:long"/>
+    </sequence>
+   </complexType>
+  </schema>
+  <schema elementFormDefault="qualified" targetNamespace="http://baseif.server.telesales.commerce.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:impl="http://baseif.server.telesales.commerce.ibm.com" xmlns:intf="http://baseif.server.telesales.commerce.ibm.com" xmlns:tns2="http://contextservice.component.commerce.ibm.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://contextservice.component.commerce.ibm.com"/>
+   <element name="sendVersioningInfo">
+    <complexType>
+     <sequence>
+      <element name="cToken" nillable="true" type="tns2:ActivityToken"/>
+      <element name="versionString" nillable="true" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="sendVersioningInfoResponse">
+    <complexType>
+     <sequence>
+      <element name="sendVersioningInfoReturn" type="xsd:boolean"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getSSOToken">
+    <complexType>
+     <sequence>
+      <element name="cToken" nillable="true" type="tns2:ActivityToken"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="getSSOTokenResponse">
+    <complexType>
+     <sequence>
+      <element name="getSSOTokenReturn" nillable="true" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="sendBodItem">
+    <complexType>
+     <sequence>
+      <element name="cToken" nillable="true" type="tns2:ActivityToken"/>
+      <element name="reqBod" nillable="true" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="sendBodItemResponse">
+    <complexType>
+     <sequence>
+      <element name="sendBodItemReturn" nillable="true" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+  </schema>
+  <schema elementFormDefault="qualified" targetNamespace="http://exception.component.commerce.ibm.com" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:impl="http://baseif.server.telesales.commerce.ibm.com" xmlns:intf="http://baseif.server.telesales.commerce.ibm.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <complexType name="ServiceException">
+    <sequence>
+     <element name="correlationIdentifier" nillable="true" type="xsd:string"/>
+     <element name="reasonCode" type="xsd:long"/>
+     <element name="message" nillable="true" type="xsd:string"/>
+     <element name="localizedMessage" nillable="true" type="xsd:string"/>
+     <element maxOccurs="unbounded" name="symptomData" nillable="true" type="xsd:string"/>
+     <element maxOccurs="unbounded" name="serviceParameterErrors" nillable="true" type="tns3:ServiceParameterError"/>
+     <element name="recoverable" type="xsd:boolean"/>
+    </sequence>
+   </complexType>
+   <complexType name="ServiceParameterError">
+    <sequence>
+     <element name="localizedMessage" nillable="true" type="xsd:string"/>
+     <element name="parameterIdentifier" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <element name="ServiceException" nillable="true" type="tns3:ServiceException"/>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="getSSOTokenResponse">
+
+      <wsdl:part element="intf:getSSOTokenResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="sendVersioningInfoRequest">
+
+      <wsdl:part element="intf:sendVersioningInfo" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ServiceException">
+
+      <wsdl:part element="tns3:ServiceException" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="sendVersioningInfoResponse">
+
+      <wsdl:part element="intf:sendVersioningInfoResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="getSSOTokenRequest">
+
+      <wsdl:part element="intf:getSSOToken" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="sendBodItemRequest">
+
+      <wsdl:part element="intf:sendBodItem" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="sendBodItemResponse">
+
+      <wsdl:part element="intf:sendBodItemResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:portType name="TelesalesBaseService">
+
+      <wsdl:operation name="sendVersioningInfo">
+
+         <wsdl:input message="intf:sendVersioningInfoRequest" name="sendVersioningInfoRequest"/>
+
+         <wsdl:output message="intf:sendVersioningInfoResponse" name="sendVersioningInfoResponse"/>
+
+         <wsdl:fault message="intf:ServiceException" name="ServiceException"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getSSOToken">
+
+         <wsdl:input message="intf:getSSOTokenRequest" name="getSSOTokenRequest"/>
+
+         <wsdl:output message="intf:getSSOTokenResponse" name="getSSOTokenResponse"/>
+
+         <wsdl:fault message="intf:ServiceException" name="ServiceException"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="sendBodItem">
+
+         <wsdl:input message="intf:sendBodItemRequest" name="sendBodItemRequest"/>
+
+         <wsdl:output message="intf:sendBodItemResponse" name="sendBodItemResponse"/>
+
+         <wsdl:fault message="intf:ServiceException" name="ServiceException"/>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="TelesalesBaseServiceSoapBinding" type="intf:TelesalesBaseService">
+
+      <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="sendVersioningInfo">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="sendVersioningInfoRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="sendVersioningInfoResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceException">
+
+            <wsdlsoap:fault name="ServiceException" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getSSOToken">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="getSSOTokenRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="getSSOTokenResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceException">
+
+            <wsdlsoap:fault name="ServiceException" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="sendBodItem">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="sendBodItemRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="sendBodItemResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceException">
+
+            <wsdlsoap:fault name="ServiceException" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="TelesalesBaseServiceService">
+
+      <wsdl:port binding="intf:TelesalesBaseServiceSoapBinding" name="TelesalesBaseService">
+
+         <wsdlsoap:address location="http://localhost:80/Telesales-BaseWebServicesRouter/services/TelesalesBaseService"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>

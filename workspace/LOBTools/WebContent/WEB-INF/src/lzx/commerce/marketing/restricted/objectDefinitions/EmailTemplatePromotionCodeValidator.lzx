@@ -1,0 +1,61 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!-- 
+		Validator for {@link mktBaseEmailTemplatePrimaryObjectDefinition}. This ensures that the
+		the selected promotion is an active promotion with populated unique promotion codes.
+	 -->
+
+	<class name="mktEmailTemplatePromotionCodeValidator" extends="wcfValidator">
+		<!--- 
+			The object path that describes required child promotion objects. 
+		 -->
+		<attribute name="objectPathPromotion" value="Promotions/PromotionGroup" type="string"/>
+		
+		<!--- 
+			The error message to be added to an object when the object selected is not an active promotion with populated unique promotion codes.
+		-->
+		<attribute name="errorNeedsPopulatedPromotionCodes" value="${mktMarketingResources.needsPopulatedPromotionCodes.string}" type="string"/>
+		
+		<!--- 
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			var childObjectsPromotion = o.getObjects(this.objectPathPromotion);
+			
+			if (childObjectsPromotion.length>= 1) {
+				
+				var promotion = childObjectsPromotion[0];
+				var promotionStatus = promotion.getPropertyValue("status");
+				var promotionCodeCreation = promotion.getPropertyValue("promotionCodeCreation");
+				var promotionCodePopulationStatus = promotion.getPropertyValue("promotionCodePopulationStatus");
+				
+				// The promotion must be active, generated or imported code, and successfully populated 
+				if (! ( 
+						promotionStatus == "Active" &&
+				        (promotionCodeCreation == "GeneratedCode" || promotionCodeCreation == "ImportedCode") && 
+				        (promotionCodePopulationStatus == "Populated" || promotionCodePopulationStatus == "PopulatedWithWarnings")
+				       )
+					) {
+					o.addValidationError(this, this.errorNeedsPopulatedPromotionCodes);
+					return;
+				}
+			}
+			
+			o.clearValidationError(this);
+			]]>
+		</method>
+	</class>
+</library>

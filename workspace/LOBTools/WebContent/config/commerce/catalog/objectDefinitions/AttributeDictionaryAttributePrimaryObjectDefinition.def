@@ -1,0 +1,867 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		The base object definition for Attribute Dictionary Attributes.
+	-->
+	<PrimaryObjectDefinition
+		definitionName="catBaseAttributeDictionaryAttributePrimaryObjectDefinition"		
+		displayNameProperty="attributeCode"
+		idProperty="attrId"
+		isBaseDefinition="true"
+		objectGroups="AttributeDictionaryAttributes"
+		utilitiesListDefinitionName="catUtilitiesAttributeValueBrowseGrid"
+		propertiesDefinitionName="catAttributeDictionaryAttributePropertiesPage"
+		searchType="FindAttributes"
+		helpLink="tasks/tpnuseattribdic.htm"
+		writeUsage="IBM_ManageAttributeDictionary">
+		
+		<!---
+        	This property definition represents the code for an attribute.
+        	The code is a unique identifier for the attribute. 
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeCodePrompt}" maximumSize="254" propertyName="attributeCode" required="true" type="string"/>
+        
+        <!---
+        	This property definition represents the data type for an attribute.
+        	Out of the box the supported data types are:
+        	String (Text), Integer (Whole Number) and Float (Decimal Number).
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeDataType_ColumnHeader}" propertyName="attrDataType" required="true">
+            <PropertyValue displayName="${catalogResources.attributeDataTypeString}" value="String"/>
+            <PropertyValue displayName="${catalogResources.attributeDataTypeInteger}" value="Integer"/>
+            <PropertyValue displayName="${catalogResources.attributeDataTypeFloat}" value="Float"/>
+        </PropertyDefinition>
+        
+        <!---
+        	This property definition represents the attribute is displayable.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeDisplayable}" propertyName="displayable">
+            <PropertyValue displayName="${catalogResources.displayable}" value="true"/>
+            <PropertyValue displayName="${catalogResources.notDisplayable}" value="false"/>
+        </PropertyDefinition>        
+		
+        <!---
+        	This property definition represents the attribute is searchable.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeSearchable}" propertyName="searchable">
+            <PropertyValue displayName="${catalogResources.searchable}" value="true"/>
+            <PropertyValue displayName="${catalogResources.notSearchable}" value="false"/>
+        </PropertyDefinition>
+        
+        <!---
+        	This property definition represents the attribute is comparable.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeComparable}" propertyName="comparable">
+            <PropertyValue displayName="${catalogResources.comparable}" value="true"/>
+            <PropertyValue displayName="${catalogResources.notComparable}" value="false"/>
+        </PropertyDefinition>
+
+        <!---
+        	This property definition represents the attribute is merchandisable.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeMerchandisable}" propertyName="merchandisable">
+            <PropertyValue displayName="${catalogResources.merchandisable}" value="true"/>
+            <PropertyValue displayName="${catalogResources.notMerchandisable}" value="false"/>
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>          
+        </PropertyDefinition>
+        
+        <!---
+        	This property definition represents the attribute is facetable.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeFacetable}" propertyName="facetable">
+            <PropertyValue displayName="${catalogResources.facetable}" value="true"/>
+            <PropertyValue displayName="${catalogResources.notFacetable}" value="false"/>
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>          
+        </PropertyDefinition>
+
+        <!---
+        	This property definition represents the attribute is facetable - included in keyword search
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeFacetableIncludeInKeywordSearch}" propertyName="xfacet_includeInKeywordSearch">
+            <PropertyValue displayName="${catalogResources.includeInKeywordSearch}" value="true" isDefault="true"/>
+            <PropertyValue displayName="${catalogResources.notIncludeInKeywordSearch}" value="false"/>
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        </PropertyDefinition>
+  		
+  		<!---
+        	This property definition represents the attribute is facetable - allow multiple value selection
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeFacetableAllowMultipleValueSelection}" propertyName="xfacet_allowMultipleValueSelection">
+            <PropertyValue displayName="${catalogResources.allowMultipleValueSelection}" value="true"/>
+            <PropertyValue displayName="${catalogResources.notAllowMultipleValueSelection}" value="false" isDefault="true"/>
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        </PropertyDefinition>
+        
+  		<!---
+        	This property definition represents the attribute is facetable - display zero count values
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeFacetableDisplayZeroCountValues}" propertyName="xfacet_displayZeroCountValues">
+            <PropertyValue displayName="${catalogResources.displayZeroCountValues}" value="true"/>
+            <PropertyValue displayName="${catalogResources.notDisplayZeroCountValues}" value="false" isDefault="true"/>
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        </PropertyDefinition>        
+        
+        <!---
+        	This property definition represents the attribute is facetable - maximum values to display 
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeFacetableMaximumValuesToDisplay}" 
+        	propertyName="xfacet_maximumValuesToDisplay"
+        	maxValue="2147483647" minValue="1"
+        	type="integer">
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        </PropertyDefinition>
+        
+        <!---
+        	This property definition represents the attribute is facetable - maximum values to display 
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeFacetableMaximumValuesToDisplay}" 
+        	propertyName="xfacet_noMaximum">
+			<PropertyValue displayName="${catalogResources.attributeFacetableMaximumValuesToDisplay_NoMax}" value="true"/>
+            <PropertyValue displayName="${catalogResources.attributeFacetableMaximumValuesToDisplay_Max}" value="false" isDefault="true"/>     	
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        </PropertyDefinition>
+        
+        <!---
+        	This property definition represents the attribute is facetable - Ordering of values 
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeFacetableValueOrder}" 
+        	propertyName="xfacet_valueOrder">
+        	<PropertyValue displayName="${catalogResources.displayOrder_Count}" value="Count" isDefault="true"/>
+            <PropertyValue displayName="${catalogResources.displayOrder_Alphanumeric}" value="AlphaNumeric"/>
+            <PropertyValue displayName="${catalogResources.displayOrder_AttributeValuesSequence}" value="AttributeValuesSequence"/>
+            <EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        </PropertyDefinition>
+        
+  		<!---
+  			Property Definition for the field1 property of an attribute.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributePropertiesField1_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xdata_Field1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributePropertiesField2_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xdata_Field2" type="number"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributePropertiesField3_DisplayName}" maximumSize="254" propertyName="xdata_Field3" type="string"/>
+		
+		<!---
+			Object filter used to select the allowed value child objects to be displayed in the utilities view details grid when
+			an attribute is selected in the utilities view.
+		-->
+		<ObjectTypeFilter
+			filterType="utilitiesViewAttributeFilter"
+			objectTypes="AttributeDictionaryAttributeFloatValue,AttributeDictionaryAttributeIntegerValue,AttributeDictionaryAttributeStringValue,InheritedAttributeDictionaryAttributeStringValue,InheritedAttributeDictionaryAttributeFloatValue,InheritedAttributeDictionaryAttributeIntegerValue">
+		</ObjectTypeFilter>
+
+		<!--- Update service. -->
+        <UpdateService url="/cmc/UpdateAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrId"  propertyName="attrId"/>
+        	<ServiceParam  name="facetable"  propertyName="facetable" optional="false">
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+        	</ServiceParam>
+        	<ServiceParam name="xfacet_includeInKeywordSearch"  propertyName="xfacet_includeInKeywordSearch" optional="false">
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+        	</ServiceParam>
+        	<ServiceParam name="xfacet_maximumValuesToDisplay"  propertyName="xfacet_maximumValuesToDisplay" optional="false">
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+        	</ServiceParam>
+        	<ServiceParam name="xfacet_displayZeroCountValues"  propertyName="xfacet_displayZeroCountValues" optional="false">
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+        	</ServiceParam>
+        	<ServiceParam name="xfacet_valueOrder"  propertyName="xfacet_valueOrder" optional="false">
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+        	</ServiceParam>
+        	<ServiceParam name="xfacet_allowMultipleValueSelection" 
+        		propertyName="xfacet_allowMultipleValueSelection" 
+        		optional="false">
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+        	</ServiceParam>
+        	<ServiceParam name="xfacet_noMaximum" 
+        		propertyName="xfacet_noMaximum" 
+        		optional="false">
+				<EnablementCondition conditionId="facetableTypeCondition" enablementValue="true" propertyName="facetable"/>
+	      	</ServiceParam>
+        </UpdateService>
+        
+		<!---
+			Retrieves the description child object {@link catAttributeDictionaryAttributeDescription}.
+		-->
+		<GetChildrenService objectTypes="AttributeDictionaryAttributeDescription" url="/cmc/GetAttributeDictionaryAttributeChildren-Description">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="attrId"  propertyName="attrId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+		
+		<!---
+			Refresh Service to retrieve the details for this attribute.
+		-->
+		<RefreshService url="/cmc/GetAttributeDictionaryAttribute">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="attrId"  propertyName="attrId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</RefreshService>
+        <!---
+			Service defined to retrieve the {@link AttributeFolder}, {@link InheritedAttributeFolder} folders that are referenced to the attribute.
+		-->
+		<GetReferencesService primaryObjectTypes="AttributeFolder,InheritedAttributeFolder" referenceObjectTypes="AttributeFolderItemReference,AttributeFolderInheritedItemReference,InheritedAttributeFolderInheritedItemReference" url="/cmc/GetFolderReferences">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="referenceId" propertyName="attrId"/>
+			<ServiceParam name="objectStoreId" parameterName="objectStoreId" propertyName="objectStoreId" />
+			<ServiceParam name="folderObjectType" value="AttributeFolder"/>
+			<ServiceParam name="folderItemType" value="AttributeDictionaryAttributeType"/>
+		</GetReferencesService>
+		
+		
+		<!---
+			The child object for the description properties of the attribute.
+		 -->
+        <ChildObjectDefinition baseDefinitionName="catAttributeDictionaryAttributeDescription" savePriority="1"/>
+        
+        <!---
+        	Validate that at most one attribute value is set as the default.
+         -->
+        <AttributeDictionaryAttributeValueHasOneDefaultValueValidator package="cat"/>
+        
+		<Xml name="template">
+			<displayable>true</displayable>
+            <searchable>false</searchable>
+            <comparable>false</comparable>
+            <facetable>false</facetable>
+            <merchandisable>false</merchandisable>
+            <xfacet_noMaximum>false</xfacet_noMaximum>
+            <xfacet_maximumValuesToDisplay>20</xfacet_maximumValuesToDisplay>
+        </Xml>
+        
+	</PrimaryObjectDefinition>
+	
+	<!---
+		This definition represents the description of an attribute dictionary attribute.
+	-->
+	<ChildObjectDefinition
+		definitionName="catAttributeDictionaryAttributeDescription"
+		idProperty="languageId"
+		languageSensitive="true"
+		objectType="AttributeDictionaryAttributeDescription"
+		releaseWhenClosed="false">
+        
+        <!--- Create service. -->
+        <CreateService url="/cmc/CreateAttributeDictionaryAttributeDescription">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrId"  propertyName="attrId" parentProperty="true"/>
+        	<ServiceParam name="languageId" propertyName="languageId"/>
+        </CreateService>
+
+        <!--- Update service. -->
+        <UpdateService url="/cmc/UpdateAttributeDictionaryAttributeDescription">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrId"  propertyName="attrId" parentProperty="true"/>
+        	<ServiceParam name="languageId" propertyName="languageId"/>
+        </UpdateService>
+       
+        <!---
+        	This property definition represents the unit of measure property for an attribute value.
+        -->                
+        <PropertyDefinition displayName="${catalogResources.attributeValueUnitOfMeasure}" propertyName="xdescdata_UnitOfMeasure">
+        		<PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Day}" value="DAY"/>
+        		<PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Hour}" value="HUR"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Kilogram}" value="KGM"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_milligram}" value="MGM"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Month}" value="MON"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_1_Unit}" value="C62"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Week}" value="WEE"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Year}" value="ANN"/>
+        </PropertyDefinition>
+		
+		<!---
+        	This property definition represents the display name for an attribute.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeDisplayNamePrompt}" maximumSize="254" propertyName="attrName" required="true" type="string"/>
+       
+        <!--- 
+        	This property definition represents the description for an attribute.
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeDescriptionPrompt}" maximumSize="254" propertyName="attrDescription" type="string"/>
+        
+        <!--- 
+        	This property definition represents the footnote for an attribute.	
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeFootnotePrompt}" maximumSize="64" propertyName="xdescdata_Footnote" type="string"/>
+        
+        <!---
+        	This property definition represents the field1 property for an attribute.
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeField1Prompt}" maximumSize="254" propertyName="xdescdata_Field1" type="string"/>
+        
+        <!--- 
+        	This property definition represents the display group name property for an attribute.	
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeGroupNamePrompt}" maximumSize="64" propertyName="xdescdata_DisplayGroupName" type="string"/>
+        
+        <!---
+        	This property definition represents the additional description property for an attribute.
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeSecondaryDescriptionPrompt}" maximumSize="254" propertyName="xdescdata_SecondaryDescription" type="string"/>
+	</ChildObjectDefinition>
+	
+	<!---
+		The object definition for the base definition for an Attribute Dictionary Attribute 
+		with assigned values.
+	-->
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryAttributePrimaryObjectDefinition"
+		definitionName="catBaseAttributeDictionaryAttributeWithAssignedValuesPrimaryObjectDefinition"
+		isBaseDefinition="true"
+		objectGroups="AttributeDictionaryAttributes,AttributeDictionaryAttributeWithAssignedValuesAlias"
+		newDisplayName="${catalogResources.attributeDictionaryAttributeAssignedValuesNew}"
+		newObjectMenuItemText="${catalogResources.contextMenuNewAttibuteDictionaryAttributeAssignedValues}">
+    </PrimaryObjectDefinition>
+    
+    <!---
+		The object definition for the base definition for an Attribute Dictionary Attribute 
+		with allowed values.
+	-->
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryAttributePrimaryObjectDefinition"
+		definitionName="catBaseAttributeDictionaryAttributeWithAllowedValuesPrimaryObjectDefinition"
+		isBaseDefinition="true"
+		objectGroups="AttributeDictionaryAttributes,AttributeDictionaryAttributeWithAllowedValuesAlias"
+		newDisplayName="${catalogResources.attributeDictionaryAttributeAllowedValuesNew}"
+		newObjectMenuItemText="${catalogResources.contextMenuNewAttibuteDictionaryAttributeAllowedValues}">
+		
+        <!---
+        	The allowed values for the attribute.
+         -->
+        <ChildObjectDefinition baseDefinitionName="catAttributeDictionaryAttributeFloatValue">
+        	<EnablementOrCondition baseDefinitionName="catStoreTypeNotStorefrontAssetStore"/>
+        </ChildObjectDefinition>
+        <ChildObjectDefinition baseDefinitionName="catAttributeDictionaryAttributeIntegerValue">
+        	<EnablementOrCondition baseDefinitionName="catStoreTypeNotStorefrontAssetStore"/>
+        </ChildObjectDefinition>
+        <ChildObjectDefinition baseDefinitionName="catAttributeDictionaryAttributeStringValue">
+        	<EnablementOrCondition baseDefinitionName="catStoreTypeNotStorefrontAssetStore"/>
+        </ChildObjectDefinition>
+		
+		<!---
+			Retrieves the allowed values child objects
+			{@link catAttributeDictionaryAttributeFloatValue},
+			{@link catAttributeDictionaryAttributeIntegerValue},
+			{@link catAttributeDictionaryAttributeStringValue},
+			{@link catInheritedAttributeDictionaryAttributeStringValue},
+			{@link catInheritedAttributeDictionaryAttributeFloatValue} and
+			{@link catInheritedAttributeDictionaryAttributeStringValue}.
+		-->
+		<GetChildrenService objectTypes="AttributeDictionaryAttributeFloatValue,AttributeDictionaryAttributeIntegerValue,AttributeDictionaryAttributeStringValue,InheritedAttributeDictionaryAttributeStringValue,InheritedAttributeDictionaryAttributeFloatValue,InheritedAttributeDictionaryAttributeIntegerValue"
+			url="/cmc/GetAttributeDictionaryAttributeChildren-AllowedValues">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="attrId"  propertyName="attrId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+		
+    </PrimaryObjectDefinition>
+    
+    <!---
+		The object definition for an Attribute Dictionary Attribute	with assigned values.
+	-->
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryAttributeWithAssignedValuesPrimaryObjectDefinition"
+		definitionName="AttributeDictionaryAttributeWithAssignedValues"
+		headerIcon="attributeDictionaryAttributeWithAssignedValuesHeaderIcon"
+		displayName="${catalogResources.attributeDictionaryAttributeAssignedValues}"
+		icon="attributeDictionaryAttributeWithAssignedValuesIcon"
+		objectType="AttributeDictionaryAttributeWithAssignedValues"
+		objectGroups="AttributeDictionaryAttributes,AttributeDictionaryAttributeWithAssignedValuesAlias">
+		
+		<!--- Condition to disable the object creation in certain store types. -->
+		<EnablementAndCondition>
+			<EnablementOrCondition baseDefinitionName="catStoreTypeCatalogObjectCreationRestriction"/>
+			<EnablementCondition conditionId="attributeDictionaryIsEnabledCondition" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled"/>
+		</EnablementAndCondition>
+		<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreateAttributeDictionaryAttribute">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="attributeDictionaryId" parameterName="attrdictId"/>
+			<ServiceParam name="attrType" value="AssignedValues"/>
+		</CreateService>
+		<DeleteService url="/cmc/DeleteAttributeDictionaryAttribute">
+			<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrId"  propertyName="attrId"/>
+		</DeleteService>
+		
+    </PrimaryObjectDefinition>
+    
+    <!---
+		The object definition for an inherited Attribute Dictionary Attribute with assigned values.
+	-->
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryAttributeWithAssignedValuesPrimaryObjectDefinition"
+		definitionName="InheritedAttributeDictionaryAttributeWithAssignedValues"
+		headerIcon="inheritedAttributeDictionaryAttributeWithAssignedValuesHeaderIcon"
+		displayName="${catalogResources.inheritedAttributeDictionaryAttributeAssignedValues}"
+		icon="inheritedAttributeDictionaryAttributeWithAssignedValuesIcon"
+		objectType="InheritedAttributeDictionaryAttributeWithAssignedValues"
+		objectGroups="AttributeDictionaryAttributes,AttributeDictionaryAttributeWithAssignedValuesAlias">
+    </PrimaryObjectDefinition>
+    
+    <!---
+		The object definition for an Attribute Dictionary Attribute with allowed values.
+	-->
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryAttributeWithAllowedValuesPrimaryObjectDefinition"
+		definitionName="AttributeDictionaryAttributeWithAllowedValues"
+		headerIcon="attributeDictionaryAttributeWithAllowedValuesHeaderIcon"
+		displayName="${catalogResources.attributeDictionaryAttributeAllowedValues}"
+		icon="attributeDictionaryAttributeWithAllowedValuesIcon"
+		objectType="AttributeDictionaryAttributeWithAllowedValues"
+		objectGroups="AttributeDictionaryAttributes,AttributeDictionaryAttributeWithAllowedValuesAlias">
+		
+		<!--- Condition to disable the object creation in certain store types. -->
+		<EnablementAndCondition>
+			<EnablementOrCondition baseDefinitionName="catStoreTypeCatalogObjectCreationRestriction"/>
+			<EnablementCondition conditionId="attributeDictionaryIsEnabledCondition" contextName="attributeDictionaryEnabledForStore" enablementValue="enabled"/>
+		</EnablementAndCondition>
+		
+		<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreateAttributeDictionaryAttribute">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="attributeDictionaryId" parameterName="attrdictId"/>
+			<ServiceParam name="attrType" value="AllowedValues"/>
+		</CreateService>
+		<DeleteService url="/cmc/DeleteAttributeDictionaryAttribute">
+			<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrId"  propertyName="attrId"/>
+		</DeleteService>
+		
+    </PrimaryObjectDefinition>
+    
+    <!---
+		The object definition for an inherited Attribute Dictionary Attribute with allowed values.
+	-->
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryAttributeWithAllowedValuesPrimaryObjectDefinition"
+		definitionName="InheritedAttributeDictionaryAttributeWithAllowedValues"
+		headerIcon="inheritedAttributeDictionaryAttributeWithAllowedValuesHeaderIcon"
+		displayName="${catalogResources.inheritedAttributeDictionaryAttributeAllowedValues}"
+		icon="inheritedAttributeDictionaryAttributeWithAllowedValuesIcon"
+		objectType="InheritedAttributeDictionaryAttributeWithAllowedValues"
+		objectGroups="AttributeDictionaryAttributes,AttributeDictionaryAttributeWithAllowedValuesAlias">
+		
+		<!---
+        	The allowed values for the attribute.
+         -->
+        <ChildObjectDefinition baseDefinitionName="catInheritedAttributeDictionaryAttributeFloatValue"/>
+        <ChildObjectDefinition baseDefinitionName="catInheritedAttributeDictionaryAttributeIntegerValue"/>
+        <ChildObjectDefinition baseDefinitionName="catInheritedAttributeDictionaryAttributeStringValue"/>
+        
+    </PrimaryObjectDefinition>
+    
+    <!---
+		Child object definition for the value of an attribute dictionary attribute.
+	-->		
+    <ChildObjectDefinition
+	    definitionName="catBaseAttributeDictionaryAttributeValue"
+	    displayNameProperty="attrValId"
+	    idProperty="attrValId"
+	    isBaseDefinition="true"
+	    newDisplayName="${catalogResources.attributeValuePromptNew}"
+	    objectGroups="AttributeDictionaryAttributeValueAlias"
+	    releaseWhenClosed="false">
+        
+		<!---
+        	This property definition represents the unique code for an attribute value.
+        	It is generated by the server based on the attribute value.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeCodePrompt}" maximumSize="254" propertyName="xvaldata_AttributeValueIdentifier" type="string" serverManaged="true" copyProtected="true" send="false"/>
+        
+        <!---
+        	This property definition indicates if this is a default value.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeValueUsage}" propertyName="default" forceParentValidation="true">
+        	<PropertyValue displayName="${catalogResources.defaultValue}" value="true"/>
+        	<PropertyValue displayName="${catalogResources.notDefaultValue}" value="false"/>
+        </PropertyDefinition>
+  		
+  		<!---
+  			Property Definition for the field1 property of an attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValuePropertiesField1_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xvaldata_AttributeValueField1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute value.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValuePropertiesField2_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xvaldata_AttributeValueField2" type="number"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute value.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValuePropertiesField3_DisplayName}" maximumSize="254" propertyName="xvaldata_AttributeValueField3" type="string"/>
+		
+	    <!--- Create service. -->
+        <CreateService sendDefaultLanguageProperties="true" url="/cmc/CreateAttributeDictionaryAttributeAllowedValue">
+        	<ServiceParam name="defaultLanguageId" parameterName="allowedValueLanguageId"/>
+        	<ServiceParam name="storeId">
+        		<EnablementOrCondition negate="true">
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedAttributeDictionaryAttributeStringValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedAttributeDictionaryAttributeIntegerValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition3" enablementValue="InheritedAttributeDictionaryAttributeFloatValue" propertyName="objectType"/>			
+        		</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedAttributeDictionaryAttributeStringValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedAttributeDictionaryAttributeIntegerValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition3" enablementValue="InheritedAttributeDictionaryAttributeFloatValue" propertyName="objectType"/>			
+        		</EnablementOrCondition>
+			</ServiceParam>
+        	<ServiceParam name="attrDictAttrId" parentProperty="true" propertyName="attrId"/>
+        	<ServiceParam name="allowedAttrVal" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value"/>
+        	
+        </CreateService>
+
+        <!--- Update service. -->
+        <UpdateService sendDefaultLanguageProperties="true" url="/cmc/UpdateAttributeDictionaryAttributeAllowedValue">
+        	<ServiceParam name="defaultLanguageId" parameterName="allowedValueLanguageId"/>
+        	<ServiceParam name="storeId">
+        		<EnablementOrCondition negate="true">
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedAttributeDictionaryAttributeStringValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedAttributeDictionaryAttributeIntegerValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition3" enablementValue="InheritedAttributeDictionaryAttributeFloatValue" propertyName="objectType"/>			
+        		</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedAttributeDictionaryAttributeStringValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedAttributeDictionaryAttributeIntegerValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition3" enablementValue="InheritedAttributeDictionaryAttributeFloatValue" propertyName="objectType"/>			
+        		</EnablementOrCondition>
+			</ServiceParam>
+        	<ServiceParam name="attrDictAttrId" parentProperty="true" propertyName="attrId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="allowedAttrVal" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value"/>
+
+        </UpdateService>
+        
+        <!--- Delete service. -->
+        <DeleteService sendDefaultLanguageProperties="true" url="/cmc/DeleteAttributeDictionaryAttributeAllowedValue">
+        	<ServiceParam name="defaultLanguageId" parameterName="allowedValueLanguageId"/>
+        	<ServiceParam name="storeId">
+        		<EnablementOrCondition negate="true">
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedAttributeDictionaryAttributeStringValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedAttributeDictionaryAttributeIntegerValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition3" enablementValue="InheritedAttributeDictionaryAttributeFloatValue" propertyName="objectType"/>			
+        		</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition1" enablementValue="InheritedAttributeDictionaryAttributeStringValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition2" enablementValue="InheritedAttributeDictionaryAttributeIntegerValue" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition3" enablementValue="InheritedAttributeDictionaryAttributeFloatValue" propertyName="objectType"/>			
+        		</EnablementOrCondition>
+			</ServiceParam>
+        	<ServiceParam name="attrDictAttrId" parentProperty="true" propertyName="attrId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="allowedAttrVal" objectPath="AttributeDictionaryAttributeValueDescription" propertyName="value"/>
+        </DeleteService>
+		
+		<!---
+        	The description for the attribute.
+         -->
+        <ChildObjectDefinition baseDefinitionName="catAttributeDictionaryAttributeValueDescription"/>
+        
+        <Xml name="template">
+            <default>false</default>
+        </Xml>
+        
+    </ChildObjectDefinition>
+    
+	<!--- 
+		This definition represents the description for the attribute value.
+		The description includes the language sensitive values associated with the attribute value.
+	 -->
+    <ChildObjectDefinition
+	    definitionName="catAttributeDictionaryAttributeValueDescription"
+	    idProperty="languageId"
+	    objectType="AttributeDictionaryAttributeValueDescription"
+	    languageSensitive="true"
+	    releaseWhenClosed="false">
+	    
+        <!---
+		    This property definition represents the display sequence property for an attribute value.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeValueSequence}" maxValue="9999999999" minValue="-9999999999" propertyName="xval_DisplaySequence" type="number"/>   
+        
+        <!--- 
+        	This property definition represents the attribute value.
+        	All validation is done on this property by the custom validators.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeValue}" propertyName="value" required="true">
+        	<AttributeDictionaryValueRangeValidator package="cat"
+        		maxIntegerValue="2147483647"
+		        minIntegerValue="-2147483648"
+		        maxFloatValue="9999999999999.99999"
+		        minFloatValue="-9999999999999.99999"/>
+        	<AttributeDictionaryValueSizeValidator package="cat" maximumSize="2000"/>
+        	<AttributeDictionaryValueTypeValidator package="cat"/>
+        	<AttributeDictionaryValueDecimalPlacesValidator package="cat" maximumDecimalPlaces="5"/>
+        </PropertyDefinition>
+
+        <!--- 
+        	This property definition represents the image 1 property for an attribute value.(language sensitive)
+        -->        
+        <PropertyDefinition displayName="${catalogResources.attributeValueImage1}" maximumSize="254" propertyName="xvaldescdata_Image1" type="string"/>
+        
+        <!--- 
+        	This property definition represents the image 2 property for an attribute value.(language sensitive)
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeValueImage2}" maximumSize="254" propertyName="xvaldescdata_Image2" type="string"/>
+        
+        <!---
+        	This property definition represents the unit of measure property for an attribute value.(language sensitive)
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeValueUnitOfMeasure}" propertyName="xvaldescdata_UnitOfMeasure">
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Day}" value="DAY"/>
+        		<PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Hour}" value="HUR"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Kilogram}" value="KGM"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_milligram}" value="MGM"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Month}" value="MON"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_1_Unit}" value="C62"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Week}" value="WEE"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Year}" value="ANN"/>
+        </PropertyDefinition>
+  		
+  		<!---
+  			Property Definition for the field1 property of an attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValueDescPropertiesField1_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xvaldescdata_Field1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValueDescPropertiesField2_DisplayName}" maximumSize="254" propertyName="xvaldescdata_Field2" type="string"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValueDescPropertiesField3_DisplayName}" maximumSize="254" propertyName="xvaldescdata_Field3" type="string"/>
+		
+        
+        <CreateService url="/cmc/UpdateAttributeDictionaryAttributeAllowedValue">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrId" parentProperty="true" propertyName="attrId"/>
+        	<ServiceParam name="attrDictAttrValId" objectPath="AttributeDictionaryAttributeValueAlias" parentProperty="true" propertyName="attrValId"/>
+			<ServiceParam name="allowedValueLanguageId" propertyName="languageId"/>        	
+        	<ServiceParam name="allowedAttrVal" propertyName="value"/>
+        	
+        </CreateService>
+
+        <!--- Update service. -->
+        <UpdateService url="/cmc/UpdateAttributeDictionaryAttributeAllowedValue">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrId" parentProperty="true" propertyName="attrId"/>
+        	<ServiceParam name="attrDictAttrValId" objectPath="AttributeDictionaryAttributeValueAlias" parentProperty="true" propertyName="attrValId"/>
+			<ServiceParam name="allowedValueLanguageId" propertyName="languageId"/>
+        	<ServiceParam name="allowedAttrVal" propertyName="value"/>
+        </UpdateService>
+        
+        <Xml name="template">
+            <sequence>0.0</sequence>
+        </Xml>        
+
+    </ChildObjectDefinition>
+    
+	<!---
+		Child object definition for the string value of an attribute dictionary attribute.
+	-->		
+    <ChildObjectDefinition
+	    baseDefinitionName="catBaseAttributeDictionaryAttributeValue"
+	    definitionName="catAttributeDictionaryAttributeStringValue"
+	    objectType="AttributeDictionaryAttributeStringValue"
+	    displayName="${catalogResources.attributeValuePrompt}"
+	    headerIcon="attributeValueHeaderIcon"
+	    icon="attributeValueIcon"
+	    objectGroups="AttributeDictionaryAttributeStringValueAlias,AttributeDictionaryAttributeValueAlias">
+	    
+	</ChildObjectDefinition>
+	
+	<!---
+		Child object definition for the inherited string value of an attribute dictionary attribute.
+	-->		
+    <ChildObjectDefinition
+	    baseDefinitionName="catBaseAttributeDictionaryAttributeValue"
+	    definitionName="catInheritedAttributeDictionaryAttributeStringValue"
+	    objectType="InheritedAttributeDictionaryAttributeStringValue"
+	    displayName="${catalogResources.inheritedAttributeValue}"
+	    headerIcon="inheritedAttributeValueHeaderIcon"
+	    icon="inheritedAttributeValueIcon"
+	    objectGroups="AttributeDictionaryAttributeStringValueAlias,AttributeDictionaryAttributeValueAlias">
+	</ChildObjectDefinition>
+    
+	<!---
+		Child object definition for the integer value of an attribute dictionary attribute.
+	-->		
+    <ChildObjectDefinition
+	    baseDefinitionName="catBaseAttributeDictionaryAttributeValue"
+	    definitionName="catAttributeDictionaryAttributeIntegerValue"
+	    objectType="AttributeDictionaryAttributeIntegerValue"
+	    displayName="${catalogResources.attributeValuePrompt}"
+	    headerIcon="attributeValueHeaderIcon"
+	    icon="attributeValueIcon"
+	    objectGroups="AttributeDictionaryAttributeIntegerValueAlias,AttributeDictionaryAttributeValueAlias">
+	</ChildObjectDefinition>
+	
+	<!---
+		Child object definition for the inherited integer value of an attribute dictionary attribute.
+	-->		
+    <ChildObjectDefinition
+	    baseDefinitionName="catBaseAttributeDictionaryAttributeValue"
+	    definitionName="catInheritedAttributeDictionaryAttributeIntegerValue"
+	    objectType="InheritedAttributeDictionaryAttributeIntegerValue"
+	    displayName="${catalogResources.inheritedAttributeValue}"
+	    headerIcon="inheritedAttributeValueHeaderIcon"
+	    icon="inheritedAttributeValueIcon"
+	    objectGroups="AttributeDictionaryAttributeIntegerValueAlias,AttributeDictionaryAttributeValueAlias">
+	</ChildObjectDefinition>
+    
+	<!---
+		Child object definition for the float value of an attribute dictionary attribute.
+	-->		
+    <ChildObjectDefinition
+	    baseDefinitionName="catBaseAttributeDictionaryAttributeValue"
+	    definitionName="catAttributeDictionaryAttributeFloatValue"
+	    objectType="AttributeDictionaryAttributeFloatValue"
+	    displayName="${catalogResources.attributeValuePrompt}"
+	    headerIcon="attributeValueHeaderIcon"
+	    icon="attributeValueIcon"
+	    objectGroups="AttributeDictionaryAttributeFloatValueAlias,AttributeDictionaryAttributeValueAlias">
+	</ChildObjectDefinition>
+	
+	<!---
+		Child object definition for the inherited float value of an attribute dictionary attribute.
+	-->		
+    <ChildObjectDefinition
+	    baseDefinitionName="catBaseAttributeDictionaryAttributeValue"
+	    definitionName="catInheritedAttributeDictionaryAttributeFloatValue"
+	    objectType="InheritedAttributeDictionaryAttributeFloatValue"
+	    displayName="${catalogResources.inheritedAttributeValue}"
+	    headerIcon="inheritedAttributeValueHeaderIcon"
+	    icon="inheritedAttributeValueIcon"
+	    objectGroups="AttributeDictionaryAttributeFloatValueAlias,AttributeDictionaryAttributeValueAlias">
+	</ChildObjectDefinition>
+	
+	<!--- 
+		This definition represents the description for an assigned attribute value.
+		The description includes the language sensitive values associated with the attribute value.
+	 -->
+    <ChildObjectDefinition
+	    definitionName="catAttributeDictionaryAttributeAssignedValueDescription"
+	    idProperty="languageId"
+	    objectType="AttributeDictionaryAttributeAssignedValueDescription"
+	    languageSensitive="true"
+	    releaseWhenClosed="false">
+	    
+	    <!--- Create service. -->
+        <CreateService url="/cmc/UpdateCatalogEntryAttributeDictionaryAttributeValue">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="catalogEntryAttributesLanguageId" propertyName="languageId"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" parentProperty="true" resolvePrimaryParent="false" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        	<ServiceParam name="attrDataType" parentProperty="true" resolvePrimaryParent="false" propertyName="attrDataType"/>
+        	<ServiceParam name="attrDictAttrValId" parentProperty="true" resolvePrimaryParent="false" propertyName="attrValId"/>
+        	<ServiceParam name="attrDictAttrValue" parameterName="attrDictAttrValue" propertyName="value" optional="false" sendEmpty="false"/>
+        </CreateService>
+
+        <!--- Update service. -->
+        <UpdateService url="/cmc/UpdateCatalogEntryAttributeDictionaryAttributeValue">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="catalogEntryAttributesLanguageId" propertyName="languageId"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" parentProperty="true" resolvePrimaryParent="false" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        	<ServiceParam name="attrDataType" parentProperty="true" resolvePrimaryParent="false" propertyName="attrDataType"/>
+        	<ServiceParam name="attrDictAttrValId" parentProperty="true" resolvePrimaryParent="false" propertyName="attrValId"/>
+        	<ServiceParam name="attrDictAttrValue" parameterName="attrDictAttrValue" propertyName="value" optional="false" sendEmpty="false"/>
+        </UpdateService>
+        
+        <!---
+		    This property definition represents the display sequence property for an attribute value.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeValueSequence}" maxValue="9999999999" minValue="-9999999999" propertyName="xval_DisplaySequence" type="number"/>   
+        
+        <!--- 
+        	This property definition represents the attribute value.
+        	All validation is done on this property by the custom validators.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeValue}" propertyName="value" required="true">
+        	<AttributeDictionaryValueRangeValidator package="cat"
+        		maxIntegerValue="2147483647"
+		        minIntegerValue="-2147483648"
+		        maxFloatValue="9999999999999.99999"
+		        minFloatValue="-9999999999999.99999"/>
+        	<AttributeDictionaryValueSizeValidator package="cat" maximumSize="2000"/>
+        	<AttributeDictionaryValueTypeValidator package="cat"/>
+        	<AttributeDictionaryValueDecimalPlacesValidator package="cat" maximumDecimalPlaces="5"/>
+        </PropertyDefinition>
+        
+        <!--- 
+        	This property definition represents the image 1 property for an attribute value.
+        -->        
+        <PropertyDefinition displayName="${catalogResources.attributeValueImage1}" maximumSize="254" propertyName="xvaldescdata_Image1" type="string"/>
+        
+        <!--- 
+        	This property definition represents the image 2 property for an attribute value.
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeValueImage2}" maximumSize="254" propertyName="xvaldescdata_Image2" type="string"/>
+        
+        <!---
+        	This property definition represents the unit of measure property for an attribute value.
+        -->            
+        <PropertyDefinition displayName="${catalogResources.attributeValueUnitOfMeasure}" propertyName="xvaldescdata_UnitOfMeasure">
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Day}" value="DAY"/>
+        		<PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Hour}" value="HUR"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Kilogram}" value="KGM"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_milligram}" value="MGM"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Month}" value="MON"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_1_Unit}" value="C62"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Week}" value="WEE"/>
+            <PropertyValue displayName="${catalogResources.attributeValueUnitOfMeasure_Year}" value="ANN"/>
+        </PropertyDefinition>
+  		
+  		<!---
+  			Property Definition for the field1 property of an attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValueDescPropertiesField1_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xvaldescdata_Field1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValueDescPropertiesField2_DisplayName}" maximumSize="254" propertyName="xvaldescdata_Field2" type="string"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValueDescPropertiesField3_DisplayName}" maximumSize="254" propertyName="xvaldescdata_Field3" type="string"/>
+		
+        <Xml name="template">
+            <xval_DisplaySequence>0</xval_DisplaySequence>
+        </Xml>
+        
+    </ChildObjectDefinition>
+	
+</Definitions>

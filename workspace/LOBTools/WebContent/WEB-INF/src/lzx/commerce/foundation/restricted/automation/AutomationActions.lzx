@@ -1,0 +1,1206 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		@keywords private
+		This action downloads a testcase XML file found at the specified url and
+		inserts the actions found in the file at the start of the list of pending actions. 
+		This action accepts the following parameters:
+		<ul>
+		<li>url - The URL of the testcase XML. This URL must begin with the "/" character. The XML file
+		must be in the LOBTools web application. The <code>url</code> parameter is a required parameter.</li>
+		<li>requiredValueKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that must
+		be set before the action can be run. If the value is an empty string or has not been set, then the action will be skipped.</li>
+		</ul>
+	-->
+	<wcfService id="wcfAutoRunTestCaseAction"
+		url=""
+		sendIdentity="false"
+		sendLocale="false"
+		sendWorkspaceContext="false"
+		sendTimeZoneId="false">
+		
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			var skip = false;
+			if (params["requiredValueKey"]) {
+				var requiredValue = wcfAutomationUtil.getValue(params.requiredValueKey);
+				if (requiredValue == null || requiredValue == "") {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "INFO", "wcfAutoRunTestCaseAction", "execute", "Skipping test case. Required value '" + params.requiredValueKey + "' has not been set.");
+					skip = true;
+				}
+			}
+			if (!skip) {
+				var url = params["url"];
+				if (url && url.charAt(0) == '/') {
+					if (global["serviceContextRoot"]) {
+						this.url = global["serviceContextRoot"] + url;
+					}
+					else {
+						this.url = "/lobtools" + url;
+					}
+					this.doRequest();
+				}
+				else {
+					wcfAutomationUtil.abort();
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoRunTestCaseAction", "execute", "Invalid url "+url);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---@keywords private -->
+		<method name="serviceComplete" args="ds">
+			<![CDATA[
+			var e = ds.dataXML;
+			var actions = e != null ? e.childNodes : null;
+			
+			super.serviceComplete(ds);
+			if (actions) {
+				for (var i = actions.length -1; i>=0 ; i--) {
+					wcfAutomationUtil.insertAction(actions[i]);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---@keywords private -->
+		<method name="handleException" args="ds,message,code=null">
+			<![CDATA[
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoRunTestCaseAction", "execute", "Error loading test data: "+this.url);
+			wcfAutomationUtil.abort();
+			]]>
+		</method>
+	</wcfService>
+	
+	<!---
+		@keywords private
+		This action opens specified tool. If the tool is already open, then it becomes the active tool.
+		This action accepts the following parameters:
+		<ul>
+		<li>toolId - The ID of the tool that you want to open. This value is the same as the <code>id</code> attribute specified
+		for the tool's <code>wcfApplicationMenuItem</code> in <code>ApplicationMenuItems.lzx</code>. The <code>toolId</code>
+		parameter is a required parameter.</li>
+		</ul>
+	-->
+	<node id="wcfAutoOpenToolAction">
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["toolId"]) {
+				toolsController.openToolById(params.toolId);
+				var tool = toolsController.getTool(params.toolId);
+				if (tool != null) {
+					wcfAutomationUtil.activeTool = tool;
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoOpenToolAction", "execute", "Tool " + params.toolId + " could not be opened.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoOpenToolAction", "execute", "Missing 'toolId' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		This action sets a value that can be used by other actions.
+		This action accepts the following parameters:
+		<ul>
+		<li>valueKey - The name of the value. This name will be used by other actions to refer to the new value.
+		If the value key is already in use, then the value will be updated. This <code>valueKey</code> parameter is a
+		required parameter.</li>
+		<li>value - The new value that will be assigned to the specified value key. If this parameter is not specified,
+		then the new unique value will be generated and assigned to the value key. The <code>value</code> parameter is optional.</li>
+		<li>object - Used together with <code>propertyName</code> parameter as an alternative way to assign value to the specified value key. 
+		This object must match the <code>objectKey</code> parameter of a previous action that created or located the object.
+		The <code>object</code> parameter is optional. If the <code>value</code> parameter is provided, <code>object</code> parameter
+		and <code>propertyName</code> parameter will be ignored.</li>
+		<li>propertyName - The name of the property value in <code>object</code> that will be assigned to the specified value key.
+		<code>propertyName</code> is required if <code>object</code> is provided.</li>
+		<li>valuePrefix - An optional prefix that will be inserted at the start of the value.</li>
+		</ul>
+	-->
+	<node id="wcfAutoSetValueAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["valueKey"]) {
+				var value = params["value"];
+				if (typeof(value) == "undefined") {
+					if (params["object"]) {
+						var o = wcfAutomationUtil.getObject(params.object);
+						if (o) {
+							var propertyName = params["propertyName"];
+							if (propertyName) {
+								value = o.getPropertyValue(propertyName);
+							}
+							else {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSetValueAction", "execute", "Missing 'propertyName' parameter.");
+								wcfAutomationUtil.abort();
+							}
+						}
+						else {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoSetValueAction", "execute", "Object " + params.object + " not found.");
+							if (wcfAutomationUtil.abortOnError) {
+								wcfAutomationUtil.abort();
+							}
+						}
+					}
+					else{
+						value = "" + new Date().getTime();
+					}
+				}
+				if (wcfAutomationUtil.active) {
+					var prefix = params["valuePrefix"];
+					if (typeof(prefix) == "undefined") {
+						prefix = "";
+					}
+					wcfAutomationUtil.setValue(params.valueKey, prefix + value);
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSetValueAction", "execute", "Missing 'valueKey' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		This action switches the current business object editor's store to the specified store.
+		This action accepts the following parameters:
+		<ul>
+		<li>storeIdentifier - The store identifier. This <code>storeIdentifier</code> parameter is
+		required if the <code>storeKey</code> parameter is not specified.</li>
+		<li>storeKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that will
+		be used as the store identifier. The <code>storeKey</code> parameter is required if the
+		<code>storeIdentifier</code> parameter is not specified. If this parameter is specified, but no value with
+		the specified name is found, then the <code>storeIdentifier</code> parameter will be used.</li>
+		</ul>
+	-->
+	<node id="wcfAutoSelectStoreAction">
+		<!--- @keywords private -->
+		<attribute name="storeIdentifier" type="string"/>
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var boe = wcfAutomationUtil.activeTool;
+			if (boe != null) {
+				var params = wcfAutomationUtil.parseParameters(action);
+				if (params["storeIdentifier"] || params["storeKey"]) {
+					var storeIdentifier = null;
+					if (params["storeKey"]) {
+						storeIdentifier = wcfAutomationUtil.getValue(params.storeKey);
+					}
+					if (storeIdentifier == null && params["storeIdentifier"]) {
+						storeIdentifier = params.storeIdentifier; 
+					}
+					if (storeIdentifier) {
+						wcfAutomationUtil.releaseObjects();
+						this.storeIdentifier = storeIdentifier;
+						wcfStoreSelectionGetDefaultStoreService.doRequest(this, {
+							storeName: storeIdentifier,
+							usage: boe.usage
+						});
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSelectStoreAction", "execute", "Invalid store ID: Value " + params.storeKey + " not found.");
+						wcfAutomationUtil.abort();
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSelectStoreAction", "execute", "Missing 'storeIdentifier' or 'storeKey' parameter.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSelectStoreAction", "execute", "No active tool.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="changeStore" args="store">
+			<![CDATA[
+			if (wcfAutomationUtil.activeTool != null) {
+				wcfAutomationUtil.activeTool.header.storeSelectionList.changeStore(store, false);
+			}
+			this.storeName = null;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="handleDefaultStoreNotAvailable">
+			<![CDATA[
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSelectStoreAction", "handleDefaultStoreNotAvailable", "Store " + this.storeIdentifier + " could not be selected.");
+			wcfAutomationUtil.abort();
+			this.storeName = null;
+			]]>
+		</method>
+	</node>
+	
+	<!--- 
+		@keywords private 
+		This action creates new model object instance.
+		This action accepts the following parameters:
+		<ul>
+		<li>objectType - The object type that will be used to identify the object definition that will
+		be used to create the new object. Either this or the <code>objectTypeKey</code> parameter is required.</li>
+		<li>objectTypeKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that will
+		be used as the <code>objectType</code>. Either this or the <code>objectType</code> parameter is required.</li>
+		<li>parentObject - The name of the parent object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the parent object. This parameter must be
+		specified if the <code>objectType</code> or <code>objectTypeKey</code> matches a <code>wcfChildObjectDefinition</code> instance. Do not
+		specify this parameter when creating primary objects.</li>
+		<li>referencedObject - The name of the object that will be added as a child of the new object. This
+		name must match the <code>objectKey</code> parameter of a previous action that created or located
+		the object that will be referenced by the new object. This parameter must be specified if the <code>objectType</code> or <ocde>objectTypeKey</code>
+		matches a <code>wcfReferenceObjectDefinition</code> instance. Do not specify this parameter when creating primary objects or
+		simple child objects.</li>
+		<li>templateObject - The name of the object that will be copied when creating the new object. This name
+		must match the <code>objectKey</code> parameter of a previous action that created or located the template
+		object.</li>
+		<li>objectKey - The name that will be used to keep a reference to the new object so it can be used by other actions. This parameter
+		is optional.</li>
+		<li>abortOnError - Set this parameter to "false" to request that automation continue
+		even if the create new object action cannot be performed because the action is not permitted.
+		The default is "true".</li>
+		</ul>
+	-->
+	<node id="wcfAutoCreateNewObjectAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			
+			if (params["objectType"] || params["objectTypeKey"]) {
+				var objectType = params["objectType"];
+				if(!objectType || objectType == "") {
+					objectType = wcfAutomationUtil.getValue(params.objectTypeKey);
+				}
+				var boe = wcfAutomationUtil.activeTool;
+				if (boe != null) {
+					var parentObject = null;
+					if (params["parentObject"]) {
+						parentObject = wcfAutomationUtil.getObject(params.parentObject);
+						if (!parentObject) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateNewObjectAction", "execute", "Parent object " + params.parentObject + " could not be resolved.");
+							wcfAutomationUtil.abort();
+						}
+					}
+					var referencedObject = null;
+					if (params["referencedObject"]) {
+						referencedObject = wcfAutomationUtil.getObject(params.referencedObject);
+						if (!referencedObject) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateNewObjectAction", "execute", "Referenced object " + params.referencedObject + " could not be resolved.");
+							wcfAutomationUtil.abort();
+						}
+					}
+					var templateObject = null;
+					if (params["templateObject"]) {
+						templateObject = wcfAutomationUtil.getObject(params.templateObject);
+						if (!templateObject) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateNewObjectAction", "execute", "Template object " + params.templateObject + " could not be resolved.");
+							wcfAutomationUtil.abort();
+						}
+					}
+					if (wcfAutomationUtil.active) {
+						var def = boe.model.getObjectDefinition(parentObject, objectType);
+						if (def) {
+							if (def.reference && (referencedObject == null || !def.isReferencedDefinition(referencedObject.objectDefinition))) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateNewObjectAction", "execute", "Referenced object not valid: "+(referencedObject ? referencedObject.logString() : null));
+								wcfAutomationUtil.abort();
+							}
+							else {
+								var creatable = def.isCreatable(parentObject, referencedObject);
+								if (wcfAutomationUtil.isActionInProgress()) {
+									wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "INFO", "wcfAutoCreateNewObjectAction", "execute", "Retrying action.");
+									wcfAutomationUtil.insertAction(action);
+								} else if (creatable) {
+									var o = boe.model.createNewObject(def, parentObject, true, templateObject);
+									if (o) {
+										if (def.reference) {
+											o.addChild(referencedObject);
+										}
+										if (def.languageSensitive) {
+											var property = o.getProperty("languageId");
+											property.setAttribute("value", wcfContextUtil.findContextValue(o, "defaultLanguageId").value);
+										}
+										if (params["objectKey"]) {
+											wcfAutomationUtil.setObject(params.objectKey, o);				
+										}
+									}
+									else {
+										wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoCreateNewObjectAction", "execute", "Create new object failed.");
+										if (wcfAutomationUtil.abortOnError) {
+											wcfAutomationUtil.abort();
+										}
+									}
+								} else {
+									wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoCreateNewObjectAction", "execute", "Object creation not permitted.");
+									if (wcfAutomationUtil.abortOnError) {
+										wcfAutomationUtil.abort();
+									}
+								}
+							}
+						}
+						else {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateNewObjectAction", "execute", "Object definition not found.");
+							wcfAutomationUtil.abort();
+						}
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateNewObjectAction", "execute", "No active tool.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateNewObjectAction", "execute", "Missing 'objectType' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!--- 
+		@keywords private 
+		This action sets a property value.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object that will be updated. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the object. This parameter is required.</li>
+		<li>propertyName - The name of the property that will be updated with the specified value. This parameter is required.</li>
+		<li>value - The new property value. This parameter is required if the <code>valueKey</code> parameter is is not specified.</li>
+		<li>valueKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that will
+		be used as the new property value. The <code>valueKey</code> parameter is required if the
+		<code>value</code> parameter is not specified.</li>
+		<li>abortOnError - Set this parameter to "false" to request that automation continue
+		even if the set property action cannot be performed because the action is not permitted.
+		The default is "true".</li>
+		</ul>
+	-->
+	<node name="wcfAutoSetPropertyAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["object"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o) {
+					var propertyName = params["propertyName"];
+					if (propertyName) {
+						var value = params["value"];
+						if (typeof(value) == "undefined") {
+							if (params["valueKey"]) {
+								value = wcfAutomationUtil.getValue(params.valueKey);
+							}
+						}
+						if (typeof(value) == "undefined") {
+							value = "";
+						}
+						if (value === null) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoSetPropertyAction", "execute", "Property value cannot be set to null.");
+							if (wcfAutomationUtil.abortOnError) {
+								wcfAutomationUtil.abort();
+							}
+						}
+						else {
+							var property = o.getProperty(propertyName);
+							if (property.readOnly) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoSetPropertyAction", "execute", "Property update not permitted.");
+								if (wcfAutomationUtil.abortOnError) {
+									wcfAutomationUtil.abort();
+								}
+							}
+							else {
+								property.change(value);
+							}
+						}
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSetPropertyAction", "execute", "Missing 'propertyName' parameter.");
+						wcfAutomationUtil.abort();
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSetPropertyAction", "execute", "Object " + params.object + " not found.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSetPropertyAction", "execute", "Missing 'object' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!--- 
+		@keywords private 
+		This action deletes the specified object.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object that will be deleted. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the object. This parameter is required.</li>
+		<li>abortOnError - Set this parameter to "false" to request that automation continue
+		even if the delete cannot be invoked or if the delete fails. The default is "true".</li>
+		</ul>
+	-->
+	<node name="wcfAutoDeleteObjectAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			
+			if (params["object"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o) {
+					if (o.isDeletable()) {
+						o.deleteObject(false);
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoDeleteObjectAction", "execute", "Object deletion not permitted.");
+						if (wcfAutomationUtil.abortOnError) {
+							wcfAutomationUtil.abort();
+						}
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoDeleteObjectAction", "execute", "Object " + params.object + " not found.");
+					if (wcfAutomationUtil.abortOnError) {
+						wcfAutomationUtil.abort();
+					}
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoDeleteObjectAction", "execute", "Missing 'object' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private 
+		This action searches for the specified object and saves it for other actions to use.
+		This action accepts the following parameters:
+		<ul>
+		<li>searchType - The search type that will be used to locate the <code>wcfSearchDefinition</code> that 
+		will be used to invoke the search. This parameter is required.</li>
+		<li>searchText - The search text that will be used to search for the object. This parameter is optional.</li>
+		<li>searchKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that will
+		be used as the search text. This parameter is optional.</li>
+		<li>searchOption.option - A search option value that will be passed to the search service. Replace "option"
+		with the name of the option. For example to set the catalogId search option, use the parameter name
+		"searchOption.catalogId". Multiple search options with different names can be specified. This parameter is optional.</li>
+		<li>searchOptionKey.option - The name of a value set by the <code>wcfAutoSetValueAction</code> action that
+		will be used as a search option. Replace "option" with the name of the option. This parameter is optional.</li>
+		<li>objectKey - The name that will be used to keep a reference to the object so it can be used by other actions. This parameter
+		is optional.</li>
+		</ul>
+	-->
+	<node id="wcfAutoFindObjectAction">
+		<!--- @keywords private -->
+		<attribute name="objectKey" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["searchType"]) {
+				var searchOptions = {};
+				if (params["searchText"]) {
+					searchOptions.searchText = params.searchText;
+				}
+				else if (params["searchKey"]) {
+					searchOptions.searchText = wcfAutomationUtil.getValue(params.searchKey);
+				}
+				for (var param in params) {
+					if (param.indexOf("searchOption.") == 0) {
+						var optionName = param.slice("searchOption.".length);
+						searchOptions[optionName] = params[param];
+					}
+					else if (param.indexOf("searchOptionKey.") == 0) {
+						var optionName = param.slice("searchOptionKey.".length);
+						searchOptions[optionName] = wcfAutomationUtil.getValue(params[param]);
+					}
+				}
+				if (this["searchCompleteDel"]) {
+					this.searchCompleteDel.unregisterAll();
+				}
+				else {
+					this.searchCompleteDel = new lz.Delegate(this, "searchComplete");
+				}
+				this.objectKey = params["objectKey"];
+				var boe = wcfAutomationUtil.activeTool;
+				if (boe) {
+					var s = boe.model.findSearchResults(params.searchType);
+					if (s) {
+						this.searchCompleteDel.register(s, "onsearchComplete");
+						s.doSearch(searchOptions);
+					}
+					else{
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoFindObjectAction", "execute", "Invalid 'searchType' parameter: " + params.searchType);
+						wcfAutomationUtil.abort();
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoFindObjectAction", "execute", "No active tool.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoFindObjectAction", "execute", "Missing 'searchType' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="searchComplete" args="args">
+			<![CDATA[
+			this.searchCompleteDel.unregisterAll();
+			if (args) {
+				if (args["searchResultObjects"]) {
+					var objects = args.searchResultObjects;
+					if (objects.length >= 1) {
+						if (this.objectKey) {
+							wcfAutomationUtil.setObject(this.objectKey, objects[0]);
+						}
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoFindObjectAction", "searchComplete", args.statusMessage);
+					if (wcfAutomationUtil.abortOnError) {
+						wcfAutomationUtil.abort();
+					}
+				}
+			}
+			this.objectKey = null;
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private 
+		This action locates the specified child object and saves it for other actions to use. This action
+		will not invoke the parent object's get children services to load the object. Use the
+		<code>wcfAutoLoadChildrenAction</code> action to ensure that the child objects are loaded.
+		This action accepts the following parameters:
+		<ul>
+		<li>objectPath - The object path that will be used to locate the child object. This parameter is required.</li>
+		<li>propertyName - The name of the property that will be used to choose between multiple child objects that match
+		the specified object path. If this parameter is specified, then you must also specify either <code>propertyValue</code>
+		or </code>propertyValueKey</code>.</li>
+		<li>propertyValue - The property value that will be used to find a specific child object. This parameter must be specified
+		if you use <code>propertyName</code> and you do not use <code>propertyValueKey</code>.</li>
+		<li>propertyValueKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that will
+		be used as the property value that will be used to find a specific child object. This parameter must be specified
+		if you use <code>propertyName</code> and you do not use <code>propertyValue</code>.</li>
+		<li>parentObject - The name of the parent object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the parent object. If the parent object is not specified,
+		then the object path will be resolve relative to the "Top" object.</li>
+		<li>objectKey - The name that will be used to keep a reference to the object so it can be used by other actions. This parameter
+		is required.</li>
+		</ul>
+	-->
+	<node id="wcfAutoGetChildObjectAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var boe = wcfAutomationUtil.activeTool;
+			if (boe != null) {
+				var params = wcfAutomationUtil.parseParameters(action);
+				if (!params["objectPath"]) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoGetChildObjectAction", "execute", "Missing 'objectPath' parameter.");
+					wcfAutomationUtil.abort();
+				}
+				else if (!params["objectKey"]) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoGetChildObjectAction", "execute", "Missing 'objectKey' parameter.");
+					wcfAutomationUtil.abort();
+				}
+				else if (params["propertyName"] && !params["propertyValue"] && !params["propertyValueKey"]) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoGetChildObjectAction", "execute", "Missing 'propertyValue' or 'propertyValueKey' parameter.");
+					wcfAutomationUtil.abort();
+				}
+				else {
+					var parentObject = null;
+					if (params["parentObject"]) {
+						var parentObject = wcfAutomationUtil.getObject(params.parentObject);
+						if (parentObject == null) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoGetChildObjectAction", "execute", "Invalid parent object " + params.parentObject);
+							if (wcfAutomationUtil.abortOnError) {
+								wcfAutomationUtil.abort();
+							}
+						}
+					}
+					else {
+						parentObject = boe.model.topObject;
+					}
+					if (parentObject != null) {
+						var objectPath = params.objectPath;
+						if (params["propertyName"]) {
+							var value = "";
+							if (params["propertyValue"]) {
+								value = params.propertyValue;
+							}
+							else if (params["propertyValueKey"]) {
+								value = wcfAutomationUtil.getValue(params.propertyValueKey);
+							}
+							objectPath += "[" + params.propertyName + "=" + value + "]";
+						}
+						var o = parentObject.getObject(objectPath);
+						wcfAutomationUtil.setObject(params.objectKey, o);
+					}
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoGetChildObjectAction", "execute", "No active tool.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private 
+		This action invokes the specified object's get children services.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the parent object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the parent object. If the parent object is not specified,
+		then the object path will be resolve relative to the "Top" object.</li>
+		<li>objectType - The object type of the child object that you want to load. This parameter is optional.</li>
+		<li>objectTypeKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that will
+		be used as the <code>objectType</code>. This parameter is optional and not used if <code>objectType</code> is provided.</li>
+		</ul>
+	-->
+	<node id="wcfAutoLoadChildrenAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			var boe = wcfAutomationUtil.activeTool;
+			if (boe != null) {
+				var o = params["object"] ? wcfAutomationUtil.getObject(params.object) : boe.model.topObject;
+				if (o) {
+					if (params["objectType"] || params["objectTypeKey"]) {
+						var objectType = params["objectType"];
+						if (!objectType || objectType == "") {
+							objectType = wcfAutomationUtil.getValue(params.objectTypeKey);
+						}
+						var objectDefinition = o.model.getObjectDefinition(o, objectType);
+						if (objectDefinition == null) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoLoadChildrenAction", "execute", "Invalid object type " + objectType);
+							wcfAutomationUtil.abort();
+						}
+						else {
+							o.loadChildren([objectDefinition], true);
+						}
+					}
+					else {
+						o.loadChildren(null, true);
+					}
+				}
+				else {
+					var objectName = params["object"] ? ("Object " + params.object) : "Top Object";
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoLoadChildrenAction", "execute", objectName + " not found.");
+					if (wcfAutomationUtil.abortOnError) {
+						wcfAutomationUtil.abort();
+					}
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoLoadChildrenAction", "execute", "No active tool.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!--- 
+		@keywords private 
+		This action saves all unsaved objects for the current tool.
+		This action accepts the following parameters:
+		<ul>
+		<li>abortOnError - Set this parameter to "false" to request that automation continue
+		even if the save cannot be invoked or if the save fails. The default is "true".</li>
+		</ul>
+	-->
+	<node name="wcfAutoSaveAllAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			
+			var boe = wcfAutomationUtil.activeTool;
+			if (boe != null) {
+				boe.model.save(false);
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoSaveAllAction", "execute", "No active tool.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private 
+		This action triggers a refresh all action for the current tool. This action does not accept any parameters.
+	-->
+	<node name="wcfAutoRefreshAllAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			wcfAutomationUtil.releaseObjects();
+			var boe = wcfAutomationUtil.activeTool;
+			if (boe != null) {
+				boe.model.refreshAll(false);
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoRefreshAllAction", "execute", "No active tool.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private 
+		This action verifies that the specified object exists.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the object.</li>
+		</ul>
+	-->
+	<node name="wcfAutoVerifyObjectAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["object"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o == null) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyObjectAction", "execute", "Verification Error: Object " + params.object + " not found.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyObjectAction", "execute", "Missing 'object' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private 
+		This action verifies that the specified object does not exist.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the object.</li>
+		</ul>
+	-->
+	<node name="wcfAutoVerifyNoObjectAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["object"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o != null) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyNoObjectAction", "execute", "Verification Error: Object " + params.object + " found.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyNoObjectAction", "execute", "Missing 'object' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private 
+		This action verifies that the specified property matches a specified value.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the object.</li>
+		<li>propertyName - The name of the property that will be verified. This parameter is required.</li>
+		<li>value - The value against which the property value will be tested. This parameter is required if the 
+		<code>valueKey</code> parameter is not specified.</li>
+		<li>valueKey - The name of a value set by the <code>wcfAutoSetValueAction</code> action that will 
+		be used to test the specified property's value. The <code>valueKey</code> parameter is required if the 
+		<code>value</code> parameter is not specified.</li>
+		<li>type - If this property value represents a number, "number" type can be specified for verification. 
+		This parameter is optional. If not specified, the property value will be verified as string value.</li>
+		<li>startKey - The name of an integer value set by the <code>wcfAutoSetValueAction</code> action
+		that indicates the start index from which to begin the string comparison. 
+		Characters that precede the start index in the specified verification value and the property value 
+		will be ignored. This parameter is optional and if it is not specified then it will default to zero.</li>
+		<li>start - An integer that indicates the start index from which to begin the string comparison. 
+		This parameter is optional and takes precedence over <code>startKey</code>.
+		If it is not specified then it will default to zero.</li>
+		<li>endKey - The name of an integer value set by the <code>wcfAutoSetValueAction</code> action
+		that indicates the end index plus one of the string comparison. Characters that 
+		are at or after the end index in the specified verification value and the property value will be ignored. 
+		This parameter is optional and if it is not specified then the comparison will proceed from the start 
+		index to the end of the comparison strings.</li>
+		<li>end - An integer that indicates the end index plus one of the string comparison. 
+		This parameter is optional and takes precedence over <code>endKey</code>.
+		If it is not specified then the comparison will proceed from the start index to the end of the comparison strings.</li>
+		</ul>
+	-->
+	<node name="wcfAutoVerifyPropertyAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["object"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o) {
+					var propertyName = params["propertyName"];
+					if (propertyName) {
+						var value = params["value"];
+						if (typeof(value) == "undefined") {
+							if (params["valueKey"]) {
+								value = wcfAutomationUtil.getValue(params.valueKey);
+							}
+						}
+						if (typeof(value) == "undefined") {
+							value = "";
+						}
+						var propertyValue = o.getPropertyValue(propertyName);
+						if (params["type"] == "number") {
+							if (Number(propertyValue) != Number(value)) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyObjectAction", "execute", "Verification Error: Property value '" + propertyValue + "' does not match expected value '" + value + "'.");
+								wcfAutomationUtil.abort();
+							}
+						}
+						else{
+							if (params["endKey"] || params["end"]) {
+								var end;
+								if (params["endKey"]) {
+									end = parseInt(wcfAutomationUtil.getValue(params.endKey));
+								}
+								if (params["end"]) {
+									end = parseInt(params.end);
+								}
+								if (!isNaN(end)) {
+									if (propertyValue.length > end) {
+										propertyValue = propertyValue.substring(0, end);
+									}
+									if (value.length > end) {
+										value = value.substring(0, end);
+									}
+								}
+							}
+							if (params["startKey"] || params["start"]) {
+								var start;
+								if (params["startKey"]) {
+									start = parseInt(wcfAutomationUtil.getValue(params.startKey));
+								}
+								if (params["start"]) {
+									start = parseInt(params.start);
+								}
+								if (!isNaN(start)) {
+									if (propertyValue.length -1 > start) {
+										propertyValue = propertyValue.substring(start);
+									}
+									if (value.length - 1 > start) {
+										value = value.substring(start);
+									}
+								}
+							}
+							if (propertyValue != value) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyObjectAction", "execute", "Verification Error: Property value '" + propertyValue + "' does not match expected value '" + value + "'.");
+								wcfAutomationUtil.abort();
+							}
+						}
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyObjectAction", "execute", "Missing 'propertyName' parameter.");
+						wcfAutomationUtil.abort();
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyObjectAction", "execute", "Object " + params.object + " not found.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoVerifyObjectAction", "execute", "Missing 'object' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private 
+		This action performs custom service on the specified object.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the object. 
+		This parameter is required.</li>
+		<li>url - The url of the custom service defined in the object's object definition. 
+		This parameter is required.</li>
+		<li>abortOnError - Set this parameter to "false" to request that automation continue
+		even if the service cannot be invoked or if the service request fails. The default is "true".</li>
+		</ul>
+	-->
+	<node id="wcfAutoRunCustomServiceAction">
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			
+			if (!params["object"]) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoRunCustomServiceAction", "execute", "Missing 'object' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			else if (!params["url"]) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoRunCustomServiceAction", "execute", "Missing 'url' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			else {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o != null) {
+					var oDef = o.objectDefinition;
+					var url = params["url"];
+					if (url.charAt(0) == '/') {
+						if (global["serviceContextRoot"]) {
+							url = global["serviceContextRoot"] + url;
+						}
+						else {
+							url = "/lobtools" + url;
+						}
+					}
+					var customService = null;
+					if (oDef.customServices) {
+						for (var i = 0; i < oDef.customServices.length; i++) {
+							if (oDef.customServices[i].url == url) {
+								customService = oDef.customServices[i];
+								break;
+							}
+						}
+					}
+					if (customService != null) {
+						if (customService.isEnabled(o)) {
+							customService.doRequest(o);
+						}
+						else {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoRunCustomServiceAction", "execute", "Service " + params.url + " is not enabled.");
+							if (wcfAutomationUtil.abortOnError) {
+								wcfAutomationUtil.abort();
+							}
+						}
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoRunCustomServiceAction", "execute", "Service " + params.url + " not found.");
+						wcfAutomationUtil.abort();
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoRunCustomServiceAction", "execute", "Object " + params.object + " not found.");
+					if (wcfAutomationUtil.abortOnError) {
+						wcfAutomationUtil.abort();
+					}
+				}
+			}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private 
+		Action to create a version.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object.  This name must match the <code>objectKey</code> parameter of a previous action that created or located the object.  This parameter is required.</li>
+		<li>versionName - The name of the version.  This parameter is required.</li>
+		<li>comment - The comment of the version.  This parameter is optional.</li>
+		</ul>
+	-->
+	<node id="wcfAutoCreateVersionAction">
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			
+			if (params["object"] && params["versionName"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o) {
+					var versionName = params.versionName;
+					var comment = "";
+					
+					if (params["comment"]) {
+						comment = params.comment;
+					}		
+					
+					wcfCreateContentVersionService.doRequest(o, {
+						versionName: versionName,
+						comment: comment,
+						objectType: o.objectType,
+						objectId: o.objectId
+					});
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoCreateVersionAction", "execute", "Object " + params.object + " not found.");
+					if (wcfAutomationUtil.abortOnError) {
+						wcfAutomationUtil.abort();
+					}
+				}
+			}
+			else{
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoCreateVersionAction", "execute", "Missing parameters, must have 'object' and 'versionName'.");
+				wcfAutomationUtil.abort();
+			}
+			
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private 
+		Action to restore a version.
+		This action accepts the following parameters:
+		<ul>
+		<li>object - The name of the object.  This name must match the <code>objectKey</code> parameter of a previous action that created or located the object.  This parameter is required.</li>
+		</ul>
+	-->
+	<node id="wcfAutoRestoreVersionAction">
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			
+			if (params["object"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				if (o) {
+					wcfRestoreContentVersionService.doRequest(o, {
+						versionId: o.getPropertyValue("versionId")
+					});
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", (wcfAutomationUtil.abortOnError ? "SEVERE" : "WARNING"), "wcfAutoRestoreVersionAction", "execute", "Object " + params.object + " not found.");
+					if (wcfAutomationUtil.abortOnError) {
+						wcfAutomationUtil.abort();
+					}
+				}
+			}
+			else{
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoRestoreVersionAction", "execute", "Missing parameters, must have 'object'");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private 
+		Action to trigger a Management Center action that is controlled through ActionManager.
+		This action accepts the following parameters:
+		<ul>
+		<li>actionHandler - The name of the action handler.</li>
+		<li>stringOption.option - A string option value that will be passed to the action. Replace "option"
+		with the name of the option. For example to set the "searchType" option, use the parameter name
+		"stringOption.searchType". Multiple string options with different names can be specified. This parameter is optional.</li>
+		<li>stringOptionKey.option - The name of a string value set by the <code>wcfAutoSetValueAction</code> action that
+		will be used as an action option. Replace "option" with the name of the option. This parameter is optional.</li>
+		<li>stringOption.option.subOption - A string sub option value that will be passed to the action. Replace "option"
+		with the name of the option and "subOption" with the name of the sub option. For example to set the "searchOption.searchText" option,
+		use the parameter name "stringOption.searchOption.searchText". Multiple string sub options with different names can be specified. This parameter is optional.</li>
+		<li>stringOptionKey.option.subOption - The name of a string sub option value set by the <code>wcfAutoSetValueAction</code> action that
+		will be used as an action sub option. Replace "option" with the name of the option and replace "subOption" with the name of the 
+		sub option. This parameter is optional.</li>
+		<li>objectOption.option - An object option value that will be passed to the action. Replace "option" with the
+		name of the option. For example to set the "sourceObject" option, use the parameter name "objectOption.sourceObject".
+		This parameter is optional.</li>
+		</ul>
+	-->
+	<node id="wcfAutoTriggerActionAction">
+		<!--- @keywords private -->
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			if (params["actionHandler"]) {
+				var options = {};
+				for (var param in params) {
+					var value = null;
+					var optionName = null;
+					if (param.indexOf("stringOption.") == 0) {
+						optionName = param.slice("stringOption.".length);
+						value = params[param];
+					}
+					else if (param.indexOf("stringOptionKey.") == 0) {
+						optionName = param.slice("stringOptionKey.".length);
+						value = wcfAutomationUtil.getValue(params[param]);
+					}
+					else if (param.indexOf("objectOption.") == 0) {
+						optionName = param.slice("objectOption.".length);
+						value = wcfAutomationUtil.getObject(params[param]);
+					}
+					if (optionName != null) {
+						var subOptionIndex = optionName.indexOf(".");
+						if (subOptionIndex != -1) {
+							var subValue = value;
+							var subOptionName = optionName.slice(subOptionIndex + 1);
+							optionName = optionName.slice(0, subOptionIndex);
+							if (typeof (options[optionName]) == "undefined") {
+								value = {};
+							}
+							else {
+								value = options[optionName];
+							}
+							value[subOptionName] = subValue;
+						}
+						if (value != null) {
+							options[optionName] = value;
+						}
+					}
+				}
+				var boe = wcfAutomationUtil.activeTool;
+				if (boe) {
+					options.model = boe.model;
+					triggerAction(params.actionHandler, options);
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoTriggerActionAction", "execute", "No active tool.");
+					wcfAutomationUtil.abort();
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutoTriggerActionAction", "execute", "Missing 'actionHandler' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			]]>
+		</method>
+	</node>
+</library>

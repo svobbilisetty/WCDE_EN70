@@ -1,0 +1,212 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktCurrentPageElementObject} flow element.
+	-->
+	<class name="mktCurrentPageSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="containsOperator" propertyName="containsOperator"/>
+		<wcfFlowSummaryParam name="categoryNames" objectPath="ChildCatalogGroup/CatalogGroupAlias/CatalogGroupDescription" propertyName="name"/>
+		<wcfFlowSummaryParam name="productNames" objectPath="ChildCatentry/CatalogEntry/CatalogEntryDescription" propertyName="name"/>
+		<wcfFlowSummaryParam name="includeSubcategories" propertyName="type"/>
+		<wcfFlowSummaryParam name="searchTermList" objectPath="searchTerm" propertyName="searchTerm"/>
+		<wcfFlowSummaryParam name="comparison" propertyName="comparison"/>
+		<wcfFlowSummaryParam name="urlName" propertyName="urlName"/>
+		<wcfFlowSummaryParam name="urlValueList" objectPath="urlValue" propertyName="urlValue"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryViewingProducts, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotViewingProducts, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryViewingCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotViewingCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryViewingCategoriesAndSubCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotViewingCategoriesAndSubCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryViewingProductsInCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotViewingProductsInCategories, "onstring");
+			
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchingExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotSearchingExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchingStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotSearchingStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchingContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotSearchingContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchingEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotSearchingEnds, "onstring");
+			
+			this.updateSummaryDel.register(mktMarketingResources.summaryNVPExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotNVPExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNVPStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotNVPStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNVPContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotNVPContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNVPEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotNVPEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNVPAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotNVPAny, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				
+				if(this.resolvedParams["elemTemplateName"] == "currentCustomerBehaviorProductBrowsing") {
+					summaryText = this.getCatalogSummary("Products");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "currentCustomerBehaviorCategoryBrowsing") {
+					summaryText = this.getCatalogSummary("Categories");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "currentCustomerBehaviorProductInCategoryBrowsing") {
+					summaryText = this.getCatalogSummary("ProductsInCategories");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "currentCustomerBehaviorURLContents") {
+					summaryText = this.getNVPSummary();
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "currentCustomerBehaviorSearching") {
+					summaryText = this.getSearchSummary();
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getCatalogSummary" args="usage">
+			<![CDATA[
+				if(usage == undefined) {
+					usage = "Products";
+				}
+				var summary = "";
+				
+				var containsOperator = this.resolvedParams["containsOperator"];
+				if((containsOperator == "=") || (containsOperator == "!=")) {
+					if(usage == "Products") {
+						var productText = this.getValuesList("productNames");
+						if(productText != "") {
+							if(containsOperator == "=") {
+								summary = mktMarketingResources.replaceValues("summaryViewingProducts", [productText]);
+							}
+							else {
+								summary = mktMarketingResources.replaceValues("summaryNotViewingProducts", [productText]);
+							}
+						}
+					}
+					else if((usage == "Categories") || (usage == "ProductsInCategories")) {
+						var includeSubcategories = this.resolvedParams["includeSubcategories"];
+						if((usage == "Categories") && (includeSubcategories == "PARENTCATEGORY")) {
+							includeSubcategories = "AndSubCategories";
+						}
+						else {
+							includeSubcategories = "";
+						}
+						
+						var categoryText = this.getValuesList("categoryNames");
+						if(categoryText != "") {
+							if(containsOperator == "=") {
+								summary = mktMarketingResources.replaceValues("summaryViewing" + usage + includeSubcategories, [categoryText]);
+							}
+							else {
+								summary = mktMarketingResources.replaceValues("summaryNotViewing" + usage + includeSubcategories, [categoryText]);
+							}
+						}
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getNVPSummary">
+			<![CDATA[
+				var summary = "";
+				var valueText = this.getValuesList("urlValueList");
+				var urlName = this.resolvedParams["urlName"];
+				var comparison = this.resolvedParams["comparison"];
+				var containsOperator = this.resolvedParams["containsOperator"];
+				
+				if((urlName != null) && (urlName != "") && (comparison != null) && (comparison != "") &&
+						((containsOperator == "=") || (containsOperator == "!="))) {
+					
+					var notText = (containsOperator == "!=") ? "Not" : "";
+					var compText = "";
+					
+					switch(comparison) {
+						case "=":
+							compText = "Exactly";
+							break;
+						case "start":
+							compText = "StartsWith";
+							break;
+						case "contain":
+							compText = "Contains";
+							break;
+						case "end":
+							compText = "Ends";
+							break;
+						case "any":
+							compText = "Any";
+							break;
+					}
+					
+					if(((valueText != null) && (valueText != "")) || (compText == "Any")) {
+						summary = mktMarketingResources.replaceValues("summary" + notText + "NVP" + compText, [urlName, valueText]);
+					}
+				}
+			
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getSearchSummary">
+			<![CDATA[
+				var summary = "";
+				var valueText = this.getValuesList("searchTermList");
+				var comparison = this.resolvedParams["comparison"];
+				var containsOperator = this.resolvedParams["containsOperator"];
+				
+				if((valueText != null) && (valueText != "") && (comparison != null) && (comparison != "") &&
+						((containsOperator == "=") || (containsOperator == "!="))) {
+					
+					var notText = (containsOperator == "!=") ? "Not" : "";
+					var compText = "";
+					
+					switch(comparison) {
+						case "=":
+							compText = "Exactly";
+							break;
+						case "start":
+							compText = "StartsWith";
+							break;
+						case "contain":
+							compText = "Contains";
+							break;
+						case "end":
+							compText = "Ends";
+							break;
+					}
+					
+					summary = mktMarketingResources.replaceValues("summary" + notText + "Searching" + compText, [valueText]);
+				}
+			
+				return summary;
+			]]>
+		</method>
+	</class>
+
+</library>

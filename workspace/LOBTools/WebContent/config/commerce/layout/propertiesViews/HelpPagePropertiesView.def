@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglHelpPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.helpPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="HelpPageReferenceDefaultHelpPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="HelpPageReferenceDefaultHelpPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="HelpPageReferenceDefaultHelpPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display help page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglHelpPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localHelpPageCondition" enablementValue="InheritedHelpPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglHelpPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited Help page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedHelpPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedHelpPageCondition" enablementValue="InheritedHelpPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedHelpPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglHelpPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglHelpPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_helpPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="HelpPageLayoutAssociationReferencedHelpPageLayouts,HelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglHelpPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_helpPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="HelpPageLayoutAssociationReferencedHelpPageLayouts,HelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedHelpPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_helpPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedHelpPageLayoutAssociationReferencedInheritedHelpPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

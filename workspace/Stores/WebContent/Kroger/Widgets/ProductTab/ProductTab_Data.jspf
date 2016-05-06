@@ -1,0 +1,39 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<%-- Pick the productId from WCParam, if empty pick from param --%>
+<c:set var="uniqueID" value="${WCParam.productId}"/>
+<c:if test="${empty uniqueID}">
+	<c:set var="uniqueID" value="${param.productId}"/>
+</c:if>
+<c:set var="key1" value="${uniqueID}+getCatalogEntryViewAllByID"/>
+<c:set var="catEntry" value="${cachedCatalogEntryDetailsMap[key1]}"/>
+<c:if test="${empty catEntry}">
+        <wcf:getData type="com.ibm.commerce.catalog.facade.datatypes.CatalogNavigationViewType" var="catalogNavigationView"
+                        expressionBuilder="getCatalogEntryViewAllWithoutAttachmentsByID" varShowVerb="showCatalogNavigationView" maxItems="1" recordSetStartNumber="0" scope="request">
+                <wcf:param name="UniqueID" value="${uniqueID}" />
+                <wcf:contextData name="storeId" data="${storeId}" />
+                <wcf:contextData name="catalogId" data="${catalogId}" />
+        </wcf:getData>
+
+        <c:set var="catEntry" value="${catalogNavigationView.catalogEntryView[0]}" />
+        <wcf:set target="${cachedCatalogEntryDetailsMap}" key="${key1}" value="${catEntry}"/>
+</c:if>
+<c:set var="excludeUsageStr" value="NOUSAGE,ANGLEIMAGES_THUMBNAIL,ANGLEIMAGES_FULLIMAGE,ANGLEIMAGES_HDIMAGE,IMAGE_SIZE_55,IMAGE_SIZE_40,IMAGE_SIZE_330,IMAGE_SIZE_1000,SWATCH_IMAGE"/>
+<wcf:url var="AttachmentPaginationURL" value="AttachmentPaginationView">
+	<wcf:param name="storeId" value="${storeId}"/>
+	<wcf:param name="catalogId" value="${catalogId}"/>
+	<wcf:param name="langId" value="${langId}"/>
+	<wcf:param name="productId" value="${uniqueID}"/>
+	<wcf:param name="excludeUsageStr" value="${excludeUsageStr}"/>
+</wcf:url>

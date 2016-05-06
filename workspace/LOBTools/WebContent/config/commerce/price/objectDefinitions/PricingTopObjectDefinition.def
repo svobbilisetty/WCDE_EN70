@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	
+	<!--- 
+		The top object definition for pricing tooling that acts as the root 
+		object for navigational view of the pricing UI. 
+	 -->
+ 	<TopObjectDefinition definitionName="prcPricingTopObjectDefinition">    	
+        <!-- Initialize the Instants of the Organizational Objects-->
+        <Xml name="template">	 	
+            <object objectType="CatalogFiltersNode"/>	
+			<object objectType="CatalogFilterImportNode"/>
+			<object objectType="PriceRulesNode"/>
+			<object objectType="PriceListsNode"/>
+			<object objectType="PriceListImportNode"/>
+			<object objectType="PriceEquationsNode"/>
+			<object objectType="PriceConstantsNode"/>
+			<object objectType="AttributeDictionaryNode"/>
+		</Xml>
+		
+		<!--- Retrieves the {@link Catalog Catalog} child objects. -->
+		<GetChildrenService url="/cmc/GetMasterCatalogObject">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService> 
+		<!--- Retrieves the {@link SalesCatalog Sales Catalog} child objects. -->
+		<GetChildrenService url="/cmc/GetSalesCatalogs">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+	</TopObjectDefinition>
+	
+	<!---
+		An organizational object that represents the Price Rule node in the 
+		navigation tree.
+	 -->
+	<OrganizationalObjectDefinition definitionName="PriceRulesNode" displayName="${prcPriceResources.organizationalPriceRules_DisplayName}" objectType="PriceRulesNode" organizedObjectTypes="InheritedPriceRule,PriceRule,WrappedPriceRule,InheritedWrappedPriceRule">
+		
+		<!-- Get children service to retrieve all price rules -->
+		<GetChildrenService url="/cmc/GetPriceRules">	
+			<ServiceParam name="storeId"/>		
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="prcPriceRuleGridChildList"/>
+	</OrganizationalObjectDefinition>
+	<!---
+		An organizational object that represents the Catalog Filter node in the 
+		navigation tree.
+	-->	
+	<OrganizationalObjectDefinition definitionName="CatalogFiltersNode" displayName="${cftCatalogFilterResources.catalogFilters}" objectType="CatalogFiltersNode" organizedObjectTypes="CatalogFilter">
+        
+      <GetChildrenService url="/cmc/GetAllCatalogFilters">
+           <ServiceParam name="storeId"/>
+           <ServiceParam name="searchEnabled" contextName="searchEnabled" />
+      </GetChildrenService>
+
+       <NavigationListDefinition baseDefinitionName="cftCatalogFilterGridChildList"/>
+     </OrganizationalObjectDefinition>
+	<!---
+		An organizational object that represents the Price Constant node in the 
+		navigation tree.
+	 -->	
+	<OrganizationalObjectDefinition definitionName="PriceConstantsNode" displayName="${prcPriceResources.organizationalPriceConstants_DisplayName}" objectType="PriceConstantsNode" organizedObjectTypes="PercentPriceConstant,NumberPriceConstant,CurrencyPriceConstant,InheritedPercentPriceConstant,InheritedNumberPriceConstant,InheritedCurrencyPriceConstant">
+		
+		<!-- Get children service to retrieve all price constants -->
+		<GetChildrenService url="/cmc/GetPriceConstants">	
+			<ServiceParam name="storeId"/>		
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="prcPriceConstantGridChildList"/>
+		
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		An organizational object that represents the Price Equation node in the 
+		navigation tree.
+	 -->
+	<OrganizationalObjectDefinition definitionName="PriceEquationsNode" displayName="${prcPriceResources.organizationalPriceEquations_DisplayName}" objectType="PriceEquationsNode" organizedObjectTypes="InheritedPriceEquation,PriceEquation">
+		
+		<!-- Get children service to retrieve all price equations -->
+		<GetChildrenService url="/cmc/GetPriceEquations">	
+			<ServiceParam name="storeId"/>		
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="prcPriceEquationGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	
+	<!---
+		An organizational object that represents the Price list node in the 
+		navigation tree.
+	 -->	
+	<OrganizationalObjectDefinition definitionName="PriceListsNode" displayName="${prcPriceResources.organizationalPriceLists_DisplayName}" objectType="PriceListsNode" organizedObjectTypes="PriceList,InheritedPriceList">
+		
+		<!-- Get children service to retrieve all price lists -->
+		<GetChildrenService url="/cmc/GetPriceList">	
+			<ServiceParam name="storeId"/>		
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="prcPriceListGridChildList"/>
+		
+	</OrganizationalObjectDefinition>
+	
+		<!---
+		An organizational object that represents the Price list import node in the 
+		navigation tree.
+	 -->
+	<OrganizationalObjectDefinition definitionName="PriceListImportNode" displayName="${prcPriceResources.organizationalPriceListImport_DisplayName}" objectType="PriceListImportNode" organizedObjectTypes="PriceListImport">
+		
+		<!-- Get children service to retrieve all price lists -->
+		<GetChildrenService url="/cmc/GetAllPriceListImportJobs">	
+			<ServiceParam name="storeId"/>		
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="prcPriceListImportGridChildList"/>
+		
+	</OrganizationalObjectDefinition>
+    
+    	<OrganizationalObjectDefinition definitionName="CatalogFilterImportNode" displayName="${cftCatalogFilterResources.organizationalCatalogFilterImport_DisplayName}" objectType="CatalogFilterImportNode" organizedObjectTypes="CatalogFilterImport">
+		
+		<GetChildrenService url="/cmc/GetAllCatalogFilterImportJobs">	
+			<ServiceParam name="storeId"/>		
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="cftCatalogFilterImportGridChildList"/>
+		
+	</OrganizationalObjectDefinition>
+	
+	<OrganizationalObjectDefinition definitionName="AttributeDictionaryNode" displayName="${catalogResources.attributeDictionary}" objectType="AttributeDictionaryNode" organizedObjectTypes="AttributeDictionary,InheritedAttributeDictionary">
+		
+		<GetChildrenService url="/cmc/FindSearchableAttributes">	
+			<ServiceParam name="storeId"/>		
+		</GetChildrenService>
+
+	</OrganizationalObjectDefinition>
+
+</Definitions>

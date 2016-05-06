@@ -1,0 +1,67 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktCustomerSegmentElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktCustomerSegmentElementObject} object:
+		<ul>
+			<li>anyOrAll</li>
+			<li>containsOperator</li>
+			<li>ChildCustomerSegment/CustomerSegment[name]</li>
+		</ul>
+	-->
+	<class name="mktCustomerSegmentSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="anyOrAll" propertyName="anyOrAll" />
+		<wcfFlowSummaryParam name="containsOperator" propertyName="containsOperator" />
+		<wcfFlowSummaryParam name="segmentNames" objectPath="ChildSegment/CustomerSegmentGroup" propertyName="name" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryAnyText, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAllText, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotAnyText, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktCustomerSegmentElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+
+				var anyOrAll = this.resolvedParams["anyOrAll"];
+				var names = this.getValuesList("segmentNames");
+				var containsOperator = this.resolvedParams["containsOperator"];
+				
+				if((anyOrAll != null) && (names != "") && (containsOperator != null)) {
+					if((anyOrAll == "any") && (containsOperator == "=")) {
+						summary = mktMarketingResources.replaceValues("summaryAnyText", [names]);
+					}
+					else if((anyOrAll == "all") && (containsOperator == "=")) {
+						summary = mktMarketingResources.replaceValues("summaryAllText", [names]);
+					}
+					else if((anyOrAll == "any") && (containsOperator == "!=")) {
+						summary = mktMarketingResources.replaceValues("summaryNotAnyText", [names]);
+					}
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+</library>

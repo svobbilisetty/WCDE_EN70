@@ -1,0 +1,146 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<class name="prcCompareConditionElementSummary" extends="wcfFlowElementSummary">
+
+		<wcfFlowSummaryParam name="inputOperandType" propertyName="inputOperandType"/>
+		<wcfFlowSummaryParam name="comparisonOperandType" propertyName="comparisonOperandType"/>
+		<wcfFlowSummaryParam name="operator" propertyName="operator"/>
+		<wcfFlowSummaryParam name="numericalValue" propertyName="numericalValue"/>
+		
+		<wcfFlowSummaryParam name="inputPriceListName" objectPath="InputPriceListGroup/PriceListGroup" propertyName="name"/>
+		<wcfFlowSummaryParam name="comparisonPriceListName" objectPath="InputPriceConstantGroup/PriceConstant" propertyName="name"/>
+		<wcfFlowSummaryParam name="inputPriceConstantName" objectPath="ComparisonPriceListGroup/PriceListGroup" propertyName="name"/>
+		<wcfFlowSummaryParam name="comparisonPriceConstantName" objectPath="ComparisonPriceConstantGroup/PriceConstant" propertyName="name"/>
+		<wcfFlowSummaryParam name="inputPriceEquationName" objectPath="InputPriceEquationGroup/PriceEquationGroup" propertyName="name"/>
+		<wcfFlowSummaryParam name="comparisonPriceEquationName" objectPath="ComparisonPriceEquationGroup/PriceEquationGroup" propertyName="name"/>
+		
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(prcPriceResources.priceListInputOperand, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.priceConstantInputOperand, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.priceListComparisonOperand, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.priceConstantComparisonOperand, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.variableOperand, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.numberOperand, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.equal, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.notEqual, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.lessThan, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.noGreaterThan, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.greaterThan, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.noLessThan, "onstring");
+			]]>
+		</handler>
+		
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var valueASummary = getValueASummary();
+				var valueBSummary = getValueBSummary();
+				if (valueASummary != "" && valueBSummary!= "") {
+					this.setSummaryText(valueASummary + "\n" + getOperatorSummary() + "\n" + valueBSummary);
+				} else {
+					this.setSummaryText("");
+				}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getValueASummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				var inputOperandType = this.resolvedParams["inputOperandType"];
+				if (inputOperandType == "PriceList" ) {
+					var priceListName = this.getValuesList("inputPriceListName");
+					if (priceListName != "") {
+						summary = prcPriceResources.replaceValues("summary_valueA", [priceListName]);
+					}
+				} else if (inputOperandType == "PriceConstant" ) {
+					var priceConstantName = this.getValuesList("inputPriceConstantName");
+					if (priceConstantName != "") {
+						summary = prcPriceResources.replaceValues("summary_valueA", [priceConstantName]);
+					}
+				} else if (inputOperandType == "PriceEquation" ) {
+					var priceEquationName = this.getValuesList("inputPriceEquationName");
+					if (priceEquationName != "") {
+						summary = prcPriceResources.replaceValues("summary_valueA", [priceEquationName]);
+					}
+				} else if (inputOperandType == "Variable") {
+					summary = prcPriceResources.summary_variable.string;
+				}
+				
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getValueBSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				var comparisonOperandType = this.resolvedParams["comparisonOperandType"];
+				if (comparisonOperandType == "PriceList" ) {
+					var priceListName = this.getValuesList("comparisonPriceListName");
+					if (priceListName != "") {
+						summary = prcPriceResources.replaceValues("summary_valueB", [priceListName]);
+					}
+				} else if (comparisonOperandType == "PriceConstant" ) {
+					var priceConstantName = this.getValuesList("comparisonPriceConstantName");
+					if (priceConstantName != "") {
+						summary = prcPriceResources.replaceValues("summary_valueB", [priceConstantName]);
+					}
+				} else if (comparisonOperandType == "PriceEquation" ) {
+					var priceEquationName = this.getValuesList("comparisonPriceEquationName");
+					if (priceEquationName != "") {
+						summary = prcPriceResources.replaceValues("summary_valueB", [priceEquationName]);
+					}
+				} else if (comparisonOperandType == "Number") {
+					summary = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numericalValue"]);
+				}
+				
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getOperatorSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				var operator =this.resolvedParams["operator"];
+				switch(operator) {
+					case "=": 
+						summary = prcPriceResources.op_equal.string;
+						break;
+					case "!=": 
+						summary = prcPriceResources.op_notEqual.string;
+						break;
+					case "<": 
+						summary = prcPriceResources.op_lessThan.string;
+						break;
+					case "<=": 
+						summary = prcPriceResources.op_noGreaterThan.string;
+						break;
+					case ">": 
+						summary = prcPriceResources.op_greaterThan.string;
+						break;
+					case ">=": 
+						summary = prcPriceResources.op_noLessThan.string;
+						break;
+				}
+				return summary;
+			]]>
+		</method>
+	</class>
+</library>

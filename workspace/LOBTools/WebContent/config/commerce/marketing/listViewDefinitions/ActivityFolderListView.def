@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+ 
+	<!--
+            Defines the views to display top level folder, sub folders and the corresponding Activities in the folders.
+            A list view lists objects in the form of a table, providing selected information about the object, within table cells.
+            For example, a list of folders showing the type, Store, Name, Description, etc.
+       -->
+<Definitions>
+      <!--- This grid displays the contents and characteristics of a list of top level ActivityFolder Marketing folders}. -->
+      <ObjectGrid definitionName="mktTopActivityFolderGrid" preferenceKey="mktActivityFolderGrid">
+            <GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.ActivityFolderType}" width="60"/>
+            <GridStoreName name="store" objectPath="ActivityFolderGroup" propertyName="objectStoreId" text="${mktMarketingResources.ActivityFolderStore}" width="125"/>
+            <GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId"  text="${mktMarketingResources.ActivityFolderList_uniqueID}" visible="false" width="90"/>
+            <GridText editable="true" name="folderName" propertyName="identifier" required="true" text="${mktMarketingResources.ActivityFolderList_identifier}" visible="true" width="180"/>
+            <GridText editable="true"  name="folderDescription" propertyName="description" text="${mktMarketingResources.ActivityFolderList_description}" visible="true" width="350"/>          
+      </ObjectGrid>
+     
+      <!-- This child list editor shows a list of top level folders when the 'Activity Folders' organizational node is selected in the navigation view. -->
+      <ChildListEditor definitionName="mktTopActivityFolderGridEditor" listDefinitionName="mktTopActivityFolderGrid" objectTypes="ActivityFolder,InheritedActivityFolder"/>
+     
+      <!--- This navigation list definition is used to display top level ActivityFolder. -->
+      <NavigationListDefinition definitionName="mktTopActivityFolderGridChildList" displayName="${mktMarketingResources.ActivityFolderListMenuTitle}" listDefinitionName="mktTopActivityFolderGridEditor" listTitle="${mktMarketingResources.ActivityFolderListTitle}" toolbarIcon="folderListToolbarIcon"/>
+     
+      <!--- This grid displays the contents and characteristics of a list of ActivityFolders -->
+      <ObjectGrid definitionName="mktActivityFolderGrid" preferenceKey="mktActivityFolderGrid">
+            <GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.ActivityFolderType}" width="60"/>
+            <GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.ActivityFolderStore}" width="125"/>
+            <GridText datatype="number" editable="false" name="uniqueID" propertyName="ActivityFolderId" objectPath="ActivityFolderGroup" text="${mktMarketingResources.ActivityFolderList_uniqueID}" visible="false" width="90"/>
+            <GridText editable="true" name="folderName" propertyName="identifier" objectPath="ActivityFolderGroup" required="true" text="${mktMarketingResources.ActivityFolderList_identifier}" visible="true" width="180"/>
+            <GridText editable="true"  name="folderDescription" propertyName="description" objectPath="ActivityFolderGroup" text="${mktMarketingResources.ActivityFolderList_description}" visible="true" width="350"/>          
+      </ObjectGrid>
+     
+      <!-- This child list editor shows a list of Activity folders that are children of an Activity folder. -->
+      <ChildListEditor definitionName="mktActivityFolderGridEditor" listDefinitionName="mktActivityFolderGrid" objectTypes="ActivityFolderReference,InheritedActivityFolderReference"/>
+     
+      <!--- This navigation list definition is used to display ActivityFolders -->
+      <NavigationListDefinition definitionName="mktActivityFolderGridChildList" displayName="${mktMarketingResources.ActivityFolderListMenuTitle}" listDefinitionName="mktActivityFolderGridEditor" listTitle="${mktMarketingResources.ActivityFolderListTitle}" toolbarIcon="listToolbarIcon"/>          
+     
+      <!--- This grid displays the contents and characteristics of a list of Activities-->
+	  <ObjectGrid definitionName="mktActivityFolderItemGrid" preferenceKey="mktActivityGrid">
+		    <GridIconTypeImage objectPath="ActivityGroup" enableFilter="true" name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="80"/>
+		    <GridPropertyImage objectPath="ActivityGroup" editable="false" enableFilter="true" name="state" propertyName="state" text="${mktMarketingResources.state}" visible="true" width="80"/>
+		    <GridStoreName objectPath="ActivityGroup" name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		    <GridText objectPath="ActivityGroup" editable="true" name="activityName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		    <GridText objectPath="ActivityGroup" editable="true" name="description" propertyName="description" text="${mktMarketingResources.description}" width="250"/>
+		    <GridDateTime editable="true" name="startdate" propertyName="" text="${mktMarketingResources.startDateHeading}">
+				<GridCellDescriptor objectPath="WebActivity" name="webActivityStartDate" propertyName="startdate"/>
+				<GridCellDescriptor objectPath="DialogActivity" name="dialogActivityStartDate" propertyName="startdate"/>
+				<GridCellDescriptor objectPath="EmailActivity" disabled="true" name="emailActivityStartDate" propertyName=""/>
+				<GridCellDescriptor objectPath="InheritedWebActivity" name="inheritedWebActivityStartDate" propertyName="startdate"/>
+				<GridCellDescriptor objectPath="InheritedDialogActivity" name="inheritedDialogActivityStartDate" propertyName="startdate"/>
+				<GridCellDescriptor objectPath="InheritedEmailActivity" disabled="true" name="inheritedEmailActivityStartDate" propertyName=""/>
+		    </GridDateTime>
+		    <GridDateTime editable="true" endOfDay="true" name="enddate" propertyName="" text="${mktMarketingResources.endDateHeading}">
+				<GridCellDescriptor objectPath="WebActivity" name="webActivityEndDate" propertyName="enddate"/>
+				<GridCellDescriptor objectPath="DialogActivity" name="dialogActivityEndDate" propertyName="enddate"/>
+				<GridCellDescriptor objectPath="EmailActivity" disabled="true" name="emailActivityEndDate" propertyName=""/>
+				<GridCellDescriptor objectPath="InheritedWebActivity" name="inheritedWebActivityEndDate" propertyName="enddate"/>
+				<GridCellDescriptor objectPath="InheritedDialogActivity" name="inheritedDialogActivityEndDate" propertyName="enddate"/>
+				<GridCellDescriptor objectPath="InheritedEmailActivity" disabled="true" name="inheritedEmailActivityEndDate" propertyName=""/>
+		    </GridDateTime>
+		    <GridStepper objectPath="ActivityGroup" alignment="right" datatype="number" editable="true" maximumValue="1000" minimumValue="0" name="priority" propertyName="priority" text="${mktMarketingResources.priority}" visible="false" width="45"/>
+		    <GridCheckbox objectPath="ActivityGroup" alignment="center" editable="false" name="experiment" propertyName="experimentType" text="${mktMarketingResources.experiment}" trueValue="Experiment" visible="false" width="100"/>
+		    <GridDate editable="true" name="senddate" propertyName="" text="${mktMarketingResources.sendDateHeading}" visible="false" width="125">
+				<GridCellDescriptor objectPath="WebActivity" disabled="true" name="webActivitySendDate" propertyName=""/>
+				<GridCellDescriptor objectPath="DialogActivity" disabled="true" name="dialogActivitySendDate" propertyName=""/>
+				<GridCellDescriptor objectPath="EmailActivity" name="emailActivitySendDate" propertyName="startdate"/>
+				<GridCellDescriptor objectPath="InheritedWebActivity" disabled="true" name="inheritedWebActivitySendDate" propertyName=""/>
+				<GridCellDescriptor objectPath="InheritedDialogActivity" disabled="true" name="inheritedDialogActivitySendDate" propertyName=""/>
+				<GridCellDescriptor objectPath="InheritedEmailActivity" name="inheritedEmailActivitySendDate" propertyName="startdate"/>
+		    </GridDate>
+		    <GridPropertyImage editable="false" name="sent" propertyName="" text="${mktMarketingResources.emailSent}" visible="false" width="125">
+				<GridCellDescriptor objectPath="WebActivity" disabled="true" name="webActivitySent" propertyName=""/>
+				<GridCellDescriptor objectPath="DialogActivity" disabled="true" name="dialogActivitySent" propertyName=""/>
+  				<GridCellDescriptor objectPath="EmailActivity" name="emailActivitySent" propertyName="sent"/>
+				<GridCellDescriptor objectPath="InheritedWebActivity" disabled="true" name="inheritedWebActivitySent" propertyName=""/>
+				<GridCellDescriptor objectPath="InheritedDialogActivity" disabled="true" name="inheritedDialogActivitySent" propertyName=""/>
+ 				<GridCellDescriptor objectPath="InheritedEmailActivity" name="inheritedEmailActivitySent" propertyName="sent"/>
+		    </GridPropertyImage>
+		    <GridDisplayName objectPath="ActivityGroup" name="campaign" parentObject="true" propertyName="" text="${mktMarketingResources.campaign}" width="150"/>
+		    <GridDateTime objectPath="ActivityGroup" editable="false" name="created" propertyName="created" text="${mktMarketingResources.created}" visible="false"/>
+		    <GridDateTime objectPath="ActivityGroup" editable="false" name="lastUpdated" propertyName="lastupdate" text="${mktMarketingResources.lastUpdated}" visible="false"/>
+		    <GridText objectPath="ActivityGroup" alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="activityId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+	  </ObjectGrid>
+     
+      <!-- Child list editor to display Activity in a folder. -->
+      <ChildListEditor definitionName="mktActivityFolderItemGridEditor" listDefinitionName="mktActivityFolderItemGrid" objectTypes="ActivityFolderItemReference,ActivityFolderInheritedItemReference,InheritedActivityFolderInheritedItemReference"/>
+  
+   <!--- This navigation list definition is used to display Activity Folder Item References} -->
+      <NavigationListDefinition definitionName="mktActivityFolderItemGridChildList" displayName="${mktMarketingResources.ActivityFolderItemListMenuTitle}" listDefinitionName="mktActivityFolderItemGridEditor" listTitle="${mktMarketingResources.ActivityFolderItemListTitle}" toolbarIcon="listToolbarIcon"/>
+           
+</Definitions>

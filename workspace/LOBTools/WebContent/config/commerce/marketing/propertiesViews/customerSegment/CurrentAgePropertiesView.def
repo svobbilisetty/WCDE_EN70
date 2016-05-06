@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyGroup collapsable="false" definitionName="mktCurrentAgeProperties" displayGrouping="true">
+		<PropertyCombobox helpText="${mktMarketingResources.help_customerSegment_CurrentAge}" objectPath="TopAndList/CurrentAge" promptText="${mktMarketingResources.cspCurrentAge}" propertyName="template"/>
+        
+		<PropertyGroup collapsable="false" name="singleCurrentAgeGroup">
+			<EnablementOrCondition conditionId="singleInput">
+				<EnablementCondition conditionId="equal" enablementValue="equal" objectPath="TopAndList/CurrentAge" propertyName="template"/>
+				<EnablementCondition conditionId="greaterOrEqual" enablementValue="greaterOrEqual" objectPath="TopAndList/CurrentAge" propertyName="template"/>
+				<EnablementCondition conditionId="lessOrEqual" enablementValue="lessOrEqual" objectPath="TopAndList/CurrentAge" propertyName="template"/>
+			</EnablementOrCondition>
+			<PropertyStepper maximumValue="200" minimumValue="0" objectPath="TopAndList/CurrentAge/CurrentAgeAndOrList/CurrentAgeCondition" promptText="${mktMarketingResources.customerSegment_currentAge}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="multiCurrentAgeGroup">
+			<EnablementCondition conditionId="lessOrEqual" enablementValue="between" objectPath="TopAndList/CurrentAge" propertyName="template"/>
+			<PropertyStepper maximumValue="200" minimumValue="0" objectPath="TopAndList/CurrentAge/CurrentAgeAndOrList/CurrentAgeCondition[conditionOperator=&gt;=]" promptText="${mktMarketingResources.customerSegment_minimumCurrentAge}" propertyName="conditionValue" required="true"/>
+			<PropertyStepper maximumValue="200" minimumValue="0" objectPath="TopAndList/CurrentAge/CurrentAgeAndOrList/CurrentAgeCondition[conditionOperator=&lt;=]" promptText="${mktMarketingResources.customerSegment_maximumCurrentAge}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+	</PropertyGroup>
+</Definitions>

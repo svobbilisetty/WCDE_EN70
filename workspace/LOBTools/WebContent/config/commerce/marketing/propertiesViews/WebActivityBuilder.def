@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for a {@link WebActivity Marketing Web Activity}.
+	-->
+	<FlowElementProperties definitionName="mktGeneralWebActivityProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="general" text="${mktMarketingResources.generalProperties}">
+				<PropertyPane name="pane">
+					<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+					<PropertyGroup groupTitle="${mktMarketingResources.webActivityProperties}" hideHeaderWhenOnlyGroup="true" name="group" open="true">
+						<PropertyInputText helpText="${mktMarketingResources.help_activity_name}" promptText="${mktMarketingResources.objectName}" propertyName="name"/>
+						<PropertyInputMultiLineText promptText="${mktMarketingResources.description}" propertyName="description"/>
+						<PropertyStepper helpText="${mktMarketingResources.help_activity_priority}" maximumValue="1000" minimumValue="0" promptText="${mktMarketingResources.priority}" propertyName="priority"/>
+						<PropertyDateTimePicker promptText="${mktMarketingResources.startDate}" propertyName="startdate"/>
+						<PropertyDateTimePicker endOfDay="true" promptText="${mktMarketingResources.endDate}" propertyName="enddate"/>
+						<PropertyCheckbox falseValue="0" helpText="${mktMarketingResources.help_activity_repeatable}" promptText="${mktMarketingResources.repeatable}" propertyName="repeatable" trueValue="1"/>
+						<ReferenceEditor name="campaign" parentObjectTypes="Campaign,InheritedCampaign" promptText="${mktMarketingResources.campaign}" referenceObjectTypes="ChildActivity,ChildInheritedActivity"/>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<PropertyTabPane name="related" text="${mktMarketingResources.relatedActivities}">
+				<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+				<PropertyPane name="pane">
+					<PropertyGroup collapsable="false" name="group">
+						<FamilyChildListViewer helpText="${mktMarketingResources.help_activity_relatedActivities}" name="relatedActivities" package="mkt" promptText="${mktMarketingResources.webActivitiesLabel}"/>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<!--- 
+				This property tab pane displays references of a web activity.	
+			-->
+			<PropertyTabPane name="mktWebActivityReferencesTabPane" text="${mktMarketingResources.references}">
+				<!--- 
+					This property pane displays folder references of a web activity.	
+				-->
+				<PropertyPane name="mktWebActivityReferencesPane">
+					<PropertyGroup baseDefinitionName="mktActivityFolderPropertyGroup" name="mktWebActivityFoldersGroup"/>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</FlowElementProperties>
+
+	<!--- 
+		This property group displays references of an activity. It is shared by all activity types, including web activity, email activity, dialog activity and search activity.	
+	-->
+	<PropertyGroup definitionName="mktActivityFolderPropertyGroup" collapsable="false">
+			<!--- The reference list editor for a list of {@link ActivityFolder Activity folder} or {@link InheritedActivityFolder Inherited Activity folder} which are associated with a an activity, including web activity, email activity, dialog activity and search activity. -->
+         	<PropertyReferenceList listDefinitionName="mktActivityFolderReferenceGrid" name="mktActivityFolderReferenceList" promptText="${mktMarketingResources.ActivityFolderReferences}" referenceObjectPaths="*/ActivityFolderItemReference,*/ActivityFolderInheritedItemReference,*/InheritedActivityFolderInheritedItemReference"/>
+	 </PropertyGroup>
+	<!--- 
+		This grid displays the contents and characteristics of a list of {@link ActivityFolder Content folder} or {@link InheritedActivityFolder Inherited Activity folder}. This grid is used in the 
+		{@link mktWebActivityReferencesTabPane References Tab} to list the activity folders that have references to an activity, including web activity, email activity, dialog activity and search activity.	
+	-->
+	<ObjectGrid definitionName="mktActivityFolderReferenceGrid" preferenceKey="mktActivityFolderReferenceGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.ActivityFolderType}" width="60"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.ActivityFolderStore}" width="125"/>
+		<GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId" text="${mktMarketingResources.ActivityFolderList_uniqueID}" visible="false" width="100"/>
+		<GridText editable="false" name="folderName" propertyName="identifier" required="true" text="${mktMarketingResources.ActivityFolderList_identifier}" visible="true" width="150"/>
+		<GridText editable="false" name="description" propertyName="description" text="${mktMarketingResources.ActivityFolderList_description}" visible="false" width="250"/>
+		<GridText editable="false" name="path" propertyName="path" text="${mktMarketingResources.ActivityFolderList_path}" visible="true" width="250"/>
+ 	</ObjectGrid>
+
+	<!---
+		For Web activities, this definition defines a palette in the Activity Builder containing the following elements:
+		<ul>
+			<li>Targets:
+				<ul>
+					<li>Customer Segment</li>
+					<li>Shopping Cart</li>
+					<li>Purchase History</li>
+					<li>Current Page</li>
+					<li>Catalog Browsing Behavior</li>
+					<li>Online Behavior</li>
+					<li>External Site Referral</li>
+					<li>Cookie Contents</li>
+					<li>Social Commerce Participation</li>
+					<li>Day and Time</li>
+					<li>Promotion Checker</li>
+					<li>Search Criteria And Result</>
+				</ul>
+			</li>
+			<li>Actions:
+				<ul>
+					<li>Recommend Catalog Entry</li>
+					<li>Recommend Content</li>
+					<li>Recommend Category</li>
+					<li>Recommend Merchandising Association</li>
+					<li>Recommend Promotion</li>
+					<li>Display Recently Viewed</li>
+					<li>Display Best Sellers</li>
+					<li>Display Top Browsed</li>					
+					<li>Add To or Remove From Customer Segment</li>
+					<li>Display Promotional Price of a Product</li>
+					<li>Display Coremetrics Intelligent Offer Recommendation</li>
+					<li>Recommend From External System</li>
+					<li>Display Location-based Content</li>
+					<li>Display Title</li>
+					<li>Return Name Value Pair Data</li>
+				</ul>
+			</li>
+			<li>Branch</li>
+			<li>Experiment</li>
+		</ul>
+	-->
+	<ActivityBuilder definitionName="mktWebActivityBuilder" flowConnectorClass="mktWebActivityFlowConnector" generalPropertiesDefinitionName="mktGeneralWebActivityProperties" hideIntroPreferenceKey="introWebActivity" introDialogPromptText="${mktMarketingResources.introWebActivity}" introUrl="demo/WebIntro/WebIntro.html?noframes=true" package="mkt">
+		<Xml name="palette">
+			<Group helpLink="concepts/csbtargets.htm" helpText="help_palette_targets" name="targets" resourceBundle="mktMarketingResources">
+				<Element objectType="customerSegmentIdList"/>
+				<Element objectType="shoppingCart"/>
+				<Element objectType="purchaseHistory"/>
+				<Element objectType="currentPage"/>
+				<Element objectType="catalogBrowsingBehavior"/>
+				<Element objectType="onlineBehavior"/>
+				<Element objectType="externalSiteReferral"/>
+				<Element objectType="cookieContents"/>
+				<Element objectType="socialCommerceParticipation"/>
+				<Element objectType="time"/>
+				<Element objectType="promotionChecker"/>
+				<Element objectType="searchCriteriaAndResultV7FEP6"/>
+			</Group>
+			<Group helpLink="concepts/csbactions.htm" helpText="help_palette_actions" name="actions" resourceBundle="mktMarketingResources">
+				<Element objectType="displayProductCombined"/>
+				<Element objectType="displayContent"/>
+				<Element objectType="displayCategory"/>
+				<Element objectType="displayAssociation"/>
+				<Element objectType="displayPromotion"/>
+				<Element objectType="recentlyViewed"/>
+				<Element objectType="ranking_MostSold"/>					
+				<Element objectType="ranking_MostBrowsed"/>
+				<Element objectType="addToRemoveFromCustomerSegment"/>
+				<Element objectType="displayProductPromotionalPrice"/>
+				<Element objectType="displayCoremetricsRecommendation"/>
+				<!-- This prebuilt element is available for customizations to use when the 
+				     DisplayExternalRecommendationActionTaskCmd task command is implemented.
+				<Element objectType="displayExternalRecommendation"/>
+				-->
+				<Element objectType="displayLocationBasedContent"/>
+				<Element objectType="displayTitle"/>
+				<Element objectType="returnNvpData"/>
+			</Group>
+			<Group helpLink="concepts/csbbranchvsexp.htm" helpText="help_palette_branching" name="branching" resourceBundle="mktMarketingResources">
+				<Element objectType="simpleBranch"/>
+				<Element objectType="branch"/>
+			</Group>
+		</Xml>
+	</ActivityBuilder>
+</Definitions>

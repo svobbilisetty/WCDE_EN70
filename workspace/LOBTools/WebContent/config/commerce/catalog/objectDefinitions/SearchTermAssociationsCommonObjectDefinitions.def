@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<ChildObjectDefinition definitionName="catBaseSynonymObjectDefinition" idProperty="uniqueId" isBaseDefinition="true" icon="synonymsIcon" displayName="${catalogResources.synonym_DisplayName}" releaseWhenClosed="false">
+		<!---
+			Create service to create a Synonym. 
+		-->
+		<CreateService url="/cmc/CreateSynonym" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="languageId" propertyName="languageId" resolvePrimaryParent="false" parentProperty="true"/>
+			<ServiceParam name="associationType" value="Synonym"/>
+		</CreateService>
+		<!---
+			Delete service to delete a Synonym. 
+		-->
+		<DeleteService url="/cmc/DeleteSynonym" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</DeleteService>
+		<!--- 
+			Update Service to update a Synonym.
+		-->
+		<UpdateService url="/cmc/UpdateSynonym" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</UpdateService>
+	</ChildObjectDefinition>
+
+	<ChildObjectDefinition baseDefinitionName="catBaseSynonymObjectDefinition" definitionName="catSynonymObjectDefinition" objectType="Synonym">   
+	</ChildObjectDefinition>
+
+	<ChildObjectDefinition baseDefinitionName="catBaseSynonymObjectDefinition" definitionName="catInheritedSynonymObjectDefinition" objectType="InheritedSynonym" icon="inheritedSynonymsIcon" displayName="${catalogResources.inheritedSynonym_DisplayName}">
+		<FalseEnablementCondition conditionId="synonymCondition"/>
+	</ChildObjectDefinition>
+	
+	<ChildObjectDefinition definitionName="catBaseReplacementObjectDefinition" idProperty="uniqueId" isBaseDefinition="true" icon="replacementsIcon" displayName="${catalogResources.replacement_DisplayName}" releaseWhenClosed="false">
+	
+		<PropertyDefinition displayName="${catalogResources.replacementType}" propertyName="associationType" required="true">
+			<PropertyValue displayName="${catalogResources.replacementTypeAlsoSearchFor}" value="AlsoSearchFor"/>
+			<PropertyValue displayName="${catalogResources.replacementTypeInsteadSearchFor}" value="SearchForInstead"/>
+		</PropertyDefinition>
+		
+		<!---
+			Create service to create a Replacement. 
+		-->
+		<CreateService url="/cmc/CreateReplacement" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="languageId" propertyName="languageId" resolvePrimaryParent="false" parentProperty="true"/>
+		</CreateService>
+		<!---
+			Delete service to delete a Replacement. 
+		-->
+		<DeleteService url="/cmc/DeleteReplacement" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</DeleteService>
+		<!--- 
+			Update Service to update a Replacement.
+		-->
+		<UpdateService url="/cmc/UpdateReplacement" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</UpdateService>
+	</ChildObjectDefinition>
+
+	<ChildObjectDefinition baseDefinitionName="catBaseReplacementObjectDefinition" definitionName="catReplacementObjectDefinition" objectType="Replacement">   
+	</ChildObjectDefinition>
+
+	<ChildObjectDefinition baseDefinitionName="catBaseReplacementObjectDefinition" definitionName="catInheritedReplacementObjectDefinition" objectType="InheritedReplacement" icon="inheritedReplacementsIcon"  displayName="${catalogResources.inheritedReplacement_DisplayName}">
+		<FalseEnablementCondition conditionId="replacementCondition"/>
+	</ChildObjectDefinition>
+
+	<ChildObjectDefinition definitionName="catBaseLandingPageObjectDefinition" idProperty="uniqueId" isBaseDefinition="true" icon="landingPageIcon" displayName="${catalogResources.landingPage_DisplayName}" releaseWhenClosed="false">
+		<!---
+			Create service to create a LandingPage. 
+		-->
+		<CreateService url="/cmc/CreateLandingPage" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="languageId" propertyName="languageId" resolvePrimaryParent="false" parentProperty="true"/>
+			<ServiceParam name="associationType" value="LandingPageURL"/>
+		</CreateService>
+		<!---
+			Delete service to delete a LandingPage. 
+		-->
+		<DeleteService url="/cmc/DeleteLandingPage" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</DeleteService>
+		<!--- 
+			Update Service to update a LandingPage.
+		-->
+		<UpdateService url="/cmc/UpdateLandingPage" abortOnError="false">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</UpdateService>
+	</ChildObjectDefinition>
+
+	<ChildObjectDefinition baseDefinitionName="catBaseLandingPageObjectDefinition" definitionName="catLandingPageObjectDefinition" objectType="LandingPage">   
+	</ChildObjectDefinition>
+
+	<ChildObjectDefinition baseDefinitionName="catBaseLandingPageObjectDefinition" definitionName="catInheritedLandingPageObjectDefinition" objectType="InheritedLandingPage" icon="inheritedLandingPageIcon" displayName="${catalogResources.inheritedLandingPage_DisplayName}">
+		<FalseEnablementCondition conditionId="landingPageCondition"/>
+	</ChildObjectDefinition>
+	
+	<ChildObjectDefinition definitionName="catTopSearchHitObjectDefinition" objectType="TopSearchHit" idProperty="uniqueId" copyProtected="true" displayName="${catalogResources.topSearchHit_DisplayName}" releaseWhenClosed="false">
+		<PropertyDefinition propertyName="landingPage">
+			<PropertyValue displayName="${catalogResources.topSearchHitsReport_LandingPage}" value="1" isDefault="true"/>
+		</PropertyDefinition>
+	</ChildObjectDefinition>
+	
+	<ChildObjectDefinition definitionName="catTopSearchHitTotalObjectDefinition" objectType="TopSearchHitTotal" idProperty="uniqueId" copyProtected="true" displayName="${catalogResources.topSearchHit_DisplayName}" releaseWhenClosed="false"/>
+	
+	<ChildObjectDefinition definitionName="catTopSearchMissObjectDefinition" objectType="TopSearchMiss" idProperty="uniqueId" copyProtected="true" displayName="${catalogResources.topSearchMiss_DisplayName}" releaseWhenClosed="false"/>
+	
+	<ChildObjectDefinition definitionName="catTopSearchMissTotalObjectDefinition" objectType="TopSearchMissTotal" idProperty="uniqueId" copyProtected="true" displayName="${catalogResources.topSearchMiss_DisplayName}" releaseWhenClosed="false"/>
+	
+</Definitions>

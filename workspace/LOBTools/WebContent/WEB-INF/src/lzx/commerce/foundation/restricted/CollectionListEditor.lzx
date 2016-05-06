@@ -1,0 +1,881 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords abstract
+
+		A collection list editor is a widget that you can use to work with the list of collections to which an
+		object belongs. You can use the collection list editor to add new collection objects to the list, or delete
+		collection objects from the list.
+
+		wcfBaseCollectionListEditor is an abstract class. Do not create instances of this type or extend this class.
+		Instead, use {@link wcfCollectionListEditor}, as required.
+	-->
+	<class name="wcfBaseCollectionListEditor" visible="true" extends="basecomponent" focusable="false">
+		<!---
+			A comma separated list of primary object types that represent the collection objects.
+			The primary object definitions must have a {@link wcfCollectionReferenceObjectDefinition} with
+			a referenceType that matches the current object. This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string" />
+		
+		<!---
+			This attribute indicates that a new object can be created. If it is set to false, then the
+			collection list editor will not include the "New" button. The default is false.
+		-->
+		<attribute name="allowCreate" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			Model instance.
+		-->
+		<attribute name="model" />
+
+		<!---
+			@keywords private
+			Model object instance.
+		-->
+		<attribute name="o" setter="this.setModelObject(o)" />
+
+		<!---
+			The class name for the list view. This must be a class that extends {@link wcfObjectGrid}.
+		-->
+		<attribute name="listClass" type="string" value="${null}" />
+		<!---
+			The name of the definition to use for viewing this list. 
+			This is often a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableHeight" attribute. This is used to calculate
+			the list view's available height.
+		-->
+		<attribute name="availableHeightView" value="${wcfViewUtil.getAvailableHeightView(this)}" when="once" />
+
+		<!---
+			@keywords private
+			The closest ancestor view that defines an "availableWidth" attribute. This is used to calculate
+			the list view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once" />
+
+		<!---
+			@keywords private
+			Indicates that this collection list editor is embedded in a properties view.
+		-->
+		<attribute name="embedded" type="boolean" value="true" />
+
+		<!---
+			@keywords private
+			Indicates that the delete action is enabled.
+		-->
+		<attribute name="deleteEnabled" type="boolean" value="false" />
+
+		<!---
+			@keywords private
+			Indicates that the add action is enabled.
+		-->
+		<attribute name="addEnabled" type="boolean" value="true" />
+
+		<!---
+			@keywords private
+			Instance of search widget {@link wcfObjectSearchWidget}.
+		-->
+		<attribute name="searchWidget" />
+
+		<!---
+			@keywords private
+			Instance of utility button {@link wcfUtilitiesButton}.
+		-->
+		<attribute name="utilitesButton" />
+
+		<!---
+			@keywords private
+			Instance of new button {@link wcfNewObjectButton}.
+		-->
+		<attribute name="newButton" />
+
+		<!---
+			The resource name of the create new object button.
+		-->
+		<attribute name="newButtonResource" type="string" value="grid_createNewIconForSingleAction" />
+
+		<!---
+			@keywords private
+			Collection list status message.
+		-->
+		<attribute name="statusMessage" type="string" value="" />
+
+		<!--- @keywords private -->
+		<event name="onselect" />
+
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+				this.checkEnabledDel = new lz.Delegate(this, "checkEnabled");
+				this.updateActionsDel = new lz.Delegate(this, "updateActions");
+				this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+				this.listSelectDel = new lz.Delegate(this, "listSelect");
+				this.updateMessageDel = new lz.Delegate(this, "updateMessage");
+				this.o = null;
+				super.construct(args, parent);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				if (this.listClass == null) {
+					this.listClass = this.listDefinitionName;
+				}
+				if (this.availableHeightView != null) {
+					this.updateAvailableHeightDel = new lz.Delegate(this, "updateAvailableHeight");
+					this.updateAvailableHeightDel.register(this.availableHeightView, "onavailableHeight");
+					this.updateAvailableHeightDel.register(this.content, "ony");
+					this.updateAvailableHeight();
+				}
+				if (this.availableWidthView != null) {
+					this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+					this.updateAvailableWidthDel.register(this.availableWidthView, "onavailableWidth");
+					this.updateAvailableWidth();
+				}
+
+				if (lz[this.listClass]) {
+					new lz[this.listClass](this, {
+						name: "list",
+						placement: "content",
+						rowMenuClass: "wcfCollectionListMenu",
+						menuClass: "wcfCollectionListBackgroundMenu",
+						fitExistingRows: this.embedded,
+						listBorderSize: this.embedded ? 1 : 0,
+						filterLeftPadding: this.embedded ? 0 : 3
+					});
+				}
+				else {
+					wcfDefinitionLoader.getDefinition(this.listClass, this, {
+						name: "list",
+						placement: "content",
+						rowMenuClass: "wcfCollectionListMenu",
+						menuClass: "wcfCollectionListBackgroundMenu",
+						fitExistingRows: this.embedded,
+						listBorderSize: this.embedded ? 1 : 0,
+						filterLeftPadding: this.embedded ? 0 : 3
+					});
+				}
+
+				if (this["o"]) {
+					this.o.bindViewToReferences(this.list, null, this.referenceObjectPaths);
+				}
+
+				if (this.list["filters"] && this.list.filters.length > 0) {
+					if (this.embedded) {
+						this.list.setAttribute("padding", 5);
+					}
+				}
+				else {
+					this.list.setAttribute("padding", 0);
+				}
+
+				this.checkEnabled();
+
+				this.listSelectDel.register(this.list, "onselect");
+				if (this.embedded) {
+					this.createActions();
+					this.updateActions();
+				}
+				this.updateMessage();
+				super.init();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				if (this["o"]) {
+					this.o.releaseViewFromReferences(this.list);
+				}
+				delete this.objectDefinitions;
+				delete this.collectionDefinitions;
+				delete this.referenceObjectPaths;
+				this.listSelectDel.unregisterAll();
+				delete this.listSelectDel;
+				this.checkEnabledDel.unregisterAll();
+				delete this.checkEnabledDel;
+				this.updateActionsDel.unregisterAll();
+				delete this.updateActionsDel;
+				if (this["updateAvailableHeightDel"]) {
+					this.updateAvailableHeightDel.unregisterAll();
+					delete this.updateAvailableHeightDel;
+				}
+				if (this["updateAvailableWidthDel"]) {
+					this.updateAvailableWidthDel.unregisterAll();
+					delete this.updateAvailableWidthDel;
+				}
+				this.releaseModelObjectDel.unregisterAll();
+				delete this.releaseModelObjectDel;
+				this.updateMessageDel.unregisterAll();
+				delete this.updateMessageDel;
+				super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the model object for this editor to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBaseCollectionListEditor", "setModelObject(newObject)", [newObject]);
+				}
+
+				if (this["o"] !== newObject) {
+					this.objectDefinitions = null;
+					this.collectionDefinitions = null;
+					this.referenceObjectPaths = null;
+					this.releaseModelObjectDel.unregisterAll();
+					if (this["o"]) {
+						if (this["list"]) {
+							this.o.releaseViewFromReferences(this.list);
+						}
+					}
+					this.o = newObject;
+					if (this.o) {
+						this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+						this.objectDefinitions = this.model.getObjectDefinitions(null, this.objectTypes);
+						this.collectionDefinitions = [];
+						for (var i = 0; i < this.objectDefinitions.length; i++) {
+							var defs = this.objectDefinitions[i].collectionReferenceObjectDefinitions;
+							var collectionDef = null;
+							for (var j = 0; j < defs.length; j++) {
+								if (defs[j].isReferencedDefinition(this.o.objectDefinition)) {
+									collectionDef = defs[j];
+									break;
+								}
+							}
+							if (collectionDef != null) {
+								this.collectionDefinitions.push(collectionDef);
+								var path = this.objectDefinitions[i].objectType + "/" + collectionDef.objectType;
+								if (this.referenceObjectPaths == null) {
+									this.referenceObjectPaths = path;
+								}
+								else {
+									this.referenceObjectPaths += "," + path;
+								}
+							}
+							else {
+								this.objectDefinitions.splice(i, 1);
+								i--;
+							}
+						}
+						if (this["list"]) {
+							this.o.bindViewToReferences(this.list, null, this.referenceObjectPaths);
+						}
+					}
+					if (this["list"]) {
+						this.checkEnabled();
+					}
+					if (this["ono"]) {
+						this.ono.sendEvent(o);
+					}
+					this.updateMessage();
+				}
+
+				if (this.embedded) {
+					this.createActions();
+					this.updateActions();
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBaseCollectionListEditor", "setModelObject(newObject)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method releases the {@link wcfModelObject model object} from this collection list editor.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+				this.setAttribute("o", null);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method creates the toolbar actions for this list.
+		-->
+		<method name="createActions">
+			<![CDATA[
+				if (!this["_actionsCreated"] && this["actionArea"]) {
+					this.searchWidget = new lz.wcfObjectSearchWidget(this.actionArea, {
+						editor: this,
+						searchDefinitions : null,
+						allowMultipleResults : true,
+						y: 1
+					});
+					this.utilitesButton = new lz.wcfUtilitiesButton(this.actionArea, {
+						editor: this,
+						objectDefinitions : null,
+						y: 5
+					});
+					this.newButton = new lz.wcfNewObjectButton(this.actionArea, {
+						editor: this,
+						actionDefinitions: null,
+						buttonResourceForSingleAction: this.newButtonResource,
+						y: 5
+					});
+					new lz.wcfRemoveObjectButton(this.actionArea, {
+						editor: this,
+						y: 5
+					});
+					this._actionsCreated = true;
+					this.actionArea.setAttribute("visible", true);
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method will update the toolbar actions with the new object's object definition.
+		-->
+		<method name="updateActions" args="e=null">
+			<![CDATA[
+				if (this.objectDefinitions && this["actionArea"]) {
+					var searchDefs = [];
+					var searchTypes = {};
+					for (var i = 0; i < this.objectDefinitions.length; i++) {
+						var searchDef = this.objectDefinitions[i].searchDefinition;
+						if (searchDef && !searchTypes[searchDef.searchType]) {
+							searchTypes[searchDef.searchType] = true;
+							searchDefs.push(searchDef);
+						}
+					}
+
+					if (searchDefs.length > 0) {
+						this.searchWidget.setAttribute("searchDefinitions", searchDefs);
+					}
+					else {
+						this.searchWidget.setAttribute("searchDefinitions", null);
+					}
+
+					if (this.objectDefinitions.length > 0) {
+						this.utilitesButton.setAttribute("objectDefinition", this.objectDefinitions[0]);
+					}
+					else {
+						this.utilitesButton.setAttribute("objectDefinition", null);
+					}
+
+					var creatableDefs = [];
+					for (var i = 0; i < this.objectDefinitions.length; i++) {
+						var oDef = this.objectDefinitions[i];
+						if (oDef.isCreatable()) {
+							creatableDefs.push(oDef);
+						}
+					}					
+					if (this.allowCreate && creatableDefs.length > 0) {
+						this.newButton.setAttribute("actionDefinitions", creatableDefs);
+					}
+					else {
+						this.newButton.setAttribute("actionDefinitions", null);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method checks the current enablement of the available actions.
+		-->
+		<method name="checkEnabled" args="e=null">
+			<![CDATA[
+				this.checkEnabledDel.unregisterAll();
+
+				// check delete action
+				var actionEnabled = this.o != null && this.isDeleteEnabled(this.checkEnabledDel);
+				if (actionEnabled != this.deleteEnabled) {
+					this.setAttribute("deleteEnabled", actionEnabled);
+				}
+
+				// check add action
+				actionEnabled = false;
+				if (this.o != null && this.collectionDefinitions != null) {
+					for (var i = 0; i < this.collectionDefinitions.length; i++) {
+						if (this.collectionDefinitions[i].isCreatable(null, this.o, this.checkEnabledDel)) {
+							actionEnabled = true;
+							break;
+						}
+					}
+				}
+				if (actionEnabled != this.addEnabled) {
+					this.setAttribute("addEnabled", actionEnabled);
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method gets the currently selected object in the list.
+		-->
+		<method name="getSelectedObject">
+			<![CDATA[
+				return this.list.getSelectedObject();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when the selection changes in the list.
+		-->
+		<method name="listSelect" args="e=null">
+			<![CDATA[
+				if (this.onselect) {
+					this.onselect.sendEvent();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Adds a reference child for the given new primary object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setNewObject" args="newObject">
+			<![CDATA[
+				var roDef = null;
+				for (var i = 0; i < this.collectionDefinitions.length; i++) {
+					if (newObject.objectDefinition.isChildDefinition(this.collectionDefinitions[i])) {
+						roDef = this.collectionDefinitions[i];
+						break;
+					}
+				}
+				if (roDef != null) {
+					var newRO = this.model.createNewObject(roDef, newObject);
+					newRO.addChild(this.o);
+				}
+				if (this.o.lockCount == 0) {
+					this.o.updateReferences(true);
+					this.list.showObjectInView(newObject);
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if the add to collection action is enabled for the specified object.
+			@param wcfModelObject testObject: the object to test
+			@return boolean: true if the object can be added, false otherwise
+		-->
+		<method name="isAddEnabled" args="testObject">
+			<![CDATA[
+				var actionEnabled = true;
+				var sourceObject = testObject.getReferencedObject();
+				var collectionDefs = sourceObject.objectDefinition.collectionReferenceObjectDefinitions;
+				var collectionDef = null;
+				for (var i = 0; i < collectionDefs.length; i++) {
+					if (this.o && collectionDefs[i].isReferencedDefinition(this.o.objectDefinition)) {
+						collectionDef = collectionDefs[i];
+						break;
+					}
+				}
+				if (collectionDef == null || !collectionDef.isCreatable(sourceObject, this.o) || sourceObject.isDuplicateReference(collectionDef, this.o)) {
+					actionEnabled = false;
+				}
+				return actionEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if delete is enabled for the given objects.
+			@param Array objects: An array of wcfModelObject objects
+			@param lz.Delegate delegate: An optional parameter with a delegate that will be registered with the
+			readonly properties of the objects in question.
+		-->
+		<method name="isDeleteObjectsEnabled" args="objects, delegate">
+			<![CDATA[
+				var deleteEnabled = objects.length > 0;
+				if (deleteEnabled) {
+					for (var i = 0; i < objects.length; i++) {
+						var thisObject = objects[i];
+						for (var key in thisObject.childObjectMap) {
+							var thisChildObject = thisObject.childObjectMap[key];
+							if (thisChildObject.objectDefinition.collectionReference &&
+								thisChildObject.getReferencedObject() == this.o &&
+								!thisChildObject.pendingDelete &&
+								!thisChildObject.isDeletable(delegate)) {
+								deleteEnabled = false;
+								break;
+							}
+						}
+						if (!deleteEnabled) {
+							break;
+						}
+					}
+				}
+				return deleteEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if delete is enabled.
+			@param lz.Delegate delegate: An optional parameter, a delegate registered to changes that can effect the deletable state.
+		-->
+		<method name="isDeleteEnabled" args="delegate=null">
+			<![CDATA[
+				if (delegate) {
+					delegate.register(this, "onselect");
+				}
+				return this.isDeleteObjectsEnabled(this.list.getSelectedObjects(), delegate);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Invoke delete for the given wcfModelObjects.
+			@param Array objects: An array of wcfModelObject objects
+		-->
+		<method name="doDeleteObjects" args="objects">
+			<![CDATA[
+				var deleteObjects = [];
+				for (var i = 0; i < objects.length; i++) {
+					var thisObject = objects[i];
+					for (var key in thisObject.childObjectMap) {
+						var thisChildObject = thisObject.childObjectMap[key];
+						if (thisChildObject.objectDefinition.collectionReference &&
+							!thisChildObject.pendingDelete &&
+							thisChildObject.getReferencedObject() == this.o) {
+							deleteObjects[deleteObjects.length] = thisChildObject;
+							break;
+						}
+					}
+				}
+				for (var i = 0; i < deleteObjects.length; i++) {
+					deleteObjects[i].deleteObject();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Invoke remove object.
+		-->
+		<method name="removeObject">
+			<![CDATA[
+				this.doDeleteObjects(this.list.getSelectedObjects());
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Perform delete.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+				this.doDeleteObjects(this.list.getSelectedObjects());
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if drop is enabled.
+			@param array sources: Array of drag sources.
+		-->
+		<method name="isDropEnabled" args="sources">
+			<![CDATA[
+				var dropEnabled = false;
+				if (sources.length > 0 && sources[0].dragParent != this.list) {
+					var objects = [];
+					for (var i = 0; i < sources.length; i++) {
+						objects.push(wcfModelUtil.findObjectForView(sources[i]));
+					}
+					dropEnabled = this.isAddToCollectionActionEnabled(objects);
+				}
+				return dropEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Add the dragged objects into this list.
+			@param array sources: array of drag sources
+		-->
+		<method name="droppedInTarget" args="sources">
+			<![CDATA[
+				var objects = [];
+				for (var i = 0; i < sources.length; i++) {
+					objects.push(wcfModelUtil.findObjectForView(sources[i]));
+				}
+				this.triggerAddToCollection(objects);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if all of the objects currently in the clipboard can be used as source objects to
+			add new objects to this list.
+			@return boolean: true if the objects can be pasted
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+				return this.isAddToCollectionActionEnabled(this.model.clipboardObjects);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Paste the objects in the clipboard into this list.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+				this.triggerAddToCollection(this.model.clipboardObjects);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if the add to collection action is enabled for the specified objects.
+			@param array objects: source objects
+			@return boolean: true if all the objects can be added, false otherwise
+		-->
+		<method name="isAddToCollectionActionEnabled" args="objects">
+			<![CDATA[
+				var actionEnabled = objects.length > 0;
+				for (var i = 0; i < objects.length; i++) {
+					if (!this.isAddEnabled(objects[i])) {
+						actionEnabled = false;
+						break;
+					}
+				}
+				return actionEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Trigger an add to collection action for each of the specified objects.
+			@param array objects: array of wcfModelObject instances to be added
+		-->
+		<method name="triggerAddToCollection" args="objects">
+			<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfBaseCollectionListEditor", "triggerAddToCollection", "Start add to collection");
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfBaseCollectionListEditor triggerAddToCollection: " + this.o.objectDisplayName + " #objects=" + objects.length);
+				for (var i = 0; i < objects.length; i++) {
+					wcfAddToCollectionActionHandler.triggerAction(this.o, objects[i].getReferencedObject());
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfBaseCollectionListEditor", "triggerAddToCollection", "End add to collection");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the message.
+		-->
+		<method name="updateMessage" args="e=null">
+			<![CDATA[
+				if (this["list"]) {
+					this.updateMessageDel.unregisterAll();
+					var newMessage = "";
+					if (this["o"] && this.list["oList"]) {
+						if (this.list.oList.statusObject != null) {
+							newMessage = this.list.oList.statusObject.message;
+						}
+						this.updateMessageDel.register(this.list.oList, "onstatusObject");
+					}
+					if (newMessage != this.statusMessage) {
+						this.setAttribute("statusMessage", newMessage);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the available height.
+		-->
+		<method name="updateAvailableHeight" args="e=null">
+			<![CDATA[
+				var newHeight = this.availableHeightView.availableHeight - this.content.y;
+				if (this.embedded) {
+					newHeight -= 2;
+				}
+				if (this.content["availableHeight"] != newHeight) {
+					this.content.setAttribute("availableHeight", newHeight);
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the available width.
+		-->
+		<method name="updateAvailableWidth" args="e=null">
+			<![CDATA[
+				var newWidth = this.availableWidthView.availableWidth;
+				if (this.embedded) {
+					newWidth -= 2;
+				}
+				if (this.content["availableWidth"] != newWidth) {
+					this.content.setAttribute("availableWidth", newWidth);
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="5" />
+
+		<view name="actionArea" visible="false">
+			<simplelayout axis="x" spacing="3" />
+		</view>
+		<text name="message" text="${classroot.statusMessage}" multiline="true" width="${parent.content.width}" visible="${classroot.embedded &amp;&amp; classroot.statusMessage != ''}" />
+		<view name="content" />
+
+		<wcfDropTarget targetKey="${'element'}" dragAndDropManager="${wcfDndManager}">
+			<handler name="ondroppedintarget" args="sources">
+				<![CDATA[
+					classroot.droppedInTarget(sources);
+				]]>
+			</handler>
+			<method name="isEnabled" args="currentDragSource">
+				<![CDATA[
+					return classroot.isDropEnabled(currentDragSource);
+				]]>
+			</method>
+		</wcfDropTarget>
+	</class>
+
+	<!---
+		@keywords final
+		This class defines a collection list editor that you can use within a properties view. This widget has its own
+		toolbar that a business user can use to add new collection objects to the list.
+
+		<p>Sample usage:
+		@START_CODE
+			<wcfCollectionListEditor
+					name="SampleCollectionListEditor"
+					listClass="SampleGrid"
+					objectTypes="SampleParentObject" />
+		@END_CODE
+		
+		A collection list editor can also be declared as a definition:
+		@START_CODE
+			<CollectionListEditor definitionName="SampleCollectionListEditor" 
+				listDefinitionName="SampleGrid"
+				objectTypes="SampleParentObject"/>
+		@END_CODE
+	-->
+	<class name="wcfCollectionListEditor" extends="wcfPropertiesComponent">
+		<!---
+			A comma separated list of primary object types that represent the collection objects.
+			The primary object definitions must have a {@link wcfCollectionReferenceObjectDefinition} with
+			a referenceType that matches the current object. This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string" />
+
+		<!---
+			The class name for the list view. This must be a class that extends {@link wcfObjectGrid}.
+		-->
+		<attribute name="listClass" type="string" value="${null}" />
+		<!---
+			The name of the definition to use for viewing this list. 
+			This must be a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			This attribute indicates that a new object can be created. If it is set to false, then the
+			collection list editor will not include the "New" button. The default is false.
+		-->
+		<attribute name="allowCreate" type="boolean" value="false"/>
+		<!---
+			The resource name of the create new object button.
+		-->
+		<attribute name="newButtonResource" type="string" value="grid_createNewIconForSingleAction" />
+
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be
+			called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt.
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+				super.createPrompt(parentComponent);
+
+				if (parentComponent["editor"]) {
+					if (parentComponent["prompt"]) {
+						parentComponent.prompt.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+					}
+
+					if (parentComponent["extendedHelpIcon"]) {
+						parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method creates the editor for the given property component.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+				new lz.wcfBaseCollectionListEditor(parentComponent, {
+					name: "editor",
+					model: parentComponent.model,
+					x: parentComponent.promptWidth + parentComponent.xspacing,
+					o: parentComponent.o,
+					objectTypes: this.objectTypes,
+					listClass: this.listClass,
+					listDefinitionName: this.listDefinitionName,
+					embedded: true,
+					newButtonResource: this.newButtonResource,
+					allowCreate: this.allowCreate
+				});
+
+				if (parentComponent["prompt"]) {
+					parentComponent.prompt.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+
+				if (parentComponent["extendedHelpIcon"]) {
+					parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.list.borderView.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Collection list editors should determine their enablement on its own by looking at its
+			collection reference object definitions to find out if they can be creatable. Overwrites the
+			{@link wcfPropertiesComponent#updateEnablement} method to do nothing.
+		-->
+		<method name="updateEnablement" args="e=null"/>
+	</class>
+
+</library>

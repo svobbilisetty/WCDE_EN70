@@ -1,0 +1,42 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+	-->
+	<class name="wspWorkspaceCancelCustomService" extends="wcfCustomService" displayName="${wspWorkspaceResources.cancel.string}" url="/cmc/CancelWorkspace" refreshChildren="true" sendWorkspaceContext="false">
+		<wcfServiceParam name="workspaceId" propertyName="workspaceId" />
+		<wcfEnablementAndCondition>
+			<wcfEnablementCondition enablementValue="Active" propertyName="workspaceStatus" />
+			<wcfEnablementCondition contextName="workspaceManager" enablementValue="true" />
+			<wcfEnablementCondition propertyName="status" objectPath="ChildTaskGroup/TaskGroup">
+				<!--- @keywords private -->
+				<method name="isEnabled" args="o">
+					<![CDATA[
+						var propertyValues = this.getValues(o);
+						for (var i = 0; i < propertyValues.length; i++) {
+							if (propertyValues[i] != "0" && propertyValues[i] != "6") {
+								return false;
+							}
+						}
+						return true;
+					]]>
+				</method>
+			</wcfEnablementCondition>
+		</wcfEnablementAndCondition>
+	</class>
+
+</library>

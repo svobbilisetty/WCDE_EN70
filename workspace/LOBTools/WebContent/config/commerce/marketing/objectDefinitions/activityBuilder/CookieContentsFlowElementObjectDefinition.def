@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Cookie target. Defined as part of this
+		object are the following:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_cookieValueList as a parameter</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_cookieValueList as a parameter</li>
+			<li>{@link wcfChildObjectDefinition} that defines a new cookieValue type which references the string values</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator} to ensure at least one cookie value is provided when necessary</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>cookie</b>: required string field that specifies the name of the cookie. Maximum length of this string is 254 characters.</li>
+			<li><b>containsOperator</b>: required field with a default of "="</li>
+			<li><b>anyOrAll</b>: required field with a default of "any"</li>
+			<li><b>comparison</b>: required field with a default of "="</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktCookieContentsElementObject" displayName="${mktMarketingResources.cookieContentsName}" elemTemplateType="Target" flowIcon="cookieIcon" headerIcon="cookieHeaderIcon" helpLink="concepts/csbtarcookie.htm" objectType="cookieContents" package="mkt" paletteIcon="cookiePaletteIcon" propertiesDefinitionName="mktCookieContentsProperties" summaryClass="mktCookieContentsSummary">
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_cookieValueList" objectPath="cookieValue" optional="true" propertyName="cookieValue">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+			</ServiceParam>
+		</CreateService>
+
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_cookieValueList" objectPath="cookieValue" optional="true" propertyName="cookieValue">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+			</ServiceParam>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>currentCustomerBehaviorCookieContents</elemTemplateName>
+			<anyOrAll>any</anyOrAll>
+			<containsOperator>=</containsOperator>
+			<comparison>=</comparison>
+			<object objectType="cookieValue"/>
+		</Xml>
+
+		<PropertyDefinition displayName="${mktMarketingResources.cookieName}" maximumSize="254" propertyName="cookie" required="true" trim="true"/>
+
+		<ChildObjectDefinition creatable="true" displayName="${mktMarketingResources.cookieValue}" idProperty="cookieValue" objectType="cookieValue">
+			<PropertyDefinition displayName="${mktMarketingResources.cookieValue}" maximumSize="254" propertyName="cookieValue" required="true" trim="true">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" parentProperty="true" propertyName="comparison" resolvePrimaryParent="false"/>
+			</PropertyDefinition>
+		</ChildObjectDefinition>
+		
+		<PropertyDefinition propertyName="containsOperator">
+			<PropertyValue displayName="${mktMarketingResources.anyCookieContents}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.notAnyCookieContents}" value="!="/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="comparison" required="true">
+			<PropertyValue displayName="${mktMarketingResources.isExactly}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.start}" value="start"/>
+			<PropertyValue displayName="${mktMarketingResources.contain}" value="contain"/>
+			<PropertyValue displayName="${mktMarketingResources.end}" value="end"/>
+			<PropertyValue displayName="${mktMarketingResources.any}" value="any"/>
+		</PropertyDefinition>
+		
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noCookieValueProvided}" objectPath="cookieValue" validatorId="cookieValueValidator" validatorType="noCookieValueProvided">
+			<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+		</RequiredChildObjectValidator>
+	</FlowElementObjectDefinition>
+
+</Definitions>

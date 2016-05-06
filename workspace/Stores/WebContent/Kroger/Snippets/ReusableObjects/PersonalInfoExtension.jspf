@@ -1,0 +1,203 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+
+<flow:ifEnabled feature="DateOfBirth">
+	<jsp:useBean id="now" class="java.util.Date" />
+	<input type="hidden" name="birthdayEnabled" value="true" id="WC_PersonalInfoExtension_HiddenField_1"/>
+	<input type="hidden" name="curr_year" value="${now.year + 1900}" id="WC_PersonalInfoExtension_HiddenField_2"/>
+	<input type="hidden" name="curr_month" value="${now.month + 1}" id="WC_PersonalInfoExtension_HiddenField_3"/>
+	<input type="hidden" name="curr_date" value="${now.date}" id="WC_PersonalInfoExtension_HiddenField_4"/>
+	<input type="hidden" name="dateOfBirthTemp" value="" id="WC_PersonalInfoExtension_HiddenField_5"/>
+	
+	<c:if test="${!empty dateOfBirth}">
+		<c:catch>
+			<fmt:parseDate parseLocale="${dateLocale}" var="myDOB" value="${dateOfBirth}" pattern="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" timeZone="GMT"/>
+		</c:catch>
+		<c:if test="${empty myDOB}">
+			<c:catch>
+				<fmt:parseDate parseLocale="${dateLocale}" var="myDOB" value="${dateOfBirth}" pattern="yyyy-MM-dd'T'HH:mm:ss'Z'" timeZone="GMT"/>
+			</c:catch>
+		</c:if>
+		
+		<c:choose>
+			<c:when test="${!empty errorMessage}">
+				<c:set var="dateOfBirth" value="${paramSource.dateOfBirth}"/>
+				<c:if test="${!empty dateOfBirth and fn:length(dateOfBirth) eq 10}">
+					<fmt:parseNumber var="myDOBYear" value="${fn:substring(dateOfBirth,0,4)}" type="number" pattern="#"/>
+					<fmt:parseNumber var="myDOBMonth" value="${fn:substring(dateOfBirth,5,7)}" type="number" pattern="#"/>
+					<fmt:parseNumber var="myDOBDate" value="${fn:substring(dateOfBirth,8,10)}" type="number" pattern="#"/>
+				</c:if>
+			</c:when>
+			<c:otherwise>
+				<c:set var="myDOBYear" value="${myDOB.year + 1900}"/>
+				<c:set var="myDOBMonth" value="${myDOB.month + 1}"/>
+				<c:set var="myDOBDate" value="${myDOB.date}"/>
+			</c:otherwise>
+		</c:choose>
+		
+	</c:if>
+	<c:set var="zero" value="0"/>
+	
+	<%-- If the user does not specify the year in his/her date of birth, set the year to 1896. --%>
+	<c:set var="DOBYearReset" value="1896"/>
+	
+	<div class="column_registration" id="WC_PersonalInfoExtension_DOB_div_1">
+		<div id="WC_PersonalInfoExtension_DOB_div_2" class="birthday_label">
+			<fmt:message key="REG_BIRTHDAY"/>:
+		</div>
+		<div id="WC_PersonalInfoExtension_DOB_div_3" class="birthday_content">
+			<div class="birthdayColumn" id="WC_PersonalInfoExtension_DOB_div_4">
+				<div id="WC_PersonalInfoExtension_DOB_div_7">
+					<fmt:message key="REG_BIRTHDAY_YEAR"/>
+				</div>
+				<fmt:parseNumber var="this_year" type="number" value="${now.year + 1900}" />
+				<span class="spanacce"><label for="WC_PersonalInfoExtension_birth_year"><fmt:message key="REG_BIRTHDAY_YEAR_NODISPLAY"/></label></span>
+				<span id="age_check_year" style="display:none;"><fmt:message key="REG_BIRTHDAY_POPUP_WARNING"/></span>
+				<select aria-describedby="age_check_year" onchange="javascript:LogonForm.validateAge(document.Register)" class="drop_down" name="birth_year" id="WC_PersonalInfoExtension_birth_year" size="1">
+					<option <c:if test="${DOBYearReset eq myDOBYear}"> selected="selected" </c:if> value="0">----</option>
+					<c:forEach var="year" begin="${this_year - 100}" end="${this_year}" step="1">
+						<option <c:if test="${year eq myDOBYear}"> selected="selected" </c:if> value="${year}">
+							<c:out value="${year}"/>
+						</option>
+					</c:forEach>
+				</select>
+			</div>
+			<div class="birthdayColumn" id="WC_PersonalInfoExtension_DOB_div_5">
+				<div id="WC_PersonalInfoExtension_DOB_div_8">
+					<fmt:message key="REG_BIRTHDAY_MONTH"/>
+				</div>
+				<span class="spanacce"><label for="WC_PersonalInfoExtension_birth_month"><fmt:message key="REG_BIRTHDAY_MONTH_NODISPLAY"/></label></span>
+				<span id="age_check_month" style="display:none;"><fmt:message key="REG_BIRTHDAY_POPUP_WARNING"/></span>
+				<select aria-describedby="age_check_month" onchange="javascript:LogonForm.validateAge(document.Register)" class="drop_down" name="birth_month" id="WC_PersonalInfoExtension_birth_month" size="1">
+					<option value="0">--</option>
+					<c:forEach var="month" begin="1" end="12" step="1">
+						<fmt:formatNumber var="month_number" value="${month}" type="number" maxFractionDigits="0"/>
+						<c:choose>
+							<c:when test="${month_number < 10}">
+								<c:set var="month_display" value="${zero + month}"/>
+							</c:when>
+							<c:otherwise>
+								<c:set var="month_display" value="${month}"/>
+							</c:otherwise>
+						</c:choose>
+						<option <c:if test="${month eq myDOBMonth}"> selected="selected" </c:if> value="${month}">
+							<c:out value="${month_display}"/>
+						</option>
+					</c:forEach>
+				</select>
+			</div>
+			<div class="birthdayColumn" id="WC_PersonalInfoExtension_DOB_div_6">
+				<div id="WC_PersonalInfoExtension_DOB_div_9">
+					<fmt:message key="REG_BIRTHDAY_DATE"/>
+				</div>
+				<span class="spanacce"><label for="WC_PersonalInfoExtension_birth_date"><fmt:message key="REG_BIRTHDAY_DATE_NODISPLAY"/></label></span>
+				<span id="age_check_day" style="display:none;"><fmt:message key="REG_BIRTHDAY_POPUP_WARNING"/></span>
+				<select aria-describedby="age_check_day" onchange="javascript:LogonForm.validateAge(document.Register)" class="drop_down" name="birth_date" id="WC_PersonalInfoExtension_birth_date" size="1">
+					<option value="0">--</option>
+					<c:forEach var="date" begin="1" end="31" step="1">
+						<fmt:formatNumber var="date_number" value="${date}" type="number" maxFractionDigits="0"/>
+						<c:choose>
+							<c:when test="${date_number < 10}">
+								<c:set var="date_display" value="${zero + date}"/>
+							</c:when>
+							<c:otherwise>
+								<c:set var="date_display" value="${date}"/>
+							</c:otherwise>
+						</c:choose>
+						<option <c:if test="${date eq myDOBDate}"> selected="selected" </c:if> value="${date}">
+							<c:out value="${date_display}"/>
+						</option>
+					</c:forEach>
+				</select>
+			</div>
+			<wcf:url var="PrivacyViewURL" patternName="PrivacyRegistrationURL" value="PrivacyPolicy">  
+				<wcf:param name="langId" value="${langId}" />
+				<wcf:param name="storeId" value="${WCParam.storeId}" />
+				<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+				<wcf:param name="fromPage" value="registration" />
+				<wcf:param name="urlLangId" value="${urlLangId}" />
+			</wcf:url>
+			<span id="privacy_link_acce_id" class="spanacce"><fmt:message key="REG_PRIVACEY_LINK_ACCE"/></span>
+			<a class="myaccount_link hover_underline" href="javascript:MyAccountDisplay.popupWindow('<c:out value="${PrivacyViewURL}"/>');" aria-labelledby="privacy_link_acce_id" class="myaccount_link" id="WC_PersonalInfoExtension_Link_1"><fmt:message key="PRIVACY_TITLE"/></a>
+		</div>	
+	</div>
+	<br clear="all" />
+</flow:ifEnabled>
+
+<flow:ifEnabled feature="MobilePhone">
+	<!-- This code will include the Mobile country drop down list and the mobile Phone number field -->
+	<input type="hidden" name="mobileDeviceEnabled" value="true" id="WC_PersonalInfoExtension_mobile_div_25"/>
+	<div class="column" id="WC_PersonalInfoExtension_mobile_div_1" >
+		<div id="WC_PersonalInfoExtension_mobile_div_3" class="column_label">
+			<fmt:message key="MOBILE_COUNTRY"/>
+		</div>
+		<span class="spanacce"><label for="WC_PersonalInfoExtension_mobile_div_Country_dropdown"><fmt:message key="MOBILE_PHONE_NUMBER_COUNTRY_NODISPLAY"/></label></span>
+		<c:set var="lang" value="${locale}" />
+		<c:set var="country_language_select" value="${fn:split(lang, '_')}" />
+		<select class="drop_down_country" id="WC_PersonalInfoExtension_mobile_div_Country_dropdown" name="mobilePhone1Country" onchange="javascript:AddressHelper.loadCountryCode('WC_PersonalInfoExtension_mobile_div_Country_dropdown','WC_PersonalInfoExtension_mobile_div_mobileCountryCode')">
+			<c:forEach var="mobileCountry" items="${countryBean.countries}">
+				<option value="<c:out value="${mobileCountry.code}"/>"
+					<c:if test="${mobileCountry.code eq mobilePhoneNumber1Country || mobileCountry.displayName eq mobilePhoneNumber1Country || (empty mobilePhoneNumber1Country&&mobileCountry.code eq country_language_select[1]) }">
+						selected="selected"
+						<c:set var="mobilePhoneNumber1CountryCode" value="${mobileCountry.callingCode}"/>
+					</c:if>
+				>
+				<c:out value="${mobileCountry.displayName}"/></option>
+			</c:forEach>
+		</select>
+	</div>	
+	<div class="column" id="WC_PersonalInfoExtension_mobile_div_6" >
+		<div id="WC_PersonalInfoExtension_mobile_div_8" class="column_label">
+			<label for="WC_PersonalInfoExtension_mobile_div_12">
+			<fmt:message key="MOBILE_PHONE_NUMBER"/></label>
+		</div>
+		<c:set var="countryCode" value="${mobilePhoneNumber1CountryCode}"/>
+		<c:if test="${mobilePhoneNumber1CountryCode==null || mobilePhoneNumber1CountryCode==''}">
+			<c:set var="countryCode" value="+93"/>
+		</c:if>
+		<span class="spanacce"><label for="WC_PersonalInfoExtension_mobile_div_mobileCountryCode"><fmt:message key="MOBILE_COUNTRY"/></label></span>
+		<input type="text" size="6" maxlength="6" id="WC_PersonalInfoExtension_mobile_div_mobileCountryCode" name="mobileCountryCode" value="${countryCode}" readonly="readonly" class="text" tabindex="-1"/>		
+		<input type="tel" size="20" maxlength="20" id="WC_PersonalInfoExtension_mobile_div_12" name="mobilePhone1" value="<c:out value='${mobilePhoneNumber1}'/>" onkeyup="javascript:AddressHelper.enableSMSNotifications(<c:out value='${formName}'/>);"/>
+		<div id="WC_PersonalInfoExtension_mobile_div_13">
+				<fmt:message key="MOBILE_PHONE_EXAMPLE"/>
+		</div>
+	</div>	
+	<br clear="all" />
+	
+	<div class="column" id="WC_UserRegistrationAddForm_sendMeSMSNotification_div_9_1">
+		<div class="input_label" id="WC_UserRegistrationAddForm_sendMeSMSNotification_div_9_2">
+			<div class="checkbox_registration" id="WC_UserRegistrationAddForm_sendMeSMSNotification_div_10">
+				<input class="checkbox" type="checkbox"  name="sendMeSMSNotification" id="WC_UserRegistrationAddForm_FormInput_sendMeSMSNotification_In_Register_2" <c:if test="${receiveSMSNotification && !empty mobilePhoneNumber1}"> checked </c:if> <c:if test="${empty mobilePhoneNumber1}"> disabled="true" </c:if>/>
+			</div>
+			
+			<div class="checkbox_label_registration" id="WC_UserRegistrationAddForm_sendMeSMSNotification_div_11">
+				<label for="WC_UserRegistrationAddForm_FormInput_sendMeSMSNotification_In_Register_2"><fmt:message key="SMS_OPT_IN"/></label>
+			</div>
+		</div>
+	</div>    
+	<br clear="all" />
+	
+	<div class="column" id="WC_UserRegistrationAddForm_sendMeSMSPreference_div_12_1">   
+		<div class="input_label" id="WC_UserRegistrationAddForm_sendMeSMSPreference_div_12_2">
+			<div class="checkbox_registration" id="WC_UserRegistrationAddForm_sendMeSMSPreference_div_13">
+				<input class="checkbox" type="checkbox"  name="sendMeSMSPreference"  id="WC_UserRegistrationAddForm_FormInput_sendMeSMSPreference_In_Register_3" <c:if test="${(bnEmailUserReceive.userReceiveSMS || paramSource.sendMeSMSPreference == 'on') && !empty mobilePhoneNumber1}"> checked </c:if> <c:if test="${empty mobilePhoneNumber1}"> disabled="true" </c:if>/>
+			</div>
+	
+			<div class="checkbox_label_registration" id="WC_UserRegistrationAddForm_sendMeSMSPreference_div_14">
+				<label for="WC_UserRegistrationAddForm_FormInput_sendMeSMSPreference_In_Register_3"><fmt:message key="SMS_PROMO"/></label>
+			</div>
+		</div>
+	</div>
+</flow:ifEnabled>

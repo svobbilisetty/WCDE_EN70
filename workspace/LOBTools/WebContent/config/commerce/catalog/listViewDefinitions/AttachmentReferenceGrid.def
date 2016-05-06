@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>			
+	<PropertyChildListEditor definitionName="catAttachmentReferenceList" extendedHelpText="${catalogResources.attachmentReferenceExtendedHelpText}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpn_topattachments.htm" listDefinitionName="catAttachmentReferenceGrid" newButtonResource="URLListToolbarIcon" promptText="${catalogResources.attachmentReferenceGridPrompt}"/>			
+		
+	<!---
+	    This definition displays the contents and characteristics of a list of {@link catCatalogEntryAttachmentReference}
+	-->		
+	<ObjectGrid definitionName="catAttachmentReferenceGrid" preferenceKey="catAttachmentReferenceGrid">
+	
+     	<GridNumeric editable="true" name="sequence" numDecimalPlaces="1" propertyName="sequence" text="${attachmentResources.attachmentSequence}" width="80"/>
+     	
+     	<GridIconTypeImage editable="false" name="typeIcon" propertyName="typeIcon" required="true" text="${attachmentResources.attachment_typeIcon}" width="60"/>
+    	
+    	<GridStoreName name="store" objectPath="AttachmentGroup" propertyName="objectStoreId" text="${attachmentResources.store}" width="125"/>
+
+    	<GridText implicitCreate="false" loadChildren="true" multipleMatchText="${catalogResources.attachmentMultipleAsset}" name="assetPath" noMatchText="${catalogResources.attachmentNoAsset}" propertyName="fullPath" text="${attachmentResources.attachmentAsset_path}" width="332">
+    	     <GridCellDescriptor name="newObjectFileCell" objectPath="AttachmentGroup/AttachmentAssetGroup/ManagedFileGroup" propertyName="fullPath" editable="true" >
+    	     	<EnablementCondition conditionId="newObjectCondition" checkNewObject="true" enablementValue="true"/>
+    	     </GridCellDescriptor>
+    	     <GridCellDescriptor name="existingObjectFileCell" objectPath="AttachmentGroup/AttachmentAssetGroup/ManagedFileGroup" propertyName="fullPath" editable="false" >
+    	     	<EnablementCondition conditionId="existingObjectCondition" checkNewObject="true" enablementValue="false"/>
+    	     </GridCellDescriptor>
+    	     
+			 <GridCellDescriptor name="newObjectURLCell" objectPath="AttachmentGroup/AttachmentAssetWithURLType" propertyName="path" editable="true" >
+			 	<EnablementCondition conditionId="newObjectCondition" checkNewObject="true" enablementValue="true"/>
+			 </GridCellDescriptor>
+			 <GridCellDescriptor name="existingObjectURLCell" objectPath="AttachmentGroup/AttachmentAssetWithURLType" propertyName="path" editable="false" >
+			 	<EnablementCondition conditionId="existingObjectCondition" checkNewObject="true" enablementValue="false"/>
+			 </GridCellDescriptor>
+	    </GridText>
+	    
+	    <GridText editable="false" name="attachmentCode" objectPath="AttachmentGroup" propertyName="identifier" text="${attachmentResources.attachmentIdentifier}" width="150"/>
+		
+        <GridText languageSensitive="true" name="attachmentName"  text="${attachmentResources.attachmentName}" width="230">
+        	<GridCellDescriptor name="existingObject" objectPath="AttachmentGroup/AttachmentDescription"  propertyName="name" editable="false">
+        		<EnablementCondition conditionId="existingObjectCondition" checkNewObject="true" enablementValue="false"/>
+        	</GridCellDescriptor>
+        	<GridCellDescriptor name="newObject" objectPath="AttachmentGroup/AttachmentDescription"  propertyName="name" editable="true">
+        		<EnablementCondition conditionId="newObjectCondition" checkNewObject="true" enablementValue="true"/>
+        	</GridCellDescriptor>
+        </GridText>
+                
+    	<GridComboBox editable="true" enableFilter="true" name="attachmentUsage" propertyName="usage" required="true" text="${attachmentResources.attachmentUsage}" width="90"/>
+    	
+    	<GridText editable="true" languageSensitive="true" name="sdesc" objectPath="AttachmentReferenceDescription" propertyName="sdesc" text="${attachmentResources.attachmentShortDescription}" width="367"/>
+    	
+    	<GridText editable="true" languageSensitive="true" name="ldesc" objectPath="AttachmentReferenceDescription" propertyName="ldesc" text="${attachmentResources.attachmentLongDescription}" visible="false" width="200"/>
+				
+	</ObjectGrid>	
+	
+	
+</Definitions>

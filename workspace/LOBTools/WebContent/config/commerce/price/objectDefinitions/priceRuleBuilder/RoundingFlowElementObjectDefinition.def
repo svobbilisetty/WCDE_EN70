@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcRoundingElementObject" displayName="${prcPriceResources.roundingPriceText_RoundingElement}" elemTemplateType="Action" flowIcon="roundingPriceElementIcon" headerIcon="roundingPriceElementHeaderIcon" helpLink="concepts/cpiactrounding.htm" objectType="roundingPrice" package="prc" paletteIcon="roundingPricePaletteIcon" propertiesDefinitionName="prcRoundingElementProperties" summaryClass="prcRoundingElementSummary">
+									
+		<ChildObjectDefinition objectType="prcRoundingRuleCurrencyObject" idProperty="definingCurrencyCodes">
+			<PropertyDefinition propertyName="definingCurrencyCodes" forceParentValidation="true"/>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition objectType="prcRoundingRulePatternObject" idProperty="pattern" displayName="${prcPriceResources.roundingPricePattern_ColumnHeader}">
+			<PropertyDefinition propertyName="pattern" required="true" displayName="${prcPriceResources.roundingPricePattern_ColumnHeader}" forceParentValidation="true">
+				<RoundingPatternValidator package="prc"/>
+			</PropertyDefinition>
+		</ChildObjectDefinition>
+		
+		<Xml name="template">
+			<elemTemplateName>roundingPrice</elemTemplateName>
+			<object objectType="prcRoundingRuleCurrencyObject"/>
+		</Xml>
+
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_definingCurrencyCodes" objectPath="prcRoundingRuleCurrencyObject" propertyName="definingCurrencyCodes"/>
+			<ServiceParam name="PROPERTY_pattern" objectPath="prcRoundingRulePatternObject" propertyName="pattern"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_definingCurrencyCodes" objectPath="prcRoundingRuleCurrencyObject" propertyName="definingCurrencyCodes"/>
+			<ServiceParam name="PROPERTY_pattern" objectPath="prcRoundingRulePatternObject" propertyName="pattern"/>
+		</UpdateService>
+		
+		<RequiredChildObjectValidator objectPath="prcRoundingRulePatternObject" errorMessage="${prcPriceResources.errorMessage_missingRoundingDefinition}" validatorId="requirePatternInRoundingValidator"  validatorType="requirePatternInRoundingValidator"/>
+		<UniqueValueForChildObjectPropertyValidator objectPath="prcRoundingRulePatternObject" propertyName="pattern"/> 
+		<RequiredChildObjectPropertyValidator objectPath="prcRoundingRuleCurrencyObject" propertyName="definingCurrencyCodes" errorMessage="${prcPriceResources.roundingRequireCurrency}" validatorId="requireCurrencyInRoundingValidator" validatorType="requireCurrencyInRoundingValidator" package="prc"/> 
+	</FlowElementObjectDefinition>
+</Definitions>

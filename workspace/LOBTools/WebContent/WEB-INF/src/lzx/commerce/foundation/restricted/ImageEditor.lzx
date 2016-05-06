@@ -1,0 +1,344 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!---
+		<p>
+		wcfImageEditor is a property editor that is used to edit URLs that point to images.
+		The images constructed from the URL will be displayed either next to or below the text entry field used to
+		edit the URL. Instances of wcfImageEditor may only be declared as children
+		of {@link wcfPropertyPane} or {@link wcfPropertyGroup}.
+		</p><p>
+		Override the {@link wcfImageEditor#getImageURL} method if the property value must be modified before 
+		fetching the image. If the property value is used to locate multiple values, the getImageURL method must 
+		return different URLs based on the image index. The total number of images managed by the image editor is 
+		controlled by the {@link wcfImageEditor#imageCount} attribute.
+		</p><p>
+		The following example demonstrates the declaration of an image editor
+		that lets the user edit a property named "tImage". The property is
+		in a child object of object type "SalesCatalogDescription". The image 
+		found at the URL will be displayed below the text entry field.
+		</p>
+		@START_CODE
+			<ImageEditor 
+				promptText="${resourceBundles.thumbnailPrompt}" 
+				objectPath="SalesCatalogDescription" 
+				propertyName="tImage"
+				showImagesBelowText="true"/>
+		@END_CODE
+	-->
+	<class name="wcfImageEditor" extends="wcfPropertyEditor" sizeToAvailableWidth="false">
+		<!---
+			Show the URL editor text entry field. If this is set to false, the text entry field is not available. 
+			You can use this attribute to only show images. The default value is "true".
+		-->
+		<attribute name="showText" type="boolean" value="true"/>
+		<!---
+			Show the images below the text entry field. If this is set to "false", the images display 
+			to the right of the text entry field.
+		-->
+		<attribute name="showImagesBelowText" type="boolean" value="false"/>
+		<!---
+			The number of images to display. If the property value is used to derive multiple image URLS, set 
+			this value to the number of available images and override the {@link getImageURL} method to
+			return different URLs based on the image index. The default image count is 1.
+		-->
+		<attribute name="imageCount" type="number" value="1"/>
+		<!---
+			The width of the image URL text entry field.
+		-->
+		<attribute name="urlTextWidth" value="235" type="number" />
+		
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfImageEditorViews(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				imageEditor: this
+			});
+			]]>
+		</method>
+		
+		<!---
+			<p>
+			Get the image URL for the specified image index. Override this method to derive the image URL from the property 
+			value. If this image editor supports multiple indexes, the image URL must be derived differently for each 
+			image index. The default implementation returns the unmodified property value.
+			</p>
+			@param string value: the property value
+			@param number imageIndex: the image index. The first image is index 0.
+			@return string: the image URL
+		-->
+		<method name="getImageURL" args="value, imageIndex">
+			<![CDATA[
+			return value;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Image editor views. The image editor views include an entry field for the image URL and an image viewer.
+	-->
+	<class name="wcfImageEditorViews">
+		<!---
+			wcfImageEditor instance.
+		-->
+		<attribute name="imageEditor"/>
+				
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.viewsLayout.setAttribute("axis", this.imageEditor.showImagesBelowText?'y':'x');
+			for (var i=0; i < this.imageEditor.imageCount; i++) {
+				new lz.wcfPropertyImageViewer(this, {
+					placement: "imageViewContainer",
+					imageIndex: i
+				});
+			}
+			]]>
+		</method>
+				
+		<simplelayout name="viewsLayout" axis="x" spacing="5"/>
+		<wcfTextEditor name="url" property="${parent.parent.property}" enabled="${parent.parent.enabled}" 
+			width="${parent.imageEditor.urlTextWidth}" visible="${parent.imageEditor.showText}"/>
+		<view name="imageViewContainer" visible="${parent.imageEditor.imageCount > 0}">
+			<simplelayout axis="x" spacing="5"/>
+		</view>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Image viewer.
+	-->
+	<class name="wcfImageViewer" extends="basecomponent" focusable="false">
+		<!---
+			The maximum width allowed for this viewer. Images that are wider than this value will be scaled down.
+			If this value is not specified then the viewer will display the image in its original size.
+		-->
+		<attribute name="maximumWidth" value="${null}" type="number"/>
+		
+		<!---
+			This attribute specifies if image tooltip shows along with this image viewer.
+		-->
+		<attribute name="showImageToolTip" value="false" type="boolean"/>
+		
+		<!---
+			Reference to the model instance.
+		-->
+		<attribute name="model" value="${wcfModelUtil.findModelForView(this)}" when="once"/>
+		<!---
+			Image URL property.
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (this.property != null) {
+				this.updateValue();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Set a new property instance for this viewer.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(this.property, "onvalue");
+					if (this.inited) {
+						this.updateValue();
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the property value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			var storeConfig = wcfContextUtil.findStoreConfig(this.property.o);
+			var storeId = ((storeConfig != null) ? storeConfig.storeId : null);
+			if (this.property != null) {
+				// extended sites support: need to determine the closest parentObject's objectStoreId and use that instead of currently selected storeId
+				var o = this.property.o;
+				while (o != null) {
+					var imageStoreId = o.getPropertyValue("imageStoreId");
+					if(imageStoreId != null && imageStoreId != ""){
+						storeId = imageStoreId;
+						break;
+					}else if (o.objectStoreId != "") {
+						storeId = o.objectStoreId;
+						break;
+					}
+					o = o.parentObject;
+				}
+			}
+			
+			var url;
+			if (global["serviceContextRoot"]) {
+				url = global["serviceContextRoot"];
+			}
+			else {
+				url = "/lobtools";
+			}
+			url += "/LoadImage?" + (storeId != null ? "storeId=" + storeId + "&" : "") + "imageURL=" + this.getImageURL();
+			if (wcfContextUtil.findContextValue(null, "workspacesEnabled").value == "true") {
+				url += "&workspaceName=" + wcfContextUtil.findContextValue(null, "workspaceName").value;
+			}
+			if (configProperties.loadContentSecurely) {
+				url += "&identityId=" + wcfContextUtil.findContextValue(null, "identityId").value;
+			}
+
+			if (url != this.display.image["currentImageUrl"]) {
+				this.setAttribute('height', this.display.image.height);
+				this.display.image.setAttribute("currentImageUrl", url);
+			}
+			if (this.showImageToolTip && url != null && url != ""){
+				this.display.image.tip.setAttribute("imageURL",url);
+				this.display.image.setAttribute("enabled", true);
+			} else {
+				this.display.image.tip.setAttribute("imageURL","");
+				this.display.image.tip.setAttribute("enabled", false);
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the image URL.
+		-->
+		<method name="getImageURL">
+			<![CDATA[
+			return this.property.value;
+			]]>
+		</method>
+		
+		<wcfBorderedView paddingSize="${classroot.style.thumbnailpaddingsize}" marginBottomSize="${classroot.style.thumbnailmarginbottomsize}" borderSize="${classroot.style.thumbnailbordersize}" borderColor="${classroot.style.thumbnailbordercolor}" name="display">  	
+			<view name="image" stretches="both">
+				<wcfTooltip name="tip"/>
+				<attribute name="currentImageUrl" type="string" value="" setter="setCurrentImageUrl(currentImageUrl)"/>
+				<!--- 
+					@keywords private 
+					Indicates that DragAndDropMangement should not to set this resource in the cloneViewItem method
+				-->
+				<attribute name="dndIgnoreResource" type="boolean" value="true"/>				
+				
+				<method name="setCurrentImageUrl" args="url">
+	    			<![CDATA[
+					if (url != null && url != "") {
+						this.currentImageUrl = url;
+						this.setSource(url);
+					}
+					]]>
+				</method>
+				
+				<handler name="onload">
+	    			<![CDATA[
+					classroot.setAttribute('height', null);
+					this.scaleImage();
+					]]>
+				</handler>
+				<!---
+					@keywords private
+					This method will scale the image down if required, and otherwise resets the image to its fullsize.
+				-->
+				<method name="scaleImage">
+					<![CDATA[		
+					if (classroot.maximumWidth!= null && this.unstretchedwidth > classroot.maximumWidth) {
+						var scale = this.unstretchedwidth/classroot.maximumWidth;	
+						this.setAttribute('width', classroot.maximumWidth);	
+						this.setAttribute('height', this.unstretchedheight/scale);	
+					} else {	
+						//This is required because we reuse rows between grids so need to reset the image sizes
+						this.setAttribute('height', this.unstretchedheight);
+						this.setAttribute('width', this.unstretchedwidth);
+					}				
+															
+					]]>
+				</method>				
+			</view>
+		</wcfBorderedView>
+		
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Image viewer used by wcfImageEditorViews.
+	-->
+	<class name="wcfPropertyImageViewer" extends="wcfImageViewer" property="${parent.parent.property}">
+		<!---
+			@keywords private
+			Image index.
+		-->
+		<attribute name="imageIndex" type="number" value="0"/>
+
+		<!--- @keywords private -->
+		<method name="getImageURL">
+			<![CDATA[
+			return parent.imageEditor.getImageURL(this.property.value, this.imageIndex);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Image viewer used by wcfGridImage.
+	-->
+	<class name="wcfGridImageViewer" extends="wcfImageViewer">
+		<!--- @keywords private -->
+		<method name="getImageURL">
+			<![CDATA[
+			var column = this.parent.column;
+			if (column["originalColumn"]) {
+				column = column.originalColumn;
+			}
+			return column.getImageURL(this.property.value);
+			]]>
+		</method>
+	</class>
+	 
+</library>

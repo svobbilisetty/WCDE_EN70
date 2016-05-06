@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the flow element object definition for the display title property action.
+	-->
+	<FlowElementObjectDefinition
+		definitionName="mktDisplayTitleFlowElementObject"
+		objectType="displayTitle"
+		elemTemplateType="Action"
+		headerIcon="displayTitleHeaderIcon"
+		flowIcon="displayTitleIcon"
+		paletteIcon="displayTitlePaletteIcon"
+		displayName="${mktMarketingResources.displayTitleName}"
+		helpLink="concepts/csbactlabcon.htm"
+		package="mkt"
+		propertiesDefinitionName="mktDisplayTitlePropertiesView"
+		summaryClass="mktDisplayTitleSummary">
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_collateralIdList" objectPath="ChildContent/MarketingContentGroup" optional="true" propertyName="uniqueId"/>
+			<ServiceParam name="ASSOCIATEDPROPERTY_sequence_collateralIdList" objectPath="ChildContent" optional="true" propertyName="sequence"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_collateralIdList" objectPath="ChildContent/MarketingContentGroup" optional="true" propertyName="uniqueId"/>
+			<ServiceParam name="ASSOCIATEDPROPERTY_sequence_collateralIdList" objectPath="ChildContent" optional="true" propertyName="sequence"/>		
+		</UpdateService>
+		
+		<!--- Name to identify this element  -->
+		<Xml name="template">
+			<elemTemplateName>displayTitle</elemTemplateName>
+		</Xml>
+		
+		<ReferenceObjectDefinition
+			allowDuplicates="false"
+			allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate"
+			derivedId="true"
+			idProperty="childMarketingContentId"
+			objectGroups="ChildContent"
+			objectType="ChildMarketingContent"
+			referencedTypes="MarketingContent"/>
+			
+		<ReferenceObjectDefinition
+			allowDuplicates="false"
+			derivedId="true"
+			idProperty="childMarketingContentId"
+			objectGroups="ChildContent"
+			objectType="ChildInheritedMarketingContent"
+			referencedTypes="InheritedMarketingContent"/>
+	
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noMarketingContentSelected}" objectPath="ChildContent" validatorId="reqChildObject" validatorType="noMarketingContentSelected"/>		
+	</FlowElementObjectDefinition>
+	
+</Definitions>

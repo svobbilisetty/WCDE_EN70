@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+	<action-mappings>
+
+		<!-- Gets workspace access by role-->
+		<action path="/GetWorkspaceAccess" forward="/jsp/commerce/workspace/restricted/GetWorkspaceAccess.jsp" />
+
+		<!-- Gets all the workspaces -->
+		<action path="/GetWorkspaces" forward="/jsp/commerce/workspace/restricted/GetWorkspaces.jsp" />
+		<!-- Gets workspace by task group ID -->
+		<action path="/GetWorkspaceByTaskGroupId" forward="/jsp/commerce/workspace/restricted/GetWorkspaceByTaskGroupId.jsp" />
+		<!-- Gets workspace by ID -->
+		<action path="/GetWorkspaceById" forward="/jsp/commerce/workspace/restricted/GetWorkspaceById.jsp" />
+
+		<!-- Gets all the task groups by workspace ID -->
+		<action path="/GetTaskGroupsByWorkspaceId" forward="/jsp/commerce/workspace/restricted/GetTaskGroupsByWorkspaceId.jsp" />
+		<!-- Gets task group by task ID -->
+		<action path="/GetTaskGroupByTaskId" forward="/jsp/commerce/workspace/restricted/GetTaskGroupByTaskId.jsp" />
+		<!-- Gets the task group by ID -->
+		<action path="/GetTaskGroup" forward="/jsp/commerce/workspace/restricted/GetTaskGroup.jsp" />
+		<!-- Gets the task group approvers -->
+		<action path="/GetTaskGroupApprovers" forward="/jsp/commerce/workspace/restricted/GetTaskGroupApprovers.jsp" />
+
+		<!-- Gets all the tasks by task group ID -->
+		<action path="/GetTasksByTaskGroupId" forward="/jsp/commerce/workspace/restricted/GetTasksByTaskGroupId.jsp" />
+		<!-- Gets the task by ID -->
+		<action path="/GetTask" forward="/jsp/commerce/workspace/restricted/GetTask.jsp" />
+		<!-- Gets the list of tasks by task status -->
+		<action path="/GetTasks" forward="/jsp/commerce/workspace/restricted/GetTasks.jsp" />
+		<!-- Gets the task contributors -->
+		<action path="/GetTaskContributors" forward="/jsp/commerce/workspace/restricted/GetTaskContributors.jsp" />
+		
+		<!-- Gets task group comments by task group ID -->
+		<action path="/GetTaskGroupComments" forward="/jsp/commerce/workspace/restricted/GetTaskGroupComments.jsp" />
+
+		<!-- Find approvers --> 
+		<action path="/FindApprovers" forward="/jsp/commerce/workspace/restricted/FindApprovers.jsp" />
+		<!-- Find contributors -->  
+		<action path="/FindContributors" forward="/jsp/commerce/workspace/restricted/FindContributors.jsp" />
+		<!-- Find change history--> 
+		<action path="/GetTaskGroupHistory" forward="/jsp/commerce/workspace/GetTaskGroupHistory.jsp" />
+		<!-- Find tasks -->
+		<action path="/FindTasks" forward="/jsp/commerce/workspace/restricted/FindTasks.jsp" />
+		<!-- Find task groups -->
+		<action path="/FindTaskGroups" forward="/jsp/commerce/workspace/restricted/FindTaskGroups.jsp" />		
+
+		<!-- Creates a task group comment -->
+		<action path="/CreateTaskGroupComment" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeTaskGroup" />
+			<set-property property="actionCode" value="Add" />
+			<set-property property="var" value="taskGroups" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondCreateTaskGroupComment.jsp" />
+		</action>
+
+		<!-- Create a task -->
+		<action path="/CreateTask" parameter="Task"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTask" />
+			<set-property property="actionCode" value="Create" />
+			<set-property property="var" value="tasks" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondCreateTask.jsp" />
+		</action>
+
+		<!-- Update a task -->
+		<action path="/UpdateTask" parameter="Task"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeTask" />
+			<set-property property="actionCode" value="Change" />
+		</action>
+
+		<!-- Completes a task -->
+		<action path="/CompleteTask" parameter="Task"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTask" />
+			<set-property property="actionCode" value="Complete" />
+		</action>
+
+		<!-- Rejects a task -->
+		<action path="/RejectTask" parameter="Task"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTask" />
+			<set-property property="actionCode" value="Reject" />
+		</action>
+
+		<!-- Return a task group to active -->
+		<action path="/ReturnToActiveTask" parameter="Task"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTask" />
+			<set-property property="actionCode" value="ReturnToActive" />
+			<set-property property="var" value="tasks" />
+		</action>		
+
+		<!-- Delete a task -->
+		<action path="/DeleteTask" parameter="Task"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTask" />
+			<set-property property="actionCode" value="Delete" />
+		</action>
+
+		<!-- Create a task group -->
+		<action path="/CreateTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="Create" />
+			<set-property property="var" value="taskGroups" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondCreateTaskGroup.jsp" />
+		</action>
+
+		<!-- Update a task group -->
+		<action path="/UpdateTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeTaskGroup" />
+			<set-property property="actionCode" value="Change" />
+		</action>
+
+		<!-- Approves a task group -->
+		<action path="/ApproveTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="Approve" />
+		</action>
+
+		<!-- Rejects a task group -->
+		<action path="/RejectTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="Reject" />
+		</action>
+
+		<!-- Activate a task group -->
+		<action path="/ActivateTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="Activate" />
+			<set-property property="var" value="taskGroups" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondActivateTaskGroup.jsp" />
+		</action>
+
+		<!-- Return a task group to active -->
+		<action path="/ReturnToActiveTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="ReturnToActive" />
+			<set-property property="var" value="taskGroups" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondReturnToActiveTaskGroup.jsp" />
+		</action>
+
+		<!-- Cancel a task group -->
+		<action path="/CancelTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="Cancel" />
+			<set-property property="var" value="taskGroups" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondCancelTaskGroup.jsp" />
+		</action>
+
+		<!-- Delete a task group -->
+		<action path="/DeleteTaskGroup" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="Delete" />
+		</action>
+
+		<!-- Create a workspace -->
+		<action path="/CreateWorkspace" parameter="Workspace"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processWorkspace" />
+			<set-property property="actionCode" value="Create" />
+			<set-property property="var" value="workspaces" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondCreateWorkspace.jsp" />
+		</action>
+
+		<!-- Update a workspace -->
+		<action path="/UpdateWorkspace" parameter="Workspace"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeWorkspace" />
+			<set-property property="actionCode" value="Change" />
+		</action>
+
+		<!-- Cancel a workspace -->
+		<action path="/CancelWorkspace" parameter="Workspace"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processWorkspace" />
+			<set-property property="actionCode" value="Cancel" />
+			<set-property property="var" value="workspaces" />
+			<forward name="success" path="/jsp/commerce/workspace/restricted/RespondCancelWorkspace.jsp" />
+		</action>
+
+		<!-- Delete a workspace -->
+		<action path="/DeleteWorkspace" parameter="Workspace"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processWorkspace" />
+			<set-property property="actionCode" value="Delete" />
+		</action>
+
+		<!-- Delete a task group history record -->
+		<action path="/DeleteTaskGroupHistory" parameter="TaskGroup"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processTaskGroup" />
+			<set-property property="actionCode" value="UndoChange" />
+			<forward name="failed" path="/jsp/commerce/workspace/restricted/HistoryFailed.jsp"/>
+		</action>
+	</action-mappings>
+
+</struts-config>

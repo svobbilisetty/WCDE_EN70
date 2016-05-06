@@ -1,0 +1,181 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<%--
+  *****
+  * This JSP segment displays the address section of the registration forms
+  * for all countries/regions unless otherwise specified.
+  * The display order is as follows (* means mandatory):
+  *  - Poland
+  * The display order is as follows (* means mandatory):
+  *  - firstname
+  *  - lastname*
+  *  - address*
+  *  - zip/postal code*
+  *  - city*
+  *  - state/province*
+  *  - country/region*
+  *****
+--%>
+
+<!-- BEGIN AddressEntryForm_PL.jspf-->
+
+<%@ include file="AddressHelperCountrySelection.jspf" %>
+
+<script type="text/javascript">
+	dojo.addOnLoad(function() { 
+		AddressHelper.setStateDivName("stateDiv");
+	});
+</script>
+<c:if test="${empty B2BShowNameField || B2BShowNameField eq 'true'}">
+    <div class="column" id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_firstname">
+         <div id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_17" class="column_label">
+              <span class="spanacce">
+				  <label for="<c:out value='WC_${pageName}_NameEntryForm_FormInput_${paramPrefix}firstName_1'/>">
+				  <fmt:message key="FIRST_NAME"/>
+				  </label>
+			  </span>
+              <fmt:message key="FIRST_NAME"/>
+         </div>
+         <input type="text" maxlength="40" size="35" id="<c:out value='WC_${pageName}_NameEntryForm_FormInput_${paramPrefix}firstName_1'/>" name="<c:out value="${paramPrefix}firstName"/>" value="<c:out value='${firstName}'/>" />
+    </div>
+    <div class="column" id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_lastname">
+         <div id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_19" class="column_label">
+              <span class="spanacce">
+				  <label for="<c:out value='WC_${pageName}_NameEntryForm_FormInput_${paramPrefix}lastName_1'/>">
+				  <fmt:message key="LAST_NAME"/>
+				  </label>
+			  </span>
+              <span class="required-field"  id="WC_WC_AddressEntryForm_PL<c:out value="_${paramPrefix}"/>_div_20"> *</span>
+              <fmt:message key="LAST_NAME"/>
+         </div>
+         <input type="text" maxlength="40" size="35" aria-required="true" id="<c:out value='WC_${pageName}_NameEntryForm_FormInput_${paramPrefix}lastName_1'/>" name="<c:out value="${paramPrefix}lastName"/>" value="<c:out value='${lastName}'/>" />
+    </div>
+    <br clear="all" />
+</c:if>
+<c:if test="${B2BShowUseOrgAddress eq 'true'}">
+	<br clear="all" />
+	<div class="input_label">
+		<div id="WC_OrganizationRegistrationAddForm_Checkbox1_1" class="left">
+	      <input id="WC_OrganizationRegistrationAddForm_Checkbox1" type="checkbox" value=""
+	             class="checkbox"
+	             onclick="javascript:B2BLogonForm.fillAdminAddress(document.OrganizationRegistrationAddForm);" />
+		</div>
+		<div id="WC_OrganizationRegistrationAddForm_Checkbox1_2" class="checkbox_label">
+			<label for="WC_OrganizationRegistrationAddForm_Checkbox1"><fmt:message key="OR_USE_ORG_ADD" /></label>
+		</div>	
+	</div>
+	<br clear="all" />
+</c:if>
+<div class="column" id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_1">
+	 <div id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_2" class="column_label">
+		  <span class="spanacce">
+			  <label for="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}address1_1'/>">
+			  <fmt:message key="STREET_ADDRESS_LINE_1"/>
+			  </label>
+		  </span>
+		  <span class="required-field"  id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_3"> *</span>
+		  <fmt:message key="STREET_ADDRESS"/></div>
+	 <input type="text" maxlength="99" size="35" aria-required="true" id="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}address1_1'/>" name="<c:out value="${paramPrefix}address1"/>" value="<c:out value='${street}'/>"/>
+	 <span class="spanacce">
+		<label for="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}address2_1'/>">
+			<fmt:message key="STREET_ADDRESS_LINE_2"/>
+		</label>
+	 </span>
+	 <input type="text" maxlength="49" size="35" id="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}address2_1'/>" name="<c:out value="${paramPrefix}address2"/>" value="<c:out value='${street2}'/>"/>
+</div>
+<div class="column" id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_4">
+	 <div id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_5" class="column_label">
+		  <span class="spanacce">
+			  <label for="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}zipCode_1'/>">
+			  <fmt:message key="ZIP_CODE"/>
+			  </label>
+		  </span>
+		  <span class="required-field"  id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_6"> *</span>
+		  <fmt:message key="ZIP_CODE"/>
+	 </div>
+	 <input type="text" maxlength="30" size="35" aria-required="true" id="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}zipCode_1'/>" name="<c:out value="${paramPrefix}zipCode"/>" value="<c:out value='${zipCode}'/>"/>
+</div>
+<br clear="all" />
+<div class="column" id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_7">
+	 <div id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_8" class="column_label">
+		  <span class="spanacce">
+			  <label for="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}city_1'/>">
+			  <fmt:message key="CITY2"/>
+			  </label>
+		  </span>
+		  <span class="required-field"  id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_9"> *</span>
+		  <fmt:message key="CITY2"/>
+	 </div>
+	 <input type="text" maxlength="40" size="35" aria-required="true" id="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}city_1'/>" name="<c:out value="${paramPrefix}city"/>" value="<c:out value='${city}'/>" />
+</div>
+<div class="column" id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_10">
+	 <div id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_11" class="column_label">
+		  <span class="spanacce">
+			  <label for="<c:out value='${paramPrefix}WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}state_1'/>">
+			  <fmt:message key="REG_STATE"/>
+			  </label>
+		  </span>
+		  <span class="required-field"  id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_10a"> *</span>
+		  <fmt:message key="REG_STATE"/></div>
+		  <wcbase:useBean id="countryBean" classname="com.ibm.commerce.user.beans.CountryStateListDataBean">
+				<c:set target="${countryBean}" property="countryCode" value="${country1}"/>
+		 </wcbase:useBean>
+		   <jsp:setProperty name="countryBean" property="countryCode" value="${country1}" />	
+		  <c:choose>
+			<c:when test="${!empty countryBean.countryCodeStates}">
+				<div id="<c:out value='${paramPrefix}stateDiv'/>">
+				<select class="drop_down_country" aria-required="true" id="<c:out value='${paramPrefix}WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}state_1'/>" name="<c:out value="${paramPrefix}state"/>">
+				<c:forEach var="state1" items="${countryBean.countryCodeStates}">
+					<option value="<c:out value="${state1.code}"/>"
+						<c:if test="${state1.code eq state || state1.displayName eq state}">
+							selected="selected"
+						</c:if>
+					>
+						<c:out value="${state1.displayName}"/>
+					</option>
+				</c:forEach>
+				</select>
+				</div>
+			</c:when>
+			<c:otherwise>
+				<div id="<c:out value='${paramPrefix}stateDiv'/>">
+				<input type="text" maxlength="40" size="35" aria-required="true" id="<c:out value='${paramPrefix}WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}state_1'/>" name="<c:out value="${paramPrefix}state"/>" value="<c:out value='${state}'/>"/>
+				</div>
+			</c:otherwise>
+	  </c:choose>
+</div>
+<br clear="all" />
+<div class="column" id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_13">
+	 <div id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_14" class="column_label">
+		  <span class="spanacce">
+			  <label for="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}country_1'/>">
+				<fmt:message key="COUNTRY2_ACCE"/>
+			  </label>
+		  </span>
+		  <span class="required-field"  id="WC_AddressEntryForm_PL<c:out value='_${paramPrefix}'/>_div_15"> *</span>
+		  <fmt:message key="COUNTRY2"/>
+	 </div>
+	<select class="drop_down_country" aria-required="true" id="<c:out value='WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}country_1'/>" name="<c:out value="${paramPrefix}country"/>" onchange="javascript:AddressHelper.loadStatesUI(<c:out value="${formName}"/>, '<c:out value="${paramPrefix}"/>','<c:out value="${paramPrefix}stateDiv"/>','<c:out value="WC_${pageName}_AddressEntryForm_FormInput_${paramPrefix}state_1"/>')">
+		<c:forEach var="country" items="${countryBean.countries}">
+			<option value="<c:out value="${country.code}"/>"
+				<c:if test="${country.code eq country1 || country.displayName eq country1}">
+					selected="selected"
+				</c:if>
+			><c:out value="${country.displayName}"/></option>
+		</c:forEach>
+	</select>
+</div>
+<!-- END AddressEntryForm_PL.jspf-->
+

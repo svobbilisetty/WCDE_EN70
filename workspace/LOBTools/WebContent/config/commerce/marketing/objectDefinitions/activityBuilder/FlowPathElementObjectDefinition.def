@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for a path element for use within a marketing activity.
+		This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService}</li>
+			<li>{@link mktFlowElementUpdateService}</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>name</b>: Required string field with a maximum of 254 characters. This property is only defined when
+				{@link mktFlowElementObjectDefinition#isTopElement} is <code>false</code>.</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition baseDefinitionName="mktBaseFlowPathElementObject" definitionName="mktFlowPathElementObject" elemTemplateType="Path" flowIcon="webActivityIcon" headerIcon="webActivityHeaderIcon" objectType="path" package="mkt">
+	 	
+		<CreateService baseDefinitionName="mktFlowElementCreateService"/>
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService"/>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.objectName}" maximumSize="254" propertyName="name" required="true" trim="true">
+			<EnablementCondition checkObjectDefinition="true" conditionId="nameCondition" enablementValue="false" propertyName="isTopElement"/>
+		</PropertyDefinition>
+	 </FlowElementObjectDefinition>
+	
+	<!---
+		<p>This is the base flow element object definition for a path element for use within a marketing activity.</p>
+		
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>pctg</b>: Number field with a minimum value of 0 and a maximum value of 100. This value indicates the percentage weight to use
+				when this path is part of a branching element and is required if the branching element is of a random type.</li>
+			<li><b>winner</b>: 'true' or 'false' flag indicating this path is a winner when it is within an experiment. If not set, 'false' is assumed.</li>
+			<li><b>sequence</b>: A decimal value indicating what order this path exists amongst sibling path elements</li>
+		</ul>
+		</p>
+	-->
+	<ChildObjectDefinition definitionName="mktBaseFlowPathElementObject" displayName="${mktMarketingResources.path}" isBaseDefinition="true">
+		
+		<Xml name="template">
+			<object objectType="ExperimentStatistics">
+				<uniqueId>1</uniqueId>
+			</object>
+			<elemTemplateName>path</elemTemplateName>
+		</Xml>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.percentage}" maxValue="100" minValue="0" propertyName="pctg" type="number"/>
+		<PropertyDefinition copyProtected="true" displayName="${mktMarketingResources.winner}" propertyName="winner"/>
+		<PropertyDefinition displayName="${mktMarketingResources.sequence}" propertyName="sequence" type="number"/>
+
+		<ChildObjectDefinition idProperty="uniqueId" objectType="ExperimentStatistics">
+			<PropertyDefinition copyProtected="true" propertyName="views"/>
+			<PropertyDefinition copyProtected="true" propertyName="viewOrders"/>
+			<PropertyDefinition copyProtected="true" propertyName="viewRevenue"/>
+			<PropertyDefinition copyProtected="true" propertyName="clicks"/>
+			<PropertyDefinition copyProtected="true" propertyName="clickOrders"/>
+			<PropertyDefinition copyProtected="true" propertyName="clickRevenue"/>
+			<PropertyDefinition copyProtected="true" propertyName="currency"/>
+		</ChildObjectDefinition>
+		
+		<FlowElementObjectDefinition baseDefinitionName="mktBranchElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCatalogBrowsingBehaviorElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCookieContentsElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCurrentPageElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCustomerIsInSegmentElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCustomerAbandonsShoppingCartElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCustomerParticipatesInSocialCommerceElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCustomerCheckInStoreTriggerElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCustomerSegmentElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayContentElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayProductElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayProductCombinedElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayCategoryElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayPromotionElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayAssociationElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayExternalRecommendationElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayCoremetricsRecommendationElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktSendMessageElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktExperimentElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktExternalSiteReferralElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktIssueCouponElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktPurchaseHistoryElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktPurchasesElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktRecentlyViewedElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktRegistersElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktSendBulkEmailElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktShoppingCartElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktSocialCommerceParticipationElementObject" package="mkt"/>		
+		<FlowElementObjectDefinition baseDefinitionName="mktOnlineBehaviorElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktTimeElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktWaitElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktBirthdayTriggerElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktViewEMarketingSpotElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktAddToRemoveFromCustomerSegmentElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktEventAndParametersElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktPromotionCheckerElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayProductPromotionalPriceElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCustomerSearchesElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktViewSearchEMarketingSpotElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktOrderSearchResultElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktOrderSearchResultElementObjectV7FEP6" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktRecurringOrderTriggerElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktSpecifyTopSearchResultElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktReplaceOrAddSearchCriteriaElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktReplaceOrAddSearchCriteriaElementObjectV7FEP6" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktSearchCriteriaAndResultElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktSearchCriteriaAndResultElementObjectV7FEP6" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktSubscriptionTriggerElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktCustomerUsesPromotionTriggerElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayLocationBasedContentElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayTitleFlowElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktReturnNvpDataElementObject" package="mkt"/>
+		
+		<!-- purchasing and browsing ranking -->
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayTopBrowsedElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktDisplayBestSellersElementObject" package="mkt"/>		
+				
+		<!-- The following elements are provided here for backwards compatibility only and have been deprecated. -->
+		<FlowElementObjectDefinition baseDefinitionName="mktShoppingCartTotalsElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktShoppingCartProductContentsElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktShoppingCartCategoryContentsElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktPurchaseHistoryTotalsElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktPurchaseHistoryProductContentsElementObject" package="mkt"/>
+		<FlowElementObjectDefinition baseDefinitionName="mktPurchaseHistoryCategoryContentsElementObject" package="mkt"/>
+		
+	</ChildObjectDefinition>
+	
+</Definitions>

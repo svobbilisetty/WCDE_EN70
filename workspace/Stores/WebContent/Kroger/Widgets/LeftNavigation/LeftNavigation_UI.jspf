@@ -1,0 +1,205 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<div class="widget_left_nav" id="widget_left_nav">
+	<div class="top">
+		<div class="left_border">
+			
+		</div>
+		<div class="middle">
+			
+		</div>
+		<div class="right_border">
+			
+		</div>
+	</div>
+	
+	<div class="clear_float"></div>
+	
+	<div class="content_left_border">
+		<div class="content_right_border">
+			<div class="content">
+				<c:if test="${!empty categoryFacetList}">
+						<div class="content_section bottom_border_5px">
+						<c:if test="${fn:length(featuredFacetList) > 0}">
+							<div class="header bottom_border">
+								<span class="header_title left"><fmt:message key="LN_SEARCH_FACET_FEATURED" /></span>
+							</div>
+							<div class="section_list bottom_border" id="search_facet_featured">
+								<ul>
+									<c:forEach var="featuredFacetValues" items="${featuredFacetList}" varStatus="aStatus" >
+										<li><a id="SBN_<c:out value="${featuredFacetValues[0]}"/>" href="<c:out value="${featuredFacetValues[2]}" escapeXml="false"/>"><c:out value="${featuredFacetValues[0]}"/> <div class="facetCountContainer">(<c:out value="${featuredFacetValues[1]}"/>)</div></a></li>
+									</c:forEach>
+								</ul>
+							</div>
+						</c:if>
+						<div class="header bottom_border">
+							<span class="header_title"><fmt:message key="LN_SEARCH_FACET_CATEGORY" /></span>
+						</div>
+						<div class="section_list bottom_border" id="search_facet_category">
+							<ul>
+								<c:forEach var="categoryFacetValues" items="${categoryFacetList}" varStatus="aStatus" >
+									<li><a id="SBN_<c:out value="${categoryFacetValues[0]}"/>" href="<c:out value="${categoryFacetValues[2]}" escapeXml="false"/>"><c:out value="${categoryFacetValues[0]}"/> <div class="facetCountContainer">(<c:out value="${categoryFacetValues[1]}"/>)</div></a></li>
+								</c:forEach>
+							</ul>
+						</div>
+					</div>
+				</c:if>
+
+				<c:if test="${empty categoryFacetList || f != 0}">
+					<div class="content_section">
+						<div class="header bottom_border">
+							<span class="filter_by_title"><fmt:message key="LN_SEARCH_FACET_FILTER_BY"/></span>
+							<div id="clear_all_filter" class="clearall" style="display: none">
+								<a role="button" id="LeftNavigationSearchClearAllLink" href="#" onclick="SearchBasedNavigationDisplayJS.clearAllFacets(); return false;" title="<fmt:message key="LN_SEARCH_FACET_CLEAR_ALL"/>">
+									<div class="clear_all_text">
+										<div class="filter_sprite"><img src="${jspStoreImgDir}images/colors/color1/close_circle_sprite.png" alt=""></div>
+										<span><fmt:message key="LN_SEARCH_FACET_CLEAR_ALL"/></span>
+									</div>
+								</a>
+								<div class="clear_float"></div>
+							</div>
+							<div class="clear_float"></div>
+						</div>
+						<div id="facetFilterListWrapper" class="filter_list section_list bottom_border">
+						</div>
+					</div>
+					<form id="productsFacets">
+						<script>SearchBasedNavigationDisplayJS.initConstants(
+								"<c:out value='${jspStoreImgDir}images/colors/color1/widget_left_nav/filter_sprite.png'/>",
+								"<fmt:message key='LN_SEARCH_FACET_REMOVE'/>",
+								"<fmt:message key='LN_SEARCH_FACET_SHOW_ALL'/>",
+								"<fmt:message key='LN_SEARCH_FACET_SHOW_LESS'/>");
+						</script>
+						<c:if test="${!empty facetArray}">
+							<c:forEach var="facetList" items="${facetArray}" varStatus="facetCounter">
+								<c:set var="facetClass" value="${facetList[2] == true ? '' : 'singleFacet'}"/>
+								<c:set var="facetSection" value="${!empty(facetList[5]) ? facetList[5] : facetCounter.index}"/>
+								<c:set var="facetSectionElement" value="${facetList[2] == true ? '' : facetSection}"/>
+								
+								<fieldset>
+								<legend class="spanacce"><c:out value="${facetList[0]}"/></legend>
+								<div class="content_section" id="section_${facetSection}">
+									<a role="button" href="#" onkeydown='if(event.keyCode == dojo.keys.SPACE) {SearchBasedNavigationDisplayJS.toggleExpand("<c:out value="${facetSection}"/>"); return false;}' onclick='SearchBasedNavigationDisplayJS.toggleExpand("<c:out value="${facetSection}"/>"); return false;'>
+										<div class="header bottom_border">
+											<span id="expand_icon_${facetSection}" class="expand_icon_open"></span>
+											<span class="header_title"><c:out value="${facetList[0]}"/></span>
+										</div>
+									</a>
+									<div id="section_list_${facetSection}" class="section_list bottom_border">
+										<ul>
+											<c:set var="priceFacet" value="false"/>
+											<c:forEach var="facetValues" items="${facetList[1]}" varStatus="aStatus" >
+												<c:if test="${fn:startsWith(facetValues[2], 'price_')}">
+													<c:set var="priceFacet" value="true"/>
+												</c:if>
+												<c:set var="facetId" value="${facetValues[3]}"/>
+												<script>SearchBasedNavigationDisplayJS.facetIdsArray.push("${facetId}")</script>
+
+												<c:if test="${!empty facetValues[4]}">
+													<c:set var="facetClass" value="singleFacet left"/>
+												</c:if>
+												
+												<li id="facet_${facetId}" class="${facetClass}">
+													<input type="checkbox" aria-labelledby="facet_checkbox${facetId}_ACCE_Label" id="facet_checkbox${facetId}" value="<c:out value='${facetValues[2]}' escapeXml='false'/>" 
+														onclick="javascript: SearchBasedNavigationDisplayJS.toggleSearchFilter(this, '${facetId}', '${facetSectionElement}')" 
+														onkeypress="javascript: SearchBasedNavigationDisplayJS.toggleSearchFilterOnKeyDown(event, this, '${facetId}', '${facetSectionElement}')"
+														<c:if test="${facetValues[1] == 0}">disabled</c:if>/>
+													<label for="facet_checkbox${facetId}">
+														<c:choose>
+															<c:when test="${!empty facetValues[4]}">
+																<span class="swatch">
+																	<span class="outline">
+																		<span id="facetLabel_${facetId}"><img src="${env_imageContextPath}/${facetValues[4]}" title="${facetValues[0]}" alt="${facetValues[0]}" onclick="SearchBasedNavigationDisplayJS.swatchImageClicked('facet_checkbox${facetId}')"/></span> <div class="facetCountContainer">(<span id="facet_count${facetId}"><c:out value="${facetValues[1]}"/></span>)</div>
+																	</span>
+																</span>
+															</c:when>
+															<c:otherwise>
+																<span class="outline">
+																	<span id="facetLabel_${facetId}"><c:out value="${facetValues[0]}" escapeXml="false"/></span> <div class="facetCountContainer">(<span id="facet_count${facetId}"><c:out value="${facetValues[1]}"/></span>)</div>
+																</span>
+															</c:otherwise>
+														</c:choose>
+														<span class="spanacce" id="facet_checkbox${facetId}_ACCE_Label">${facetValues[0]} <div class="facetCountContainer">(<c:out value="${facetValues[1]}"/>)</div></span>
+													</label>
+												</li>
+											</c:forEach>
+											<div class="clear_float"></div>
+
+											<c:if test="${priceFacet}">
+												<li>
+													<span class="spanacce"><label for="low_price_input"><fmt:message key="LN_SEARCH_FACET_LOWER_BOUND" /></label></span>
+													<span class="spanacce"><label for="high_price_input"><fmt:message key="LN_SEARCH_FACET_UPPER_BOUND" /></label></span>
+													<c:out value="${env_CurrencySymbolToFormat}" escapeXml="false"/> <input id="low_price_input" onkeyup="SearchBasedNavigationDisplayJS.checkPriceInput(event, '${env_CurrencySymbolToFormat}', '${facetSectionElement}');" class="range_input" type="tel"/> - <c:out value="${env_CurrencySymbolToFormat}" escapeXml="false"/> <input id="high_price_input" onkeyup="SearchBasedNavigationDisplayJS.checkPriceInput(event, '${env_CurrencySymbolToFormat}', '${facetSectionElement}');" class="range_input" type="tel"/> <input id="price_range_go" class="go_button_disabled" type="button" value="<fmt:message key="GO_BUTTON_LABEL" />" onclick="SearchBasedNavigationDisplayJS.appendFilterPriceRange('${env_CurrencySymbolToFormat}', '${facetSectionElement}');" disabled/>
+												</li>
+												<input type="hidden" id="low_price_value" name="low_price_value" value=""/>
+												<input type="hidden" id="high_price_value" name="high_price_value" value=""/>
+											</c:if>
+										</ul>
+
+										<c:if test="${facetList[4] == false}">
+											<div class="facet_more_section" id="moresection_<c:out value='${facetSection}' escapeXml='false'/>">
+												<ul id="more_<c:out value='${facetSection}' escapeXml='false'/>"></ul>
+											</div>
+											<div class="showMore" id="morebutton_<c:out value='${facetSection}' escapeXml='false'/>">
+												<input title="MORE" type="checkbox" aria-labelledby="morelink_${facetSection}_ACCE_Label" id="morelink_${facetSection}" name="morelink_${facetSection}" value="<c:out value='${facetSection}' escapeXml='false'/>:-1" onclick="javascript: SearchBasedNavigationDisplayJS.toggleShowMore(this, '<c:out value='${facetSection}' escapeXml='false'/>');"/>
+												<label for="morelink_${facetSection}" id="showMoreLabel_${facetSection}">
+													<fmt:message key="LN_SEARCH_FACET_SHOW_ALL" />
+												</label>
+											</div>										
+										</c:if>
+									</div>
+								</div>
+								</fieldset>
+							</c:forEach>
+						</c:if>
+					</form>
+
+					<c:if test="${f == 0}">
+						<div class="content_section">
+							<div class="section_list">
+								<ul>
+									<li><fmt:message key="LN_SEARCH_NO_FURTHER_REFINEMENT"/></li>
+								</ul>
+							</div>
+						</div>
+					</c:if>
+				</c:if>
+			</div>
+		</div>
+	</div>
+	
+	<div class="bottom">
+		<div class="left_border">
+			
+		</div>
+		<div class="middle">
+			
+		</div>
+		<div class="right_border">
+			
+		</div>
+	</div>
+	
+</div>
+
+<script type="text/javascript">
+	var _searchBasedNavigationFacetContext = new Array();
+
+	<c:forEach var="breadcrumb" items="${globalbreadcrumbs.breadCrumbTrailEntryView}">
+		<c:if test="${breadcrumb.type_ != 'FACET_ENTRY_CATEGORY'}">
+			_searchBasedNavigationFacetContext.push("<c:out value="${breadcrumb.value}"/>");
+		</c:if>
+	</c:forEach>
+</script>

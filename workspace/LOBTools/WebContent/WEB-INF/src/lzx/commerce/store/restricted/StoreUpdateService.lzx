@@ -1,0 +1,40 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This service extends {@link wcfUpdateService} and is used to update
+		a store object on the WebSphere Commerce server by invoking the URL 
+		specified in the <code>url</code> attribute.
+	-->
+	<class name="stoUpdateService" extends="wcfUpdateService" >
+
+		<!---
+			@keywords private
+			This method is called when this update service completed successfully for the Store object.
+			If the store is an AssetStore, then the configurationLoaded flag will be set to false. 
+			
+			@param wcfModelObject requestParent: the object on which this update service was performed
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+			super.handleServiceSuccess(requestParent);
+			var id = requestParent.getProperty("storeId").value;
+			var store = wcfStoreUtil.getStore(id);
+			if (store && store.configurationLoaded){
+				store.setAttribute("configurationLoaded", false);
+			}
+			]]>
+		</method>
+	</class>
+</library>

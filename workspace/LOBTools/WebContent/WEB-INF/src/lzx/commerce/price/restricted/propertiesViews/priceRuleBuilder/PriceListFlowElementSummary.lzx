@@ -1,0 +1,30 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<class name="prcPriceListElementSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="priceListName" objectPath="RefPriceListGroup/PriceListGroup" propertyName="name"/>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var priceList = this.getValuesList("priceListName");
+				if (priceList != "") {
+					this.setSummaryText(prcPriceResources.replaceValues("summary_priceList", [priceList]));
+				} else {
+					this.setSummaryText("");
+				}
+			]]>
+		</method>
+	</class>
+</library>

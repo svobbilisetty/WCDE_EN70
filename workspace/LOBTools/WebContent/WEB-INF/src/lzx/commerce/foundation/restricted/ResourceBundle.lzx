@@ -1,0 +1,250 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		This class declares a service that loads the contents of a resource bundle.
+		A resource bundle is used to define all the NL messages used in the user interface.
+	-->
+	<wcfService id="getResourceBundleService" sendIdentity="false" sendWorkspaceContext="false" sendTimeZoneId="false" retryOnError="true" url="/cmc/GetResourceBundle">
+		<!---
+			This method is called when an element named "values"
+			is found in the service response XML.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent,e,requestIdentifier">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "getResourceBundleService", "parseValues(requestParent,e,requestIdentifier)", [requestParent]);
+			}
+			
+			var nodes = e.childNodes;
+			if (nodes.length == 0) {
+				 if (wcfLogger.enabled) {
+					  wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "getResourceBundleService", "parseValues", "Unable to load resource bundle: " + requestParent.baseName);
+				 }	
+			}
+			else {
+				for (var i = 0; i < nodes.length; i++) {
+					var node = nodes[i];
+					var key = node.nodeName;
+					var textNode = node.firstChild;
+					if (textNode != null && textNode.nodeType == 3) {
+						var resource = requestParent[key];
+						if (resource) {
+							resource.setAttribute("string",textNode.nodeValue);
+						}
+						else {
+							new lz.wcfResourceBundleKey(requestParent, {
+								name: key,
+								string: textNode.nodeValue
+							}); 
+						}
+					}
+				}
+				requestParent.updateConstrainedAttributes();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "getResourceBundleService", "parseValues(requestParent,e,requestIdentifier)");
+			}				
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		This class creates a key that can be used to access strings from a resource bundle. This object is comprised
+		of a name, which is the key, and a string, which is the value, from the resource bundle resource.
+		Instances of this class are to be used as children of the {@link wcfResourceBundle} class.
+		
+		Sample Usage:
+		@START_CODE
+			<wcfResourceBundleKey name="menuFile"/>
+		@END_CODE
+	-->
+	<class name="wcfResourceBundleKey" extends="node">
+		<!---
+			Resource key. This is a required attribute.
+			@type String
+		-->
+		<attribute name="name"/>
+		<!---
+			Resource value.
+		-->
+		<attribute name="string" type="string" value=""/>
+	</class>
+
+	<!---
+		Resource bundles contain locale specific strings. If your program requires a locale specific string then
+		loading from a resource bundle assures that the string is appropiate for the current user's locale. Resource
+		bundles allows programs to be easily localized or translated into different languages.
+		
+		This class is created to represent a resource bundle object within the Open Laszlo code. At class initialization, 
+		all the resource bundle keys defined will be retrieved from the resource bundle file. Then the locale specific
+		strings can be easily referenced by accessing the resource bundle object with the different keys.
+		
+		Using this class to access locale specific strings, allows developers to code independently of locale.
+		
+		Sample Usage:
+		@START_CODE
+				<wcfResourceBundle name="myResources" id="myResources" baseName="extension.myCompany.MyResourcesLOB">
+					<wcfResourceBundleKey name="message1"/>
+					<wcfResourceBundleKey name="message2"/>
+				<wcfResourceBundle/>
+		@END_CODE
+	-->
+	<class name="wcfResourceBundle" extends="node">
+		<!---
+			Fully qualified resource bundle base name.
+		-->
+		<attribute name="baseName" type="string"/>
+		<!---
+			Fully qualified resource bundle extension base name. If not specified, this will default to 
+			"extension.componentName.fileName".
+			
+			This is the path to the resource bundle file which takes precedence over the resource bundle
+			defined by the baseName parameter. The key name/value from this resource bundle will overwrite any
+			existing key name/value combination. 
+		-->
+		<attribute name="extensionBaseName" type="string" value=""/>
+		<!---
+			@keywords private
+			Array of object attributes that are constrained to resource bundle keys.
+			Each entry in the array is a map with three values:
+				key - the name of the resource bundle key
+				node - the node with the constrained attribute
+				attributeName - the name of the attribute
+		-->
+		<attribute name="constrainedAttributes" value="${[]}"/>
+		<!---
+			@keywords private
+			The current locale of this resource bundle.
+		-->
+		<attribute name="currentLocale" value="${null}"/>
+
+		<!---
+			@keywords private 
+			
+			Initialization handler for this class.
+		-->
+		<handler name="oninit" reference="canvas">
+			<![CDATA[
+			this.load();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private 
+			
+			Initialization method for this class.
+		-->
+		<method name="init">
+			<![CDATA[
+			this.loadDel = new lz.Delegate(this, "load");
+			super.init();
+			this.load();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private 
+			
+			Destroy method for this class.
+		-->
+		<method name="destroy">
+			this.loadDel.unregisterAll();
+			delete this.loadDel;
+			super.destroy();
+		</method>
+		
+		<!---
+			@keywords private
+			Load the resource bundle.
+		-->
+		<method name="load" args="e=null">
+			<![CDATA[
+			this.loadDel.unregisterAll();
+			var localeValue = wcfContextUtil.findContextValue(null, "locale", this.loadDel);
+			if(localeValue.value != this.currentLocale){
+				this.currentLocale = localeValue.value;
+				if (localeValue.value && this.baseName) {
+					if (this.extensionBaseName == "") {
+						var tokens = this.baseName.split(".");
+						this.extensionBaseName = "extension." + tokens[3] + "." + tokens[7];
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "INFO", "wcfResourceBundle", "load", "--- extensionBaseName = " + this.extensionBaseName + " ---");
+						}
+					}
+					getResourceBundleService.doRequest(this, {baseName: this.baseName, extensionBaseName: this.extensionBaseName, developmentMode: wcfContextUtil.findContextValue(null, "developmentMode").value});
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Return a formatted string for the specified resource key and parameter list. It substitutes the
+			parameters in the message with the values given in the parameter list.
+			
+			@param string key: resource key
+			@param Array paramList: an array of parameters that are to be substituted into the message
+			@returns string: the resulting message string
+		-->
+		<method name="replaceValues" args="key, paramList">
+			<![CDATA[
+			var resource = this[key];
+			
+			if(!resource || !resource['string']){
+				return null;
+			}
+			
+			var value = wcfStringUtil.replaceParams(resource.string, paramList);
+			
+			return value;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Constrain the specified attribute to the specified resource key.
+			@param string key: resource key
+			@param node node: the node with the attribute to be constrained
+			@param string attributeName: the name of the attribute being constrained
+		-->
+		<method name="constrainAttribute" args="key,node,attributeName">
+			<![CDATA[
+			this.constrainedAttributes.push({key:key,node:node,attributeName:attributeName});
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateConstrainedAttributes">
+			<![CDATA[
+			for (var i = 0; i < this.constrainedAttributes.length; i++) {
+				var constrainedAttribute = this.constrainedAttributes[i];
+				if( typeof(this[constrainedAttribute.key]) != 'undefined' ) {
+					constrainedAttribute.node.setAttribute(constrainedAttribute.attributeName, this[constrainedAttribute.key].string);
+				} else
+				{
+					if (wcfLogger.enabled) {
+					  wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "WARNING", "wcfResourceBundle", "updateConstrainedAttributes", "Undefined resource bundle key: " + constrainedAttribute.key);
+				 	}
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

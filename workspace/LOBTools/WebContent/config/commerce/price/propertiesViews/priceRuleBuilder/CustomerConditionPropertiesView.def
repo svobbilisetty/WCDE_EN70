@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link prcCustomerConditionElementObject}.
+	-->
+	<FlowElementProperties definitionName="prcCustomerConditionElementProperties">
+
+		<PropertyGroup collapsable="false" name="customerCondition">
+			<PropertyCombobox promptText="${prcPriceResources.customerScope}" propertyName="scope" helpText="${prcPriceResources.helpText_customerScope}" helpLinkURL="concepts/cpiconcust.htm"/>
+		
+			<PropertyGroup collapsable="false" name="memberGroupEntriesPropertyGroup">
+				<EnablementCondition conditionId="scopeIsMemberGroups" enablementValue="memberGroups" propertyName="scope"/>
+				<PropertyRadioGroup promptText="${prcPriceResources.targetCustomers}" propertyName="targetMemberGroups"/>
+				<PropertyChildListEditor listDefinitionName="prcMemberGroupGrid" name="memberGroupEditor" objectTypes="MemberGroupEntry" promptText="${prcPriceResources.memberGroupEntries}" required="true" validatorTypes="noMemberGroupEntryProvided" helpText="${prcPriceResources.helpText_memberGroups}"/>
+			</PropertyGroup>
+
+			<PropertyGroup collapsable="false" name="customerSegmentEntriesPropertyGroup">
+				<EnablementCondition conditionId="scopeIsCustomerSegments" enablementValue="customerSegments" propertyName="scope"/>
+				<PropertyRadioGroup promptText="${prcPriceResources.targetCustomers}" propertyName="targetCustomerSegments"/>
+				<PropertyChildListEditor hideEditColumnAction="true" listDefinitionName="prcCustomerSegmentGrid" name="customerSegmentEditor" objectTypes="ChildCustomerSegment, ChildInheritedCustomerSegment" promptText="${prcPriceResources.customerSegmentEntries}" required="true" validatorTypes="noCustomerSegmentProvided" helpText="${prcPriceResources.helpText_customerSegments}"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="orgnizationEntriesPropertyGroup">
+				<EnablementCondition conditionId="scopeIsOrganizations" enablementValue="organizations" propertyName="scope"/>
+				<PropertyRadioGroup promptText="${prcPriceResources.targetCustomers}" propertyName="targetOrganizations"/>
+				<PropertyChildListEditor listDefinitionName="prcOrganizationGrid" name="orgEditor" objectTypes="OrganizationEntry" promptText="${prcPriceResources.organizationEntries}" required="true" validatorTypes="noOrganizationEntryProvided" helpText="${prcPriceResources.helpText_organizations}" />
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="buyerOrgnizationEntriesPropertyGroup">
+				<EnablementCondition conditionId="scopeIsBuyerOrganizations" enablementValue="buyerOrganizations" propertyName="scope"/>
+				<PropertyRadioGroup promptText="${prcPriceResources.targetCustomers}" propertyName="targetBuyerOrganizations"/>
+				<PropertyChildListEditor listDefinitionName="prcBuyerOrganizationGrid" name="buyerOrgEditor" objectTypes="ChildBuyerOrganization" promptText="${prcPriceResources.buyerOrganizationEntries}" required="true" validatorTypes="noBuyerOrganizationProvided" helpText="${prcPriceResources.helpText_buyerOrganizations}" />
+			</PropertyGroup>
+			
+		</PropertyGroup>			
+	</FlowElementProperties>
+	
+	<ObjectGrid definitionName="prcCustomerSegmentGrid" preferenceKey="prcCustomerSegmentGrid" editable="false" >
+		<GridIconTypeImage editable="false" name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName editable="false" name="store" objectPath="CustomerSegmentGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" alignment="left" datatype="string" name="name" objectPath="CustomerSegmentGroup" propertyName="name" text="${prcPriceResources.nameString}" width="200"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="prcMemberGroupGrid" preferenceKey="prcMemberGroupGrid">
+		<GridText alignment="right" datatype="number" editable="true" name="uniqueID" propertyName="memberGroupIdentifier" text="${prcPriceResources.uniqueId}" width="200"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="prcOrganizationGrid" preferenceKey="prcOrganizationGrid">
+		<GridText alignment="right" datatype="number" editable="true" name="uniqueID" propertyName="organizationIdentifier" text="${prcPriceResources.uniqueId}" width="200"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="prcBuyerOrganizationGrid" preferenceKey="prcBuyerOrganizationGrid" editable="false" >
+		<GridIconTypeImage editable="false" name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridText editable="false" alignment="left" datatype="string" name="name" objectPath="BuyerOrganizationGroup" propertyName="name" text="${prcPriceResources.nameString}" width="175"/>
+	</ObjectGrid>
+	
+</Definitions>

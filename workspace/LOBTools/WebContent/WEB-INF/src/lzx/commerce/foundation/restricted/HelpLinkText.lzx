@@ -1,0 +1,62 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		A class that defines a text that is a link to another document in the Information Center
+	-->
+	<class name="wcfHelpLinkText" extends="text" focusable="true" fgcolor="0x063bcd" multiline="true" text="${foundationResources.helpDefaultLinkText.string}">
+	
+		<!--- @keywords private -->
+		<attribute name="width" value="100"/>
+		
+		<!--- @keywords private -->
+		<attribute name="helpLink" type="string" value=""/>
+	
+		<!--- @keywords private -->
+		<handler name="onfocus">
+			<![CDATA[
+			if(!this["indicator"]){
+		    	new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+			if ((k == 13 || k == 32) && (this.helpLink != "")) { // enter or spacebar
+				helpManager.openHelpLink(this.helpLink);
+			}
+			]]>
+		</handler>
+	
+		<!--- @keywords private -->
+		<handler name="onclick">
+			<![CDATA[
+			if (this.helpLink != "") {
+				helpManager.openHelpLink(this.helpLink);
+			}
+			]]>
+		</handler>
+	
+	</class>
+	
+</library>

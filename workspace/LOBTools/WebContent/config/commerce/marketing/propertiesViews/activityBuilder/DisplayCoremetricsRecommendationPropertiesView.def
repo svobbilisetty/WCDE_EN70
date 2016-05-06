@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktDisplayCoremetricsRecommendationElementObject Display Intelligent Offer Recommendation action}.
+	-->
+	<FlowElementProperties definitionName="mktDisplayCoremetricsRecommendationProperties">
+	  <PropertyGroup collapsable="false" name="group">
+		<PropertyCombobox helpText="${mktMarketingResources.help_intelligentOffer_delivery}" promptText="${mktMarketingResources.intelligentOfferRecommendation}" propertyName="delivery"/>
+				
+		<PropertyGroup collapsable="false" name="groupZoneId">
+			<EnablementCondition conditionId="zoneId" enablementValue="siteZone" propertyName="delivery"/>
+			
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_intelligentOffer_zoneId}" listDefinitionName="mktZoneIdValueGrid" name="zoneIdEditor" objectTypes="zoneId" promptText="${mktMarketingResources.intelligentOfferRecommendationZoneIDs}" required="true" validatorTypes="displayCoremetricsValidator"/>
+			
+   		</PropertyGroup>
+    
+		<PropertyGroup collapsable="false" name="groupFlatFile">
+			<EnablementCondition conditionId="flatFile" enablementValue="flatFile" propertyName="delivery"/>
+
+			<PropertyInputText helpText="${mktMarketingResources.help_intelligentOffer_offerName}" promptText="${mktMarketingResources.intelligentOfferRecommendationOfferName}" propertyName="associationTypeList" required="true"/>
+				
+			<PropertyRadioGroup promptText="${mktMarketingResources.actionCondition}" propertyName="location"/>
+							
+			<PropertyGroup collapsable="false" name="prodGroup">
+				<EnablementCondition conditionId="prodCondition" enablementValue="templateArgumentIdList" propertyName="location"/>
+				<PropertyChildListEditor listDefinitionName="mktProductGrid" name="prodEditor" objectTypes="ChildCatentry,ChildInheritedCatentry" promptText="${mktMarketingResources.products}" required="true"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="dateGroup">
+			  <EnablementCondition conditionId="dateCondition" enablementValue="purchaseHistory" propertyName="location"/>			
+			  <PurchaseHistoryBaseDateProperties package="mkt"/>
+			</PropertyGroup>
+			
+		</PropertyGroup>
+	  </PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

@@ -1,0 +1,65 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		<p>Validator for {@link mktIssueCouponElementObject Issue Coupon action}. This ensures that a coupon promotion
+		is selected.</p>
+		
+		<p>There should only be one instance of this class defined for each {@link mktFlowElementObjectDefinition}.</p>
+	-->	 
+	<class name="mktIssueCouponValidator" extends="wcfValidator">
+		<!--- 
+			The object path that describes required child objects. 
+		 -->
+		<attribute name="objectPath" value="ChildPromotion/PromotionGroup" type="string"/>
+		
+		<!--- 
+			The error message to be added to an object when the object does not one matching child object.
+		 -->
+		<attribute name="errorMessage" value="${mktMarketingResources.noCouponsSelected.string}" type="string"/>
+		
+		<!--- 
+			The error message to be added to an object when the object selected is not a coupon promotion.
+		-->
+		<attribute name="errorCoupon" value="${mktMarketingResources.notCouponPromotion.string}" type="string"/>
+		
+		<!--- 
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			o.clearValidationError(this);
+
+			var childObjects = o.getObjects(this.objectPath);
+			if (childObjects == null || childObjects.length <= 0) {
+				o.addValidationError(this, this.errorMessage);
+				return;
+			}
+			
+			for(var i=0; i<childObjects.length; i++){
+				var coupon = childObjects[i];
+				var couponRequired = coupon.getPropertyValue("couponRequired");
+				if (couponRequired!="true"){
+					o.addValidationError(this, this.errorCoupon);
+					return;
+				}
+			}
+			]]>
+		</method>
+
+	</class>
+
+
+</library>

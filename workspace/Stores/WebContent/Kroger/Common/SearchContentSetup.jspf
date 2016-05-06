@@ -1,0 +1,76 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<%-- 
+  *****
+  * This JSP file initializes the solr search for unstructured content
+  *****
+--%>
+<!-- BEGIN SearchContentSetup.jspf-->
+
+<%@page import="org.apache.solr.client.solrj.response.SpellCheckResponse"%>
+<%@page import="org.apache.solr.client.solrj.response.QueryResponse"%>
+<%@page import="org.apache.solr.common.SolrDocumentList"%>
+<%@page import="java.util.HashMap"%>
+<%@page import="java.util.List"%>
+<%@page import="java.util.Map"%>
+<%@page import="com.ibm.commerce.registry.StoreCopy"%>
+<%@page import="com.ibm.commerce.registry.StoreRegistry"%>
+<%@page import="com.ibm.commerce.catalog.facade.datatypes.CatalogNavigationViewType"%>
+<%@page import="com.ibm.commerce.datatype.WcParam" %>
+
+<c:if test="${empty contentSearchTerm}">
+	<c:set var="contentSearchTerm" value="${WCParam.searchTerm}" scope="request"/>
+</c:if>
+
+<c:set var="pageSize" value="${WCParam.pageSize}" scope="request"/>
+<c:if test="${empty pageSize}" >
+	<c:set var="pageSize" value="12" scope="request"/>
+</c:if>
+<!-- 
+	See SearchSetup.jspf for an explanation of the search type and its possible
+	values.
+-->
+<c:set var="searchType" value="${responseSearchType}" scope="request"/>
+<c:if test="${empty searchType}" >
+	<c:set var="searchType" value="${WCParam.searchType}" scope="request"/>
+	<c:if test="${empty searchType}" >
+		<c:set var="searchType" value="1000" scope="request"/>
+	</c:if>
+</c:if>
+
+<c:set var="contentNavigationView" value="getWebContentView" scope="request"/>
+<c:set var="contentSearchProfile" value="IBM_Global_WebContent" scope="request"/>
+
+<wcf:getData type="com.ibm.commerce.catalog.facade.datatypes.CatalogNavigationViewType" var="catalogNavigationView" 
+	expressionBuilder="${contentNavigationView}" scope="request" varShowVerb="showCatalogNavigationView" 
+	maxItems="${pageSize}" recordSetStartNumber="${WCParam.beginIndex}" scope="request">
+	<wcf:param name="searchProfile" value="${contentSearchProfile}" />
+	<wcf:param name="searchTerm" value="${fn:escapeXml(contentSearchTerm)}" />
+	<wcf:param name="searchType" value="${searchType}" />
+	<wcf:param name="metaData" value="" />
+	<wcf:param name="orderByContent" value="${WCParam.orderByContent}" />
+	<wcf:param name="facet" value="" />
+	<wcf:param name="advancedFacetList" value=""/>
+	<wcf:contextData name="storeId" data="${WCParam.storeId}" />
+	<wcf:contextData name="catalogId" data="${WCParam.catalogId}" />
+</wcf:getData>
+
+<c:set var="contentresults" value="${catalogNavigationView.webContentView}" scope="request"/>
+<c:set var="contentreport" value="${catalogNavigationView.previewReport}" scope="request"/>
+<c:if test="${empty contentspellcheck}">
+	<c:set var="contentspellcheck" value="${catalogNavigationView.metaData.spellcheck}" scope="request"/>
+</c:if>
+<c:set var="totalContentCount" value="${showCatalogNavigationView.recordSetTotal}" scope="request"/>
+
+<!-- END SearchContentSetup.jspf-->

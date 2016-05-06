@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--- 
+		This definition defines the main tab for manage price list import
+	 -->
+	<PropertyPane definitionName="prcPriceListImportMainTabPaneContent">
+		<!--- Property group for the main properties of price list import -->
+		<PropertyGroup groupTitle="${prcPriceResources.generalProperties}" name="PriceListImportPropertiesGroup" open="true">
+			<!--- 
+				Property group which contain the file upload widget. 
+				This widget is only shown when creating a new price list import  
+			-->
+			<PropertyGroup name="PriceListImportUploadGroup" collapsable="false">
+				<!--- Enable condition which only show the file upload widget when creating a new price list import  -->
+				<EnablementCondition checkNewObject="true" conditionId="newPriceListImportCondition" enablementValue="true"/>
+				<!--- File Upload widget to browse and select a file from local system  -->
+				<PropertyFileUploader name="filePath" extendedHelpText="${prcPriceResources.extendedHelpText_selectFile}"
+					 promptText="${prcPriceResources.priceListImport_sourcePath}" required="true" helpLinkURL="tasks/tpiupload.htm">
+				</PropertyFileUploader>
+			</PropertyGroup> 
+			
+			<PropertyGroup collapsable="false" name="fileNamePropertyGroup">
+				<!--- Enable condition which does not show the file name when creating a new catalog import  -->
+				<EnablementCondition checkNewObject="true" conditionId="existingPriceListImportCondition" enablementValue="false"/>
+				<!--- An input field for file name -->
+				<PropertyInputText name="fileName" propertyName="fileName" extendedHelpText="${prcPriceResources.extendedHelpText_fileName}" 
+					promptText="${prcPriceResources.priceListImport_fileName}" required="true"/>
+			</PropertyGroup>
+			
+			<!--- An input field for file size. It is read-only. -->
+			<PropertyKilobyte name="fileSize" propertyName="fileSize" promptText="${prcPriceResources.priceListImport_fileSize}"/>
+			
+			<!---  The character set used in the file -->
+			<PropertyCombobox propertyName="fileEncoding" required="true" promptText="${prcPriceResources.priceListImport_fileEncoding}" helpText="${prcPriceResources.extendedHelpText_fileEncoding}"/>
+			
+			<!--- A drop down list contains the target price list -->
+			<PropertyGroup name="PriceListImportTargetGroup" collapsable="false">
+				<PropertyChildListEditor listDefinitionName="prcPriceListRefGrid" singleChild="true" name="priceListRefList" objectTypes="RefPriceList" promptText="${prcPriceResources.priceListImport_targetpriceList}"
+					helpText="${prcPriceResources.extendedHelpText_targetPriceList}"/>
+			</PropertyGroup>
+		
+		</PropertyGroup>
+		
+		<!--- Property group for the status information of the price list import -->
+		<PropertyGroup groupTitle="${prcPriceResources.priceListImport_status}" name="PriceListImportStatusGroup" open="true">
+			<!--- Enablement condition which only display status group when viewing price list import -->
+			<EnablementCondition conditionId="viewPriceListImportCondition" checkNewObject="true" enablementValue="false"/>
+			
+			<!--- The name of the user who creates the price list import  -->
+			<PropertyInputText name="userName" propertyName="userName" promptText="${prcPriceResources.priceListImport_userName}"
+				extendedHelpText="${prcPriceResources.extendedHelpText_userName}"/>
+			
+			<!--- Show the current status of the price list import -->
+			<PropertyCombobox propertyName="status" name="status" width="120" promptText="${prcPriceResources.priceListImport_status}"
+				extendedHelpText="${prcPriceResources.extendedHelpText_status}">
+			</PropertyCombobox>
+			
+			<!--- The summary report of the price list import  -->
+			<PropertyViewLongText propertyName="summary" promptText="${prcPriceResources.priceListImport_summary}" objectPath="PriceListImportSummary"
+				extendedHelpText="${prcPriceResources.extendedHelpText_summary}">
+			</PropertyViewLongText>
+		</PropertyGroup>
+		
+	</PropertyPane>
+	
+	<!--- 
+		This definition defines the property view for a price list import. It only contains one tab.
+	 -->
+	<ObjectProperties definitionName="prcPriceListImportProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="priceListImportMainTab" text="${prcPriceResources.priceListImport_displayName}">
+				<PropertyPane baseDefinitionName="prcPriceListImportMainTabPaneContent"/>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+
+</Definitions>

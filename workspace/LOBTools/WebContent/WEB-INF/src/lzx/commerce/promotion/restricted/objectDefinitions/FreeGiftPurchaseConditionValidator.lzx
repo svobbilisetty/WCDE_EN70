@@ -1,0 +1,65 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		<p>Validator for a {@link proOrderLevelFreeGiftPurchaseConditionObjectDefinition OrderLevelFreeGiftPurchaseCondition} object.</p>
+		
+		This validator ensures that when the value of the property <code>chooseBehavior</code> is <code>pickFreeGift</code>,
+		<ul>
+			<li>the number of gift catalog entries is greater than or equal to the value of the <code>NoOfItems</code> property, and</li>
+			<li>the number of gift catalog entries that are the same is less than or equal to the value of the <code>NoOfItems</code> property.</li>
+		</ul>
+	-->
+	<class name="proOrderLevelFreeGiftPurchaseConditionValidator" extends="wcfValidator">
+		<!--- @keywords private -->
+		<attribute name="message_noOfItemsInvalidValue" type="string" value="${promotionResources.promotion_error_NoOfItemsInvalidValue.string}"/>
+		<!--- @keywords private -->
+		<attribute name="message_sameItemsInvalidForNoOfItemsValue" type="string" value="${promotionResources.promotion_error_sameItemsInvalidForNoOfItemsValue.string}"/>
+		
+		<!--- @keywords private -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			o.getProperty("NoOfItems").clearValidationError(this);
+			o.clearValidationError(this);
+			
+			if (o.getPropertyValue("chooseBehavior") == "pickFreeGift") {
+				var numberOfItems = o.getPropertyValue("NoOfItems");
+				var giftEntries = o.getObjects("Identifier_GiftCatalogEntryGroup");
+												
+				if (numberOfItems > giftEntries.length){
+					o.getProperty("NoOfItems").addValidationError(this, this.message_noOfItemsInvalidValue);
+				}
+				
+				//If the number of items that are the same in the Free catalog entries table is greater than the value of the NoOfItems property, 
+				// add a validation message to warn the user about an invalid scenario.
+				for (var i = 0; i < giftEntries.length - 1; i++){
+					var id = giftEntries[i].getReferencedObject().getPropertyValue("catentryId"); 
+					var count = 1;
+					for (var j = i + 1; j < giftEntries.length; j++){
+						var otherId = giftEntries[j].getReferencedObject().getPropertyValue("catentryId"); 
+						if(id == otherId){
+							count++;
+						}
+					}					
+					if(count > numberOfItems){
+						o.addValidationError(this, this.message_sameItemsInvalidForNoOfItemsValue);
+						break; 
+					}
+				} 				
+			}	
+			]]>
+		</method>
+	</class>
+		
+</library>

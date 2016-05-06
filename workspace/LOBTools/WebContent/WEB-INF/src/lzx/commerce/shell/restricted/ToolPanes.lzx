@@ -1,0 +1,254 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		
+		The wcfDefaultToolPane class defines the default pane in the work area in Management Center that will be displayed
+		while no business tool is opened. It consists of a background image and the welcome to IBM text.
+		
+		wcfDefaultToolPane also contains text with instructions on how to start using Management Center and references 
+		business users to the Getting Started page.
+	-->
+	<class name="wcfDefaultToolPane">
+		<view resource="workAreaBackground" />
+		<view name="welcomeText" width="${parent.width-100}" x="50" y="50" fontsize="13">
+			<text width="${parent.width}" multiline="true" text="${shellResourceBundle.applicationWelcomeTitle.string}" fontsize="16" />
+			<text width="${parent.width}" multiline="true" text="${shellResourceBundle.applicationWelcomeText1.string}" />
+			<text width="${parent.width}" multiline="true" text="${shellResourceBundle.applicationWelcomeText2.string}" />
+			<simplelayout axis="y" spacing="15" />
+		</view>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class implements all the panes in the work area in Management Center. When a tool is
+		opened, its associated pane will be displayed in the pane section of the area below the tool
+		tab, and users can view the pane by clicking on the associated tab.
+	-->
+	<class name="wcfToolPanes" width="100%" height="95%" bgcolor="white" extends="view">
+		<wcfDefaultToolPane name="defaultToolPane" width="100%" height="100%" />
+
+		<!---
+			This method opens the pane for the specified tool in the work area in Management Center.
+			@param string objectId: identifier of the tool
+			@param string objectClass: class that implements the tool
+			@param string usage: usage of the tool for access control purpose
+			@param boolean availableToWorkspaceTasks Flag that indicates whether the tool is available or not when working on a workspace task
+			@param wcfStore store: the store
+		-->
+		<method name="openPane" args="objectId, objectClass, usage, availableToWorkspaceTasks, store">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "openPane(objectId,objectClass,usage,availableToWorkspaceTasks,store)", [objectId, objectClass, usage, availableToWorkspaceTasks, store]);
+				}
+				var paneViewIndex = findPane(objectId);
+				if (paneViewIndex >= 0) {
+					this.subviews[paneViewIndex].setAttribute("visible", true);
+					if (this.subviews[paneViewIndex]["open"]) {
+						this.subviews[paneViewIndex].open(store);
+					}
+					focusPane(objectId);
+				}
+				else {
+					createPane(objectId, objectClass, usage, availableToWorkspaceTasks, store);
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "openPane(objectId,objectClass,usage,availableToWorkspaceTasks,store)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="createPane" args="objectId, objectClass, usage, availableToWorkspaceTasks, store">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "createPane(objectId,objectClass,usage,availableToWorkspaceTasks,store)", [objectId, objectClass, usage, availableToWorkspaceTasks, store]);
+				}
+				var tool = null;
+				if (lz[objectClass]) {
+					tool = new lz[objectClass](this, {name: objectId, languageId: global.languageId, usage: usage, availableToWorkspaceTasks: availableToWorkspaceTasks});
+				}
+				else {
+					tool = wcfDefinitionLoader.getDefinition(objectClass, this, {name: objectId, languageId: global.languageId, usage: usage, availableToWorkspaceTasks: availableToWorkspaceTasks});
+				}
+				if (tool && tool["open"]) {
+					tool.open(store);
+				}
+				focusPane(objectId);
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "createPane(objectId,objectClass,usage,availableToWorkspaceTasks)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="findPane" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "findPane(objectId)", [objectId]);
+				}
+				for (var i=0; i<this.subviews.length; i++) {
+					if (this.subviews[i].name == objectId) {
+						if (wcfLogger.enabled) {
+							wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "findPane(objectId)", i);
+						}
+						return i;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfToolPanes", "findPane(objectId)", "Unable to find the following pane from the work area: " + objectId);
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "findPane(objectId)", -1);
+				}
+				return -1;
+			]]>
+		</method>
+
+		<!---
+			Set the pane active with objectId flag to true others to false
+			@param string objectId: identifier of the tool that will be focused
+		-->
+		<method name="activatePane" args="objectId">
+			<![CDATA[
+				for (var i = 0; i < this.subviews.length; i++) {
+					if (this.subviews[i].name == objectId) {
+						this.subviews[i].setAttribute("active", true);
+					} else {
+						this.subviews[i].setAttribute("active", false);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			This method returns the Business Object Editor instance of the specified tool.
+			@param string objectId: Identifier of the tool.
+			@returns wcfBusinessObjectEditor: Instance of the Business Object Editor of the specified tool.
+		-->
+		<method name="getPane" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "getPane(objectId)", [objectId]);
+				}
+				var paneViewIndex = findPane(objectId);
+				if (paneViewIndex >= 0) {
+					if (wcfLogger.enabled) {
+						wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "getPane(objectId)", this.subviews[paneViewIndex]);
+					}
+					return this.subviews[paneViewIndex];
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "getPane(objectId)", null);
+				}
+				return null;
+			]]>
+		</method>
+
+		<!---
+			This method returns the identifier of the tool that is currently being focused on
+			in the work area.
+			@returns string: identifier of the tool that is currently being focused
+		-->
+		<method name="getCurrentPane">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "getCurrentPane");
+				}
+				for (var i=0; i<this.subviews.length; i++) {
+					if (this.subviews[i].visible == true) {
+						if (wcfLogger.enabled) {
+							wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "getCurrentPane", this.subviews[i]);
+						}
+						return this.subviews[i];
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfToolPanes", "getCurrentPane", "Unable to resolve the tool pane that is currently opened.");
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "getCurrentPane", -1);
+				}
+				return -1;
+			]]>
+		</method>
+
+		<!---
+			This method brings the pane of the specified tool into focus.
+			@param string objectId: identifier of the tool that will be focused
+		-->
+		<method name="focusPane" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "focusPane(objectId)", [objectId]);
+				}
+				for (var i=0; i<this.subviews.length; i++) {	
+					if (this.subviews[i].name == objectId) {
+						this.subviews[i].setAttribute("visible", true);								
+						this.activatePane(objectId);
+					}
+					else {
+						this.subviews[i].setAttribute("visible", false);
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "focusPane(objectId)");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method resets the pane of the specified tool in the work area in Management Center.
+			@param string objectId: identifier of the tool that will be reset
+		-->
+		<method name="resetPane" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "resetPane(objectId)", [objectId]);
+				}
+				var paneViewIndex = findPane(objectId);
+				if (paneViewIndex >= 0 && this.subviews[paneViewIndex]["model"]) {
+					this.subviews[paneViewIndex].model.refreshAll(false);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "resetPane(objectId)");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method closes the pane of the specified tool in the work area in Management Center.
+			@param string objectId: identifier of the tool that will be closed
+		-->
+		<method name="closePane" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "closePane(objectId)", [objectId]);
+				}
+				var paneViewIndex = findPane(objectId);
+				if (paneViewIndex >= 0) {
+					if (this.subviews[paneViewIndex]["close"]) {
+						this.subviews[paneViewIndex].close();
+					}
+					this.subviews[paneViewIndex].setAttribute("visible", false);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolPanes", "closePane(objectId)");
+				}
+			]]>
+		</method>
+	</class>
+
+</library>

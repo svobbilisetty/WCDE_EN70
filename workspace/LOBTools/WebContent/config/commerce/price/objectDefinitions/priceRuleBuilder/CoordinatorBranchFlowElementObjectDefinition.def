@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcCoordinatorBranchElementObject" displayName="${prcPriceResources.coordinator_DisplayName}" elemTemplateType="Action" flowIcon="coordinatorBranchElementIcon" headerIcon="coordinatorBranchElementHeaderIcon" helpLink="concepts/cpibranchcoor.htm" objectType="coordinatorBranch" package="prc" paletteIcon="coordinatorBranchPaletteIcon" propertiesDefinitionName="prcCoordinatorBranchElementProperties" summaryClass="prcCoordinatorBranchElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService" />
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService" />
+	
+		<PropertyDefinition propertyName="name" maximumSize="254" trim="true" displayName="${prcPriceResources.nameString}" />
+		<PropertyDefinition propertyName="coordinatorType">
+			<PropertyValue displayName="${prcPriceResources.lowestPricePath}" value="lowestPrice"/>
+			<PropertyValue displayName="${prcPriceResources.highestPricePath}" value="highestPrice"/>
+			<PropertyValue displayName="${prcPriceResources.firstValidPath}" value="firstValidPath"/>
+		</PropertyDefinition>
+		
+		<Xml name="template">
+			<elemTemplateName>coordinatorBranch</elemTemplateName>
+			<coordinatorType>lowestPrice</coordinatorType>
+		</Xml>
+		
+		<FlowElementObjectDefinition baseDefinitionName="prcFlowPathElementObject" package="prc"/>
+	
+		<BranchingValidator errorMessage="${prcPriceResources.coordinatorPathDuplicateNames}" package="prc" validatorId="branchingPathNamesValidator"/>
+		
+	</FlowElementObjectDefinition>
+
+</Definitions>

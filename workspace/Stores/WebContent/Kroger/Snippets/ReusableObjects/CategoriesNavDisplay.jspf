@@ -1,0 +1,278 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+
+<%--
+*****
+This object snippet displays the subcategories of the top level category.
+
+Required parameters:
+
+*****
+--%>
+<!-- BEGIN CategoriesNavDisplay.jspf-->
+ 
+<c:set var="catalog" value="${requestScope.catalog}" />
+<c:if test="${empty catalog || catalog==null}">
+	<wcbase:useBean id="catalog" classname="com.ibm.commerce.catalog.beans.CatalogDataBean" scope="request"/>
+</c:if>
+ 
+<c:set var="shownSidebar" value="false"/>
+
+<c:if test="${categoryPage || productPage}">
+		<c:choose>
+			<c:when test="${!empty WCParam.top_category && !empty WCParam.parent_category_rn && (WCParam.top_category == WCParam.parent_category_rn || productPage)}">
+			<wcbase:useBean id="currentCategory" classname="com.ibm.commerce.catalog.beans.CategoryDataBean">
+				<c:if test="${empty WCParam.categoryId && empty WCParam.identifier}">
+					<c:set target="${currentCategory}" property="categoryId" value="${WCParam.parent_category_rn}" />
+				</c:if>
+			</wcbase:useBean>
+				<c:set var="currentCategorySubCategories" value="${currentCategory.subCategories}"/>
+				<c:choose>
+					<c:when test="${empty currentCategorySubCategories}">
+						<wcbase:useBean id="sidebarTopCategory" classname="com.ibm.commerce.catalog.beans.CategoryDataBean">
+							<c:set target="${sidebarTopCategory}" property="categoryId" value="${WCParam.top_category}" />
+						</wcbase:useBean>
+						<c:set var="topLevelDescription" value="${sidebarTopCategory.description.name}"/>
+						<c:set var="subCategories" value="${sidebarTopCategory.subCategories}"/>
+						<c:set var="topCategoryId" value="${sidebarTopCategory.categoryId}"/>
+					</c:when>
+					<c:otherwise>
+						<c:set var="topLevelDescription" value="${currentCategory.description.name}"/>
+						<c:set var="subCategories" value="${currentCategory.subCategories}"/>
+						<c:set var="topCategoryId" value="${currentCategory.categoryId}"/>
+					</c:otherwise>
+				</c:choose>
+				<c:set var="shownSidebar" value="true"/>
+			</c:when>
+			<c:when test="${!empty WCParam.parent_category_rn}">
+				<wcbase:useBean id="currentCategory" classname="com.ibm.commerce.catalog.beans.CategoryDataBean">
+					<c:if test="${empty WCParam.categoryId && empty WCParam.identifier}">
+						<c:set target="${currentCategory}" property="categoryId" value="${WCParam.parent_category_rn}" />
+					</c:if>
+				</wcbase:useBean>
+				<c:set var="currentCategorySubCategories" value="${currentCategory.subCategories}"/>
+				<c:choose>
+					<c:when test="${empty currentCategorySubCategories}">
+						<wcbase:useBean id="sidebarParentCategory" classname="com.ibm.commerce.catalog.beans.CategoryDataBean">
+							<c:set target="${sidebarParentCategory}" property="categoryId" value="${WCParam.parent_category_rn}" />
+						</wcbase:useBean>
+						<c:set var="topLevelDescription" value="${sidebarParentCategory.description.name}"/>
+						<c:set var="subCategories" value="${sidebarParentCategory.subCategories}"/>
+						<c:set var="topCategoryId" value="${sidebarParentCategory.categoryId}"/>
+					</c:when>
+					<c:otherwise>
+						<c:set var="topLevelDescription" value="${currentCategory.description.name}"/>
+						<c:set var="subCategories" value="${currentCategory.subCategories}"/>
+						<c:set var="topCategoryId" value="${currentCategory.categoryId}"/>
+					</c:otherwise>
+				</c:choose>
+				<c:set var="shownSidebar" value="true"/>
+			</c:when>
+			<c:when test="${!empty WCParam.categoryId || (categoryPage && !empty WCParam.identifier)}">
+				<wcbase:useBean id="sidebarCategory" classname="com.ibm.commerce.catalog.beans.CategoryDataBean"/>
+				<c:set var="topLevelDescription" value="${sidebarCategory.description.name}"/>
+				<c:set var="subCategories" value="${sidebarCategory.subCategories}"/>
+				<c:set var="topCategoryId" value="${sidebarCategory.categoryId}"/>
+				<c:set var="shownSidebar" value="true"/>
+			</c:when>
+		</c:choose>
+		<c:if test="${!empty topLevelDescription}">
+		<!-- If top != Y, then we should use some other pattern..But top seems to be always == Y. Check later.. -->
+			<wcf:url var="ParentCategoryDisplayURL" patternName="CanonicalCategoryURL" value="Category3">
+				<wcf:param name="langId" value="${langId}" />
+				<wcf:param name="storeId" value="${WCParam.storeId}" />
+				<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+				<wcf:param name="categoryId" value="${topCategoryId}" />
+				<c:choose>
+					<c:when test="${!empty WCParam.top_category}">
+						<wcf:param name="top_category" value="${WCParam.top_category}" />
+					</c:when>
+				</c:choose>
+				<c:if test="${WCParam.top == 'Y' || WCParam.top_category == WCParam.parent_category_rn}">
+					<wcf:param name="top" value="Y" />
+				</c:if>
+				<wcf:param name="pageView" value="${defaultPageView}" />
+				<wcf:param name="beginIndex" value="0" />
+				<wcf:param name="urlLangId" value="${urlLangId}" />
+			</wcf:url>
+			
+			<c:set var="maxNumberCharactersAllowedToDisplay" value="17"/>
+			<%-- for double byte, we need to lower the maximum number of characters to be displayed --%>
+			<c:if test="${CommandContext.locale == 'zh_TW' || CommandContext.locale == 'ja_JP' || CommandContext.locale == 'zh_CN' || CommandContext.locale == 'ko_KR'}" >
+				<c:set var="maxNumberCharactersAllowedToDisplay" value="${maxNumberCharactersAllowedToDisplay/2}"/>
+			</c:if>			
+					
+			<c:set var="categoryName" value="${topLevelDescription}"/>
+			<c:if test="${fn:length(categoryName) > maxNumberCharactersAllowedToDisplay}">
+				<c:set var="categoryName" value="${fn:substring(topLevelDescription, 0, maxNumberCharactersAllowedToDisplay)}..."/>
+			</c:if>				
+			
+			<h2 class="sidebar_header"><a role="heading" aria-level="1" class="sidebar_header_link" href="<c:out value='${ParentCategoryDisplayURL}'/>" id="WC_CategoriesSidebarDisplayf_links_1_ParentCategory" title="<c:out value="${topLevelDescription}"/>"><c:out value="${categoryName}" escapeXml="false"/><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="TOP_LEVEL_CATEGORY" />"/></a></h2>
+			<c:set var="maxCategoriesReached" value="false"/>
+			<c:forEach var="subCategory" items="${subCategories}" varStatus="counter">
+					<c:if test="${counter.count <= maxSubCategoriesPerCategoryInSidebar}">
+						<flow:ifDisabled feature="SearchBasedNavigation">
+							<%-- Use patternName = CategoryURLWithDetails, if beginIndex != 0 OR pageView != image --%>						
+							<wcf:url var="CategoryDisplayURL" patternName="CategoryURL" value="Category4">
+								<wcf:param name="langId" value="${langId}" />
+								<wcf:param name="storeId" value="${WCParam.storeId}" />
+								<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+								<wcf:param name="categoryId" value="${subCategory.categoryId}" />
+								<wcf:param name="parent_category_rn" value="${topCategoryId}" />
+								<c:choose>
+									<c:when test="${!empty WCParam.top_category}">
+										<wcf:param name="top_category" value="${WCParam.top_category}" />
+									</c:when>
+									<c:otherwise>
+										<wcf:param name="top_category" value="${topCategoryId}" />
+									</c:otherwise>
+								</c:choose>
+								<wcf:param name="pageView" value="${defaultPageView}" />
+								<wcf:param name="beginIndex" value="0" />
+								<wcf:param name="urlLangId" value="${urlLangId}" />
+							</wcf:url>
+						</flow:ifDisabled>
+						<flow:ifEnabled feature="SearchBasedNavigation">
+							<wcf:url var="CategoryDisplayURL" patternName="SearchCategoryURL" value="SearchDisplay">
+								<wcf:param name="langId" value="${langId}"/>
+								<wcf:param name="storeId" value="${WCParam.storeId}"/>
+								<wcf:param name="catalogId" value="${WCParam.catalogId}"/>
+								<wcf:param name="pageView" value="image"/>
+								<wcf:param name="beginIndex" value="0"/>
+								<wcf:param name="sType" value="SimpleSearch"/>
+								<wcf:param name="categoryId" value="${subCategory.categoryId}"/>
+								<wcf:param name="resultCatEntryType" value="${WCParam.resultCatEntryType}"/>
+								<wcf:param name="showResultsPage" value="true"/>
+								<wcf:param name="urlLangId" value="${urlLangId}" />
+							</wcf:url>
+						</flow:ifEnabled>
+
+						<c:choose>
+							<c:when test="${WCParam.categoryId == subCategory.categoryId}">
+								<p class="subcategory_link"><a role="heading" aria-level="2" href="<c:out value='${CategoryDisplayURL}'/>" id="WC_CategoriesSidebarDisplayf_links_1_<c:out value='${counter.count}'/>"><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="SUB_CATEGORY" />"/><strong><c:out value="${subCategory.description.name}" escapeXml="false"/></strong></a></p>
+							</c:when>
+							<c:otherwise>
+								<p class="subcategory_link"><a role="heading" aria-level="2" href="<c:out value='${CategoryDisplayURL}'/>" id="WC_CategoriesSidebarDisplayf_links_2_<c:out value='${counter.count}'/>"><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="SUB_CATEGORY" />"/><c:out value="${subCategory.description.name}" escapeXml="false"/></a></p>
+							</c:otherwise>
+						</c:choose>
+					</c:if>
+					<c:if test="${counter.count > maxSubCategoriesPerCategoryInSidebar && maxCategoriesReached == false}">
+							<c:set var="maxCategoriesReached" value="true"/>
+					</c:if>
+					
+			</c:forEach>
+			<c:if test="${maxCategoriesReached}">
+				<p class="subcategory_link"><a href="<c:out value='${ParentCategoryDisplayURL}'/>" id="WC_CategoriesSidebarDisplayf_links_2_ShowAllLink"><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="SHOW_ALL_TEXT" />"/><fmt:message key="SHOW_ALL_TEXT" /></a></p>
+			</c:if>
+		</c:if>
+</c:if>
+<c:if test="${!shownSidebar}">
+
+	<wcf:url var="SiteMapURL" value="SiteMap">
+		<wcf:param name="langId" value="${langId}" />
+		<wcf:param name="storeId" value="${WCParam.storeId}" />
+		<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+	</wcf:url>
+
+
+	<c:set var="categoryCount" value="0"/>
+	<c:set var="maxTotalCategoriesReached" value="false"/>
+	
+	<c:forEach var="topCategory" items="${catalog.topCategories}" varStatus="status">
+		<c:set var="categoryCount" value="${categoryCount+1}"/>
+		<c:if test="${categoryCount <= maxTotalCategoriesInSidebar - 1 && maxTotalCategoriesInSidebar > 0}">
+			<c:set var="maxCategoriesReached" value="false"/>
+				<wcf:url var="CategoryDisplayURL" patternName="CanonicalCategoryURL" value="Category3">
+					<wcf:param name="langId" value="${langId}" />
+					<wcf:param name="storeId" value="${WCParam.storeId}" />
+					<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+					<wcf:param name="top" value="Y" />
+					<wcf:param name="categoryId" value="${topCategory.categoryId}" />
+					<wcf:param name="pageView" value="${defaultPageView}" />
+					<wcf:param name="beginIndex" value="0" />
+					<wcf:param name="urlLangId" value="${urlLangId}" />
+				</wcf:url>
+				
+				<c:set var="maxNumberCharactersAllowedToDisplay" value="17"/>
+				<%-- for double byte, we need to lower the maximum number of characters to be displayed --%>
+				<c:if test="${CommandContext.locale == 'zh_TW' || CommandContext.locale == 'ja_JP' || CommandContext.locale == 'zh_CN' || CommandContext.locale == 'ko_KR'}" >
+					<c:set var="maxNumberCharactersAllowedToDisplay" value="${maxNumberCharactersAllowedToDisplay/2}"/>
+				</c:if>			
+						
+				<c:set var="categoryName" value="${topCategory.description.name}"/>
+				<c:if test="${fn:length(categoryName) > maxNumberCharactersAllowedToDisplay}">
+					<c:set var="categoryName" value="${fn:substring(topCategory.description.name, 0, maxNumberCharactersAllowedToDisplay)}..."/>
+				</c:if>						
+				<h2 class="sidebar_header"><a role="heading" aria-level="1" class="sidebar_header_link" href="<c:out value='${CategoryDisplayURL}'/>" id="WC_CategoriesSidebarDisplayf_links_3_<c:out value='${status.count}'/>" title="<c:out value='${topCategory.description.name}'/>"><c:out value="${categoryName}" escapeXml="false"/><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="TOP_LEVEL_CATEGORY" />"/></a></h2>
+				
+				<c:forEach var="subTopCategory" items="${topCategory.subCategories}" varStatus="status2">
+						<c:if test="${status2.count <= maxSubCategoriesPerCategoryInSidebar && categoryCount < maxTotalCategoriesInSidebar}">
+							<flow:ifDisabled feature="SearchBasedNavigation">
+								<%-- Use patternName = CategoryURLWithDetails, if beginIndex != 0 OR pageView != image --%>
+								<wcf:url var="subTopCategoryDisplayUrl" patternName="CategoryURL" value="Category4">
+									<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+									<wcf:param name="storeId" value="${WCParam.storeId}" />
+									<wcf:param name="categoryId" value="${subTopCategory.categoryId}" />
+									<wcf:param name="langId" value="${langId}" />
+									<wcf:param name="parent_category_rn" value="${topCategory.categoryId}" />
+									<wcf:param name="top_category" value="${topCategory.categoryId}" />
+									<wcf:param name="pageView" value="${defaultPageView}" />
+									<wcf:param name="beginIndex" value="0" />
+									<wcf:param name="urlLangId" value="${urlLangId}" />
+								</wcf:url>
+							</flow:ifDisabled>
+							<flow:ifEnabled feature="SearchBasedNavigation">
+								<wcf:url var="subTopCategoryDisplayUrl" patternName="SearchCategoryURL" value="SearchDisplay">
+									<wcf:param name="langId" value="${langId}"/>
+									<wcf:param name="storeId" value="${WCParam.storeId}"/>
+									<wcf:param name="catalogId" value="${WCParam.catalogId}"/>
+									<wcf:param name="pageView" value="image"/>
+									<wcf:param name="beginIndex" value="0"/>
+									<wcf:param name="sType" value="SimpleSearch"/>
+									<wcf:param name="categoryId" value="${subTopCategory.categoryId}"/>
+									<wcf:param name="resultCatEntryType" value="${WCParam.resultCatEntryType}"/>
+									<wcf:param name="showResultsPage" value="true"/>
+									<wcf:param name="urlLangId" value="${urlLangId}" />
+								</wcf:url>
+							</flow:ifEnabled>
+
+							<p class="subcategory_link"><a role="heading" aria-level="2" href="<c:out value='${subTopCategoryDisplayUrl}'/>" id="WC_CategoriesSidebarDisplayf_links_4_<c:out value='${status.count}'/>_<c:out value='${status2.count}'/>"><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="SUB_CATEGORY" />"/><c:out value="${subTopCategory.description.name}" escapeXml="false"/></a></p>
+					</c:if>
+					<c:if test="${status2.count > maxSubCategoriesPerCategoryInSidebar && maxCategoriesReached == false}">
+						<c:set var="maxCategoriesReached" value="true"/>
+						</c:if>
+						<c:if test="${categoryCount > maxTotalCategoriesInSidebar}">
+							<c:set var="maxTotalCategoriesReached" value="true"/>
+						</c:if>
+						<c:set var="categoryCount" value="${categoryCount+1}"/>
+					</c:forEach>
+					<c:if test="${maxCategoriesReached}">
+							<p class="subcategory_link"><a href="<c:out value='${CategoryDisplayURL}'/>" id="WC_CategoriesSidebarDisplayf_links_4_<c:out value='${status.count}'/>_ShowAllLink"><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="SHOW_ALL_TEXT" />"/><fmt:message key="SHOW_ALL_TEXT" /></a></p>
+					</c:if>
+					<br />
+			
+		</c:if>
+		<c:if test="${categoryCount > maxTotalCategoriesInSidebar}">
+			<c:set var="maxTotalCategoriesReached" value="true"/>
+		</c:if>
+		
+	
+	</c:forEach>
+	<c:if test="${maxTotalCategoriesReached == true}">
+			<h2 class="sidebar_header"><a class="sidebar_header_link" href="<c:out value='${SiteMapURL}'/>" id="WC_CategoriesSidebarDisplayf_links_TotalShowAllLink"><fmt:message key="SHOW_ALL_TEXT" /><img src="<c:out value='${jspStoreImgDir}'/>images/empty.gif" alt="<fmt:message key="SHOW_ALL_TEXT" />"/></a></h2>
+	</c:if>
+</c:if>
+<br />
+<!-- END CategoriesNavDisplay.jspf-->

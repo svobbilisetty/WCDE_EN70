@@ -1,0 +1,111 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<testcase>
+
+	<!-- Open Assets tool -->
+	<action name="wcfAutoOpenToolAction">
+		<param name="toolId" value="attachmentManagement"/>
+	</action>
+	
+	<!-- Select store -->
+	<action name="wcfAutoSelectStoreAction">
+		<param name="storeKey" value="storeIdentifier"/>
+	</action>
+	
+	
+	<!-- Load the root directory. -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="objectType" value="ManagedDirectory"/>		
+	</action>
+	
+	<!-- Get the root directory object. -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="ManagedDirectory"/>
+		<param name="objectKey" value="rootDirectory"/>
+	</action>
+	
+	<!-- Create a new directory -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="ManagedDirectory"/>
+		<param name="objectKey" value="directory"/>
+	</action>
+	
+	<!-- Set the directory name property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="directory"/>
+		<param name="propertyName" value="displayName"/>
+		<param name="valueKey" value="name"/>
+	</action>	
+		
+	<!-- Create the reference object between the 2 directories -->	
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="parentObject" value="rootDirectory"/>
+		<param name="referencedObject" value="directory"/>
+		<param name="objectType" value="ChildManagedDirectory"/>
+	</action>
+	
+	<!-- Save all -->
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<!-- Refresh all -->
+	<action name="wcfAutoRefreshAllAction"/>
+	
+	<!-- Load the root directory. -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="objectType" value="ManagedDirectory"/>		
+	</action>
+	
+	<!-- Get the root directory object. -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="ManagedDirectory"/>
+		<param name="objectKey" value="rootDirectory"/>
+	</action>
+	
+	<!-- Load the sub directory of the root directory -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value ="rootDirectory"/>		
+	</action>
+	
+	<!-- Get the child directory object. -->
+	<action name="wcfAutoGetChildObjectAction">
+	    <param name="parentObject" value="rootDirectory"/>
+		<param name="objectPath" value="ChildManagedDirectory/ManagedDirectory"/>
+		<param name="objectKey" value="directory2"/>
+		<param name="propertyName" value="displayName"/>
+		<param name="propertyValueKey" value="name"/>
+	</action>
+	
+	<!-- Verify that the directory was found -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="directory2"/>
+	</action>
+	
+	<!-- Verify the displayName property of the directory -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="directory2"/>
+		<param name="propertyName" value="displayName"/>
+		<param name="valueKey" value="name"/>
+	</action>	
+	
+	<!-- Delete the directory -->
+	<action name="wcfAutoDeleteObjectAction">
+		<param name="object" value="directory2"/>
+	</action>		
+	
+	<action name="wcfAutoVerifyNoObjectAction">
+		<param name="object" value="directory2"/>
+	</action>
+	
+</testcase>

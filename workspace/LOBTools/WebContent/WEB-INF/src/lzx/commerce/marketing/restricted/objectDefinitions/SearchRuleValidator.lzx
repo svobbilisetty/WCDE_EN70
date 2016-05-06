@@ -1,0 +1,47 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Search Rules Validators
+	-->
+	<!---  
+		This validator extends the wcfPropertyRangeValidator validator and overwrites the verifyMaxRangeNotExceeded method by displaying new message.
+		@keywords private
+	 -->
+	<class name="mktPropertyRangeValidator" extends="wcfPropertyRangeValidator">	
+		<!---  
+			An unique identifier string for this validator within a node. 
+		-->
+		<attribute name="validatorId" type="string" value="mktPropertyRangeValidator"/>			
+			
+		<!--- @keywords private -->
+		<method name="verifyMaxRangeNotExceeded" args="property, maxValue">
+			<![CDATA[
+						
+			if(!property || !property.value){
+				return true;
+			}
+
+			if(!super.verifyMaxRangeNotExceeded(property, this.maxValue)) {				
+				property.addValidationError(this, mktMarketingResources.replaceValues("propertyValueTooLarge", [property.propertyDefinition.getDisplayName(), this.maxValue]));
+				return false;			
+			}
+			
+			return true;
+						
+			]]>
+		</method>			
+	</class>
+	
+</library>

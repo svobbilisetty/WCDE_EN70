@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This delete service to the URL <code>/cmc/DeletePriceRuleElement</code> is used to delete existing price rule element objects.
+		By default, this service is already included in {@link prcFlowElementObjectDefinition} and does not have to be manually instantiated.</p>
+		
+		<p>The following URL parameters are automatically sent as part of the request:
+			<ul>
+				<li><code>storeId</code> - The identifier of the current store.</li>
+				<li><code>priceRuleId</code> - The identifier of the associated price rule this element is a part of.</li>
+				<li><code>PROPERTY_elementName</code> - The name of this element.</li>
+			</ul>
+		</p>
+	-->
+	<DeleteService definitionName="prcFlowElementDeleteService" url="/cmc/DeletePriceRuleElement">
+		<ServiceParam name="storeId" parameterName="storeId">
+			<EnablementOrCondition>
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition1" enablementValue="PriceRule" propertyName="objectType" parentProperty="true"/>
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition2" enablementValue="WrappedPriceRule" propertyName="objectType" parentProperty="true"/>
+			</EnablementOrCondition>
+		</ServiceParam>
+		<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+			<EnablementOrCondition>
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition1" enablementValue="InheritedPriceRule" propertyName="objectType" parentProperty="true"/>
+				<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition2" enablementValue="InheritedWrappedPriceRule" propertyName="objectType" parentProperty="true"/>
+			</EnablementOrCondition>
+		</ServiceParam>
+		<ServiceParam name="priceRuleId" parentProperty="true"/>
+		<ServiceParam name="PROPERTY_elementName" propertyName="elementName"/>
+	</DeleteService>
+		
+</Definitions>

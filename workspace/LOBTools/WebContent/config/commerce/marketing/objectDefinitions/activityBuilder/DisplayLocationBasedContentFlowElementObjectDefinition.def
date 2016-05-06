@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Display Location-based Content action. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService}</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService}</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li>
+				<b>locationType</b>:  A required property specifying the location type. It can be "region" or "pointOfInterest".
+			</li>
+			<li><b>urlPrefix</b>: An optional value to set the prefix to use when composing the content URL.</li>
+			<li><b>urlSuffix</b>: An optional value to set the suffix to use when composing the content URL.</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktDisplayLocationBasedContentElementObject" displayName="${mktMarketingResources.displayLocationBasedContentName}" elemTemplateType="Action" flowIcon="displayLocationBasedContentIcon" headerIcon="displayLocationBasedContentHeaderIcon" helpLink="concepts/csbactdisconloc.htm" objectType="displayLocationBasedContent" package="mkt" paletteIcon="displayLocationBasedContentPaletteIcon" propertiesDefinitionName="mktDisplayLocationBasedContentProperties" summaryClass="mktDisplayLocationBasedContentSummary">
+		<EnablementAndCondition conditionId="creatableCondition">
+			<EnablementCondition contextName="lbsEnabled" enablementValue="true" conditionId="lbsEnabledContextValueCondition"/>
+			<EnablementCondition checkReadOnly="true" enablementValue="false" conditionId="notReadOnly"/>
+		</EnablementAndCondition>
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService"/>
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService"/>
+
+		<Xml name="template">
+			<elemTemplateName>displayLocationBasedContent</elemTemplateName>
+			<locationType>pointOfInterest</locationType>
+		</Xml>
+		
+		<PropertyDefinition propertyName="locationType">
+			<PropertyValue displayName="${mktMarketingResources.pointOfInterest}"  value="pointOfInterest" isDefault="true"/>
+			<PropertyValue displayName="${mktMarketingResources.region}"           value="region" />
+		</PropertyDefinition>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.urlPrefix}" maximumSize="254" propertyName="urlPrefix" required="false" trim="true"/>
+		<PropertyDefinition displayName="${mktMarketingResources.urlSuffix}" maximumSize="254" propertyName="urlSuffix" required="false" trim="true"/>
+
+	</FlowElementObjectDefinition>
+</Definitions>

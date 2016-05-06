@@ -1,0 +1,474 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+		<!---
+			<p>
+			Class definition for the advanced search class for task and task group.
+			This class extends from the wcfAdvancedSearchContent class and is in charge of building the 
+			user interface for gathering the input from the user to perform the advanced search.
+			</p>
+			
+			<p>
+			As required by extending the wcfAdvancedSearchContent, a setSearchOptions method is
+			implemented to set the searchOptions attribute of the super class. The searchOptions is an
+			object that contains the name/value pairs that will be sent to the search service.
+			</p>
+			
+			<p>
+			This search is used to find the following:
+			{@link TaskPrimaryObjectDefinition Task}
+			</p>
+			
+			<p>			
+			Search parameters incuded in this class : 
+				<ol>
+					<li> taskCode - Represents the uniqueId of the task.
+					<li> taskName - Represents the name of the task
+					<li> contributorFirstName - Represents the first name of task contributor.
+					<li> contributorLastName - Represents the last name of the task contributor.
+					<li> taskDescription - Represents description of the task.
+					<li> dueDateFrom - Represents beginning of the task dueDate.
+					<li> dueDateTo - Represents end of the task dueDate.
+					<li> taskStatus - Represents the status of the task.
+				</ol>
+			</p>									  
+			
+			<p>
+			If this class is extended to append some extra search parameters, you must also write the
+			setSearchOptions method that calls the super.setSearchOptions() and then appends the new
+			extra search parameters to the searchOptions attribute.
+			</p>
+		-->
+		<class name="wspTaskAdvancedSearchContent" extends="wcfAdvancedSearchContent">
+	
+			<attribute name="myStyle" value="${this.parent.parent.parent.parent.parent.style}"/>
+			
+			<simplelayout axis="y"/>
+			<view name="section1" width="100%" height="14">
+					<simplelayout axis="y"/>
+					<view name="filler1" height="15"/>
+					<!-- Instructional text to the user -->
+					<text text="${wspWorkspaceResources.searchInstructionalText.string}" multiline="true" width="100%" fontstyle="italic"/>
+					<view name="filler2" height="8"/>
+			</view>
+			<view name="section2" width="410" height="65">
+				<simplelayout axis="x"/>
+				<view name="section2_1" width="230" height="100%">
+						<simplelayout axis="y" spacing="2"/>
+						<view name="filler3" height="23"/>
+						<view name="section2_1_1" width="100%" height="30%">
+								<text text="${wspWorkspaceResources.taskIdentifier.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section2_1_2" width="100%" height="70%">
+							<wcfInputText name="taskCode" width="177"/>
+						</view>
+				</view>
+				<view name="section2_2" width="181" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler4" height="23"/>
+					<view name="section2_2_1" width="100%" height="30%">
+						<text text="${wspWorkspaceResources.taskName.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section2_2_2" width="100%" height="40%">
+						<wcfInputText name="taskName" width="177"/>
+					</view>
+				</view>
+				<view name="filler5" height="10"/>
+			</view>			
+
+			<!-- view name="section3" width="410" height="60">
+				<simplelayout axis="x"/>
+				<view name="section3_1" width="230" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler1" height="5"/>
+					<view name="section3_1_1" width="100%" height="30%">
+							<text text="${wspWorkspaceResources.workspaceDescription.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section3_1_2" width="100%" height="70%">
+						<wcfInputText name="taskDescription" width="177"/>
+					</view>
+					<view name="filler2" height="5"/>
+				</view>
+			</view>
+			
+			<view name="section4" width="410" height="70">
+				<simplelayout axis="y"/>
+				<view resource="dividerLine" stretches="width" width="${parent.width - 3}"/>
+				<view name="filler1" height="5"/>
+				<view name="section4_1" width="100%" height="16">
+					<text text="${wspWorkspaceResources.contributorFilter.string}" width="100%" height="16" fontstyle="bolditalic"/>
+				</view>
+				
+				<view name="section4_2" width="230" height="50">			
+					<simplelayout axis="x"/>
+					<view name="section4_2_1" width="230" height="50">
+						<simplelayout axis="y" spacing="2"/>
+						<view name="filler2" height="2"/>
+						<view name="section4_2_1_1" width="100%" height="16">					
+							<text text="${wspWorkspaceResources.firstNameSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section4_2_1_2" width="100%" height="30">
+							<wcfInputText name="contributerFirstName" width="177"/>
+						</view>
+					</view>			
+					<view name="section4_2_2" width="181" height="50">
+						<simplelayout axis="y" spacing="2"/>
+						<view name="filler4" height="2"/>
+						<view name="section4_2_2_1" width="100%" height="16">				
+							<text text="${wspWorkspaceResources.lastNameSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section4_2_2_2" width="100%" height="30">
+							<wcfInputText name="contributerLastName" width="177"/>
+						</view>
+					</view>
+				</view>			
+			 </view-->
+						
+
+			<view name="section5" width="100%" height="80">			
+				<simplelayout axis="y"/>
+				<view name="filler0" height="10"/>
+				<view resource="dividerLine" stretches="width" width="400"/>
+				<view name="section5_1" width="100%" height="20">
+					<view name="filler1" height="5"/>
+					<text text="${wspWorkspaceResources.dueDate.string}" width="100%" height="15" fontstyle="bolditalic"/>
+				</view>
+				<view name="section5_2" width="100%" height="60">
+					<simplelayout axis="x"/>
+					<view name="section5_2_1" width="230" height="100%">
+						<simplelayout axis="y" spacing="5"/>
+						<view name="section5_2_1_1" width="100%" height="30%" x="2">
+							<text text="${wspWorkspaceResources.dueDateFromSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section5_2_1_2" width="100%" height="70%" x="2">
+							<wcfDatePicker name="dueDateFrom"/>
+						</view>
+					</view>
+					<view name="section5_2_2" width="181" height="100%">
+						<simplelayout axis="y" spacing="5"/>
+						<view name="section5_2_2_1" width="100%" height="30%" x="2">
+							<text text="${wspWorkspaceResources.dueDateToSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section5_2_2_2" width="100%" height="70%" x="2">
+							<wcfDatePicker name="dueDateTo"/>
+						</view>
+					</view>
+				</view>					
+				<view name="filler3" height="10"/>				
+			</view>			
+					
+			<view name="section6" width="410" height="130" >
+				<simplelayout axis="y"/>
+				<view resource="dividerLine" stretches="width" width="${parent.width - 3}"/>
+				<view name="filler1" height="5"/>
+				<text text="${wspWorkspaceResources.status.string}" width="100%" fontstyle="bolditalic"/>
+				<view name="filler2" height="5"/>
+				
+				<!-- 
+					Radio Button Group for taskStatus search param. 
+					Options: 1) To search task with all status 
+							 2) To specify one or more particular status - This would list the different types to select from. 
+				-->
+				<wcfBaseRadioGroup x="5" name="taskStatus">
+					    <wcfBaseRadioButton value="1" text="${wspWorkspaceResources.searchStatusAll.string}" selected="true"/>
+					    <wcfBaseRadioButton value="2" text="${wspWorkspaceResources.searchStatus.string}"/>
+				</wcfBaseRadioGroup>
+				<state applied="${immediateparent.taskStatus.value == 2}">
+					<view name="filler3" height="10"/>
+					<view name="section6_1" width="100%" x="20" height="30">
+						<wcfBaseCheckbox name="typeInactive" text="${wspWorkspaceResources.taskGroupStatusInactive.string}" width="180" fgcolor='0x000000'/>
+						<wcfBaseCheckbox name="typeWorking" x="180" text="${wspWorkspaceResources.workingTasks.string}" width="180"/>
+					</view>
+					<view name="section6_2" width="100%" x="20" height="30">
+						<wcfBaseCheckbox name="typeCompleted" text="${wspWorkspaceResources.completedTasks.string}" width="160"/>
+					</view>
+				</state>				
+			</view>
+		
+			<!---
+				Construct the search options for the tasks advanced search.
+			-->
+			<method name="setSearchOptions">
+				<![CDATA[
+					super.setSearchOptions();
+					var newSearchOptions = {};
+					newSearchOptions.taskCode = this.section2.section2_1.section2_1_2.taskCode.getText();
+					newSearchOptions.taskName = this.section2.section2_2.section2_2_2.taskName.getText();
+					
+					/*newSearchOptions.taskDescription = this.section3.section3_1.section4_1_2.taskDescription.getText();
+					newSearchOptions.contributorFirstName = this.section4.section4_2.section4_2_1.section4_2_1_2.contributerFirstName.getText();
+					newSearchOptions.contributorLastName = this.section4.section4_2.section4_2_2.section4_2_2_2.getText();*/
+					
+					newSearchOptions.wrongDate = 'false';
+					// format dueDate to DATE_ONLY_FORMAT
+					var date1 = this.section5.section5_2.section5_2_1.section5_2_1_2.dueDateFrom.getDate();
+					if (date1 != null) {
+						newSearchOptions.dueDateFrom = wcfDateUtil.format(date1, wcfDateUtil.DATE_ONLY_FORMAT);
+					} else if(this.section5.section5_2.section5_2_1.section5_2_1_2.dueDateFrom.getDateString() != ''){
+						newSearchOptions.wrongDate = 'true';
+					}
+					
+					var date2 = this.section5.section5_2.section5_2_2.section5_2_2_2.dueDateTo.getDate();
+					if (date2 != null) {
+						newSearchOptions.dueDateTo = wcfDateUtil.format(date2, wcfDateUtil.DATE_ONLY_FORMAT);
+					} else if(this.section5.section5_2.section5_2_2.section5_2_2_2.dueDateTo.getDateString() != ''){
+						newSearchOptions.wrongDate = 'true';
+					}
+					
+					newSearchOptions.taskStatus = this.section6.taskStatus.getValue();
+					if (newSearchOptions.taskStatus == 2) {
+						newSearchOptions.typeInactive = this.section6.section6_1.typeInactive.getValue();
+						newSearchOptions.typeWorking = this.section6.section6_1.typeWorking.getValue();
+						newSearchOptions.typeCompleted = this.section6.section6_2.typeCompleted.getValue();
+					}					
+					this.searchOptions = newSearchOptions;
+				]]>
+			</method>
+		</class>
+
+		<!---
+			<p>
+			Class definition for the advanced search class for TaskGroups.
+			This class extends from the wcfAdvancedSearchContent class and is in charge of building the 
+			user interface for gathering the input from the user to perform the advanced search.
+			<p>
+			
+			<p>
+			As required by extending the wcfAdvancedSearchContent, a setSearchOptions method is
+			implemented to set the searchOptions attribute of the super class. The searchOptions is an
+			object that contains the name/value pairs that will be sent to the search service.
+			<p>
+			
+			<p>
+			This search is used to find the following:
+			{@link TaskGrouupPrimaryObjectDefinition TaskGroup}
+			</p>
+			
+			<p>
+			Search parameters incuded in this class : 
+				<ol>
+					<li> taskGroupCode - Represents the uniqueId of the task group.
+					<li> taskGroupName - Represents the name of the task group.
+					<li> approverFirstName - Represents the first name of task group approver.
+					<li> approverLastName - Represents the last name of task group approver.
+					<li> taskGroupDescription - Represents description of the task group.
+					<li> dueDateFrom - Represents beginning of the task dueDate.
+					<li> dueDateTo - Represents end of the task dueDate.
+					<li> taskGroupStatus - Represents the status of the task group.				
+				</ol>
+			</p>
+			
+			<p>
+			If this class is extended to append some extra search parameters, you must also write the
+			setSearchOptions method that calls the super.setSearchOptions() and then appends the new
+			extra search parameters to the searchOptions attribute.
+			</p>
+		-->
+		<class name="wspTaskGroupAdvancedSearchContent" extends="wcfAdvancedSearchContent">
+			
+			<attribute name="myStyle" value="${this.parent.parent.parent.parent.parent.style}"/>
+		
+			<simplelayout axis="y"/>
+			<view name="section1" width="100%" height="14">
+					<simplelayout axis="y"/>
+					<view name="filler1" height="15"/>
+					<!-- Instructional text to the user -->
+					<text text="${wspWorkspaceResources.searchInstructionalText.string}" multiline="true" width="100%" fontstyle="italic"/>
+					<view name="filler2" height="8"/>
+			</view>
+			<view name="section2" width="410" height="65">
+				<simplelayout axis="x"/>
+				<view name="section2_1" width="230" height="100%">
+						<simplelayout axis="y" spacing="2"/>
+						<view name="filler3" height="23"/>
+						<view name="section2_1_1" width="100%" height="30%">
+								<text text="${wspWorkspaceResources.taskIdentifier.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section2_1_2" width="100%" height="70%">
+							<wcfInputText name="taskGroupCode" width="177"/>
+						</view>
+				</view>
+				<view name="section2_2" width="181" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler4" height="23"/>
+					<view name="section2_2_1" width="100%" height="30%">
+						<text text="${wspWorkspaceResources.taskGroupName.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section2_2_2" width="100%" height="40%">
+						<wcfInputText name="taskGroupName" width="177"/>
+					</view>
+				</view>
+				<view name="filler5" height="10"/>
+			</view>
+				
+			<!-- view name="section3" width="410" height="52">
+				<simplelayout axis="x"/>
+				<view name="section3_1" width="230" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler1" height="15"/>
+					<view name="section3_1_1" width="100%" height="16">
+						<text text="${wspWorkspaceResources.firstNameSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section3_1_2" width="97%" height="30">
+						<wcfInputText name="approverFirstName" width="177"/>
+					</view>
+				</view>
+			
+				<view name="section3_2" width="181" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler1" height="15"/>
+					<view name="section3_2_1" width="100%" height="16">
+						<text text="${wspWorkspaceResources.lastNameSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section3_2_2" width="100%" height="30">
+						<wcfInputText name="approverLastName" width="177"/>
+					</view>
+				</view>
+			</view>
+
+			<view name="section4" width="410" height="62">
+				<simplelayout axis="x"/>
+				<view name="section4_1" width="230" height="100%">
+					<simplelayout axis="y" spacing="2"/>
+					<view name="filler1" height="10"/>
+					<view name="section4_1_1" width="100%" height="16">
+						<text text="${wspWorkspaceResources.workspaceDescription.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+					</view>
+					<view name="section4_1_2" width="100%" height="30">
+						<wcfInputText name="taskGroupDescription" width="177"/>
+					</view>
+					<view name="filler2" height="10"/>
+				</view>
+			</view-->			
+
+
+			<view name="section5" width="100%" height="80">			
+				<simplelayout axis="y"/>
+				<view name="filler0" height="10"/>
+				<view resource="dividerLine" stretches="width" width="400"/>
+				<view name="section5_1" width="100%" height="20">
+					<view name="filler1" height="5"/>
+					<text text="${wspWorkspaceResources.dueDate.string}" width="100%" height="15" fontstyle="bolditalic"/>
+					<!-- view name="filler2" height="5"/-->
+				</view>
+				<view name="section5_2" width="100%" height="60">
+					<simplelayout axis="x"/>
+					<!-- view name="filler3" height="23"/-->
+					<view name="section5_2_1" width="230" height="100%">
+						<simplelayout axis="y" spacing="5"/>
+						<view name="section5_2_1_1" width="100%" height="30%" x="2">
+							<text text="${wspWorkspaceResources.dueDateFromSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section5_2_1_2" width="100%" height="70%" x="2">
+							<wcfDatePicker name="dueDateFrom"/>
+						</view>
+					</view>
+					<view name="section5_2_2" width="181" height="100%">
+						<simplelayout axis="y" spacing="5"/>
+						<view name="section5_2_2_1" width="100%" height="30%" x="2">
+							<text text="${wspWorkspaceResources.dueDateToSearchPrompt.string}" width="100%" fgcolor="${classroot.myStyle.texthilitecolor}"/>
+						</view>
+						<view name="section5_2_2_2" width="100%" height="70%" x="2">
+							<wcfDatePicker name="dueDateTo"/>
+						</view>
+					</view>
+					<!-- view name="filler5" height="10"/-->
+				</view>					
+				<view name="filler3" height="10"/>				
+			</view>
+			
+			<view name="section6" width="100%" height="150" >
+				<simplelayout axis="y"/>
+				<view resource="dividerLine" stretches="width" width="400"/>
+				<view name="filler1" height="5"/>
+				<text text="${wspWorkspaceResources.status.string}" width="100%" fontstyle="bolditalic"/>
+				<view name="filler2" height="5"/>
+				<!-- 
+					Radio Button Group for taskStatus search param. 
+					Options: 1) To search task with all status 
+							 2) To specify one or more particular status - This would list the different types to select from. 
+				-->
+				<wcfBaseRadioGroup x="5" name="taskGroupStatus">
+					    <wcfBaseRadioButton value="1" text="${wspWorkspaceResources.searchStatusAll.string}" selected="true"/>
+					    <wcfBaseRadioButton value="2" text="${wspWorkspaceResources.searchStatus.string}"/>
+				</wcfBaseRadioGroup>
+				<state applied="${immediateparent.taskGroupStatus.value == 2}">
+					<view name="filler3" height="10"/>
+					<view name="section6_1" width="100%" x="2" height="150">
+						<simplelayout axis="y"/>
+						<view name="section6_1_1" width="100%" x="20" height="30">
+							<wcfBaseCheckbox name="typeInactive" text="${wspWorkspaceResources.taskGroupStatusInactive.string}" width="180" fgcolor='0x000000'/>
+							<wcfBaseCheckbox name="typeWorking" x="180" text="${wspWorkspaceResources.workingTasks.string}" width="180"/>
+						</view>
+						<view name="section6_1_2" width="100%" x="20" height="30">
+							<wcfBaseCheckbox name="typeCompleted" text="${wspWorkspaceResources.completedTasks.string}" width="180"/>
+							<wcfBaseCheckbox name="typeApproved" x="180" text="${wspWorkspaceResources.approvedTasks.string}" width="180"/>
+						</view>
+						<view name="section6_1_3" width="100%" x="20" height="30">
+							<wcfBaseCheckbox name="typeCanceled" text="${wspWorkspaceResources.canceledTasks.string}" width="180"/>
+							<wcfBaseCheckbox name="typeReadyForApprove" x="180" text="${wspWorkspaceResources.taskGroupStatusReadyForApproval.string}" width="300"/>
+						</view>						
+					</view>
+				</state>
+			</view>					
+
+			
+			<!---
+				Construct the search options for the taskgroups advanced search.
+			-->
+			<method name="setSearchOptions">
+				<![CDATA[
+	 				super.setSearchOptions();
+	 				var newSearchOptions = {};
+					newSearchOptions.taskGroupCode = this.section2.section2_1.section2_1_2.taskGroupCode.getText();
+					//Debug.write("code obj="+this.section2.section2_1.section2_1_2.taskGroupCode);
+					//Debug.write("code="+this.section2.section2_1.section2_1_2.taskGroupCode.getText());
+					newSearchOptions.taskGroupName = this.section2.section2_2.section2_2_2.taskGroupName.getText();
+					
+					/*
+					newSearchOptions.approverFirstName = this.section3.section3_1.section3_1_2.approverFirstName.getText();
+					newSearchOptions.approverLastName = this.section3.section3_2.section3_2_2.approverLastName.getText();
+					newSearchOptions.taskGroupDescription = this.section4.section4_1.section4_1_2.taskGroupDescription.getText();
+					*/
+					
+					newSearchOptions.wrongDate = 'false';
+					// format dueDate to DATE_ONLY_FORMAT
+					var date1 = this.section5.section5_2.section5_2_1.section5_2_1_2.dueDateFrom.getDate();
+					if (date1 != null) {
+						newSearchOptions.dueDateFrom = wcfDateUtil.format(date1, wcfDateUtil.DATE_ONLY_FORMAT);
+					} else if(this.section5.section5_2.section5_2_1.section5_2_1_2.dueDateFrom.getDateString() != ''){
+						newSearchOptions.wrongDate = 'true';
+					}
+					var date2 = this.section5.section5_2.section5_2_2.section5_2_2_2.dueDateTo.getDate();
+					if (date2 != null) {
+						newSearchOptions.dueDateTo = wcfDateUtil.format(date2, wcfDateUtil.DATE_ONLY_FORMAT);
+					} else if(this.section5.section5_2.section5_2_2.section5_2_2_2.dueDateTo.getDateString() != ''){
+						newSearchOptions.wrongDate = 'true';
+					}
+					
+					newSearchOptions.taskGroupStatus = this.section6.taskGroupStatus.getValue();
+					if (newSearchOptions.taskGroupStatus == 2) {
+						newSearchOptions.typeInactive = this.section6.section6_1.section6_1_1.typeInactive.getValue();
+						newSearchOptions.typeWorking = this.section6.section6_1.section6_1_1.typeWorking.getValue();
+						newSearchOptions.typeReadyForApprove = this.section6.section6_1.section6_1_3.typeReadyForApprove.getValue();
+						newSearchOptions.typeCompleted = this.section6.section6_1.section6_1_2.typeCompleted.getValue();
+						newSearchOptions.typeApproved = this.section6.section6_1.section6_1_2.typeApproved.getValue();
+						newSearchOptions.typeCanceled = this.section6.section6_1.section6_1_3.typeCanceled.getValue();
+					}				
+					this.searchOptions = newSearchOptions;
+				]]>
+			</method>
+		</class>		
+</library>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This navigation list definition is used to display {@link PriceListImport Price list import}.
+	-->
+	<NavigationListDefinition definitionName="prcPriceListImportGridChildList" displayName="${prcPriceResources.priceListImports}" isDefault="true" listDefinitionName="prcPriceListImportListEditor" listTitle="${prcPriceResources.priceListImportsList}"/>
+	
+	<ChildListEditor definitionName="prcPriceListImportListEditor" listDefinitionName="prcPriceListImportGrid" objectTypes="PriceListImport"/>
+	
+	<ObjectGrid definitionName="prcPriceListImportGrid" preferenceKey="prcPriceListImportGrid">
+		<!--- The unique id of the price list import. -->
+		<GridText name="uniqueID" propertyName="priceListImportId" editable="false" 
+			text="${prcPriceResources.priceListImport_uniqueID_ColumnHeader}" 
+			visible="false" width="90" datatype="number"/>
+			
+		<!--- The file name of the .csv or .zip file. -->
+		<GridText name="fileName" propertyName="fileName" visible="true" editable="false"
+			text="${prcPriceResources.priceListImport_fileName_ColumnHeader}" 
+			width="230" required="true"/>
+			
+		<!--- The server path of the file uploaded. -->
+		<GridText name="filePath" propertyName="filePath" editable="false" 
+			text="${prcPriceResources.priceListImport_filePath_ColumnHeader}" 
+			visible="false" width="180"/>
+			
+		<!--- The fize of the CSV/Zip file -->
+		<GridKilobytes name="fileSize" 
+			propertyName="fileSize" visible="true" editable="false"
+			text="${prcPriceResources.priceListImport_fileSize_ColumnHeader}" 
+			width="60"/>
+		<!--- The status of price list import: Processing, Complete or Failed -->
+		<GridPropertyImage name="statusIcon" propertyName="status" editable="false" enableFilter="true" text="${prcPriceResources.priceListImport_status_ColumnHeader}" width="80" visible="true"/>
+		<!--- The logon id of the user who creates the import task. -->
+		<GridText name="userName" propertyName="userName" editable="false" text="${prcPriceResources.priceListImport_userName_ColumnHeader}" visible="true" width="160"/>
+		<!--- The date and time when the CSV/Zip file is uploaded -->
+		<GridDateTime name="uploadTime" propertyName="uploadTime" editable="false" text="${prcPriceResources.priceListImport_uploadTime_ColumnHeader}" visible="false" width="140"/>
+		<!--- The date and time when the data load begins -->
+		<GridDateTime name="startTime" propertyName="startTime" editable="false" text="${prcPriceResources.priceListImport_startTime_ColumnHeader}" visible="true" width="140"/>
+		<!--- The date and time when the data load ends -->
+		<GridDateTime name="endTime" propertyName="endTime" editable="false" text="${prcPriceResources.priceListImport_endTime_ColumnHeader}" visible="true" width="140"/>
+	</ObjectGrid> 
+	
+	<ObjectGrid definitionName="prcPriceListRefGrid" preferenceKey="prcPriceListRefGrid">
+		<GridText editable="false" name="priceListId" propertyName="priceListId" text="${prcPriceResources.uniqueId}" visible="false"/>
+		<GridText editable="false" name="priceListName" propertyName="name" objectPath="PriceList" text="${prcPriceResources.nameString}" width="200"/>
+		<GridText editable="false" name="priceListDescription" propertyName="description" objectPath="PriceList" text="${prcPriceResources.description}" width="300"/>
+	</ObjectGrid>
+	
+</Definitions>

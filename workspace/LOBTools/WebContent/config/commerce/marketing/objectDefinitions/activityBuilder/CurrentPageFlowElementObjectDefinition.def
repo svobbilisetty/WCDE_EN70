@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Current Page target. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_categoryIdList, PROPERTY_catalogEntryIdList, PROPERTY_searchTermList and PROPERTY_urlValueList as parameters</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_categoryIdList, PROPERTY_catalogEntryIdList, PROPERTY_searchTermList and PROPERTY_urlValueList as parameters</li>
+
+			<li>{@link wcfReferenceObjectDefinition} that defines a new ChildCatalogGroup type which references the
+				{@link CatalogGroup CatalogGroup} and {@link SalesCatalogGroup SalesCatalogGroup} object types</li>
+			<li>{@link wcfReferenceObjectDefinition} that defines a new ChildInheritedCatalogGroup type which references the
+				{@link InheritedCatalogGroup InheritedCatalogGroup} and {@link InheritedSalesCatalogGroup InheritedSalesCatalogGroup} object types</li>
+			<li>{@link wcfReferenceObjectDefinition} that defines a new ChildCatentry type which references the catalog entry object types</li>
+			<li>{@link wcfReferenceObjectDefinition} that defines a new ChildInheritedCatentry type which references the inherited catalog entry object types</li>
+			<li>{@link wcfChildObjectDefinition} that defines a new urlValue type used for targeting specific URL parameter values</li>
+			<li>{@link wcfChildObjectDefinition} that defines a new searchTerm type used for targeting specific values search keywords</li>
+			
+			<li>instance of {@link mktCurrentPageValidator} to ensure the appropriate values are provided when required</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>elemTemplateName</b>: required flow element template name. Must be one of currentCustomerBehaviorProductBrowsing, currentCustomerBehaviorCategoryBrowsing,
+				currentCustomerBehaviorProductInCategoryBrowsing, currentCustomerBehaviorSearching, or currentCustomerBehaviorURLContents.</li>
+			<li><b>containsOperator</b>: required field with a default of "="</li>
+			<li><b>type</b>: optional field with possible values "NVP" and "PARENTCATEGORY"</li>
+			<li><b>comparison</b>: optional field with possible values "=", "start", "contain", "end" or "any"</li>
+			<li><b>synonymMatch</b>: optional field that specifies if the matching rules must include synonyms. Value can be true to include and false not to include</li>
+			<li><b>urlName</b>: optional string field that specifies the name of the parameter on the referral URL. Maximum length of this string is 254 characters.</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktCurrentPageElementObject" displayName="${mktMarketingResources.currentPageName}" elemTemplateType="Target" flowIcon="currentPageIcon" headerIcon="currentPageHeaderIcon" helpLink="concepts/csbtarpage.htm" objectType="currentPage" package="mkt" paletteIcon="currentPagePaletteIcon" propertiesDefinitionName="mktCurrentPageProperties" summaryClass="mktCurrentPageSummary">
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_categoryIdList" objectPath="ChildCatalogGroup/CatalogGroupAlias" optional="true" propertyName="catgroupId">
+				<EnablementOrCondition conditionId="category">
+					<EnablementCondition conditionId="categoryTemplate" enablementValue="currentCustomerBehaviorCategoryBrowsing" propertyName="elemTemplateName"/>
+					<EnablementCondition conditionId="prodsInCategoryTemplate" enablementValue="currentCustomerBehaviorProductInCategoryBrowsing" propertyName="elemTemplateName"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_catalogEntryIdList" objectPath="ChildCatentry/CatalogEntry" optional="true" propertyName="catentryId">
+				<EnablementCondition conditionId="productTemplate" enablementValue="currentCustomerBehaviorProductBrowsing" propertyName="elemTemplateName"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_urlValueList" objectPath="urlValue" optional="true" propertyName="urlValue">
+				<EnablementAndCondition conditionId="url">
+					<EnablementCondition conditionId="urlTemplate" enablementValue="currentCustomerBehaviorURLContents" propertyName="elemTemplateName"/>
+					<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+				</EnablementAndCondition>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_searchTermList" objectPath="searchTerm" optional="true" propertyName="searchTerm">
+				<EnablementCondition conditionId="searchTemplate" enablementValue="currentCustomerBehaviorSearching" propertyName="elemTemplateName"/>
+			</ServiceParam>
+		</CreateService>
+
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_categoryIdList" objectPath="ChildCatalogGroup/CatalogGroupAlias" optional="true" propertyName="catgroupId">
+				<EnablementOrCondition conditionId="category">
+					<EnablementCondition conditionId="categoryTemplate" enablementValue="currentCustomerBehaviorCategoryBrowsing" propertyName="elemTemplateName"/>
+					<EnablementCondition conditionId="prodsInCategoryTemplate" enablementValue="currentCustomerBehaviorProductInCategoryBrowsing" propertyName="elemTemplateName"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_catalogEntryIdList" objectPath="ChildCatentry/CatalogEntry" optional="true" propertyName="catentryId">
+				<EnablementCondition conditionId="productTemplate" enablementValue="currentCustomerBehaviorProductBrowsing" propertyName="elemTemplateName"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_urlValueList" objectPath="urlValue" optional="true" propertyName="urlValue">
+				<EnablementAndCondition conditionId="url">
+					<EnablementCondition conditionId="urlTemplate" enablementValue="currentCustomerBehaviorURLContents" propertyName="elemTemplateName"/>
+					<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+				</EnablementAndCondition>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_searchTermList" objectPath="searchTerm" optional="true" propertyName="searchTerm">
+				<EnablementCondition conditionId="searchTemplate" enablementValue="currentCustomerBehaviorSearching" propertyName="elemTemplateName"/>
+			</ServiceParam>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>currentCustomerBehaviorCategoryBrowsing</elemTemplateName>
+			<anyOrAll>any</anyOrAll>
+			<containsOperator>=</containsOperator>
+			<type>NVP</type>
+			<comparison>=</comparison>
+			<synonymMatch>false</synonymMatch>
+		</Xml>
+
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate,SearchActivity,SearchActivityTemplate" derivedId="true" idProperty="childCatalogGroupId" objectGroups="ChildCatalogGroup,ChildCatalogGroupGroup" objectType="ChildCatalogGroup" referencedTypes="CatalogGroup,SalesCatalogGroup"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCatalogGroupId" objectGroups="ChildCatalogGroup,ChildCatalogGroupGroup" objectType="ChildInheritedCatalogGroup" referencedTypes="InheritedCatalogGroup,InheritedSalesCatalogGroup"/>
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate,SearchActivity,SearchActivityTemplate" derivedId="true" idProperty="childCatentryId" objectGroups="ChildCatentry,ChildCatentryGroup" objectType="ChildCatentry" referencedTypes="Product,Bundle,CatalogGroupSKU,ProductSKU,Kit"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCatentryId" objectGroups="ChildCatentry,ChildCatentryGroup" objectType="ChildInheritedCatentry" referencedTypes="InheritedProduct,InheritedBundle,InheritedCatalogGroupSKU,InheritedProductSKU,InheritedKit"/>
+
+		<PropertyDefinition propertyName="elemTemplateName" required="true">
+			<PropertyValue displayName="${mktMarketingResources.browsingCategories}" value="currentCustomerBehaviorCategoryBrowsing"/>
+			<PropertyValue displayName="${mktMarketingResources.browsingProducts}" value="currentCustomerBehaviorProductBrowsing"/>
+			<PropertyValue displayName="${mktMarketingResources.browsingProductsInCategories}" value="currentCustomerBehaviorProductInCategoryBrowsing"/>
+			<PropertyValue displayName="${mktMarketingResources.browsingSearch}" value="currentCustomerBehaviorSearching"/>
+			<PropertyValue displayName="${mktMarketingResources.browsingURL}" value="currentCustomerBehaviorURLContents"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="containsOperator" required="true">
+			<PropertyValue displayName="${mktMarketingResources.equals}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.notEquals}" value="!="/>
+		</PropertyDefinition>
+
+		<PropertyDefinition propertyName="comparison" required="true">
+			<PropertyValue displayName="${mktMarketingResources.isExactly}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.start}" value="start"/>
+			<PropertyValue displayName="${mktMarketingResources.contain}" value="contain"/>
+			<PropertyValue displayName="${mktMarketingResources.end}" value="end"/>
+			<PropertyValue displayName="${mktMarketingResources.any}" value="any"/>
+		</PropertyDefinition>
+
+		<PropertyDefinition displayName="${mktMarketingResources.urlName}" maximumSize="254" propertyName="urlName" required="true" trim="true">
+			<EnablementCondition conditionId="URLElement" enablementValue="currentCustomerBehaviorURLContents" propertyName="elemTemplateName"/>
+		</PropertyDefinition>
+
+		<PropertyDefinition displayName="${mktMarketingResources.synonymMatch}" propertyName="synonymMatch">
+			<EnablementCondition conditionId="synonymMatch" enablementValue="currentCustomerBehaviorSearching" propertyName="elemTemplateName"/>
+		</PropertyDefinition>
+
+		<ChildObjectDefinition displayName="${mktMarketingResources.urlValues}" idProperty="urlValue" objectType="urlValue">
+			<PropertyDefinition displayName="${mktMarketingResources.urlValues}" maximumSize="254" propertyName="urlValue" required="true" trim="true"/>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition displayName="${mktMarketingResources.searchValues}" idProperty="searchTerm" objectType="searchTerm">
+			<PropertyDefinition displayName="${mktMarketingResources.searchValues}" maximumSize="254" propertyName="searchTerm" required="true" trim="true"/>
+		</ChildObjectDefinition>
+		
+		<CurrentPageValidator package="mkt" validatorId="currentPage"/>
+	</FlowElementObjectDefinition>
+
+</Definitions>

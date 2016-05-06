@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		The base object definition for Default Catalog Configurations.
+	-->
+	<PrimaryObjectDefinition definitionName="DefaultCatalog" objectType="DefaultCatalog" displayName="${catalogResources.defaultCatalog_DisplayName}" headerIcon="defaultCatalogHeaderIcon" icon="defaultCatalogIcon" helpLink="concepts/cpndefaultcatalog.htm" idProperty="defaultcatalogId" propertiesDefinitionName="catDefaultCatalogProperties" writeUsage="IBM_ManageCatalog" searchType="FindDefaultCatalog">
+
+		<!---
+ 			Retrieves the {@link catDefaultCatalogReference} and {@link catInheritedDefaultCatalogReference}
+ 			reference objects for Default Catalog.
+		-->
+		<GetChildrenService objectTypes="DefaultCatalogReference,InheritedDefaultCatalogReference" url="/cmc/GetDefaultCatalogReference">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogStoreId"/>
+			<ServiceParam name="objectStoreId" propertyName="objectStoreId"/>
+		</GetChildrenService>
+
+		<!---
+			An instantiation of the reference object {@link catDefaultCatalogReference}
+			representing the reference to the catalog object being set as default catalog.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catDefaultCatalogReference" objectType="DefaultCatalogReference" />
+				
+		<!---
+			An instantiation of the inherited reference object {@link catInheritedDefaultCatalogReference}
+			representing the reference to the catalog object being set as default catalog.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="catInheritedDefaultCatalogReference" objectType="InheritedDefaultCatalogReference" />
+		
+	</PrimaryObjectDefinition>
+	
+	<!--- 
+    	The base definition of the default catalog reference. A default catalog reference is an association between a Default Catalog Configurations and 
+    	the catalog being set as default catalog.
+        There are two kinds of  default catalog references: {@link catDefaultCatalogReference} and {@link catInheritedDefaultCatalogReference}. 
+        This definition includes the common services. 
+        Definitions that are based on catBaseDefaultCatalogReference need to specify definitionName and referencedType.
+	-->
+	<ReferenceObjectDefinition definitionName="catBaseDefaultCatalogReference" initializeObjectStoreId="true"  isBaseDefinition="true" idProperty="storeDefCatId" allowCrossStoreReferences="true" objectType="BaseDefaultCatalogReference">
+	
+  		<!---
+  			Property Definition for the field1 property.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.defaultCatalogField1Prompt}" maxValue="2147483647" minValue="-2147483648" propertyName="xdefcat_Field1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.defaultCatalogField2Prompt}" maximumSize="254" propertyName="xdefcat_Field2" type="string"/>
+
+		<!---
+			Property Definition for the field3 property.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.defaultCatalogField3Prompt}" maximumSize="254" propertyName="xdefcat_Field3" type="string"/>
+	
+	  	<!--- Create service for creating a new default catalog configuration. -->
+		 <CreateService url="/cmc/CreateStoreChildren-DefaultCatalog">
+		  		<ServiceParam name="storeId">
+ 					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="InheritedDefaultCatalogReference" negate="true" propertyName="objectType"/>
+				</ServiceParam>
+				<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="InheritedDefaultCatalogReference" propertyName="objectType"/>
+				</ServiceParam>
+            	<ServiceParam name="catalogId" propertyName="catalogId" objectPath="AllCatalogAlias"/>
+         </CreateService>
+                
+        <!--- Update service for creating an existing default catalog configuration. -->
+        <UpdateService url="/cmc/UpdateStoreChildren-DefaultCatalog">
+		  		<ServiceParam name="storeId">
+ 					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="InheritedDefaultCatalogReference" negate="true" propertyName="objectType"/>
+				</ServiceParam>
+				<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="InheritedDefaultCatalogReference" propertyName="objectType"/>
+				</ServiceParam>
+            	<ServiceParam name="storeDefCatId" propertyName="storeDefCatId"/>
+            	<ServiceParam name="catalogId" propertyName="catalogId" objectPath="AllCatalogAlias"/>
+        </UpdateService>
+        
+        <!--- Delete service for deleting an existing default catalog configuration. -->
+        <DeleteService url="/cmc/DeleteStoreChildren-DefaultCatalog">
+		  		<ServiceParam name="storeId">
+ 					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="InheritedDefaultCatalogReference" negate="true" propertyName="objectType"/>
+				</ServiceParam>
+				<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+					<EnablementCondition checkObjectDefinition="true" conditionId="objectTypeCondition" enablementValue="InheritedDefaultCatalogReference" propertyName="objectType"/>
+				</ServiceParam>
+               	<ServiceParam name="storeDefCatId" propertyName="storeDefCatId"/>
+               	<ServiceParam name="catalogId" propertyName="catalogId" objectPath="AllCatalogAlias"/> 
+        </DeleteService>    
+        
+	</ReferenceObjectDefinition>
+	
+	<!-- Reference object definition for defining the default catalog configuration owned by current store -->
+	<ReferenceObjectDefinition baseDefinitionName="catBaseDefaultCatalogReference"  initializeObjectStoreId="true"   definitionName="catDefaultCatalogReference" objectType="DefaultCatalogReference" referencedTypes="Catalog,SalesCatalog,InheritedCatalog,InheritedSalesCatalog">
+		<TrueEnablementCondition/>
+	</ReferenceObjectDefinition>
+	
+	<!-- Reference object definition for defining the default catalog configuration owned by catalog asset store store -->
+	<ReferenceObjectDefinition baseDefinitionName="catBaseDefaultCatalogReference"  initializeObjectStoreId="true"  definitionName="catInheritedDefaultCatalogReference" objectType="InheritedDefaultCatalogReference" referencedTypes="InheritedCatalog,InheritedSalesCatalog">
+		<EnablementCondition checkHasAccessRight="true" conditionId="parentLockingCondition" conditionType="childObjectCondition" enablementValue="true"/>
+	</ReferenceObjectDefinition>
+	
+</Definitions>

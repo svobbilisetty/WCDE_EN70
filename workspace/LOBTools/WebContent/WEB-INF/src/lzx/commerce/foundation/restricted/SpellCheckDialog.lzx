@@ -1,0 +1,622 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		
+		Spell checking dialog.
+	-->
+	<wcfDialog id="wcfSpellCheckDialog" title="${foundationResources.spellCheckDialogTitle.string}">
+		<!---
+			@keywords private
+			This is a required attribute.
+		-->
+		<attribute name="propertyEditor" value="null" />
+		<!---
+			@keywords private
+			{@OLlink inputtext} or {@OLlink richinputtext}
+			This is a required attribute.
+		-->
+		<attribute name="inputField" value="null" />
+		<!---
+			@keywords private
+			A list of elements to keep track of the misspelled words
+		-->
+		<attribute name="misspelledWords" value="${[]}" />
+		<!---
+			@keywords private
+			Which word in the list is currently being analyzed
+		-->
+		<attribute name="wordCount" type="number" value="0" />
+		<!---
+			@keywords private
+			Cursor position in the inputField at time of spell check launch
+		-->
+		<attribute name="selectionPosition" type="number" value="0" />
+		<!---
+			@keywords private
+			Selection size in the inputField at time of spell check launch
+		-->
+		<attribute name="selectionSize" type="number" value="0" />
+		<!---
+			@keywords private
+			Language object of property or if not language sensitive then the stores default language
+		-->
+		<attribute name="languageObj" value="null" />
+		<!---
+			@keywords private
+			Array to keep track of the color format of each character inside the inputField
+		-->
+		<attribute name="formatArray" value="${[]}" />
+		<!---
+			@keywords private
+			Indicates if replace buttons are enabled 
+		-->
+		<attribute name="replaceEnabled" type="boolean" value="false" />
+		<!---
+			@keywords private
+			Indicates if the messageView should be visible or the spellingView 
+		-->
+		<attribute name="showMessage" type="boolean" value="true" />
+		<!---
+			@keywords private
+		-->
+		<attribute name="listItems" value="${[]}"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="availableItems" value="${[]}"/>
+		
+		<text name="messageView" visible="${wcfSpellCheckDialog.showMessage}" width="${wcfSpellCheckDialog.spellingView.width}" multiline="true"/>
+		<view name="spellingView" visible="${!wcfSpellCheckDialog.showMessage}" >
+			<simplelayout axis="x" spacing="10"/>
+			<view name="textView">
+				<simplelayout axis="y"/>
+				<text text="${foundationResources.spellCheckMisspelledWordLabel.string}" fgcolor="${wcfSpellCheckDialog.style.texthilitecolor}" multiline="true" width="175"/>
+				<wcfInputText name="misspelledWord" width="175" onfocus="wcfSpellCheckDialog.spellingView.textView.suggestionList.clearSelection()" >
+					<handler name="ontext">
+						<![CDATA[
+						if (wcfSpellCheckDialog.misspelledWords.length > wcfSpellCheckDialog.wordCount) {
+							wcfSpellCheckDialog.setAttribute("replaceEnabled", wcfSpellCheckDialog.misspelledWords[wcfSpellCheckDialog.wordCount].word != this.getText());
+						}
+						]]>
+             		</handler>
+             		<handler name="onkeydown" args="kc">
+						<![CDATA[
+						if (kc == 13 && wcfSpellCheckDialog.misspelledWords.length > wcfSpellCheckDialog.wordCount && wcfSpellCheckDialog.misspelledWords[wcfSpellCheckDialog.wordCount].word != this.getText()) {
+							wcfSpellCheckDialog.replaceWord();
+						}
+						]]>
+					</handler>
+				</wcfInputText>
+				<text text="${foundationResources.spellCheckSuggestionLabel.string}" fgcolor="${wcfSpellCheckDialog.style.texthilitecolor}" multiline="true" width="175"/>
+				<list name="suggestionList" width="175" height="100" scrollbarclassname="wcfVerticalScrollbar">
+					<handler name="onselect">
+             			wcfSpellCheckDialog.spellingView.textView.misspelledWord.setText(this.getSelection().value);
+             		</handler>
+             		<handler name="onkeydown" args="k">
+						<![CDATA[
+						if (k == 13 && this.getSelection() != null) {
+							wcfSpellCheckDialog.spellingView.textView.misspelledWord.setText(this.getSelection().value);
+							wcfSpellCheckDialog.replaceWord();
+						}
+						]]>
+					</handler>
+					<!--- @keywords private	-->
+					<handler name="onfocus">
+						<![CDATA[
+						if(!parent["indicator"]){
+						    new lz.wcfFocusIndicator(parent, {
+						    	name: "indicator",
+						    	focusableView: this,
+						    	indicatorView: this
+						    });
+					    }
+						]]>
+					</handler>
+				</list>
+             </view>
+             <view name="buttonsView">
+             	<simplelayout axis="y"/>
+             	<wcfButton name="replaceButton" text="${foundationResources.spellCheckReplaceButton.string}" enabled="${wcfSpellCheckDialog.replaceEnabled}">
+             		<handler name="onclick">
+             			<![CDATA[
+             			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSpellCheckDialog replaceButton");
+             			wcfSpellCheckDialog.replaceWord();
+             			if (wcfEventTimer.enabled) wcfEventTimer.end();
+						]]>
+             		</handler>
+             	</wcfButton>
+             	<wcfButton name="replaceAllButton" text="${foundationResources.spellCheckReplaceAllButton.string}" enabled="${wcfSpellCheckDialog.replaceEnabled}" >
+             		<handler name="onclick">
+             			<![CDATA[
+             			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSpellCheckDialog replaceAllButton");
+             			var misspelledWord = wcfSpellCheckDialog.misspelledWords[wcfSpellCheckDialog.wordCount].word;
+             			for(var i = wcfSpellCheckDialog.wordCount; i < wcfSpellCheckDialog.misspelledWords.length; i++){
+							var replacedWord = wcfSpellCheckDialog.misspelledWords[i];
+							if(misspelledWord == replacedWord.word){
+								wcfSpellCheckDialog.updateInputField(replacedWord, i);
+								replacedWord.skip = true;
+							}
+						}
+					    wcfSpellCheckDialog.wordCount++;
+				    	wcfSpellCheckDialog.runSpellCheckingSession();
+				    	if (wcfEventTimer.enabled) wcfEventTimer.end();
+						]]>
+             		</handler>
+             	</wcfButton>
+             	<wcfButton name="skipButton" text="${foundationResources.spellCheckSkipButton.string}" >
+             		<handler name="onclick">
+             			<![CDATA[
+             			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSpellCheckDialog skipButton");
+					    wcfSpellCheckDialog.wordCount++;
+				    	wcfSpellCheckDialog.runSpellCheckingSession();
+				    	if (wcfEventTimer.enabled) wcfEventTimer.end();
+						]]>
+             		</handler>
+             	</wcfButton>
+             	<wcfButton name="skipAllButton" text="${foundationResources.spellCheckSkipAllButton.string}" >
+             		<handler name="onclick">
+             			<![CDATA[
+             			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSpellCheckDialog skipAllButton");
+					    for(var i = wcfSpellCheckDialog.wordCount+1; i < wcfSpellCheckDialog.misspelledWords.length; i++){
+							if(wcfSpellCheckDialog.misspelledWords[wcfSpellCheckDialog.wordCount].word == wcfSpellCheckDialog.misspelledWords[i].word){
+								wcfSpellCheckDialog.misspelledWords[i].skip = true;
+							}
+						}
+						wcfSpellCheckDialog.wordCount++;
+				    	wcfSpellCheckDialog.runSpellCheckingSession();	
+				    	if (wcfEventTimer.enabled) wcfEventTimer.end();
+						]]>
+             		</handler>
+             	</wcfButton>
+             </view> 
+		</view>
+		<view name="buttonSection" placement="footer" >
+			<wcfButton name="spellCheckCancelButton" text="${foundationResources.spellCheckCloseButton.string}"  onclick="wcfSpellCheckDialog.closeWindow();" />
+			<simplelayout axis="x" spacing="5" />
+		</view>	
+		
+		<!--- 
+			@keywords private
+			Method to replace misspelled word with a new word.
+		-->
+		<method name="replaceWord">
+			<![CDATA[
+  			var replacedWord = this.misspelledWords[wcfSpellCheckDialog.wordCount];
+   			this.updateInputField(replacedWord, this.wordCount);
+		    this.wordCount++;
+	    	this.runSpellCheckingSession();
+  			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Method to open the spell check dialog when user clicks Spell Check option in context menu.
+			@param {@link wcfObjectProperties} propertyEditor: property editor
+			@param {@OLlink inputtext} inputField: this can also be a {@OLlink richinputtext}
+			@param languageObj: language object to get locale
+			@param selectionPosition: cursor selection position of inputField
+			@param selectionSize: cursor selection size of inputField
+		-->
+		<method name="openSpellCheckDialog" args="propertyEditor, inputField, languageObj, selectionPosition, selectionSize">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("showMessage", true);
+			this.messageView.setAttribute('text', foundationResources.spellCheckProcessingMsg.string);
+			lz.Focus.setFocus(this.buttonSection.spellCheckCancelButton);
+			this.spellingView.textView.misspelledWord.setText("");
+			this.clearSuggestionList();
+			this.misspelledWords = [];
+			this.propertyEditor = propertyEditor;
+			this.inputField = inputField;
+			this.languageObj = languageObj; 
+			var text = this.inputField.getText();
+			this.selectionPosition = selectionPosition;
+			this.selectionSize = selectionSize;
+			
+			//Store text color to apply when back when closing dialog
+			for(var i = 0; i < text.length; i++){
+				var textFormat;
+				if ($as3) {
+					textFormat = this.inputField.tsprite.textfield.getTextFormat(i, i+1);
+				} else {
+					textFormat = this.inputField.sprite.__LZtextclip.getTextFormat(i, i+1);
+				}
+				this.formatArray.push(textFormat["color"]);
+			}
+			this.setTextToGray();
+			
+			if(selectionSize != 0){
+				text = text.slice(selectionPosition, selectionPosition + selectionSize);
+			}
+			//Start service to get misspelled words
+			wcfGetMisspelledWordsService.doRequest(this, {
+				text: text,
+				editorLocale: wcfStringUtil.replace(this.languageObj.localeName, "_", "-")
+			});
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Close dialog.  Also updates the propertyEditor, restores color formats, and sets focus back to the inputField.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			for(var i = 0; i < this.inputField.getText().length; i++){
+				var textFormat;
+				if ($as3) {
+					textFormat = this.inputField.tsprite.textfield.getTextFormat(i, i+1);
+				} else {
+					textFormat = this.inputField.sprite.__LZtextclip.getTextFormat(i, i+1);
+				}
+				textFormat.color = this.formatArray.shift();
+				if ($as3) {
+					this.inputField.tsprite.textfield.setTextFormat(textFormat, i, i+1);
+				} else {
+					this.inputField.sprite.__LZtextclip.setTextFormat(i, i+1, textFormat);
+				}
+			}
+			if(this.propertyEditor.property){
+				this.propertyEditor.storeValue();
+			}
+			this.setAttribute("showMessage", true);
+			this.messageView.setAttribute('text', "");
+			this.spellingView.textView.misspelledWord.setText("");
+			this.clearSuggestionList();
+			this.misspelledWords = [];
+			this.propertyEditor = null;
+			this.languageObj = null;
+			super.closeWindow();
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			lz.Focus.setFocus(this.inputField);
+			this.inputField.setSelection(this.selectionPosition, this.selectionPosition + this.selectionSize);
+			this.selectionPosition = 0;
+			this.selectionSize = 0;
+			this.inputField = null;
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Runs the misspelled word session
+		-->
+		<method name="runSpellCheckingSession">
+			<![CDATA[
+			this.setTextToGray();
+			this.clearSuggestionList();
+			this.spellingView.textView.misspelledWord.setText("");
+			while (this.wordCount < this.misspelledWords.length && this.misspelledWords[this.wordCount].skip) {
+				this.wordCount++;
+			}
+			if(this.wordCount < this.misspelledWords.length){
+				var misspelledWord = this.misspelledWords[this.wordCount];
+				this.spellingView.textView.misspelledWord.setText(misspelledWord.word);
+				this.highlightCurrentWord();
+				wcfGetMisspelledSuggestionsService.doRequest(this, {					
+					misspelledWord: misspelledWord.word,
+					editorLocale: wcfStringUtil.replace(this.languageObj.localeName, "_", "-")
+				});
+				this.setAttribute("showMessage", false);
+				lz.Focus.setFocus(this.spellingView.textView.misspelledWord);
+			}
+			else {
+				if(this.misspelledWords.length == 0){
+					this.messageView.setAttribute('text', foundationResources.spellCheckNoMisspelledWordsMsg.string);
+				}else{
+					this.messageView.setAttribute('text', foundationResources.spellCheckCompleteMsg.string);
+				}
+				this.setAttribute("showMessage", true);
+				lz.Focus.setFocus(this.buttonSection.spellCheckCancelButton);
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Highlight the currently misspelled word in the inputField
+		-->
+		<method name="highlightCurrentWord">
+			<![CDATA[
+			var misspelledWord = this.misspelledWords[this.wordCount];
+			for(var i = misspelledWord.position; i < misspelledWord.position + misspelledWord.word.length; i++){
+				var textFormat;
+				if ($as3) {
+					textFormat = this.inputField.tsprite.textfield.getTextFormat(i, i+1);
+				} else {
+					textFormat = this.inputField.sprite.__LZtextclip.getTextFormat(i, i+1);
+				}
+				textFormat.color = 0xDE0D18;
+				if ($as3) {
+					this.inputField.tsprite.textfield.setTextFormat(textFormat, i, i+1);
+				} else {
+					this.inputField.sprite.__LZtextclip.setTextFormat(i, i+1, textFormat);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Sets all the text in the inputField to grey
+		-->
+		<method name="setTextToGray">
+			<![CDATA[
+			for(var i = 0; i < this.inputField.getText().length; i++){
+				var textFormat;
+				if ($as3) {
+					textFormat = this.inputField.tsprite.textfield.getTextFormat(i, i+1);
+				} else {
+					textFormat = this.inputField.sprite.__LZtextclip.getTextFormat(i, i+1);
+				}
+				textFormat.color = 0x9c9c9c;
+				if ($as3) {
+					this.inputField.tsprite.textfield.setTextFormat(textFormat, i, i+1);
+				} else {
+					this.inputField.sprite.__LZtextclip.setTextFormat(i, i+1, textFormat);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Updates list of suggestions
+		-->	
+		<method name="showSuggestions" args="suggestions">
+			<![CDATA[
+			var misspelledWord = misspelledWords[this.wordCount];
+			if(misspelledWord){
+				this.clearSuggestionList();
+				misspelledWord.suggestions = suggestions;
+				var item;
+				for(var i = 0; i < suggestions.length; i++){
+					if (this.availableItems.length > 0) {
+						item = this.availableItems.shift();
+						item.setAttribute("visible", true);
+					} else {
+						item = new lz.wcfSpellCheckListItem(this.spellingView.textView.suggestionList);
+					}
+					item.setAttribute("value", suggestions[i]);
+					item.setAttribute("text", suggestions[i]);
+					this.listItems.push(item);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Clears suggestions in list
+		-->		
+		<method name="clearSuggestionList">
+			<![CDATA[
+			var item;
+			while (this.listItems.length > 0) {
+				item = this.listItems.pop();
+				item.setAttribute("visible", false);
+				item.setAttribute("value", null);
+				item.setAttribute("text", "");
+				this.availableItems.unshift(item);
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Updates the inputField with the new word.
+		-->
+		<method name="updateInputField" args="replacedWord, replacedWordCount">
+			<![CDATA[
+  			var newWord = this.spellingView.textView.misspelledWord.getText();
+  			var position = replacedWord.position;
+		    
+		    //update with the new word and keep the formatting, color gets applied later
+		    var textFormat;
+		    if ($as3) {
+				textFormat = this.inputField.tsprite.textfield.getTextFormat(position, position+1);
+			} else {
+				textFormat = this.inputField.sprite.__LZtextclip.getTextFormat(position, position+1);
+			}
+			this.inputField.replaceText(position, position + replacedWord.word.length, newWord);
+		    if ($as3) {
+				this.inputField.tsprite.textfield.setTextFormat(textFormat, position, position + newWord.length);
+			} else {
+				this.inputField.sprite.__LZtextclip.setTextFormat(position, position + newWord.length, textFormat);
+			}
+		    
+		    //update the color format array to accommodate growing or shrinking word, to be used when closing the dialog
+		    var color = this.formatArray[position];
+		    this.formatArray.splice(position, replacedWord.word.length);
+		    for(var a = 0; a < newWord.length; a++){
+				this.formatArray.splice(position, 0, color);
+			}
+		    
+		    //update word objects position value to accommodate growing or shrinking word
+		    var offset = newWord.length - replacedWord.word.length;
+			for(var i = replacedWordCount+1; i < this.misspelledWords.length; i++){
+				this.misspelledWords[i].position = this.misspelledWords[i].position + offset;
+			}
+			if(this.selectionSize != 0){
+				this.selectionSize = this.selectionSize + offset;
+			}
+			]]>
+		</method>
+	</wcfDialog>
+	
+	<!---
+		@keywords private
+		This class declares a spell check service that is extended by {@link wcfGetMisspelledWordsService} and {@link wcfGetMisspelledSuggestionsService}.
+	-->
+	<class name="wcfSpellCheckService" extends="wcfService" sendIdentity="true" sendLocale="true" sendWorkspaceContext="false" retryOnError="true">
+		
+		<!---
+			@keywords private
+			This method is called when a service response is successfully returned from the server. This does
+			not necessarily mean that the service completed successfully, it just means that there were no
+			communication errors. The specified dataset contains the response XML.
+			@param wcfServiceDataset ds: dataset
+		-->
+		<method name="serviceComplete" args="ds">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfSpellCheckService", "serviceComplete(ds)", [ds]);				
+			}
+			if (ds.requestIdentifier == this.requestIdentifier && wcfSpellCheckDialog.visible) {
+				super.serviceComplete(ds);
+			}else{
+				if (wcfLogger.enabled) {
+		        	wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfSpellCheckService", "serviceComplete", "service response was ignored.");
+				}
+			}
+			if (wcfLogger.enabled) {
+	        	wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "CONFIG", "wcfSpellCheckService", "serviceComplete", this.url);
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfSpellCheckService", "serviceComplete");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle service exception. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param string message: the exception message
+			@param string code: the exception code
+		-->
+		<method name="handleException" args="ds,message,code=null">
+			<![CDATA[
+			if (ds.requestIdentifier == this.requestIdentifier && wcfSpellCheckDialog.visible) {
+				wcfSpellCheckDialog.setAttribute("showMessage", true);
+				wcfSpellCheckDialog.messageView.setAttribute('text',  foundationResources.replaceValues("spellCheckFailureMsg", [wcfSpellCheckDialog.languageObj.languageDescription]));
+				lz.Focus.setFocus(wcfSpellCheckDialog.buttonSection.spellCheckCancelButton);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This class declares a service that returns the misspelled words in a block of text.
+	-->
+	<wcfSpellCheckService id="wcfGetMisspelledWordsService" url="/cmc/GetMisspelledWords" > 
+				
+		<!---
+			This method is called when an element named "values"
+			is found in the service response XML.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent,e,requestIdentifier">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfGetMisspelledWordsService", "parseValues(requestParent,e,requestIdentifier)", [requestParent]);
+			}
+            var nodes = e.childNodes;
+            for (var i = 0; i < nodes.length; i++) {
+                if(nodes[i].nodeName=="misspelledWord"){
+                    var wordNodes = nodes[i].childNodes;
+                    var word = "";
+                    var position = 0;
+                    for (var t = 0; t < wordNodes.length; t++) {
+                        var wordNode = wordNodes[t];
+                        var wordKey = wordNode.nodeName;
+                        var wordTextNode = wordNode.firstChild;
+                        if (wordTextNode != null && wordTextNode.nodeType == 3) {
+                            if(wordKey=="word"){
+                                word = wordTextNode.nodeValue;
+                            }else if(wordKey=="position"){
+                                position = parseInt(wordTextNode.nodeValue);
+                            }
+                        }
+                    }
+                    if(requestParent.selectionSize != 0){
+                        position = position + requestParent.selectionPosition;
+                    }
+                    requestParent.misspelledWords.push({word: word, position: position, skip: false});
+                }
+            }
+			requestParent.wordCount = 0;
+			requestParent.runSpellCheckingSession();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfGetMisspelledWordsService", "parseValues(requestParent,e,requestIdentifier)");
+			}			
+			]]>
+		</method>
+	</wcfSpellCheckService>
+	
+	<!---
+		@keywords private
+		This class declares a service that returns the possible suggestions for a misspelled word.
+	-->
+	<wcfSpellCheckService id="wcfGetMisspelledSuggestionsService" url="/cmc/GetMisspelledSuggestions" >
+		
+		<!---
+			This method is called when an element named "values"
+			is found in the service response XML.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent,e,requestIdentifier">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfGetMisspelledSuggestionsService", "parseValues(requestParent,e,requestIdentifier)", [requestParent]);
+			}
+			var suggestions = [];	
+            var nodes = e.childNodes;
+			for (var i = 0; i < nodes.length; i++) {
+				var node = nodes[i];
+				if(node.nodeName=="suggestion"){
+					var textNode = node.firstChild;
+					if (textNode != null && textNode.nodeType == 3) {
+						suggestions.push(textNode.nodeValue);
+					}
+				}
+			}
+			requestParent.showSuggestions(suggestions);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfGetMisspelledSuggestionsService", "parseValues(requestParent,e,requestIdentifier)");
+			}			
+			]]>
+		</method>
+	</wcfSpellCheckService>
+	
+	<!---
+		@keywords private
+		
+		{@link wcfSpellCheckDialog} misspelled word suggestion list items.
+	-->
+	<class name="wcfSpellCheckListItem" extends="textlistitem">
+		<!---
+			Handle double click event.
+		-->
+		<handler name="ondblclick">
+			<![CDATA[
+			wcfSpellCheckDialog.spellingView.textView.misspelledWord.setText(this.value);
+			wcfSpellCheckDialog.replaceWord();
+			]]>
+		</handler>
+	</class>
+</library>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Display Recommendation From External System action. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_source, PROPERTY_target and PROPERTY_catalogEntryIdList as parameters</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_source, PROPERTY_target and PROPERTY_catalogEntryIdList as parameters</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildCatentry type which references the catalog entry object types</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedCatentry type which references the inherited catalog entry object types</li>
+		</ul>
+		</p>
+		
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>location</b>: required field with possible values "shoppingCart", "purchaseHistory", "currentPage" or "templateArgumentIdList"</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktDisplayExternalRecommendationElementObject" displayName="${mktMarketingResources.displayExternalRecommendationName}" elemTemplateType="Action" flowIcon="displayExternalRecommendationIcon" headerIcon="displayExternalRecommendationHeaderIcon" helpLink="concepts/csbactdisextrec.htm" objectType="displayExternalRecommendation" package="mkt" paletteIcon="displayExternalRecommendationPaletteIcon" propertiesDefinitionName="mktDisplayExternalRecommendationProperties" summaryClass="mktDisplayExternalRecommendationSummary">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_source" value="catalogEntry"/>
+			<ServiceParam name="PROPERTY_target" value="catalogEntry"/>
+			<ServiceParam name="PROPERTY_catalogEntryIdList" objectPath="ChildCatentry/CatalogEntry" optional="true" propertyName="catentryId"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_source" value="catalogEntry"/>
+			<ServiceParam name="PROPERTY_target" value="catalogEntry"/>
+			<ServiceParam name="PROPERTY_catalogEntryIdList" objectPath="ChildCatentry/CatalogEntry" optional="true" propertyName="catentryId"/>
+		</UpdateService>
+
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childCatentryId" objectGroups="ChildCatentry,ChildCatentryGroup" objectType="ChildCatentry" referencedTypes="Product,Bundle,CatalogGroupSKU,ProductSKU,Kit"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCatentryId" objectGroups="ChildCatentry,ChildCatentryGroup" objectType="ChildInheritedCatentry" referencedTypes="InheritedProduct,InheritedBundle,InheritedCatalogGroupSKU,InheritedProductSKU,InheritedKit"/>
+				
+		<Xml name="template">
+			<elemTemplateName>displayExternalRecommendation</elemTemplateName>
+			<location>currentPage</location>
+		</Xml>		
+		
+		<PropertyDefinition propertyName="location">
+			<PropertyValue displayName="${mktMarketingResources.currentPageCatalogEntryExternalRecommend}" value="currentPage"/>
+			<PropertyValue displayName="${mktMarketingResources.shoppingCartCatalogEntryExternalRecommend}" value="shoppingCart"/>
+			<PropertyValue displayName="${mktMarketingResources.purchaseHistoryCatalogEntryExternalRecommend}" value="purchaseHistory"/>
+			<PropertyValue displayName="${mktMarketingResources.catalogEntryExternalRecommend}" value="templateArgumentIdList"/>
+		</PropertyDefinition>
+		
+		<DisplayAssociationValidator enablePropertyName="location" enablePropertyValue="templateArgumentIdList" errorMessage="${mktMarketingResources.noProductsSelected}" objectPath="ChildCatentry" package="mkt" validatorId="assocValidator"/>
+	</FlowElementObjectDefinition>
+	
+</Definitions>

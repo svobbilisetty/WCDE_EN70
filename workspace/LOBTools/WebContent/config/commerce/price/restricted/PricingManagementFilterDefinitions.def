@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectTypeFilter definitionName="prcPricingObjectsExplorerFilter" displayName="${prcPriceResources.pricingFilter_DisplayName}" filterType="PricingToolNodes" objectTypes="CatalogFiltersNode,CatalogFilterImportNode,PriceRulesNode,PriceListsNode,PriceListImportNode,PriceEquationsNode,PriceConstantsNode">
+	  <EnablementAndCondition>
+		<EnablementOrCondition baseDefinitionName="prcAllPricingObjectsCreationRestriction"/>
+   		<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+   	  </EnablementAndCondition>
+	</ObjectTypeFilter>
+
+	<ObjectTypeFilter definitionName="prcPricingObjectsExplorerFilterWithoutCatalogFilters" displayName="${prcPriceResources.pricingFilter_DisplayName}" filterType="PricingToolNodes" objectTypes="PriceRulesNode,PriceListsNode,PriceListImportNode,PriceEquationsNode,PriceConstantsNode">
+	  <EnablementAndCondition>
+		<EnablementOrCondition baseDefinitionName="prcAllPricingObjectsCreationRestriction"/>
+   		<EnablementCondition contextName="searchEnabled" enablementValue="true" negate="true" conditionId="searchNotEnabledContextValueCondition"/>
+   	  </EnablementAndCondition>
+	</ObjectTypeFilter>
+
+	<ObjectTypeFilter definitionName="prcPriceListExplorerFilter" displayName="${prcPriceResources.pricingFilter_DisplayName}" filterType="PricingToolNodes" objectTypes="PriceListsNode,PriceListImportNode">
+		<EnablementOrCondition baseDefinitionName="prcOnlyPriceListObjectsCreationRestriction"/>
+	</ObjectTypeFilter>		
+
+	<ObjectTypeFilter definitionName="prcPriceRuleExplorerFilter" displayName="${prcPriceResources.pricingFilter_DisplayName}" filterType="PricingToolNodes" objectTypes="CatalogFiltersNode,CatalogFilterImportNode,PriceRulesNode,PriceEquationsNode,PriceConstantsNode"> 
+	  <EnablementAndCondition>
+		<EnablementOrCondition baseDefinitionName="prcOnlyPriceRuleObjectsCreationRestriction"/>
+   		<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+   	  </EnablementAndCondition>
+	</ObjectTypeFilter>
+	
+	<ObjectTypeFilter definitionName="prcPriceRuleExplorerFilterWithoutCatalogFilters" displayName="${prcPriceResources.pricingFilter_DisplayName}" filterType="PricingToolNodes" objectTypes="PriceRulesNode,PriceEquationsNode,PriceConstantsNode"> 
+	  <EnablementAndCondition>
+		<EnablementOrCondition baseDefinitionName="prcOnlyPriceRuleObjectsCreationRestriction"/>
+   		<EnablementCondition contextName="searchEnabled" enablementValue="true" negate="true" conditionId="searchNotEnabledContextValueCondition"/>
+   	  </EnablementAndCondition>
+	</ObjectTypeFilter>
+	
+    <ObjectTypeFilter definitionName="catMasterCatalogPropertyTestFilter"
+        filterType="MasterCategoriesExplorer"
+        displayName="Simple Catalog Filter"
+        objectTypes="CatalogFilter,Catalog,InheritedCatalog,ChildCatalogGroup,ChildInheritedCatalogGroup">
+       <EnablementOrCondition baseDefinitionName="catStoreTypeCatalogObjectCreationRestriction"/>
+    </ObjectTypeFilter>
+    
+   <ObjectTypeFilter definitionName="cftAttributeDictionaryFilter" displayName="${catalogResources.attributeDictionary}" filterType="AttributeDictionaryNode" objectTypes="AttributeDictionaryNode"> 
+	 </ObjectTypeFilter>
+	
+	<EnablementOrCondition conditionId="storeTypeCondition1" definitionName="prcAllPricingObjectsCreationRestriction">
+		<EnablementCondition conditionId="b2cCondition" contextName="storeType" enablementValue="B2C"/>
+		<EnablementCondition conditionId="bbbCondition" contextName="storeType" enablementValue="BBB"/>
+		<EnablementCondition conditionId="b2bCondition" contextName="storeType" enablementValue="B2B"/>
+		<EnablementCondition conditionId="rhsCondition" contextName="storeType" enablementValue="RHS"/>
+		<EnablementCondition conditionId="brhCondition" contextName="storeType" enablementValue="BRH"/>
+		<EnablementCondition conditionId="shsCondition" contextName="storeType" enablementValue="SHS"/>
+		<EnablementCondition conditionId="mhsCondition" contextName="storeType" enablementValue="MHS"/>
+		<EnablementCondition conditionId="bmhCondition" contextName="storeType" enablementValue="BMH"/>
+		<EnablementCondition conditionId="noStoreSelectionCondition" contextName="storeType" enablementValue="${null}"/>
+	</EnablementOrCondition>
+	
+	<EnablementOrCondition conditionId="storeTypeCondition2" definitionName="prcOnlyPriceRuleObjectsCreationRestriction">
+		<EnablementCondition conditionId="rpsCondition" contextName="storeType" enablementValue="RPS"/>
+		<EnablementCondition conditionId="brpCondition" contextName="storeType" enablementValue="BRP"/>
+		<EnablementCondition conditionId="spsCondition" contextName="storeType" enablementValue="SPS"/>
+		<EnablementCondition conditionId="mpsCondition" contextName="storeType" enablementValue="MPS"/>
+		<EnablementCondition conditionId="bmpCondition" contextName="storeType" enablementValue="BMP"/>
+	</EnablementOrCondition>
+	
+	<EnablementOrCondition conditionId="storeTypeCondition3" definitionName="prcOnlyPriceListObjectsCreationRestriction">
+		<EnablementCondition conditionId="cpsCondition" contextName="storeType" enablementValue="CPS"/>
+		<EnablementCondition conditionId="scsCondition" contextName="storeType" enablementValue="SCS"/>
+	</EnablementOrCondition>
+	
+	<EnablementOrCondition conditionId="storeTypeCondition4" definitionName="prcPriceRuleObjectsCreationRestriction">
+		<EnablementCondition conditionId="b2cCondition" contextName="storeType" enablementValue="B2C"/>
+		<EnablementCondition conditionId="bbbCondition" contextName="storeType" enablementValue="BBB"/>
+		<EnablementCondition conditionId="b2bCondition" contextName="storeType" enablementValue="B2B"/>
+		<EnablementCondition conditionId="rhsCondition" contextName="storeType" enablementValue="RHS"/>
+		<EnablementCondition conditionId="brhCondition" contextName="storeType" enablementValue="BRH"/>
+		<EnablementCondition conditionId="shsCondition" contextName="storeType" enablementValue="SHS"/>
+		<EnablementCondition conditionId="mhsCondition" contextName="storeType" enablementValue="MHS"/>
+		<EnablementCondition conditionId="bmhCondition" contextName="storeType" enablementValue="BMH"/>
+		<EnablementCondition conditionId="rpsCondition" contextName="storeType" enablementValue="RPS"/>
+		<EnablementCondition conditionId="brpCondition" contextName="storeType" enablementValue="BRP"/>
+		<EnablementCondition conditionId="spsCondition" contextName="storeType" enablementValue="SPS"/>
+		<EnablementCondition conditionId="mpsCondition" contextName="storeType" enablementValue="MPS"/>
+		<EnablementCondition conditionId="bmpCondition" contextName="storeType" enablementValue="BMP"/>
+	</EnablementOrCondition>
+	
+	<EnablementOrCondition conditionId="storeTypeCondition5" definitionName="prcPriceListObjectsCreationRestriction">
+		<EnablementCondition conditionId="b2cCondition" contextName="storeType" enablementValue="B2C"/>
+		<EnablementCondition conditionId="bbbCondition" contextName="storeType" enablementValue="BBB"/>
+		<EnablementCondition conditionId="b2bCondition" contextName="storeType" enablementValue="B2B"/>
+		<EnablementCondition conditionId="rhsCondition" contextName="storeType" enablementValue="RHS"/>
+		<EnablementCondition conditionId="brhCondition" contextName="storeType" enablementValue="BRH"/>
+		<EnablementCondition conditionId="shsCondition" contextName="storeType" enablementValue="SHS"/>
+		<EnablementCondition conditionId="mhsCondition" contextName="storeType" enablementValue="MHS"/>
+		<EnablementCondition conditionId="bmhCondition" contextName="storeType" enablementValue="BMH"/>
+		<EnablementCondition conditionId="cpsCondition" contextName="storeType" enablementValue="CPS"/>
+		<EnablementCondition conditionId="scsCondition" contextName="storeType" enablementValue="SCS"/>
+	</EnablementOrCondition>
+	
+	<EnablementOrCondition conditionId="storeTypeCondition6" definitionName="cftCatalogFilterObjectsCreationRestriction">
+		<EnablementCondition conditionId="b2cCondition" contextName="storeType" enablementValue="B2C"/>
+		<EnablementCondition conditionId="bbbCondition" contextName="storeType" enablementValue="BBB"/>
+		<EnablementCondition conditionId="b2bCondition" contextName="storeType" enablementValue="B2B"/>
+		<EnablementCondition conditionId="rhsCondition" contextName="storeType" enablementValue="RHS"/>
+		<EnablementCondition conditionId="brhCondition" contextName="storeType" enablementValue="BRH"/>
+		<EnablementCondition conditionId="shsCondition" contextName="storeType" enablementValue="SHS"/>
+		<EnablementCondition conditionId="mhsCondition" contextName="storeType" enablementValue="MHS"/>
+		<EnablementCondition conditionId="bmhCondition" contextName="storeType" enablementValue="BMH"/>
+		<EnablementCondition conditionId="rpsCondition" contextName="storeType" enablementValue="RPS"/>
+		<EnablementCondition conditionId="brpCondition" contextName="storeType" enablementValue="BRP"/>
+		<EnablementCondition conditionId="spsCondition" contextName="storeType" enablementValue="SPS"/>
+		<EnablementCondition conditionId="mpsCondition" contextName="storeType" enablementValue="MPS"/>
+		<EnablementCondition conditionId="bmpCondition" contextName="storeType" enablementValue="BMP"/>
+	</EnablementOrCondition>
+	 
+</Definitions>

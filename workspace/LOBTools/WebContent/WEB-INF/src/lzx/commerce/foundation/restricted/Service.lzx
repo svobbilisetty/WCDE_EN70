@@ -1,0 +1,3904 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		Service transaction handler. This handler works on transaction objects, which contain
+		information about objects and properties that are saved in a save request.
+		When the the service completes successfully, the saved state will be applied to all
+		of the properties and objects. If the service fails, then the state of the objects
+		will be assumed to be unchanged.
+		
+		<p>
+		A transaction object is a javascript Object with the following attributes:
+		<ul>
+			<li>service - The service associated with the transaction</li>
+			<li>o - The parent object for the transaction.</li>
+			<li>requestParent - The parent object for the transaction.</li>
+			<li>saveObjects - Array of wcfModelObject instances that are being saved by the current request.</li>
+			<li>hasNewObjects - Indicates that one or more of the secondary save objects associated with this transaction
+								are new objects. Secondary save objects are objects that are not equal to "o".</li>
+			<li>saveProperties - Array of wcfModelProperty instances that are being saved by the current request. These
+								 properties could belong to multiple model objects.</li>
+			<li>deleteObjects - Array of wcfModelObject instances that are being deleted by the current request.</li>
+			<li>serviceDataset - The service dataset associated with this transaction.</li>
+			<li>fileref - This Action Script FileReference object is used when thef service transaction is for an upload service request.
+										  The default value is null.</li>
+			<li>args - arguments object that will be passed to the service dataset</li>
+			<li>reresolveParameters - array of parameters that must be reresolved before the request is sent</li>
+			<li>loadingParameters - array of parameters that are loading. The request will be triggered once the values are loaded</li>
+			<li>serverManagedParameters - array of service managed parameter. Service managed parameters are properties of new objects
+										that will be set once the new objects have been saved.</li>
+			<li>unresolvableParameters - array of unresolvable parameters.</li>
+			<li>requestIdentifier - the request identifier</li>
+			<li>recreate - indicates that when this transaction completes successfully, the create service will be called</li>
+			<li>recreateArgs - arguments that will be sent to the create service when a recreate is required</li>
+			<li>eventId - the user event ID that triggered this transaction</li>
+		</ul>
+		
+	-->
+	<node id="wcfServiceTransactionUtil">
+		<!---
+			Array of pending transactions.
+		-->
+		<attribute name="pendingTransactions" value="${[]}"/>
+		<!---
+			An array of active transactions.
+		-->
+		<attribute name="activeTransactions" value="${[]}"/>
+		<!---
+			Array of pending parallel transactions. This array contains transactions that have
+			been identified as being eligible to be sent in parallel with the currently active
+			transactions but have not yet been sent because the maximum number of parallel transactions
+			limit has been reached.
+		-->
+		<attribute name="pendingParallelTransactions" value="${[]}"/>
+		<!---
+			The active transaction group ID.
+		-->
+		<attribute name="activeTransactionGroupId" type="string" value="${null}"/>
+		<!---
+			The active transaction event ID.
+		-->
+		<attribute name="activeTransactionEventId" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Active service transaction count.
+		-->
+		<attribute name="activeServiceTransactionCount" type="number" value="0"/>
+		<!---
+			@keyword private
+			Indicates that "triggerPendingTransactions" has been added as a deferred callback.
+		-->
+		<attribute name="deferredTriggerAdded" value="false" type="boolean"/>
+		<!---
+			@keyword private
+			Counter used to generate transaction group identifiers. Transaction groups include all
+			the transactions associated with the same open object that were triggered by the same user action.
+		-->
+		<attribute name="transactionEventCount" type="number" value="0"/>
+		<!---
+			@keyword private
+			Map of all of the existing transaction groups. A transaction group includes all of the transactions
+			associated with the same open group that were triggered by the same user action.
+		-->
+		<attribute name="transactionGroupMap" value="${{}}"/>
+		<!---
+			@keyword private
+			Indicates that "triggerPendingTransactions" method is currently active.
+		-->
+		<attribute name="triggeringPendingTransactions" value="false" type="boolean"/>
+		<!---
+			@keyword private
+			Map of all of the existing transaction Events. A transaction event includes all of the transactions groups
+			associated with a single user event, e.g a mouse click to 'save all'.
+		-->
+		<attribute name="transactionEventMap" value="${{}}"/>
+		<!---
+			@keyword private
+			Indicates that the ping service has been submitted.
+		-->
+		<attribute name="pingSubmitted" type="boolean" value="false"/>
+		<!---
+			@keyword private
+			Indicates that the ping service has been completed.
+		-->
+		<attribute name="pingCompleted" type="boolean" value="false"/>
+		<!---
+			Interval to submit the ping service again (in milliseconds).
+		-->
+		<attribute name="pingInterval" type="number" value="300000"/>
+		<!---
+			@keyword private
+			This event is triggered when all ongoing transactions complete.
+		-->
+		<event name="allTransactionsComplete"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.triggerPendingTransactionsDel = new lz.Delegate(this, "triggerPendingTransactions");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			delete this.triggerPendingTransactionsDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Returns true if the specified transaction is the last transaction in the transaction group.
+			@param Object transaction: the service transaction
+			@return boolean: true if the specified transaction is the last transaction in the transaction group
+			@keywords private
+		-->
+		<method name="isLastTransactionInGroup" args="transaction">
+			<![CDATA[
+			return this.transactionGroupMap[transaction.transactionGroupId] && !this.transactionGroupMap[transaction.transactionGroupId].longRunning && this.transactionGroupMap[transaction.transactionGroupId].length == 1;
+			]]>
+		</method>
+
+		<!---
+			Clear the specified transaction group.
+			@param string transactionGroupId: the transaction group ID
+			@keywords private
+		-->
+		<method name="clearTransactionGroup" args="transactionGroupId">
+			<![CDATA[
+			if (this.transactionGroupMap[transactionGroupId] && !this.transactionGroupMap[transactionGroupId].longRunning) {
+				var transactionEventId = this.transactionGroupMap[transactionGroupId].transactionEventId;
+				var transactionEvent = this.transactionEventMap[transactionEventId];
+				transactionEvent.transactionGroupCount--;
+				if (transactionEvent.transactionGroupCount == 0 && !transactionEvent.longRunning) {
+					for (var key in transactionEvent.messages) {
+						messageLogger.logStatus(transactionEvent.messages[key].message);
+					}
+					delete this.transactionEventMap[transactionEventId];
+				}
+				delete this.transactionGroupMap[transactionGroupId];
+				progressIndicator.removeAction();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Add the specified transaction to the queue of pending transactions.
+			@param Object transaction: the service transaction
+			@param boolean async ensure the transaction is triggered asynchronously
+		-->
+		<method name="addPendingTransaction" args="transaction,async=false">
+			<![CDATA[
+			if (transaction.o.transaction == null || transaction.o.transaction == transaction) {
+				transaction.o.transaction = transaction;
+				if (!transaction.deferred) {
+					this.pendingTransactions.push(transaction);
+				}
+				else {
+					transaction.deferred = false;
+					var transactionAdded = false;
+					for (var i = 0; i < this.pendingTransactions.length; i++) {
+						if (this.pendingTransactions[i].transactionGroupId == transaction.transactionGroupId) {
+							i++;
+							while (i < this.pendingTransactions.length && this.pendingTransactions[i].transactionGroupId == transaction.transactionGroupId) {
+								i++;
+							}
+							this.pendingTransactions.splice(i, 0, transaction);
+							transactionAdded = true;
+							break;
+						}
+					}
+					if (!transactionAdded) {
+						if (this.activeTransactionGroupId == transaction.transactionGroupId) {
+							this.pendingTransactions.unshift(transaction);
+						}
+						else {
+							this.pendingTransactions.push(transaction);
+						}
+					}
+				}
+			}
+			else {
+				transaction.o.addPendingTransaction(transaction);
+			}
+			
+			if (async) {
+				if (!this.deferredTriggerAdded) {
+					wcfCallbackUtil.addDeferredCallback(this.triggerPendingTransactionsDel, null, wcfCallbackUtil.PRIORITY_IMMEDIATE);
+					this.deferredTriggerAdded = true;
+				}
+			}
+			else {
+				this.triggerPendingTransactions();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Trigger any pending transactions.
+		-->
+		<method name="triggerPendingTransactions" args="e=null">
+			<![CDATA[
+			if (!this.triggeringPendingTransactions) {
+				var waitForPingService = false;
+				if (!this.pingCompleted && this.hasOutstandingTransactions()) {
+					waitForPingService = true;
+					if (!this.pingSubmitted) {
+						var currentTime = (new Date()).getTime();
+						var interval = currentTime - wcfServiceUtil.lastSubmittedTime;
+						if (interval >= this.pingInterval) {
+							this.pingSubmitted = true;
+							wcfPingService.doRequest();
+						} else {
+							waitForPingService = false;
+						}
+					}
+				}
+				if (!waitForPingService) {
+					this.triggeringPendingTransactions = true;
+					this.deferredTriggerAdded = false;
+					this.triggerPendingParallelTransactions();
+					var checkPendingParallelTransactions = false;
+					while (this.pendingTransactions.length > 0 && this.activeTransactions.length == 0) {
+						var transaction = this.pendingTransactions.shift();
+						checkPendingParallelTransactions = transaction.service.sendSiblingRequestsInParallel;
+						this.activeTransactions.push(transaction);
+						this.doRequest(transaction);
+					}
+					if (checkPendingParallelTransactions && this.activeTransactions.length > 0) {
+						var activeTransaction = this.activeTransactions[0];
+						var isOpenGroupTransaction = activeTransaction.o.isOpenGroupObject();
+						for (var i = 0; i < this.pendingTransactions.length; i++) {
+							var transaction = this.pendingTransactions[i];
+							if ((isOpenGroupTransaction && transaction.service != activeTransaction.service) ||
+								(!isOpenGroupTransaction && transaction.transactionGroupId != activeTransaction.transactionGroupId)) {
+								break;
+							}
+							if (transaction.service == activeTransaction.service) {
+								this.pendingParallelTransactions.push(transaction);
+								this.pendingTransactions.splice(i, 1);
+								i--;
+							}
+						}
+						this.triggerPendingParallelTransactions();
+					}
+					this.triggeringPendingTransactions = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Trigger any pending parallel transactions.
+		-->
+		<method name="triggerPendingParallelTransactions">
+			<![CDATA[
+			while (this.pendingParallelTransactions.length > 0 && this.activeTransactions.length < configProperties.maximumParallelServiceRequests) {
+				var transaction = this.pendingParallelTransactions.shift();
+				this.activeTransactions.push(transaction);
+				this.doRequest(transaction);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Stop any pending transactions.
+			@param wcfModel model: object model instance
+		-->
+		<method name="stopPendingTransactions" args="model">
+			<![CDATA[
+			var stoppableTransactions = [];
+			var remainingActiveTransactions = [];
+			for (var i = 0; i < this.activeTransactions.length; i++) {
+				var transaction = this.activeTransactions[i];
+				if ((!this.transactionGroupMap[transaction.transactionGroupId].submitted) &&
+					(typeof(model) == "undefined" || model == null || transaction.o.model == model)) {
+					stoppableTransactions.push(transaction);
+				} else {
+					remainingActiveTransactions.push(transaction);
+				}
+			}
+			this.activeTransactions = remainingActiveTransactions;
+			var remainingPendingParallelTransactions = [];
+			for (var i = 0; i < this.pendingParallelTransactions.length; i++) {
+				var transaction = this.pendingParallelTransactions[i];
+				if ((!this.transactionGroupMap[transaction.transactionGroupId].submitted) &&
+					(typeof(model) == "undefined" || model == null || transaction.o.model == model)) {
+					stoppableTransactions.push(transaction);
+				} else {
+					remainingPendingParallelTransactions.push(transaction);
+				}
+			}
+			this.pendingParallelTransactions = remainingPendingParallelTransactions;
+			var remainingPendingTransactions = [];
+			for (var i = 0; i < this.pendingTransactions.length; i++) {
+				var transaction = this.pendingTransactions[i];
+				if ((!this.transactionGroupMap[transaction.transactionGroupId].submitted) &&
+					(typeof(model) == "undefined" || model == null || transaction.o.model == model)) {
+					stoppableTransactions.push(transaction);
+				} else {
+					remainingPendingTransactions.push(transaction);
+				}
+			}
+			this.pendingTransactions = remainingPendingTransactions;
+			while (stoppableTransactions.length > 0) {
+				var transaction = stoppableTransactions.shift();
+				if (transaction.service != null) {
+					this.rollback(transaction);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Discard any pending transactions whose open group object match the given open group object.
+			@param openGroupObject: the given open group object
+		-->
+		<method name="discardPendingTransactions" args="openGroupObject">
+			<![CDATA[
+			var discardablePendingTransactions = [];
+			var remainingPendingParallelTransactions = [];
+			for (var i = 0; i < this.pendingParallelTransactions.length; i++) {
+				var transaction = this.pendingParallelTransactions[i];
+				if (transaction.o.openGroupObject == openGroupObject || transaction.o.parentPrimaryObject == openGroupObject) {
+					discardablePendingTransactions.push(transaction);
+				}
+				else {
+					remainingPendingParallelTransactions.push(transaction);
+				}
+			}
+			this.pendingParallelTransactions = remainingPendingParallelTransactions;
+			var remainingPendingTransactions = [];
+			for (var i = 0; i < this.pendingTransactions.length; i++) {
+				var transaction = this.pendingTransactions[i];
+				if (transaction.o.openGroupObject == openGroupObject || transaction.o.parentPrimaryObject == openGroupObject) {
+					discardablePendingTransactions.push(transaction);
+				}
+				else {
+					remainingPendingTransactions.push(transaction);
+				}
+			}
+			this.pendingTransactions = remainingPendingTransactions;
+			while (discardablePendingTransactions.length > 0) {
+				var transaction = discardablePendingTransactions.shift();
+				if (transaction.service != null) {
+					this.rollback(transaction);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Returns a service transaction instance primed with the specified arguments. This may
+			be a new or recycled instance.
+			@param wcfModelObject o: the model object associated with the created transaction that will be created
+			@param wcfService service: the service associated with the created transaction that will be created
+		-->
+		<method name="createServiceTransaction" args="o, service">
+			<![CDATA[
+			var transaction = {};
+			transaction.o = o;
+			transaction.requestParent = o;
+			transaction.service = service;
+			transaction.saveObjects = [];
+			transaction.hasNewObjects = false;
+			transaction.saveProperties = [];
+			transaction.deleteObjects = [];
+			transaction.serviceDataset = null;			
+			transaction.fileref = null;
+			transaction.args = null;
+			transaction.reresolveParameters = null;
+			transaction.loadingParameters = null;
+			transaction.serverManagedParameters = null;
+			transaction.unresolvableParameters = null;
+			transaction.requestIdentifier = null;
+			transaction.deferred = false;
+			transaction.recreate = false;
+			transaction.recreateArgs = null;
+
+			if (wcfEventTimer.enabled) transaction.eventId = wcfEventTimer.currentEventId;
+
+			if (transaction.o.openGroupObject != null) {
+				transaction.o.openGroupObject.incrementReferenceCount();
+			}
+
+			var eventId = this.transactionEventCount;
+			if (this.activeTransactionEventId != null) {
+				eventId = this.activeTransactionEventId;
+			}
+			else if (!this.deferredTriggerAdded) {
+				eventId = this.createTransactionEvent();
+			}
+			
+			var transactionGroupId = transaction.o.openGroupObject.objectKey + eventId;
+			var transactionGroup = this.transactionGroupMap[transactionGroupId];
+			if (typeof(transactionGroup) == "undefined") {
+				transactionGroupId = this.createTransactionGroup(transaction.o, eventId);
+				transactionGroup = this.transactionGroupMap[transactionGroupId]; 
+			}
+			
+			transaction.transactionGroupId = transactionGroupId;
+			transactionGroup.push(transaction);
+			
+			this.activeServiceTransactionCount++;
+			return transaction;
+			]]>
+		</method>
+		
+		<!---@keywords private-->
+		<method name="createTransactionEvent" args="longRunning=false">
+			<![CDATA[
+			this.transactionEventCount++;
+			this.transactionEventMap[this.transactionEventCount] = {
+				transactionGroupCount: 0,
+				messages:{},
+				longRunning: longRunning
+			};
+			return this.transactionEventCount;
+			]]>
+		</method>
+		
+		<!---@keywords private-->
+		<method name="createTransactionGroup" args="o, eventId, longRunning=false">
+			<![CDATA[
+			var transactionGroupId = o.openGroupObject.objectKey + eventId;
+			var transactionGroup = [];
+			transactionGroup.submitted = false;
+			transactionGroup.hasError = false;
+			transactionGroup.transactionEventId = eventId;
+			transactionGroup.longRunning = longRunning;
+			this.transactionGroupMap[transactionGroupId] = transactionGroup;
+			this.transactionEventMap[eventId].transactionGroupCount++;
+			progressIndicator.addAction();
+			return transactionGroupId;
+			]]>
+		</method>
+		
+		<!---@keywords private-->
+		<method name="releaseLongRunningTransactionEvent" args="eventId">
+			<![CDATA[
+			var transactionEvent = this.transactionEventMap[eventId];
+			if (transactionEvent) {
+				transactionEvent.longRunning = false;
+				if (transactionEvent.transactionGroupCount == 0) {
+					for (var key in transactionEvent.messages) {
+						messageLogger.logStatus(transactionEvent.messages[key].message);
+					}
+					delete this.transactionEventMap[eventId];
+				}
+			}
+			]]>
+		</method>
+		
+		<!---@keywords private-->
+		<method name="releaseLongRunningTransactionGroup" args="groupId">
+			<![CDATA[
+			var transactionGroup = this.transactionGroupMap[groupId];
+			if (transactionGroup) {
+				transactionGroup.longRunning = false;
+				if (transactionGroup.length == 0) {
+					this.clearTransactionGroup(groupId);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---@keywords private-->
+		<method name="setTransactionGroupHasError" args="transaction">
+			<![CDATA[
+			if (this.transactionGroupMap[transaction.transactionGroupId]) {
+				this.transactionGroupMap[transaction.transactionGroupId].hasError = true;
+			}
+			]]>
+		</method>
+		
+		<!---@keywords private-->
+		<method name="transactionGroupHasError" args="transaction">
+			<![CDATA[
+			var result = false;
+			if (this.transactionGroupMap[transaction.transactionGroupId]) {
+				result = this.transactionGroupMap[transaction.transactionGroupId].hasError;
+			}
+			return result;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the message count that matches the specified message type
+			for the transaction event associated with the specified transaction. This represents the number of business objects
+			of the same type that were successfully processed by the same action (saved, deleted, activated etc.) as part of
+			the same transaction event.
+			@param transaction: The transaction used to determine the transaction event
+			@param messageType: The message type (save, delete, activate etc.)
+		-->
+		<method name="getTransactionEventMessageCount" args="transaction, messageType">
+			<![CDATA[
+			var count = 0;
+			var transactionEventId = 
+				this.transactionGroupMap[transaction.transactionGroupId].transactionEventId;
+			var transactionEvent = this.transactionEventMap[transactionEventId];
+			if (transactionEvent.messages[messageType]) {
+					count = transactionEvent.messages[messageType].count;
+			}
+			return count;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the transaction event status message for the specified message type.
+			A single message will be logged for all of the successful transaction groups 
+			in the same transaction event that have the same message type.
+			@param transaction: The transaction that outputs the message.
+			@param messageType: The message type (save, delete, activate etc.)
+			@param msg: The message logged for the completion of the transaction group that includes this transaction. 
+		-->
+		<method name="setTransactionEventMessage" args="transaction, messageType, msg">
+			<![CDATA[
+			var transactionEventId = 
+				this.transactionGroupMap[transaction.transactionGroupId].transactionEventId;
+			var transactionEvent = this.transactionEventMap[transactionEventId];
+			if (transactionEvent.messages[messageType]) {
+				transactionEvent.messages[messageType].count++;
+				transactionEvent.messages[messageType].message = msg;
+			}else{
+				transactionEvent.messages[messageType] = {count: 1, message: msg};
+			}
+			]]>
+		</method>
+		
+		<!---
+			Release the specified service transaction and make it available for future requests.
+			@param Object transaction: the service transaction to release
+		-->
+		<method name="releaseServiceTransaction" args="transaction">
+			<![CDATA[
+			this.activeServiceTransactionCount--;
+			this.release(transaction);
+			]]>
+		</method>
+		
+		<!---
+			This method checks whether there are outstanding transactions.
+			@return boolean: True if there are outstanding transactions; false otherwise.
+		-->
+		<method name="hasOutstandingTransactions">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfServiceTransactionUtil", "hasOutstandingTransactions", [this.activeTransactions]);
+				}
+				var result = false;
+				if (this.activeTransactions.length > 0 || this.pendingParallelTransactions.length > 0 || this.pendingTransactions.length > 0) {
+					result = true;
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfServiceTransactionUtil", "hasOutstandingTransactions", result);
+				}
+				return result;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Release the service transaction instance and make it available for re-use.
+			@param Object transaction: the service transaction to release
+		-->
+		<method name="release" args="transaction">
+			<![CDATA[
+			if (transaction.serviceDataset != null) {
+				wcfServiceUtil.releaseServiceDataset(transaction.serviceDataset);
+				transaction.serviceDataset = null;
+			}
+			var transactionGroup = this.transactionGroupMap[transaction.transactionGroupId];
+			if (transactionGroup) {
+				for (var i = 0; i < transactionGroup.length; i++) {
+					if (transactionGroup[i] == transaction) {
+						transactionGroup.splice(i, 1);
+						break;
+					}
+				}
+				if (transactionGroup.length == 0) {
+					this.clearTransactionGroup(transaction.transactionGroupId);
+				}
+			}
+			if (transaction.o.openGroupObject != null) {
+				transaction.o.openGroupObject.decrementReferenceCount();
+			}
+			transaction.transactionGroupId = null;
+			transaction.service = null;
+			transaction.o = null;
+			transaction.requestParent = null;
+			transaction.saveObject = null;
+			transaction.hasNewObjects = false;
+			transaction.saveProperties = null;
+			transaction.deleteObjects = null;
+			transaction.serviceDataset = null;
+			transaction.fileref = null;
+			transaction.args = null;
+			transaction.reresolveParameters = null;
+			transaction.loadingParameters = null;
+			transaction.serverManagedParameters = null;
+			transaction.unresolvableParameters = null;
+			transaction.requestIdentifier = null;
+			transaction.deferred = false;
+			transaction.recreate = false;
+			transaction.recreateArgs = null;
+			transaction.eventId = null;
+			var index = this.activeTransactions.indexOf(transaction);
+			if (index != -1) {
+				this.activeTransactions.splice(index, 1);
+				this.triggerPendingTransactions();
+			}
+			if (!this.hasOutstandingTransactions()) {
+				this.pingSubmitted = false;
+				this.pingCompleted = false;
+				this.allTransactionsComplete.sendEvent();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Add the specified save object to the transaction.
+		-->
+		<method name="addSaveObject" args="transaction, o">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "addSaveObject(transaction, o)", [transaction, o]);
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfServiceTransactionUtil", "addSaveObject(transaction, o)", "adding save object for service " + transaction.service.url + " " + o.logString());
+			}
+			if (transaction.saveObjects.indexOf(o) == -1) {
+				if (o.newObject) {
+					if (o != transaction.o) {
+						transaction.hasNewObjects = true;
+					}
+					o.creating = true;
+					if (o.objectDefinition.parentReference) {
+						var referencedObject = o.getReferencedObject();
+						for (var key in referencedObject.referenceMap) {
+							var ro = referencedObject.referenceMap[key];
+							if (ro != o && ro.objectDefinition.parentReference && ro.pendingDelete && !ro.deleting && !ro.getIsVersionObject()) {
+								wcfServiceTransactionUtil.addDeleteObject(transaction, ro);
+								ro.transaction = transaction;
+							}
+						}
+					}
+				}
+
+				// Increment reference count of the open group object for this save object
+				if (o.openGroupObject != null) {
+					o.openGroupObject.incrementReferenceCount();
+				}
+				
+				// Set the fileref if appropriate
+				if (o.objectDefinition.isFileObject == true && o == transaction.o) {	
+					transaction.fileref = o.fileref;					
+				}
+
+				transaction.saveObjects.push(o);
+				for (var key in o.propertyMap) {
+					var prop = o.propertyMap[key];
+					if (prop.dirty && prop.transaction == null) {
+						wcfServiceTransactionUtil.addSaveProperty(transaction, prop);
+					}
+				}
+				for (var key in o.childObjectMap) {
+					var child = o.childObjectMap[key];
+					var oDef = child.objectDefinition;
+					if (!oDef.parentReference && !oDef.collectionReference && child.transaction == null && child.parentObject == o && !child.getIsVersionObject()) {
+						if (oDef.createService == null && child.newObject) {
+							wcfServiceTransactionUtil.addSaveObject(transaction, child);
+							child.transaction = transaction;
+							child.creating = true;
+						}
+						else if (oDef.deleteService == null && child.pendingDelete) {
+							wcfServiceTransactionUtil.addDeleteObject(transaction, child);
+							child.transaction = transaction;
+						}
+						else if (oDef.saveService == null && child.hasUnsavedPropertyChanges()) {
+							wcfServiceTransactionUtil.addSaveObject(transaction, child);
+							child.transaction = transaction;
+						}
+					}
+				}
+				var newParentReferenceObject = null;
+				var oldParentReferenceObject = null;
+				for (var key in o.referenceMap) {
+					var ro = o.referenceMap[key];
+					var oDef = ro.objectDefinition;
+					if (ro.transaction == null && (oDef.parentReference || oDef.collectionReference) && oDef.isReferencedDefinition(o.objectDefinition) && !ro.getIsVersionObject()) {
+						if (ro.newObject) {
+							if (oDef.createService == null) {
+								wcfServiceTransactionUtil.addSaveObject(transaction, ro);
+								ro.transaction = transaction;
+								ro.creating = true;
+							}
+							else if (oDef.parentReference) {
+								newParentReferenceObject = ro;
+							}
+						}
+						else if (ro.pendingDelete) {
+							if (oDef.deleteService == null && !ro.deleting) {
+								if (oDef.parentReference) {
+									oldParentReferenceObject = ro;
+								}
+								else {
+									wcfServiceTransactionUtil.addDeleteObject(transaction, ro);
+									ro.transaction = transaction;
+								}
+							}
+						}
+						else if (oDef.saveService == null && ro.hasUnsavedPropertyChanges()) {
+							wcfServiceTransactionUtil.addSaveObject(transaction, ro);
+							ro.transaction = transaction;
+						}
+					}
+				}
+				if (oldParentReferenceObject != null && newParentReferenceObject == null && !oldParentReferenceObject.deleting) {
+					wcfServiceTransactionUtil.addDeleteObject(transaction, oldParentReferenceObject);
+					oldParentReferenceObject.transaction = transaction;
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "addSaveObject");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Add the specified property to the transaction.
+		-->
+		<method name="addSaveProperty" args="transaction, prop">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "addSaveProperty(transaction,prop)", [transaction, prop]);				
+			}
+			prop.transaction = transaction;
+			transaction.saveProperties.push(prop);
+			if (prop.o == transaction.o && !transaction.o.newObject && prop.propertyDefinition != null && prop.propertyDefinition.recreateObject &&
+				transaction.o.objectDefinition.deleteService != null && transaction.o.objectDefinition.createService != null &&
+				!transaction.o.objectDefinition.hasChildDefinitions()) {
+				transaction.recreate = true;
+				transaction.service = transaction.o.objectDefinition.deleteService;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "addSaveProperty(transaction, prop)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Remove the specified property from the transaction. If the property changes before the
+			service request completes, then it will be dropped from the transaction.
+		-->
+		<method name="removeSaveProperty" args="transaction, prop">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "removeSaveProperty(transaction, prop)", [transaction, prop]);				
+			}
+			if (transaction.serviceDataset == null || !transaction.serviceDataset.complete) {
+				var index = transaction.saveProperties.indexOf(prop);
+				if (index != -1) {
+					transaction.saveProperties.splice(index, 1);
+				}
+				prop.transaction = null;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "removeSaveProperty(transaction, prop)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Add the specified object to the list of objects that are being deleted by this transaction.
+		-->
+		<method name="addDeleteObject" args="transaction, o">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "addDeleteObject(transaction, o)", [transaction, o]);				
+			}
+			o.setAttribute("deleting", true);
+			// Increment reference count of the open group object for this delete object
+			if (o.openGroupObject != null) {
+				o.openGroupObject.incrementReferenceCount();
+			}
+			transaction.deleteObjects.push(o);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "addDeleteObject(transaction, o)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Rollback the transaction.
+		-->
+		<method name="rollback" args="transaction">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "rollback(transaction)");
+			}
+			var dirty = false;
+			var openGroupObject = transaction.o.openGroupObject;
+			while (transaction.saveProperties.length > 0) {
+				var prop = transaction.saveProperties.shift();
+				prop.transaction = null;
+				if (!dirty) {
+					dirty = prop.dirty;
+				}
+			}
+			while (transaction.saveObjects.length > 0) {
+				var o = transaction.saveObjects.shift();
+				if (o.transaction == transaction) {
+					o.transaction = null;
+					o.creating = false;
+				}
+				o.discardPendingTransactions();				
+				if (o.openGroupObject != null) {					
+					if (!o.openGroupObject.open) {
+						o.openGroupObject.setAttribute("open", true);
+					}
+					
+					// Decrement reference count of the open group object for this save object
+					o.openGroupObject.decrementReferenceCount();
+				}
+				if (!dirty) {
+					dirty = o.hasUnsavedChanges();
+				}
+			}
+			while (transaction.deleteObjects.length > 0) {
+				var o = transaction.deleteObjects.shift();
+				o.setAttribute("deleting", false);
+				if (o.transaction == transaction) {
+					o.transaction = null;
+				}
+				o.discardPendingTransactions();
+				// Decrement reference count of the open group object for this delete object
+				if (o.openGroupObject != null) {
+					if (o.pendingDelete && !o.openGroupObject.open) {
+						o.openGroupObject.setAttribute("open", true);
+					}
+					o.openGroupObject.decrementReferenceCount();
+				}
+				if (!dirty) {
+					dirty = o.hasUnsavedChanges();
+				}
+			}
+			if (transaction.o.transaction == transaction) {
+				transaction.o.transaction = null;
+				transaction.o.discardPendingTransactions();
+			}
+			if (openGroupObject) {			
+				if (transaction == transaction.o.postSaveTransaction) {										
+					dirty = true;
+					transaction.o.setAttribute("postSaveTransaction", null);
+					transaction.o.setAttribute("postSaveFailed", true);
+					if (!openGroupObject.open) {
+						openGroupObject.setAttribute("open", true);										
+					}
+				}
+				if (transaction.service.abortOnError) {
+					wcfServiceTransactionUtil.discardPendingTransactions(openGroupObject);
+				}
+			}
+			wcfServiceTransactionUtil.releaseServiceTransaction(transaction);
+			
+			if (dirty && openGroupObject != null) {
+				openGroupObject.checkUnsavedChanges(dirty);
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "rollback(transaction)");
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Commit the changes back to the model. If there are any pending transactions, then
+			the next transaction in the queue will be invoked.
+			@param Object transaction: the service transaction to commit
+			@param boolean abort: true if the request is aborted
+		-->
+		<method name="commit" args="transaction, abort=false">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "commit(transaction)");
+			}
+			if (transaction.recreate) {
+				var index = this.activeTransactions.indexOf(transaction);
+				if (index != -1) {
+					this.activeTransactions.splice(index, 1);
+				}
+				wcfServiceUtil.releaseServiceDataset(transaction.serviceDataset);
+				transaction.serviceDataset = null;
+				transaction.recreate = false;
+				transaction.o.revertToNewObject();
+				transaction.o.creating = true;
+				for (var key in transaction.recreateArgs) {
+					transaction[key] = transaction.recreateArgs[key];
+				}
+				transaction.recreateArgs = null;
+				transaction.deferred = true;
+				wcfServiceTransactionUtil.addPendingTransaction(transaction);
+			}
+			else {
+				var openGroupObject = transaction.o.openGroupObject;
+				while (transaction.saveProperties.length > 0) {
+					var prop = transaction.saveProperties.shift();
+					prop.reset();
+					prop.transaction = null;
+				}
+				while (transaction.saveObjects.length > 0) {
+					var o = transaction.saveObjects.shift();
+					if (o.newObject && !abort) {
+						o.creating = false;
+						o.setGetChildrenServicesLoaded();
+						o.implicitNewObject = false;
+						o.setAttribute("newObject", false);
+					}
+					if (o.transaction == transaction) {
+						o.transaction = null;
+						o.triggerPendingTransactions();
+					}
+					// Decrement reference count of the open group object for this save object
+					if (o.openGroupObject != null) {
+						o.openGroupObject.decrementReferenceCount();
+					}
+				}
+				while (transaction.deleteObjects.length > 0) {
+					var o = transaction.deleteObjects.shift();
+					// Decrement reference count of the open group object for this delete object
+					if (o.openGroupObject != null) {
+						o.openGroupObject.decrementReferenceCount();
+					}
+					wcfModelUtil.releaseModelObject(o);
+				}
+				if (transaction.o.postSaveTransaction == transaction) {					
+					transaction.o.setAttribute("postSaveFailed", false);
+					transaction.o.setAttribute("postSaveTransaction", null);
+				}
+				
+				if (transaction.o.transaction == transaction) {
+					transaction.o.transaction = null;
+					transaction.o.triggerPendingTransactions();
+				}
+				if (wcfEventTimer.enabled && !abort) {
+					wcfEventTimer.updateObjCount(1);
+				}
+				wcfServiceTransactionUtil.releaseServiceTransaction(transaction);
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "commit(transaction)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Invoke the service request for the given transaction. If there is already an active transaction
+			for the parent of this transaction, then the request will be queued in the list of pending
+			transactions.
+		-->
+		<method name="doRequest" args="transaction">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "doRequest(transaction)");		
+			}
+			if (wcfEventTimer.enabled && transaction["eventId"]) wcfEventTimer.restart(transaction.eventId);
+			this.activeTransactionGroupId = transaction.transactionGroupId;
+			var unresolvedServiceParameter = null;
+			var unresolvedParameter = false;
+			var isPendingTransaction = false;
+			if (transaction.unresolvableParameters.length > 0) {
+				unresolvedParameter = true;
+				unresolvedServiceParameter = transaction.unresolvableParameters[0];
+				if (wcfLogger.enabled) {
+					var param = transaction.unresolvableParameters[0];
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfServiceTransactionUtil", "doRequest", "Unresolved parameter: " + param.name + " for request " + transaction.service.url);
+				}
+			}
+			if (!unresolvedParameter) {
+				wcfServiceUtil.resolveParameters(transaction.reresolveParameters, transaction);
+				var parentObject = null;
+				var unresolvedParentParameter = false;
+				var childObject = null;
+				var unresolvedChildParameter = false;
+				if (transaction.serverManagedParameters.length > 0) {
+					var params = transaction.serverManagedParameters;
+					for (var i = 0; i < params.length; i++) {
+						var param = params[i];
+						if (param.parentProperty) {
+							if (wcfLogger.enabled) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfServiceTransactionUtil", "doRequest", "Unresolved parameter: " + param.name + " for request " + transaction.service.url);
+							}
+							unresolvedParentParameter = true;
+							unresolvedServiceParameter = param;
+							var property = param.getValueSource(transaction.o);
+							if (property) {
+								parentObject = property.o;
+							}
+							break;
+						}
+						else if (param.objectPath) {
+							if (wcfLogger.enabled) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfServiceTransactionUtil", "doRequest", "Unresolved parameter: " + param.name + " for request " + transaction.service.url);
+							}
+							unresolvedChildParameter = true;
+							unresolvedServiceParameter = param;
+							var property = param.getValueSource(transaction.o);
+							if (property) {
+								childObject = property.o;
+							}
+						}
+					}
+				}
+				if (parentObject && parentObject.transaction) {
+					parentObject.addPendingTransaction(transaction);
+					isPendingTransaction = true;
+				}
+				else if (childObject && childObject.transaction) {
+					childObject.addPendingTransaction(transaction);
+					isPendingTransaction = true;
+				}
+			}
+			if (!isPendingTransaction) {
+				var isInvalidFileUpload = wcfServiceTransactionUtil.notValidFileUploadTransaction(transaction);
+							
+				if (unresolvedParameter || unresolvedParentParameter || unresolvedChildParameter || isInvalidFileUpload) {			
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "wcfServiceTransactionUtil", "doRequest", "Aborting transaction " + transaction.service.url);
+					}
+					if (transaction.o.isOpenGroupObject() || !transaction.o.openGroupObject.hasServiceErrors()) {
+						wcfServiceTransactionUtil.clearServiceErrors(transaction);
+						var hasErrorInOpenGroup = transaction.o.openGroupObject.errorInOpenGroup;
+						if (unresolvedServiceParameter != null && !hasErrorInOpenGroup) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "wcfServiceTransactionUtil", "doRequest", "No errors associated with the business object. Unresolved parameter: " + unresolvedServiceParameter.name + " for transaction: " + transaction.service.url);
+						}
+						var o = transaction.o;
+						wcfServiceTransactionUtil.rollback(transaction);
+
+						// Apply appropriate message for different cases					
+						if (hasErrorInOpenGroup) {
+							messageLogger.logValidationError(foundationResources.savingFailed.string, o, null, null);
+						}
+						else if (isInvalidFileUpload) {
+							messageLogger.logValidationError(foundationResources.uploadFileFailed.string, o, null, null);
+						}
+						else {
+							messageLogger.logValidationError(foundationResources.savingFailedInGeneral.string, o, null, null);
+						}						
+					}
+					else {
+						wcfServiceTransactionUtil.rollback(transaction);
+					}
+				}
+				else {
+					transaction.serviceDataset = wcfServiceUtil.createServiceDataset({
+						requestParent: transaction.requestParent,
+						service: transaction.service,
+						args: transaction.args,
+						transaction: transaction,
+						reresolveParameters: transaction.reresolveParameters,
+						loadingParameters: transaction.loadingParameters,
+						serverManagedParameters: transaction.serverManagedParameters,
+						unresolvableParameters: transaction.unresolvableParameters,
+						requestIdentifier: transaction.requestIdentifier
+					});
+					transaction.serviceDataset.doRequest();
+					if (wcfLogger.enabled) {
+						if (this.activeTransactions.length > 1) {
+							var msg = "Sending transaction "+transaction.o.logString()+" in parallel with "+this.activeTransactions[0].o.logString()+" transactionGroupId="+transaction.transactionGroupId;
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfServiceTransactionUtil", "doRequest", msg);
+						}
+					}
+				}
+			} else {
+				var index = this.activeTransactions.indexOf(transaction);
+				if (index != -1) {
+					this.activeTransactions.splice(index, 1);
+					this.triggerPendingTransactions();
+				}
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfServiceTransactionUtil", "doRequest(transaction)");
+			}			
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This method returns true if the current transaction is a file upload transaction, but is not valid.
+			A file upload transaction is indicated by a non null value for {@link transaction fileref}.
+			This transaction can be invalid in one of three ways:
+			<ol><li>The {@link wcfServiceTransaction#o object's} {@link wcfModelObject#fileref fileref} is null
+				<li>No file was selected for the fileref.
+				<li>An empty file was selected for the fileref.
+			</ol>
+			If the current transaction is not a file upload transaction, this method will return false.
+			It will also return	false if the current transaction is a valid file upload transaction. 			
+			
+			@return boolean This method returns true if the current transaction is a file upload transaction, but
+			is not valid.
+		-->
+		<method name="notValidFileUploadTransaction" args="transaction">
+			<![CDATA[
+			if (transaction.fileref == null) {
+				return false;
+			}
+			if (typeof(transaction.fileref.name) == "undefined" || transaction.fileref.size == 0) {
+				return true;
+			}
+			return false;
+			]]>
+		</method>
+		<!---
+			Returns true if the given transaction has no properties being saved or has no objects being deleted.
+			@return boolean: true if the transaction is empty
+		-->
+		<method name="isEmpty" args="transaction">
+			<![CDATA[
+			var empty;
+			if (transaction.o.objectDefinition.postSaveService == transaction.service) {
+				empty = this.isLastTransactionInGroup(transaction) && (!transaction.o.postSaveFailed || transaction.o.postSaveTransaction != transaction);
+			}
+			else {
+				empty = !transaction.hasNewObjects && transaction.saveProperties.length == 0 && transaction.deleteObjects.length == 0
+			}
+			
+			if (!empty && wcfLogger.enabled) {
+				var msg = "Saving objects: ";
+				for (var i = 0; i < transaction.saveObjects.length; i++) {
+					var o = transaction.saveObjects[i];
+					msg = msg + " " + o.objectType + o.objectId;
+				}
+				msg += " Has new objects: " + transaction.hasNewObjects;
+				msg += " Saving properties: ";
+				for (var i = 0; i < transaction.saveProperties.length; i++) {
+					var prop = transaction.saveProperties[i];
+					msg = msg + " " + prop.propertyName + "=" + prop.value;
+				}
+				msg += " Deleting objects: ";
+				for (var i = 0; i < transaction.deleteObjects.length; i++) {
+					var o = transaction.deleteObjects[i];
+					msg = msg + " " + o.objectType + o.objectId;
+				}
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfServiceTransactionUtil", "isEmpty", msg);
+			}
+			return empty;
+			]]>
+		</method>
+		
+		<!---
+			Clears service errors associated with the objects that this transaction saves.
+			If the object has an open group object, then the open group object's service errors will
+			also be cleared. If the open group object is not a primary object, then the owning primary
+			object is located and its service errors are also cleared.
+		 -->
+		<method name="clearServiceErrors" args="transaction"><![CDATA[
+			transaction.o.clearServiceErrors();
+			for(var i = 0; i < transaction.saveObjects.length; i++){
+				var o = transaction.saveObjects[i];
+				o.clearServiceErrors();
+				if (o.openGroupObject) {
+					if (o != o.openGroupObject){
+						o.openGroupObject.clearValidationError(null);
+					}
+					if (o.openGroupObject.parentPrimaryObject != null && o.openGroupObject != o.openGroupObject.parentPrimaryObject) {
+						o.openGroupObject.parentPrimaryObject.clearValidationError(null);
+					}
+				}
+			}
+			for(var i = 0; i < transaction.deleteObjects.length; i++){
+				var o = transaction.deleteObjects[i];
+				if (o.openGroupObject && o != o.openGroupObject) {
+					o.openGroupObject.clearValidationError(null);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Handle validation error. The default implementation will associate
+			the message with the specified model object. If the property name
+			is specified, then the message will be associated with the property. If an object-level
+			error message is empty, the message will be replaced with a generic message.
+			@param string message: the validation error message
+			@param string propertyName: the property name
+		-->
+		<method name="handleValidationError" args="transaction, message,propertyName">
+			<![CDATA[			
+			var property = null;
+			if(message == null || wcfStringUtil.trim(message).length == 0){
+				// Replace empty object-level message with a generic error message
+				transaction.o.addValidationError(null, foundationResources.savingFailed.string);
+			}
+			else if(propertyName) {
+				var objs = transaction.saveObjects;
+				for(var i = 0; i < objs.length; i++) {
+					property = objs[i].propertyMap[propertyName];
+					if(property) {
+						break;
+					}
+				}
+			
+				if(property != null) {
+					property.addValidationError(null, message);
+				}
+				else {
+					transaction.o.addValidationError(null, message);
+				}
+			}
+			else {
+				transaction.o.addValidationError(null, message);
+			}
+
+			if (transaction.o.openGroupObject != null && !transaction.o.openGroupObject.open) {
+				//if no object is selected in the object editor, select this object so that the user can edit the object
+				if (transaction.o.model.oEditor.workAreaContainer.activeView == null) {	
+					if (wcfLogger.enabled) {		
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfServiceTransactionUtil", "handleValidationError", "validation error, re-opening object in activeView");
+					}
+					transaction.o.openGroupObject.doOpen();
+				}
+				else {
+					transaction.o.openGroupObject.doOpen(false);
+				}
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			Prepare the arguments for this transaction.
+			@param object transaction: transaction object
+			@param object args: arguments object
+		-->
+		<method name="prepareArguments" args="transaction,args">
+			<![CDATA[
+			var o = transaction.o;
+			if (transaction.recreate) {
+				transaction.recreateArgs = {};
+				transaction.recreateArgs.requestParent = transaction.requestParent;
+				transaction.recreateArgs.args = {};
+				for (var key in args) {
+					transaction.recreateArgs.args[key] = args[key];
+				}
+				var createService = o.objectDefinition.createService;
+				createService.prepareArguments(o, transaction.recreateArgs.args);
+				var oDef = o.objectDefinition;
+				for (var key in transaction.recreateArgs.args) {
+					var pDef = oDef.getPropertyDefinition(o, key);
+					if ((key == oDef.idProperty && !oDef.languageSensitive) ||
+						(pDef && pDef.serverManaged)) {
+						delete transaction.recreateArgs.args[key];
+					}
+				}
+				var enabledParams = wcfServiceUtil.getEnabledParameters(createService.serviceParams, o);
+				wcfServiceUtil.resolveParameters(enabledParams, transaction.recreateArgs);
+				transaction.recreateArgs.service = o.objectDefinition.createService;
+			}
+			transaction.service.prepareArguments(o, args);
+			var enabledParams = wcfServiceUtil.getEnabledParameters(transaction.service.serviceParams, o);
+			transaction.args = args;
+			wcfServiceUtil.resolveParameters(enabledParams, transaction);
+			]]>
+		</method>
+	</node>
+
+	<!---
+		@keywords private
+		
+		A XML Utility Class.
+	-->
+	<node id="wcfXMLUtil">
+		<switch>
+			<when property="$as3">
+				<passthrough>
+					import flash.xml.XMLDocument
+				</passthrough>
+			</when>
+		</switch>		
+		<method name="getFirstElement" args="e, nodeName">
+		<![CDATA[
+			var children = e.childNodes;
+			var child;
+			var rs = null;
+			for (var i=0; i<children.length; i++) {
+				child = children[i];
+				if (child.nodeName == nodeName) {
+					rs = child;
+					break;
+				}
+			}
+			return rs;
+		]]>
+		</method>
+		<method name="getNodeValue" args="e">
+		<![CDATA[
+			var nodeValue = "";
+			var nodes = e.childNodes;
+			for (var i = 0; i < nodes.length; i++) {
+				var thisNode = nodes[i];
+				if (thisNode != null && thisNode.nodeType == 3) {
+					nodeValue += thisNode.nodeValue;
+				}
+			}
+			return nodeValue;
+		]]>
+		</method>
+		<method name="parseXML" args="xml">
+		<![CDATA[
+			var rs = null;
+			if (xml != null && xml != "") {				
+				try {
+					var xmlObj;
+					if ($as3) {
+						xmlObj = new flash.xml.XMLDocument();
+					} else {
+						xmlObj = new XML();
+					}
+					xmlObj.ignoreWhite = true;
+					xmlObj.parseXML(xml);
+					rs = xmlObj.firstChild; //lfcnode;
+				} catch (e) {
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "wcfXMLUtil", "parseXML", "parse XML failed, exception thrown: " + e.toString() + "; XML: " + xml);
+					}				
+				}
+			}  
+			return rs;
+		]]>
+		</method>
+	</node>
+	<!---
+		@keywords private
+		
+		A service dataset. A service dataset is used to invoke
+		a service request instance.
+	-->
+	<class name="wcfServiceDataset" extends="node">
+		<switch>
+			<when property="$as3">
+				<passthrough>
+					import flash.events.DataEvent;
+					import flash.events.Event;
+					import flash.events.HTTPStatusEvent;
+					import flash.events.IOErrorEvent;
+					import flash.events.SecurityErrorEvent;
+					import flash.net.URLLoader;
+					import flash.net.URLRequest;
+					import flash.net.URLRequestHeader;
+					import flash.net.URLRequestMethod;
+					import flash.net.URLVariables;
+					import flash.xml.XMLDocument;
+				</passthrough>
+			</when>
+		</switch>
+     	
+		<!---
+			Reference to the parent service. This is a required attribute.
+		-->
+		<attribute name="service" value="null"/>
+		<!---
+			Arguments for this service request.
+		-->
+		<attribute name="args" value="null"/>
+		<!---
+			Parent for this request.
+		-->
+		<attribute name="requestParent" value="null"/>
+		<!---
+			Transaction object.
+		-->
+		<attribute name="transaction" value="null"/>
+		<!---
+			An array of parameters to reresolve.
+		-->
+		<attribute name="reresolveParameters" value="null"/>
+		<!---
+			An array of unresolved parameters that are loading.
+		-->
+		<attribute name="loadingParameters" value="null"/>
+		<!---
+			An array of unresolved parameters that are server managed.
+		-->
+		<attribute name="serverManagedParameters" value="null"/>
+		<!---
+			An array of unresolvable parameters.
+		-->
+		<attribute name="unresolvableParameters" value="null"/>
+		<!---
+			Indicates that the service request has been completed.
+		-->
+		<attribute name="complete" type="boolean" value="false"/>
+		<!---
+			Indicates that the service request has been submitted.
+		-->
+		<attribute name="submitted" type="boolean" value="false"/>
+		<!---
+			Indicates that a request has been made to stop the service request.
+		-->
+		<attribute name="stopped" type="boolean" value="false"/>
+		
+		<!--- @keywords private -->
+		<attribute name="requestIdentifier" type="number" value="0"/>
+		<!---
+			The URL for this service request. This value is set when the request is sent and can be
+			used for debug purposes.
+		-->
+		<attribute name="url" value="null"/>
+		<!---
+			XML that contains the response for this service request.
+		-->
+		<attribute name="dataXML" value="null"/>
+		
+		<!---
+			The ID of the user event that triggered this service request.
+		-->
+		<attribute name="eventId" value="null"/>
+		<!---
+			The start index for this request. The start index will be greater than
+			zero if the user has requested to load the next page. This is only
+			available if the total number of search results exceeds 500.
+		-->
+		<attribute name="startIndex" value="0"/>
+
+		<!--- @keywords private -->
+		<attribute name="requestRetryLimit" type="number" value="1" />
+
+		<!--- @keywords private -->
+		<attribute name="requestRetryCount" type="number" value="0" />
+		
+		<!--- @keywords private -->
+		<attribute name="getAll" type="boolean" value="false" />
+		
+		<!---
+			XML string for the service request.
+		-->
+		<attribute name="xmlContent" type="string" value=""/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.doDeferredRequestDel = new lz.Delegate(this, "doDeferredRequest");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.release();
+			delete this.doDeferredRequestDel;
+			if (this["doReleaseDeferredRequestDel"]) {
+				delete this.doReleaseDeferredRequestDel;
+			}						
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Release this service dataset so it can be reused.
+		-->
+		<method name="release">
+			<![CDATA[
+			this.doDeferredRequestDel.unregisterAll();
+			if (this["doReleaseDeferredRequestDel"]) {
+				this.doReleaseDeferredRequestDel.unregisterAll();
+			}
+			for (var i = 0; i < this.service.activeRequests.length; i++) {
+				if (this.service.activeRequests[i] == this) {
+					this.service.activeRequests.splice(i, 1);
+					break;
+				}
+			}
+			this.service = null;
+			this.args = null;			
+			this.reresolveParameters = null;
+			this.loadingParameters = null;
+			this.serverManagedParameters = null;
+			this.unresolvableParameters = null;
+			this.complete = false;
+			this.submitted = false;
+			this.stopped = false;
+			this.requestIdentifier = 0;
+			this.dataXML = null;
+			this.url = null;
+			this.eventId = null;
+			this.startIndex = 0;
+			this.requestRetryCount = 0;
+			this.xmlContent = "";
+			if (this.transaction != null && this.transaction.fileref != null) {
+				if ($as3) {
+					this.transaction.fileref.removeEventListener(flash.events.DataEvent.UPLOAD_COMPLETE_DATA, this.handleUploadCompleteData);
+					this.transaction.fileref.removeEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+					this.transaction.fileref.removeEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+					this.transaction.fileref.removeEventListener(flash.events.HTTPStatusEvent.HTTP_STATUS, this.handleHTTPError);
+				} else {
+					this.transaction.fileref.removeListener(this);
+				}
+			}
+			this.transaction = null;
+			this.requestParent = null;
+			if ($as3) {
+				if (typeof(this["urlLoader"]) != "undefined" && this["urlLoader"] != null) {
+					this.urlLoader.removeEventListener(flash.events.Event.COMPLETE, this.handleComplete);
+					this.urlLoader.removeEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+					this.urlLoader.removeEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+					this.urlLoader = null;
+				}	
+			}
+			]]>
+		</method>
+		
+		<!---
+			Asynchronously invoke the service request. If the service request has
+			unresolved parameters, then the request will be deferred until the
+			context values are set.
+		-->
+		<method name="doRequest">
+			<![CDATA[
+			if (this.loadingParameters != null && this.loadingParameters.length > 0) {
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfServiceDataset", "doRequest", "deferring request " + this.service.url);
+					for (var i = 0; i < this.loadingParameters.length; i++) {
+						var param = this.loadingParameters[i];
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfServiceDataset", "doRequest", "unresolved parameter:" + param.parameterName);
+					}
+				}	
+				this.loadingParameters[0].registerDelegate(this.requestParent, this.doDeferredRequestDel);		
+				if (this.transaction == null && this.requestParent && this.requestParent instanceof lz.wcfModelObject) {
+					if (this["doReleaseDeferredRequestDel"]) {
+						this.doReleaseDeferredRequestDel.unregisterAll();
+					} else {
+						this.doReleaseDeferredRequestDel = new lz.Delegate(this, "doReleaseDeferredRequest");
+					}
+					this.doReleaseDeferredRequestDel.register(this.requestParent, "beingDestroyed");
+				}
+			}
+			else {
+				// start the progress indicator in the shell
+				if (global["progressIndicator"] != undefined) {
+					global.progressIndicator.startAnimation();
+				}
+				this.url = this.service.url;
+				if (this.url.indexOf("?") >= 0) {
+					this.url += "&requestIdentifier=" + this.requestIdentifier;
+				}
+				else {
+					this.url += "?requestIdentifier=" + this.requestIdentifier;
+				}
+				if (wcfEventTimer.enabled && this.eventId != null) this.url += "&eventId=" + this.eventId;
+		
+				var loadVars = null;
+				if ((this.transaction == null || this.transaction.fileref == null) && 
+				    (!this.service.xml || this.xmlContent == "")) {
+					if ($as3) {	
+						loadVars = new flash.net.URLVariables();
+					} else {
+						loadVars = new LoadVars();
+					}
+				}
+				for (var key in args) {
+					var sensitive = wcfServiceUtil.sensitiveParams[key];
+					var val = args[key];
+					if (this.service.sendMultiValues && val instanceof Array) {
+						for (var i = 0; i < val.length; i++) {			
+							if (loadVars == null || (!sensitive && (val[i].length < wcfServiceUtil.MAX_URL_PARAM_LEN && this.url.length < wcfServiceUtil.MAX_URL_LEN))) {
+								if (!sensitive) {
+									this.url += "&" + key + "." + i + "=" + encodeURIComponent(val[i]);
+								}
+							}
+							else {
+								loadVars[key + "." + i] = val[i];
+							}
+						}
+					}
+					else {						
+						val = val.toString();
+						if (loadVars == null || (!sensitive && (val.length < wcfServiceUtil.MAX_URL_PARAM_LEN && this.url.length < wcfServiceUtil.MAX_URL_LEN))) {
+							if (!sensitive) {
+								this.url += "&" + key + "=" + encodeURIComponent(val);
+							}
+						}
+						else {
+							loadVars[key] = val;
+						}
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfServiceDataset", "doRequest", this.maskSensitiveParam(this.url));
+				}
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfServiceDataset", "doRequest", "requestIdentifier=" + this.requestIdentifier + " " + this.service.url);
+				}
+
+				if (this.transaction != null) {
+					var transactionGroup = wcfServiceTransactionUtil.transactionGroupMap[this.transaction.transactionGroupId];
+					transactionGroup.submitted = true;
+				}
+			
+				if (this.transaction != null && this.transaction.fileref != null) {			
+					if ($as3) {
+						this.transaction.fileref.addEventListener(flash.events.DataEvent.UPLOAD_COMPLETE_DATA, this.handleUploadCompleteData);
+						this.transaction.fileref.addEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+						this.transaction.fileref.addEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+						this.transaction.fileref.addEventListener(flash.events.HTTPStatusEvent.HTTP_STATUS, this.handleHTTPError);
+						
+						var req = new flash.net.URLRequest(this.url);
+						req.method = flash.net.URLRequestMethod.POST;
+						this.transaction.fileref.upload(req);
+					} else {
+						this.transaction.fileref.addListener(this);	
+						this.transaction.fileref.upload(this.url);
+					}	
+				}
+				else {
+					if ($as3) {
+						if (typeof(this["urlLoader"]) == "undefined" || this["urlLoader"] == null) {
+							this.urlLoader = new flash.net.URLLoader();
+							this.urlLoader.addEventListener(flash.events.Event.COMPLETE, this.handleComplete);
+							this.urlLoader.addEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+							this.urlLoader.addEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+						}
+						var req = new flash.net.URLRequest(this.url);
+						if (this.service.xml && this.xmlContent != "") {
+							var reqHeader;
+							if (this.service.requestHeader.length > 0) {
+								var i = 0;
+								while (i < this.service.requestHeader.length) {
+									var headerName = this.service.requestHeader[i++];
+									var headerValue = null;
+									if (i < this.service.requestHeader.length) {
+										headerValue = this.service.requestHeader[i++];
+									}
+									reqHeader = new flash.net.URLRequestHeader(headerName, headerValue);
+									req.requestHeaders.push(reqHeader);
+								}
+							} else {
+								reqHeader = new flash.net.URLRequestHeader("Content-Type", "text/xml");
+								req.requestHeaders.push(reqHeader);
+							}
+							req.contentType = "text/xml";
+							req.data = new flash.xml.XMLDocument(this.xmlContent);
+						} else {
+							req.data = loadVars;
+						}
+						req.method = flash.net.URLRequestMethod.POST;
+						this.urlLoader.load(req);
+					} else {
+						if (this.service.xml && this.xmlContent != "") {
+							var loadXML = new XML(this.xmlContent);
+							if (this.service.requestHeader.length > 0){
+								loadXML.addRequestHeader(this.service.requestHeader);
+							}
+							this.sendAndLoadXML(this.url, loadXML);
+						} else {
+							loadVars.sendAndLoad(this.url, this);
+						}
+					}
+				}
+				this.submitted = true;
+				wcfServiceUtil.lastSubmittedTime = (new Date()).getTime();
+			}
+			]]>
+		</method>
+
+		<!---
+			Release the deferred request. This method is called when the request parent of the service is released.
+		-->
+		<method name="doReleaseDeferredRequest" args="e=null">
+			<![CDATA[
+			this.doReleaseDeferredRequestDel.unregisterAll();
+			if (this.transaction == null) {
+				wcfServiceUtil.releaseServiceDataset(this);
+			}
+			]]>
+		</method>
+				
+		<!---
+			Stop the request currently associated with this dataset. If the service has already been submitted,
+			then the request will not actually be stopped, but when the request does return, the response will
+			from non-transactional services will be discarded. The response from transaction services will be
+			committed normally.
+		-->
+		<method name="stopRequest">
+			<![CDATA[
+			if (this.service.stoppable) {
+				this.stopped = true;
+				if (!this.submitted) {
+					this.doDeferredRequestDel.unregisterAll();
+					if (this["doReleaseDeferredRequestDel"]) {
+						this.doReleaseDeferredRequestDel.unregisterAll();
+					}
+					this.service.serviceStopped(this);
+				}
+			}
+			]]>
+		</method>		
+
+		<!---
+			Attempt to resolve any unresolved parameters.
+		-->
+		<method name="resolveParameters">
+			<![CDATA[
+			var params = this.reresolveParameters;	
+			for (var i = 0; i < params.length; i++) {
+				var param = params[i];
+				this.args[param.parameterName] = undefined;
+				delete this.args[param.parameterName];
+			}	
+			wcfServiceUtil.resolveParameters(this.reresolveParameters, this);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			replace the value of sensitive parameters (like password) to ****
+		-->
+		<method name="maskSensitiveParam" args="params">
+			<![CDATA[
+			var queryString;
+			if (params == null) {
+				return "";
+			}
+			else
+			{
+				queryString = params.toString();
+			}
+			
+			for (var key in wcfServiceUtil.sensitiveParams) {
+				var sparam = key + "=";
+				var pos1=queryString.indexOf(sparam);
+				if (pos1 != -1) {
+					var str1 = queryString.substring(0, pos1 + sparam.length);
+					var pos2 = queryString.indexOf("&", pos1);
+					if (pos2 != -1) {
+						 queryString = str1 + "****" + queryString.substring(pos2);
+					}
+					else
+					{
+						queryString = str1 + "****";
+					}	
+				}
+			}	
+			return queryString;
+			]]>			
+		</method>
+		
+		<!---
+			@keywords private
+			Send the XML request and Load the response back into the XML object.
+			@param String url: The URL to send the request to.
+			@param XML loadXML: The XML object that is making the request.  The results are also loaded back into this object.
+		-->
+		<method name="sendAndLoadXML" args="url,loadXML">
+			<![CDATA[
+			loadXML.ds = this;
+			loadXML.onLoad = function (success) {
+				if (wcfEventTimer.enabled && this.ds.eventId != null) wcfEventTimer.restart(this.ds.eventId);
+				if(success){
+					this.ds.handleXMLLoad(loadXML);
+				}else{
+					this.ds.handleError("onLoad");
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			}
+			loadXML.sendAndLoad(url, loadXML);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Called by the XML objects onLoad function, will handle the response of the xmlObject.
+			@param XML xmlObject: The XML object that has recieved the XML response.
+		-->
+		<method name="handleXMLLoad" args="xmlObject">
+			<![CDATA[
+			this.handleResponse(xmlObject.toString());
+			]]>
+		</method>
+
+		<!---
+			Callback method that is called for a deferred request. This method is called
+			when the context value that is causing the deferreal is set.
+		-->
+		<method name="doDeferredRequest" args="e=null">
+			<![CDATA[
+			this.doDeferredRequestDel.unregisterAll();
+			if (this["doReleaseDeferredRequestDel"]) {
+				this.doReleaseDeferredRequestDel.unregisterAll();
+			}
+			this.resolveParameters();
+			this.doRequest();
+			]]>
+		</method>	
+		
+		<!---
+			Handle the response from LoadVars.sendAndLoad.
+			@param string src The response XML. An undefined value indicates that an error occurred.
+		-->
+		<method name="onData" args="src">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfServiceDataset", "onData", "requestIdentifier=" + this.requestIdentifier + " URL returned: " + this.service.url);
+			}
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			if (src == undefined) {
+				if (this.service.retryOnError && this.requestRetryLimit > this.requestRetryCount) {
+					// stop the progress indicator in the shell
+					if (global["progressIndicator"] != undefined) {
+						global.progressIndicator.stopAnimation();
+					}
+					this.requestRetryCount++;
+					this.doRequest();
+				}
+				else {
+					this.handleError("onData");
+				}
+			}
+			else {
+				this.handleResponse(src);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfServiceDataset", "onDataComplete", "requestIdentifier=" + this.requestIdentifier);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript UploadCompleteData event that the FileReference will
+			receive on successful completion of a file upload.
+			It removes the listener that this has on the FileReference object.
+		-->	
+		<method name="onUploadCompleteData" args="fr, data">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleResponse(data);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<!---
+			Handle response.
+			@param string responseData: the response XML string
+		-->
+		<method name="handleResponse" args="responseData">
+			<![CDATA[
+			this.complete = true;
+			
+			if (this.transaction != null && this.transaction.fileref != null) {
+				if ($as3) {
+					this.transaction.fileref.removeEventListener(flash.events.DataEvent.UPLOAD_COMPLETE_DATA, this.handleUploadCompleteData);
+					this.transaction.fileref.removeEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+					this.transaction.fileref.removeEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+					this.transaction.fileref.removeEventListener(flash.events.HTTPStatusEvent.HTTP_STATUS, this.handleHTTPError);
+				} else {
+					this.transaction.fileref.removeListener(this);
+				}
+			}
+			if ($as3) {
+				if (typeof(this["urlLoader"]) != "undefined" && this["urlLoader"] != null) {
+					this.urlLoader.removeEventListener(flash.events.Event.COMPLETE, this.handleComplete);
+					this.urlLoader.removeEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+					this.urlLoader.removeEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+					this.urlLoader = null;
+				}
+			}
+			if (this.stopped && this.transaction == null) {
+				this.service.serviceStopped(this);
+			}
+			else {
+				this.dataXML = wcfXMLUtil.parseXML(responseData);
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfServiceDataset", "handleResponse", "URL returned: " + this.maskSensitiveParam(this.url));
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "CONFIG", "wcfServiceDataset", "handleResponse", "XML returned: " + this.dataXML.toString());
+				}
+				try {
+					this.service.serviceComplete(this);
+				} catch (e) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "wcfServiceDataset", "handleResponse", "handleResponse failed, exception thrown: " + e.toString() + "; service request url: " + this.service.url);
+				}
+			}
+			// stop the progress indicator in the shell
+			if (global["progressIndicator"] != undefined) {
+				global.progressIndicator.stopAnimation();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript SecurityError event that will be
+			invoked when an upload or download fails because of a security error.
+			It also removes the listener that this has on the FileReference object.
+		-->	
+		<method name="onSecurityError" args="fr, error">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleError("onSecurityError", error);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript IOError event that will be
+			invoked when an upload or download fails because an input/output error occurs.
+			It also removes the listener that this has on the FileReference object.			
+		-->
+		<method name="onIOError" args="fr">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleError("onIOError");
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript HTTP Error event that will be
+			invoked when an upload fails because of an HTTP error.
+			It also removes the listener that this has on the FileReference object.			
+		-->	
+		<method name="onHTTPError" args="fr, httpError">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleError("onHTTPError", httpError);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			Handle service request error.
+			@param string event: the name of the event that was triggered
+			@param object error: additional error information
+		-->
+		<method name="handleError" args="event,error=null">
+			<![CDATA[
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "wcfServiceDataset", event, "Error occurred while invoking URL [" + this.maskSensitiveParam(this.url) + "]"+(error ? (" " + error) : ""));
+			if("Error #2038" == error){
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "wcfServiceDataset", event, "File upload may fail when using the Firefox browser. To resolve this problem, do one of the following things: Use Internet Explorer when creating, uploading, and importing files. You can use Firefox if WebSphere Commerce uses IBM HTTP Web server. Ensure that the SSL certificate is signed by a third party and is valid. You cannot use a self-signed certificate.");
+			}
+			if (this.transaction != null && this.transaction.fileref != null) {
+				if ($as3) {
+					this.transaction.fileref.removeEventListener(flash.events.DataEvent.UPLOAD_COMPLETE_DATA, this.handleUploadCompleteData);
+					this.transaction.fileref.removeEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+					this.transaction.fileref.removeEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+					this.transaction.fileref.removeEventListener(flash.events.HTTPStatusEvent.HTTP_STATUS, this.handleHTTPError);
+				} else {
+					this.transaction.fileref.removeListener(this);
+				}
+			}
+			if ($as3) {
+				if (typeof(this["urlLoader"]) != "undefined" && this["urlLoader"] != null) {
+					this.urlLoader.removeEventListener(flash.events.Event.COMPLETE, this.handleComplete);
+					this.urlLoader.removeEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, this.handleSecurityError);
+					this.urlLoader.removeEventListener(flash.events.IOErrorEvent.IO_ERROR, this.handleIOError);
+					this.urlLoader = null;
+				}
+			}
+			this.service.handleServiceError(this, foundationResources.serviceError.string);
+			// stop the progress indicator in the shell
+			if (global["progressIndicator"] != undefined) {
+				global.progressIndicator.stopAnimation();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Handle the response from URLLoader.load.
+			@param string src The response XML. An undefined value indicates that an error occurred.
+		-->
+		<method name="handleComplete" args="event">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfServiceDataset", "handleComplete", "requestIdentifier=" + this.requestIdentifier + " URL returned: " + this.service.url);
+			}
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			if (this.urlLoader.data == undefined || this.urlLoader.data == null) {
+				if (this.service.retryOnError && this.requestRetryLimit > this.requestRetryCount) {
+					// stop the progress indicator in the shell
+					if (global["progressIndicator"] != undefined) {
+						global.progressIndicator.stopAnimation();
+					}
+					this.requestRetryCount++;
+					this.doRequest();
+				}
+				else {
+					this.handleError("handleComplete");
+				}
+			}
+			else {
+				this.handleResponse(this.urlLoader.data);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfServiceDataset", "handleComplete", "requestIdentifier=" + this.requestIdentifier);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript UploadCompleteData event that the FileReference will
+			receive on successful completion of a file upload.
+			It removes the listener that this has on the FileReference object.
+		-->	
+		<method name="handleUploadCompleteData" args="dataEvent">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleResponse(dataEvent.data);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript SecurityError event that will be
+			invoked when an upload or download fails because of a security error.
+			It also removes the listener that this has on the FileReference object.
+		-->	
+		<method name="handleSecurityError" args="securityErrorEvent">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleError("onSecurityError", securityErrorEvent.text);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript IOError event that will be
+			invoked when an upload or download fails because an input/output error occurs.
+			It also removes the listener that this has on the FileReference object.			
+		-->
+		<method name="handleIOError" args="ioErrorEvent">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleError("onIOError", ioErrorEvent.text);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is a listener for the ActionScript HTTPStatus event that will be
+			invoked when an upload fails because of an HTTP error.
+			It also removes the listener that this has on the FileReference object.			
+		-->	
+		<method name="handleHTTPError" args="httpStatusEvent">
+			<![CDATA[
+			if (wcfEventTimer.enabled && this.eventId != null) wcfEventTimer.restart(this.eventId);
+			this.handleError("onHTTPError", httpStatusEvent.status);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This class declares a service parameter that will be resolved before invoking the parent service.
+		Service parameters can only be declared as immediate children of an instance of wcfService.
+		Refer to {@link wcfValueResolver} for details on how service parameters are resolved.
+		
+		<p>The following example demonstrates the declaration of two service parameters
+		for a custom service. The first parameter, "param1" is optional and does not need to resolve
+		to a value before the service can be invoked.
+		The second parameter, "param2" is required and must resolve to a value other than
+		an empty string before the service can be invoked.
+		
+		@START_CODE
+		<CustomService url="/cmc/MyObjectCustomService">
+			<ServiceParam name="param1" optional="true"/>
+			<ServiceParam name="param2"/>			
+		</CustomService>
+		@END_CODE
+	-->
+	<class name="wcfServiceParam" extends="wcfValueResolver">
+		<!---
+			Indicates that the service parameter is optional. The service
+			request will not be made if this is set to <code>false</code>
+			and the value cannot be resolved or resolves to an empty string.
+			The default value is "false".
+		-->
+		<attribute name="optional" value="false" type="boolean"/>
+		
+		<!---
+			The parameter name. If this value is not specified, then the name of the parameter
+			will be taken from the "name" attribute.
+			
+			For example:
+			@START_CODE
+			<CustomService url="/cmc/MyObjectCustomService">
+				<ServiceParam name="param1" optional="true"/>
+				<ServiceParam name="param2" parameterName="parameter2"/>			
+			</CustomService>
+			@END_CODE
+			
+			This example will look up the context value "param2" and pass
+			it to the URL with parameter2 as the name. For example,
+			<code>/cmc/MyObjectCustomService?param1=value1&<b>parameter2=value2</b></code>
+		-->
+		<attribute name="parameterName" value="${name}" type="string"/>
+
+		<!---
+			Indicates that the service parameter is sent even though its value resolves to an empty string.
+			The default is true.
+		-->
+		<attribute name="sendEmpty" value="true" type="boolean"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var params = parent["serviceParams"];
+			if (!params) {
+				params = [];
+				parent.serviceParams = params;
+			}
+			params.push(this);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		This is the base class for all Management Center service request declarations. Its job is to build an URL with
+		all the specified parameters, send the URL request, and parse the response. This class must not be extended
+		or instantiated directly.
+	-->
+	<class name="wcfService" extends="node">
+		<!---
+			The URL for this service. If the URL begins with "/", then it will be
+			prefixed with the value of the global variable "serviceContextRooot". If the
+			global variable "serviceContextRoot" has not been set, then the value "/lobtools"
+			is used as the service context. This is a required attribute.
+		-->
+		<attribute name="url" type="string"/>
+		<!---
+			Indicates that the children of the business object associated with this request will be refreshed after the service completes successfully. 
+			The user will be prompted to save unsaved changes before the refresh takes place. The refresh does not take place if the service fails. 
+			The default value is false. 
+		-->
+		<attribute name="refreshChildren" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Array of declared service parameters for this service.
+		-->
+		<attribute name="serviceParams" value="${[]}"/>
+		<!---
+			@keywords private
+			Send all of the object's "dirty" properties as service parameters.
+		-->
+		<attribute name="sendDirty" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Send the object's object ID as a service parameter named "parentId".
+		-->
+		<attribute name="sendParent" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Send all of the object's properties as service parameters.
+		-->
+		<attribute name="sendAll" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Send properties from the default language sensitive object. The
+			default language sensitive object is a child object of the current
+			object and its "languageId" property matches the default language
+			for the current store.
+		-->
+		<attribute name="sendDefaultLanguageProperties" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that identity token must be sent with the request. The default
+			is "true".
+		-->
+		<attribute name="sendIdentity" value="true" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that current locale must be sent with the request. The default
+			is "true".
+		-->
+		<attribute name="sendLocale" value="true" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that current timeZoneId must be sent with the request. The default
+			is "true".
+		-->
+		<attribute name="sendTimeZoneId" value="true" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that this service is used to persist the state of a model object.
+		-->
+		<attribute name="transactionService" value="false" type="boolean"/>		
+		<!---
+			@keywords private
+			Abort the request if the transaction is empty. The default is false.
+		-->
+		<attribute name="abortEmptyTransactions" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			The prefix for properties when the request is sent.
+		-->
+		<attribute name="propertyPrefix" value="PROPERTY_" type="string"/>
+		<!---
+			@keywords private
+			Send all the properties with a prefix.
+		-->
+		<attribute name="sendPrefix" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Send the maximum items to return
+		-->
+		<attribute name="sendMaxItems" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			The maximum items to return. 
+		-->
+		<attribute name="maxItemsToReturn" type="number"/>		
+		<!---
+			When set to "true" this attribute will cause service parameters that resolve to multiple values to
+			be sent as individual request parameters of the form "parmName.0=value0&amp;paramName.1=value1".
+			When set to "false", service parameters that resolve to multiple values will be sent as a single
+			parameter with commas separating the values: "paramName=value0,value1". The default
+			is "false".
+		-->
+		<attribute name="sendMultiValues" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			If true, the service will refresh itself when the associated model is reinitialized.
+		-->
+		<attribute name="refreshOnModelInit" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			If true, the service will refresh itself when a user logs on.
+		-->
+		<attribute name="refreshOnNewIdentity" value="false" type="boolean"/>
+		<!--- @keywords private -->
+		<attribute name="requestIdentifier" type="number" value="0"/>
+		<!---
+			@keywords private
+			Indicates that this is a GET type of service. Example for GET type of service will be
+			Refresh service, Get children service or Get reference service. The default
+			is "false".
+		-->
+		<attribute name="getService" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that this service request can be stopped by the user. This
+			attribute only applies to services that are not transaction services.
+		-->
+		<attribute name="stoppable" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that workspace context values must be sent with the request. The default
+			is "true".
+		-->
+		<attribute name="sendWorkspaceContext" value="true" type="boolean" />
+		<!---
+			@keywords private
+			Indicates whether or not the <code>dataLanguageIds</code> URL parameter containing
+			the store default language identifier should be sent. The default is <code>false</code>.
+		-->
+		<attribute name="sendDefaultLanguageId" value="false" type="boolean" />
+		<!---
+			Indicates that multiple requests of this type can be sent in parallel (rather than being
+			serialized). This attribute is only applicable to {@link wcfCreateService}, {@link wcfUpdateService}, {@link wcfDeleteService},
+			and {@link wcfCustomService}. The default is "true".
+		-->
+		<attribute name="sendSiblingRequestsInParallel" value="true" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that objectVersionId must be sent with the request. The default
+			is "false".
+		-->
+		<attribute name="sendObjectVersionId" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Indicates that all requests made by this service instance will be serialized. This attribute
+			is ignored for transaction requests.
+		-->
+		<attribute name="serializeRequests" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Array of active requests for this service. This is only used with non transaction requests.
+		-->
+		<attribute name="activeRequests" value="${[]}"/>
+		<!---
+			@keywords private
+			Array of wcfContextValue objects populated by this service.
+		-->
+		<attribute name="contextValues" value="${[]}"/>
+		<!---
+			@keywords private
+			Check that the result set size is over the limit. If this is set to <code>false</code>
+			then the total result set size will be ignored and the entire result set
+			will be unconditionally loaded. This attribute only applies to requests that
+			return a list of objects. The default is <code>true</code>.
+		-->
+		<attribute name="checkResultsOverLimit" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Abort the service if the result set size is over the limit. If this is set to
+			<code>true</code> then the results will be discarded.
+			If this is set to <code>false</code>, then
+			page requests will continue until the maximum result set size is reached.
+			This attribute only applies if <code>checkResultsOverLimit</code> is active. The
+			default is <code>true</code>.
+		-->
+		<attribute name="abortResultsOverLimit" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Indicates that an attempt should be made to retry this request if there is a communication error.
+		-->
+		<attribute name="retryOnError" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the service will be an XML request. 
+		-->
+		<attribute name="xml" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Optional HTML request header for XML request.  
+		-->
+		<attribute name="requestHeader" value="[]"/>
+		<!---
+			Indicates that the failure of this service will prevent subsequent service requests related to the same primary object from being sent.
+			This attribute is only applicable to {@link wcfCreateService}, {@link wcfUpdateService} and {@link wcfDeleteService}. The default is "true".
+		-->
+		<attribute name="abortOnError" value="true" type="boolean"/>
+		<!---
+			This event is triggered when the service completes. It is sent regardless of whether the service completed successfully or unsuccessfully.
+		-->
+		<event name="onserviceComplete"/>
+		<!---
+			@keywords private
+			Indicates whether or not the <code>dataLanguageIds</code> URL parameter containing
+			the current input languages should be sent. The default is <code>false</code>.
+		-->
+		<attribute name="sendInputLanguageIds" value="false" type="boolean" />
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (this.sendIdentity) {
+				new lz.wcfServiceParam(this, {name: "identityId"});
+				new lz.wcfServiceParam(this, {name: "identitySignature"});
+			}
+			if (this.sendMaxItems) {
+				new lz.wcfServiceParam(this, {name: "maxItems", value: this.getMaxItemsToReturn()});
+			}
+			if (this.sendLocale) {
+				new lz.wcfServiceParam(this, {name: "locale"});
+			}
+			if (this.sendWorkspaceContext) {
+				new lz.wcfServiceParam(this, {name: "workspaceName"});
+				new lz.wcfServiceParam(this, {name: "workspaceTaskGroup"});
+				new lz.wcfServiceParam(this, {name: "workspaceTask"});
+				this["workspaceName"].enablementCondition = new lz.wcfEnablementCondition(this["workspaceName"], {contextName: "workspaceTask", enablementValue: "", negate: true});
+				this["workspaceTaskGroup"].enablementCondition = this["workspaceName"].enablementCondition;
+				this["workspaceTask"].enablementCondition = this["workspaceName"].enablementCondition;
+			}
+			if(this.sendDefaultLanguageId) {
+				var model = wcfModelUtil.findModelForView(this);
+				if(model && model.parent.multipleInputLanguages) {
+					new lz.wcfServiceParam(this, {contextName: "defaultLanguageId", parameterName: "dataLanguageIds"});
+				}
+			}
+			if(this.sendInputLanguageIds) {
+				new lz.wcfServiceParam(this, {contextName: "inputLanguageIds", parameterName: "dataLanguageIds"});
+			}
+			if (this.sendTimeZoneId) {
+				new lz.wcfServiceParam(this, {name: "timeZoneId"});
+			}
+			if (this.sendObjectVersionId) {
+				new lz.wcfServiceParam(this, {name: "objectVersionId", propertyName: "objectVersionId"});
+				this["objectVersionId"].enablementCondition = new lz.wcfEnablementCondition(this["objectVersionId"], {propertyName: "objectVersionId", enablementValue: "", negate: true});
+			}
+			if (this.url.charAt(0) == '/') {
+				if (global["serviceContextRoot"]) {
+					this.url = global["serviceContextRoot"] + this.url;
+				}
+				else {
+					this.url = "/lobtools" + this.url;
+				}
+			}
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			if(refreshOnModelInit) {
+				var model = wcfModelUtil.findModelForView(this);
+				if(model != null) {
+					this.refreshDel = new lz.Delegate(this, "doRefreshOnInit");
+					this.refreshDel.register(model, "onmodelInitialized");
+					this.doRefreshOnInit(model.modelInitialized);
+				}
+			}
+			
+			if(this.refreshOnNewIdentity) {
+				this.doRefreshOnNewIdentityDel = new lz.Delegate(this, "doRefreshOnNewIdentity");
+				this.doRefreshOnNewIdentityDel.register(canvas, "onnewIdentity");
+				this.doRefreshOnNewIdentity();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="doRefreshOnNewIdentity" args="e=null">
+			<![CDATA[
+			var identityIdContext = wcfContextUtil.findContextValue(null, "identityId");
+			if (identityIdContext != null && identityIdContext.value != null && identityIdContext.value != "") {
+				this.doRequest();
+			}
+			else {
+				for (var i = 0; i < this.contextValues.length; i++) {
+					var contextValue = this.contextValues[i];
+					contextValue.setAttribute("value", null);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="doRefreshOnInit" args="modelInitialized">
+			<![CDATA[
+			if(modelInitialized == true) {
+				this.doRequest();
+			}
+			else {
+				for (var i = 0; i < this.contextValues.length; i++) {
+					var contextValue = this.contextValues[i];
+					contextValue.setAttribute("value", null);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if(this["refreshDel"]) {
+				this.refreshDel.unregisterAll();
+				delete this.refreshDel;
+			}
+			if(this["doRefreshOnNewIdentityDel"]) {
+				this.doRefreshOnNewIdentityDel.unregisterAll();
+				delete this.doRefreshOnNewIdentityDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Invoke this service for the specified object and arguments.
+			@param node requestParent: The request parent. Depending on the service type
+					this may be an instance of wcfModelObject or wcfModelSearchResults. If
+					it is "null", then the service will be used as the parent.
+			@param Object args: request parameters
+			@param Object extraArgs: contains extra parameters such as:
+				<ul>
+					<li>Number startIndex: The start index for this request. This is used to control paging</li>
+					<li>FileReference fileref: ActionScript FileReference object to upload</li>
+					<li>String content: XML string used in content of the request</li>
+				</ul>
+		-->
+		<method name="doRequest" args="requestParent=null,args=undefined,extraArgs=undefined">
+			<![CDATA[			
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfService", "doRequest", "Entering" + " requestIdentifier=" + (this.requestIdentifier+1) + " " + this.url);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfService", "doRequest(requestParent,args)", [requestParent,args]);				
+			}
+
+			if (requestParent == null) {
+				requestParent = this;
+			} else if (!(requestParent instanceof lz.node) && typeof (requestParent["parent"]) == "undefined") {
+				// For store preview case, requestParent will be the preview options and no parent will be set.
+				requestParent.parent = this;
+			}
+			var o = (requestParent instanceof lz.wcfModelObject) ? requestParent : null;
+			var transaction = null;
+			var abort = false;
+			if (typeof(extraArgs) == "undefined") {
+				extraArgs = {};
+			}
+			if (this.transactionService) {
+				transaction = wcfServiceTransactionUtil.createServiceTransaction(o, this);
+				this.initializeTransaction(transaction);
+				if (extraArgs["fileref"] != null) {					
+					transaction.fileref = extraArgs.fileref;
+				}
+				
+				var oDef = o.objectDefinition;
+				if (oDef.languageSensitive && o.parentObject != null && o.parentObject.getDefaultLanguageObject() == o) {
+					if (oDef.createService == this && o.parentObject.objectDefinition.createService != null && o.parentObject.objectDefinition.createService.sendDefaultLanguageProperties) {
+						abort = true;
+					}
+					if (oDef.saveService == this && o.parentObject.objectDefinition.saveService != null && o.parentObject.objectDefinition.saveService.sendDefaultLanguageProperties) {
+						abort = true;
+					}
+				}
+				if (this.abortEmptyTransactions && wcfServiceTransactionUtil.isEmpty(transaction)) {
+					abort = true;
+				}
+				if (abort) {
+					wcfServiceTransactionUtil.commit(transaction, true);
+				}
+			}
+			if (!abort) {
+				if (typeof(args) == "undefined") {
+					args = {};
+				} else {
+					// make a copy of the arguments
+					var newargs = {};
+					for (var key in args) {
+						newargs[key] = args[key];
+					}
+					args = newargs;
+				}
+				this.requestIdentifier++;
+				if (o != null && this.getService) {
+					// Increment the reference count of the request parent when Get service (Refresh, Get children, Get references) is invoked
+					o.incrementReferenceCount();
+				}
+				if (transaction == null) {
+					this.prepareArguments(o, args);
+					var enabledParams = wcfServiceUtil.getEnabledParameters(this.serviceParams, o);
+					var rpds = {requestParent: requestParent, args: args};
+					wcfServiceUtil.resolveParameters(enabledParams, rpds);
+					var xmlContent = "";
+					if (extraArgs["content"]){
+						xmlContent = extraArgs.content;
+					}
+					var startIndex = 0;
+					if (extraArgs["startIndex"] && extraArgs["startIndex"] != 0){
+						startIndex = extraArgs.startIndex;
+						args.recordSetStartNumber = startIndex;
+					}
+					var getAll = false;
+					if (extraArgs["getAll"]) {
+						getAll = extraArgs.getAll;
+					}
+					var ds = wcfServiceUtil.createServiceDataset({
+						requestParent: requestParent,
+						service: this,
+						args: rpds.args,
+						transaction: transaction,
+						reresolveParameters: rpds.reresolveParameters,
+						loadingParameters: rpds.loadingParameters,
+						serverManagedParameters: rpds.serverManagedParameters,
+						unresolvableParameters: rpds.unresolvableParameters,
+						requestIdentifier: this.requestIdentifier,
+						startIndex: startIndex,
+						xmlContent: xmlContent,
+						getAll: getAll
+					});
+					this.activeRequests.push(ds);
+					if (!this.serializeRequests || this.activeRequests.length == 1) {
+						ds.doRequest();
+					}
+				}
+				else {
+					transaction.requestIdentifier = this.requestIdentifier;
+					wcfServiceTransactionUtil.prepareArguments(transaction, args);
+					wcfServiceTransactionUtil.addPendingTransaction(transaction, true);
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfService", "doRequest(requestParent,args)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Add additional service parameters for the current request.
+			@param wcfModelObject o: The object for which this request is
+					being issued.
+			@param Object args: request parameters object
+		-->
+		<method name="prepareArguments" args="o,args">
+			<![CDATA[
+			if (o != null) {
+				var keyPrefix = this.sendPrefix ? this.propertyPrefix : null;
+				if (this.sendAll) {
+					o.getPropertyValues(args, false, true, keyPrefix, true);
+				}
+				else if (this.sendDirty) {
+					o.getPropertyValues(args, true, true, keyPrefix, true);
+				}
+				if (this.sendParent) {
+					args.parentId = o.objectId;
+				}
+				if (this.sendDefaultLanguageProperties) {
+					var languageObject = o.getDefaultLanguageObject();
+					if (languageObject != null) {
+						if (languageObject.newObject) {
+							languageObject.getPropertyValues(args, false, true, keyPrefix, true);
+						}
+						else {
+							languageObject.getPropertyValues(args, true, true, keyPrefix, true);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Initialize the service transaction object for this request.
+			@param Object transaction: the transaction object
+		-->
+		<method name="initializeTransaction" args="transaction">
+			<![CDATA[
+			if (this.sendDirty || this.sendAll) {
+				wcfServiceTransactionUtil.addSaveObject(transaction, transaction.o);
+				if (this.sendDefaultLanguageProperties) {
+					var defaultLanguageObject = transaction.o.getDefaultLanguageObject();
+					if (defaultLanguageObject != null) {
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfService", "initializeTransaction", "defaultLanguageObject=" + defaultLanguageObject.logString());
+						}
+						wcfServiceTransactionUtil.addSaveObject(transaction, defaultLanguageObject);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when the service has been stopped, aborting a request or response.
+			@param wcfServiceDataset ds: dataset
+		-->
+		<method name="serviceStopped" args="ds">
+			<![CDATA[
+			if (ds.requestParent["objectDefinition"]) {
+				if (this.getService) {
+					// Decrement the reference count of the request parent when Get service (Refresh, Get children, Get references) returns with service exception
+					ds.requestParent.decrementReferenceCount();
+				}
+			}
+			var requestIdentifier = ds.requestIdentifier;
+			if (ds.transaction != null) {
+				wcfServiceTransactionUtil.clearTransactionGroup(ds.transaction.transactionGroupId);
+				wcfServiceTransactionUtil.rollback(ds.transaction);
+			}
+			else {
+				wcfServiceUtil.releaseServiceDataset(ds);
+			}
+			this.onserviceComplete.sendEvent({requestIdentifier: requestIdentifier});
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when a service response is successfuly returned from the server. This does
+			not necessarily mean that the service completed successfully, it just means that there were no
+			communication errors. The specified dataset contains the response XML.
+			@param wcfServiceDataset ds: dataset
+		-->
+		<method name="serviceComplete" args="ds">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfService", "serviceComplete(ds)", [ds]);				
+			}
+			if (ds.transaction != null) {
+				wcfServiceTransactionUtil.clearServiceErrors(ds.transaction);
+			}
+			var commitTransaction = true;
+			var hasMoreRecordsFlag = false;
+			var isRecoveryNeeded = false;
+			var e = ds.dataXML;
+			if (e != null) {
+				if(this.xml){
+					this.parseXML(ds.requestParent,e,ds.requestIdentifier);
+					this.handleServiceSuccess(ds.requestParent);
+				}
+				else if (e.nodeName == "objects") {
+					var abort = false;
+					if (this.hasResultsOverLimit(ds,e)) {
+						this.handleResultsOverLimit(ds,e);
+						if (this.abortResultsOverLimit) {
+							abort = true;
+						}
+					}
+					if (!abort) {
+						hasMoreRecordsFlag = this.hasMoreRecords(ds,e);
+						this.parseObjects(ds.requestParent,e,hasMoreRecordsFlag,ds.requestIdentifier,ds.startIndex);
+					}
+					this.handleServiceSuccess(ds.requestParent);
+				}
+				else if (e.nodeName == "object") {
+					this.parseObject(ds.requestParent,e,ds.requestIdentifier);
+					this.handleServiceSuccess(ds.requestParent);
+				}
+				else if (e.nodeName == "values") {
+					this.parseValues(ds.requestParent,e,ds.requestIdentifier);
+					this.handleServiceSuccess(ds.requestParent);
+				}
+				else if (e.nodeName == "errors") {
+					commitTransaction = false;
+					if (checkRequestRecovery(e)) {
+						wcfContextUtil.findContextValue(null, "identityId").setAttribute("value", null);
+						wcfContextUtil.findContextValue(null, "identitySignature").setAttribute("value", null);
+						var enabledParams = wcfServiceUtil.getEnabledParameters(this.serviceParams, ds.requestParent);
+						wcfServiceUtil.resolveParameters(enabledParams, ds);
+						isRecoveryNeeded = true;
+					}
+					else {
+						if (ds.transaction != null) {
+							wcfServiceTransactionUtil.setTransactionGroupHasError(ds.transaction);
+						}
+						this.parseErrors(ds,e);
+					}
+				}
+			}
+			if (hasMoreRecordsFlag || isRecoveryNeeded) {
+				ds.doRequest();
+			}
+			else if (ds.transaction != null) {
+				var requestIdentifier = ds.requestIdentifier;
+				if (commitTransaction) {				
+					var o = ds.transaction.o;
+					wcfServiceTransactionUtil.commit(ds.transaction);
+					if (this.refreshChildren && o.openGroupObject != null) {						
+						o.openGroupObject.setGetChildrenServicesStale(null);
+					}
+				}
+				else {
+					wcfServiceTransactionUtil.rollback(ds.transaction);
+				}
+				this.onserviceComplete.sendEvent({requestIdentifier: requestIdentifier});
+			}
+			else {
+				var requestIdentifier = ds.requestIdentifier;
+				if (ds.requestParent["objectDefinition"] != undefined && this.getService) {
+					// Decrement the reference count of the request parent when Get service (Refresh, Get children, Get references) is completed
+					ds.requestParent.decrementReferenceCount();
+				}
+				wcfServiceUtil.releaseServiceDataset(ds);
+				if (this.serializeRequests && this.activeRequests.length > 0) {
+					this.activeRequests[0].doRequest();
+				}
+				this.onserviceComplete.sendEvent({requestIdentifier: requestIdentifier});
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "CONFIG", "wcfService", "serviceComplete", this.url);
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfService", "serviceComplete");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Checks if the total number of results of the service request is over the limit
+			@param wcfServiceDataset ds: dataset
+			@param XML e: "objects" element
+		-->
+		<method name="hasResultsOverLimit" args="ds,e">
+			<![CDATA[
+			var overLimit = false;
+			if (this.checkResultsOverLimit) {
+				var maxRecordSetTotal = this.getMaxRecordSetTotal();
+				if (this.abortResultsOverLimit) {
+					var recordSetTotal = Number(e.attributes["recordSetTotal"]);
+					if (!isNaN(recordSetTotal)) {
+						overLimit = recordSetTotal > maxRecordSetTotal;
+					}
+				}
+				else {
+					var recordSetStartNumber = Number(e.attributes["recordSetStartNumber"]);
+					if (isNaN(recordSetStartNumber)) {
+						recordSetStartNumber = 0;
+					}
+					var recordSetCount = Number(e.attributes["recordSetCount"]);
+					var recordSetComplete = e.attributes["recordSetCompleteIndicator"] != "false";
+					if (!isNaN(recordSetCount)) {
+						var currentTotal = recordSetStartNumber + recordSetCount - ds.startIndex;
+						if (currentTotal > maxRecordSetTotal ||
+							(currentTotal == maxRecordSetTotal && !recordSetComplete)) {
+							overLimit = true;
+						}
+					}
+				}
+			}
+			return overLimit;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the maximum record set size allowed.
+			@return integer: maximum record set total
+		-->
+		<method name="getMaxRecordSetTotal">
+			<![CDATA[
+			if (typeof(this.maxRecordSetTotal) == "undefined") {
+				var maxRecordSetTotalContextValue = wcfContextUtil.findContextValue(null, "maxRecordSetTotal");
+				if (maxRecordSetTotalContextValue != null) {
+					this.maxRecordSetTotal = Number(maxRecordSetTotalContextValue.value);
+				}
+			}
+			return this.maxRecordSetTotal;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the maximum record returned per service call.
+			@return integer: maximum record returned per service call
+		-->
+		<method name="getMaxItems">
+			<![CDATA[
+			var maxItemsValue;
+			if (this.sendMaxItems && this["maxItems"]) {
+				maxItemsValue = this.maxItems.value;
+			} else {
+				maxItemsValue = this.getMaxItemsToReturn();
+			}
+			return maxItemsValue;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Gets the valid maximum record returned per service call.
+			@return integer: maximum record returned per service call
+		-->
+		<method name="getMaxItemsToReturn">
+			<![CDATA[
+			var maxItems = this.maxItemsToReturn;
+			if (typeof(maxItems) == "undefined") {
+				var maxItemsContextValue = wcfContextUtil.findContextValue(null, "maxItems");
+				if (maxItemsContextValue != null) {
+					maxItems = Number(maxItemsContextValue.value);
+				}
+			}
+			var pageSize = this.getMaxRecordSetTotal();
+			if (typeof(maxItems) != "undefined" && typeof(pageSize) != "undefined") {
+				if (maxItems > pageSize) {
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfService", "getMaxItemsToReturn", "Page size (" + pageSize + ") is smaller than the maximum items returned (" + maxItems +") per service (" + this.url + ").");
+					}
+					maxItems = pageSize;
+				} else if (maxItems != pageSize) {
+					var remainder = pageSize % maxItems;
+					if (remainder > 0) {
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfService", "getMaxItemsToReturn", "Page size (" + pageSize + ") is not multiples of the maximum items returned (" + maxItems +") per service (" + this.url + ").");
+						}
+						var quotient = Math.ceil(pageSize / maxItems);
+						while (remainder > 0 && quotient > 1) {
+							quotient = quotient - 1;
+							remainder = pageSize % quotient;
+						}
+						if (remainder > 0) {
+							maxItems = pageSize;
+						} else {
+							maxItems = pageSize / quotient;
+						}
+					}
+				}
+			}
+			return maxItems;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This handler will update the maximum record set total if the user changes his page size preference
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				// Check if this event is for the CMCPageSize preference
+				if (preference == "CMCPageSize") {
+					this.maxRecordSetTotal = Number(wcfContextUtil.findContextValue(null, "maxRecordSetTotal").value);
+					if (this.sendMaxItems && this["maxItems"]) {
+						var maxItemsValue = this.getMaxItemsToReturn();
+						if (this.maxItems.value != maxItemsValue) {
+							this.maxItems.setAttribute("value", maxItemsValue);
+						}
+					}
+				}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Check if there are more results awaiting to be returned from this service
+			@param wcfServiceDataset ds: dataset
+			@param XML e: "objects" element
+		-->		
+		<method name="hasMoreRecords" args="ds,e">
+			<![CDATA[
+			var moreRecords = false;
+			if (e.attributes["recordSetCompleteIndicator"] && e.attributes["recordSetCompleteIndicator"] == "false") {
+				if (e.attributes["recordSetReferenceId"] && e.attributes["recordSetReferenceId"] != "") {
+					ds.args.recordSetReferenceId = e.attributes["recordSetReferenceId"];
+				}
+				var recordSetCount = Number(e.attributes["recordSetCount"]);
+				if (!isNaN(recordSetCount)) {
+					var recordSetStartNumber = Number(e.attributes["recordSetStartNumber"]);
+					if (isNaN(recordSetStartNumber)) {
+						recordSetStartNumber = 0;
+					}
+					if (ds.getAll || !this.checkResultsOverLimit || recordSetStartNumber + recordSetCount - ds.startIndex < this.getMaxRecordSetTotal()) {
+						ds.args.recordSetStartNumber = recordSetStartNumber + recordSetCount;
+						moreRecords = true;
+					}
+				}
+				else {
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfService", "hasMoreRecords", "Aborted: Record set count not available");
+					}	
+				}
+			}
+			return moreRecords;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Checks if the recovery is needed on service request or not after a session related error occurred.
+			If it is a session related error, then ask the user to re-logon if necessary or force the user to log out.
+			@param XML e: the data element
+			@return boolean: True if the request recovery is needed; false otherwise.
+		-->
+		<method name="checkRequestRecovery" args="e=null">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.service", "wcfService", "checkRequestRecovery(e)", [e]);
+				}
+				var nodes = e.childNodes;
+				var isRecoveryNeeded = false;
+				for (var i=0; i<nodes.length; i++) {
+					var node = nodes[i];
+					var message = null;
+					var textNode = node.firstChild;
+					if (textNode != null && textNode.nodeType == 3) {
+						message = textNode.nodeValue;
+					}
+					if (message != null) {
+						if (node.nodeName == "exception") {
+							var code = node.attributes["code"];
+							// if the session timed out, then ask the user to relogon again
+							// else if the same user logged onto a new session, then force the user to logout
+							// else log the exception
+							if (code == wcfFoundationConstants.ERROR_EXPIRED_IDENTITY_TOKEN || code == wcfFoundationConstants.MSG_ID_EXPIRED_IDENTITY_TOKEN ) {
+								doSessionTimeout();
+								isRecoveryNeeded = true;
+							}
+							else if (code == wcfFoundationConstants.ERROR_TERMINATED_IDENTITY_TOKEN || code == wcfFoundationConstants.MSG_ID_TERMINATED_IDENTITY_TOKEN) {
+								doSessionTerminated();
+								isRecoveryNeeded = true;
+							}
+							else if (code == wcfFoundationConstants.ERROR_CORRUPTED_IDENTITY_TOKEN || code == wcfFoundationConstants.MSG_ID_CORRUPTED_IDENTITY_TOKEN) {
+								doSessionCorrupted();
+								isRecoveryNeeded = true;
+							}
+						}
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.service", "wcfService", "checkRequestRecovery(e)", isRecoveryNeeded);
+				}
+				return isRecoveryNeeded;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Parse the specified "objects" element. This method is called when an element named "objects"
+			is found in the service response XML.
+			@param node requestParent: service request parent node
+			@param XML e: "objects" element
+			@param boolean hasMoreRecordsFlag: true when more records exist that have not been loaded
+			@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+			@param number startIndex: the start index for this request
+		-->
+		<method name="parseObjects" args="requestParent,e,hasMoreRecordsFlag,reqIdentifier,startIndex">
+		</method>
+		
+		<!---
+			@keywords private
+			Parse the specified XML response element. This method is called when the XML flag is true and a
+			service response XML has been retrieved.
+			@param node requestParent: service request parent node
+			@param XML e: XML document
+			@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+		-->
+		<method name="parseXML" args="requestParent,e,reqIdentifier">
+		</method>
+		
+		<!---
+			@keywords private
+			Parse the specified data element and apply the properties to the
+			specified object. This method is called when an element named "object"
+			is found in the service response XML.
+			@param wcfModelObject o: the model object
+			@param XML e: "object" data element
+			@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+		-->
+		<method name="parseObject" args="o,e,reqIdentifier">
+			<![CDATA[
+			o.parseDataElement(e);
+			]]>
+		</method>
+		
+
+		<!---
+			@keywords private
+			Parse the specified errors element. This method is called when an element named "errors"
+			is found in the service response XML.
+			@param wcfServiceDataset ds: dataset
+			@param XML e: the data element
+		-->
+		<method name="parseErrors" args="ds,e">
+			<![CDATA[
+			var nodes = e.childNodes;
+			for (var i = 0; i < nodes.length; i++) {
+				var node = nodes[i];
+				var message = wcfXMLUtil.getNodeValue(node);
+				if (node.nodeName == "exception") {
+					var code = node.attributes["code"];
+					this.handleException(ds,message,code);
+				}
+				else if (node.nodeName == "validationError") {
+					var propertyName = node.attributes["propertyName"];
+					wcfServiceTransactionUtil.handleValidationError(ds.transaction,message,propertyName);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle service exception. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param string message: the exception message
+			@param string code: the exception code
+		-->
+		<method name="handleException" args="ds,message,code=null">
+			<![CDATA[
+				// log error message to message console in the shell
+				if (ds.requestParent["objectDefinition"]) {
+					if (this.getService) {
+						// Decrement the reference count of the request parent when Get service (Refresh, Get children, Get references) returns with service exception
+						ds.requestParent.decrementReferenceCount();
+					}
+				}
+				messageLogger.logException(code, message);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Handle results set over the UI limit. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param XML e: "values" data element
+		-->
+		<method name="handleResultsOverLimit" args="ds,e">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfService", "handleResultsOverLimit", "Warning: Result set total (" + e.attributes["recordSetTotal"] + ") exceeded maximum results (" + this.getMaxRecordSetTotal() + ").");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when an element named "values"
+			is found in the service response XML.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent,e,requestIdentifier">
+			<![CDATA[
+			if (this.requestIdentifier == requestIdentifier) {
+				this.contextValues = [];
+				var nodes = e.childNodes;
+				for (var i = 0; i < nodes.length; i++) {
+					var node = nodes[i];
+					var parameterName = node.nodeName;
+					var value = wcfXMLUtil.getNodeValue(node);
+					var contextValue = wcfContextUtil.findContextValue(this, parameterName);
+					if (contextValue != null) {
+						contextValue.setAttribute("value", value);
+						this.contextValues.push(contextValue);
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param node requestParent: the parent node for this service request
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "INFO", "wcfService", "handleServiceSuccess", "Service completed for this URL: " + this.url);
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when a communication error occurs during the service request.
+			@param wcfServiceDataset ds: dataset
+			@param string message: error message
+		-->
+		<method name="handleServiceError" args="ds, message">
+			<![CDATA[
+			this.handleException(ds, message);
+			var requestIdentifier = ds.requestIdentifier;
+			if (ds.transaction != null) {
+				wcfServiceTransactionUtil.setTransactionGroupHasError(ds.transaction);
+				wcfServiceTransactionUtil.rollback(ds.transaction);
+			}
+			else {
+				wcfServiceUtil.releaseServiceDataset(ds);
+				if (this.serializeRequests && this.activeRequests.length > 0) {
+					this.activeRequests[0].doRequest();
+				}
+			}
+			this.onserviceComplete.sendEvent({requestIdentifier: requestIdentifier});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		wcfSOAPService will wrap a SOAP envelop around {@link wcfService}.
+		The XML attribute is set to true in this service.
+		
+		Use the addSOAPEnvelop and removeSOAPEvelop to add and remove the
+		SOAP wrapper from the content of your XML request.  The XML envelop will look
+		like this.	
+		
+		@START_CODE
+		<soap:Envelope xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/' xmlns:soap="your SOAP URL">
+			<soap:Header>
+				...
+			</soap:Header>
+			<soap:Body>
+				...
+			</soap:Body>
+		</soap:Envelope>
+		@END_CODE
+	-->
+	<class name="wcfSOAPService" extends="wcfService" xml="true">
+		<switch>
+			<when property="$as3">
+				<passthrough>
+					import flash.xml.XMLDocument;
+				</passthrough>
+			</when>
+		</switch>
+		<!---
+			@keywords private
+			Adds SOAP wrapper around the XML content.
+			@param String headerContent: A string that contains the SOAP header XML
+			@param String bodyContent: A string that contains the SOAP body XML
+			@return String content: returns the XML string including the SOAP envelop
+		-->
+		<method name="createSOAPEnvelop" args="headerContent, bodyContent">
+			<![CDATA[
+			var content = "<soap:Envelope xmlns:soap='http://schemas.xmlsoap.org/soap/envelope/'>"+
+ 								"<soap:Header>"+
+ 									headerContent+
+ 								"</soap:Header>"+
+ 								"<soap:Body>"+
+ 									bodyContent+
+ 								"</soap:Body>"+
+ 							"</soap:Envelope>";
+			return content;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Removes the SOAP wrapper and returns the content inside the <soap:Body>.
+			@param XML content: A string that contains the XML content including the SOAP envelop
+			@return String content: returns the XML string without the SOAP envelop
+		-->
+		<method name="getSOAPBody" args="content">
+			<![CDATA[
+			var soapBody = content.firstChild;
+			if(soapBody.nodeName == "soap:Body"){
+				var bodyContent = soapBody.firstChild;
+				if ($as3) {
+					content = new flash.xml.XMLDocument(wcfStringUtil.unescapeText(bodyContent.toString()));
+				} else {
+					content = new XML(wcfStringUtil.unescapeText(bodyContent.toString()));
+				}
+			}
+			return content;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Service utilities.
+	-->
+	<node id="wcfServiceUtil">
+		<!---
+			Maximum length that a service request URL can be before we
+			start adding in the URL parameters into the post content of the request.
+		-->
+		<attribute name="MAX_URL_LEN" type="number" value="1500"/>
+		<!---
+			Maximum length for URL parameter value. Longer URL parameters will be added
+			to the POST content of the request.
+		-->
+		<attribute name="MAX_URL_PARAM_LEN" type="number" value="100"/>
+		<!---
+			Array of active service datasets.
+		-->
+		<attribute name="serviceDatasets" value="${[]}"/>
+		<!---
+			Array of service datasets that are available for service requests. Service datasets
+			are reused.
+		-->
+		<attribute name="availableServiceDatasets" value="${[]}"/>
+		<!---
+			@keywords private
+			Active service dataset count.
+		-->
+		<attribute name="activeServiceDatasetCount" type="number" value="0"/>
+		<!---
+			@keywords private
+			The map of parameters that contain sensitive data.
+		-->
+		<attribute name="sensitiveParams" value="${{password: true, logonPassword: true, logonPasswordOld: true, logonPasswordNew: true, logonPasswordVerify: true, identitySignature: true}}" />
+		<!--- 
+			@keywords private
+			The number of milliseconds since the last time any service has been submitted.
+		-->
+		<attribute name="lastSubmittedTime" type="number" value="0"/>
+		
+		<!---
+			Stop service requests.
+			@param wcfModel model: object model instance
+		-->
+		<method name="stopServiceRequests" args="model">
+			<![CDATA[
+			var stoppableServiceDatasets = [];
+			for (var i = 0; i < this.serviceDatasets.length; i++) {
+				var ds = this.serviceDatasets[i];
+				if (ds.service.stoppable
+					&& (typeof(model) == "undefined" || model == null
+						|| ds.requestParent["model"] == model)
+					) {
+					stoppableServiceDatasets.push(ds);
+				}
+			}
+			while (stoppableServiceDatasets.length > 0) {
+				stoppableServiceDatasets.shift().stopRequest();
+			}
+			]]>
+		</method>
+
+		<!---
+			Returns all the parameters in the given array that are marked as an always resolve
+			parameter.
+			@param array params: an array of wcfServiceParam values
+			@param ModelObject o: in where the value being used to check with the enablementCondition
+			@return array: array of wcfServiceParam instances that has been validated with its enablementCondition (is there is any)
+		-->
+		<method name="getEnabledParameters" args="params, o">
+			<![CDATA[
+			var enabledParameters = [];
+			for (var i=0; i<params.length; i++) {
+				var isEnabled = true;
+				if (!params[i].isContextValue && params[i]["enablementCondition"]) {
+					if (!params[i].enablementCondition.isEnabled(o)) {
+						isEnabled = false;
+					}
+				}
+				if (isEnabled) {
+					enabledParameters.push(params[i]);
+				}
+			}
+			return enabledParameters;
+			]]>
+		</method>
+		
+		<!---
+			Resolve the declared parameters for this request and add the arguments and resolved parameters array to the specified ds object.
+			@param array params: an array of wcfServiceParam values to resolve
+			@param Object ds:  An object containing the following parameters:
+								node requestParent: the request parent node
+							   	Object args: request parameters object into which the resolved values will be populated
+								Array reresolveParameters:	An array of parameters to reresolve
+								Array loadingParameters: An array of unresolved parameters that are loading
+								Array serverManagedParameters: An array of unresolved parameters that are server managed
+								Array unresolvableParameters: An array of unresolvable parameters
+		-->
+		<method name="resolveParameters" args="params,ds">
+			<![CDATA[
+			var reresolveParameters = [];
+			var loadingParameters = [];
+			var serverManagedParameters = [];
+			var unresolvableParameters = [];
+			for (var i = 0; i < params.length; i++) {
+				var param = params[i];
+				var enabled = true;
+				if (param.isContextValue && param["enablementCondition"] && !param.enablementCondition.isEnabled(ds.requestParent)) {
+					enabled = false;
+				}
+				var value = null;
+				var values = param.getValues(ds.requestParent, true);
+				var noValue = false;
+				var reresolve = false;
+				var loading = false;
+				var serverManaged = false;
+				if (values.length > 1) {
+					value = values;
+				}
+				else if (values.length == 1) {
+					value = values[0];
+					if (value == "" && !param.optional) {
+						noValue = true;
+						if (param.isContextValue) {
+							reresolve = true;
+							loading = true;
+						}
+						else if (param.isPropertyValue) {
+							var valueSource = param.getValueSource(ds.requestParent);
+							if (valueSource.propertyName == valueSource.o.objectDefinition.idProperty
+									|| valueSource.propertyName == "objectStoreId"
+									|| (valueSource["propertyDefinition"] && valueSource.propertyDefinition.serverManaged)) {
+								reresolve = true;
+								serverManaged = true;
+							}
+						}
+					}
+					else if (param.isContextValue) {
+						reresolve = true;
+					}
+				}
+				if (value == null && !param.optional) {
+					noValue = true;
+					if (param.parentProperty) {
+						if (!ds.requestParent.isParentLoaded(param.parentType)) {
+							reresolve = true;
+							loading = true;
+						}
+						else {
+							if (wcfLogger.enabled) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfService", "resolveParameters", "Unable to resolve parameter: " + param.parameterName);
+						 	}	
+						}
+					}
+					else if (param.isContextValue && param.isResolvable(ds.requestParent)) {
+						reresolve = true;
+						loading = true;
+					}
+					else {
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "WARNING", "wcfService", "resolveParameters", "Unable to resolve parameter: " + param.parameterName);
+					 	}
+					}
+				}
+				if (reresolve) {
+					reresolveParameters.push(param);
+				}
+				if (noValue) {
+					if (loading && enabled) {
+						loadingParameters.push(param);
+					}
+					if (serverManaged) {
+						serverManagedParameters.push(param);
+					}
+					if (!reresolve && !param.optional) {
+						unresolvableParameters.push(param);
+					}
+				}
+				if (value == null) {
+					value = "";
+				}
+				if (enabled && (value != "" || param.sendEmpty)) {
+					ds.args[param.parameterName] = value;
+				}
+			}
+			ds.reresolveParameters = reresolveParameters;
+			ds.loadingParameters = loadingParameters;
+			ds.serverManagedParameters = serverManagedParameters;
+			ds.unresolvableParameters = unresolvableParameters;
+			]]>
+		</method>
+		
+		<!---
+			Returns a service dataset instance primed with the specified arguments. This may
+			be a new or recycled instance.
+			@param object args: the create arguments for the service dataset
+		-->
+		<method name="createServiceDataset" args="args">
+			<![CDATA[
+			var ds;
+			if (this.availableServiceDatasets.length > 0) {
+				ds = this.availableServiceDatasets.pop();
+				for (var i in args) {
+					ds.setAttribute(i, args[i]);
+				}
+			}
+			else {
+				ds = new lz.wcfServiceDataset(this, args);
+			}
+			if (wcfEventTimer.enabled) ds.eventId = wcfEventTimer.currentEventId;
+			this.serviceDatasets.push(ds);
+			this.activeServiceDatasetCount++;
+			return ds;
+			]]>
+		</method>
+		
+		<!---
+			Release the specified service dataset and make it available for future requests.
+			@param wcfServiceDataset ds: the service dataset to release
+		-->
+		<method name="releaseServiceDataset" args="ds">
+			<![CDATA[
+			for (var i = 0; i < this.serviceDatasets.length; i++) {
+				if (this.serviceDatasets[i] == ds) {
+					this.serviceDatasets.splice(i, 1);
+					break;
+				}
+			}
+			this.activeServiceDatasetCount--;
+			ds.release();
+			this.availableServiceDatasets.push(ds);
+			]]>
+		</method>
+		
+	</node>
+
+	<!---
+		A service that will return a list of business objects that reference the current object. References
+		are used to describe a relationship between two primary objects. A wcfGetReferencesService may only
+		be declared as an immediate sub-node of an instance of {@link wcfPrimaryObjectDefinition}.
+		The get references service will be invoked for business objects that are described by the parent object definition
+		when the framework determines that the references are required. The references of a business object are required when
+		the user performs the following actions:
+		<ul>
+			<li>launches the properties view for a business object</li>
+			<li>opens a references navigation view for an object by selecting it in the explorer view</li>
+		</ul>
+		
+		<p>Get references services must be prepared to accept the following implicit parameters:
+		<ul>
+			<li>maxItems: This is an integer value that indicates the desired page size for the result set.</li>
+			<li>recordSetStartNumber: This is an integer value that is sent if the result set is broken up
+			into multiple pages. The second and subsequent page requests will include this parameter.</li>
+			<li>dataLanguageIds: This is the default language ID. Get references services that return translated data
+			must respect this parameter and only return the translated data that matches the specified language identifiers.</li>
+		</ul>
+		
+		<p>Additional required service parameters can be defined by declaring instances of
+		{@link wcfServiceParam} as children of the wcfGetReferencesService instance.
+		
+		<p>The following example demonstrates the declaration of a get references service
+		that loads the products that reference the current product through the merchandising
+		association relationship. The service requires three parameters, the store ID which
+		is resolved from the "storeId" context values, the catalog entry ID which is resolved
+		from the current object's "catentryId" property, and the catalog entry type which is
+		hard coded to "ProductBean".
+		
+		@START_CODE
+		<GetReferencesService url="/cmc/GetProductChildren-ReferenceAssociations">
+			<ServiceParam name="storeId" />
+			<ServiceParam name="catentryId" propertyName="catentryId" />
+			<ServiceParam name="catenttypeId" value="ProductBean" />
+		</GetReferencesService>
+		@END_CODE
+		
+		<p>The successful response from a get references service must be an XML document that has a root element named
+		"objects". The child elements of the "objects" element must all be named "reference" and they
+		must have a single child element named "object". The "object" elements must indicate their object type by specifying
+		the "objectType" attribute. The root "objects" element must include the following attributes:
+		<ul>
+			<li>recordSetCompleteIndicator - this value is true if the response is the last page of the result set</li>
+			<li>recordSetStartNumber - the starting index into the result set for the current page</li>
+			<li>recordSetCount - the number of objects returned by this page</li>
+			<li>recordSetTotal - the total number of objects in the complete result set</li>
+		</ul>
+		The "objects" element may optionally include an attribute called "recordSetReferenceId" that will be sent back
+		as a parameter on the request for the next page of referencing objects. This may be used to optimize the get references service.
+		
+		<p>Object and property elements returned from a get references service may optionally include a "readonly" attribute.
+		If the value is set to "true", then the framework will prevent the user from making changes to that object
+		or property instance.
+		
+		<p>The following sample demonstrates a response that returns two referencing product objects. Notice that
+		the list of objects returned are reference objects that include their parent primary object using
+		the "parent" tag.
+		
+		@START_CODE
+		<objects recordSetCompleteIndicator="true"
+				recordSetReferenceId="65024510-df44-11dc-83e5-829b47bb4a4f:5"
+				recordSetStartNumber="0" recordSetCount="2" recordSetTotal="2">
+			<reference>
+				<object objectType="ProductMerchandisingAssociation">
+					<associationId>10750</associationId>
+					<parent>
+						<object objectType="Product">
+							<type>Product</type>
+							<catenttypeId readonly="true">ProductBean</catenttypeId>
+							<catentryId>10275</catentryId>
+							<partnumber>FUCO-01</partnumber>
+							<object objectType="CatalogEntryDescription">
+								<languageId>-1</languageId>
+								<name>Sleek Occasional Table</name>
+								<sDesc>The sleek styling makes this occasional
+								table a perfect addition to your home.</sDesc>
+							</object>
+						</object>
+					</parent>
+				</object>
+			</reference>
+			<reference>
+				<object objectType="ProductMerchandisingAssociation">
+					<associationId>10752</associationId>
+					<parent>
+						<object objectType="Product">
+							<type>Product</type>
+							<catenttypeId readonly="true">ProductBean</catenttypeId>
+							<catentryId>10277</catentryId>
+							<partnumber>FUCO-02</partnumber>
+							<object objectType="CatalogEntryDescription">
+								<languageId>-1</languageId>
+								<name>Modern Occasional Table</name>
+								<sDesc>Modern occasional table to go with the
+								modern decor.</sDesc>
+							</object>
+						</object>
+					</parent>
+				</object>
+			</reference>
+		</objects>
+		@END_CODE
+		
+		<p>If an exception occurs while processing a get references service, the response must be an XML document that
+		has a root element named "errors". The "errors" element must include one child element named "exception".
+		The "exception" element includes a message suitable for display to the user. The following example demonstrates
+		a valid error response for a get references service.
+
+		@START_CODE
+		<errors>
+			<exception>You do not have the required access rights to perform this operation.</exception>
+		</errors>
+		@END_CODE
+	-->
+	<class name="wcfGetReferencesService" extends="wcfService" sendMaxItems="true" getService="true" stoppable="true" sendDefaultLanguageId="true" sendObjectVersionId="true" retryOnError="true">
+		<!---
+			A comma separated list of primary {@link wcfObjectDefinition#objectType object types} returned by this get references service.
+		-->
+		<attribute name="primaryObjectTypes" type="string" value="${null}"/>
+		<!---
+			A comma separated list of reference {@link wcfObjectDefinition#objectType object types} returned by this get references service.
+			The reference object types will be matched against the primary object definitions identified by <code>primaryObjectTypes</code>. The
+			reference object definitions do not need to be declared as immediate children of the primary object definition. They can be anywhere
+			in the primary object definition.
+		-->
+		<attribute name="referenceObjectTypes" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			The message to be shown in the widget that displays the list of business objects returned by this service when
+			the number of objects is over the limit.
+		-->
+		<attribute name="serviceOverLimitMsg" type="string" value="${foundationResources.tooManyObjectsMsg.string}" />
+		<!---
+			@keywords private
+			Array of primary object definitions.
+		-->
+		<attribute name="primaryObjectDefinitions" value="${null}"/>
+		<!---
+			@keywords private
+			String array of the object types specified by referenceObjectTypes.
+		-->
+		<attribute name="referenceObjectTypesArray" value="${[]}"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			var services = parent["getReferencesServices"];
+			if (!services) {
+				services = [];
+				parent.getReferencesServices = services;
+			}
+			services.push(this);
+			this.doParseCompleteDel = new lz.Delegate(this, "doParseComplete");
+			this.doParseStopDel = new lz.Delegate(this, "doParseStop");
+			if (this.referenceObjectTypes != null) {
+				this.referenceObjectTypesArray = wcfStringUtil.splitAndTrim(this.referenceObjectTypes, ",");
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->		
+		<method name="destroy">
+			<![CDATA[
+			super.destroy();
+			delete this.doParseCompleteDel;
+			delete this.doParseStopDel;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Parse the "objects" element returned from a successful request.
+			@param wcfModelObject o: the parent object
+			@param XML e: the objects data element
+			@param boolean hasMoreRecordsFlag: true when more records exist that have not been loaded
+			@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+			@param number startIndex: the start index for this request
+		-->
+		<method name="parseObjects" args="o,e,hasMoreRecordsFlag,reqIdentifier,startIndex">
+			<![CDATA[
+			o.model.doDeferredParseObjects(e, o, this.doParseCompleteDel, {o: o, hasMoreRecordsFlag: hasMoreRecordsFlag, reqIdentifier: reqIdentifier}, this.stoppable, this.doParseStopDel, {o: o, hasMoreRecordsFlag: hasMoreRecordsFlag});
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Parse the specified data element and apply the properties to the
+			specified object. This method is called when an element named "object"
+			is found in the service response XML.
+			@param wcfModelObject o: the model object
+			@param XML e: "object" data element
+			@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+		-->
+		<method name="parseObject" args="o,e,reqIdentifier">
+			<![CDATA[
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "SEVERE", "wcfGetReferencesService", "onerror", "Unexpected <object> tag returned by get references service: " + this.url + ". Get references services must return <objects> tag.");
+			]]>
+		</method>
+
+		
+		<!--- @keywords private -->		
+		<method name="doParseComplete" args="args">
+			<![CDATA[
+			var hasMoreRecordsFlag = args.hasMoreRecordsFlag;
+			var o = args.o;
+			o.updateReferences(true);
+			if (!hasMoreRecordsFlag) {
+				o.referenceServiceRequestCompleted(this);
+			}
+			if (wcfEventTimer.enabled) {
+				wcfEventTimer.updateObjCount(args.objects.length);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="doParseStop" args="args">
+			<![CDATA[
+			if (!args.hasMoreRecordsFlag) {
+				args.o.referenceServiceRequestError(this);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when the service has been stopped, aborting a request or response.
+			@param wcfServiceDataset ds: dataset
+		-->
+		<method name="serviceStopped" args="ds">
+			<![CDATA[
+			ds.requestParent.referenceServiceRequestError(this);
+			super.serviceStopped(ds);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Parse the specified errors element. This method is called when an element named "errors"
+			is found in the service response XML.
+			@param wcfServiceDataset ds: dataset
+			@param XML e: the data element
+		-->
+		<method name="parseErrors" args="ds,e">
+			<![CDATA[
+			ds.requestParent.referenceServiceRequestError(this);
+			super.parseErrors(ds, e);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle service exception.
+			@param wcfServiceDataset ds: dataset
+			@param string message: the exception message
+			@param string code: the exception code
+		-->
+		<method name="handleException" args="ds,message,code=null">
+			<![CDATA[
+			super.handleException(ds, message, code);
+			ds.requestParent.referenceServiceRequestError(this, message);
+			]]>
+		</method>		
+		
+		<!---
+			@keywords private
+			Handle results set over the UI limit.
+			@param wcfServiceDataset ds: dataset
+			@param XML e: "values" data element
+		-->
+		<method name="handleResultsOverLimit" args="ds,e">
+			<![CDATA[
+			ds.requestParent.referenceServiceRequestError(this, this.serviceOverLimitMsg);
+			super.handleResultsOverLimit(ds,e);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the maximum record set size allowed.
+			@return integer: maximum record set total
+		-->
+		<method name="getMaxRecordSetTotal">
+			<![CDATA[
+			// always return 500 as the maximum record set size
+			return 500;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the array of primary object definitions.
+			@param wcfModel model: the model
+			@return [wcfPrimaryObjectDefinition]: array of primary object definitions
+		-->
+		<method name="getPrimaryObjectDefinitions" args="model">
+			<![CDATA[
+			if (this.primaryObjectDefinitions == null) {
+				this.primaryObjectDefinitions = [];
+				if (this.primaryObjectTypes) {
+					var types = wcfStringUtil.splitAndTrim(this.primaryObjectTypes, ",");
+					for (var i = 0; i < types.length; i++) {
+						var def = model.getObjectDefinition(null, types[i]);
+						if (def) {
+							this.primaryObjectDefinitions.push(def);
+						}
+						else {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "SEVERE", "wcfGetReferencesService", "getPrimaryObjectDefinitions", "Unable to resolve primary object type: " + types[i]);
+						}
+					}
+				}
+			}
+			return this.primaryObjectDefinitions;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if at least one of this service's primary object/reference object combinations match the specified array of object types.
+			@param wcfPrimaryObjectDefinition referencedDef The referenced primary object definition to test
+			@param [string] types: an array of object types begining with the reference object type and progressing to the primary object type
+			@return boolean: true if the type array matches any of this services reference object paths
+		-->
+		<method name="matchesObjectTypes" args="referencedDef,types">
+			<![CDATA[
+			var match = false;
+			var primaryDefs = this.getPrimaryObjectDefinitions(referencedDef.model);
+			for (var i = 0; i < primaryDefs.length; i++) {
+				var primaryDef = primaryDefs[i];
+				var primaryIndex = null;
+				for (var j = 0; j < types.length; j++) {
+					if (primaryDef.matchesType(types[j])) {
+						primaryIndex = j;
+						break;
+					}
+				}
+				if (primaryIndex) {
+					var matchingDefs = [primaryDef];
+					for (var j = primaryIndex - 1; j >= 0; j--) {
+						var type = types[j];
+						var childDefs = [];
+						for (var k = 0; k < matchingDefs.length; k++) {
+							var defs = matchingDefs[k].getChildDefinitions(type);
+							while (defs.length > 0) {
+								childDefs.push(defs.shift());
+							}
+						}
+						matchingDefs = childDefs;
+					}
+					for (var j = 0; j < matchingDefs.length; j++) {
+						var def = matchingDefs[j];
+						if (def.reference && def.isReferencedDefinition(referencedDef)) {
+							for (var k = 0; k < this.referenceObjectTypesArray.length; k++) {
+								if (def.matchesType(this.referenceObjectTypesArray[k])) {
+									match = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			return match;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		Ping server service to check for connection.
+	-->
+	<wcfService id="wcfPingService" url="/cmc/PingServer" sendWorkspaceContext="false" retryOnError="true">
+		<!---
+			@keywords private
+			Parse the specified data element and apply the properties to the
+			specified object. This method is called when an element named "object"
+			is found in the service response XML.
+			@param wcfModelObject o: the model object
+			@param XML e: "object" data element
+			@param number reqIdentifier: the request identifier associated with the dataset that returned this data
+		-->
+		<method name="parseObject" args="o,e,reqIdentifier">
+		</method>
+		<!---
+			@keywords private
+			This method is called when a service completed successfully.
+			@param node requestParent: the parent node for this service request
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+			wcfServiceTransactionUtil.pingCompleted = true;
+			wcfServiceTransactionUtil.triggerPendingTransactions();
+			super.handleServiceSuccess(requestParent);
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Handle service exception. 
+			@param wcfServiceDataset ds: dataset
+			@param string message: the exception message
+			@param string code: the exception code
+		-->
+		<method name="handleException" args="ds,message,code=null">
+			<![CDATA[
+			wcfServiceTransactionUtil.pingCompleted = true;
+			wcfServiceTransactionUtil.triggerPendingTransactions();
+			super.handleException(ds, message, code);
+			]]>
+		</method>
+	</wcfService>
+
+</library>

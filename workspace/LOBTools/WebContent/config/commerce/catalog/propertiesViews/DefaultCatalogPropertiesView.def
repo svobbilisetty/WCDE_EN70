@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This definition defines the properties of Default Catalog Configurations.
+	-->
+   <ObjectProperties definitionName="catDefaultCatalogProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="manageDefaultCatalogTab" text="${catalogResources.manageDefaultCatalogTab}">
+				<PropertyPane baseDefinitionName="catManageDefaultCatalog"/>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+	
+	<!---
+		This definition defines the property details displayed in the properties view of Default Catalog Configurations.
+	-->
+	
+	<PropertyPane definitionName="catManageDefaultCatalog">
+		
+		<!-- Property Group for displaying property asset information, like the owning store and workspace information -->
+		<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>
+		
+		<!--- 
+			The property group which contains the inherited default catalog configuration.
+		-->
+		<PropertyGroup collapsable="false" name="inheritedDefaultCatalogPropertiesGroup" open="true">
+			<PropertyChildListEditor name="inheritedDefaultCatalogList" objectTypes="InheritedDefaultCatalogReference" singleChild="true" displayObjectStoreName="true" extendedHelpText="${catalogResources.extendedHelpText_DefaultCatalog}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="concepts/cpndefaultcatalog.htm" listDefinitionName="catDefaultCatalogGrid"  promptText="${catalogResources.inheritedDefaultCatalogSection}"/>
+			<EnablementOrCondition conditionId="localObjectTypesAndStoreCondition">
+				<EnablementCondition conditionId="b2cESiteStoreCondition" contextName="storeType" enablementValue="MHS"/>
+				<EnablementCondition conditionId="b2bESiteStoreCondition" contextName="storeType" enablementValue="BMH"/>
+			</EnablementOrCondition>
+		</PropertyGroup>
+		
+		
+		<!--- 
+			The property group which contains the default catalog configuration.
+		-->
+		<PropertyGroup collapsable="false" name="defaultCatalogPropertiesGroup" open="true">
+			<PropertyChildListEditor name="defaultCatalogList" objectTypes="DefaultCatalogReference" singleChild="true" displayStoreName="true" extendedHelpText="${catalogResources.extendedHelpText_DefaultCatalog}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="concepts/cpndefaultcatalog.htm" listDefinitionName="catDefaultCatalogGrid"  promptText="${catalogResources.defaultCatalogSection}"/>
+			<TrueEnablementCondition/>
+		</PropertyGroup>
+	</PropertyPane>
+	
+  	<!---
+		This definition is used to display detail information about the Default Catalog Configuration. 
+	-->	
+	
+	<ObjectGrid name="defaultCatalogGrid" editable="true" definitionName="catDefaultCatalogGrid" preferenceKey="catDefaultCatalogGrid">
+		<GridIconTypeImage name="typeIcon" enableFilter="true" propertyName="typeIcon" required="true" sortable="false" text="${catalogResources.type_ColumnHeader}" visible="true" width="80"/>
+		<GridStoreName name="store" objectPath="AllCatalogAlias"/>	
+		<!-- The unique id of the catalog being set as default -->			
+		<GridText editable="false" name="catalogId" objectPath="AllCatalogAlias" propertyName="catalogId" text="${catalogResources.uniqueId_ColumnHeader}" required="true" visible="true" width="90"/>
+		<!-- The code of the catalog being set as default -->
+		<GridText editable="false" name="identifier" objectPath="AllCatalogAlias" propertyName="identifier" text="${catalogResources.codePrompt}" required="true" visible="true" width="150"/>
+		<!--  The name of the catalog being set as default -->
+		<GridText editable="false" name="catalogName" objectPath="AllCatalogAlias/SalesCatalogDescription" propertyName="name" text="${catalogResources.namePrompt}" required="true" visible="true" width="170"/>
+		
+		<!--  Customer Field 1 -->
+		<GridStepper editable="true" name="xdefcat_Field1" datatype="number" propertyName="xdefcat_Field1" text="${catalogResources.defaultCatalogField1Prompt}" visible="false" minimumValue="-2147483648" maximumValue="2147483647" width="150"/>
+		<!--  Customer Field 2 -->
+		<GridText editable="true" name="xdefcat_Field2" propertyName="xdefcat_Field2" text="${catalogResources.defaultCatalogField2Prompt}" visible="false" width="150"/>
+		<!--  Customer Field 3 -->
+		<GridText editable="true" name="xdefcat_Field3" propertyName="xdefcat_Field3" text="${catalogResources.defaultCatalogField3Prompt}" visible="false" width="150"/>		
+	</ObjectGrid>
+	
+</Definitions>

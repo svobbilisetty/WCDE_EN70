@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBaseCorporateInfoPagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglCorporateInfoPageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglCorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts}
+			representing the reference to the corporate info page layout objects which hold a page layout association with this static corporate info page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts}
+			representing the reference to the inherited corporate info page layout objects which hold a page layout association with this static corporate info page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts}
+			representing the reference to the inherited corporate info page layout objects which hold a page layout association with this inherited corporate info page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the static corporate info page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCorporateInfoPageReferenceDefaultCorporateInfoPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglCorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts},
+			{@link pglCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts} and {@link pglInheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts}
+			references for this static corporate info page.
+		-->
+		<GetChildrenService objectTypes="CorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts,CorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts,InheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="CorporateInfoPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this Corporate Info Page.
+		-->
+		<GetChildrenService objectTypes="CorporateInfoPageReferenceDefaultCorporateInfoPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="CorporateInfoPage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for the corporate info page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="CorporateInfo"/>
+		</GetPreviewURLService>		
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Corporate Info Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseCorporateInfoPagePrimaryObjectDefinition"
+     	definitionName="CorporateInfoPage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="CorporateInfoPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Corporate Info Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseCorporateInfoPagePrimaryObjectDefinition"
+     	definitionName="InheritedCorporateInfoPage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedCorporateInfoPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglCorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts" objectType="CorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts" referencedTypes="CorporateInfoPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" definitionName="pglCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" objectType="CorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" referencedTypes="InheritedCorporateInfoPageLayout"/>    
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="CorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" definitionName="pglInheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" objectType="InheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" referencedTypes="InheritedCorporateInfoPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglCorporateInfoPageReferenceDefaultCorporateInfoPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="CorporateInfoPageReferenceDefaultCorporateInfoPageLayout" 
+		referencedTypes="CorporateInfoPageLayout,InheritedCorporateInfoPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

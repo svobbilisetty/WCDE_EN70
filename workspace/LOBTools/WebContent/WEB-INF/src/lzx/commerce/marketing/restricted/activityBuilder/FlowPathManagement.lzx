@@ -1,0 +1,68 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<class name="mktPropertyPathListEditor" extends="wcfPropertyPathListEditor">
+		<!---
+			@keywords private
+			This method creates the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.mktBasePathListEditor(parentComponent, {
+				name: "editor",
+				model: parentComponent.model,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				o: parentComponent.o,
+				objectTypes: this.objectTypes,
+				listClass: this.listClass,
+				listDefinitionName: this.listDefinitionName,
+				embedded: true,
+				singleChild: this.singleChild,
+				newButtonResource: this.newButtonResource
+			});
+			
+			if (parentComponent["prompt"]) {
+				parentComponent.prompt.setAttribute('y', parentComponent.editor.content.y);
+			}
+			
+			if (parentComponent["extendedHelpIcon"]) {			
+				parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.content.y);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="mktBasePathListEditor" extends="wcfBasePathListEditor">
+		<!---
+			@keywords private
+			Invoke delete for the given wcfModelObjects.
+			@param Array objects: An array of wcfModelObject objects
+		-->
+		<method name="doDeleteObjects" args="objects">
+			<![CDATA[
+				super.doDeleteObjects(objects);
+				
+				var activity = this.o.getParentPrimaryObject();
+				var exp = mktFlowUtils.hasExperiment(activity) ? "Experiment" : "";
+				if(exp != activity.getPropertyValue("experimentType")) {
+					activity.setPropertyValue("experimentType", null, exp);
+				}
+			]]>
+		</method>
+	</class>
+
+</library>

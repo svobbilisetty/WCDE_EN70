@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link prcCalculatePriceElementObject}.
+	-->
+	<FlowElementProperties definitionName="prcCalculatePriceElementProperties">
+
+		<PropertyGroup collapsable="false" name="calculatePrice">
+			<MultiValueSelector name="optionsSelector" promptText="${prcPriceResources.calculatePriceOptions}" useRadioButtons="true" helpText="${prcPriceResources.helpText_Options}" helpLinkURL="concepts/cpiactcalcprice.htm">
+				<MultiValueSelection displayName="${prcPriceResources.markUpPrice}" name="markUp">
+					<Xml name="values">
+						<calculationType>markUp</calculationType>
+						<markUpPercentage significant="false" ></markUpPercentage>
+						<markDownPercentage significant="false" ></markDownPercentage>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${prcPriceResources.markDownPrice}" name="markDown">
+					<Xml name="values">
+						<calculationType>markDown</calculationType>
+						<markUpPercentage significant="false" ></markUpPercentage>
+						<markDownPercentage significant="false" ></markDownPercentage>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${prcPriceResources.usePriceEquation}" name="usePriceEquation">
+					<Xml name="values">
+						<calculationType>usePriceEquation</calculationType>
+						<markUpPercentage significant="false" >0</markUpPercentage>
+						<markDownPercentage significant="false">0</markDownPercentage>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+					 
+			<PropertyGroup collapsable="false" name="markUpType">
+				<EnablementCondition conditionId="markCalculationUpType" enablementValue="markUp" propertyName="calculationType"/>
+				<PropertyNumericText promptText="${prcPriceResources.markUp_PromptText}" propertyName="markUpPercentage" required="true"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="markDownType">
+				<EnablementCondition conditionId="markCalculationDownType" enablementValue="markDown" propertyName="calculationType"/>
+				<PropertyNumericText promptText="${prcPriceResources.markDown_PromptText}" propertyName="markDownPercentage" required="true"/>
+			</PropertyGroup>
+					
+			<PropertyGroup collapsable="false" name="priceEquation">
+				<EnablementCondition conditionId="usePriceEquationCalculationType" enablementValue="usePriceEquation" propertyName="calculationType"/>
+				<PropertyChildListEditor listDefinitionName="prcPriceEquationRefListGrid" name="priceEquationEditor" objectTypes="RefPriceEquation,InheritedRefPriceEquation" promptText="${prcPriceResources.priceEquationLabel}" singleChild="true" required="true" validatorTypes="noPriceEquationProvided" helpText="${prcPriceResources.helpText_calculatePrice_equation}" helpLinkURL="concepts/cpiequation.htm"/>
+			</PropertyGroup>
+		</PropertyGroup>			
+	</FlowElementProperties>
+	<ObjectGrid definitionName="prcPriceEquationRefListGrid" preferenceKey="prcPriceEquationRefListGrid">
+        <GridText editable="false" name="priceEquationId" propertyName="priceEquationId" text="${prcPriceResources.uniqueId}" visible="false" width="90"/>
+        <GridIconTypeImage name="typeIcon" propertyName="" required="true" text="${prcPriceResources.type}" width="100"/>
+    	<GridStoreName name="store" objectPath="PriceEquationGroup" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+    	<GridText editable="false" name="priceEquationName" objectPath="PriceEquationGroup" propertyName="name" text="${prcPriceResources.nameString}" width="175"/>
+    	<GridText editable="false" name="priceEquationDescription" objectPath="PriceEquationGroup" propertyName="description" text="${prcPriceResources.description}" width="250"/>
+    </ObjectGrid> 
+</Definitions>

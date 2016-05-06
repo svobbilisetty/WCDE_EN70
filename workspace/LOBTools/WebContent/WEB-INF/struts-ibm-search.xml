@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+	<action-mappings>
+		
+		<!-- Catalog Tool Search Term Association -->
+		<!-- ========= -->
+		<action path="/GetSearchTermAssociations" forward="/jsp/commerce/catalog/restricted/GetSearchTermAssociations.jsp" />
+		
+		<action path="/RefreshSearchTermAssociations" forward="/jsp/commerce/catalog/restricted/RefreshSearchTermAssociations.jsp" />
+		
+		<action path="/PublishSearchTermAssociations" parameter="OnlineStore"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.infrastructure.facade.datatypes.InfrastructureFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.infrastructure.facade.client.InfrastructureFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processOnlineStore" />
+			<set-property property="actionCode" value="PublishSearchTermAssociations"/>
+		</action>	
+		
+		<action path="/GetSynonyms" forward="/jsp/commerce/catalog/restricted/GetSynonyms.jsp" />
+				
+		<action path="/CreateSynonym" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processSearchTermAssociation" />
+			<set-property property="actionCode" value="Create"/>
+			
+			<set-property property="var" value="synonym" />
+			<forward name="success" path="/jsp/commerce/catalog/restricted/RespondCreateSynonym.jsp"/>
+						
+		</action>
+		
+		<action path="/UpdateSynonym" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeSearchTermAssociation" />
+			<set-property property="actionCode" value="Update"/>
+		</action>
+		
+		<action path="/DeleteSynonym" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processSearchTermAssociation" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/GetReplacements" forward="/jsp/commerce/catalog/restricted/GetReplacements.jsp" />
+		
+		<action path="/CreateReplacement" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processSearchTermAssociation" />
+			<set-property property="actionCode" value="Create"/>
+			
+			<set-property property="var" value="replacements" />
+			<forward name="success" path="/jsp/commerce/catalog/restricted/RespondCreateReplacement.jsp"/>
+			
+		</action>
+		
+		<action path="/UpdateReplacement" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeSearchTermAssociation" />
+			<set-property property="actionCode" value="Update"/>
+		</action>
+		
+		<action path="/DeleteReplacement" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processSearchTermAssociation" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/GetLandingPages" forward="/jsp/commerce/catalog/restricted/GetLandingPages.jsp" />
+		
+		<action path="/CreateLandingPage" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processSearchTermAssociation" />
+			<set-property property="actionCode" value="Create"/>
+			
+			<set-property property="var" value="landingPage" />
+			<forward name="success" path="/jsp/commerce/catalog/restricted/RespondCreateLandingPage.jsp"/>
+			
+		</action>
+		
+		<action path="/DeleteLandingPage" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processSearchTermAssociation" />
+			<set-property property="actionCode" value="Delete"/>
+		</action>
+		
+		<action path="/UpdateLandingPage" parameter="SearchTermAssociation"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.search.facade.datatypes.SearchFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.search.facade.client.SearchFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="changeSearchTermAssociation" />
+			<set-property property="actionCode" value="Update"/>
+		</action>
+		
+		<action path="/GetTopSearchHits" forward="/jsp/commerce/catalog/restricted/GetTopSearchHits.jsp" />
+		<action path="/GetTopSearchHitTotal" forward="/jsp/commerce/catalog/restricted/GetTopSearchHitTotal.jsp" />
+		<action path="/GetTopSearchMisses" forward="/jsp/commerce/catalog/restricted/GetTopSearchMisses.jsp" />
+		<action path="/GetTopSearchMissTotal" forward="/jsp/commerce/catalog/restricted/GetTopSearchMissTotal.jsp" />
+		
+		<!-- V7FEP6: Search Rules, Dynamic Merchandising Enhancements -->
+		<!-- Search Filters, Sorting, Rank, Search Rule Facet, Facet Exclusions configuration enhancements. -->
+		<action path="/GetSearchFilterProperties" forward="/jsp/commerce/search/restricted/GetSearchFilterProperties.jsp" />
+		<action path="/GetSearchSortColumns" forward="/jsp/commerce/search/restricted/GetSearchSortColumns.jsp" />
+		<action path="/GetSearchRankProperties" forward="/jsp/commerce/search/restricted/GetSearchRankProperties.jsp" />
+		<action path="/GetSearchRuleFacetProperties" forward="/jsp/commerce/search/restricted/GetSearchRuleFacetProperties.jsp" />
+		<action path="/GetSearchFacetColumns" forward="/jsp/commerce/search/restricted/GetSearchFacetColumns.jsp" />
+		<action path="/GetSearchFacetExclusionColumns" forward="/jsp/commerce/search/restricted/GetSearchFacetExclusionColumns.jsp" />
+		<action path="/FindFacets" forward="/jsp/commerce/search/restricted/FindFacets.jsp" />
+		<action path="/GetFacets" forward="/jsp/commerce/search/restricted/GetSearchFacetColumns.jsp" />
+	</action-mappings>
+
+</struts-config>

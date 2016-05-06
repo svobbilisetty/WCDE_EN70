@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This grid displays the contents and characteristics of a list of {@link SearchActivity Search Activities}.
+	-->
+	<ObjectGrid definitionName="mktSearchActivityGrid" preferenceKey="mktSearchActivityGrid">
+		<GridIconTypeImage enableFilter="true" name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="80"/>
+		<GridPropertyImage editable="false" enableFilter="true" name="state" propertyName="state" text="${mktMarketingResources.state}" visible="true" width="80"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridColumn editable="false" name="searchKeyword" text="${mktMarketingResources.searchActivitySearchKeyword}" visible="true" width="150" noMatchText="${mktMarketingResources.searchActivityAllKeywords}" objectPath="nomatch" implicitCreate="false">
+			<GridChildObjectTextCellDescriptor name="searchKeywordCell" objectPath="path/viewSearchEMarketingSpot" childObjectType="searchKeyword" childPropertyName="searchKeyword">
+				<EnablementCondition conditionId="anyCond1" objectPath="path/viewSearchEMarketingSpot" enablementValue="any" propertyName="searchOperator" negate="true"/>
+			</GridChildObjectTextCellDescriptor>
+		</GridColumn>
+		<GridText editable="true" name="activityName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridText editable="true" name="description" propertyName="description" text="${mktMarketingResources.description}" width="250"/>
+		<GridDateTime editable="true" name="startdate" propertyName="startdate" text="${mktMarketingResources.startDateHeading}"/>
+		<GridDateTime editable="true" endOfDay="true" name="enddate" propertyName="enddate" text="${mktMarketingResources.endDateHeading}"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="1000" minimumValue="0" name="priority" propertyName="priority" text="${mktMarketingResources.priority}" visible="false" width="45"/>
+		<GridCheckbox alignment="center" editable="false" name="experiment" propertyName="experimentType" text="${mktMarketingResources.experiment}" trueValue="Experiment" visible="false" width="100"/>
+		<GridDateTime editable="false" name="created" propertyName="created" text="${mktMarketingResources.created}" visible="false"/>
+		<GridDateTime editable="false" name="lastUpdated" propertyName="lastupdate" text="${mktMarketingResources.lastUpdated}" visible="false"/>
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="activityId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+	</ObjectGrid>
+
+	<!---
+		This Gantt grid displays the contents and characteristics of a {@link SearchActivity Search Activities} calendar view.
+	-->
+	<GanttGrid definitionName="mktSearchActivityGanttGrid" preferenceKey="mktSearchActivityGanttGrid">
+		<GanttGridBarDescriptor objectType="SearchActivity" propertyName="startdate" propertyName2="enddate"/>
+		<GanttGridBarDescriptor objectType="InheritedSearchActivity" propertyName="startdate" propertyName2="enddate"/>
+		<GridIconTypeImage enableFilter="true" name="type" propertyName="" text="${mktMarketingResources.type}" width="80"/>
+		<GridPropertyImage editable="false" enableFilter="true" name="state" propertyName="state" text="${mktMarketingResources.state}" visible="true" width="80"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" visible="false" width="125"/>
+		<GridColumn editable="false" name="searchKeyword" text="${mktMarketingResources.searchActivitySearchKeyword}" visible="true" width="150" noMatchText="${mktMarketingResources.searchActivityAllKeywords}" objectPath="nomatch" implicitCreate="false">
+			<GridChildObjectTextCellDescriptor name="searchKeywordCell" objectPath="path/viewSearchEMarketingSpot" childObjectType="searchKeyword" childPropertyName="searchKeyword">
+				<EnablementCondition conditionId="anyCond1" objectPath="path/viewSearchEMarketingSpot" enablementValue="any" propertyName="searchOperator" negate="true"/>
+			</GridChildObjectTextCellDescriptor>
+		</GridColumn>
+		<GridText editable="true" name="activityName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="200"/>
+		<GridText editable="true" name="description" propertyName="description" text="${mktMarketingResources.description}" visible="false" width="250"/>
+		<GridDateTime editable="true" name="startdate" propertyName="startdate" text="${mktMarketingResources.startDateHeading}" visible="false"/>
+		<GridDateTime editable="true" endOfDay="true" name="enddate" propertyName="enddate" text="${mktMarketingResources.endDateHeading}" visible="false"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="1000" minimumValue="0" name="priority" propertyName="priority" text="${mktMarketingResources.priority}" visible="false" width="45"/>
+		<GridCheckbox alignment="center" editable="false" name="experiment" propertyName="experimentType" text="${mktMarketingResources.experiment}" trueValue="Experiment" visible="false" width="100"/>
+		<GridDateTime editable="false" name="created" propertyName="created" text="${mktMarketingResources.created}" visible="false"/>
+		<GridDateTime editable="false" name="lastUpdated" propertyName="lastupdate" text="${mktMarketingResources.lastUpdated}" visible="false"/>
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="activityId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+	</GanttGrid>
+
+	<ChildListEditor definitionName="mktSearchActivityGridEditor" listDefinitionName="mktSearchActivityGrid" objectTypes="SearchActivity,InheritedSearchActivity"/>
+	<ChildListEditor definitionName="mktSearchActivityGanttChartEditor" listDefinitionName="mktSearchActivityGanttGrid" objectTypes="SearchActivity,InheritedSearchActivity"/>
+
+	<!---
+		This navigation list definition is used to display {@link SearchActivity Search Activities}.
+	-->
+	<NavigationListDefinition definitionName="mktSearchActivityGridChildList" displayName="${mktMarketingResources.searchActivityList}" helpLink="tasks/tsbsearchsupert.htm" isDefault="true" listDefinitionName="mktSearchActivityGridEditor" listTitle="${mktMarketingResources.list}" toolbarIcon="listToolbarIcon"/>
+
+	<!---
+		This navigation list definition is used to display {@link SearchActivity Search Activities} as a calendar view.
+	-->
+	<NavigationListDefinition definitionName="mktSearchActivityGanttChartChildList" displayName="${mktMarketingResources.searchActivityCalendar}" helpLink="tasks/tsbsearchsupert.htm" listDefinitionName="mktSearchActivityGanttChartEditor" listTitle="${mktMarketingResources.calendar}" toolbarIcon="ganttChartToolbarIcon"/>
+
+</Definitions>

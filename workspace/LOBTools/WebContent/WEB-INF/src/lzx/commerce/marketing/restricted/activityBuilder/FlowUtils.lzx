@@ -1,0 +1,49 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!--- @keywords private -->
+	<node id="mktFlowUtils">
+		<!---
+			@keywords private
+			
+			This method recursively checks the flow elements and paths in the activity
+			and returns whether or not the activity has an experiment object, anywhere in the
+			tree.
+			
+			@param wcfModelObject o Activity object
+			@returns boolean <code>true</code> if an experiment is found, <code>false</code> otherwise.
+		-->
+		<method name="hasExperiment" args="obj">
+			<![CDATA[
+				if(obj == null) {
+					return false;
+				}
+				else if(obj.objectType == "branch") {
+					return true;
+				}
+				else {
+					var childObjs = wcfFlowUtils.getSortedElements(obj);
+					for(var i = 0; i < childObjs.length; i++) {
+						var foundExperiment = mktFlowUtils.hasExperiment(childObjs[i]);
+						if(foundExperiment) {
+							return true;
+						}
+					}
+				}
+				return false;
+			]]>
+		</method>
+	</node>
+</library>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<!---
+		Properties view for the {@link mktCustomerCheckInStoreTriggerElementObject Customer Check In Store Trigger}.
+	-->
+	<FlowElementProperties definitionName="mktCustomerCheckInStoreTriggerProperties">
+        
+        <PropertyGroup collapsable="false" name="container">
+
+            <PropertyCombobox promptText="${mktMarketingResources.locationType}" 
+                              propertyName="locationType"
+                              helpText="${mktMarketingResources.help_customerCheckInStore_locationType}" />
+
+        
+		    <PropertyGroup collapsable="false"  displayGrouping="true"  name="regionGroup">
+				<EnablementCondition conditionId="regionCondition" enablementValue="region" propertyName="locationType"/>
+			    <PropertyChildListEditor helpText="${mktMarketingResources.help_customerCheckInStore_regionSelection}" 
+			                             listDefinitionName="mktLocationRegionGrid" 
+			                             name="RegionEditor" 
+			                             objectTypes="ReferenceRegion" 
+			                             promptText="${mktMarketingResources.region}" 
+			                             required="true" 
+			                             validatorTypes="noRegionSelected"/>
+		    </PropertyGroup>
+			
+			
+		    <PropertyGroup collapsable="false"  displayGrouping="true"  name="pointOfInterestGroup">
+				<EnablementCondition conditionId="pointOfInterestCondition" enablementValue="pointOfInterest" propertyName="locationType"/>
+			    <PropertyChildListEditor helpText="${mktMarketingResources.help_customerCheckInStore_pointOfInterestSelection}" 
+			                             listDefinitionName="mktLocationPOIGrid" 
+			                             name="PointOfInterestEditor" 
+			                             objectTypes="ReferencePOI" 
+			                             promptText="${mktMarketingResources.pointOfInterest}" 
+			                             required="true" 
+			                             validatorTypes="noPointOfInterestSelected"/>
+		    </PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="numberOfTimesGroup">
+				<PropertyStepper helpText="${mktMarketingResources.help_customerCheckInStore_times}" minimumValue="1" promptText="${mktMarketingResources.times}" propertyName="numberOfTimes"/>
+			</PropertyGroup>
+		    <BaseDateProperties helpText="${mktMarketingResources.help_customerCheckInStore_timeframe}" package="mkt"/>
+		
+      </PropertyGroup>
+      
+	</FlowElementProperties>
+</Definitions>

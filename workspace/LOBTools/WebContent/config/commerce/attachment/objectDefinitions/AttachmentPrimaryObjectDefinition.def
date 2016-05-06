@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+   
+	<PrimaryObjectDefinition browseFilterType="ManagedContentsFilter" creatable="false" definitionName="attBaseAttachmentPrimaryObjectDefinition" displayName="${attachmentResources.attachmentObjectName}" displayNameProperty="identifier" helpLink="tasks/tttcreateattachment.htm" idProperty="attachmentId" isBaseDefinition="true" newDisplayName="${attachmentResources.attachment_NewAttachmentDisplayName}" newObjectMenuItemText="${attachmentResources.contextMenuNewAttachment}" objectGroups="AttachmentGroup" propertiesDefinitionName="attAttachmentProperties" searchType="FindAttachments" writeUsage="IBM_ManageAttachmentTool">
+        
+       <!--- The unique identifier for the attachment.-->
+	   <PropertyDefinition displayName="${attachmentResources.attachment_identifier}" maximumSize="128" propertyName="identifier" type="string"/>
+	    
+	    
+	    <RequiredChildObjectValidator errorMessage="${attachmentResources.missingChildAssetsValidator}" objectPath="AttachmentAssetGroup" validatorId="reqChildAssetsValidator" validatorType="reqChildAssetsValidator"/>
+       <!--- Retrieves the {@link attAttachmentAssetWithFileType AttachmentAssetWithFileType},{@link attAttachmentDescription AttachmentDescription} and 
+			{@link attAttachmentAssetWithURLType AttachmentAssetWithURLType} child objects.  -->                               
+       <GetChildrenService objectTypes="AttachmentAssetWithFileType,InheritedAttachmentAssetWithFileType,AttachmentAssetWithURLType,AttachmentDescription" url="/cmc/GetAttachmentChildren">
+         		<ServiceParam name="attachmentId" propertyName="attachmentId"/>
+         		<ServiceParam name="storeId"/>
+        </GetChildrenService> 
+        
+        <!-- Refresh Service to reload the properties and description of the attachment -->
+		<RefreshService url="/cmc/GetAttachmentByAttachmentId">
+			<ServiceParam name="attachmentId" propertyName="attachmentId"/>
+         	<ServiceParam name="storeId"/>
+		</RefreshService>
+		
+       <CreateService url="/cmc/CreateAttachment">
+				 <ServiceParam name="storeId"/>
+		</CreateService>
+		
+		<UpdateService url="/cmc/UpdateAttachment">
+            <ServiceParam name="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="updateAttachmentCondition" enablementValue="Attachment" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="updateInheritedAttachmentCondition" enablementValue="InheritedAttachment" propertyName="objectType"/>
+			</ServiceParam>
+          
+            <ServiceParam name="attachmentId" parameterName="attachmentId" propertyName="attachmentId"/> 
+        </UpdateService>
+        
+        <DeleteService url="/cmc/DeleteAttachment">
+			<ServiceParam name="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="deleteAttachmentCondition" enablementValue="Attachment" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="objectStoreId" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="deleteInheritedAttachmentCondition" enablementValue="InheritedAttachment" propertyName="objectType"/>
+			</ServiceParam>
+				<ServiceParam name="attachmentId" propertyName="attachmentId"/>
+		</DeleteService>                           
+        
+        <!--- Retrieves the {@link SalesCatalog SalesCatalogs} that refer to this object. -->
+        <GetReferencesService primaryObjectTypes="SalesCatalog,InheritedSalesCatalog" referenceObjectTypes="AttachmentReference,BusinessObjectToInheritedAttachment,InheritedBusinessObjectToInheritedAttachment" url="/cmc/GetSalesCatalogForAttachment">
+         		<ServiceParam name="attachmentId" propertyName="attachmentId"/>
+         		<ServiceParam name="storeId"/>
+        </GetReferencesService>    
+        
+        <!--- Retrieves the {@link InheritedCatalogGroup InheritedCatalogGroups},
+		{@link CatalogGroup CatalogGroups} and {@link SalesCatalogGroup SalesCatalogGroups} that refer to this object. -->
+        <GetReferencesService primaryObjectTypes="CatalogGroup,InheritedCatalogGroup,SalesCatalogGroup,InheritedSalesCatalogGroup" referenceObjectTypes="AttachmentReference,BusinessObjectToInheritedAttachment,InheritedBusinessObjectToInheritedAttachment" url="/cmc/GetCatalogGroupForAttachment">
+         		<ServiceParam name="attachmentId" propertyName="attachmentId"/>
+         		<ServiceParam name="storeId"/>
+        </GetReferencesService>
+        <!--- Retrieves the {@link InheritedKit InheritedKits},
+		{@link Kit Kits}, {@link InheritedCatalogGroupSKU InheritedSKUs},{@link CatalogGroupSKU SKUs},
+		{@link InheritedProduct InheritedProducts},{@link Product Products},{@link Bundle Bundles},
+		{@link InheritedBundle InheritedBundles},{@link InheritedProductSKU InheritedProductSKUs} and {@link ProductSKU ProductSKUs} that refer to this object. -->
+        <GetReferencesService primaryObjectTypes="Product,InheritedProduct,Bundle,InheritedBundle,Kit,InheritedKit,ProductSKU,InheritedProductSKU,CatalogGroupSKU,InheritedCatalogGroupSKU" referenceObjectTypes="AttachmentReference,BusinessObjectToInheritedAttachment,InheritedBusinessObjectToInheritedAttachment" url="/cmc/GetCatalogEntryForAttachment">
+         		<ServiceParam name="attachmentId" propertyName="attachmentId"/>
+         		<ServiceParam name="storeId"/>
+        </GetReferencesService>  
+        
+          <!--- Retrieves the @link InheritedMarketingContent InheritedMarketingContents}
+		and {@link MarketingContent MarketingContents} that refer to this object. -->
+        <GetReferencesService primaryObjectTypes="MarketingContent,InheritedMarketingContent" referenceObjectTypes="AttachmentReference,InheritedAttachmentReference" url="/cmc/GetMarketingContentForAttachment">
+         		<ServiceParam name="attachmentId" propertyName="attachmentId"/>
+         		<ServiceParam name="storeId"/>
+         		<ServiceParam parameterName="attachmentReferenceObjectType" value="AttachmentReference">
+         			<EnablementCondition checkObjectDefinition="true" conditionId="localAttachment" enablementValue="Attachment" propertyName="objectType"/>
+         		</ServiceParam>
+         		<ServiceParam parameterName="attachmentReferenceObjectType" value="InheritedAttachmentReference">
+         			<EnablementCondition checkObjectDefinition="true" conditionId="inheritedAttachment" enablementValue="Attachment" propertyName="objectType" negate="true"/>
+         		</ServiceParam>
+        </GetReferencesService>   
+              
+    	
+    	<!--
+			Child object definition for the description related fields of an attachment.
+			This is object is  language sensitive.
+		-->
+    	<ChildObjectDefinition baseDefinitionName="attAttachmentDescription"/>
+		
+		
+		<!--
+			Child object definition for the asset with URL type related fields of an attachment.
+		-->
+		<ChildObjectDefinition allowImplicitParentCreate="true" baseDefinitionName="attAttachmentAssetWithURLType"/>
+		
+		<PreviewFileClientAction displayName="${attachmentResources.attachment_preview}" externalObjectTypes="AttachmentAssetWithURLType" filenamePropertyName="fileName" languageIdsPropertyName="assetLanguageIds" objectPath="AttachmentAssetGroup" pathPropertyName="path" toolbarIcon="PreviewListToolbarIcon"/>
+    </PrimaryObjectDefinition>
+    <PrimaryObjectDefinition baseDefinitionName="attBaseAttachmentPrimaryObjectDefinition" creatable="true" definitionName="Attachment" headerIcon="AttachmentHeaderIcon" icon="AttachmentIcon" objectType="Attachment">
+		<!--
+			Reference object definition for the asset with file type related fields of an attachment.
+		-->
+		<ReferenceObjectDefinition allowImplicitParentCreate="true" baseDefinitionName="attAttachmentAssetWithFileType"/>
+		<ReferenceObjectDefinition allowImplicitParentCreate="true" baseDefinitionName="attInheritedAttachmentAssetWithFileType"/>
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="attBaseAttachmentPrimaryObjectDefinition" compatibleObjectTypes="Attachment" creatable="false" definitionName="InheritedAttachment" headerIcon="InheritedAttachmentHeaderIcon" icon="InheritedAttachmentIcon" objectType="InheritedAttachment">
+	 	<FalseEnablementCondition conditionId="attachmentCondition"/>
+		<!--
+			Reference object definition for the asset with file type related fields of an attachment.
+		-->
+		<ReferenceObjectDefinition allowImplicitParentCreate="true" baseDefinitionName="attInheritedAttachmentAssetWithFileType"/>
+	</PrimaryObjectDefinition>
+    
+    <ReferenceObjectDefinition definitionName="attBaseAttachmentAssetWithFileType" displayName="${attachmentResources.attachmentAssetWithFileTypeObjectName}" idProperty="assetId" isBaseDefinition="true" objectGroups="AttachmentAssetGroup,AttachmentAssetWithFileTypeGroup">
+         
+         <CreateService url="/cmc/CreateAttachmentAssetWithFileType">
+            	<ServiceParam name="objectStoreId" objectPath="ManagedFileGroup" propertyName="objectStoreId"/>
+            	<ServiceParam name="storeId"/>
+            	<ServiceParam name="attachmentId" parentProperty="true"/>
+            	<ServiceParam name="assetLanguageIds" optional="true" propertyName="assetLanguageIds"/>
+            	<ServiceParam name="path" objectPath="ManagedFileGroup" propertyName="fullPath"/>
+        </CreateService>
+        
+       	<UpdateService url="/cmc/UpdateAttachmentAssetWithFileType">
+            <ServiceParam name="attachmentId" parentProperty="true"/>
+            <ServiceParam name="assetId" propertyName="assetId"/>
+            <ServiceParam name="storeId"/>
+        </UpdateService>
+        
+         <DeleteService url="/cmc/DeleteAttachmentAssetWithFileType">
+            <ServiceParam name="assetId" propertyName="assetId"/>
+            <ServiceParam name="attachmentId" parentProperty="true"/>
+			<ServiceParam name="storeId"/>
+          </DeleteService>
+           </ReferenceObjectDefinition>
+      
+    <ReferenceObjectDefinition baseDefinitionName="attBaseAttachmentAssetWithFileType" definitionName="attAttachmentAssetWithFileType" objectType="AttachmentAssetWithFileType" referencedType="ManagedFile"/>   	
+   		
+   
+    
+  
+     <ReferenceObjectDefinition baseDefinitionName="attBaseAttachmentAssetWithFileType" definitionName="attInheritedAttachmentAssetWithFileType" objectType="InheritedAttachmentAssetWithFileType" referencedType="InheritedManagedFile"/>   	
+   		
+   		
+ 
+    <ChildObjectDefinition definitionName="attAttachmentAssetWithURLType" displayName="${attachmentResources.attachmentAssetWithURLTypeObjectName}" headerIcon="URLHeaderIcon" icon="URLIcon" idProperty="assetId" objectGroups="AttachmentAssetGroup" objectType="AttachmentAssetWithURLType">
+			
+			<PreviewFileClientAction displayName="${attachmentResources.attachment_preview}" isExternal="true" pathPropertyName="path" toolbarIcon="PreviewListToolbarIcon"/>
+		    <PropertyDefinition displayName="${attachmentResources.attachmentAsset_path}" maximumSize="254" propertyName="path" required="true" type="string"/>
+			<CreateService url="/cmc/CreateAttachmentAssetWithURLType">
+            	<ServiceParam name="storeId" parentProperty="true" propertyName="objectStoreId"/>
+            	<ServiceParam name="path" propertyName="path"/>
+            	<ServiceParam name="assetLanguageIds" optional="true" propertyName="assetLanguageIds"/>
+            	<ServiceParam name="attachmentId" parentProperty="true"/>
+        	</CreateService> 
+        	
+          <DeleteService url="/cmc/DeleteAttachmentAssetWithURLType">
+          <ServiceParam name="storeId" parentProperty="true" propertyName="objectStoreId"/>
+            <ServiceParam name="assetId" propertyName="assetId"/>
+            <ServiceParam name="attachmentId" parentProperty="true"/>
+          </DeleteService>
+          
+          <UpdateService url="/cmc/UpdateAttachmentAssetWithURLType">
+          <ServiceParam name="storeId" parentProperty="true" propertyName="objectStoreId"/>
+            <ServiceParam name="attachmentId" parentProperty="true"/>
+            <ServiceParam name="assetId" propertyName="assetId"/>
+          </UpdateService>
+            	
+    </ChildObjectDefinition>
+    
+      
+   
+    <ChildObjectDefinition definitionName="attAttachmentDescription" idProperty="languageId" languageSensitive="true" objectType="AttachmentDescription" releaseWhenClosed="false">
+			
+			<!--- The name for the attachment. -->
+			<PropertyDefinition displayName="${attachmentResources.attachmentDescription_Name}" maximumSize="128" propertyName="name" type="string"/>
+		    <!--- The short description for the attachment. -->
+		    <PropertyDefinition displayName="${attachmentResources.attachmentDescription_ShortDescription}" maximumSize="254" propertyName="sDesc" type="string"/>
+		    <!--- The long description for the attachment. -->
+		    <PropertyDefinition displayName="${attachmentResources.attachmentDescription_LongDescription}" maximumSize="4000" propertyName="lDesc" type="string"/>
+		    
+		    <CreateService url="/cmc/CreateAttachmentDescription">
+            	<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true"/>
+            	<ServiceParam name="attachmentId" parentProperty="true"/>
+            	<ServiceParam name="languageId" propertyName="languageId"/>
+        	</CreateService>
+			   	
+			<UpdateService url="/cmc/UpdateAttachmentDescription">
+			    <ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true"/>
+            	<ServiceParam name="languageId" propertyName="languageId"/>
+            	<ServiceParam name="attachmentId" parentProperty="true"/>
+        	</UpdateService>   	
+   
+			   	
+    </ChildObjectDefinition>
+    
+</Definitions>

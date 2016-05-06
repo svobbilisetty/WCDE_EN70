@@ -1,0 +1,523 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		@keywords private
+		The definition loader loads object definition, list view definitions, properties view definitions and tool definitions.
+		When Management Center is initialized, the definition registry is loaded. The root definition registry is loaded from the 
+		following URL: /lobtools/LoadDefinitionRegistry?path=/config
+
+		<p>A registry file is an XML file that has a root element named "DefinitionRegistry". The DefinitionRegistry element
+		can have two types of child elements: RegistryFile and DefinitionFile. RegistryFile elements define the location of
+		other registry files. DefinitionFile elements define the location of definition files. The DefinitionFile elements
+		also indicate the definition types that are found in the specified definition file.
+
+		<p>The following sample demonstrates the syntax of the definition registry:
+		@START_CODE
+		<DefinitionRegistry>
+			<DefinitionFile definitionNames="proPromotionCodeGrid,proGeneral" path="/config/commerce/promotion/propertiesViews/General.def"/>
+			<DefinitionFile definitionNames="proMiscellaneous" path="/config/commerce/promotion/propertiesViews/Miscellaneous.def"/>
+			<RegistryFile path="/config/commerce/promotion/restricted"/>
+		</DefinitionRegistry>
+		@END_CODE
+		This definition registry file registers the location of three definition types and the location of another registry file.
+
+		<p>A definition file is an XML file that has a root element named "Definitions". All of the child elements of the Definitions
+		element represent definitions. These can include object, properties view, list view, and tool definitions. Each definition
+		element must have an attribute "definitionName" that is the name of the definition. The element name
+		of the child definition is the name of the class that will be instantiated when the definition is loaded. By default this
+		class name will be qualified by the three character prefix "wcf". This can be overridden by specifying a package name using the
+		package attribute. If a definition extends another definition, then the name of the base definition is specified by the
+		"baseDefinition" attribute. All other attributes will be passed to the new instance when the object is instantiated.
+
+		<p>The descendant elements of definition nodes will be constructed after the definition instance is created. Like the definitions,
+		the name of the descendant elements of the definitions are the names of the classes that will be instantiated when the definition is
+		constructed. The package name is assumed to be "wcf" unless explicitly specified using the "package" attribute. The attributes and
+		children of a definition child element can be inherited from another definition by the specification of the "baseDefinition" attribute.
+		Do not specify "definitionName" for descendant elements. Only specify "definitionName" for the definition element (the child elements of the
+		Definitions element).
+
+		<p>Special syntax can be used to constrain the value of an attribute to the value of a resource bundle key. The syntax is
+		"${resourceBunde.key}" where "resourceBundle" is the ID of the resource bundle instance and "key" is the name of the resource
+		bundle key.
+
+		<p>The following sample demonstrates the syntax of a definition file:
+		@START_CODE
+		<Definitions>
+			<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogPrimaryObjectDefinition" definitionName="Catalog" objectType="Catalog"/>
+			<PrimaryObjectDefinition baseDefinitionName="catBaseCatalogPrimaryObjectDefinition" definitionName="InheritedCatalog" displayName="${catalogResources.inheritedCatalog_DisplayName}" headerIcon="inheritedCatalogHeaderIcon" icon="inheritedCatalogIcon" objectType="InheritedCatalog">
+				<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedCatalogGroup"/>
+			</PrimaryObjectDefinition>
+		</Definitions>
+		@END_CODE
+		This definition file contains two definitions: "Catalog" and "InheritedCatalog". The definitions both describe primary object definitions and will be created by
+		constructing an instance of wcfPrimaryObjectDefinition. The definitions are both based on another definition named "catBaseCatalogPrimaryObjectDefinition".
+		The second definition includes a child element that will be created by instantiating an instance of wcfParentReferenceObjectDefinition.
+		
+		<p>Since the class instance of the parent element is created before the child elements, it will often be necessary to perform some additional
+		initialization in the parent after the children are created. This can be done by declaring a method called "postCreateDefinitionChildren" in
+		the parent class. This method will be called after all of the children are created. If the "initstage" attribute in the class is set to "defer", then
+		the "postCreateDefinitionChildren" will not be called unless <code>wcfDefinitionLoader.completeCreateDefinitionChildren(this);</code>" is added
+		to the "completeInstantiation" method of the class that has deferred initialization.
+		
+		<p>Attributes declared as part of the definition will be passed into the constructor when the class is initialized. The type of the value
+		will be determined by checking the default value of the attribute that is declared in the class declaration. If the attribute has no default value
+		and the type is not "string", then the type must be declared to ensure that the correct type will be passed to the constructor. Attribute
+		types can be explicitly declared by adding a second attribute with the "__type" appended to the name (two underscores). For example,
+		to ensure that the "width" attribute is interpreted as a number, add the following attribute to the class declaration:
+		@START_CODE
+		<attribute name="width__type" type="string" value="number"/>
+		@END_CODE 
+		Valid values for these type declarations are: "string", "number", "boolean" and "array". The default is "string". When the type is "array",
+		the value string is expected to be a comma-separated list of values. Leading and trailing square brackets will be removed, as well as leading
+		and trailing single quotes on each value. For example,
+		@START_CODE
+		<myClass color="['red', blue, 000000, '333333']"/>
+		@END_CODE
+		The color attribute would be parsed as an array where color[0] = red, color[1] = blue, color[2] = 000000 and color[3] = 333333.
+	-->
+	<node name="wcfDefinitionLoader">
+		<switch>
+			<when property="$as3">
+				<passthrough>
+					import flash.external.ExternalInterface;
+				</passthrough>
+			</when>
+		</switch>	
+	
+		<!---
+			@keywords private
+			Map of definition names to the files that contain the definitions.
+		-->
+		<attribute name="definitionFileRegistry" value="${null}"/>
+		<!---
+			@keywords private
+			Map of definition names to the definition elements.
+		-->
+		<attribute name="definitionNodes" value="${{}}"/>
+		<!---
+			@keywords private
+			A map of default attribute types.
+		-->
+		<attribute name="attributeTypes"/>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.attributeTypes = {
+				width: "number",
+				height: "number"
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Load the registry file at the specified URL.
+			@param string path: the registry file URL
+		-->
+		<method name="loadRegistryFile" args="path">
+			<![CDATA[
+			if (path && path.charAt(0) == '/') {
+				if (global["serviceContextRoot"]) {
+					path = global["serviceContextRoot"] + "/LoadDefinitionRegistry?path=" + path;
+				}
+				else {
+					path = "/lobtools/LoadDefinitionRegistry?path=" + path;
+				}
+				var result = flash.external.ExternalInterface.call("synchGet", path);
+				if (result.data != null) {
+					var xml = wcfXMLUtil.parseXML(result.data);
+					this.parseRegistryFile(xml);
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "loadRegistryFile", "Error loading registry file path "+path+" "+result.error);
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "loadRegistryFile", "Invalid registry file path "+path);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Parse the specified definition registry element.
+			@param XML registry: the DefinitionRegistry element
+		-->
+		<method name="parseRegistryFile" args="registry">
+			<![CDATA[
+			if (registry) {
+				for (var i = 0; i < registry.childNodes.length; i++) {
+					var node = registry.childNodes[i];
+					if (node.nodeName == "RegistryFile") {
+						this.loadRegistryFile(node.attributes["path"]);
+					}
+					else if (node.nodeName == "DefinitionFile") {
+						var definitionNames = wcfStringUtil.splitAndTrim(node.attributes["definitionNames"], ",");
+						for (var j = 0; j < definitionNames.length; j++) {
+							if (this.definitionFileRegistry[definitionNames[j]]) {
+								wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "parseRegistryFile", "Duplicate definition name: "+definitionNames[j]+" "+this.definitionFileRegistry[definitionNames[j]]+" and "+node.attributes["path"]);
+							}
+							else {
+								this.definitionFileRegistry[definitionNames[j]] = node.attributes["path"];
+							}
+						}
+					}
+				}
+		  	}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Load the definition file at the specified URL.
+			@param string path: the defition file URL
+		-->
+		<method name="loadDefinitionFile" args="path">
+			<![CDATA[
+			if (path && path.charAt(0) == '/') {
+				if (global["serviceContextRoot"]) {
+					path = global["serviceContextRoot"] + path;
+				}
+				else {
+					path = "/lobtools" + path;
+				}
+				var result = flash.external.ExternalInterface.call("synchGet", path);
+				if (result.data != null) {
+					var definitions = wcfXMLUtil.parseXML(result.data);
+					if (definitions != null) {
+						for (var i = 0; i < definitions.childNodes.length; i++) {
+							var node = definitions.childNodes[i];
+							if (node.nodeType == 1) {
+								var definitionName = node.attributes["definitionName"];
+								this.definitionNodes[definitionName] = node;
+							}
+						}
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "loadDefinitionFile", "Invalid XML '" + result.data + "' found at "+path);
+					}
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "loadDefinitionFile", "Error loading definition file "+path+" "+result.error);
+				}
+			}
+			else {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "loadDefinitionFile", "Invalid definition file path "+path);			
+			}
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			Get the XML element that represents the definition with the specified definition name.
+			The definition file will be synchronously loaded if it has not already been loaded.
+			@param string definitionName: the name of the definition
+			@param return XML the definition element 
+		-->
+		<method name="getDefinitionNode" args="definitionName">
+			<![CDATA[
+			var definitionNode = this.definitionNodes[definitionName];
+			if (typeof(definitionNode) == "undefined") {
+				if (this.definitionFileRegistry == null) {
+					this.definitionFileRegistry = {};
+					this.loadRegistryFile("/config");
+				}
+				var path = this.definitionFileRegistry[definitionName];
+				if (path) {
+					this.loadDefinitionFile(this.definitionFileRegistry[definitionName]);
+					definitionNode = this.definitionNodes[definitionName];
+					if (typeof(definitionNode) == "undefined") {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "getDefinitionNode", "The definition name " + definitionName + " was not found in " + path);
+					}
+				}
+				else {
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "WARNING", "wcfDefinitionLoader", "getDefinitionNode", "The definition name " + definitionName + " is not registered.");
+					}
+					definitionNode = null;
+				}
+			}
+			return definitionNode;
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			Create a new definition instance with the specified name, parent and initalization arguments.
+			@param string definitionName: the name of the definition
+			@param node parent: the parent of the new definition
+			@param initArgs object: optional initialization arguments
+			@return object: the new definition instance 
+		-->
+		<method name="getDefinition" args="definitionName, parent, initArgs=null">
+			<![CDATA[
+			var definition = null;
+			var definitionNode = this.getDefinitionNode(definitionName);
+			if (definitionNode) {
+				var definitionClass = this.resolveClass(definitionNode);
+				if (definitionClass) {
+					definition = this.createInstance(parent, definitionNode, definitionClass, initArgs);
+				}
+				else {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "getDefinition", "The class for definition name " + definitionName + " could not be resolved.");
+				}
+			}
+			return definition;
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			Resolve the definition package. This will default to "wcf".
+			@param XML node: the definition element
+			@return string: the name of the class package 
+		-->
+		<method name="resolvePackage" args="node">
+			<![CDATA[
+			var definitionPackage = node.attributes["package"];
+			if (!definitionPackage) {
+				definitionPackage = "wcf";
+			}
+			return definitionPackage;
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			Resolve the definition class.
+			@param XML node: the definition element
+			@return class: the definition class 
+		-->
+		<method name="resolveClass" args="node">
+			<![CDATA[
+			var className = this.resolvePackage(node) + node.nodeName;
+			return lz[className] ? lz[className] : lz[node.nodeName];
+			]]>
+		</method>
+	
+		<!---
+			@keywords private
+			Prepare the arguments that will be passed to the constructor of the definition
+			class.
+			@param object args: The arguments object.
+			@param node parent: the parent node
+			@param XML node: the definition element
+			@param boolean ignoreBaseDefinition: indicates that the definition loader should ignore the base definition
+		-->
+		<method name="prepareInitArgs" args="args, parent, node, ignoreBaseDefinition">
+			<![CDATA[
+			if (!ignoreBaseDefinition || !node.attributes["definitionName"]) {
+				var baseDefinitionName = node.attributes["baseDefinitionName"];
+				if (baseDefinitionName) {
+					var definitionNode = this.getDefinitionNode(baseDefinitionName);
+					if (definitionNode != null) {
+						this.prepareInitArgs(args, parent, definitionNode, ignoreBaseDefinition);
+						if ("isBaseDefinition" in args) {
+							delete args.isBaseDefinition;
+						}
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "prepareInitArgs", "Unable to resolve base definition name " + baseDefinitionName);
+					}
+				}
+			}
+			for (var attributeName in node.attributes) {
+				if (attributeName != "baseDefinitionName" || node.attributes["definitionName"]) {
+					args[attributeName] = node.attributes[attributeName];
+				}
+			}
+			args.definitionNode = node;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Create the definition instance.
+			@param node parent: the parent node
+			@param XML node: the definition element
+			@param class definitionClass: the definition class
+			@param object initArgs: the initialization arguments
+			@return object: the new definition instance
+		-->
+		<method name="createInstance" args="parent, node, definitionClass, initArgs">
+			<![CDATA[
+			var args = {};
+			this.prepareInitArgs(args, parent, node, definitionClass.attributes["ignoreBaseDefinition"]);
+			for (var prop in initArgs) {
+				args[prop] = initArgs[prop];
+			}
+			var resourceArgs = [];
+			var typedArgs = {};
+			for (var i in args) {
+				typedArgs[i] = args[i];
+				if (typeof(args[i]) == "string") {
+					var prop = definitionClass.attributes[i];
+					var propType = definitionClass.attributes[i + "__type"];
+					if (typeof(prop) == "undefined" && typeof(propType) == "undefined") {
+						propType = this.attributeTypes[i];
+					}
+					if (typeof(prop) == "number" || propType == "number") {
+						typedArgs[i] = Number(args[i]);
+					}
+					else if (typeof(prop) == "boolean" || propType == "boolean") {
+						typedArgs[i] = args[i] == "true";
+					}
+					else if (propType == "array") {
+						var valArray = new Array();
+						
+						var strArray = args[i];
+						if(strArray.length >= 2 && strArray.charAt(0) == "[" && strArray.charAt(strArray.length - 1) == "]") {
+							strArray = strArray.substring(1, strArray.length - 1);
+						}
+						
+						var values = wcfStringUtil.splitAndTrim(strArray, ",");
+						for(var j = 0; j < values.length; j++) {
+							var val = values[j];
+							if(val.length >= 2 && val.charAt(0) == "'" && val.charAt(val.length - 1) == "'") {
+								val = val.substring(1, val.length - 1);
+							}
+							valArray.push(val);
+						}
+						
+						typedArgs[i] = valArray;
+					}
+					else {
+						var s = wcfStringUtil.trim(args[i]);
+						if (s.indexOf("${") == 0 && s.indexOf("}") == (s.length - 1)) {
+							s = s.substring(2, s.length - 1);
+							if (s == "null") {
+								typedArgs[i] = null;
+							}
+							else {
+								var k = s.length;
+								var bundle = null;
+								var key = null;
+								while (bundle == null) {
+									k = s.lastIndexOf(".", k - 1);
+									if (k == -1) {
+										break;
+									}
+									var bundleName = s.substring(0, k);
+									key = s.substring(k + 1);
+									if (global[bundleName]) {
+										bundle = global[bundleName];
+									}
+									else {
+										bundle = this.getDefinition(bundleName, canvas);
+										if (bundle != null) {
+											global[bundleName] = bundle;
+										}
+									}
+								}
+								if (bundle != null) {
+									if (bundle[key]) {
+										typedArgs[i] = bundle[key].string;
+									}
+									else {
+										wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "WARNING", "wcfDefinitionLoader", "createInstance", "Unable to resolve resource bundle key " + key);
+									}
+									resourceArgs.push({bundle: bundle, key: key, variable: i});
+								}
+								else {
+									wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "createInstance", "Unable to resolve resource bundle " + s);
+								}
+							}
+						}
+					}
+				}
+			}
+			var newInstance = new definitionClass(parent, typedArgs);
+			if (args["id"]) {
+				global[args.id] = newInstance;
+				newInstance.id = args.id;
+			}
+			for (var i = 0; i < resourceArgs.length; i++) {
+				var resourceArg = resourceArgs[i];
+				resourceArg.bundle.constrainAttribute(resourceArg.key, newInstance, resourceArg.variable);
+			}
+			if (newInstance.initstage != "defer") {
+				this.completeCreateDefinitionChildren(newInstance);
+			}
+			return newInstance;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Create the children of the specified definition instance.
+			@param node parent: the parent node
+			@param XML parentNode: the definition element
+			@param boolean ignoreBaseDefinition: indicates that the definition loader should ignore the base definition
+		-->
+		<method name="createDefinitionChildren" args="parent, parentNode, ignoreBaseDefinition">
+			<![CDATA[
+			if (!ignoreBaseDefinition || !parentNode.attributes["definitionName"]) {
+				var baseDefinitionName = parentNode.attributes["baseDefinitionName"];
+				if (baseDefinitionName) {
+					var baseDefinitionNode = this.getDefinitionNode(baseDefinitionName);
+					if (baseDefinitionNode != null) {
+						this.createDefinitionChildren(parent, baseDefinitionNode, ignoreBaseDefinition);
+					}
+				}
+			}
+			var nodes = parentNode.childNodes;
+			for (var i = 0; i < nodes.length; i++) {
+				var node = nodes[i];
+				if (node.nodeType == 1) {
+					if (node.nodeName == "Xml") {
+						parent["_" + node.attributes["name"]] = node;
+						var dataset = new lz.dataset(parent, {
+							name: node.attributes["name"],
+							initialdata: node.toString()
+						});
+					}
+					else {
+						var definitionClass = this.resolveClass(node);
+						if (definitionClass) {
+							this.createInstance(parent, node, definitionClass, null);
+						}
+						else {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "SEVERE", "wcfDefinitionLoader", "createDefinitionChildren", "Unable to resolve class " + node.nodeName);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Complete the creation of the definition children. Call this method from the
+			"completeInstantiation" method of classes that are declared with "initstage" set to "defer".
+			@param object definition: the definition instance
+		-->
+		<method name="completeCreateDefinitionChildren" args="definition">
+			<![CDATA[
+			if (definition["definitionNode"] && !definition["definitionChildrenCreated"]) {
+				this.createDefinitionChildren(definition, definition.definitionNode, definition["ignoreBaseDefinition"]);
+				if (definition["postCreateDefinitionChildren"]) {
+					definition.postCreateDefinitionChildren();
+				}
+				definition.definitionChildrenCreated = true;
+			}
+			]]>
+		</method>
+	</node>
+</library>

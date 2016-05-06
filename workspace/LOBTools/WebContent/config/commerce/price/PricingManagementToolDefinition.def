@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--- 
+		This is the definition that defines the entire pricing tool and 
+		provides support for the menu, toolbar, search widget, navigation view 
+		and utility pane.
+	-->
+	<BusinessObjectEditor browseUtilityFilterTypes="PricingToolNodes,MasterCategories,AttributeDictionaryNode" definitionName="prcPricingManagement" displayName="${prcPriceResources.pricingAndEntitlementManagement_DisplayName}" explorerFilterTypes="PricingToolNodes" gettingStartedPageClass="prcPricingGettingStartedPage" helpLink="concepts/cpipricingtools.htm">
+		<!-- Filter definitions -->
+		<ObjectTypeFilter baseDefinitionName="prcPricingObjectsExplorerFilter" isDefault="true" />
+		<ObjectTypeFilter baseDefinitionName="prcPricingObjectsExplorerFilterWithoutCatalogFilters" />
+		<ObjectTypeFilter baseDefinitionName="prcPriceListExplorerFilter"/>
+		<ObjectTypeFilter baseDefinitionName="prcPriceRuleExplorerFilter"/>
+		<ObjectTypeFilter baseDefinitionName="prcPriceRuleExplorerFilterWithoutCatalogFilters"/>
+		
+		<ObjectTypeFilter baseDefinitionName="catMasterCatalogGroupsFilter"/>
+		<ObjectTypeFilter baseDefinitionName="catSalesCatalogGroupsFilter"/>
+		<ObjectTypeFilter baseDefinitionName="cftAttributeDictionaryFilter"/>
+
+
+		<!-- Pricing Top Objects -->
+		<TopObjectDefinition baseDefinitionName="prcPricingTopObjectDefinition"/>
+
+		<!-- Pricing Organizational Objects -->
+		<OrganizationalObjectDefinition baseDefinitionName="CatalogFiltersNode"/>
+        <OrganizationalObjectDefinition baseDefinitionName="CatalogFilterImportNode"/>
+		<OrganizationalObjectDefinition baseDefinitionName="PriceRulesNode"/> 
+		<OrganizationalObjectDefinition baseDefinitionName="PriceListsNode"/>
+        <OrganizationalObjectDefinition baseDefinitionName="PriceListImportNode"/>
+		<OrganizationalObjectDefinition baseDefinitionName="PriceEquationsNode"/>
+		<OrganizationalObjectDefinition baseDefinitionName="PriceConstantsNode"/>
+    <OrganizationalObjectDefinition baseDefinitionName="AttributeDictionaryNode"/>
+
+		<!-- Pricing Primary Objects -->
+		<PrimaryObjectDefinition baseDefinitionName="CatalogFilter">
+        	<EnablementAndCondition>
+        		<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        		<EnablementOrCondition baseDefinitionName="cftCatalogFilterObjectsCreationRestriction"/>
+          </EnablementAndCondition>
+	  </PrimaryObjectDefinition>	
+    <PrimaryObjectDefinition baseDefinitionName="InheritedCatalogFilter" creatable="false"/>
+    <PrimaryObjectDefinition baseDefinitionName="catBaseAttributeDictionaryAttributePrimaryObjectDefinition" searchType="FindSearchableAttributes"/>
+		<PrimaryObjectDefinition baseDefinitionName="CatalogFilterImport" creatable="true">
+        	<EnablementAndCondition>
+        		<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        		<EnablementOrCondition baseDefinitionName="cftCatalogFilterObjectsCreationRestriction"/>
+         </EnablementAndCondition>
+	  </PrimaryObjectDefinition>	
+		<PrimaryObjectDefinition baseDefinitionName="PriceRule"/>
+		<PrimaryObjectDefinition baseDefinitionName="WrappedPriceRule" />
+		<PrimaryObjectDefinition baseDefinitionName="ExternalPriceRule" />
+		<PrimaryObjectDefinition baseDefinitionName="PriceList" creatable="true"/>
+		<PrimaryObjectDefinition baseDefinitionName="InheritedPriceList" creatable="false"/>
+		<PrimaryObjectDefinition baseDefinitionName="PriceListImport" creatable="true"/>
+		<PrimaryObjectDefinition baseDefinitionName="PriceEquation" />
+		<PrimaryObjectDefinition baseDefinitionName="PercentPriceConstant"/>
+		<PrimaryObjectDefinition baseDefinitionName="NumberPriceConstant"/>
+		<PrimaryObjectDefinition baseDefinitionName="CurrencyPriceConstant"/>
+		<PrimaryObjectDefinition baseDefinitionName="Contract" />
+		
+		<!-- search definitions -->
+		<SearchDefinition baseDefinitionName="FindCatalogFilters">
+			<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+        </SearchDefinition>
+        <SearchDefinition baseDefinitionName="FindPriceRuleByName" displayName="${prcPriceResources.priceRulePrimaryObject_DisplayName}" isDefault="true"/>
+		<SearchDefinition baseDefinitionName="FindExternalPriceRuleByName" displayName="${prcPriceResources.externalPriceRule}"/>
+		<SearchDefinition baseDefinitionName="FindPriceListByName" displayName="${prcPriceResources.priceListPrimaryObject_DisplayName}" />
+		<SearchDefinition baseDefinitionName="FindPriceEquationByName" displayName="${prcPriceResources.priceEquationPrimaryObject_DisplayName}"/>
+		<SearchDefinition baseDefinitionName="FindPriceConstantByName" displayName="${prcPriceResources.priceConstantPrimaryObject_DisplayName}"/>
+		<SearchDefinition baseDefinitionName="FindBuyerOrganizationByName" displayName="${prcPriceResources.buyerOrganizationPrimaryObject_DisplayName}"/>
+		<SearchDefinition baseDefinitionName="FindSearchableAttributes"/>
+		
+	</BusinessObjectEditor>
+</Definitions>

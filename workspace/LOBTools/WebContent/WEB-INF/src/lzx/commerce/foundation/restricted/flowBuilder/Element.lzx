@@ -1,0 +1,132 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!--- 
+		This class holds some basic attributes for element diagram in flow builder.
+		@keywords private 
+	-->
+	<class name="wcfElement">
+		<!--- @keywords private -->
+		<attribute name="complete" type="boolean" value="true"/>
+
+		<!--- @keywords private -->
+		<attribute name="selected" type="boolean" value="false"/>
+		<!--- @keywords private -->
+		<attribute name="hoverBorderColour" type="string" value="0xF88840"/>
+		<!--- @keywords private -->
+		<attribute name="hoverFillColour" type="string" value="0xFFEAC2"/>
+		<!--- @keywords private -->
+		<attribute name="selectBorderColour" type="string" value="0x5272CC"/>
+		<!--- @keywords private -->
+		<attribute name="selectFillColour" type="string" value="0xFFEAC2"/>
+		<!--- @keywords private -->
+		<attribute name="parentFlow" value="null"/>
+		
+		<!--- @keywords private -->
+		<attribute name="o" value="null"/>
+		
+		<handler name="oninit">
+			if (this.parentFlow == null) {
+				this.parentFlow = wcfFlowUtils.getParentFlow(this);
+			}
+			wcfCanvasMenu.addView(this);
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			super.destroy();
+			if (this["updateCompleteDel"]) {
+				this.updateCompleteDel.unregisterAll();
+				delete this.updateCompleteDel;
+			}
+		</method>
+
+		<!--- @keywords private -->
+		<method name="unselect">
+			if (this["MainView"]) {
+				this.selected = false;
+				setIconBackground(null, null);
+				this.parentFlow.unselected(this);
+			}
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="select">
+			if (this["MainView"]) {
+				this.selected = true;
+				setIconBackground(this.selectBorderColour, this.selectFillColour);
+				this.parentFlow.selected(this);
+			}
+		</method>
+
+		<!--- @keywords private -->
+		<method name="setIconBackground" args="borderColour, fillColour">
+			this.MainView.iconcontentview.iconcontent.wrapper.setAttribute('bgcolor', borderColour);
+			this.MainView.iconcontentview.iconcontent.wrapper.iconview.setAttribute('bgcolor', fillColour);
+		</method>
+
+		<!--- @keywords private -->
+		<method name="loadProperties">
+			this.parentFlow.unselectAll();
+			this.select();
+			this.parentFlow.loadProperties(this);
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateComplete" args="e=null">
+			<![CDATA[
+			if (!this["updateCompleteDel"]) {
+				this.updateCompleteDel = new lz.Delegate(this, "updateComplete");
+			}
+			else {
+				this.updateCompleteDel.unregisterAll();
+			}
+			
+			if (this["o"]) {
+				this.updateCompleteDel.register(this.o, "onvalidationErrors");
+				var propertyMap = this.o.propertyMap;
+				for (var key in propertyMap) {
+					var property = propertyMap[key];
+					this.updateCompleteDel.register(property, "onvalidationErrors");
+				}
+			}
+			this.setAttribute("complete", this.isComplete());
+			]]>
+		</method>
+		
+		
+		<!--- @keywords private -->
+		<method name="isComplete">
+			<![CDATA[
+			if (this["o"]) {
+				if (this.o.getValidationErrors().length > 0) {
+					return false;
+				}
+			
+				var propertyMap = this.o.propertyMap;
+				for (var key in propertyMap) {
+					var property = propertyMap[key];
+					if (property.getValidationErrors().length > 0) {
+						return false;
+					}
+				}
+			}
+			return true;
+			]]>		
+		</method>
+
+	</class>
+	
+</library>

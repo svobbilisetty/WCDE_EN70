@@ -1,0 +1,637 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords final
+		<p>This class defines a widget that allows child objects to be created, deleted and edited within a single grid cell.</p>
+		
+		<p>If the object associated with the cell is editable, then the user can select the edit icon which
+		will launch a dialog that displays a list of child objects. The user can add, remove and edit
+		the child objects in the list.</p>
+
+		<p>The following example demonstrates the declaration of a grid column that will create
+		and delete a child objects with object type "Element". The business user will be able to
+		provide values for the poperty named "value".
+		
+		@START_CODE
+			<GridChildObjectText
+				childObjectType="Element"
+				childPropertyName="value"
+				text="${resourceBundle.displayToCustomers}"
+				visible="true"
+				width="140"/>
+		@END_CODE
+	-->
+	<class name="wcfGridChildObjectText" extends="wcfGridColumn" propertyName="">
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectTextViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridChildObjectTextViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectTextEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridChildObjectTextEditor"/>
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property of the object specified by <code>childObjectType</code>
+			to be edited by the user.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+		<!---
+			Indicates that the value is numeric.
+		-->
+		<attribute name="numeric" type="boolean" value="false"/>
+		<!---
+			Number of decimal places to use if the value is numeric. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>
+
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName,
+				numeric: this.numeric,
+				numDecimalPlaces: this.numDecimalPlaces
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the column filter display value.
+			@param wcfModelObject o: the model object instance
+		-->
+		<method name="getColumnFilterDisplayValue" args="o">
+			<![CDATA[
+			var value = null;
+			if (o != null) {
+				if (this.objectPath != null) {
+					o = o.getObject(this.objectPath);
+				}
+				if (o != null) {
+					var childObjects = o.getObjects(this.childObjectType);
+					for (var i = 0; i < childObjects.length; i++) {
+						var propertyValue = childObjects[i].getPropertyValue(this.childPropertyName);
+						if (value == null) {
+							value = propertyValue;
+						}
+						else {
+							value += ", " + propertyValue;
+						}
+					}
+				}
+			}
+			return value;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		Use this class to define a widget that allows child objects to be created, deleted and edited within a single grid cell.
+		Use this class instead of wcfGridChildObjectText if you
+		need to display a this widget for some rows and something else for other rows.
+	-->
+	<class name="wcfGridChildObjectTextCellDescriptor" extends="wcfGridCellDescriptor" propertyName="">
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectTextViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridChildObjectTextViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectTextEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridChildObjectTextEditor"/>
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object to be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property of the object specified by <code>childObjectType</code>
+			to be edited by the user.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+		<!---
+			Indicates that the value is numeric.
+		-->
+		<attribute name="numeric" type="boolean" value="false"/>
+		<!---
+			Number of decimal places to use if the value is numeric. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>
+
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName,
+				numeric: this.numeric,
+				numDecimalPlaces: this.numDecimalPlaces
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the column filter display value.
+			@param wcfModelObject o: the model object instance
+		-->
+		<method name="getColumnFilterDisplayValue" args="o">
+			<![CDATA[
+			var value = null;
+			if (o != null) {
+				if (this.objectPath != null) {
+					o = o.getObject(this.objectPath);
+				}
+				if (o != null) {
+					var childObjects = o.getObjects(this.childObjectType);
+					for (var i = 0; i < childObjects.length; i++) {
+						var propertyValue = childObjects[i].getPropertyValue(this.childPropertyName);
+						if (value == null) {
+							value = propertyValue;
+						}
+						else {
+							value += ", " + propertyValue;
+						}
+					}
+				}
+			}
+			return value;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Child object viewer viewer.
+	-->
+	<class name="wcfGridChildObjectTextViewer" extends="wcfGridTextViewer">
+		<!--- {@link wcfModelObject} instance associated with this viewer. -->
+		<attribute name="o" value="${null}"/>
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object to be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property of the object specified by <code>childObjectType</code>
+			to be edited by the user.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="setProperty" args="newProperty"/>
+
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateValue();
+			]]>
+		</method>
+
+		<!---
+			Update and refresh wcfGridTextViewer value with a new {@link wcfModelProperty} value.			
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateValueDel) == "undefined") {
+				this.updateValueDel = new lz.Delegate(this, "updateValue");
+			}
+			this.updateValueDel.unregisterAll();
+			this.updateValueDel.register(this, "ono");
+			var newText = "";
+			if (this.o != null) {
+				var childObjects = this.o.getObjects(this.childObjectType, this.updateValueDel);
+				for (var i = 0; i < childObjects.length; i++) {
+					var prop = childObjects[i].getProperty(this.childPropertyName);
+					this.updateValueDel.register(prop, "onvalue");
+					if (newText != "") {
+						newText += ", ";
+					}
+					newText += prop.value;
+				}
+			}
+			if (this.text != newText) {
+				this.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Child object editor class for internal use by {@link wcfGridChildObjectText}.
+		
+		In edit mode, a dialog {@link wcfDialog} named wcfChildObjectTextDialog is opened that contains a
+		list of child objects that can be added, removed and edited by the user.
+	-->
+	<class name="wcfGridChildObjectTextEditor" extends="basecomponent" width="${immediateparent.availableWidth}" focusable="false">	
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property of the object specified by <code>childObjectType</code>
+			to be edited by the user.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+		<!---
+			Indicates that the value is numeric.
+		-->
+		<attribute name="numeric" type="boolean" value="false"/>
+		<!---
+			Number of decimal places to use if the value is numeric. If not specified, the default is 0 meaning no padding.
+			There is no truncation.
+		-->
+		<attribute name="numDecimalPlaces" value="null" type="number"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateValue();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private			
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateValueDel) == "undefined") {
+				this.updateValueDel = new lz.Delegate(this, "updateValue");
+			}
+			this.updateValueDel.unregisterAll();
+			this.updateValueDel.disable();
+			this.updateValueDel.register(this, "ono");
+			this.updateValueDel.register(this, "onenabled");
+			var count = 0;
+			var prop = null;
+			var newText = "";
+			if (this.o != null) {
+				var childObjects = this.o.getObjects(this.childObjectType, this.updateValueDel);
+				count = childObjects.length;
+				if (count == 0 && this.enabled) {
+					childObjects.push(this.o.getObject(this.childObjectType, true));
+					count = 1;
+				}
+				if (count == 1 && this.enabled) {
+					prop = childObjects[0].getProperty(this.childPropertyName);
+				}
+				else {
+					for (var i = 0; i < count; i++) {
+						prop = childObjects[i].getProperty(this.childPropertyName);
+						this.updateValueDel.register(prop, "onvalue");
+						if (newText != "") {
+							newText += ", ";
+						}
+						newText += prop.value;
+					}
+				}
+			}
+			if (count == 1 && this.enabled) {
+				if (this.numeric) {
+					this.textEditor.setAttribute("visible", false);
+					this.numericEditor.setAttribute("visible", true);
+					this.textEditor.setAttribute("property", null);
+					this.numericEditor.setAttribute("property", prop);
+				}
+				else {
+					this.numericEditor.setAttribute("visible", false);
+					this.textEditor.setAttribute("visible", true);
+					this.numericEditor.setAttribute("property", null);
+					this.textEditor.setAttribute("property", prop);
+				}
+				this.textView.setAttribute("visible", false);
+			}
+			else {
+				if (!this.textView.visible) {
+					this.textEditor.setAttribute("visible", false);
+					this.numericEditor.setAttribute("visible", false);
+					this.textEditor.setAttribute("property", null);
+					this.numericEditor.setAttribute("property", null);
+					this.textView.setAttribute("visible", true);
+				}
+				if (this.textView.text != newText) {
+					this.textView.setAttribute("text", newText);
+				}
+			}
+			this.updateValueDel.enable();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private			
+		-->
+		<method name="getValidationErrors" args="del=null">
+			<![CDATA[
+			var validationErrors = null;
+			if (this.o != null) {
+				var childObjects = this.o.getObjects(this.childObjectType, del);
+				for (var i = 0; i < childObjects.length; i++) {
+					validationErrors = childObjects[i].getValidationErrors();
+					if (del) {
+						del.register(childObjects[i], "onvalidationErrors");
+					}
+					if (validationErrors != null && validationErrors.length > 0) {
+						break;
+					}
+					var prop = childObjects[i].getProperty(this.childPropertyName);
+					validationErrors = prop.getValidationErrors();
+					if (del) {
+						del.register(prop, "onvalidationErrors");
+					}
+					if (validationErrors != null && validationErrors.length > 0) {
+						break;
+					}
+				}
+			}
+			return validationErrors;
+			]]>
+		</method>
+		
+		<simplelayout axis="x" spacing="0"/>
+		
+		<text name="textView" width="${parent.width-parent.openDialogButton.width}" multiline="true"/>
+		<wcfTextEditor name="textEditor" width="${parent.width-parent.openDialogButton.width}" visible="false"/>
+		<wcfNumericEditor name="numericEditor" width="${parent.width-parent.openDialogButton.width}" visible="false" numDecimalPlaces="${parent.numDecimalPlaces}"/>
+
+		<basebutton name="openDialogButton" enabled="${classroot.enabled}" resource="rteGridIcon" focusable="true">
+			<!--
+				@keyword private
+			-->
+			<handler name="onclick">
+				<![CDATA[
+				wcfChildObjectTextDialog.openChildObjectTextDialog(classroot);
+				]]>
+			</handler>
+			
+			<!---
+				@keywords private
+				Handle focus.
+			-->
+			<handler name="onfocus">
+				<![CDATA[
+				if(!this["indicator"]){
+					new lz.wcfFocusIndicator(this, {
+						name: "indicator",
+						focusableView: this,
+						indicatorView: this
+					});
+				}
+				]]>
+			</handler>
+		</basebutton>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Multiple selector dialog.
+	-->
+	<wcfDialog name="wcfChildObjectTextDialog" contentPaddingLeftSize="0" contentPaddingRightSize="0" contentPaddingTopSize="0" contentPaddingBottomSize="0" minWidth="100">
+		<!---
+			Reference to grid editor from which this dialog was launched.
+		-->
+		<attribute name="gridEditor"/>
+		<!---
+			@keywords private
+			Indicates that the delete action is enabled.
+		-->
+		<attribute name="deleteEnabled" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the delete action is not available.
+		-->
+		<attribute name="hideDeleteAction" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that the add action is enabled.
+		-->
+		<attribute name="addEnabled" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Instance of new button {@link wcfNewChildButton}
+		-->
+		<attribute name="newButton" value="${null}"/>
+		<!---
+			@keywords private
+			Instance of delete button {@link wcfDeleteChildButton}
+		-->
+		<attribute name="deleteButton" value="${null}"/>
+		<!--- @keywords private -->
+		<attribute name="model"/>
+
+		<!---
+			Open the child object editor dialog.
+			@param wcfGridChildObjectTextEditor gridEditor grid cell editor
+		 -->
+		<method name="openChildObjectTextDialog" args="gridEditor">
+			<![CDATA[
+			this.model = gridEditor.o.model;
+			this.openWindow();
+			this.gridEditor = gridEditor;
+			this.borderedView.list.valueColumn.setAttribute("visible", !gridEditor.numeric);
+			this.borderedView.list.numericValueColumn.setAttribute("visible", gridEditor.numeric);
+			this.borderedView.list.numericValueColumn.setAttribute("numDecimalPlaces", gridEditor.numDecimalPlaces);
+			var childDefinition = gridEditor.o.model.getObjectDefinition(gridEditor.o, gridEditor.childObjectType, true);
+			if (childDefinition != null) {
+				if (this.newButton == null) {
+					this.newButton = new lz.wcfNewChildButton(this.borderedView.actionArea, {
+						editor: this,
+						actionDefinitions: null
+					});
+				}
+				if (childDefinition.isCreatable(gridEditor.o)) {
+					this.setAttribute("addEnabled", true);
+					this.newButton.setAttribute("actionDefinitions", [childDefinition]);
+				}
+				if (this.deleteButton == null) {
+					this.deleteButton = new lz.wcfDeleteChildButton(this.borderedView.actionArea, {
+						editor: this
+					});
+				}
+				
+				this.borderedView.list.valueColumn.setAttribute("propertyName", gridEditor.childPropertyName);
+				this.borderedView.list.numericValueColumn.setAttribute("propertyName", gridEditor.childPropertyName);
+				gridEditor.o.bindViewToChildren(this.borderedView.list, null, gridEditor.childObjectType);
+				this.borderedView.list.setAttribute("activated", true);
+				this.borderedView.list.checkShortcutKeys();
+				this.checkEnabled();
+			}
+			]]>
+		</method>
+
+		<!---
+			Close the dialog.
+		 -->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.gridEditor.o.releaseViewFromChildren(this.borderedView.list);
+			this.newButton.setAttribute("actionDefinitions", null);
+			this.setAttribute("addEnabled", false);
+			this.borderedView.list.setAttribute("activated", false);
+			this.borderedView.list.checkShortcutKeys();
+			this.gridEditor = null;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create a new child object for the specified object definition.
+			@param Object childDefinition: The child object definition
+		-->
+		<method name="createChild" args="childDefinition">
+			<![CDATA[
+			var newChild = this.model.createNewObject(childDefinition, this.gridEditor.o, true);
+			this.gridEditor.o.updateChildObjects(true);
+			this.borderedView.list.showObjectInView(newChild, true);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Invoke delete.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+			var objects = this.borderedView.list.getSelectedObjects();
+			var deleteObjects = [];
+			for (var i = 0; i < objects.length; i++) {
+				deleteObjects.push(objects[i]);
+			}
+			for (var i = 0; i < deleteObjects.length; i++) {
+				var o = deleteObjects[i];
+				o.deleteObject();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method checks the current enablement of the available actions.
+		-->
+		<method name="checkEnabled">
+			<![CDATA[
+			var objects = this.borderedView.list.getSelectedObjects();
+			var newDeleteEnabled = objects.length > 0;
+			if (newDeleteEnabled) {
+				for (var i = 0; i < objects.length; i++) {
+					if (!objects[i].isDeletable()) {
+						newDeleteEnabled = false;
+						break;
+					}
+				}
+			}
+			if (newDeleteEnabled != this.deleteEnabled) {
+				this.setAttribute("deleteEnabled", newDeleteEnabled);
+			}
+			]]>
+		</method>
+
+		<wcfBorderedView name="borderedView" width="180" height="200" borderSize="1" borderColor="${parent.style.bordercolumnlistcolor}">
+			<attribute name="availableHeight" type="number" value="${200 - this.actionArea.height - 10}"/>
+			<attribute name="availableWidth" value="${179}"/>
+			<simplelayout axis="y" spacing="5" inset="5"/>
+			<view name="actionArea">
+				<simplelayout axis="x" spacing="3"/>
+			</view>
+			<wcfObjectGrid name="list" listBorderSize="1" padding="0" dragEnabled="false" isConfigurable="false">
+				<wcfGridText name="valueColumn" text="${foundationResources.gridChildObjectTextValue.string}" width="160"/>
+				<wcfGridNumeric name="numericValueColumn" text="${foundationResources.gridChildObjectTextValue.string}" width="160"/>
+				<handler name="onselect">
+					<![CDATA[
+					wcfChildObjectTextDialog.checkEnabled();
+					]]>
+				</handler>
+				<method name="activateObject" args="o"/>
+			</wcfObjectGrid>
+		</wcfBorderedView>
+		
+		<view name="buttonSection" placement="footer">
+			<wcfButton name="closeButton" text="${foundationResources.closeButtonText.string}">
+				<handler name="onclick">
+					<![CDATA[
+					parent.parent.closeWindow();
+					]]>
+				</handler>
+			</wcfButton>
+		</view>
+
+	</wcfDialog>
+</library>

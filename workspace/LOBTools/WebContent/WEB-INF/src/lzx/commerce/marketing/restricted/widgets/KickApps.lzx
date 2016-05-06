@@ -1,0 +1,270 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		This class declares a KickApps SOAP Single Sign On service and parses the XML in the response.
+	-->
+	<wcfSOAPService id="mktKickAppsSSOService" url="http://affiliate.kickapps.com/soap/KaSoapSvc" requestHeader="['Content-Type', 'text/xml']"
+		sendIdentity="false" sendLocale="false" sendTimeZoneId="false" sendWorkspaceContext="false">
+		
+		<!---
+			@keywords private
+			Parse the specified XML response element. This method is called when the XML flag is true and a
+			service response XML has been retrieved.
+			@param node requestParent: service request parent node
+			@param XML e: "objects" element
+			@param string reqIdentifier: the request identifier associated with the dataset that returned this data
+		-->
+		<method name="parseXML" args="requestParent,e,requestIdentifier">
+			<![CDATA[
+			var sessionToken = "";
+			var transactionId = "";
+			var content = this.getSOAPBody(e);
+			var nodes = content.childNodes;
+			for (var i = 0; i < nodes.length; i++) {
+				if(nodes[i].nodeName=="processRequestout") {
+					var responseNodes = nodes[i].childNodes;
+					for (var s = 0; s < responseNodes.length; s++) {
+						if(responseNodes[s].nodeName=="KassoResponse") {
+							var paramNodes = responseNodes[s].childNodes;
+							for (var t = 0; t < paramNodes.length; t++) {
+								var param = paramNodes[t]
+								if(param.nodeName=="Param") {
+									if(param.attributes["paramName"] == "sessionToken") {
+										sessionToken = param.attributes["paramValue"];
+									}
+									if(param.attributes["paramName"] == "transactionId") {
+										transactionId = param.attributes["paramValue"];
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			requestParent.launchKickApps(sessionToken,transactionId);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Builds the Single sign on XML request
+			@param String siteId: Kick Apps SSO key, used in SOAP header
+			@param String userName: Kick Apps account user name
+			@param String email: Kick Apps account user email address
+			@param String siteName: Kick Apps account site name
+			@return String: Kick Apps single sign on request
+		-->
+		<method name="buildSSORequest" args="siteId,userName,email,siteName">
+			<![CDATA[
+			var header = "<AffiliateAuthenticationToken xmlns='http://schemas.kickapps.com/services/soap'>"+
+								"<Key>"+siteId+"</Key>"+
+						 "</AffiliateAuthenticationToken>";
+			var body = "<processRequestin0 xmlns='http://soap.services.kickapps.com' >"+
+								"&#13;&lt;?xml version='1.0' encoding='UTF-8'?&gt;&#13;"+
+							"&lt;KassoRequest xmlns='http://schemas.kickapps.com/services/soap' requestName='signInUser'&gt;&#13;"+
+								"&lt;Param xmlns='' paramName='affiliateUserName' paramValue='"+userName+"'/&gt;&#13;"+
+								"&lt;Param xmlns='' paramName='affiliateEmail' paramValue='"+email+"'/&gt;&#13;"+
+								"&lt;Param xmlns='' paramName='affiliateSiteName' paramValue='"+siteName+"'/&gt;&#13;"+
+								"&lt;Param xmlns='' paramName='userName' paramValue='"+userName+"'/&gt;&#13;"+
+								"&lt;Param xmlns='' paramName='email' paramValue='"+email+"'/&gt;&#13;"+
+							"&lt;/KassoRequest&gt;&#13;"+
+						"</processRequestin0>";
+			return this.createSOAPEnvelop(header,body);
+			]]>
+		</method>
+
+	</wcfSOAPService>
+	
+	<!---
+		@keywords private
+		The mktKickAppsButton class is the editor class used by {@link mktPropertyGetRemoteWidget}. This button will
+		build the KickApps perform the {@link mktKickAppsSSOService} Single-Sign on request, create the KickApps URL
+		and launch KickApps in a new window.
+	-->
+	<class name="mktKickAppsButton" extends="wcfButton">
+	
+		<!---
+			@keywords private
+			The {@link wcfStoreConfiguration} instance used to gather the remote widgets parameters.
+			@type wcfModelProperty
+		-->
+		<attribute name="storeConfig" value="null" />
+		<!---
+			@keywords private
+			The {@link wcfModelProperty} instance that this property editor is editing.
+			@type wcfModelProperty
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)" />
+		<!---
+			@keywords private
+			The {@link wcfPropertyCompoent} instance that created this editor.
+			@type wcfPropertyCompoent
+		-->
+		<attribute name="parentComponent" value="null" />
+		
+		<!---
+			@keywords private
+		-->
+		<handler name="onclick"> 
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("mktKickAppsButton onclick, handle SSO request to KickApps");
+			var ssoXMLString = mktKickAppsSSOService.buildSSORequest(
+									this.storeConfig.remoteWidgets.SiteId,
+									this.storeConfig.remoteWidgets.UserName,
+									this.storeConfig.remoteWidgets.Email,
+									this.storeConfig.remoteWidgets.SiteName);	
+			mktKickAppsSSOService.doRequest(this,null,{content:ssoXMLString});
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Builds the KickApps URL and then launches KickApps in a new window
+			@param string sessionToken,: KickApps session token retrieved by single sign on
+			@param string sessionToken,: KickApps transaction Id retrieved by single sign on
+		-->	
+		<method name="launchKickApps" args="sessionToken, transactionId">
+			<![CDATA[
+			var newWindowObj = new Object();
+			var cName = "affiliate.kickapps.com";
+			if(typeof(this.storeConfig.remoteWidgets["CName"]) != "undefined" && this.storeConfig.remoteWidgets.CName != null && this.storeConfig.remoteWidgets.CName != "") {
+				cName = this.storeConfig.remoteWidgets.CName;
+			}
+			var title = this.property.value;
+			if(title != ""){
+				title = "&title=" + encodeURIComponent(title);
+			}
+			var feedURL = this.getURLFeed(); 
+			if(feedURL != "") {
+				feedURL = "&feedURL=" + encodeURIComponent(feedURL);
+			}
+			newWindowObj.URL = "http://" + cName + "/widget/displayManageFeed.kickAction?as=" + this.storeConfig.remoteWidgets.AffiliateSiteId +
+								"&nav=WB" + "&st=" + sessionToken + "&tid=" + transactionId + feedURL + title;
+			newWindowObj.windowName = "KickApps_Window";
+			newWindowObj.windowFeatures = "scrollbars=yes,toolbar=no,directories=no,status=no,menubar=no,copyhistory=no,resizable=yes";
+			newWindowObj.windowWidth = 1014;
+			newWindowObj.windowHeight = 710;
+			callJSFunction("openNewCenteredWindow", newWindowObj);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the enabled attribute based on the property value being valid and the Kick Apps required parameters 
+			store in the storeConfig.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			this.updateEnablementDel.register(this.property, "ondirty");
+			
+			var siteId = this.storeConfig.remoteWidgets["SiteId"];
+			var userName = this.storeConfig.remoteWidgets["UserName"];
+			var email = this.storeConfig.remoteWidgets["Email"];
+			var siteName = this.storeConfig.remoteWidgets["SiteName"];
+			var affSiteId = this.storeConfig.remoteWidgets["AffiliateSiteId"];
+			
+			if(this.property.value == "" || this.property.value == null || this.property.dirty == true || this.parentComponent.enabled == false ||
+					typeof(siteId) == "undefined" || siteId == null || siteId == "" ||
+					typeof(userName) == "undefined" || userName == null || userName == "" ||
+					typeof(email) == "undefined" || email == null || email == "" ||
+					typeof(siteName) == "undefined" || siteName == null || siteName == "" ||
+					typeof(affSiteId) == "undefined" || affSiteId == null || affSiteId == "") {
+				this.setAttribute("enabled", false);
+			}
+			else {
+				this.setAttribute("enabled", true);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Creates and returns the URL feed for this E-Marketing Spot.
+			@return String url: unique URL feed used for this E-Marketing Spot.
+		-->
+		<method name="getURLFeed">
+			<![CDATA[ 
+			var value = this.property.value;
+			var url = "";
+			if(value != "") {
+				var currentURL = new LzURL(lz.Browser.getLoadURL());
+				var hostname = currentURL.host;
+				if(typeof(this.storeConfig.remoteWidgets["ProductionServer"]) != "undefined"
+						&& this.storeConfig.remoteWidgets.ProductionServer != null
+						&& this.storeConfig.remoteWidgets.ProductionServer != "") {
+					hostname = this.storeConfig.remoteWidgets.ProductionServer;
+				}
+				
+				var contextPath = "/wcs/resources";
+				if(this.storeConfig.remoteWidgets.restContextPath != "") {
+					contextPath = this.storeConfig.remoteWidgets.restContextPath;
+				}
+
+				var protocol = "http";
+				var port = "";
+				if(this.storeConfig.remoteWidgets.restNonSSLPort != "") {
+					if(this.storeConfig.remoteWidgets.restNonSSLPort != "80") {
+						port = ":" + this.storeConfig.remoteWidgets.restNonSSLPort;
+					}
+				}
+				else if(this.storeConfig.remoteWidgets.restSSLPort != "") {
+					protocol = "https";
+					if(this.storeConfig.remoteWidgets.restSSLPort != "443") {
+						port = ":" + this.storeConfig.remoteWidgets.restSSLPort;
+					}
+				}
+				
+				url = protocol + "://" + hostname + port + contextPath + "/stores/" + this.storeConfig.storeId + "/MarketingSpotData/" + encodeURIComponent(value) + "?responseFormat=atom";
+			}
+			return url;
+			]]>
+		</method>
+		
+		<!---
+			Set the {@link wcfModelProperty} to be associated with this button. Listeners are created to
+			watch the property value. If the property changes at any time, the <code>updateEnablement</code> method will be called.
+			@param wcfModelProperty newProperty New Property to associate with this button
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateEnablementDel) == "undefined") {
+					this.updateEnablementDel = new lz.Delegate(this, "updateEnablement");
+				}
+				this.property = newProperty;
+				if (this.property) {
+					this.storeConfig = wcfContextUtil.findStoreConfig(this.property.o);
+				}
+				else {
+					this.storeConfig = null;
+				}
+				if (this.storeConfig != null) {
+					this.updateEnablement();
+				}
+				else {
+					this.updateEnablementDel.unregisterAll();
+					this.setAttribute('enabled', false);
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+</library>

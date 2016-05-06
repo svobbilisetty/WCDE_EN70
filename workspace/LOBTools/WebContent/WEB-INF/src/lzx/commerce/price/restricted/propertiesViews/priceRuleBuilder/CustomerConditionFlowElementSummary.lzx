@@ -1,0 +1,144 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<class name="prcCustomerConditionElementSummary" extends="wcfFlowElementSummary">
+
+		<wcfFlowSummaryParam name="scope" propertyName="scope"/>
+		<wcfFlowSummaryParam name="targetMemberGroups" propertyName="targetMemberGroups"/>
+		<wcfFlowSummaryParam name="targetOrganizations" propertyName="targetOrganizations"/>
+		<wcfFlowSummaryParam name="targetCustomerSegments" propertyName="targetCustomerSegments"/>
+		<wcfFlowSummaryParam name="targetBuyerOrganizations" propertyName="targetBuyerOrganizations"/>
+		
+		<wcfFlowSummaryParam name="memberGroupIds" objectPath="MemberGroupEntry" propertyName="memberGroupIdentifier"/>
+		<wcfFlowSummaryParam name="organizationIds" objectPath="OrganizationEntry" propertyName="organizationIdentifier"/>
+		<wcfFlowSummaryParam name="customerSegmentIds" objectPath="ChildSegment/CustomerSegmentGroup" propertyName="name"/>
+		<wcfFlowSummaryParam name="buyerOrganizationIds" objectPath="ChildBuyerOrganizationGroup/BuyerOrganizationGroup" propertyName="name"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(prcPriceResources.scopeMemberGroups, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.scopeOrganizations, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.scopeCustomerSegments, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAnyMemberGroups, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAllMemberGroups, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.notInMemberGroups, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAnyOrganizations, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAllOrganizations, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.notInOrganizations, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAnyCustomerSegments, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAllCustomerSegments, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.notInCustomerSegments, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAnyBuyerOrganizations, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.inAllBuyerOrganizations, "onstring");
+			this.updateSummaryDel.register(prcPriceResources.notInBuyerOrganizations, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var tooltipText = "";
+				
+				if(this.resolvedParams["scope"] == "memberGroups") {
+					var memberGroupIds = this.getValuesList("memberGroupIds");
+					if (memberGroupIds != "") { 				
+						if(this.resolvedParams["targetMemberGroups"] == "inAny") {
+							summaryText = this.getSummaryText("summary_inAnyMemberGroups", memberGroupIds);
+							tooltipText = this.getTooltipText("summary_inAnyMemberGroups", memberGroupIds);
+						} else if(this.resolvedParams["targetMemberGroups"] == "inAll") {
+							summaryText = this.getSummaryText("summary_inAllMemberGroups", memberGroupIds);
+							tooltipText = this.getTooltipText("summary_inAllMemberGroups", memberGroupIds);
+						} else if(this.resolvedParams["targetMemberGroups"] == "notIn") {
+							summaryText = this.getSummaryText("summary_notInMemberGroups", memberGroupIds);
+							tooltipText = this.getTooltipText("summary_notInMemberGroups", memberGroupIds);
+						}	
+					}	
+				} else if(this.resolvedParams["scope"] == "organizations") {
+					var organizationIds = this.getValuesList("organizationIds");
+					if (organizationIds != "") {
+						if(this.resolvedParams["targetOrganizations"] == "inAny") {
+							summaryText = this.getSummaryText("summary_inAnyOrganizations", organizationIds);
+							tooltipText = this.getTooltipText("summary_inAnyOrganizations", organizationIds);
+						} else if(this.resolvedParams["targetOrganizations"] == "inAll") {
+							summaryText = this.getSummaryText("summary_inAllOrganizations", organizationIds);
+							tooltipText = this.getTooltipText("summary_inAllOrganizations", organizationIds);
+						} else if(this.resolvedParams["targetOrganizations"] == "notIn") {
+							summaryText = this.getSummaryText("summary_notInOrganizations", organizationIds);
+							tooltipText = this.getTooltipText("summary_notInOrganizations", organizationIds);
+						}	
+					}
+				} else if(this.resolvedParams["scope"] == "customerSegments") {
+					var customerSegmentIds = this.getValuesList("customerSegmentIds");
+					if (customerSegmentIds != "") {
+						if(this.resolvedParams["targetCustomerSegments"] == "inAny") {
+							summaryText = this.getSummaryText("summary_inAnyCustomerSegments", customerSegmentIds);
+							tooltipText = this.getTooltipText("summary_inAnyCustomerSegments", customerSegmentIds);
+						} else if(this.resolvedParams["targetCustomerSegments"] == "inAll") {
+							summaryText = this.getSummaryText("summary_inAllCustomerSegments", customerSegmentIds);
+							tooltipText = this.getTooltipText("summary_inAllCustomerSegments", customerSegmentIds);
+						} else if(this.resolvedParams["targetCustomerSegments"] == "notIn") {
+							summaryText = this.getSummaryText("summary_notInCustomerSegments", customerSegmentIds);
+							tooltipText = this.getTooltipText("summary_notInCustomerSegments", customerSegmentIds);
+						}	
+					}
+				} else if(this.resolvedParams["scope"] == "buyerOrganizations") {
+					var buyerOrganizationIds = this.getValuesList("buyerOrganizationIds");
+					if (buyerOrganizationIds != "") {
+						if(this.resolvedParams["targetBuyerOrganizations"] == "inAny") {
+							summaryText = this.getSummaryText("summary_inAnyBuyOrganizations", buyerOrganizationIds);
+							tooltipText = this.getTooltipText("summary_inAnyBuyOrganizations", buyerOrganizationIds);
+						} else if(this.resolvedParams["targetBuyerOrganizations"] == "inAll") {
+							summaryText = this.getSummaryText("summary_inAllBuyOrganizations", buyerOrganizationIds);
+							tooltipText = this.getTooltipText("summary_inAllBuyOrganizations", buyerOrganizationIds);
+						} else if(this.resolvedParams["targetBuyerOrganizations"] == "notIn") {
+							summaryText = this.getSummaryText("summary_notInBuyOrganizations", buyerOrganizationIds);
+							tooltipText = this.getTooltipText("summary_notInBuyOrganizations", buyerOrganizationIds);
+						}	
+					}
+				} 
+				
+				this.setSummaryText(summaryText);
+				this.setTooltipText(tooltipText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getSummaryText" args="template,valuesList">
+			<![CDATA[
+				var values = valuesList.split(", ");
+				var text = "";
+				if (values.length > 3) {
+					text = prcPriceResources.replaceValues(template, valuesList.split(", ", 3));
+				} else {
+					text = prcPriceResources.replaceValues("full_" + template, [valuesList]);
+				}
+				return text;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getTooltipText" args="template,valuesList">
+			<![CDATA[
+				var values = valuesList.split(", ");
+				var text = "";
+				if (values.length > 3) {
+					text = prcPriceResources.replaceValues("full_" + template, [valuesList]);
+				} 
+				return text;				
+			]]>
+		</method>
+	</class>
+</library>

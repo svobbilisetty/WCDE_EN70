@@ -1,0 +1,102 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<!-- BEGIN CategoryNavigationSetup.jspf-->
+
+<%@page import="org.apache.solr.client.solrj.response.SpellCheckResponse"%>
+<%@page import="org.apache.solr.client.solrj.response.QueryResponse"%>
+<%@page import="org.apache.solr.common.SolrDocumentList"%>
+<%@page import="java.util.HashMap"%>
+<%@page import="java.util.List"%>
+<%@page import="java.util.Map"%>
+<%@page import="com.ibm.commerce.registry.StoreCopy"%>
+<%@page import="com.ibm.commerce.registry.StoreRegistry"%>
+<%@page import="com.ibm.commerce.catalog.facade.datatypes.CatalogNavigationViewType"%>
+<%@page import="com.ibm.commerce.foundation.internal.server.services.search.util.SpecialCharacterHelper"%>
+<%@page import="com.ibm.commerce.datatype.WcParam" %>
+<%@page import="com.ibm.commerce.foundation.internal.server.services.search.config.solr.SolrSearchConfigurationRegistry"%>
+
+<c:if test="${empty includedCategoryNavigationSetupJSPF}">
+	<c:set var="includedCategoryNavigationSetupJSPF" value="includedCategoryNavigationSetupJSPF" scope="request"/> <%-- For singleton feature --%>
+
+	<c:set var="categoryId" value="${WCParam.categoryId}"/>
+	<c:if test = "${empty categoryId}">
+		<c:set var="categoryId" value="${param.categoryId}"/>
+	</c:if>
+
+	<c:set var="searchType" value="${WCParam.searchType}" scope="request"/>
+	<c:if test="${empty searchType}" >
+		<c:set var="searchType" value="1000" scope="request"/>
+	</c:if>
+
+	<%-- Do not need to get category facets separately in case of expanded category navigation. --%>
+	<flow:ifDisabled feature="ExpandedCategoryNavigation">
+		<%-- Use a deep search with no filters in order to populate the complete child category list with product counts.  Since the category search will return only the category facet belonging to the resulting products, we must use this for now to obtain the complete view.  --%>
+		<wcf:getData type="com.ibm.commerce.catalog.facade.datatypes.CatalogNavigationViewType" var="catalogNavigationView" 
+			expressionBuilder="getCatalogNavigationView" scope="request" varShowVerb="showCatalogNavigationView" 
+			maxItems="1" recordSetStartNumber="0" scope="request">
+			<wcf:param name="searchProfile" value="IBM_ComposeCategoryFacetListByCategoryId" />
+			<wcf:param name="searchTerm" value=" " />
+			<wcf:param name="categoryId" value="${categoryId}"/>
+			<wcf:param name="searchType" value="${searchType}" />
+			<wcf:contextData name="storeId" data="${WCParam.storeId}" />
+			<wcf:contextData name="catalogId" data="${WCParam.catalogId}" />
+		</wcf:getData>
+
+		<c:set var="globalcategories" value="${catalogNavigationView.facetView}" scope="request"/>
+	</flow:ifDisabled>
+
+	<%-- Category navigation.  Only display products and facets belonging to the current category with a shallow search --%>
+	<wcf:getData type="com.ibm.commerce.catalog.facade.datatypes.CatalogNavigationViewType" var="catalogNavigationView" 
+		expressionBuilder="getCatalogNavigationViewByCategory" scope="request" varShowVerb="showCatalogNavigationView" 
+		maxItems="${pageSize}" recordSetStartNumber="${beginIndex}"  scope="request">
+		<wcf:param name="searchProfile" value="IBM_ComposeProductListByCategoryId" />
+		<wcf:param name="categoryId" value="${WCParam.categoryId}" />
+		<wcf:param name="orderBy" value="${WCParam.orderBy}" />
+		<wcf:param name="searchType" value="${searchType}" />
+		<c:forEach var="facetValue" items="${paramValues.facet}">
+			<wcf:param name="facet" value="${facetValue}" />
+		</c:forEach>
+		<wcf:param name="minPrice" value="${WCParam.minPrice}" />
+		<wcf:param name="maxPrice" value="${WCParam.maxPrice}" />
+		<flow:ifEnabled feature="ExpandedCategoryNavigation">
+			<%-- Perform deep search to retrieve all products within the current category and all the subcategories.  The default of this parameter in the expression is "N" for shallow search Navigation to return immediate products in the category.  --%>
+			<wcf:param name="searchSource" value="E" />
+		</flow:ifEnabled>
+		<wcf:contextData name="storeId" data="${WCParam.storeId}" />
+		<wcf:contextData name="catalogId" data="${WCParam.catalogId}" />
+		<c:forEach var="facetLimit" items="${paramValues.facetLimit}">
+			<wcf:param name="facetLimit" value="${facetLimit}" />
+		</c:forEach>
+	</wcf:getData>
+ 	<flow:ifEnabled feature="ExpandedCategoryNavigation">
+		<c:set var="globalcategories" value="${catalogNavigationView.facetView}" scope="request"/>
+	</flow:ifEnabled>
+
+	<c:set var="globalfacets" value="${catalogNavigationView.facetView}" scope="request"/>
+	<c:set var="globalresults" value="${catalogNavigationView.catalogEntryView}" scope="request"/>
+	<c:set var="globalbreadcrumbs" value="${catalogNavigationView.breadCrumbTrailView}" scope="request"/>
+	<c:set var="globalreport" value="${catalogNavigationView.previewReport}" scope="request"/>
+	<c:set var="spellcheck" value="${catalogNavigationView.metaData.spellcheck}" scope="request"/>
+	<c:set var="metaData" value="${catalogNavigationView.metaData.metastring}" scope="request"/>
+	<c:set var="totalCount" value="${showCatalogNavigationView.recordSetTotal}" scope="request"/>
+	<c:set var="searchTerm" value="${responseSearchTerm}" scope="request"/>
+	<c:set var="searchMissed" value="false" scope="request"/>
+	<c:set var="globalpricemode" value="${catalogNavigationView.metaData.price}" scope="request"/>
+	<c:set var="mpe_id" value="${catalogNavigationView.metaData.espot}" scope="request" />
+	<c:set var="intv_id" value="${catalogNavigationView.metaData.activity}" scope="request" />
+	<c:set var="experimentId" value="${catalogNavigationView.metaData.experiment}" scope="request" />
+	<c:set var="testElementId" value="${catalogNavigationView.metaData.testelement}" scope="request" />
+</c:if>
+<!-- END CategoryNavigationSetup.jspf-->

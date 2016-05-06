@@ -1,0 +1,1078 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		Base class for store configuration information.
+	-->
+	<class name="wcfStoreConfiguration" extends="node">
+		<!---
+			Parse the specified data element and populate the attributes in this instance
+			with the data elements.
+			@param XML e: the data element
+		-->
+		<method name="parseDataElement" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfStoreConfigInfo", "parse(e)", [e]);
+			}
+            var nodes = e.childNodes;
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                var textNode = node.firstChild;
+                if (textNode != null && textNode.nodeType == 3) {
+                    this.setAttribute(node.nodeName, textNode.nodeValue);
+                } else {
+					this.setAttribute(node.nodeName, null);
+				}
+            }
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfStoreConfigInfo", "parse(e)");	
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Store language information.
+	-->
+	<class name="wcfStoreLanguage" extends="wcfStoreConfiguration">
+		<!---
+			Language description.
+		-->
+		<attribute name="languageDescription" type="string" value=""/>
+		<!---
+			Language ID.
+		-->
+		<attribute name="languageId" type="string" value=""/>
+		<!---
+			Locale name.
+		-->
+		<attribute name="localeName" type="string" value=""/>
+		<!---
+			Language.
+		-->
+		<attribute name="language" type="string" value=""/>
+		<!---
+			Indicates that this language is the default language.
+		-->
+		<attribute name="isDefault" type="boolean" value="false"/>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Store currency information.
+	-->
+	<class name="wcfStoreCurrency" extends="wcfStoreConfiguration">
+		<!---
+			Currency description.
+		-->
+		<attribute name="currencyDescription" type="string" value=""/>
+		<!---
+			Currency code.
+		-->
+		<attribute name="currencyCode" type="string" value=""/>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Store default currency information.
+	-->
+	<class name="wcfStoreDefaultCurrency" extends="wcfStoreConfiguration">
+		<!---
+			Currency description.
+		-->
+		<attribute name="currencyDescription" type="string" value=""/>
+		<!---
+			Currency code.
+		-->
+		<attribute name="currencyCode" type="string" value=""/>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Store static content information.
+	-->
+	<class name="wcfStoreStaticContent" extends="wcfStoreConfiguration">
+		<!---
+			Static content URL prefix. For example, "http://servername:80/wcsstore/Madisons/".
+		-->
+		<attribute name="urlPrefix" type="string" value=""/>
+		<!---
+			Static content directory. For example, "Madisons".
+		-->
+		<attribute name="directory" type="string" value=""/>
+		<!---
+			Store web server port. For example, "80".
+		-->
+		<attribute name="webServerPort" type="string" value=""/>
+		<!---
+			Store SSL web server port. For example, "443".
+		-->
+		<attribute name="webServerSSLPort" type="string" value=""/>
+		<!---
+			Store context path. For example, "/webapp/wcs/stores".
+		-->
+		<attribute name="contextPath" type="string" value=""/>
+		<!---
+			Store servlet mapping path. For example, "/servlet".
+		-->
+		<attribute name="urlMappingPath" type="string" value=""/>
+		<!---
+			Store level. For example, "MOBILE".
+		-->
+		<attribute name="storeLevel" type="string" value=""/>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Store fulfillment center information.
+	-->
+	<class name="wcfStoreFulfillmentCenter" extends="wcfStoreConfiguration">
+		<!---
+			Fulfillment center name.
+		-->
+		<attribute name="fulfillmentCenterName" type="string" value=""/>
+		<!---
+			Fulfillment center ID.
+		-->
+		<attribute name="fulfillmentCenterId" type="string" value=""/>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Store inventory information.
+	-->
+	<class name="wcfStoreInventorySystem" extends="wcfStoreConfiguration">
+		<!---
+			Inventory system.
+		-->
+		<attribute name="inventorySystem" type="string" value=""/>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Store shipping mode information.
+	-->
+	<class name="wcfStoreShippingMode" extends="wcfStoreConfiguration">
+		<!---
+			Shipping mode description
+		-->
+		<attribute name="shippingModeDescription" type="string" value=""/>
+		<!---
+			Shipping mode ID.
+		-->
+		<attribute name="shippingModeId" type="string" value=""/>
+		<!---
+			Shipping mode code.
+		-->
+		<attribute name="code" type="string" value=""/>
+		<!---
+			Shipping mode carrier.
+		-->
+		<attribute name="carrier" type="string" value=""/>
+	</class>
+
+	
+	<!---
+		@keywords private  
+		
+		Store remote widget information.
+	--> 
+	<class name="wcfStoreRemoteWidgets" extends="wcfStoreConfiguration">
+		<!---
+			Whether or not remote widgets is enabled. "true" or "false"
+		-->
+		<attribute name="isEnabled" type="string" value="false"/>
+		<!---
+			The context path of the REST servlet.
+		-->
+		<attribute name="restContextPath" type="string" value=""/>
+		<!---
+			The secure port of the REST servlet.
+		-->
+		<attribute name="restSSLPort" type="string" value=""/>
+		<!---
+			The non-secure port of the REST servlet.
+		-->
+		<attribute name="restNonSSLPort" type="string" value=""/>
+		<!---
+			The context path of the REST preview servlet.
+		-->
+		<attribute name="restPreviewContextPath" type="string" value=""/>
+		<!---
+			The secure port of the REST preview servlet.
+		-->
+		<attribute name="restPreviewSSLPort" type="string" value=""/>
+		<!---
+			The non-secure port of the REST preview servlet.
+		-->
+		<attribute name="restPreviewNonSSLPort" type="string" value=""/>
+	</class>
+	<!---
+		@keywords private
+		
+		Store list price list information.
+	-->
+	<class name="wcfStoreListPriceList" extends="wcfStoreConfiguration">
+		<!---
+			Whether or not list price list is enabled. "true" or "false"
+		-->
+		<attribute name="isEnabled" type="string" value="false"/>
+	</class>
+	<!---
+		@keywords private
+		
+		Store SEO information.
+	-->
+	<class name="wcfStoreSEO" extends="wcfStoreConfiguration">
+		<!---
+			Whether or not seo is enabled. "true" or "false"
+		-->
+		<attribute name="isEnabled" type="string" value="false"/>
+	</class>
+	<!---
+		@keywords private
+		
+		Store analytics information.
+	-->
+	<class name="wcfStoreAnalytics" extends="wcfStoreConfiguration">
+		<!---
+			Analytics provider
+		-->
+		<attribute name="provider" type="string" value=""/>
+		<!---
+			Whether or not analytics is enabled. "true" or "false"
+		-->
+		<attribute name="isEnabled" type="string" value="false"/>
+	</class>
+	<!---
+		@keywords private
+		Store Sterling configurator information.
+	--> 
+	<class name="wcfStoreSterlingConfig" extends="wcfStoreConfiguration">
+		<!--- Whether or not Sterling configurator is enabled. "true" or "false" -->
+		<attribute name="isEnabled" type="string" value="false"/>
+		<!--- Visual Modeler Server URL -->
+		<attribute name="visualModelerServer" type="string" value=""/>
+		<!--- Visual Modeler Server ID -->
+		<attribute name="visualModelerId" type="string" value=""/>
+		<!--- Visual Modeler Server password -->
+		<attribute name="visualModelerPassword" type="string" value=""/>
+		<!--- Sterling Configurator Server URL -->
+		<attribute name="configuratorURL" type="string" value=""/>
+		<!--- Sterling Organization code  -->
+		<attribute name="sterlingOrganization" type="string" value=""/>
+	</class>	
+		
+	<!---
+		@keywords private
+		
+		Store information.
+	-->
+	<class name="wcfStore" extends="node">
+		<!---
+			Store ID.
+		-->
+		<attribute name="storeId" type="string" value=""/>
+		<!---
+			Store name.
+		-->
+		<attribute name="storeName" type="string" value=""/>
+		
+		<!---
+			Store type
+		-->
+		<attribute name="storeType" type="string" value=""/>
+		
+		<!---
+			Assert Store ID.
+		-->
+		<attribute name="assetStoreId" type="string" value=""/>
+		
+		<!---
+			Indicates that the store configuration information has been loaded.
+		-->
+		<attribute name="configurationLoaded" type="boolean" value="false" setter="this.setConfigurationLoaded(configurationLoaded)"/>
+		<!---
+			The request identifier of the load configuration service.
+		-->
+		<attribute name="configurationRequestIdentifier" type="number" value="${null}"/>
+		<!---
+			The locale used to load this configuration.
+		-->
+		<attribute name="configurationLocale" type="string" value=""/>
+		<!---
+			The identity ID used to load this configuration.
+		-->
+		<attribute name="configurationIdentityId" type="string" value=""/>
+		<!---
+			Display name.
+		-->
+		<attribute name="displayName" type="string" value="${storeName}"/>
+		<!---
+			Default language for the store. This is an instance of wcfStoreLanguage.
+		-->
+		<attribute name="defaultLanguage" value="null"/>
+		<!---
+			Supported languages for the store. This is an array of wcfStoreLanguage instances.
+		-->
+		<attribute name="supportedLanguages" value="${[]}"/>
+		<!---
+			Array of wcfStoreLanguage objects available for re-use.
+		-->
+		<attribute name="availableLanguages" value="${[]}"/>
+		<!---
+			Default currency for the store. This is an instance of wcfStoreDefaultCurrency.
+		-->
+		<attribute name="defaultCurrency" value="null"/>
+		<!---
+			Supported currencies for the store. This is an array of wcfStoreCurrency instances.
+		-->
+		<attribute name="supportedCurrencies" value="${[]}"/>
+		<!---
+			Array of wcfStoreCurrency objects available for re-use.
+		-->
+		<attribute name="availableCurrencies" value="${[]}"/>
+		<!---
+			Static content information. This is an instance of wcfStoreStaticContent.
+		-->
+		<attribute name="staticContent" value="null"/>
+		<!---
+			Fulfillment center information. This is an instance of wcfStoreFulfillmentCenter.
+		-->
+		<attribute name="fulfillmentCenter" value="null"/>
+		<!---
+			Inventory system. This is an instance of wcfStoreInventorySystem.
+		-->
+		<attribute name="inventorySystem" value="null"/>
+		<!---
+			Shipping modes. This is an array of wcfStoreShippingMode instances.
+		-->
+		<attribute name="shippingModes" value="${[]}"/>
+		<!---
+			Array of wcfStoreShippingMode objects available for re-use.
+		-->
+		<attribute name="availableShippingModes" value="${[]}"/>
+		<!---
+			Analytics information. This is an instance of wcfStoreAnalytics.
+		-->
+		<attribute name="analytics" value="null"/>
+		<!---
+			 Remote Widgets information. This is an instance of wcfStoreRemoteWidgets.
+		-->
+		<attribute name="remoteWidgets" value="null"/>
+		<!---
+			 List Price List enablement information. This is an instance of wcfStoreListPriceList.
+		-->
+		<attribute name="listPriceList" value="null"/>
+		<!---
+			 Sterling Configurator information. This is an instance of wcfStoreSterlingConfig.
+		-->
+		<attribute name="sterlingConfig" value="null"/>
+		<!---
+			 SEO enablement information. This is an instance of wcfStoreSEO.
+		-->
+		<attribute name="seo" value="null"/>
+		<!---
+			Dump the store information.
+		-->
+		<method name="dump">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				var msg = "storeId:"+this.storeId+" storeName:"+this.storeName;
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				msg = "\t------------------------<supportedLanguages>------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				for (var i = 0; i < this.supportedLanguages.length; i++) {
+					var language = this.supportedLanguages[i];
+					msg = "\tlocaleName:"+language.localeName+" language:"+language.language+" languageId:"+language.languageId+" languageDescription:"+language.languageDescription;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<supportedCurrencies>-----------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				for (var i = 0; i < this.supportedCurrencies.length; i++) {
+					var currency = this.supportedCurrencies[i];
+					msg = "\tcurrencyDescription:"+currency.currencyDescription+" currencyCode:"+currency.currencyCode;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<defaultCurrency>---------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if (this.defaultCurrency != null) {
+					msg = "\tcurrencyDescription:"+this.defaultCurrency.currencyDescription+" currencyCode:"+this.defaultCurrency.currencyCode;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<staticContent>-----------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if (this.staticContent != null) {
+					msg = "\turlPrefix:"+this.staticContent.urlPrefix+" directory:"+this.staticContent.directory;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<fulfillmentCenter>-------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if (this.fulfillmentCenter != null) {
+					msg = "\tfulfillmentCenterId:"+this.fulfillmentCenter.fulfillmentCenterId+" fulfillmentCenterName:"+this.fulfillmentCenter.fulfillmentCenterName;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<inventorySystem>---------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if (this.inventorySystem != null) {
+					msg = "\tinventorySystem:"+this.inventorySystem.inventorySystem;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<shippingModes>-----------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				for (var i = 0; i < this.shippingModes.length; i++) {
+					var shippingMode = this.shippingModes[i];
+					msg = "\tshippingModeId:"+shippingMode.shippingModeId+" code:"+shippingMode.code+" carrier:"+shippingMode.carrier;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<analytics>---------------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if(this.analytics != null) {
+					msg = "\tprovider: " + this.analytics.provider + ", isEnabled: " + this.analytics.isEnabled;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<remoteWidgets>---------------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if(this.remoteWidgets != null) {
+					msg = "\isEnabled: " + this.remoteWidgets.isEnabled;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<listPriceList>---------------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if(this.listPriceList != null) {
+					msg = "\isEnabled: " + this.listPriceList.isEnabled;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				msg = "\t------------------------<sterlingConfig>---------------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if(this.sterlingConfig != null) {
+					var msg1 = "\isEnabled: " + this.sterlingConfig.isEnabled;
+					var msg2 = "\visualModelerServer: " + this.sterlingConfig.visualModelerServer;
+					var msg3 = "\visualModelerId: " + this.sterlingConfig.visualModelerId;
+					var msg4 = "\configuratorURL: " + this.sterlingConfig.configuratorURL;
+					var msg5 = "\sterlingOrganization: " + this.sterlingConfig.sterlingOrganization;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg1);
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg2);
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg3);
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg4);
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg5);
+				}
+				msg = "\t------------------------<seo>---------------------------------";
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				if(this.seo != null) {
+					msg = "\isEnabled: " + this.seo.isEnabled;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.util", "FINER", "wcfStore", "dump", msg);
+				}
+				wcfLogger.flush();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the language information for the specified language ID.
+			@param string languageId: the language ID
+			@return wcfStoreLanguage: language information
+		-->
+		<method name="getLanguageById" args="languageId">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfStore", "getLanguageById(languageId)", [languageId]);
+			}
+			var result = null;
+			for (var i = 0; i < this.supportedLanguages.length; i++) {
+				var language = this.supportedLanguages[i];
+				if (language.languageId == languageId) {
+					result = language;
+					break;
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfStore", "getLanguageById(languageId)", result);	
+			}
+			return result;
+			]]>
+		</method>
+		
+		<!---
+			Get the language information for the specified locale.
+			@param string locale: The locale value. For example, "en_US".
+			@return wcfStoreLanguage: Language information or <code>null</code> if the locale can not be found.
+		-->
+		<method name="getLanguageByLocale" args="locale">
+			<![CDATA[
+			var result = null;
+			for (var i = 0; i < this.supportedLanguages.length; i++) {
+				var language = this.supportedLanguages[i];
+				if (language.localeName == locale) {
+					result = language;
+					break;
+				}
+			}
+			return result;
+			]]>
+		</method>
+		
+		<!---
+			Returns an array of wcfStoreLanguage objects that match the
+			specified list of language IDs.
+			@param string languageIds: comma separated list of language IDs
+			@return wcfStoreLanguage: language information
+		-->
+		<method name="getLanguagesById" args="languageIds">
+			<![CDATA[
+			var languages = [];
+			if (languageIds.length > 0) {
+				var ids = languageIds.split(",");
+				for (var i = 0; i < ids.length; i++) {
+					languages.push(this.getLanguageById(ids[i]));
+				}
+			}
+			return languages;
+			]]>
+		</method>
+
+		<!---
+			Get the default language information.
+		-->
+		<method name="getDefaultLanguage">
+			<![CDATA[
+			return this.defaultLanguage;
+			]]>
+		</method>
+		
+		<!---
+			Get the non default language Ids as a list of comma separated value.
+		-->
+		<method name="getStoreLanguageIds">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfStore", "getStoreLanguageIds");
+			}
+			var result="";
+			for (var i = 0; i < this.supportedLanguages.length; i++) {
+					result += this.supportedLanguages[i].languageId;
+					if ( i < (this.supportedLanguages.length-1) ) { result += ","}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfStore", "getStoreLanguageIds", result);	
+			}
+			return result;
+			]]>
+		</method>
+
+		<!---
+			Get the supported currency codes as a list of comma separated value.
+		-->
+		<method name="getCurrencyCodes">
+			<![CDATA[
+			var result="";
+			for (var i = 0; i < this.supportedCurrencies.length; i++) 
+			{
+				var currency = this.supportedCurrencies[i];
+				result += currency.currencyCode;
+				if ( i < (this.supportedCurrencies.length-1) ) { result += ","}
+			}
+			return result;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private 
+			
+			Initialization method for this class.
+		-->
+		<method name="init">
+			<![CDATA[
+			this.loadDel = new lz.Delegate(this, "loadConfiguration");
+			super.init();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private 
+			
+			Destroy method for this class.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.loadDel.unregisterAll();
+			delete this.loadDel;
+			super.destroy();
+			]]>
+		</method>
+		<!---
+			Trigger load of the store configuration information.
+		-->
+		<method name="loadConfiguration" args="e=null">
+			<![CDATA[
+			var localeContext = wcfContextUtil.findContextValue(null, "locale");
+			var identityIdContext = wcfContextUtil.findContextValue(null, "identityId");
+			this.loadDel.unregisterAll();
+			this.loadDel.register(localeContext, "onvalue");
+			this.loadDel.register(identityIdContext, "onvalue");
+			if (identityIdContext.value != null && identityIdContext.value != "") {
+				if (this.configurationLocale != localeContext.value || this.configurationIdentityId != identityIdContext.value) {
+					this.configurationLocale = localeContext.value;
+					this.configurationIdentityId = identityIdContext.value;
+					wcfStoreConfigService.doRequest(this, {
+						storeId: this.storeId
+					});
+					this.configurationRequestIdentifier = wcfStoreConfigService.requestIdentifier;
+				}
+			}
+			else {
+				this.configurationLoaded = false;
+			}
+			]]>
+		</method>
+		
+		<!---
+			Reset the configuration before parsing in the new configuration.
+		-->
+		<method name="resetConfiguration">
+			<![CDATA[
+			this.defaultLanguage = null;
+			while (this.supportedLanguages.length > 0) {
+				this.availableLanguages.push(this.supportedLanguages.shift());
+			}
+			while (this.supportedCurrencies.length > 0) {
+				this.availableCurrencies.push(this.supportedCurrencies.shift());
+			}
+			while (this.shippingModes.length > 0) {
+				this.availableShippingModes.push(this.shippingModes.shift());
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set the configuration loaded flag.
+			@param boolean newValue: the new value
+		-->
+		<method name="setConfigurationLoaded" args="newValue">
+			<![CDATA[
+			this.configurationLoaded = newValue;
+			if (!newValue) {
+				this.configurationLocale = "";
+				this.configurationIdentityId = "";
+			}
+			if (this["onconfigurationLoaded"]) {
+				this.onconfigurationLoaded.sendEvent(this);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Parse the specified data element and add the attributes to this store object.
+		-->
+		<method name="parseStore" args="dataElement">
+			<![CDATA[
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                var e = dataElement.childNodes[i];
+                if (e.nodeName == "object") {
+                    var storeConfigObject = null;
+                    var objectType = e.attributes["objectType"];
+                    if (objectType == "StoreLanguage") {
+                        storeConfigObject = wcfStoreUtil.getStoreConfiguration(this.availableLanguages, "languageId", wcfStoreUtil.parseStoreConfigurationKey(e, "languageId"));
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreLanguage(this);
+                        }
+                        if (this.defaultLanguage == null) {
+                            this.defaultLanguage = storeConfigObject;
+                        }
+                        storeConfigObject.setAttribute("isDefault", this.defaultLanguage == storeConfigObject);
+                        this.supportedLanguages.push(storeConfigObject);
+                    } else if (objectType == "StoreCurrency") {
+                        storeConfigObject = wcfStoreUtil.getStoreConfiguration(this.availableCurrencies, "currencyCode", wcfStoreUtil.parseStoreConfigurationKey(e, "currencyCode"));
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreCurrency(this);
+                        }
+                        this.supportedCurrencies.push(storeConfigObject);
+                    } else if (objectType == "StoreDefaultCurrency") {
+                        storeConfigObject = this.defaultCurrency;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreDefaultCurrency(this);
+                            this.defaultCurrency = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreStaticContent") {
+                        storeConfigObject = this.staticContent;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreStaticContent(this);
+                            this.staticContent = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreFulfillmentCenter") {
+                        storeConfigObject = this.fulfillmentCenter;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreFulfillmentCenter(this);
+                            this.fulfillmentCenter = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreInventorySystem") {
+                        storeConfigObject = this.inventorySystem;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreInventorySystem(this);
+                            this.inventorySystem = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreShippingMode") {
+                        storeConfigObject = wcfStoreUtil.getStoreConfiguration(this.availableShippingModes, "shippingModeId", wcfStoreUtil.parseStoreConfigurationKey(e, "shippingModeId"));
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreShippingMode(this);
+                        }
+                        this.shippingModes.push(storeConfigObject);
+                    } else if (objectType == "StoreAnalytics") {
+                        storeConfigObject = this.analytics;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreAnalytics(this);
+                            this.analytics = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreRemoteWidgets") {
+                        storeConfigObject = this.remoteWidgets;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreRemoteWidgets(this);
+                            this.remoteWidgets = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreListPriceList") {
+                        storeConfigObject = this.listPriceList;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreListPriceList(this);
+                            this.listPriceList = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreSterlingConfig") {
+                        storeConfigObject = this.sterlingConfig;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreSterlingConfig(this);
+                            this.sterlingConfig = storeConfigObject;
+                        }
+                    } else if (objectType == "StoreSEO") {
+                        storeConfigObject = this.seo;
+                        if (!storeConfigObject) {
+                            storeConfigObject = new lz.wcfStoreSEO(this);
+                            this.seo = storeConfigObject;
+                        }
+                    }
+                    if (storeConfigObject) {
+                        storeConfigObject.parseDataElement(e);
+                    }
+                }
+                else {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        this.setAttribute(e.nodeName, textNode.nodeValue);
+                    }
+                }
+            }
+			]]>
+		</method>
+	</class>
+
+	<!--- Get StoreConfig service. -->
+	<wcfService id="wcfStoreConfigService" url="/cmc/GetStoreConfiguration" sendWorkspaceContext="false" retryOnError="true">
+		<method name="parseObject" args="requestParent, dataElement,reqIdentifier">
+			<![CDATA[
+			if (reqIdentifier == requestParent.configurationRequestIdentifier) {
+				requestParent.resetConfiguration();
+				requestParent.parseStore(dataElement);
+				requestParent.setAttribute("configurationLoaded", true);
+			}
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		
+		Object store information.
+	-->
+	<class name="wcfObjectStore" extends="node">
+		<!---
+			Store ID.
+		-->
+		<attribute name="storeId" type="string" value=""/>
+		<!---
+			@keywords private
+			Usage is a string identifier that is unique to the tool. 
+			
+			The "usage" attribute is used to filter the stores available to the current user for the  
+			business object editor. 
+		-->
+		<attribute name="usage" type="string" value="" />
+		<!---
+			Indicates that the access right information of the store has been checked.
+		-->
+		<attribute name="accessRightChecked" type="boolean" value="false"/>
+		<!--- 
+			Indicate that user has access rights to the store.
+		-->
+		<attribute name="hasAccessRight" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			@param Object args An object whose properties will be copied to this model object.
+		-->
+		<method name="initializeObjectStore" args="args">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+			   wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "initializeObjectStore");
+			}
+			for (var key in args) {
+				this[key] = args[key];
+			}
+			this.checkAccessRight();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "initializeObjectStore");
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method checks if the user has access right to the store.
+		-->
+		<method name="checkAccessRight">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "checkAccessRight", [this.usage,this.storeId]);
+			}
+			if (wcfStringUtil.isInteger(this.storeId)) {
+				wcfGetObjectStoreByIdService.doRequest(this, {
+					usage: this.usage,
+					storeId: this.storeId
+				});
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "checkAccessRight");
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method gets the information for the store.
+		-->
+		<method name="getStoreInfo">
+		<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "getStoreInfo", [this.storeId]);
+			}
+			if (wcfStoreUtil.storeMap[this.storeId] == null && wcfStringUtil.isInteger(this.storeId)) {
+				wcfGetStoreByIdService.doRequest(this, {
+					usage: "",
+					storeId: this.storeId
+				});
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "getStoreInfo");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Parse the specified data element to get the information needecd for the object store.
+		-->
+		<method name="parseObjectStores" args="dataElement">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "parseObjectStores(dataElement)", [this.storeId]);
+			}
+			var store = null;
+			if (dataElement.childNodes.length > 0) {
+				store = wcfStoreUtil.parseStore(dataElement.firstChild);
+			}
+			
+			// Update access right information
+			if (!this.accessRightChecked) {
+				if (store == null ) {
+					this.setAttribute("hasAccessRight", false);
+				}
+				else {
+					this.setAttribute("hasAccessRight", true);
+				}
+				this.setAttribute("accessRightChecked", true);
+			}
+
+			// Need to make one more service call to retrieve the store information if the user does not have access right to the store
+			this.getStoreInfo();
+
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "parseObjectStores(dataElement)", [this.accessRightChecked, this.hasAccessRight]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Parse the specified data element and return a wcfStore instance.
+		-->
+		<method name="parseStores" args="dataElement">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "parseStores(dataElement)", [this.storeId]);
+			}
+			var store = null;
+			if (dataElement.childNodes.length > 0) {
+				store = wcfStoreUtil.parseStore(dataElement.firstChild);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.util", "wcfObjectStore", "parseStores(dataElement)", [store]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Release this object store instance and make it available for re-use.
+		-->
+		<method name="release">
+			<![CDATA[
+			this.storeId = "";
+			this.usage = "";
+			this.accessRightChecked = false;
+			this.hasAccessRight = false;
+			wcfModelUtil.releaseObjectStore(this);
+			]]>
+		</method>
+	</class>
+			
+	<!--- Get object store by store ID service. -->
+	<wcfService id="wcfGetObjectStoreByIdService" url="/cmc/GetStoreById" sendWorkspaceContext="false" retryOnError="true">
+		<!---
+			Parse the store objects.
+		-->
+		<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+			<![CDATA[
+			requestParent.parseObjectStores(dataElement);
+			]]>
+		</method>
+	</wcfService>	
+	
+	<!--- Get store by store ID service. -->
+	<wcfService id="wcfGetStoreByIdService" url="/cmc/GetStoreById" sendWorkspaceContext="false" retryOnError="true">
+		<!---
+			Parse the store objects.
+		-->
+		<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+			<![CDATA[
+			requestParent.parseStores(dataElement);
+			]]>
+		</method>
+	</wcfService>	
+	
+	<!---
+		@keywords private
+		
+		Store utility methods.
+	-->
+	<node id="wcfStoreUtil">
+		<!---
+			Map of all of store objects that have been loaded.
+		-->
+		<attribute name="storeMap" value="${{}}"/>
+		<!---
+			Event that notifies listeners that a new store has been loaded.
+		-->
+		<event name="storeLoaded"/>
+		<!---
+			Parse the specified data element and return a new instance of wcfStore.
+		-->
+		<method name="parseStore" args="dataElement">
+			<![CDATA[
+			var store = null;
+            var storeId = null;
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                var e = dataElement.childNodes[i];
+                if (e.nodeName == "storeId") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        storeId = textNode.nodeValue;
+                        break;
+                    }
+                }
+            }
+            if (storeId != null) {
+                store = this.getStore(storeId);
+                store.parseStore(dataElement);
+                this.storeLoaded.sendEvent(store);
+            }
+			return store;
+			]]>
+		</method>
+		
+		<!---
+			Get the wcfStore instance with the specified ID. If the store does not exist
+			it will be created.
+		-->
+		<method name="getStore" args="storeId">
+			<![CDATA[
+			var store = this.storeMap[storeId];
+			if (store == null) {
+				store = new lz.wcfStore(this, {
+				storeId: storeId
+				});
+				this.storeMap[storeId] = store;
+			}
+			return store;
+			]]>
+		</method>
+		
+		<!---
+			Parse the specified data element and return an array of wcfStore instances.
+		-->
+		<method name="parseStores" args="dataElement">
+			<![CDATA[
+			var stores = [];
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                stores.push(this.parseStore(dataElement.childNodes[i]));
+            }
+			return stores;
+			]]>
+		</method>
+		<!---
+			@keywords private
+		-->
+		<method name="parseStoreConfigurationKey" args="e, key">
+			<![CDATA[
+			var nodes = e.childNodes;
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                var textNode = node.firstChild;
+                if (textNode != null && textNode.nodeType == 3 && node.nodeName == key) {
+                    return textNode.nodeValue;
+                }
+            }
+			return null;
+			]]>
+		</method>
+		<!---
+			@keywords private
+		-->
+		<method name="getStoreConfiguration" args="array, keyName, keyValue">
+			<![CDATA[
+			var result = null;
+			for (var i = 0; i < array.length; i++) {
+				if (keyValue == array[i][keyName]) {
+					result = array[i];
+					array.splice(i, 1);
+					break;
+				}
+			}
+			return result;
+			]]>
+		</method>
+	</node>
+</library>

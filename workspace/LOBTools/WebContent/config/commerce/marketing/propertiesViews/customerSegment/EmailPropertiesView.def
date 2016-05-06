@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktEmailProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/Email" promptText="${mktMarketingResources.cspEmail}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="any" objectPath="TopAndList/Email" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyEmail}" listDefinitionName="mktCSEmailGrid" name="emailGrid" objectPath="TopAndList/Email/EmailList" objectTypes="EmailEndsWithOption" promptText="${mktMarketingResources.customerSegment_email_SpecifyEmail}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="notAny" objectPath="TopAndList/Email" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyEmail}" listDefinitionName="mktCSEmailGrid" name="emailGrid" objectPath="TopAndList/Email/EmailList" objectTypes="EmailDoesNotEndWithOption" promptText="${mktMarketingResources.customerSegment_email_SpecifyEmail}"/>
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktCSEmailGrid" preferenceKey="mktCSEmailGrid">		
+		<GridText editable="true" name="emailDomainName" propertyName="conditionValue" required="true" text="${mktMarketingResources.customerSegment_email_Specified}" visible="true" width="250"/>
+	</ObjectGrid>
+</Definitions>

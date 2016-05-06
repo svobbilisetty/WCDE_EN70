@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+ 
+	<!--
+            Defines the views to display top level folder, sub folders and the corresponding E-Marketing Spots in the folders.
+            A list view lists objects in the form of a table, providing selected information about the object, within table cells.
+            For example, a list of folders showing the type, Store, Name, Description, etc.
+       -->
+<Definitions>
+      <!--- This grid displays the contents and characteristics of a list of top level EMarketingSpotFolder Marketing folders}. -->
+      <ObjectGrid definitionName="mktTopEMarketingSpotFolderGrid" preferenceKey="mktEMarketingSpotFolderGrid">
+            <GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.EMarketingSpotFolderType}" width="60"/>
+            <GridStoreName name="store" objectPath="EMarketingSpotFolderGroup" propertyName="objectStoreId" text="${mktMarketingResources.EMarketingSpotFolderStore}" width="125"/>
+            <GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId"  text="${mktMarketingResources.EMarketingSpotFolderList_uniqueID}" visible="false" width="90"/>
+            <GridText editable="true" name="folderName" propertyName="identifier" required="true" text="${mktMarketingResources.EMarketingSpotFolderList_identifier}" visible="true" width="180"/>
+            <GridText editable="true"  name="folderDescription" propertyName="description" text="${mktMarketingResources.EMarketingSpotFolderList_description}" visible="true" width="350"/>          
+      </ObjectGrid>
+     
+      <!-- This child list editor shows a list of top level folders when the 'E-Marketing Spot Folders' organizational node is selected in the navigation view. -->
+      <ChildListEditor definitionName="mktTopEMarketingSpotFolderGridEditor" listDefinitionName="mktTopEMarketingSpotFolderGrid" objectTypes="EMarketingSpotFolder,InheritedEMarketingSpotFolder"/>
+     
+      <!--- This navigation list definition is used to display top level EMarketingSpotFolder. -->
+      <NavigationListDefinition definitionName="mktTopEMarketingSpotFolderGridChildList" displayName="${mktMarketingResources.EMarketingSpotFolderListMenuTitle}" listDefinitionName="mktTopEMarketingSpotFolderGridEditor" listTitle="${mktMarketingResources.EMarketingSpotFolderListTitle}" toolbarIcon="folderListToolbarIcon"/>
+     
+      <!--- This grid displays the contents and characteristics of a list of EMarketingSpotFolders -->
+      <ObjectGrid definitionName="mktEMarketingSpotFolderGrid" preferenceKey="mktEMarketingSpotFolderGrid">
+            <GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.EMarketingSpotFolderType}" width="60"/>
+            <GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.EMarketingSpotFolderStore}" width="125"/>
+            <GridText datatype="number" editable="false" name="uniqueID" propertyName="EMarketingSpotFolderId" objectPath="EMarketingSpotFolderGroup" text="${mktMarketingResources.EMarketingSpotFolderList_uniqueID}" visible="false" width="90"/>
+            <GridText editable="true" name="folderName" propertyName="identifier" objectPath="EMarketingSpotFolderGroup" required="true" text="${mktMarketingResources.EMarketingSpotFolderList_identifier}" visible="true" width="180"/>
+            <GridText editable="true"  name="folderDescription" propertyName="description" objectPath="EMarketingSpotFolderGroup" text="${mktMarketingResources.EMarketingSpotFolderList_description}" visible="true" width="350"/>          
+      </ObjectGrid>
+     
+      <!-- This child list editor shows a list of E-Marketing Spot folders that are children of an E-Marketing Spot folder. -->
+      <ChildListEditor definitionName="mktEMarketingSpotFolderGridEditor" listDefinitionName="mktEMarketingSpotFolderGrid" objectTypes="EMarketingSpotFolderReference,InheritedEMarketingSpotFolderReference"/>
+     
+      <!--- This navigation list definition is used to display EMarketingSpotFolders -->
+      <NavigationListDefinition definitionName="mktEMarketingSpotFolderGridChildList" displayName="${mktMarketingResources.EMarketingSpotFolderListMenuTitle}" listDefinitionName="mktEMarketingSpotFolderGridEditor" listTitle="${mktMarketingResources.EMarketingSpotFolderListTitle}" toolbarIcon="listToolbarIcon"/>          
+     
+      <!--- This grid displays the contents and characteristics of a list of e-Marketing Spots-->
+      <ObjectGrid definitionName="mktEMarketingSpotFolderItemGrid" preferenceKey="mktEMarketingSpotGrid">
+            <GridText objectPath="EMarketingSpotGroup" alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+            <GridIconTypeImage objectPath="EMarketingSpotGroup" name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+            <GridStoreName objectPath="EMarketingSpotGroup" name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+            <GridText objectPath="EMarketingSpotGroup" editable="true" name="eMarketingSpotName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="250"/>
+            <GridText objectPath="EMarketingSpotGroup" editable="true" name="description" propertyName="description" text="${mktMarketingResources.description}" width="450"/>
+      </ObjectGrid>
+     
+      <!-- Child list editor to display E-Marketing Spot in a folder. -->
+      <ChildListEditor definitionName="mktEMarketingSpotFolderItemGridEditor" listDefinitionName="mktEMarketingSpotFolderItemGrid" objectTypes="EMarketingSpotFolderItemReference,EMarketingSpotFolderInheritedItemReference,InheritedEMarketingSpotFolderInheritedItemReference"/>
+  
+   <!--- This navigation list definition is used to display E-Marketing Spot Folder Item References} -->
+      <NavigationListDefinition definitionName="mktEMarketingSpotFolderItemGridChildList" displayName="${mktMarketingResources.EMarketingSpotFolderItemListMenuTitle}" listDefinitionName="mktEMarketingSpotFolderItemGridEditor" listTitle="${mktMarketingResources.EMarketingSpotFolderItemListTitle}" toolbarIcon="listToolbarIcon"/>
+           
+</Definitions>

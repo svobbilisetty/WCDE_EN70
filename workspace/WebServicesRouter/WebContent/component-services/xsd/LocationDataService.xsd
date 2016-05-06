@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<xsd:schema targetNamespace="http://www.ibm.com/xmlns/prod/commerce/9/location"
+	xmlns:_loc="http://www.ibm.com/xmlns/prod/commerce/9/location"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<xsd:include
+		schemaLocation="OAGIS/9.0/Overlays/IBM/Commerce/Resources/Nouns/ClientLocation.xsd" />
+	<xsd:include
+		schemaLocation="OAGIS/9.0/Overlays/IBM/Commerce/Resources/Nouns/PointOfInterest.xsd" />
+		
+	<xsd:complexType name="LocationDataService">
+
+		<xsd:annotation>
+			<xsd:documentation>
+				Tracks logical and physical locations of zone members 
+				and/or their devices. Also carries configuration data
+				types that describe locations such as mappings between 
+				logical and physical location entities.
+			</xsd:documentation>
+			<xsd:appinfo is_managed="false" />
+			<xsd:appinfo service_package_name="com.ibm.commerce.location" />
+			<xsd:appinfo service_short_name="location" />
+			<xsd:appinfo default_implementation_class_name="LocationDataServiceDatabaseImpl" />
+			<xsd:appinfo location_property_name="LocationDataServiceDataFolder" />
+			<xsd:appinfo database_name="LOSVC" />
+			<xsd:appinfo table_name_prefix="" />
+			<xsd:appinfo bod_version="7" />
+			<xsd:appinfo database_storage_directory="c:\CeladonDatabases\Containers\LOSVC" />
+			<xsd:appinfo generate_scalars_table_directive="as_needed" />
+			<xsd:appinfo generate_references_tables_directive="never" />
+			<xsd:appinfo pojo_data_service_destination_folder="" />
+			<xsd:appinfo generate_oagis_data_service="true" />
+			<xsd:appinfo oagis_data_service_destination_folder="Location-GeneratedByCeladonForWCV7FEP4-Version15" />
+		</xsd:annotation>
+
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="0"
+				name="PointsOfInterest" type="_loc:PointOfInterestType">
+				<xsd:annotation>
+					<xsd:documentation>
+						Static list of fixed location "zones" within an environment
+						(e.g. stores, aisles or departments in stores).
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element maxOccurs="unbounded" minOccurs="0"
+				name="ClientLocations" type="_loc:ClientLocationType">
+				<xsd:annotation>
+					<xsd:documentation>
+						Dynamic list of the locations of entities (e.g. users, products) 
+						within a zone-based services environment.</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+</xsd:schema>

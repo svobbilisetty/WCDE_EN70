@@ -1,0 +1,86 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<testcase>
+
+	<!-- ==================== Modify the Promotion as Site-wide ====================== -->
+	<!-- Find the promotion. -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindPromotions"/>
+		<param name="searchKey" value="adminNameCreate"/>
+		<param name="objectKey" value="promotion"/>
+	</action>
+	
+	<!-- Verify that the promotion was found. -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="promotion"/>
+	</action>
+	
+	<!-- Delete the category added before. -->
+	<action name="wcfAutoDeleteObjectAction">
+		<param name="object" value="categoryForModify"/>
+	</action>		
+	
+	<!-- Set the Site wide property of the purchase condition object to true. -->	
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="purchaseCondition"/>
+		<param name="propertyName" value="siteWide"/>
+		<param name="valueKey" value="siteWideModify"/>
+	</action>	
+	
+	<!-- Save all. -->
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<!-- Refresh all. -->
+	<action name="wcfAutoRefreshAllAction"/>
+	
+	<!-- ========================= Test Modifying the Promotion ======================== -->
+	<!-- Find the promotion. -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindPromotions"/>
+		<param name="searchKey" value="adminNameModify"/>
+		<param name="objectKey" value="promotion"/>
+	</action>
+		
+	<!-- Verify that the promotion was found. -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="promotion"/>
+	</action>
+	
+	<!-- Load the purchaseCondition child object. -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="promotion"/>
+		<param name="objectType" value="CategoryLevelPerItemFixedCostDiscountPurchaseCondition"/>
+	</action>
+	
+	<!-- Get the loaded purchaseCondition child object. -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="promotion"/>
+		<param name="objectPath" value="CategoryLevelPerItemFixedCostDiscountPurchaseCondition"/>
+		<param name="objectKey" value="purchaseCondition"/>
+	</action>
+	
+	<!-- Verify that the purchaseCondition object was found. -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="purchaseCondition"/>
+	</action>
+	
+	<!-- Verify the site wide property of the purchaseCondition object. -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="purchaseCondition"/>
+		<param name="propertyName" value="siteWide"/>
+		<param name="valueKey" value="siteWideModify"/>
+	</action>	
+
+</testcase>

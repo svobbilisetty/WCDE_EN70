@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+    
+   
+    <PropertyPane definitionName="attManageAttachmentInformation">
+    
+    	<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="attachmentAssetGroup"/>
+       
+        <PropertyGroup groupTitle="${attachmentResources.attachmentPropertiesView_AttachmentInfoGroupTitle}" name="attachmentInfoGroup" open="true">
+              
+	        <!--- Identifier. An input box for the identifier property. -->
+	        <PropertyInputText extendedHelpText="${attachmentResources.extendedHelpText_Identifier}" name="identifier" promptText="${attachmentResources.attachmentPropertiesViewPrompt_Identifier}" propertyName="identifier"/>
+	                     
+	        <!--- Property: Name. An input box for the name property. -->              
+	        <PropertyInputText name="descriptionName" objectPath="AttachmentDescription" promptText="${attachmentResources.attachmentPropertiesViewPrompt_Name}" propertyName="name"/>
+	                     
+	        <!--- Property: Short Description. A long input box for the short description property. -->    
+	        <PropertyInputLongText name="sDesc" objectPath="AttachmentDescription" promptText="${attachmentResources.attachmentPropertiesViewPrompt_sDescription}" propertyName="sDesc"/>
+	            
+	        <!--- Property: Long Description. A rich text editor for the long description property. -->    
+	        <PropertyInputMultiLineText name="lDesc" objectPath="AttachmentDescription" promptText="${attachmentResources.attachmentPropertiesViewPrompt_lDescription}" propertyName="lDesc"/>
+                         
+        </PropertyGroup>
+        
+       
+        <PropertyGroup groupTitle="${attachmentResources.attachmentAssetList_labelText}" name="attachmentAssetPropertyGroup" open="true">                     
+	        
+	        <!--- An instantiation of a class which will display attachment assets in a grid. -->
+	        <PropertyChildListEditor baseDefinitionName="attAttachmentAssetList" validatorTypes="reqChildAssetsValidator"/>                                                        
+        
+        </PropertyGroup>
+                            
+   </PropertyPane>
+       
+       
+   <PropertyPane definitionName="attAttachmentReferenceInformation">
+              
+        <PropertyGroup collapsable="true" groupTitle="${attachmentResources.assignedToBusinessObjectType_SalesCatalogType}" name="assignedToCatalogReferencePropertyGroup" open="true">
+            
+	        <!---  This reference list is used to show a list of  {@link SalesCatalog SalesCatalog}  
+	                 which are associated with {@link Attachment Attachment}. -->
+	        <PropertyReferenceList listDefinitionName="attAssignedToCatalogGrid" name="assignedToCatalogPropertyReferenceList" referenceObjectPaths="SalesCatalog/AttachmentReferenceGroup"/>
+	                   
+        </PropertyGroup>
+        
+     
+        <PropertyGroup collapsable="true" groupTitle="${attachmentResources.assignedToBusinessObjectType_CatalogGroupType}" name="assignedToCategoryReferencePropertyGroup">
+            
+	          <!---  This reference list is used to show a list of  {@link InheritedCatalogGroup InheritedCatalogGroup},
+	              {@link CatalogGroup CatalogGroup} and {@link SalesCatalogGroup SalesCatalogGroup}
+	                 which are associated with {@link Attachment Attachment}. -->
+	          <PropertyReferenceList listDefinitionName="attAssignedToCategoryGrid" name="assignedToCategoryPropertyReferenceList" referenceObjectPaths="CatalogGroupAlias/AttachmentReferenceGroup"/>
+                   
+        </PropertyGroup>       
+        
+       
+        <PropertyGroup collapsable="true" groupTitle="${attachmentResources.assignedToBusinessObjectType_CatalogEntryType}" name="assignedToCatalogEntryPropertyGroup">
+            
+             <!---  This reference list is used to show a list of  {@link InheritedKit InheritedKit},
+              {@link Kit Kit}, {@link InheritedCatalogGroupSKU InheritedSKU},{@link CatalogGroupSKU SKU},
+              {@link InheritedProduct InheritedProduct},{@link Product Product},{@link Bundle Bundle},
+              {@link InheritedBundle InheritedBundle},{@link InheritedProductSKU InheritedProductSKU} and {@link ProductSKU ProductSKU}
+                 which are associated with {@link Attachment Attachment}. -->
+	        <PropertyReferenceList listDefinitionName="attAssignedToCatalogEntryGrid" name="assignedToCatalogEntryPropertyReferenceList" referenceObjectPaths="CatalogEntry/AttachmentReferenceGroup"/>
+	                
+        </PropertyGroup>                                                                         
+        
+      
+        <PropertyGroup collapsable="true" groupTitle="${attachmentResources.assignedToBusinessObjectType_ContentType}" name="assignedToMarketingContentPropertyGroup">
+            
+            <!---  This reference list is used to show a list of  {@link InheritedMarketingContent InheritedMarketingContent}
+                            and {@link MarketingContent MarketingContent} which are associated with {@link Attachment Attachment}. -->
+        	<PropertyReferenceList listDefinitionName="attAssignedToMarketingContentGrid" name="assignedToMarketingContentPropertyReferenceList" referenceObjectPaths="MarketingContentGroup/ChildAttachment"/>
+                
+        </PropertyGroup>
+     
+    </PropertyPane>
+    
+    
+    <ObjectProperties definitionName="attAttachmentProperties">
+       
+        
+    	<PropertyTabs name="tabs">
+       
+        	<PropertyTabPane name="manageAttachmentTab" text="${attachmentResources.attachment_ManageAttachmentTab}">
+            	<PropertyPane baseDefinitionName="attManageAttachmentInformation"/>
+            </PropertyTabPane>
+              
+            <PropertyTabPane name="attachmentReferenceTab" text="${attachmentResources.attachment_ReferenceTab}">
+                <PropertyPane baseDefinitionName="attAttachmentReferenceInformation"/>
+            </PropertyTabPane>
+                     
+        </PropertyTabs>
+              
+    </ObjectProperties>
+    
+</Definitions>

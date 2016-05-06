@@ -1,0 +1,57 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		Property combo box for selecting a catalog on the catalog import properties page.
+		List of catalogs will be refreshed when the properties page is opened.
+	-->
+	<class name="catCatalogPropertyComboBox" extends="wcfPropertyEditor">
+		<!---
+			@keywords private
+			Create the combo box editor for the catalogId property component. This method overrides the createEditor method in
+			the wcfPropertiesComponent class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.catCatalogSelectionComboBox(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+    	@keywords private
+    	Catalog Selection combo box to display the list of catalogs for the current store.
+    -->
+    <class name="catCatalogSelectionComboBox" extends="wcfComboBox">
+		<!---
+    		@keywords private
+    	-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if(this.property!=null && this.property.propertyDefinition != null){
+				// Force service to reload property
+				this.property.propertyDefinition.doRefreshOnInit(true);
+			}
+			super.setProperty(newProperty);
+			]]>
+		</method>
+    </class>
+</library>	 

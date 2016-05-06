@@ -1,0 +1,131 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		Currency selector that provides a combobox with a list of supported store currencies. The list
+		of currencies is obtained by the Store Configuration.
+	-->
+	<class name="wcfCurrencySelector" extends="wcfComboBox">
+		<!---
+			If true, the only option available will be the store default currency. Default is false.
+		-->
+		<attribute name="allowDefaultCurrencyOnly" type="boolean" value="false"/>
+		<!---
+			Create currency selections
+		-->
+		<method name="createComboBox" args="e=null">
+			<![CDATA[
+			this._initializingComboBox = true;
+			this.setValues(null);
+			var storeConfig = null;
+			if (this.property != null) {
+				var storeConfig = wcfContextUtil.findStoreConfig(this.property.o);
+			}
+			if((this.property != null) && (storeConfig != null)) {
+				if(!allowDefaultCurrencyOnly) {
+					for(var i = 0; i < storeConfig.supportedCurrencies.length; ++i){
+						var currency = storeConfig.supportedCurrencies[i]; 
+						this.addItem(currency.currencyDescription, currency.currencyCode);
+					}
+				}else if(storeConfig.defaultCurrency != null) {
+					this.addItem(storeConfig.defaultCurrency.currencyDescription, storeConfig.defaultCurrency.currencyCode);
+				}
+				
+				var selectedValue = null;
+				for(var i = 0; i < this.values.length; ++i){
+					if(this.property.value == this.values[i].value){
+						selectedValue = this.values[i];
+						break;
+					}
+				}
+				this.selectValue(selectedValue);
+			}
+			this._initializingComboBox = false;
+			]]>
+		</method>
+		
+	 </class>
+	 
+	 
+	<!---
+		@keywords final
+		This class defines a currency selector drop-down to use in a properties view. This class
+		will provides a combobox with a list of supported store currencies. The list of currencies is obtained from the 
+		store's configuration.
+	-->
+	<class name="wcfPropertyCurrencySelector" extends="wcfPropertyEditor">
+		<!--- If true, the only option available will be the store default currency. Default is false. -->
+		<attribute name="allowDefaultCurrencyOnly" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfCurrencySelector(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled,
+				allowDefaultCurrencyOnly: this.allowDefaultCurrencyOnly
+			});
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		This class defines a currency selector drop-down to use as a column in a {@link wcfObjectGrid}. This class
+		provides a combobox with a list of supported store currencies. The list of currencies is obtained from the 
+		store's configuration.
+	-->
+	<class name="wcfGridCurrencySelector" extends="wcfGridColumn">
+		<!--- 
+			@keywords private
+			Use "wcfGridComboBoxViewer" for the viewer class.	
+		-->
+		<attribute name="cellViewerClass" value="wcfGridComboBoxViewer"/>
+		<!--- 
+			@keywords private
+			Use "wcfGridCurrencyEditor" for the editor class. 
+		-->
+		<attribute name="cellEditorClass" value="wcfGridCurrencyEditor"/>
+		<!--- If this attribute is set to true, the only option available will be the store's default currency. The default is false. -->
+		<attribute name="allowDefaultCurrencyOnly" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				allowDefaultCurrencyOnly: this.allowDefaultCurrencyOnly
+			};
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Currency editor for a grid cell.
+	-->
+	<class name="wcfGridCurrencyEditor" extends="wcfCurrencySelector" width="${immediateparent.availableWidth}">
+	</class>
+</library>

@@ -1,0 +1,40 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		This class extends {@link wcfTextEditor} and overrides the <code>updateValue</code>  to
+		convert the value provided to kilobytes for display. It also overrides the storeValue method to do nothing.		
+		
+		This field is for internal use by the properties and implementation {@link wcfPropertyKilobyte}.
+	-->
+	<class name="wcfKilobyteViewer" extends="wcfTextEditor">
+		<!--- 	@keywords private
+				Updates the display value of the property editor with the value in KB.
+		-->	
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this["property"] != null && this.property["value"] != null && this.property.value != "") {
+				var value = this.property.value;
+				var valueInKB = Math.ceil(value/1024);
+				this.setText(foundationResources.replaceValues("fileUploaderKilobytes", [valueInKB]));
+			} else {
+				this.setText("");
+			}
+			]]>
+		</method>
+		<method name="delayedStoreValue"/>
+	</class>
+</library>

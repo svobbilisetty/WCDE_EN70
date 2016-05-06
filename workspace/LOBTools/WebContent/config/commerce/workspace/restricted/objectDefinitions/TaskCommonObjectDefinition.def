@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<!---
+		@keywords private
+	-->
+	<ChildObjectDefinition copyProtected="true" creatable="true" definitionName="wspTaskGroupComments" displayName="${wspWorkspaceResources.comments}" idProperty="taskGroupCommentId" objectType="TaskGroupComment">
+
+		<CreateService url="/cmc/CreateTaskGroupComment">
+			<ServiceParam name="taskGroupId" parentProperty="true" parentType="TaskGroup" propertyName="taskGroupId" />
+			<ServiceParam name="taskGroupComment" propertyName="taskGroupCommentText" />
+			<ServiceParam name="logonId" />
+		</CreateService>
+
+		<UpdateService url="/cmc/CreateTaskGroupComment">
+			<ServiceParam name="taskGroupId" parentProperty="true" parentType="TaskGroup" propertyName="taskGroupId" />
+			<ServiceParam name="taskGroupComment" propertyName="taskGroupCommentText" />
+			<ServiceParam name="logonId" />
+		</UpdateService>
+
+		<PropertyDefinition displayName="${wspWorkspaceResources.commentsPropertyPrompt}" maximumSize="4000" propertyName="taskGroupCommentText" required="true" trim="true" />
+
+	</ChildObjectDefinition>
+
+	<!---
+		@keywords private
+	-->
+	<ParentReferenceObjectDefinition definitionName="wspChildTaskGroupObjectDefinition" derivedId="true" idProperty="childTaskGroupId" objectType="ChildTaskGroup" referencedType="TaskGroup"/>
+
+	<!---
+		@keywords private
+	-->
+	<ParentReferenceObjectDefinition definitionName="wspChildTaskObjectDefinition" derivedId="true" idProperty="childTaskId" objectType="ChildTask" referencedType="Task"/>
+
+	<!--- 
+		This condition checks that the taskgroup is in a state that allows changes to history records.
+	-->
+	<EnablementOrCondition conditionId="allowHistoryChangeCondition" definitionName="wspAllowHistoryChangeCondition">
+		<EnablementCondition conditionId="taskGroupInactiveCondition" parentProperty="true" parentType="TaskGroup" propertyName="status" enablementValue="0"/>
+		<EnablementCondition conditionId="taskGroupWorkingCondition" parentProperty="true" parentType="TaskGroup" propertyName="status" enablementValue="1"/>
+		<EnablementCondition conditionId="taskGroupReadyForApprovalCondition" parentProperty="true" parentType="TaskGroup" propertyName="status" enablementValue="2"/>
+		<EnablementCondition conditionId="taskGroupCanceledCondition" parentProperty="true" parentType="TaskGroup" propertyName="status" enablementValue="6"/>
+		<EnablementCondition conditionId="taskGroupCommitFailedCondition" parentProperty="true" parentType="TaskGroup" propertyName="status" enablementValue="7"/>
+		<EnablementCondition conditionId="taskGroupPublishFailedCondition" parentProperty="true" parentType="TaskGroup" propertyName="status" enablementValue="13"/>
+	</EnablementOrCondition>
+	
+</Definitions>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+<!-- 
+
+This definition contains all list and grid classes for displaying the attachment assets of an attachment. 
+The definitions in this file are:
+
+attAttachmentAssetList - ChildListEditor used to navigate the attachment assets of an attachment.
+attAttachmentAssetGrid - This definition is used to display a grid containing the attachment assets information for an attachment. 
+
+-->
+		<PropertyChildListEditor definitionName="attAttachmentAssetList" extendedHelpText="${attachmentResources.extendedHelpText_AttachmentAssets}" helpLinkText="${foundationResources.helpDefaultLinkText}" hideEditColumnAction="true" listDefinitionName="attAttachmentAssetGrid" newButtonResource="URLListToolbarIcon" objectTypes="AttachmentAssetWithFileType,AttachmentAssetWithURLType,InheritedAttachmentAssetWithFileType" promptText="${attachmentResources.attachmentAssetList_labelText}"/>
+		
+	<!---
+		This class displays the contents and characteristics of a list of {@link attAttachmentAssetWithFileType AttachmentAssetsWithFileType}, 
+		{@link attInheritedAttachmentAssetWithFileType attInheritedAttachmentAssetsWithFileType} and {@link attAttachmentAssetWithURLType AttachmentAssetsWithURLType}.
+	-->
+       <ObjectGrid definitionName="attAttachmentAssetGrid">
+       
+       	<GridIconTypeImage editable="false" name="type" propertyName="" required="true" text="${attachmentResources.attachmentAsset_TypeIcon}" width="90"/>
+    	     
+    	<GridText editable="true" name="assetPath" required="true" text="${attachmentResources.attachmentAsset_path}" width="264">
+			<GridCellDescriptor name="fileCell" objectPath="ManagedFileGroup" objectType="AttachmentAssetWithFileTypeGroup" propertyName="fullPath"/>
+			<GridCellDescriptor name="urlCell" objectType="AttachmentAssetWithURLType" propertyName="path"/>
+		</GridText>
+    	<GridText editable="false" name="mimeType" objectPath="ManagedFileGroup" propertyName="mimeType" text="${attachmentResources.attachmentAsset_mimeType}" visible="false" width="90"/>
+    	<!-- The column language indicates the language current attachment asset belongs to. -->
+        <GridLanguages alignment="center" name="language" propertyName="assetLanguageIds" text="${attachmentResources.attachmentAsset_language}" width="150"/>
+    
+       </ObjectGrid>
+    
+
+
+</Definitions>

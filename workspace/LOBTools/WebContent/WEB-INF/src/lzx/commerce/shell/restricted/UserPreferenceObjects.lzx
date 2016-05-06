@@ -1,0 +1,1162 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+
+		The base class that implements an item (text key and its value) in a user preference object {@link wcfUserPreferenceObject}.
+	-->
+	<class name="wcfPreferenceValue" extends="node">
+		<!--- @keywords private -->
+		<attribute name="text" type="string" value="${null}" />
+		<!--- @keywords private -->
+		<attribute name="textKey" value="null"/>
+		<!--- @keywords private -->
+		<attribute name="value" type="string" />
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				super.init();
+				parent.addItem(text, this.value, this.textKey);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getDisplayText">
+			<![CDATA[
+			var displayText = this.text;
+			if (this.textKey != null) {
+				displayText = this.textKey.string;
+			}
+			return displayText;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		The base class that represents a user preference object. All preference objects in Management Center should
+		extend this class, and implement their own set of methods: applyValue, getValue, loadValue and validateValue.
+	-->
+	<class name="wcfUserPreferenceObject" extends="basecomponent" focusable="false">
+		<!---
+			Flag that determines whether user preference is enabled in the dialog. If the value of this flag is
+			set to false, then this preference will be read-only in the dialog. The default value is set as the
+			globalPreferenceEnabled attribute in {@link wcfConfigProperties}.
+		-->
+		<attribute name="preferenceEnabled" type="boolean" value="${configProperties.globalPreferenceEnabled}" />
+		<!---
+			Flag that determines whether this user preference is a custom attribute or not. If this preference
+			is a custom attribute, then it will be persisted in the member attribute table in the database.
+			The default value is true.
+		-->
+		<attribute name="customAttribute" type="boolean" value="true" />
+		<!---
+			Name of the user preference in preference dialog. This field is required to uniquely identify this
+			preference among the preference objects that may have been defined in the dialog.
+		-->
+		<attribute name="preferenceName" type="string" />
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				preferenceManager.addUserPreferenceObject(this);
+			]]>
+		</handler>
+
+		<!---
+			This method is called when the value of this preference is updated in the dialog to apply the value
+			to the global preference setting if applicable. By default, it sends an event to preference manager
+			to notify this preference update. Override this method to implement additional logic that needs to
+			be performed upon update to this preference.
+		-->
+		<method name="applyValue">
+			<![CDATA[
+				preferenceManager.sendPreferenceChangedEvent(preferenceName);
+			]]>
+		</method>
+
+		<!---
+			This method returns the value of this preference. This method is called by the preference manager to
+			retrieve the value of this preference and execute save action to persist this preference to the
+			database. Override this method to implement the logic to retrieve the value of this preference from
+			the control implemented in the dialog.
+
+			@returns string: The value of this preference.
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return null;
+			]]>
+		</method>
+
+		<!---
+			This method sets the value of this preference to the control implemented in the dialog by retrieving
+			the value of this preference from the map object in preference manager. Override this method to
+			implement the logic to get the value of this preference from the preference manager and set the control
+			in the dialog to display the value properly.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				// do nothing
+			]]>
+		</method>
+
+		<!---
+			This method validates the value of this preference. By default, this method always returns true.
+			Override this method to implement this preference's own validation logic.
+
+			@returns string: True if the value of this preference is validated; false otherwise.
+		-->
+		<method name="validateValue">
+			<![CDATA[
+				return true;
+			]]>
+		</method>
+
+		<!---
+			This method returns the view in this preference in which the default focus goes to. By default,
+			this method always returns null. Override this method to implement this preference's own logic to
+			return the proper view.
+
+			@returns lz.view: The view which the default focus goes to.
+		-->
+		<method name="getDefaultFocusView">
+			<![CDATA[
+				return null;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This class defines the user preference for the Store Name. It extends {@link wcfUserPreferenceObject} to
+		implement persistence of the default Store Name preference and includes a find store service to
+		validate the specified Store Name.
+		The default Store Name preference is defined by the defaultPreferredStore attribute in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfStorePreference" extends="wcfUserPreferenceObject" preferenceName="CMCDefaultStore" >
+		<!---
+			@keywords private
+			This flag determines if the value of the Store Name preference has been validated.
+		-->
+		<attribute name="isValueValidated" type="boolean" value="true" />
+
+		<!---
+			@keywords private
+			This method returns the value of the Store Name preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return wcfStringUtil.trim(this.storeFieldView.storeEditorView.selectedDefaultStore.getText());
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of the Store Name preference from the map object in
+			the preference manager to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredStore);
+				}
+				this.storeFieldView.storeEditorView.selectedDefaultStore.setText(preferenceManager.getPreference(this.preferenceName));
+				this.hideValidationError();
+				this.isValueValidated = true;
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfStorePreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method validates the value of the Store Name preference.
+			@returns string: True if the value of this preference is validated; false otherwise.
+		-->
+		<method name="validateValue">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfStorePreference", "validateValue");
+				}
+				if (!this.isValueValidated) {
+					if(this.getValue()==''){
+						this.validationPassed();
+					}else{
+						this.wcfValidateStoreName.doRequest(this, {
+							searchText: this.getValue(),
+							usage: wcfContextUtil.findContextValue(null, "accessibleTools").value
+						});
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfStorePreference", "validateValue", this.isValueValidated);
+				}
+				return this.isValueValidated;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="validationPassed">
+			<![CDATA[
+				this.hideValidationError();
+				this.isValueValidated = true;
+				preferenceManager.savePreferenceValues();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="validationFailed">
+			<![CDATA[
+				this.showValidationError();
+				this.isValueValidated = false;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="showValidationError">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfStorePreference", "showValidationError");
+				}
+				if (!this.storeFieldView.storeEditorView["errorDecorator"]) {
+					var decorator = new lz.view(this.storeFieldView.storeEditorView, {
+						name: "errorDecorator",
+						y: this.storeFieldView.storeEditorView.selectedDefaultStore.y-1,
+						x: this.storeFieldView.storeEditorView.selectedDefaultStore.x-1,
+						bgcolor: 0xFF0000,
+						height: this.storeFieldView.storeEditorView.selectedDefaultStore.height+2,
+						width: this.storeFieldView.storeEditorView.selectedDefaultStore.width+2,
+						visible: false
+					});
+					decorator.sendBehind(this.storeFieldView.storeEditorView.selectedDefaultStore);
+				}
+				this.storeFieldView.storeEditorView.errorDecorator.setAttribute("visible", true);
+				if (!this["errorMessageView"]) {
+					this.errorMessageView = new lz.wcfErrorMessageView(classroot, {
+						attach: "bottom",
+						visible: false
+					});
+					this.errorMessageView.setAttribute("attachTarget", this.storeFieldView.storeEditorView.selectedDefaultStore);
+				}
+				this.errorMessageView.show(shellResourceBundle.errorInvalidStoreName.string);
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfStorePreference", "showValidationError");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="hideValidationError">
+			<![CDATA[
+				if (this.storeFieldView.storeEditorView["errorDecorator"]) {
+					this.storeFieldView.storeEditorView.errorDecorator.setAttribute("visible", false);
+				}
+				if (this["errorMessageView"]) {
+					this.errorMessageView.hide();
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				this.changeStoreDel = new lz.Delegate(this, "changeStore");
+				super.init();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				delete this.changeStoreDel;
+				super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method changes the currently persisted store to match the store that is currently selected
+			@param wcfStore newStore: the new store
+		-->
+		<method name="changeStore" args="newStore">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfStorePreference", "changeStore");
+				}
+				if (newStore != null) {
+					this.storeFieldView.storeEditorView.selectedDefaultStore.setText(newStore.storeName);
+					this.hideValidationError();
+					this.isValueValidated = true;
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfStorePreference", "changeStore");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the default store input text control which the default focus goes to.
+			@returns lz.view: The view which the default focus goes to.
+		-->
+		<method name="getDefaultFocusView">
+			<![CDATA[
+				return this.storeFieldView.storeEditorView.selectedDefaultStore;
+			]]>
+		</method>
+
+		<!--- Validate store name using find stores service. -->
+		<wcfService name="wcfValidateStoreName" url="/cmc/FindStores" sendMaxItems="true" sendWorkspaceContext="false" sendTimeZoneId="false" retryOnError="true">
+			<!---
+				Parse the store objects.
+				@param node requestParent: the parent node for this service request
+				@param XML dataElement: "values" data element
+				@param boolean hasMoreRecordsFlag: true when more records exist that have not been loaded
+				@param string reqIdentifier: the request identifier associated with the dataset that returned this data
+				@param number startIndex: the start index for this request
+			-->
+			<method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+				<![CDATA[
+					var stores = wcfStoreUtil.parseStores(dataElement);
+					var storeFound = false;
+					for (var i=0; i<stores.length; i++) {
+						var store = stores[i];
+						if (store.storeName == requestParent.getValue()) {
+							storeFound = true;
+							break;
+						}
+					}
+					if (storeFound) {
+						requestParent.validationPassed();
+					}
+					else {
+						requestParent.validationFailed();
+					}
+				]]>
+			</method>
+		</wcfService>
+
+		<view name="storePromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text text="${shellResourceBundle.userPreferenceDialogStorePrompt.string}" />
+			<wcfExtendedHelpIcon name="storeExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogStoreTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogStoreExtendedHelp.string}" />
+		</view>
+		<view name="storeFieldView">
+			<view name="storeEditorView">
+				<wcfInputText name="selectedDefaultStore" width="230">
+					<handler name="onkeydown" args="code">
+						<![CDATA[
+						classroot.hideValidationError();
+						classroot.isValueValidated = false;
+						]]>
+					</handler>
+					<handler name="onfocus">
+						<![CDATA[
+						classroot.storeFieldView.storeSearchButton.setAttribute("isdefault",true);
+						]]>
+					</handler>
+					<handler name="onblur">
+						<![CDATA[
+						classroot.storeFieldView.storeSearchButton.setAttribute("isdefault",false);
+						]]>
+					</handler>
+				</wcfInputText>
+			</view>
+			<wcfFocusableBaseButton name="storeSearchButton" resource="searchDialogButtonIcon" valign="bottom" doesenter="true">
+				<handler name="onclick">
+					<![CDATA[
+					wcfStoreSearchDialog.openStoreSearchDialog(classroot.changeStoreDel, classroot.storeFieldView.storeEditorView.selectedDefaultStore.getText(), wcfContextUtil.findContextValue(null, "accessibleTools").value);
+					]]>
+				</handler>
+				<wcfTooltip text="${shellResourceBundle.findButton.string}" />
+			</wcfFocusableBaseButton>
+			<simplelayout axis="x" spacing="5" />
+		</view>
+		<simplelayout axis="y" spacing="2" />
+	</class>
+
+	<!---
+		User preference class for default language preference. Language preference
+		is used to specify the language that all user interface text in Management Center should be in.  If this preference
+		is not set, the default language will be used.  The default language is defined as defaultPreferredLanguage attribute
+		in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfLanguagePreference" extends="wcfUserPreferenceObject" customAttribute="false" preferenceName="preferredLanguage">
+		<!--- Name of the class that defines the list of available languages. -->
+		<attribute name="listClass" type="string"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				new lz[this.listClass](this, {name: "languageList", enabled: this.preferenceEnabled});
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method applies the preference value to the global setting if applicable.
+		-->
+		<method name="applyValue">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfLanguagePreference", "applyValue");
+				}
+				var locale = wcfContextUtil.findContextValue(null, "locale");
+				locale.setAttribute("value", preferenceManager.getPreference(this.preferenceName));
+				callJSFunction("setLoggedInUserLocale", locale.value);
+				super.applyValue();
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfLanguagePreference", "applyValue");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the value of this preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.languageList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of this preference from the map object in preference manager
+			to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredLanguage);
+				}
+				this.languageList.selectItem(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfLanguagePreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="2" />
+		<view name="languagePromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text text="${shellResourceBundle.userPreferenceDialogLanguagePrompt.string}" />
+			<wcfExtendedHelpIcon name="languageExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogLanguageTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogLanguageExtendedHelp.string}" />
+		</view>
+	</class>
+
+	<!---
+		@keywords private
+
+		User preference class for the user style preference. If this preference
+		is not set, the default style will be used.  The default style is defined as defaultPreferredStyle attribute
+		in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfStylePreference" extends="wcfUserPreferenceObject" preferenceName="CMCDefaultStyle">
+		<!--- Name of the class that defines the list of available styles. -->
+		<attribute name="listClass" type="string"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				new lz[this.listClass](this, {name: "styleList", enabled: this.preferenceEnabled});
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method applies the preference value to the global setting if applicable.
+		-->
+		<method name="applyValue">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfStylePreference", "applyValue");
+				}
+				if (canvas["_" + preferenceManager.getPreference(this.preferenceName)] == undefined) {
+					new lz[preferenceManager.getPreference(this.preferenceName)](canvas, {name: "_" + preferenceManager.getPreference(this.preferenceName), isdefault: true});
+				}
+				else {
+					canvas["_" + preferenceManager.getPreference(this.preferenceName)].setAttribute("isdefault", true);
+				}
+				super.applyValue();
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfStylePreference", "applyValue");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the value of this preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.styleList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of this preference from the map object in preference manager
+			to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredStyle);
+				}
+				this.styleList.selectItem(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfStylePreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="2" />
+		<text text="${shellResourceBundle.userPreferenceDialogStylePrompt.string}" />
+	</class>
+
+	<!---
+		User preference class for the extended help preference. Extended
+		help shows information about different user interface elements.  The user can get the extended help by either
+		clicking a help icon or by placing the mouse cursor over a button.  If this preference is not set, the default
+		setting will be used.  The default setting is defined as defaultPreferredExtendedHelp attribute in
+		{@link wcfConfigProperties}.
+	-->
+	<class name="wcfExtendedHelpPreference" extends="wcfUserPreferenceObject" preferenceName="CMCEnableExtendedHelp">
+		<!---
+			@keywords private
+			This method returns the value of this preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.extendedHelpEnabled.getValue().toString();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of this preference from the map object in preference manager
+			to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredExtendedHelp.toString());
+				}
+				this.extendedHelpEnabled.setValue(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfExtendedHelpPreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<wcfBaseCheckbox name="extendedHelpEnabled" text="${shellResourceBundle.userPreferenceDialogEnableTooltipPrompt.string}" />
+		<wcfExtendedHelpIcon name="extHelpExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogEnableTooltipTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogEnableTooltipExtendedHelp.string}" x="${parent.extendedHelpEnabled.x + parent.extendedHelpEnabled.width}" />
+	</class>
+
+	<!---
+		This class defines the user preferences for the Date format preference. If this preference
+		is not set, the default date format will be used.  The default date format is defined by the defaultPreferredDateFormat attribute
+		in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfDateFormatPreference" extends="wcfUserPreferenceObject" preferenceName="CMCDateFormat">
+		<!--- The name of the class that defines the list of available Date formats. -->
+		<attribute name="listClass" type="string"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				new lz[this.listClass](this, {name: "dateFormatList", enabled: this.preferenceEnabled});
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method returns the value of this preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.dateFormatList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the resource key of this preference.
+			@returns wcfResourceBundleKey: resource key of this preference
+		-->
+		<method name="getDisplayKey">
+			<![CDATA[
+				return this.dateFormatList.selectedValue.displayKey;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of this preference from the map object in preference manager
+			to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredDateFormat);
+				}
+				this.dateFormatList.selectItem(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfDateFormatPreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="2" />
+		<view name="dateFormatPromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text text="${shellResourceBundle.userPreferenceDialogDateFormatPrompt.string}" />
+			<wcfExtendedHelpIcon name="dateFormatExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogDateFormatTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogDateFormatExtendedHelp.string}" />
+		</view>
+	</class>
+
+	<!---
+		This class defines the user preferences for the Time format preference. If this preference
+		is not set, the default time format will be used.  The default Time format is defined by the
+		defaultPreferredTimeFormat attribute in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfTimeFormatPreference" extends="wcfUserPreferenceObject" preferenceName="CMCTimeFormat">
+		<!--- The name of the class that defines the list of available Time formats. -->
+		<attribute name="listClass" type="string"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				new lz[this.listClass](this, {name: "timeFormatList", enabled: this.preferenceEnabled});
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method returns the value of the Time format preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.timeFormatList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the text of the Time format preference.
+			@returns string: text of this preference
+		-->
+		<method name="getText">
+			<![CDATA[
+				return this.timeFormatList.selectedValue.getDisplayText();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of the Time format preference from the map object in
+			the preference manager to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredTimeFormat);
+				}
+				this.timeFormatList.selectItem(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfTimeFormatPreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="2" />
+		<view name="timeFormatPromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text text="${shellResourceBundle.userPreferenceDialogTimeFormatPrompt.string}" />
+			<wcfExtendedHelpIcon name="timeFormatExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogTimeFormatTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogTimeFormatExtendedHelp.string}" />
+		</view>
+	</class>
+		
+	<!---
+		This class defines the user preference for the time zone. If this preference is not set, the default time zone will be used. The default time zone is the server time zone.
+	-->
+	<class name="wcfTimeZonePreference" extends="wcfUserPreferenceObject" preferenceName="CMCTimeZone">
+
+		<!---
+			@keywords private
+			This method returns the value of the Time Zone preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.timeZoneList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of the Time Zone preference from the map object in
+			the preference manager to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				var contextValue = wcfContextUtil.findContextValue(null, "timeZoneId");
+				var currentPreference = preferenceManager.getPreference(this.preferenceName);
+				if (currentPreference == undefined || currentPreference == "") {
+					preferenceManager.setPreference(this.preferenceName, contextValue.value);
+				}
+				this.timeZoneList.selectValue({value: preferenceManager.getPreference(this.preferenceName), displayName: wcfContextUtil.findContextValue(null, "timeZoneDisplayName").value});
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfTimeZonePreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method applies the timezone preference value to the global setting if applicable.
+		-->
+		<method name="applyValue">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfTimeZonePreference", "applyValue");
+				}
+				var timeZoneId = wcfContextUtil.findContextValue(null, "timeZoneId");
+				if (timeZoneId.value != preferenceManager.getPreference(this.preferenceName)) {
+					timeZoneId.setAttribute("value", preferenceManager.getPreference(this.preferenceName));
+					wcfContextUtil.findContextValue(null, "timeZoneDisplayName").setAttribute("value", this.timeZoneList.selectedValue.displayName);
+					if (typeof(toolsController) != "undefined") {
+						toolsController.resetAllTools();
+					}
+					super.applyValue();
+				}
+				
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfTimeZonePreference", "applyValue");
+				}	
+			]]>
+		</method>
+		
+		<simplelayout axis="y" spacing="2" />
+		<view name="timeZonePromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text text="${shellResourceBundle.userPreferenceDialogTimeZonePrompt.string}" />
+			<wcfExtendedHelpIcon name="timeZoneExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogTimeZoneTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogTimeZoneExtendedHelp.string}" />
+		</view>
+		<wcfBaseComboBox name="timeZoneList" width="230" enabled="${parent.preferenceEnabled}">
+			<!--- @keywords private -->
+			<method name="openList">
+				<![CDATA[
+				if (typeof(toolsController) != "undefined" && toolsController.hasUnsavedChangesAllTools()) {
+					wcfChangeTimeZoneUnsavedDialog.openWindow();
+				}
+				else if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				}
+				else{
+					super.openList();
+				}
+				]]>
+			</method>
+
+			<!--- @keywords private -->
+			<wcfService url="/cmc/GetTimeZonesDetail" sendIdentity="true" sendWorkspaceContext="false" sendTimeZoneId="false" retryOnError="true">
+				<!--- @keywords private -->
+				<method name="init">
+					<![CDATA[
+					super.init();
+					this.loadDel = new lz.Delegate(this, "load");
+					this.load();
+					]]>
+				</method>
+
+				<!--- @keywords private -->
+				<method name="destroy">
+					<![CDATA[
+					super.destroy();
+					this.loadDel.unregisterAll();
+					delete this.loadDel;
+					]]>
+				</method>
+
+				<!--- @keywords private -->
+				<method name="load" args="e=null">
+					<![CDATA[
+					this.loadDel.unregisterAll();
+					var invisibleView = wcfViewUtil.getInvisibleAncestor(this);
+					if (invisibleView != null) {
+						this.loadDel.register(invisibleView, "onvisible");
+					}
+					else {
+						this.loadDel.register(wcfContextUtil.findContextValue(null, "locale"), "onvalue");
+						parent.values = [];
+						this.doRequest();
+					}
+					]]>
+				</method>
+
+				<!--- @keywords private -->
+				<method name="parseValues" args="requestParent, e,requestIdentifier">
+					<![CDATA[
+					var nodes = e.childNodes;
+                    for (var i=0; i<nodes.length; i++) {
+                        var node = nodes[i];
+                        if (node.nodeName == "timeZone") {
+                            var timeZoneId = null;
+                            var displayName = null;
+                            for (var j = 0; j < node.childNodes.length; j++) {
+                                var childNode = node.childNodes[j];
+                                var textNode = childNode.firstChild;
+                                if (textNode != null && textNode.nodeType == 3) {
+                                    if (childNode.nodeName == "id") {
+                                        timeZoneId = textNode.nodeValue;
+                                    }
+                                    else if (childNode.nodeName == "displayName") {
+                                        displayName = textNode.nodeValue;
+                                    }
+                                }
+                            }
+                            parent.addValue({value: timeZoneId, displayName: displayName});
+                        }
+                    }
+					]]>
+				</method>
+			</wcfService>
+		</wcfBaseComboBox>
+	</class>
+	
+	
+	<!---
+		This class defines the user preferences for the Start week with this day preference. If this preference
+		is not set, the default setting will be used.  The default day to use as the first day of the week is defined by the
+		defaultPreferredFirstDayOfWeek attribute in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfFirstDayOfWeekPreference" extends="wcfUserPreferenceObject" preferenceName="CMCFirstDayOfWeek">
+		<!--- The name of the class that defines the list of available days to use as the first day of the week. -->
+		<attribute name="listClass" type="string"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				new lz[this.listClass](this, {name: "firstDayOfWeekList", enabled: this.preferenceEnabled});
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method returns the value of the Start week with this day preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.firstDayOfWeekList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of the Start week with this day preference from the map object
+			in the preference manager to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredFirstDayOfWeek);
+				}
+				this.firstDayOfWeekList.selectItem(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfFirstDayOfWeekPreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="2" />
+		<view name="firstDayOfWeekPromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text text="${shellResourceBundle.userPreferenceDialogFirstDayOfWeekPrompt.string}" />
+			<wcfExtendedHelpIcon name="firstDayOfWeekExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogFirstDayOfWeekTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogFirstDayOfWeekExtendedHelp.string}" />
+		</view>
+	</class>
+
+	<!---
+		This class defines the user preferences for the Number format preference. If this preference is
+		not set, the default number format will be used.  The default Number format is defined by the
+		defaultPreferredNumberFormat attribute in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfNumberFormatPreference" extends="wcfUserPreferenceObject" preferenceName="CMCNumberFormat">
+		<!--- The name of the class that defines the list of available Number formats. -->
+		<attribute name="listClass" type="string"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				new lz[this.listClass](this, {name: "numberFormatList", enabled: this.preferenceEnabled});
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method returns the value of the Number format preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[	
+				return this.numberFormatList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the text of the Number format preference.
+			@returns string: text of this preference
+		-->
+		<method name="getText">
+			<![CDATA[
+				return this.numberFormatList.selectedValue.getDisplayText();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of the Number format preference from the map
+			object in the preference manager to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredNumberFormat);
+				}
+				this.numberFormatList.selectItem(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfNumberFormatPreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="2" />
+		<view name="numberFormatPromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text name="numberFormatPrompt" text="${shellResourceBundle.userPreferenceDialogNumberFormatPrompt.string}" />
+			<wcfExtendedHelpIcon name="numberFormatExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogNumberFormatTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogNumberFormatExtendedHelp.string}" />
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		This service uses current time zone id to get the time zone display name and time zone offset with respect to server time zone.
+		If the current time zone is not set, this service returns server time zone, its display name, and zero offset.
+	  -->
+	<wcfService id="wcfGetTimeZoneService" sendIdentity="true" sendWorkspaceContext="false" url="/cmc/GetTimeZone" sendTimeZoneId="false" retryOnError="true">
+		
+		<!--- @keywords private -->
+		<handler name="oninit" reference="canvas">
+			<![CDATA[
+			this.loadDel = new lz.Delegate(this, "load");
+			this.loadDel.register(wcfContextUtil.findContextValue(null, "locale"), "onvalue");
+			this.loadDel.register(preferenceManager, "onisInitialized");
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="load" args="e=null">
+			<![CDATA[
+			if (preferenceManager.isInitialized) {
+				this.doRequest(this, {timeZoneId: wcfContextUtil.findContextValue(null, "timeZoneId").value});
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private	-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+			if (preference == "CMCTimeZone") {
+				this.load();
+			}
+			]]>
+		</handler>
+	</wcfService>
+	
+	<!---
+		This class defines the user preferences for the page size preference. If this preference is
+		not set, the default page size will be used.  The default page size is defined by the
+		defaultPreferredPageSize attribute in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfPageSizePreference" extends="wcfUserPreferenceObject" preferenceName="CMCPageSize">
+		<!--- The name of the class that defines the list of available page sizes. -->
+		<attribute name="listClass" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				new lz[this.listClass](this, {name: "pageSizeList", enabled: this.preferenceEnabled});
+				super.init();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the value of the page size preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[	
+				return this.pageSizeList.getValue();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the text of the page size preference.
+			@returns string: text of this preference
+		-->
+		<method name="getText">
+			<![CDATA[
+				return this.pageSizeList.selectedValue.getDisplayText();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of the page size preference from the map
+			object in the preference manager to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredPageSize);
+				}
+				this.pageSizeList.selectItem(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfPageSizePreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method applies the page size preference value to the global setting if applicable.
+		-->
+		<method name="applyValue">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfPageSizePreference", "applyValue");
+				}
+				var maxRecordSetTotal = wcfContextUtil.findContextValue(null, "maxRecordSetTotal");
+				var pageSize = preferenceManager.getPreference(this.preferenceName);
+				if (maxRecordSetTotal.value != pageSize) {
+					maxRecordSetTotal.setAttribute("value", pageSize);
+					if (typeof(toolsController) != "undefined") {
+						toolsController.resetAllTools();
+					}
+					super.applyValue();
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfPageSizePreference", "applyValue");
+				}	
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="2" />
+		<view name="pageSizePromptView">
+			<simplelayout axis="x" spacing="2" />
+			<text name="pageSizePrompt" text="${shellResourceBundle.userPreferenceDialogPageSizePrompt.string}" />
+			<wcfExtendedHelpIcon name="pageSizeExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogPageSizeTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogPageSizeExtendedHelp.string}" />
+		</view>
+	</class>
+
+	<!---
+		User preference class for the Commerce Accelerator preference. User can choose to enable the Commerce Accelerator
+		option in the application menu or not. If this preference is set, the Commerce Accelerator item will be displayed
+		in the application menu, otherwise it will be hidden. The default setting of this preference is false, and it is
+		defined as defaultPreferredCommerceAccelerator attribute in {@link wcfConfigProperties}.
+	-->
+	<class name="wcfCommerceAcceleratorPreference" extends="wcfUserPreferenceObject" preferenceName="CMCEnableCommerceAccelerator">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				this.setAttribute("visible", global["isIE"] != "false");
+				super.init();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method applies the preference value to the global setting if applicable.
+		-->
+		<method name="applyValue">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfCommerceAcceleratorPreference", "applyValue");
+				}
+				if (typeof(global["accelerator"]) != "undefined" && global["isIE"] != "false") {
+					if (preferenceManager.getPreference(this.preferenceName) == "true") {
+						global.accelerator.doShowMenuItem();
+					}
+					else {
+						global.accelerator.doHideMenuItem();
+					}
+				}
+				super.applyValue();
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfCommerceAcceleratorPreference", "applyValue");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the value of this preference.
+			@returns string: value of this preference
+		-->
+		<method name="getValue">
+			<![CDATA[
+				return this.commerceAcceleratorEnabled.getValue().toString();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the value of this preference from the map object in preference manager
+			to the object in the user interface.
+		-->
+		<method name="loadValue">
+			<![CDATA[
+				if (preferenceManager.getPreference(this.preferenceName) == undefined) {
+					preferenceManager.setPreference(this.preferenceName, configProperties.defaultPreferredCommerceAccelerator.toString());
+				}
+				this.commerceAcceleratorEnabled.setValue(preferenceManager.getPreference(this.preferenceName));
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfCommerceAcceleratorPreference", "loadValue", "Loaded the following value for this preference: " + preferenceManager.getPreference(this.preferenceName));
+				}
+			]]>
+		</method>
+
+		<wcfBaseCheckbox name="commerceAcceleratorEnabled" text="${shellResourceBundle.userPreferenceDialogEnableCommerceAcceleratorPrompt.string}" />
+		<wcfExtendedHelpIcon name="extHelpExtendedHelpIcon" helpText="${shellResourceBundle.userPreferenceDialogEnableCommerceAcceleratorTip.string}" extendedHelpText="${shellResourceBundle.userPreferenceDialogEnableCommerceAcceleratorExtendedHelp.string}" x="${parent.commerceAcceleratorEnabled.x + parent.commerceAcceleratorEnabled.width}" />
+	</class>
+
+</library>

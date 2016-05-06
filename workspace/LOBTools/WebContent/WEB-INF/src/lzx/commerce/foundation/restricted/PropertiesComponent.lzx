@@ -1,0 +1,1990 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This class defines the base class for a component of a properties view. All of the
+		editors available for use within a properties view must extend this class. Using this class
+		will ensure that the properties component meets the layout requirements of {@link wcfObjectProperties} and
+		that the prompt text is positioned correctly.
+		This class will also handle binding this view to the right instance of {@link wcfModelObject}.
+		An instance of wcfPropertiesComponent can be instantiated as a child of {@link wcfPropertyPane} or {@link wcfPropertyGroup}.
+		
+		<p>A single instance of {@link wcfEnablementCondition} can be declared as the child of an instance of wcfPropertiesComponent. If the enablement condition
+		evaluates to "true", then the component will be enabled. If the enablement condition evaluates to "false", then the component will be disabled.
+
+		<p>Do not extend this class directly if the properties component you are creating is a property editor for a single {@link wcfModelProperty}.
+		Instead use {@link wcfPropertyEditor}.
+	-->
+	<class name="wcfPropertiesComponent" extends="basecomponent">
+		<!---
+			@keywords private
+			Reference to the {@link wcfModelObject} instance. This is found by calling {@link wcfModelUtil#findModelForView} and
+			passing in this as the parameter.
+		-->
+		<attribute name="model" value="${wcfModelUtil.findModelForView(this)}" when="once"/>
+		<!---
+			@keywords private
+			This attribute hold a reference to the nearest ancestor view that defines a model object. This attribute value is found
+			by invoking {@link wcfModelUtil#findObjectView} with this as the parameter.
+		-->
+		<attribute name="oView" />
+		<!---
+			The name of the component object for this properties component. You
+			can specify a named component object for properties components if you
+			want the properties component to be dependent on another properties component.
+			All named component objects must be declared in the
+			{@link wcfObjectProperties#componentObjectNames} attribute of the containing
+			properties view.
+		-->
+		<attribute name="componentObjectName" type="string" value="${null}" />
+		<!---
+			@keywords private
+			This attribute holds a reference to the ancestor view for this. This attribute value is found by calling
+			{@link wcfPanelManager#findPanel}.
+		-->
+		<attribute name="panel" value="${wcfPanelManager.findPanel(this)}" when="once"/>
+		<!---
+			This attribute is an object path to use when looking up the {@link wcfModelObject} that this class binds to.
+			If this value is not provided, the class will bind to {@link wcfPropertiesComponent#o}.
+			Otherwise it will bind to the object returned when this attribute is resolved relative to
+			{@link wcfPropertiesComponent#o}.
+						
+			The default value for this attribute is null.
+		-->
+		<attribute name="objectPath" type="string" value="${null}"/>
+		<!---
+			Indicates that this value is derived from the parent object. The parent object is the
+			closest primary object in the current object's hierarchy.
+			
+			For example, if <code>name="MyPropertyName"</code>,
+			<code>propertyName="a"</code>, and <code>parentProperty="true"</code>, then
+			this resolver will return the parent object's value of the property named
+			<code>a</code>. The default is "false".
+		-->
+		<attribute name="parentProperty" type="boolean" value="false"/>
+		<!---
+			Qualifies the search for the parent object to those primary objects with the
+			specified object type or object group.  Used only when the <code>parentProperty="true"</code>.
+		-->
+		<attribute name="parentType" type="string" value="${null}"/>
+		<!---
+			This attribute holds a reference to the instance of {@link wcfModelObject} that is being modified by the
+			properties view that contains this properties view component. It declares {@link wcfPropertiesComponent#setModelObject}
+			as a setter for this attribute.
+			@type wcfModelObject
+		-->
+		<attribute name="o" setter="this.setModelObject(o)"/>
+		<!---
+			This attribute indicates that this properties view component is required. The default value for this attribute is "false".
+		-->
+		<attribute name="required" value="false" type="boolean" />
+		<!---
+			This attribute holds a string to use as the prompt text for this properties view component. The default value of this
+			attribute is null.
+		-->
+		<attribute name="promptText" value="${null}" type="string"/>
+		<!---
+			This attribute is used to specify the color of the prompt text. The default value of this attribute is "0x000000". 
+		 -->
+		<attribute name="promptColor" value="0x000000" type="number"/>
+		<!---
+			This attribute is used to specify the font style of the prompt text. Valid values include "plain", "bold", "italic" or "bolditalic".
+			The default value of this attribute is "plain".
+		-->
+		<attribute name="promptFontStyle" value="plain" type="string"/>
+		<!---
+			This attribute indicates that this properties view component should have the currently selected store name appended
+			next to it's {@link wcfPropertiesComponent#promptText}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayStoreName" value="false" type="boolean"/>
+		<!---
+			This attribute indicates that this properties view component should have the store name of the store that owns the primary
+			object appended to it's {@link wcfPropertiesComponent#promptText}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayObjectStoreName" value="false" type="boolean"/>
+		<!---
+			This attribute indicates to the layout manager that this properties view component should
+			be resized horizontally to consume all of the available area. The default value of this attribute is "false".
+		-->
+		<attribute name="sizeToAvailableWidth" type="boolean" value="false"/>
+		<!---
+			This attribute indicates the minimum width of the editor to be retained by the layout manager,
+			if sizeToAvailableWidth is true. The default value for this attribute is 230.
+		-->
+		<attribute name="minWidth" type="number" value="230"/>
+		<!---
+			This attribute provides the help text for this properties view component. The helpText will be used for creating tooltips.
+			The default value of this attribute is the empty string.
+		-->
+		<attribute name="helpText" type="text" value=""/>
+		<!---
+			This attribute provides the extended help text for this properties view component. The extendedHelpText will be used for
+			creating tooltips. The default value of this attribute is the empty string.
+			
+			@see wcfExtendedHelpIcon#extendedHelpText.
+		-->
+		<attribute name="extendedHelpText" type="text" value=""/>
+		<!---
+			This attribute provides the help link text for this properties view component. The helpLinkText will be used for creating
+			tooltips. The default value of this attribute is the empty string.
+			
+			@see wcfExtendedHelpIcon#helpLinkText.
+		-->
+		<attribute name="helpLinkText" type="text" value=""/>
+		<!---
+			This attribute provides the help link URL for this properties view component. The helpLinkURL will be used for creating
+			tooltips. The default value of this attribute is the empty string.
+			
+			@see wcfExtendedHelpIcon#helpLinkURL.
+		-->
+		<attribute name="helpLinkURL" type="text" value=""/>
+		<!---
+			@keywords private
+			This attribute holds the list of siblings created for this language sensitive property component.
+		-->
+		<attribute name="languageSiblings" value="${[]}"/>
+		<!---
+			@keywords private
+			This attribute holds the list of siblings created for this language sensitive property component that are pooled.
+		-->
+		<attribute name="languageSiblingsPool" value="${[]}"/>
+		<!---
+			@keywords private
+			The language associated with this language sensitive property. This is an instance of {@link wcfStoreLanguage}.
+		-->
+		<attribute name="language" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			This attribute holds the new prompt string after adding language sensitive information to {@link wcfPropertiesComponent#promptText}.
+			This prompt string is what is displayed in the UI.
+		-->
+		<attribute name="newPrompt" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			This attribute holds the total width of the left column which contains the prompt and help link. It is bound to the parent's
+			value of promptWidth, but if that is not defined it will default to 177.
+		-->
+		<attribute name="promptWidth" type="number" value="${(typeof(immediateparent.promptWidth)!='undefined')? immediateparent.promptWidth : 177}"/>
+		<!---
+			@keywords private
+			This attribute indicates the spacing along x axis between the columns. It will inherit the value of xspacing from the parent
+			view, but if that is not defined the value will default to 6.
+		-->
+		<attribute name="xspacing" value="${(typeof(immediateparent.xspacing)!='undefined')? immediateparent.xspacing : 6}" type="number" />
+		<!---
+			@keywords private
+			This attribute specifies whether keyboard focus will be received by this property component. The default value is "false".
+		-->
+		<attribute name="focusable" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute holds a reference to the resolved {@link wcfObjectDefinition} for this properties component.
+		-->
+		<attribute name="objectDefinition"/>
+		<!---
+			@keywords private
+			This attribute inidicates that initialization should be defered until explicity invoked.
+		-->
+		<attribute name="initstage" value="defer"/>
+		<!---
+			@keywords private
+			This attribute holds a reference to the closest invisible ancestor view when this view is constructed.
+		-->
+		<attribute name="visibilityView"/>		
+		<!---
+			@keywords private
+			This attribute is true when the editor is currently on focus and can have validation errors. It is updated by
+			{@link wcfPropertiesComponent#updateActiveForError} and should not be changed directly.
+		 -->		
+		<attribute name="activeForError" type="boolean" value="false"/>
+		
+		<!---
+			A comma separated string of {@link wcfValidator#validatorType} values.
+			When there is a validator error in the {@link wcfPropertiesComponent#o model object associated with this editor}
+			this editor will check which {@link wcfValidator} it was created by. The error will be displayed in this editor only
+			if the error is created by a validator whose {@link wcfValidator#validatorType} appears in the list.
+		-->
+		<attribute name="validatorTypes" type="string" value=""/>
+		
+		<!---
+			Indicates that when this properties component is displayed, there will be a visual indication that it is
+			contained within its own group. This can be used instead of wrapping the properties component within an instance
+			of {@link wcfPropertyGroup}.
+		 -->
+		<attribute name="displayGrouping" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private 
+			This attribute indicates that this properties view component is a clone. The default value for this attribute is "false".
+		-->
+		<attribute name="isClone" type="boolean" value="false" />
+
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			this.updateModelObjectDel = new lz.Delegate(this, "updateModelObject");
+			this.updateModelObjectInvisibleAncestorDel = new lz.Delegate(this, "updateModelObject");
+			this.updateEnablementDel = new lz.Delegate(this, "updateEnablement");
+			this.updateChildrenEnablementDel = new lz.Delegate(this, "updateChildrenEnablement");
+			this.updateChildrenEnablementDel.register(this, "onenabled");
+			this.languageDel = new lz.Delegate(this, "checkInputLanguages");
+			this.updateNewPromptTextDel = new lz.Delegate(this, "updateNewPromptText");
+			this.updateValidationErrorDel = new lz.Delegate(this, "updateValidationError");
+			this.forceInstantiationDel = new lz.Delegate(this, "forceInstantiation");
+			this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+			this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+			if (this.visibilityView != null) {
+				this.forceInstantiationDel.register(this.visibilityView, "onvisible");
+			}
+			else {
+				this.initstage = null;
+			}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="getComponentObjectName">
+			<![CDATA[
+			return this.componentObjectName == null ? "o" : "o_" + this.componentObjectName;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="forceInstantiation" args="e=null">
+			<![CDATA[
+			this.completeInstantiation();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="completeInstantiation">
+			<![CDATA[
+			if (this.visibilityView == null || this.visibilityView.visible) {
+				this.forceInstantiationDel.unregisterAll();
+				this.visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+				if (this.visibilityView != null) {
+					this.forceInstantiationDel.register(this.visibilityView, "onvisible");
+				}
+				else {
+					super.completeInstantiation();
+					wcfDefinitionLoader.completeCreateDefinitionChildren(this);
+					this.triggerCreateViews();
+					this.updateEnablement();
+				}
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+						
+			this.oView = wcfModelUtil.findObjectView(this.parent, this.getComponentObjectName());
+			
+			this.updateModelObject();
+			if (this.visibilityView == null) {
+				this.triggerCreateViews();
+			}
+			
+			this.checkFocusDel = new lz.Delegate(this, "checkFocus");
+			this.checkFocusDel.register(lz.Focus, "onfocus");
+			]]>
+		</method>	
+
+		<!--- @keywords private -->
+		<method name="triggerCreateViews">
+			<![CDATA[
+			if (!this["_viewsCreated"]) {
+				this._viewsCreated = true;
+				this.createViewsDel = new lz.Delegate(this, "createViews");
+				wcfCallbackUtil.addDeferredCallback(this.createViewsDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method checks the focus for the current editor and scrolls if neccessary
+		-->		
+		<method name="checkFocus" args="e=null">
+			<![CDATA[
+			if (wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+				this.panel.show(this);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.forceInstantiationDel.unregisterAll();
+			delete this.forceInstantiationDel;
+			
+			this.updateChildrenEnablementDel.unregisterAll();
+			delete this.updateChildrenEnablementDel;
+			
+			this.checkFocusDel.unregisterAll();
+			delete this.checkFocusDel;
+			
+			this.updateEnablementDel.unregisterAll();
+			delete this.updateEnablementDel;
+			
+			if (this["createViewsDel"]) {
+				wcfCallbackUtil.cancelCallback(this.createViewsDel);
+				delete this.createViewsDel;
+			}
+			
+			if (this["languageDel"]) {
+				this.languageDel.unregisterAll();
+				delete this.languageDel;
+			}
+				
+			this.updateNewPromptTextDel.unregisterAll();
+			delete this.updateNewPromptTextDel;
+			delete this.languageSiblings;
+			this.updateModelObjectDel.unregisterAll();
+			delete this.updateModelObjectDel;
+			this.updateModelObjectInvisibleAncestorDel.unregisterAll();
+			delete this.updateModelObjectInvisibleAncestorDel;
+			this.releaseModelObjectDel.unregisterAll();
+			delete this.releaseModelObjectDel;
+			this.updateValidationErrorDel.unregisterAll();
+			delete this.updateValidationErrorDel; 
+			
+			if(this['updateErrorDisplayDel']){
+				this.updateErrorDisplayDel.unregisterAll();
+				delete this.updateErrorDisplayDel;
+			}
+
+			if(this['updateActiveForErrorDel']){
+				this.updateActiveForErrorDel.unregisterAll();
+				delete this.updateActiveForErrorDel;
+			}
+						
+			if(this['errorDecoratorDel']){
+				this.errorDecoratorDel.unregisterAll();
+				delete this.errorDecoratorDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method updates the model object.
+		-->
+		<method name="updateModelObject" args="e=null">
+			<![CDATA[
+			this.updateModelObjectDel.unregisterAll();
+			this.updateModelObjectDel.register(this.oView, "on" + this.getComponentObjectName() );
+			var newObject = null;
+			var invisibleAncestor = wcfViewUtil.getInvisibleAncestor(this);
+			this.updateModelObjectInvisibleAncestorDel.unregisterAll();
+			if (invisibleAncestor != null) {
+				this.updateModelObjectInvisibleAncestorDel.register(invisibleAncestor, "onvisible");
+			}
+			else {
+				newObject = this.oView[this.getComponentObjectName()];  
+			}
+			
+			var descendant = null;
+			if (newObject != null && this.parentProperty) {
+				descendant = newObject;
+				newObject = newObject.getParentPrimaryObject(this.parentType, this.updateModelObjectDel);
+			}
+			
+			if (newObject != null) {
+				if (this.objectPath) {
+					this.objectDefinition = this.model.getObjectDefinition(newObject, this.objectPath);
+					if (this.objectDefinition == null) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "WARNING", "wcfPropertiesComponent", "updateModelObject", "No object definition found for object path: " + this.objectPath);
+					}
+					if (this.objectDefinition != null && this.objectDefinition.languageSensitive) {
+						var storeConfig = wcfContextUtil.findStoreConfig(newObject);
+						if ((storeConfig != null) && ! this.isClone) {
+							this.language = storeConfig.getDefaultLanguage();
+						}
+						if (this.language != null) {
+							var languageObjectPath = this.objectPath + "[languageId=" + this.language.languageId + "]";
+							newObject = newObject.getObject(languageObjectPath, true, descendant, this.updateModelObjectDel);
+						}
+					}
+					else {
+						if (this.objectDefinition != null) {
+							//only create the object if the object is a singleInstance
+							newObject = newObject.getObject(this.objectPath, this.objectDefinition.singleInstance, descendant, this.updateModelObjectDel);
+						}
+						else {
+							newObject = newObject.getObject(this.objectPath, false, descendant, this.updateModelObjectDel);
+						}
+					}
+				}
+				else {
+					this.objectDefinition = newObject.objectDefinition;
+				}
+			}
+			this.setAttribute("o", newObject);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method sets the model object for this view to the specified object.
+			@param wcfModelObject newObject The new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfPropertiesComponent", "setModelObject(newObject)", [newObject]);
+			}
+			if (this["o"] !== newObject) {
+				if (this["o"] != null) {
+					this.o.unregisterObjectView(this);
+				}
+				this.updateEnablementDel.unregisterAll();
+				this.languageDel.unregisterAll();
+				this.releaseModelObjectDel.unregisterAll();
+				this.updateValidationErrorDel.unregisterAll();
+				this.o = newObject;
+
+				if (this["editor"]) {
+					this.editor.setAttribute("o", this.o);
+				}
+				if (this.o != null) {
+					this.o.registerObjectView(this);
+					this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+					
+					this.updateNewPromptText();
+					
+					if(this.isLanguageSensitive()) {
+						wcfContextUtil.findContextValue(this.o, "inputLanguageIds", this.languageDel);
+						this.checkInputLanguages();
+					}
+					
+					this.updateValidationErrorDel.register(this.o, "onvalidationErrors");
+					this.updateValidationError();
+				}
+				else {
+					this.updateNewPromptText();
+					if (this.isLanguageSensitive())
+					{
+						wcfContextUtil.findContextValue(this.model.oEditor, "inputLanguageIds", this.languageDel);
+					}
+				}
+				
+				this.updateEnablement();
+
+				if (this["ono"]) {
+					this.ono.sendEvent(o);
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfPropertiesComponent", "setModelObject(newObject)");				
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns true if this properties component is language sensitive.
+			
+			@return boolean This method returns true if this properties component is language sensitive, and false otherwise.
+		-->
+		<method name="isLanguageSensitive">
+			<![CDATA[
+			return this.language != null;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method releases the model object, setting {@link wcfObjectProperties#o} to null.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+			this.setAttribute("o", null);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method checks the supported and selected language that the	{@link wcfBusinessObjectEditor}
+			of {@link wcfPropertiesComponent#model} supports and replicates the properties component for each supported language.
+		-->
+		<method name="checkInputLanguages" args="e=null">
+			<![CDATA[
+			var change = false;
+			var context = null;
+			if (this.o != null) {
+				context = wcfContextUtil.findContext(this.o);
+			}
+			var storeConfig = context != null ? context.storeConfig : null;
+			var inputLanguages = [];
+			if (storeConfig != null) {
+				inputLanguages = storeConfig.getLanguagesById(context.getContextValue("inputLanguageIds").value);
+			}
+			var languageSiblingsToPool = [];
+			
+			for (var i = 0; i < this.languageSiblings.length; i++) {
+				var sibling = this.languageSiblings[i];
+				if (storeConfig == null || inputLanguages.indexOf(sibling.language) == 0 || inputLanguages.indexOf(sibling.language) == -1) {// siblings should not contain store default language.
+					languageSiblingsToPool.push(sibling);
+				}
+			}
+			
+			for (var i = 0; i < languageSiblingsToPool.length; i++) {
+				this.poolLanguageClone(languageSiblingsToPool[i]);
+				change = true;
+			}
+			
+			for (var i = 1; i < inputLanguages.length; i++) {
+				var inputLanguage = inputLanguages[i];
+				if (this.getPropertiesComponentIndex(inputLanguage.languageId) == -1) {
+					this.languageClone(inputLanguage);
+					change = true;
+				}
+			}
+			if (change) {
+				if (immediateparent["layout"]) {
+					immediateparent.layout.lock();
+				}
+				for (var i = 0; i < this.languageSiblings.length; i++) {
+					var lastSibling = null;
+					if (i == 0) {
+						lastSibling = this;
+					}
+					else {
+						lastSibling = this.languageSiblings[i-1];
+					}
+					var sibling = this.languageSiblings[i];
+					var oldPos = immediateparent.subviews.indexOf(sibling);
+					var newPos = immediateparent.subviews.indexOf(lastSibling) + 1;
+					if (oldPos != newPos && oldPos > -1 && newPos > 0) {
+						immediateparent.subviews.splice(oldPos, 1);
+						immediateparent.subviews.splice(newPos, 0, sibling);
+						if (immediateparent["layout"]) {
+							immediateparent.layout.setLayoutOrder(lastSibling, sibling);
+						}
+						var nextSubView = immediateparent.subviews[newPos+1];
+						if(typeof(nextSubView)!="undefined" && immediateparent["layout"]){
+							immediateparent.layout.setLayoutOrder(sibling, nextSubView);
+						}
+					}
+
+					oldPos = immediateparent.subnodes.indexOf(sibling);
+					newPos = immediateparent.subnodes.indexOf(lastSibling) + 1;
+					
+					if (oldPos != newPos) {
+						immediateparent.subnodes.splice(oldPos, 1);
+						immediateparent.subnodes.splice(newPos, 0, sibling);
+					}
+
+				}
+				if (immediateparent["layout"]) {
+					immediateparent.layout.unlock();
+					immediateparent.layout.update();
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method takes a language id as an input and returns the index of the wcfPropertiesComponent in
+			{@link wcfPropertiesComponent#languageSiblings} for that language.	
+			@param string languageId The language id whose index to return.
+			@return number The index of the wcfPropertiesCompoenent in {@link wcfPropertiesComponent#languageSiblings}, or -1 if that
+						   languageId was not found.
+		-->
+		<method name="getPropertiesComponentIndex" args="languageId">
+			<![CDATA[
+				for(var i=0;i<this.languageSiblings.length;i++){
+					var sibling = this.languageSiblings[i];
+					if(sibling.language.languageId==languageId){
+						return i;
+					}
+				}
+				return -1;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns a {@link wcfPropertiesComponentClone} for the given {@link wcfStoreLanguage}.
+			This method is called by {@link wcfPropertiesComponent#checkInputLanguages}.
+			
+			@param cloneLanguage The wcfStoreLanguage for the new instance of wcfPropertiesComponentClone.
+		-->
+		<method name="languageClone" args="cloneLanguage">
+			<![CDATA[
+			var propertiesComponentClone = null;
+			if (this.languageSiblingsPool.length > 0) {
+				propertiesComponentClone = this.languageSiblingsPool.pop();
+				propertiesComponentClone.setAttribute("language", cloneLanguage);
+				propertiesComponentClone.setAttribute("visible", true);
+				propertiesComponentClone.updateModelObject();
+			}
+			else {
+				propertiesComponentClone = this.createLanguageClone(cloneLanguage);
+			}
+			this.languageSiblings.push(propertiesComponentClone);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates a {@link wcfPropertiesComponentClone} for the given {@link wcfStoreLanguage}.
+			This method is called by {@link wcfPropertiesComponent#languageClone}.
+			
+			@param cloneLanguage The wcfStoreLanguage for the new instance of wcfPropertiesComponentClone.
+		-->
+		<method name="createLanguageClone" args="cloneLanguage">
+			<![CDATA[
+			return new lz.wcfPropertiesComponentClone(this.parent,{
+				originalPropertiesComponent: this,
+				language: cloneLanguage
+				});
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method pools the given sibling {@link wcfPropertiesComponentClone}
+			@param propertiesComponentClone A sibling instance of wcfPropertiesComponentClone that will be pooled
+		-->
+		<method name="poolLanguageClone" args="propertiesComponentClone">
+			<![CDATA[
+			var i = this.languageSiblings.indexOf(propertiesComponentClone);
+			this.languageSiblings.splice(i, 1);
+			
+			this.languageSiblingsPool.push(propertiesComponentClone);
+			
+			propertiesComponentClone.updateModelObjectDel.unregisterAll();
+			propertiesComponentClone.setAttribute("visible", false);
+			propertiesComponentClone.setAttribute("language", null);
+			propertiesComponentClone.setAttribute("o", null);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates {@link wcfPropertiesComponent#newPrompt}, appending the current store name if the
+			{@link wcfPropertiesComponent#displayStoreName} flag is set to true.
+			This method updates {@link wcfPropertiesComponent#newPrompt}, appending the store name of the store that owns the
+			object being edited if the {@link wcfPropertiesComponent#displayObjectStoreName} flag is set to true.
+			This method updates {@link wcfPropertiesComponent#newPrompt}, appending {@link wcfStoreLanguage#languageDescription}
+			to it if {@link wcfPropertiesComponent#language} is not null. Otherwise {@link wcfPropertiesComponent#newPrompt} will
+			be the same as {@link wcfPropertiesComponent#promptText}, or an empty string if {@link wcfPropertiesComponent#promptText}
+			is undefined.
+		-->
+		<method name="updateNewPromptText" args="e=null">
+			<![CDATA[
+			this.updateNewPromptTextDel.unregisterAll();
+			var storeName = "";
+			var store = null;
+			if (this["o"]) {				
+				if (this.displayObjectStoreName){
+					var objectStoreId = "";
+					if (this.o.objectStoreId != "") {
+						objectStoreId = this.o.objectStoreId;
+					} else if (this.o.parentPrimaryObject != null) {
+						objectStoreId = this.o.parentPrimaryObject.objectStoreId;
+					}
+					if (objectStoreId != "") {
+						store = wcfStoreUtil.storeMap[objectStoreId];
+						if (store == null) {
+							this.updateNewPromptTextDel.register(wcfStoreUtil,"storeLoaded");
+						} else {
+							storeName = store.displayName;
+						}
+					}
+				} else if (this.displayStoreName) {
+					var storeConfig = wcfContextUtil.findStoreConfig(this.o, this.updateNewPromptTextDel);
+					if (storeConfig != null) {
+						storeName = storeConfig.storeName;
+					}
+				}
+				
+			}
+			
+			if (this.language != null) {
+				if (storeName != "") {
+					this.setAttribute("newPrompt",(this["promptText"])? (this.promptText+" (" + storeName + ") - ("+this.language.languageDescription+")") : "");
+				} else {
+					this.setAttribute("newPrompt",(this["promptText"])? (this.promptText+" ("+this.language.languageDescription+")") : "");
+				}
+				this.updateNewPromptTextDel.register(this.language, "onlanguageDescription");
+			}
+			else{
+				if (storeName != "") {
+					this.setAttribute("newPrompt",(this["promptText"])? (this.promptText+" (" + storeName + ")") : "");
+				} else {
+					this.setAttribute("newPrompt",(this["promptText"])? this.promptText : "");
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This handler updates {@link wcfPropertiesComponent#newPrompt} by calling {@link wcfPropertiesComponent#updateNewPromptText}
+			whenever {@link wcfPropertiesComponent#promptText} changes.
+		-->
+		<handler name="onpromptText">
+			<![CDATA[
+			this.updateNewPromptText();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			This method updates the enabled attribute based on the current value of the	enablement conditions and
+			whether {@link wcfPropertiesComponent#o} is readonly.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			if (this["enablementCondition"]) {
+				if (this["o"]) {
+					this.enablementCondition.registerDelegate(this.o, this.updateEnablementDel);
+				}
+			}
+			if (this["o"]) {
+				this.updateEnablementDel.register(this.o, "onreadOnly");
+			}
+			var isEnabled = this.o != null && !this.o.readOnly;
+			if (isEnabled && this["enablementCondition"]) {
+				isEnabled = this.enablementCondition.isEnabled(this.o);
+			}
+			this.setAttribute("enabled", isEnabled);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the enabled attribute of its subviews based on the current value
+			of enabled.
+		-->
+		<method name="updateChildrenEnablement" args="e=null">
+			<![CDATA[
+			for (var i = 0; i < this.subviews.length; i++) {
+				if (this.subviews[i] && typeof (this.subviews[i]["enabled"]) != "undefined") {
+					if (this.subviews[i].enabled != this.enabled) {
+						this.subviews[i].setAttribute("enabled", this.enabled);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates the child views for this properties component by calling the following methods:
+				<ul>
+					<li>{@link wcfPropertiesComponent#createPrompt}</li>
+					<li>{@link wcfPropertiesComponent#createEditor}</li>
+					<li>{@link wcfPropertiesComponent#updateValidationError}</li>
+				</ul>			
+		-->
+		<method name="createViews" args="e=null">
+			<![CDATA[
+			this.createPrompt(this);
+			this.createEditor(this);
+			this.updateValidationError();
+			wcfCanvasMenu.addView(this);
+			]]>
+		</method>
+		
+		<!---
+			This method creates the editor for the given property component. This is an abstract method and must be implemented by classes that extend
+			wcfPropertiesComponent.
+			
+			@param wcfPropertiesComponent parentComponent The parent properties component for the new editor view.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			This handler will recreate the prompt if the user changes their tooltip preference
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCEnableExtendedHelp preference
+				if ((preference == "CMCEnableExtendedHelp") && this["prompt"]) {
+					//re-create the prompt
+					this.createPrompt(this);
+				}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			var indent = 0;
+			var totalWidth = 0;
+			if (!parentComponent["prompt"]) {
+				new lz.wcfPropertiesComponentPrompt(parentComponent, {
+					name: "prompt",
+					width: 100,
+					multiline: true,
+					fgcolor: parentComponent.promptColor,
+					fontstyle: parentComponent.promptFontStyle,
+					resize: true,
+					x: indent,
+					y: parentComponent.style.forminputbordersize,
+					required: parentComponent.required
+				});
+			}
+			
+			if ((preferenceManager.getPreference("CMCEnableExtendedHelp") == "true") && ((parentComponent.helpText != null && parentComponent.helpText != "") || (parentComponent.extendedHelpText != null && parentComponent.extendedHelpText != ""))) {
+				if (!parentComponent["extendedHelpIcon"]) {
+					new lz.wcfPropertiesComponentExtendedHelpIcon(parentComponent, {
+						name: "extendedHelpIcon",
+						x: indent + parentComponent.prompt.width,
+						y: parentComponent.style.forminputbordersize,
+						propertiesComponent: parentComponent
+					});
+				}
+				else {
+					parentComponent.extendedHelpIcon.setAttribute("visible", true);
+				}
+				totalWidth += parentComponent.extendedHelpIcon.width;
+			}
+			else if (parentComponent["extendedHelpIcon"]) {
+				parentComponent.extendedHelpIcon.setAttribute("visible", false);
+			}
+			parentComponent.prompt.setAttribute('width', parentComponent.promptWidth-totalWidth);
+			if(parentComponent["extendedHelpIcon"]) {
+				parentComponent.extendedHelpIcon.setAttribute('x',(parentComponent.prompt.x+parentComponent.prompt.width));
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the display of error messages on this properties component. This method will show or hide the {@link wcfErrorMessage} on the
+			properties component as appropriate.
+		 -->
+		<method name="updateErrorDisplay" args="e=null"><![CDATA[
+			var validationError = this.getValidationError();
+			
+			if (this.activeForError && validationError != null) {
+				wcfErrorMessage.setAttribute("attachTarget", this.editor);
+				wcfErrorMessage.show(validationError);
+			}else{
+				wcfErrorMessage.hide(this.editor);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns an array of the {@link wcfValidator#validatorType} that apply to this properties component.
+			@return Array This method returns an array of {@link wcfValidator#validatorType} strings that apply to this properties component.
+				If there are no validators, it returns an empty array.
+		 -->
+		<method name="getValidatorTypeList"><![CDATA[
+			if(!this.validatorTypes){
+				return [];
+			}
+			
+			return wcfStringUtil.splitAndTrim(this.validatorTypes, ",");
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method looks at the validation errors on {@link wcfPropertiesComponent#o}. It returns the first one that it identifies
+			as having been created by the validator that appears in {@link wcfPropertiesComponent#validatorTypes}.			
+
+			The error is returned the form documented in {@link wcfModelObject#validationErrors}. If no error exists this
+			method returns null.
+			@param lz.Delegate del Optional delegate to register to any events that will affect this value.
+			
+			@return String A validation error for this properties component. If none exists this method returns null.
+		 -->
+		<method name="getValidationError" args="del=null"><![CDATA[
+			if(!this["o"]){
+				return null;
+			}
+			
+			var errors = this.o.getValidationErrorsByValidatorTypes(this.getValidatorTypeList());
+			if (del) {
+				del.register(this.o, "onvalidationErrors");
+			}
+			if(errors.length > 0){
+				return errors[0];
+			}
+			
+			return null;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method hides validation error messages on this properties component.
+		 -->
+		<method name="hideValidationError"><![CDATA[
+			wcfErrorMessage.hide(this.editor);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the value of {@link wcfPropertiesComponent#activeForError}. This attribute will be true when the following
+			conditions are met:
+			<ul>
+				<li>There is a value for {@link wcfPropertiesComponent#editor}</li>
+				<li>The {@link wcfPropertiesComponent#editor} is visible</li>
+				<li>The {@link wcfPropertiesComponent#editor} is in focus</li>
+			</ul>
+		 -->
+		<method name="updateActiveForError" args="e=null"><![CDATA[
+			this.setAttribute("activeForError", !!this['editor'] && wcfViewUtil.getInvisibleAncestor(this) == null && wcfViewUtil.containsView(this.editor, lz.Focus.getFocus()));
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns v's sibling view that contains the given subview. Null will be returned if
+			no such view is found.
+			
+			@param lz.view v The view whose sibling view will be returned.
+			@param lz.view subview The view that is the child of the returned sibling view, or null if no such view exists.
+			@return lz.view The view that is a sibling of v and contains subview.
+		 -->
+		<method name="getSiblingContainer" args="v, subview"><![CDATA[
+			var result = subview;
+			while(result != null && result.parent != v.parent && result != canvas){
+				result = result.parent;
+			}
+			
+			return result;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateErrorDecorator" args="e=null"><![CDATA[
+			//updates error decorator only if there is error to decorate
+			if(this["errorDecorator"] && this.errorDecorator.visible){
+				this.errorDecorator.clear();
+			
+				this.errorDecorator.beginPath();
+				this.errorDecorator.strokeStyle = this.style.errorreminderbordercolor;
+				this.errorDecorator.lineWidth = this.style.errorreminderbordersize;
+				
+				var startX = this.editor.getAttributeRelative("x", this) - this.x - 1;
+				var startY = this.editor.getAttributeRelative("y", this) - this.y - 1;
+				this.errorDecorator.moveTo(startX, startY);
+				
+				// Draw borders from left to right, top to bottom
+				this.errorDecorator.lineTo(startX + this.editor.width + 1, startY);
+				this.errorDecorator.stroke();
+				
+				this.errorDecorator.lineTo(startX + this.editor.width + 1, startY + this.editor.height + 1);
+				this.errorDecorator.stroke();
+				
+				this.errorDecorator.lineTo(startX, startY + this.editor.height + 1);
+				this.errorDecorator.stroke();
+				
+				this.errorDecorator.lineTo(startX, startY);
+				this.errorDecorator.stroke();
+				
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="showErrorDecorator"><![CDATA[
+			if (!this["errorDecorator"]) {
+					var decorator = new lz.drawview(this, {name: "errorDecorator"});
+					this.errorDecorator.sendBehind(this.editor);
+					this.updateErrorDecorator();
+					
+					this.errorDecoratorDel = new lz.Delegate(this, "updateErrorDecorator");
+					this.errorDecoratorDel.register(this.editor, "onwidth");
+					this.errorDecoratorDel.register(this.editor, "onheight");
+					this.errorDecoratorDel.register(this.editor, "onx");
+					this.errorDecoratorDel.register(this.editor, "ony");
+			} else {
+				this.errorDecorator.setAttribute("visible", true);
+				this.updateErrorDecorator();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method refreshes the display of the validation error.
+		 -->
+		<method name="updateValidationError" args="e=null">
+			<![CDATA[
+			if (this["editor"]) {
+				if (this.getValidationError() != null) {
+					this.showErrorDecorator();
+					
+					if(!this["updateActiveForErrorDel"]){
+						this.updateActiveForErrorDel = new lz.Delegate(this, "updateActiveForError");
+					}
+					this.updateActiveForErrorDel.unregisterAll();
+					wcfViewUtil.registerVisibilityDelegate(this, this.updateActiveForErrorDel);
+					this.updateActiveForErrorDel.register(lz.Focus, "onfocus");
+					this.updateActiveForError();
+
+					if(!this["updateErrorDisplayDel"]){
+						this.updateErrorDisplayDel = new lz.Delegate(this, "updateErrorDisplay");
+					}
+					this.updateErrorDisplayDel.register(this, "onactiveForError");
+					this.updateErrorDisplay();
+				}
+				else {
+					if (this["errorDecorator"]) {
+						this.errorDecorator.setAttribute("visible", false);
+					}
+					
+					if(this["updateActiveForErrorDel"]){
+						this.updateActiveForErrorDel.unregisterAll();
+					}
+					
+					wcfErrorMessage.hide(this.editor);
+				}
+			}else{
+				if(this["updateErrorDisplayDel"]){
+					this.updateErrorDisplayDel.unregisterAll();
+				}
+				
+				if(this["updateActiveForErrorDel"]){
+					this.updateActiveForErrorDel.unregisterAll();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the first error associated with this properties component for display at the top of the properties view.
+			@param lz.Delegate del A delegate to register to events that will change the first error.
+		-->
+		<method name="getFirstError" args="del">
+			<![CDATA[
+			return this.getValidationError(del);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This handler deals with changes in the width of the properties component, and updates the width of
+			{@link wcfPropertiesComponent#editor} accordingly.
+		-->
+		<handler name="onwidth">
+			<![CDATA[
+			if (this.sizeToAvailableWidth && this["editor"]) {
+				this.editor.setAttribute("width", this.width - this.promptWidth - this.xspacing);
+			}
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			<p>This method will determine if the error message modelObject and objectProperty reported by a validator of
+			type validatorType belongs to this properties component. 
+			<p>The method checks modelObject matches this properties component's {@link wcfPropertiesComponent#o model object}
+			and whether the given validatorType is one of the {@link wcfPropertiesComponent#validatorTypes validator types}
+			supported by the properties component. This implementation will ignore the objectProperty parameter. 
+			<p>If this properties component has not been initialized, the method will resolve {@link wcfPropertiesComponent#o}
+			using the {@link wcfPropertiesComponent#objectPath} but without completing the binding in order	to perform the comparison.
+			<p>If modelObject and validatorType match with this property component, then this method returns true. Otherwise, it returns false.
+			
+			@param wcfModelObject propertiesViewObject The wcfModelProperty that this wcfPropertiesComponent is for.
+			@param wcfModelObject modelObject The wcfModelObject that this error was reported for. 
+			@param wcfModelProperty objectProperty The wcfModelProperty that this error was reported for.
+			@param string validatorType The type of validator that this error was generated by. 
+			@returns boolean The method returns true if modelObject matches with {@link wcfPropertiesComponent#o} and the validatorType is one of the types specified by 
+			{@link wcfPropertiesComponent#validatorTypes}, false otherwise.
+		-->
+		<method name="matchesError" args="propertiesViewObject,modelObject,objectProperty,validatorType">	
+			<![CDATA[		
+			var isValidType = false;			
+			//Check if the error is of a valid type
+			var validatorTypes = this.getValidatorTypeList();
+			for(var j = 0; j < validatorTypes.length; ++j){			
+				if(validatorType == validatorTypes[j]){
+					isValidType = true;
+				}
+			}
+			
+			var matches = false;
+			if (isValidType) 
+			{
+				if (this.o != null) {
+					if (this.o == modelObject) {
+						matches = true;
+					}
+				} else if(propertiesViewObject != null) {
+					var objectToCompare = propertiesViewObject;
+					if (this.objectPath != null) {
+						objectToCompare = objectToCompare.getObject(this.objectPath);
+					}				
+					if (objectToCompare != null && 
+						objectToCompare == modelObject
+						)
+						{
+							matches = true;
+						}
+				}
+			} 		
+			return matches;
+			]]>				
+		</method>						
+	</class>
+
+	<!---
+		This class is the base class for an object property editor displayed in the object properties view. Use this
+		base class for property editors that edit a single {@link wcfModelProperty}.
+		This class will handle binding this view to the right instance of {@link wcfModelProperty} and any required replication
+		if the business user selects multiple input languages.
+	-->
+	<class name="wcfPropertyEditor" extends="wcfPropertiesComponent" visible="true">
+		<!---
+			This attribute specifies the name of the {@link wcfModelProperty property} of the current object that this property editor should
+			bind to.
+			
+			If there is no value provided for <code>{@link wcfPropertiesComponent#objectPath objectPath}</code>,
+			then this property editor will bind to the property identified by this attribute on the
+			{@link wcfPropertiesComponent#o current object}.
+			
+			If there is a value for {@link wcfPropertiesComponent#objectPath}, this property editor will resolve the
+			{@link wcfPropertiesComponent#objectPath objectPath} to find the child object.
+			Then this property editor will bind to the property identified by this attribute on that object.
+			This is a required attribute.				
+		-->
+		<attribute name="propertyName" type="string"/>		
+		<!---
+			The {@link wcfModelProperty} instance that this property editor is editing.
+			@type wcfModelProperty
+		-->
+		<attribute name="property"/>
+		<!---
+			This attribute indicates that when this properties component is displayed, 
+			the validation error messages should be displayed regardless of whether
+			the editor is enabled or not. The default value for this attribute is "true".
+		-->
+		<attribute name="displayValidationError" type="boolean" value="true"/>
+		
+		<!---
+			@keywords private
+			This method creates a {@link wcfPropertyEditorClone} for the given {@link wcfStoreLanguage}.
+			
+			@param cloneLanguage The wcfStoreLanguage for the new instance of wcfPropertyEditorClone.
+		-->
+		<method name="createLanguageClone" args="cloneLanguage">
+			<![CDATA[
+			return new lz.wcfPropertyEditorClone(this.parent,{
+				originalPropertyEditor: this,
+				language: cloneLanguage
+				});
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			super.setModelObject(newObject);
+			var newProperty = null;
+			if (this.o != null) {
+				newProperty = this.o.getProperty(this.propertyName);
+				
+				this.updateValidationErrorDel.unregisterAll();
+				this.updateValidationErrorDel.register(newProperty, "onvalidationErrors");
+
+				if (newProperty.propertyDefinition != null) {
+					this.setAttribute("required", newProperty.propertyDefinition.required);
+				}
+			}
+			this.setAttribute("property", newProperty);
+			this.updateValidationError();
+			
+			if (this["editor"]) {
+				this.editor.setAttribute("property", newProperty);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the enabled attribute based on the current value of the
+			enablement condition and whether the object is readonly.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			if (this["enablementCondition"]) {
+				if (this["o"]) {
+					this.enablementCondition.registerDelegate(this.o, this.updateEnablementDel);
+				}
+			}
+			var newProperty = null;
+			if (this["o"]) {
+				newProperty = this.o.getProperty(this.propertyName);
+				this.updateEnablementDel.register(newProperty, "onreadOnly");
+			}
+			var isEnabled = this.o != null && newProperty != null && !newProperty.readOnly;
+			if (isEnabled && this["enablementCondition"]) {
+				isEnabled = this.enablementCondition.isEnabled(this.o);
+			}
+			this.setAttribute("enabled", isEnabled);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the error message to be displayed from the {@link wcfPropertyEditor#property}.
+			If {@link wcfPropertyEditor#property} is null, then this method returns null.
+			@param lz.Delegate del Optional delegate to register to any events that will affect this value.
+			
+			@return string The error message to be displayed. If {@link wcfPropertyEditor#property} is null, then this method returns null.
+		-->
+		<method name="getValidationError" args="del=null">
+			<![CDATA[
+			if (this["property"] && this.displayValidationError) {
+				var errors = this.property.getValidationErrors();
+				if (del) {
+					del.register(this.property, "onvalidationErrors");
+				}
+				if(errors.length > 0){
+					return errors[0];
+				}
+			}
+			
+			return null;
+			]]>
+		</method>
+		<!---
+			@keywords private
+			<p>This method will determine if the error for modelObject and objectProperty belongs to this property editor. 
+			<p>The method checks if modelObject matches this property editor's {@link wcfPropertyEditor#o model object}
+			and whether objectProperty matches this property editor's {@link wcfPropertyEditor#property}. 
+			<p>If this editor has not been initialized, the method will resolve {@link wcfPropertyEditor#o} using the {@link wcfPropertyEditor#objectPath} 
+			but without completing the binding in order	to perform the comparison.
+			<p>If modelObject and objectProperty match with those belonging to this property editor, then this method returns true. Otherwise, it returns false.
+			
+			@param wcfModelObject propertiesViewObject The wcfModelProperty that this wcfPropertiesComponent is for.
+			@param wcfModelObject modelObject The wcfModelObject that this error was reported for. 
+			@param wcfModelProperty objectProperty The wcfModelProperty that this error was reported for.
+			@param string validatorType The {@link wcfValidator#validatorType} of the matching property component. This will be ignored in the current implementation.
+			@returns boolean The method returns true if modelObject matches {@link wcfPropertyEditor#o} and objectProperty matches {@link wcfPropertyEditor#property}.
+		-->
+		<method name="matchesError" args="propertiesViewObject,modelObject,objectProperty,validatorType"><![CDATA[	
+			var matches = false;
+			if (objectProperty != null) 
+			{
+				if (this["o"] != null) {
+					if (this.o == modelObject && this.property == objectProperty) {
+						matches = true;
+					}
+				} else {
+					var objectToCompare = propertiesViewObject;
+					if (this.objectPath != null) {
+						objectToCompare = objectToCompare.getObject(this.objectPath);
+					}
+					
+					if (objectToCompare != null && 
+						objectToCompare == modelObject && 
+						this.propertyName == objectProperty.propertyName
+						)
+						{
+							matches = true;
+						}
+				}
+			}
+			return matches;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This class represents a cloned wcfPropertiesComponent. These are created as part of Multi Language Support.
+	-->
+	<class name="wcfPropertiesComponentClone" extends="wcfPropertiesComponent" isClone="true">
+		<!---
+			The properties component from which this component was cloned
+		-->
+		<attribute name="originalPropertiesComponent" />
+		<!---
+			Relative object path to look up model object
+		-->
+		<attribute name="objectPath" type="string" value="${originalPropertiesComponent.objectPath}"/>
+		<!---
+			The prompt text for this properties view component.
+		-->
+		<attribute name="promptText" type="string" value="${originalPropertiesComponent.promptText}"/>
+		<!---
+			This attribute indicates that this properties view component should have the currently selected store name appended
+			next to it's {@link wcfPropertiesComponent#promptText}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayStoreName" value="${originalPropertiesComponent.displayStoreName}" type="boolean"/>
+		<!---
+			This attribute indicates that this properties view component should have the store name of the store that owns the primary
+			object appended to it's {@link wcfPropertiesComponent#promptText}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayObjectStoreName" value="${originalPropertiesComponent.displayObjectStoreName}" type="boolean"/>
+		<!---
+			Indicates to the layout manager that this properties view component should
+			be resized horizontally to consume all of the available area.
+		-->
+		<attribute name="sizeToAvailableWidth" type="boolean" value="${originalPropertiesComponent.sizeToAvailableWidth}"/>
+		<!---
+			The minimum width of the editor to be retained by the layout manager, if sizeToAvailableWidth is true.
+		-->
+		<attribute name="minWidth" type="number" value="${originalPropertiesComponent.minWidth}"/>
+		<!---
+			Help text for this properties view component.
+		-->
+		<attribute name="helpText" type="text" value="${originalPropertiesComponent.helpText}"/>
+		<!---
+			Extended help text for this properties view component.
+		-->
+		<attribute name="extendedHelpText" type="text" value="${originalPropertiesComponent.extendedHelpText}"/>
+		<!---
+			Help link text for this properties view component.
+		-->
+		<attribute name="helpLinkText" type="text" value="${originalPropertiesComponent.helpLinkText}"/>
+		<!---
+			Help link URL for this properties view component.
+		-->
+		<attribute name="helpLinkURL" type="text" value="${originalPropertiesComponent.helpLinkURL}"/>
+		<!---
+			The list of siblings created for this language sensitive property component, null for a cloned object.
+		-->
+		<attribute name="languageSiblings" value="null"/>
+		<!-- A comma separated string. Each token in the string is a validator type.
+			 When there is validator error in the model object associated with this editor,
+			 this editor will check if it is created by the validator that has one of the validator
+			 types. If it is, then the error will be displayed in this editor. A validator instance
+			 will have an attribute validatorType that specifies the validator's type.
+	    -->
+		<attribute name="validatorTypes" type="string" value="${originalPropertiesComponent.validatorTypes}"/>
+		<!---
+			The name of the component object for this properties component. You
+			can specify a named component object for properties components if you
+			want the properties component to be dependent on another properties component.
+			All named component objects must be declared in the
+			{@link wcfObjectProperties#componentObjectNames} attribute of the containing
+			properties view.
+		-->
+		<attribute name="componentObjectName" type="string" value="${originalPropertiesComponent.componentObjectName}" />
+		<!---
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			this.originalPropertiesComponent.createPrompt(parentComponent);
+			]]>
+		</method>
+		
+		<!---
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			this.originalPropertiesComponent.createEditor(parentComponent);
+			]]>
+		</method>
+		
+		<!---
+			Returns true if this properties component is language sensitive
+		-->
+		<method name="isLanguageSensitive">
+			<![CDATA[
+			return false;
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		@keywords private
+		A cloned wcfPropertyEditor for MLS support
+	-->
+	<class name="wcfPropertyEditorClone" extends="wcfPropertyEditor" isClone="true">
+		<!---
+			The property editor from which this editor was cloned
+		-->
+		<attribute name="originalPropertyEditor" />
+		<!---
+			The property name for this property editor
+		-->		
+		<attribute name="propertyName" type="string" value="${originalPropertyEditor.propertyName}"/>
+		<!---
+			Relative object path to look up model object
+		-->
+		<attribute name="objectPath" type="string" value="${originalPropertyEditor.objectPath}"/>
+		<!---
+			The prompt text for this properties view component.
+		-->
+		<attribute name="promptText" type="string" value="${originalPropertyEditor.promptText}"/>
+		<!---
+			This attribute indicates that this properties view editor should have the currently selected store name appended
+			next to it's {@link wcfPropertiesEditor#promptText}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayStoreName" value="${originalPropertyEditor.displayStoreName}" type="boolean"/>
+		<!---
+			This attribute indicates that this properties view editor should have the store name of the store that owns the primary
+			object appended to it's {@link wcfPropertiesEditor#promptText}. The default value for this attribute is "false".
+		-->
+		<attribute name="displayObjectStoreName" value="${originalPropertyEditor.displayObjectStoreName}" type="boolean"/>
+		
+		<!---
+			Indicates to the layout manager that this properties view component should
+			be resized horizontally to consume all of the available area.
+		-->
+		<attribute name="sizeToAvailableWidth" type="boolean" value="${originalPropertyEditor.sizeToAvailableWidth}"/>
+		<!---
+			The minimum width of the editor to be retained by the layout manager, if sizeToAvailableWidth is true.
+		-->
+		<attribute name="minWidth" type="number" value="${originalPropertyEditor.minWidth}"/>
+		<!---
+			Help text for this properties view component.
+		-->
+		<attribute name="helpText" type="text" value="${originalPropertyEditor.helpText}"/>
+		<!---
+			Extended help text for this properties view component.
+		-->
+		<attribute name="extendedHelpText" type="text" value="${originalPropertyEditor.extendedHelpText}"/>
+		<!---
+			Help link text for this properties view component.
+		-->
+		<attribute name="helpLinkText" type="text" value="${originalPropertyEditor.helpLinkText}"/>
+		<!---
+			Help link URL for this properties view component.
+		-->
+		<attribute name="helpLinkURL" type="text" value="${originalPropertyEditor.helpLinkURL}"/>
+		<!---
+			The list of siblings created for this language sensitive property component, null for a cloned object.
+		-->
+		<attribute name="languageSiblings" value="null"/>
+		<!---
+                       A comma separated string. Each token in the string is a validator type.
+			When there is a validator error in the model object associated with this editor,
+			this editor will check if it is created by the validator that has one of the validator
+			types. If it is, then the error will be displayed in this editor. A validator instance
+			will have an attribute validatorType that specifies the validator's type.
+               -->
+		<attribute name="validatorTypes" type="string" value="${originalPropertyEditor.validatorTypes}"/>
+		<!---
+			This attribute indicates that when this properties component is displayed, 
+			the validation error messages should be displayed regardless of whether
+			the editor is enabled or not. The default value for this attribute is "true".
+		-->
+		<attribute name="displayValidationError" type="boolean" value="${originalPropertyEditor.displayValidationError}"/>
+		<!---
+			The name of the component object for this properties component. You
+			can specify a named component object for properties components if you
+			want the properties component to be dependent on another properties component.
+			All named component objects must be declared in the
+			{@link wcfObjectProperties#componentObjectNames} attribute of the containing
+			properties view.
+		-->
+		<attribute name="componentObjectName" type="string" value="${originalPropertyEditor.componentObjectName}" />
+		<!---
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			this.originalPropertyEditor.createPrompt(parentComponent);
+			]]>
+		</method>
+		
+		<!---
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			this.originalPropertyEditor.createEditor(parentComponent);
+			]]>
+		</method>
+		
+		<!---
+			Returns true if this properties component is language sensitive
+		-->
+		<method name="isLanguageSensitive">
+			<![CDATA[
+			return false;
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		@keywords final
+		wcfPropertyInputText is a simple text property editor that
+		binds to a property value {@link wcfModelProperty}.  Use wcfPropertyInputText when implementing a simple
+		text box inside a {@link wcfPropertyPane} or {@link wcfPropertyGroup}.  The class wcfPropertyInputText is
+		final, to create a new properties widget extend {@link wcfPropertyEditor}.
+		
+		The example below would create a text box inside a properties view and its text would indicate the name of an
+		employee.
+		@START_CODE
+			<PropertyCheckbox
+				objectPath="Employee/EmployeeDetails"
+				propertyName="employeeName"
+				promptText="${resourceBundles.employeeName}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyInputText" extends="wcfPropertyEditor">
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfTextEditor(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled,
+				width: 230
+			});
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		wcfPropertyInputLongText is a text property editor with a length
+		that spans the available width of the view. wcfPropertyInputLongText binds to a property value {@link wcfModelProperty}.
+		Use wcfPropertyInputLongText when implementing a long text box inside a {@link wcfPropertyPane} or {@link wcfPropertyGroup}.
+		The class wcfPropertyInputLongText is final, to create a new properties widget extend {@link wcfPropertyEditor}.
+		
+		The example	below would create a long text box inside a properties view and its text would indicate the job description of
+		an employee.
+		@START_CODE
+			<PropertyInputLongText
+				objectPath="Employee/EmployeeDetails"
+				propertyName="employeeJobDescription"
+				promptText="${resourceBundles.employeeDescription}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyInputLongText" extends="wcfPropertyEditor" sizeToAvailableWidth="true">
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.wcfTextEditor(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				width: availableWidth,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		wcfPropertyInputMultiLineText is a text property editor with a length
+		that spans the available width of the view and is multi-lined. wcfPropertyInputMultiLineText binds to a property value
+		{@link wcfModelProperty}.  Use wcfPropertyInputMultiLineText when implementing a long, multi-lined text box inside a
+		{@link wcfPropertyPane} or {@link wcfPropertyGroup}.  The class wcfPropertyInputMultiLineText is final, to create a new
+		properties widget extend {@link wcfPropertyEditor}.
+		
+		The example	below would create a long and multi-lined text box inside a properties view and its text would indicate the
+		job description of an employee.
+		@START_CODE
+			<PropertyInputMultiLineText
+				objectPath="Employee/EmployeeDetails"
+				propertyName="employeeJobDescription"
+				promptText="${resourceBundles.employeeDescription}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyInputMultiLineText" extends="wcfPropertyEditor" sizeToAvailableWidth="true">
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.wcfTextEditor(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled,
+				width: availableWidth,
+				multiline: true,
+				maximumHeight: 200
+			});
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		wcfPropertyRichTextEditor is a rich text property editor with a length
+		that spans the available width of the view. wcfPropertyRichTextEditor binds to a property value {@link wcfModelProperty}.
+		Use wcfPropertyRichTextEditor when implementing rich text, input box inside a {@link wcfPropertyPane} or
+		{@link wcfPropertyGroup}.  The class wcfPropertyRichTextEditor is final, to create a new properties widget extend
+		{@link wcfPropertyEditor}.
+		
+		The example	below would create a rich text, input box inside a properties view and its text would indicate the
+		job description of an employee.
+		@START_CODE
+			<PropertyRichTextEditor
+				objectPath="Employee/EmployeeDetails"
+				propertyName="employeeJobDescription"
+				promptText="${resourceBundles.employeeDescription}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyRichTextEditor" extends="wcfPropertyEditor" sizeToAvailableWidth="true" minWidth="445">
+		<!---
+			Maximum height to which the rich text editor can expand. The default is 420 pixels.
+		-->
+		<attribute name="maximumHeight" type="number" value="420"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="textAreaHeight" type="number" value="100"/>
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.wcfRichTextEditor(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: parentComponent.enabled,
+				textAreaHeight: this.textAreaHeight,
+				width: availableWidth,
+				maximumHeight: this.maximumHeight
+			});			
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		This class defines a property editor that you can use to edit a date {@link wcfModelProperty property}. 
+		The value of the property must be a date string that matches the format "yyyy-MM-ddT00:00:00.001Z".
+		The following example declares an instance of this class that edits the property with name "startDate".
+		
+		@START_CODE
+			<PropertyDatePicker
+				propertyName="startDate"
+				required="true"
+				promptText="${promotionResources.promotion_StartDate}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyDatePicker" extends="wcfPropertyEditor">
+		<!---
+			Indicates whether to use the start or end of the day. When set to <code>true</code>, 23:59:59:999 is saved
+			to the server as the end of the day. If set to <code>false</code>, 00:00:00:001 is used as the start of the day.
+		-->
+		<attribute name="endOfDay" type="boolean" value="false"/>
+		<!---
+			Displays the preferred time zone beside the time picker.
+			<p>The default value is <code>true<code>.
+		-->
+		<attribute name="showTimeZone" type="boolean" value="true"/>
+		<!--- Indicates whether to ignore the time when saving the date string value. The default value is <code>false</code>. -->
+		<attribute name="dateOnly" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfDatePicker(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				endOfDay: this.endOfDay,
+				showTimeZone: this.showTimeZone,
+				dateOnly: this.dateOnly,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		This class defines a property editor that allows users to edit a date time property.
+		The property's value must be date time string. The following example declares an instance of this class that
+		edits property with name "startdate".
+		
+		@START_CODE
+			<PropertyDateTimePicker propertyName="startdate" promptText="${mktMarketingResources.startDate}" />
+		@END_CODE
+	-->
+	<class name="wcfPropertyDateTimePicker" extends="wcfPropertyEditor">
+		<!---
+			When true, the time of day will default to 23:59:59:999 when the time picker is first enabled.  
+			Otherwise start of day is used 00:00:00:001. 
+		-->
+		<attribute name="endOfDay" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfDateTimePicker(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				endOfDay: this.endOfDay,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords final
+		This class defines a property editor that you can use to edit a time {@link wcfModelProperty property}.
+		The value of the property must be a time string. The following example declares an
+		instance of this class that you can use to edit a property with the name "startTime".
+		The value of the property must be a string using the time format of "HH:mm:ss", "HH:mm" or "HH" where "HH" is a
+		two digit integer indicating the hour, "mm" is a two digit integer indicating the minute and
+		"ss" is a two digit integer indicating the second.
+
+		
+		@START_CODE
+			<PropertyTimePicker
+				propertyName="startTime"
+				timeFormat="HH:mm:ss"
+				promptText="${promotionResources.promotion_StartTime}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyTimePicker" extends="wcfPropertyEditor">
+		<!---
+			The time format for setting and retrieving the property. This value can be set to "HH:mm:ss",
+			"HH:mm", or "HH". "HH" is a two digit integer indicating the hour, "mm" is a two digit integer indicating the minute,
+			and "ss" is a two digit integer indicating the second.
+			The default value is "HH:mm".
+		-->
+		<attribute name="timeFormat" value="${wcfDateUtil.TIME_FORMAT}" type="string"/>
+		<!---
+			Displays the preferred time zone beside the time picker. 
+			<p>The default value is <code>true<code>.
+		-->
+		<attribute name="showTimeZone" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfTimePicker(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				timeFormat: this.timeFormat,
+				showTimeZone: this.showTimeZone,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		wcfPropertyViewLongText is a text property viewer with a length
+		that spans the available width of the view. It displays the value of the {@link wcfModelProperty property} indicated by the "propertyName"
+		attribute. This property viewer can be used to display properties that are informational only and
+		can never be edited by the business user. The text will be displayed without a surrounding text box.
+		Use wcfPropertyViewLongText to display text inside a {@link wcfPropertyPane} or {@link wcfPropertyGroup}.
+		The class wcfPropertyViewLongText is final, to create a new properties widget extend {@link wcfPropertyEditor}.
+		
+		The example below would create a long text field inside a properties view and its text would indicate the job description of
+		an employee.
+		@START_CODE
+			<PropertyViewLongText
+				objectPath="Employee/EmployeeDetails"
+				propertyName="employeeJobDescription"
+				promptText="${resourceBundles.employeeDescription}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyViewLongText" extends="wcfPropertyEditor" sizeToAvailableWidth="true">
+		<!---	
+			@keywords private
+			Create the text viewer for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the viewer.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.wcfTextViewer(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				width: availableWidth,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		wcfPropertyKilobyte is a text viewer that displays a byte value in kilobytes. While the displayed value will be in kilobytes, the value
+		that is stored in the model will still be in bytes. For example, a value of "1024" in the underlying model displays as "1 KB".
+		Byte values are rounded up to the neares kilobyte. The value cannot be edited.
+		
+		The example below would create a text box inside a properties view and its text would be the size of a file
+		in kilobytes. The value stored in the model would be the value in bytes.
+		
+		@START_CODE
+			<PropertyKilobyte				
+				propertyName="fileSize"
+				promptText="${resourceBundles.fileSize}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyKilobyte" extends="wcfPropertyEditor">
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfKilobyteViewer(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				enabled: false,
+				width: 230
+			});	
+		
+			]]>
+		</method>	
+	</class>		
+	
+	<!---
+		@keywords private
+	 -->
+	<class name="wcfPropertiesComponentPrompt" extends="text" text="${getPromptText(this.parent.newPrompt)}">
+        <!---
+			This attribute indicates that the required property indicator is to be displayed. The default value for this attribute is "false".
+		-->
+        <attribute name="required" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			This method returns prompt string that is displayed in the UI.
+
+			@param promptText string The new prompt string.
+			@return string The prompt string that is displayed in the UI.
+		-->
+		<method name="getPromptText" args="promptText">
+			<![CDATA[
+			var requiredString = "";
+			if (this.required) {
+				requiredString = "<font color='#ff0000'>*</font>";
+			}
+			if (promptText == null) {
+				promptText = "";
+			}
+			return "<p align='right'><font>" + requiredString + promptText + "</font></p>";
+			]]>
+		</method>
+	</class>	
+	
+	<!---
+		@keywords final
+		<p>wcfPropertyStaticText is a static text viewer that displays the value of the text attribute in the properties view.  There is no prompt
+		with this text and is typically used for descriptions of a group or property view.</p>
+
+		<p>The example below would show the static text defined in the properties key <code>groupDescription</code> inside a properties view.
+		@START_CODE
+			<PropertyStaticText text="${resourceBundle.groupDescription}"/>
+		@END_CODE
+		</p>
+	-->
+	<class name="wcfPropertyStaticText" extends="text" multiline="true" x="20">
+		<!---	
+			@keywords private
+		-->
+		<attribute name="sizeToAvailableWidth" type="boolean" value="true"/>
+		<!---	
+			@keywords private
+		-->
+		<attribute name="minWidth" type="number" value="200"/>
+		
+	</class>
+	
+	<!-- 
+		@keywords final
+		The wcfPropertyObjectHeader is a property editor and is used to 
+		create an instance of the {@link wcfObjectHeader} class that binds to a property 
+		value {@link wcfModelProperty}.	 
+	-->
+	<class name="wcfPropertyObjectHeader" extends="wcfPropertyEditor">
+	
+		<method name="createEditor" args="parentComponent">
+				<![CDATA[
+				new lz.wcfObjectHeader(parentComponent, {
+					name: "editor",
+					x: 0,
+					property: parentComponent.property,
+					enabled: parentComponent.enabled,
+					width: parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing		
+				});				
+				]]>
+		</method>
+		
+	</class>
+</library>

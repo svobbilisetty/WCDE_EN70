@@ -1,0 +1,55 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<!-- BEGIN AddressHelperCountrySelection.jspf-->
+
+
+
+
+
+<c:set var="countryBean" value="${requestScope.countryBean}"/>
+
+<c:if test="${empty countryBean || countryBean == null}">
+	<wcbase:useBean id="countryBean" classname="com.ibm.commerce.user.beans.CountryStateListDataBean">
+		<c:set target="${countryBean}" property="countryCode" value="${paramSource.country}"/>
+	</wcbase:useBean>
+</c:if>
+<c:if test="${empty countryListSelectionHelperInitialized || countryListSelectionHelperInitialized != 'true'}">
+<div id="countryListSelectionHelper" style="display: none">
+
+{ "countries" : [ 
+	
+<c:forEach var="country" items="${countryBean.countries}"  varStatus='outerStatus'>
+
+	{ 
+		"code" : "<c:out value="${country.code}"/>",
+		"displayName" : "<c:out value="${country.displayName}"/>",
+		"callingCode" : "<c:out value="${country.callingCode}"/>",
+		"states" : [
+			<c:forEach var="stateObj" items="${country.states}" varStatus="innerStatus">
+		  			 { "code" : "<c:out value="${stateObj.code}"/>",
+		  			   "displayName" : "<c:out value="${stateObj.displayName}"/>"
+		  			 }
+		  			 <c:if test="${!innerStatus.last}">, </c:if>
+		  	</c:forEach>
+		  		   ] 			 
+	}
+	<c:if test="${!outerStatus.last}">, </c:if>
+</c:forEach>
+]}
+</div>
+<c:set var="countryListSelectionHelperInitialized" value="true" scope="request"/>
+</c:if>
+
+<!-- END AddressHelperCountrySelection.jspf -->

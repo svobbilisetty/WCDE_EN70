@@ -1,0 +1,53 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktBranchElementObject} and
+		{@link mktExperimentElementObject} flow elements. The generated text is shown beneath the element
+		on the Activity Builder flow diagram.
+	-->
+	<class name="mktBranchSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="branchtype" propertyName="branchtype"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.branchOne, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.branchRandom, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.branchAll, "onstring");
+			]]>
+		</handler>
+		
+		<!---
+			Sets the summary text for the {@link mktBranchElementObject} and {@link mktExperimentElementObject} flow elements.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				
+				if(this.resolvedParams["branchtype"] == "one") {
+					summaryText = mktMarketingResources.branchOne.string;
+				}
+				else if(this.resolvedParams["branchtype"] == "random") {
+					summaryText = mktMarketingResources.branchRandom.string;
+				}
+				else if(this.resolvedParams["branchtype"] == "all") {
+					summaryText = mktMarketingResources.branchAll.string;
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+	</class>
+</library>

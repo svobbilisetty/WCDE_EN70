@@ -1,0 +1,67 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktRecentlyViewedElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktRecentlyViewedElementObject} object:
+		<ul>
+			<li>elemTemplateName</li>
+			<li>numberOfTimes</li>			
+		</ul>
+	-->
+	<class name="mktRecentlyViewedSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="numberOfTimes" propertyName="numberOfTimes"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.updateSummaryDel.register(mktMarketingResources.summaryRecentlyViewedCategories, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktRecentlyViewedElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = this.getMaximumNumberToDisplay();
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+
+		<!--- @keywords private -->
+		<method name="getMaximumNumberToDisplay">
+			<![CDATA[
+				var summary = "";
+
+				if(this.resolvedParams["numberOfTimes"] != "") {
+					var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfTimes"]);
+					if(this.resolvedParams["elemTemplateName"] == "recentlyViewedCategories") {
+						summary = mktMarketingResources.replaceValues("summaryRecentlyViewedCategories", [value1]); 
+					} else if(this.resolvedParams["elemTemplateName"] == "recentlyViewedProducts") {
+						summary = mktMarketingResources.replaceValues("summaryRecentlyViewedProducts", [value1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+
+	</class>
+</library>

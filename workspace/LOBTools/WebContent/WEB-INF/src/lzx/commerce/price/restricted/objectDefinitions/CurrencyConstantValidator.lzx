@@ -1,0 +1,48 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for a currency type price constant. This validator ensures 
+		that user input at least one currency value for the currency constant.
+	-->
+	<class name="prcCurrencyConstantValidator" extends="wcfValidator">
+
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o){
+				return; // nothing to validate
+			}
+			
+			var values = o.getPropertyValues();
+			var hasValue = false;
+			
+			for(var currency in values){
+				if (values[currency] && values[currency] != "") {
+					hasValue = true;
+					break;
+				}
+			}
+			
+			o.getParentPrimaryObject().clearValidationError(this);
+			
+			if(!hasValue) {
+				o.getParentPrimaryObject().addValidationError(this, foundationResources.replaceValues("requiredPropertyMissing", [prcPriceResources.currency.string]));
+			}
+			
+			return hasValue;
+			]]>
+		</method>
+	</class>
+</library>

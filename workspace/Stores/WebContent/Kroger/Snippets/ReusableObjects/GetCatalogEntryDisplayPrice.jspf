@@ -1,0 +1,46 @@
+<%--
+/*
+ *-------------------------------------------------------------------
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2009
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *
+ *-------------------------------------------------------------------
+ */
+--%>
+<%-- 
+  *****
+  * This JSP is an extension point for price list&rule solution.
+  * This page will call priceFacadeClient to fetch list price based on display price rule and list price list.
+  *****
+--%>
+
+<%@ taglib uri="http://commerce.ibm.com/foundation" prefix="wcf" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<c:remove var="displayPrice" scope="page"/>
+<c:set var="displayPriceAmount" scope="page"/>
+<c:set var="listPriced" value="false"/>
+<wcf:getData type="com.ibm.commerce.price.facade.datatypes.DisplayPriceType" var="displayPriceType" expressionBuilder="getDisplayPriceByCatalogEntryIdandPriceRuleName">
+	<wcf:contextData name="storeId" data="${param.storeId}"/>
+    <wcf:param name="catEntryId" value="${catalogEntryIdForPriceRule}" />
+	<wcf:param name="priceRuleName" value="${defaultDisplayPriceRuleName}" />
+</wcf:getData>
+<c:if test="${null!=displayPriceType}">
+	<c:forEach var="aUnitPrice" items="${displayPriceType.unitPrice}" begin="0" end="0">
+		<c:set var="listPriced" value="true"/>
+		<c:set var="displayPriceAmount" value="${aUnitPrice.price.value}"/>
+	</c:forEach>
+</c:if>
+<wcbase:useBean id="displayPrice" classname="com.ibm.commerce.price.beans.FormattedMonetaryAmountDataBean" scope="page" >
+	<c:set property="amount" value="${displayPriceAmount}" target="${displayPrice}" />
+	<c:set property="langId" value="${langId}" target="${displayPrice}" />
+	<c:set property="storeAccessBean" value="${sdb}" target="${displayPrice}" />
+</wcbase:useBean>
+<c:remove var="displayPriceAmount" scope="page"/>
+

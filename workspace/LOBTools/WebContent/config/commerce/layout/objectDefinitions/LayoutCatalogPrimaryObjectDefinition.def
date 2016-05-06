@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>   
+	<PrimaryObjectDefinition definitionName="pglBaseLayoutCatalogPrimaryObjectDefinition"
+		detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}"
+		displayName="${catalogResources.catalog_DisplayName}"
+		displayNameProperty="identifier"
+		idProperty="catalogId"
+		isBaseDefinition="true"
+		objectGroups="LayoutCatalogAlias"
+		writeUsage="IBM_ManagePageLayoutTool"
+		searchType="FindLayoutCatalogs">
+	
+        <!--- 
+			Retrieves the {@link pglChildCatalogGroupPage} child objects.
+		-->			
+		<GetChildrenService objectTypes="ChildCatalogGroupPage" url="/cmc/GetLayoutCatalogChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+
+   	 	<!--- 
+			Child object definition for the child catalog group page of the catalog page.  
+		-->		
+		<ParentReferenceObjectDefinition baseDefinitionName="pglChildCatalogGroupPage"/>
+
+      	<!--- 
+			This navigation list definition is used to display {@link pglChildCatalogGroupPage}.
+		-->			
+		<NavigationListDefinition displayName="${pglPageLayoutResources.categoryPagesList}"
+			isDefault="true" 
+			listDefinitionName="pglCategoryPageChildList" 
+			listTitle="${pglPageLayoutResources.categoryPagesList}" 
+			name="CategoryPageChildList"
+			helpLink="tasks/tpn_topcategories.htm"/>
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseLayoutCatalogPrimaryObjectDefinition" 
+		definitionName="LayoutCatalog" 
+		objectType="LayoutCatalog"/>
+		
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseLayoutCatalogPrimaryObjectDefinition"
+		definitionName="InheritedLayoutCatalog"
+		displayName="${catalogResources.inheritedCatalog_DisplayName}"
+		objectType="InheritedLayoutCatalog">
+	</PrimaryObjectDefinition>
+</Definitions>

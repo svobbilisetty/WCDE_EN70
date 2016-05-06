@@ -1,0 +1,38 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		@keywords private
+	-->
+	<class name="catSearchSessionsGridText" extends="wcfGridText">
+		<!---
+			The name of the percentage property that is being displayed in this column.
+		-->
+		<attribute name="percentagePropertyName" type="string" value="percentage"/>
+		
+		<!---
+			This method returns the value to be displayed in the cell.
+			
+			@param wcfModelObject o The model object instance this cell represents.
+			@param wcfModelProperty property The model object property instance that this cell will display.
+			@return string The value to be displayed by the cell.
+		-->
+		<method name="getCellText" args="o,property">
+			<![CDATA[
+			return catalogResources.replaceValues("topSearchSearchingSessionsWithPercentage", [property.value, o.getPropertyValue(this.percentagePropertyName)]);
+			]]>
+		</method>
+	</class>	
+</library>

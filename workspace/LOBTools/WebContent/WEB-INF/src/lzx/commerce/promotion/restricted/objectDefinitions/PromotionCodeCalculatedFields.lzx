@@ -1,0 +1,123 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords final
+		<p>proPromotionCodeCalculatedFieldsComponent is a text viewer that is used 
+		to display example codes based on the entered pattern. It is also used to 
+		display the maximum possible number of promotion codes for a given pattern definition.
+		The {@link wcfPropertyEditor#propertyName property name} provided should be the property name that
+		contains the pattern to use.</p>	
+	-->
+	<class name="proPromotionCodeCalculatedFieldsComponent" extends="wcfPropertiesComponent" sizeToAvailableWidth="true">
+		<!---
+			This attribute specifies the name of the {@link wcfModelProperty property} that will be used to calculate 
+			the example and maximum number of codes.
+		-->
+		<attribute name="propertyName" type="string"/>		
+		<!---
+			The {@link wcfModelProperty} instance that this property editor is editing.
+			@type wcfModelProperty
+		-->
+		<attribute name="property"/>		
+		<!---
+			This attribute is used to specify that the text viewer must display the maximum number of possible codes.
+		-->
+		<attribute name="isNoOfCodesField" type="boolean" value="false"/>
+		<!---
+			This attribute is used to specify the number of examples that must be displayed.
+		-->
+		<attribute name="noOfExamples" type="number" value="1"/>
+		
+		<!---
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.proPromotionCodeCalculatedFieldsViewer(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				width: availableWidth,
+				enabled: parentComponent.enabled,
+				isNoOfCodesField: this.isNoOfCodesField,
+				noOfExamples: this.noOfExamples
+			});
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object for this property viewer to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			super.setModelObject(newObject);
+			var newProperty = null;
+			if (this.o != null) {
+				newProperty = this.o.getProperty(this.propertyName);
+			}
+			this.setAttribute("property", newProperty);
+			
+			if (this["editor"]) {
+				this.editor.setAttribute("property", newProperty);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This text viewer takes the pattern specification and displays the corresponding calculated 
+		example codes and maximum possible number of promotion codes.		
+	-->
+	<class name="proPromotionCodeCalculatedFieldsViewer" extends="wcfTextViewer">
+		<!---
+			This attribute is used to specify that the text viewer must display the maximum number of possible codes.
+		-->
+		<attribute name="isNoOfCodesField" type="boolean" value="false"/>
+		<!---
+			This attribute is used to specify the number of examples that must be displayed.
+		-->
+		<attribute name="noOfExamples" type="number" value="1"/>		
+		<!---
+			Returns the example code or maximum possible number of promotion codes 
+			depending upon the value set in the 'isNoOfCodesField' attribute and sets it as the text
+			to be displayed in the viewer.
+			@param lz.Delegate del An optional delegate to call when a change in property value is caused by the value service.
+			@returns string: display value
+		-->
+		<method name="getDisplayValue" args="del">
+			<![CDATA[			
+			var value = this.property.value;
+			var displayValue = "";
+						
+			if(value != "") {				
+				if(!this.isNoOfCodesField){
+					displayValue = proCodeUtil.getCodeExample(value,this.noOfExamples);
+				} else {
+					displayValue = wcfGlobalizationUtil.formatNumberToDisplayFormat(proCodeUtil.getNoOfPossibleCodes(value));
+				}		
+			}			
+			return displayValue;
+			]]>
+		</method>
+	</class>
+</library>

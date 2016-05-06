@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+    <ObjectProperties definitionName="catBundleProperties">
+        <!-- This is the set of tabs to display the Bundle properties notebook -->
+        <PropertyTabs name="tabs">
+        	<!-- Tab: Manage Bundle. This tab contains general information about the selected bundle such as name, description etc. -->
+            <PropertyTabPane name="manageBundleTab" text="${catalogResources.manageBundleTab}">
+            	 <!-- Property Pane: Manage Bundle. This is an instantiation of the property pane which contains general bundle details. -->
+                 <PropertyPane baseDefinitionName="catManageBundle"/>
+            </PropertyTabPane>
+			<!-- 
+				Tab: Bundle components. This tab contains the Search Engine Optimization properties for the selected bundle.
+			-->
+            <PropertyTabPane name="searchEngineOptimizationTab" text="${catalogResources.searchEngineOptimizationTab}">
+				<EnablementAndCondition>
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition conditionId="seoEnabledCondition" contextName="seoEnabled" enablementValue="true"/>
+				</EnablementAndCondition>
+				<!-- 
+					Property Pane: Bundle Components. This is an instantiation of property pane which contains the Search Engine Optimization 
+					properties for the bundle component.
+				-->
+                <PropertyPane baseDefinitionName="catSearchEngineOptimization"/>
+            </PropertyTabPane>
+			<!-- Tab: Bundle Components. This tab contains all the components the selected bundle holds. -->
+            <PropertyTabPane name="bundleComponentsTab" text="${catalogResources.bundleComponentsSection}">
+            	 <!-- Property Pane: Bundle Components. This is an instantiation of the property pane which contains the bundle components details. -->
+                 <PropertyPane baseDefinitionName="catBundleComponents"/>
+            </PropertyTabPane>
+            <!-- Tab: Bundle Descriptive Attributes. This tab contains descriptive attributes of the selected bundle. -->
+            <PropertyTabPane name="bundleDescriptiveAttributesTab" text="${catalogResources.descriptiveAttributesTab}">
+                 <!-- Property Pane: Bundle Descriptive Attributes. This is an instantiation of the property pane which contains bundle attribute details. -->
+                 <PropertyPane baseDefinitionName="catCatalogEntryDescriptiveAttributes"/>
+            </PropertyTabPane>
+            <!-- Tab: Bundle Merchandising Associations. This tab contains the merchandising associations of the selected bundle. -->
+            <PropertyTabPane name="productMerchandisingAssociationsTab" text="${catalogResources.productMerchandisingAssociationsTab}">
+				 <!-- Property Pane: Bundle Merchandising Associations. This is an instantiation of the property pane which contains bundle merchandising associations details. -->               
+                 <PropertyPane baseDefinitionName="catProductMerchandisingAssociations"/>
+            </PropertyTabPane>
+            
+            <!-- Tab: the attachment references for the current bundle -->
+			<PropertyTabPane name="manageAttachmentTab" text="${catalogResources.manageAttachmentTab}">
+				 <!-- Property Pane: Manage Attachment Reference . This is an instantiation of the property pane which contains attachment reference of this catalog entry. -->
+				 <PropertyPane baseDefinitionName="catManageAttachment"/>
+			</PropertyTabPane>
+
+			<!-- Tab: the version reference of the current catalog entry -->
+			<PropertyTabPane name="manageVersionTab" text="${foundationResources.manageVersionTab}">
+				<!-- Only show this tab if the object type is Bundle, Content Version is enabled and not new object -->
+				<EnablementAndCondition conditionId="bundleManageVersionTabCondition">
+            		<EnablementOrCondition conditionId="bundleManageVersionObjectTypeCondition">
+						<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="Bundle" conditionId="bundleManageVersionObjectTypeCondition"/>
+						<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="InheritedBundle" conditionId="bundleManageVersionObjectTypeCondition1"/>
+					</EnablementOrCondition>
+				
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition contextName="contentVersionEnabled" enablementValue="true" conditionId="bundleContentVersionContextValueCondition"/>
+					<EnablementCondition checkNewObject="true" enablementValue="false" conditionId="bundleContentVersionNewObjectCondition"/>
+				</EnablementAndCondition>
+				<!-- Property Pane: Manage Version. This is an instantiation of the property pane definition which contains versions. -->
+				<PropertyPane baseDefinitionName="wcfManageContentVersion"/>
+			</PropertyTabPane>
+			
+			<!-- Tab: Bundle References. This tab contains various types of back references to the selected bundle. For example a list of catalog entries that have the selected bundle as a merchandising association-->
+			<PropertyTabPane name="bundleResourcesTab" text="${catalogResources.productReferenceTab}">
+				 <EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+				 <!-- Property Pane: Bundle References. This is an instantiation of the property pane which contains bundle's references details. -->
+                 <PropertyPane baseDefinitionName="catBundleResources"/>
+			</PropertyTabPane>			
+			
+		</PropertyTabs>
+	</ObjectProperties>
+</Definitions>

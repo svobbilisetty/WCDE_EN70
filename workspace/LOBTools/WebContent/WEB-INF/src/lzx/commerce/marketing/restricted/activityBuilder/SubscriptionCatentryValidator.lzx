@@ -1,0 +1,55 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		<p>Validator for {@link mktSubscriptionTriggerElementObject Subscription trigger}. This ensures that the added subscription catentry
+		is valid.</p>
+		
+		<p>There should only be one instance of this class defined for each {@link mktFlowElementObjectDefinition}.</p>
+	-->	 
+	<class name="mktSubscriptionCatentryValidator" extends="wcfValidator">
+		<!--- The object path for catalog entry extra properties object -->
+		<attribute name="catalogEntryExtraPropsObjectPath" value="ChildCatentry/CatalogEntry/CatalogEntryExtraProperties" type="string"/>
+		
+		<!--- Subscription type ID property name -->
+		<attribute name="subscriptionTypePropertyName" value="xprop_subscriptionTypeId" type="string"/>
+		
+		<!--- Warning message to show when subscription trigger element is selected, catentry is added but it is not of the subscription type -->
+		<attribute name="invalidSubscriptionErrorMessage" value="${mktMarketingResources.invalidSubscriptionCatentry.string}" type="string"/>
+
+		<!--- 
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			o.clearValidationError(this);
+
+			var childObjects = o.getObjects(this.catalogEntryExtraPropsObjectPath);
+			
+			if(childObjects != null && childObjects.length > 0) {
+				for(var i=0; i<childObjects.length; i++){
+					var catentry = childObjects[i];				
+					var subscriptionType = catentry.getPropertyValue(this.subscriptionTypePropertyName);				
+					
+					if (subscriptionType == null || subscriptionType == "NONE"){
+						o.addValidationError(this, this.invalidSubscriptionErrorMessage);
+						return;
+					}
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

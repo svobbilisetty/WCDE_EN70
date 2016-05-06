@@ -1,0 +1,205 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<%--
+  *****
+  * This JSP segment displays the checkout address entry form for an unregistered user
+  * for the following countries/regions:
+  *  - China
+  * The display order is as follows (* means mandatory):
+  *  - last name*
+  *  - first name
+  *  - country/region*
+  *  - state/province*
+  *  - city*
+  *  - address*
+  *  - zip/postal code*
+  *  - phone
+  *  - email*
+  *****
+--%>
+<!-- BEGIN QuickCheckoutAddressUpdateForm_CN.jspf-->
+
+<%@ include file="AddressHelperCountrySelection.jspf" %>
+
+<%-- Last name --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_lastName'/>_CN_div_1">
+			  <span class="spanacce">
+			  <label for="<c:out value='${prefix}_lastName1'/>">
+			  <fmt:message key="LAST_NAME"/>
+				</label>
+				</span>
+			  <span class="required-field"  id="WC_<c:out value='${prefix}_lastName'/>_CN_div_2"> *</span>
+			  <fmt:message key="LAST_NAME"/></div>
+	<div id="WC_<c:out value='${prefix}_lastName'/>_CN_div_3">
+		 <input type="text" maxlength="40" size="35" aria-required="true" id="<c:out value='${prefix}_lastName1'/>" name="<c:out value="${prefix}_lastName"/>" value="<c:out value='${param.lastName}'/>" class="form_input"/>
+	</div>
+
+<%-- First name --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_firstName'/>_CN_div_4">
+			  <span class="spanacce">
+			  <label for="<c:out value='${prefix}_firstName1'/>">
+			    <fmt:message key="FIRST_NAME"/>
+			  </label>
+			  </span>
+				  <fmt:message key="FIRST_NAME"/></div>
+		 <div id="WC_<c:out value='${prefix}_firstName'/>_CN_div_5">
+		 	<input type="text" maxlength="40" size="35" id="<c:out value='${prefix}_firstName1'/>" name="<c:out value="${prefix}_firstName"/>" value="<c:out value='${param.firstName}'/>" class="form_input"/>
+		 </div>
+
+<%-- country/region --%>
+<c:set var="countryreg" value="${param.countryReg}"/>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_country'/>_CN_div_6">
+		 
+			  <span class="spanacce">
+			  <label for="<c:out value='${prefix}_country1'/>">
+			  <fmt:message key="COUNTRY_ACCE"/>
+			  </label>
+			  </span>
+			  <span class="required-field"  id="WC_<c:out value='${prefix}_country'/>_CN_div_7"> *</span>
+			  <fmt:message key="COUNTRY2"/></div>
+	<div id="WC_<c:out value='${prefix}_country'/>_CN_div_8">
+		<c:set var="lang" value="${locale}" />
+		<c:set var="country_language_select" value="${fn:split(lang, '_')}" />			
+		<select class="drop_down_checkout" aria-required="true" id="<c:out value='${prefix}_country1'/>" name="<c:out value="${prefix}_country"/>" onkeydown="saveTabPress(event)" onblur="setFocus('<c:out value="${prefix}_state1"/>')" onchange="javascript:AddressHelper.loadStatesUI('QuickCheckout','<c:out value="${prefix}"/>','<c:out value="${prefix}_stateDiv"/>','_state1')">
+			<c:forEach var="country" items="${countryBean.countries}">
+				<option value="${country.code}" 
+					<c:choose>
+						<c:when test="${!empty countryreg}">
+							<c:if test="${country.code eq countryreg || country.displayName eq countryreg}">
+								selected="selected"
+							</c:if>
+						</c:when>
+						<c:otherwise>						
+							<c:if test="${country.code eq country_language_select[1]}">
+								selected="selected"
+								<c:set var="countryreg" value="${country.code}"/>
+							</c:if>
+						</c:otherwise>
+					</c:choose>
+				><c:out value="${country.displayName}"/></option>
+			</c:forEach>
+		</select>
+	</div>
+
+<%-- state/province --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_state'/>_CN_div_9">
+		  <span class="spanacce">
+		  <label for="<c:out value='${prefix}_state1'/>">
+		    <fmt:message key="STATE_PROVINCE"/>
+			</label>
+			</span>
+		  <span class="required-field"  id="WC_<c:out value='${prefix}_state'/>_CN_div_10"> *</span>
+		  <fmt:message key="STATE_PROVINCE"/></div>
+			<wcbase:useBean id="countryBean" classname="com.ibm.commerce.user.beans.CountryStateListDataBean">
+				<c:set target="${countryBean}" property="countryCode" value="${countryreg}"/>
+			</wcbase:useBean>
+			<jsp:setProperty name="countryBean" property="countryCode" value="${countryreg}" />		
+		  <c:choose>
+			<c:when test="${!empty countryBean.countryCodeStates}">
+				<div id="<c:out value='${prefix}_stateDiv'/>">
+				<select id="<c:out value='${prefix}_state1'/>" aria-required="true" name="<c:out value="${prefix}_state"/>" class="drop_down_country">
+				<c:forEach var="state" items="${countryBean.countryCodeStates}">
+					<option value="<c:out value='${state.code}'/>" 
+					<c:if test="${state.code eq param.statePro || state.displayName eq param.statePro}">
+						selected="selected"
+					</c:if>
+				>
+						<c:out value="${state.displayName}"/>
+					</option>
+				</c:forEach>
+				</select>
+				</div>
+			</c:when>
+			<c:otherwise>
+				<div id="<c:out value='${prefix}_stateDiv'/>">
+				<input type="text" maxlength="40" size="35" aria-required="true" id="<c:out value='${prefix}_state1'/>" name="<c:out value="${prefix}_state"/>" value="<c:out value='${param.statePro}'/>" class="form_input" />
+				</div>
+			</c:otherwise>
+	  </c:choose>
+
+<%-- city --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_city'/>_CN_div_11">
+		 
+			  <span class="spanacce">
+			  <label for="<c:out value='${prefix}_city1'/>">
+				<fmt:message key="CITY"/>
+				</label>
+				</span>
+			  <span class="required-field"  id="WC_<c:out value='${prefix}_city'/>_CN_div_12"> *</span>
+			  <fmt:message key="CITY2"/></div>
+	<div id="WC_<c:out value='${prefix}_city'/>_CN_div_13">
+		 <input type="text" maxlength="40" size="35" aria-required="true" id="<c:out value='${prefix}_city1'/>" name="<c:out value="${prefix}_city"/>" value="<c:out value='${param.city}'/>" class="form_input" />
+	</div>
+
+<%-- address --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_address1'/>_CN_div_14">
+			  <span class="spanacce">
+			  <label for="<c:out value='${prefix}_address11'/>">
+				<fmt:message key="STREET_ADDRESS_LINE_1"/>
+	</label>
+	</span>
+			  <span class="required-field"  id="WC_<c:out value='${prefix}_address1'/>_CN_div_15"> *</span>
+			  <fmt:message key="STREET_ADDRESS"/></div>
+	<div id="WC_<c:out value='${prefix}_address1'/>_CN_div_16">
+		 <input type="text" maxlength="99" size="35" aria-required="true" id="<c:out value='${prefix}_address11'/>" name="<c:out value="${prefix}_address1"/>" value="<c:out value='${param.street}'/>" class="form_input" />
+	</div>
+	<div id="WC_<c:out value='${prefix}_address2'/>_CN_div_17">
+	         <span class="spanacce">
+				<label for="<c:out value='${prefix}_address21'/>"><fmt:message key="STREET_ADDRESS_LINE_2"/></label>
+			</span>
+		 <input type="text" maxlength="49" size="35" id="<c:out value='${prefix}_address21'/>" name="<c:out value="${prefix}_address2"/>" value="<c:out value='${param.street2}'/>" class="form_input" />
+	</div>
+
+<%-- zipcode --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_zipCode'/>_CN_div_18">
+		 
+			  <span class="spanacce">
+			  <label for="<c:out value='${prefix}_zipCode1'/>">
+				<fmt:message key="ZIP_CODE"/>
+				</label>
+				</span>
+			  <span class="required-field"  id="WC_<c:out value='${prefix}_zipCode'/>_CN_div_19"> *</span>
+			  <fmt:message key="ZIP_CODE"/></div>
+	<div id="WC_<c:out value='${prefix}_zipCode'/>_CN_div_20">
+		 <input type="text" maxlength="30" size="35" aria-required="true" id="<c:out value='${prefix}_zipCode1'/>" name="<c:out value="${prefix}_zipCode"/>" value="<c:out value='${param.zipCode}'/>" class="form_input" />
+	</div>
+
+<%-- phone --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_phone1'/>_CN_div_21">
+		
+			<span class="spanacce">
+			<label for="<c:out value='${prefix}_phone11'/>">
+			<fmt:message key="PHONE_NUMBER"/>
+			</label>
+			</span>
+				<fmt:message key="PHONE_NUMBER2"/></div>
+	<div id="WC_<c:out value='${prefix}_phone1'/>_CN_div_22">
+		<input type="tel" maxlength="32" size="35" id="<c:out value='${prefix}_phone11'/>" name="<c:out value="${prefix}_phone1"/>" value="<c:out value='${param.phone}'/>" class="form_input"/>
+	</div>
+
+<%-- email --%>
+<div class="label_spacer" id="WC_<c:out value='${prefix}_email1'/>_CN_div_23">
+			<span class="spanacce">
+			<label for="<c:out value='${prefix}_email11'/>">
+			<fmt:message key="EMAIL"/>
+			</label>
+			</span>
+			<span class="required-field"  id="WC_<c:out value='${prefix}_email1'/>_CN_div_24"> *</span>
+				<fmt:message key="EMAIL"/></div>
+	<div id="WC_<c:out value='${prefix}_email1'/>_CN_div_25">
+		<input type="text" maxlength="32" size="35" aria-required="true" id="<c:out value='${prefix}_email11'/>" name="<c:out value="${prefix}_email1"/>" value="<c:out value='${param.email1}'/>" class="form_input"/>
+	</div>
+
+<!-- END QuickCheckoutAddressUpdateForm_CN.jspf-->

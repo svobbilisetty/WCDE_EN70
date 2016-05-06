@@ -1,0 +1,506 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2008, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		This class implements the workspace indicator in the banner area in Management Center
+		that displays the name of task and workspace the user is currently working within.
+	-->
+	<class name="wcfWorkspaceIndicator" extends="basecomponent" focusable="false">
+		<!--- @keywords private -->
+		<attribute name="currentState" type="string" value="" />
+		<!--- @keywords private -->
+		<attribute name="taskName" type="string" value="" />
+		<!--- @keywords private -->
+		<attribute name="workspaceName" type="string" value="" />
+
+		<!--- This view will be visible when the user selects a task to work on. -->
+		<view visible="${classroot.currentState == 'TASK'}">
+			<view resource="bannerTaskIcon" clickable="true">
+				<wcfTooltip text="${wspWorkspaceResources.task.string}"/>
+			</view>
+			<text valign="middle" text="${classroot.taskName}" fontsize="12" fgcolor="${classroot.style.titletextcolor}" />
+			<view />
+			<view resource="bannerWorkspaceIcon" clickable="true">
+				<wcfTooltip text="${wspWorkspaceResources.workspace.string}"/>
+			</view>
+			<text valign="middle" text="${classroot.workspaceName}" fontsize="12" fgcolor="${classroot.style.titletextcolor}" />
+			<simplelayout axis="x" spacing="5" />
+		</view>
+
+		<!--- This view will be visible when the user chooses to work on production-ready content. -->
+		<view visible="${classroot.currentState == 'BASE' &amp;&amp; !configProperties.readOnlyOnApprovedContent}">
+			<view resource="bannerWorkOnBaseIcon" />
+			<text valign="middle" text="${shellResourceBundle.workspaceWorkOnBase.string}" fontsize="12" fgcolor="${classroot.style.titletextcolor}" />
+			<simplelayout axis="x" spacing="5" />
+		</view>
+		
+		<view visible="${classroot.currentState == 'BASE' &amp;&amp; configProperties.readOnlyOnApprovedContent}">
+			<view resource="bannerWorkOnBaseIcon" />
+			<text valign="middle" text="${shellResourceBundle.workspaceWorkOnBaseInReadOnlyMode.string}" fontsize="12" fgcolor="${classroot.style.titletextcolor}" />
+			<simplelayout axis="x" spacing="5" />
+		</view>
+	</class>
+
+	<!---
+		@keywords private
+		This utility class provides methods to handle global workspace-related actions in
+		Management Center.
+	-->
+	<node id="wcfWorkspaceUtil">
+		<!---
+			@keywords private
+			This method sets all the required context values, and updates the workspace indicator
+			in the banner area in Management Center with task and workspace name based on the
+			specified task object.
+			@param Object task: Task object that contains all the required workspace data.
+		-->
+		<method name="updateWorkspaceContext" args="task=null">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "updateWorkspaceContext(task)", [task]);
+				}
+				// update context values
+				wcfContextUtil.findContextValue(null, "readOnlyMode").setAttribute("value", "false");
+				wcfContextUtil.findContextValue(null, "workspaceName").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTaskGroup").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTask").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceId").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTaskGroupId").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTaskId").setAttribute("value", "");
+				if (task) {
+					var taskGroup = task.getParentPrimaryObject("TaskGroup");
+					var workspace = task.getParentPrimaryObject("Workspace");
+					wcfContextUtil.findContextValue(null, "workspaceName").setAttribute("value", workspace.getPropertyValue("workspaceIdentifier"));
+					wcfContextUtil.findContextValue(null, "workspaceTaskGroup").setAttribute("value", taskGroup.getPropertyValue("taskGroupIdentifier"));
+					wcfContextUtil.findContextValue(null, "workspaceTask").setAttribute("value", task.getPropertyValue("taskIdentifier"));
+					wcfContextUtil.findContextValue(null, "workspaceId").setAttribute("value", workspace.getPropertyValue("workspaceId"));
+					wcfContextUtil.findContextValue(null, "workspaceTaskGroupId").setAttribute("value", taskGroup.getPropertyValue("taskGroupId"));
+					wcfContextUtil.findContextValue(null, "workspaceTaskId").setAttribute("value", task.getPropertyValue("taskId"));
+				} else if (configProperties.readOnlyOnApprovedContent) {
+					wcfContextUtil.findContextValue(null, "readOnlyMode").setAttribute("value", "true");
+				}
+	
+				// reset opened tools that respect workspace context
+				toolsController.resetWorkspaceContextTools();
+
+				// update indicator to display information properly
+				if (task) {
+					workspaceIndicator.setAttribute("taskName", task.getPropertyValue("taskName"));
+					workspaceIndicator.setAttribute("workspaceName", workspace.getPropertyValue("wrkspcName"));
+					workspaceIndicator.setAttribute("currentState", "TASK");
+				} else {
+					workspaceIndicator.setAttribute("taskName", "");
+					workspaceIndicator.setAttribute("workspaceName", "");
+					workspaceIndicator.setAttribute("currentState", "BASE");
+				}
+
+				// clear status message in status area
+				messageLogger.clearStatusMessage();
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "updateWorkspaceContext(task)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method clears all the required context values, and clears the workspace indicator
+			in the banner area in Management Center.
+		-->
+		<method name="clearContext">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "clearContext");
+				}
+
+				// clear context values
+				wcfContextUtil.findContextValue(null, "readOnlyMode").setAttribute("value", "true");
+				wcfContextUtil.findContextValue(null, "workspaceName").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTaskGroup").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTask").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceId").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTaskGroupId").setAttribute("value", "");
+				wcfContextUtil.findContextValue(null, "workspaceTaskId").setAttribute("value", "");
+
+				// reset opened tools that respect workspace context
+				toolsController.resetWorkspaceContextTools();
+
+				// clear indicator
+				workspaceIndicator.setAttribute("taskName", "");
+				workspaceIndicator.setAttribute("workspaceName", "");
+				workspaceIndicator.setAttribute("currentState", "");
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "clearContext");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method enables the user to start working on the given task. It checks whether
+			there is any unsaved change in the tools, and then updates workspace context if
+			proceeds to work on the given task.
+			@param Object task: Task object that contains all the required workspace data.
+		-->
+		<method name="workOnTask" args="task">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "workOnTask(task)", [task]);
+				}
+
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					// check if there are any unsaved changes
+					if (toolsController.hasUnsavedChangesAllWorkspaceContextTools()) {
+						wcfSwitchTaskWithChangesDialog.openSwitchTaskWithChangesDialog(task);
+					}
+					else {
+						this.updateWorkspaceContext(task);
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "workOnTask(task)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method enables the user to start working on production-ready content. It checks
+			whether there is any unsaved change in the tools, and then updates workspace context
+			if proceeds to work on production-ready content. It clears all the workspace-related
+			context values, and updates the workspace indicator in the banner area in Management
+			Center with the corresponding static text.
+		-->
+		<method name="workOnBase">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "workOnBase");
+				}
+
+				// if already working on base, then do nothing
+				if (workspaceIndicator.currentState == 'BASE') {
+					return;
+				}
+
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					// check if there are any unsaved changes
+					if (toolsController.hasUnsavedChangesAllWorkspaceContextTools()) {
+						wcfSwitchTaskWithChangesDialog.openWindow();
+					}
+					else {
+						this.updateWorkspaceContext();
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "workOnBase");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method enables the user to complete the specified tasks. It checks whether there is
+			any unsaved changes in the tools, and then invokes the complete task services if proceeds
+			to complete the specified tasks.
+			@param [wcfModelObject] objects The array of model objects associated with the specified tasks.
+		-->
+		<method name="completeTasks" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "completeTasks(objects)", [objects]);
+				}
+
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					var hasUnsavedComment = false;
+					var hasUnsavedChanges = false;
+					var i = 0;
+					while (!hasUnsavedComment && !hasUnsavedChanges && i < objects.length) {
+						var o = objects[i];
+
+						// if the user is working on the specified task, then check whether there is any unsaved
+						// changes in its task group and the tools that respect workspace context
+						var objectTaskGroup = o.getParentPrimaryObject("TaskGroup");
+						if (objectTaskGroup.hasUnsavedChanges()) {
+							hasUnsavedComment = true;
+						} else if (o.getPropertyValue("taskIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTask").value
+						           && toolsController.hasUnsavedChangesAllWorkspaceContextTools()) {
+							hasUnsavedChanges = true;
+						}
+						i++;
+					}
+					if (hasUnsavedComment) {
+						wcfProcessTasksWithUnsavedChangesDialog.openWindow();
+					} else if (hasUnsavedChanges) {
+						wcfCompleteTasksWithChangesDialog.openCompleteTasksWithChangesDialog(objects);
+					} else {
+						// invoke the complete task service
+						this.invokeCompleteTaskService(objects);
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "completeTasks(objects)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method enables the user to approve the specified task groups. It checks whether there
+			is any unsaved changes in the tools, and then invokes the approve task group services if
+			proceeds to approve the specified task groups.
+			@param [wcfModelObject] objects The array of model objects associated with the specified task groups.
+		-->
+		<method name="approveTaskGroups" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "approveTaskGroups(objects)", [objects]);
+				}
+
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					var hasUnsavedComment = false;
+					var hasUnsavedChanges = false;
+					var i = 0;
+					while (!hasUnsavedComment && !hasUnsavedChanges && i < objects.length) {
+						var o = objects[i];
+
+						// if the user is working on the specified task group, then check whether there is any unsaved
+						// changes in the task group and the tools that respect workspace context
+						if (o.hasUnsavedChanges()) {
+							hasUnsavedComment = true;
+						} else if (o.getPropertyValue("taskGroupIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTaskGroup").value 
+						           && toolsController.hasUnsavedChangesAllWorkspaceContextTools()) {
+							hasUnsavedChanges = true;
+						}
+						i++;
+					}
+					if (hasUnsavedComment) {
+						wcfProcessTasksWithUnsavedChangesDialog.openWindow();
+					} else if (hasUnsavedChanges) {
+						wcfApproveTaskGroupsWithChangesDialog.openApproveTaskGroupsWithChangesDialog(objects);
+					} else {
+						// invoke the approve task group service
+						this.invokeApproveTaskGroupService(objects);
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "approveTaskGroups(objects)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method enables the user to reject the specified task groups. It checks whether there
+			is any unsaved changes in the tools, and then invokes the reject task group services if
+			proceeds to reject the specified task groups.
+			@param [wcfModelObject] objects The array of model objects associated with the specified task groups.
+		-->
+		<method name="rejectTaskGroups" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "rejectTaskGroups(objects)", [objects]);
+				}
+
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					var hasUnsavedComment = false;
+					var hasUnsavedChanges = false;
+					var i = 0;
+					while (!hasUnsavedComment && !hasUnsavedChanges && i < objects.length) {
+						var o = objects[i];
+
+						// if the user is working on the specified task group, then check whether there is any unsaved
+						// changes in the task group and the tools that respect workspace context
+						if (o.hasUnsavedChanges()) {
+							hasUnsavedComment = true;
+						} else if (o.getPropertyValue("taskGroupIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTaskGroup").value 
+						           && toolsController.hasUnsavedChangesAllWorkspaceContextTools()) {
+							hasUnsavedChanges = true;
+						}
+						i++;
+					}
+					if (hasUnsavedComment) {
+						wcfProcessTasksWithUnsavedChangesDialog.openWindow();
+					} else if (hasUnsavedChanges) {
+						wcfRejectTaskGroupsWithChangesDialog.openRejectTaskGroupsWithChangesDialog(objects);
+					} else {
+						// invoke the reject task group service
+						this.invokeRejectTaskGroupService(objects);
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "rejectTaskGroups(objects)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method enables the user to cancel the specified task groups. It checks whether there
+			is any unsaved changes in the tools, and then invokes the cancel task group services if
+			proceeds to cancel the specified task groups.
+			@param [wcfModelObject] objects The array of model objects associated with the specified task groups.
+		-->
+		<method name="cancelTaskGroups" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "cancelTaskGroups(objects)", [objects]);
+				}
+
+				// check if there are any outstanding transactions
+				if (wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					var hasUnsavedComment = false;
+					var hasUnsavedChanges = false;
+					var i = 0;
+					while (!hasUnsavedComment && !hasUnsavedChanges && i < objects.length) {
+						var o = objects[i];
+
+						// if the user is working on the specified task group, then check whether there is any unsaved
+						// changes in the task group and the tools that respect workspace context
+						if (o.hasUnsavedChanges()) {
+							hasUnsavedComment = true;
+						} else if (o.getPropertyValue("taskGroupIdentifier") == wcfContextUtil.findContextValue(null, "workspaceTaskGroup").value 
+						           && toolsController.hasUnsavedChangesAllWorkspaceContextTools()) {
+							hasUnsavedChanges = true;
+						}
+						i++;
+					}
+					if (hasUnsavedComment) {
+						wcfProcessTasksWithUnsavedChangesDialog.openWindow();
+					} else if (hasUnsavedChanges) {
+						wcfCancelTaskGroupsWithChangesDialog.openCancelTaskGroupsWithChangesDialog(objects);
+					} else {
+						// invoke the cancel task group service
+						this.invokeCancelTaskGroupService(objects);
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "cancelTaskGroups(objects)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method invokes the complete task services, using the specified model objects that
+			contains all the required workspace data for the specified tasks.
+			@param [wcfModelObject] objects: The array of model objects associated with the specified tasks.
+		-->
+		<method name="invokeCompleteTaskService" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeCompleteTaskService");
+				}
+				for (var i = 0; i < objects.length; i++) {
+					// invoke the complete task service
+					wspTaskCompleteService.doRequest(objects[i]);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeCompleteTaskService");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method invokes the approve task group services, using the specified model objects
+			that contains all the required workspace data for the specified task groups.
+			@param [wcfModelObject] objects: The array of model objects associated with the specified task groups.
+		-->
+		<method name="invokeApproveTaskGroupService" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeApproveTaskGroupService");
+				}
+				for (var i = 0; i < objects.length; i++) {
+					// invoke the approve task group service
+					wspTaskGroupApproveService.doRequest(objects[i]);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeApproveTaskGroupService");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method invokes the reject task group services, using the specified model objects
+			that contains all the required workspace data for the specified task groups.
+			@param [wcfModelObject] objects: The array of model objects associated with the specified task groups.
+		-->
+		<method name="invokeRejectTaskGroupService" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeRejectTaskGroupService");
+				}
+				for (var i = 0; i < objects.length; i++) {
+					// invoke the reject task group service
+					wspTaskGroupRejectService.doRequest(objects[i]);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeRejectTaskGroupService");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method invokes the cancel task group services, using the specified model objects
+			that contains all the required workspace data for the specified task groups.
+			@param [wcfModelObject] objects: The array of model objects associated with the specified task groups.
+		-->
+		<method name="invokeCancelTaskGroupService" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeCancelTaskGroupService");
+				}
+				for (var i = 0; i < objects.length; i++) {
+					// invoke the reject task group service
+					wspTaskGroupCancelService.doRequest(objects[i]);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfWorkspaceUtil", "invokeCancelTaskGroupService");
+				}
+			]]>
+		</method>
+	</node>
+
+</library>

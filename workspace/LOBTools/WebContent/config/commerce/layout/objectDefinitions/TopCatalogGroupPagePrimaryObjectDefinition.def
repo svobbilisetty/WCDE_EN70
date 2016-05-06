@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>    
+	
+	<!--- This definition defines the base object from which TopCatalogGroupPage and Inherited TopCatalogGroupPage are derived.
+	-->
+	<PrimaryObjectDefinition definitionName="pglBaseTopCatalogGroupPagePrimaryObjectDefinition"
+		detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}"
+		displayName="${catalogResources.masterCategory_DisplayName}"
+		displayNameProperty="identifier"
+  		helpLink="tasks/tpnadcat.htm" 
+  		idProperty="catgroupId"
+  		isBaseDefinition="true"
+  		propertiesDefinitionName="pglTopCategoryPageProperties"
+  		objectGroups="CatalogGroupPageAlias"
+  		searchType="FindCategoryPages"
+  		utilitiesListDefinitionName="pglUtilitiesBrowseGrid"
+  		writeUsage="IBM_ManagePageLayoutTool">
+  		
+  		<!--- Refresh Service to refresh this category page. Calling this will fetch the category pages' details again from the server. 
+		-->
+		<RefreshService url="/cmc/GetCatalogGroupPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+			<ServiceParam name="masterCatalogStoreId"/>
+			<ServiceParam name="catalogId" contextName="masterCatalogId"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+		</RefreshService>
+		<!---  
+			Retrieves the SEO URL for the category page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetCatalogGroupPageSeoUrl">
+			<ServiceParam name="catalogId" contextName="masterCatalogId"/>
+			<ServiceParam name="catgroupId" propertyName="catgroupId"/>
+		</GetPreviewURLService>
+		<!--- Retrieves the {@link pglChildCatalogGroupPage} child objects.
+		-->
+		<GetChildrenService objectTypes="ChildCatalogGroupPage"
+			url="/cmc/GetChildCatalogGroupPageForCatalogGroupPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+			<ServiceParam name="defaultLanguageId"/>
+			<ServiceParam name="catalogId" contextName="masterCatalogId"/>
+		</GetChildrenService>
+		<!--- Retrieves 
+			{@link pglChildCatalogEntryPage} child objects.
+		-->
+		<GetChildrenService objectTypes="ChildCatalogEntryPage" 
+			url="/cmc/GetChildCatalogEntryPageForCatalogGroupPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+			<ServiceParam name="defaultLanguageId"/>
+			<ServiceParam name="catalogId" contextName="masterCatalogId"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the {@link pglTopCategoryPageLayoutAssociationReferencedTopCategoryPageLayouts} and
+			{@link pglTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts} references for this category page.
+		-->
+		<GetChildrenService objectTypes="TopCategoryPageLayoutAssociationReferencedTopCategoryPageLayouts,TopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts,InheritedTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts" 
+			url="/cmc/GetCatalogGroupPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="TopCategoryPage"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the {@link pglCategoryPageLayoutAssociationReferencedProductPageLayouts} and
+			{@link pglCategoryPageLayoutAssociationReferencedInheritedProductPageLayouts} references for this category page.
+		-->
+		<GetChildrenService objectTypes="CategoryPageLayoutAssociationReferencedProductPageLayouts,CategoryPageLayoutAssociationReferencedInheritedProductPageLayouts,InheritedCategoryPageLayoutAssociationReferencedInheritedProductPageLayouts" 
+			url="/cmc/GetCatalogGroupPage-CatalogEntryPageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="TopCategoryPage"/>
+			<ServiceParam name="subPageType" value="ProductPage"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the {@link pglCategoryPageLayoutAssociationReferencedBundlePageLayouts} and
+			{@link pglCategoryPageLayoutAssociationReferencedInheritedBundlePageLayouts} references for this category page.
+		-->
+		<GetChildrenService objectTypes="CategoryPageLayoutAssociationReferencedBundlePageLayouts,CategoryPageLayoutAssociationReferencedInheritedBundlePageLayouts,InheritedCategoryPageLayoutAssociationReferencedInheritedBundlePageLayouts" 
+			url="/cmc/GetCatalogGroupPage-CatalogEntryPageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="TopCategoryPage"/>
+			<ServiceParam name="subPageType" value="BundlePage"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the {@link pglCategoryPageLayoutAssociationReferencedSKUPageLayouts} and
+			{@link pglCategoryPageLayoutAssociationReferencedInheritedSKUPageLayouts} references for this category page.
+		-->
+		<GetChildrenService objectTypes="CategoryPageLayoutAssociationReferencedSKUPageLayouts,CategoryPageLayoutAssociationReferencedInheritedSKUPageLayouts,InheritedCategoryPageLayoutAssociationReferencedInheritedSKUPageLayouts" 
+			url="/cmc/GetCatalogGroupPage-CatalogEntryPageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="TopCategoryPage"/>
+			<ServiceParam name="subPageType" value="ItemPage"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the {@link pglCategoryPageLayoutAssociationReferencedKitPageLayouts} and
+			{@link pglCategoryPageLayoutAssociationReferencedInheritedKitPageLayouts} references for this category page.
+		-->
+		<GetChildrenService objectTypes="CategoryPageLayoutAssociationReferencedKitPageLayouts,CategoryPageLayoutAssociationReferencedInheritedKitPageLayouts,InheritedCategoryPageLayoutAssociationReferencedInheritedKitPageLayouts" 
+			url="/cmc/GetCatalogGroupPage-CatalogEntryPageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="TopCategoryPage"/>
+			<ServiceParam name="subPageType" value="StaticKitPage"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the {@link pglCategoryPageLayoutAssociationReferencedDynamicKitPageLayouts} and
+			{@link pglCategoryPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts} references for this category page.
+		-->
+		<GetChildrenService objectTypes="CategoryPageLayoutAssociationReferencedDynamicKitPageLayouts,CategoryPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts,InheritedCategoryPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" 
+			url="/cmc/GetCatalogGroupPage-CatalogEntryPageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="TopCategoryPage"/>
+			<ServiceParam name="subPageType" value="DynamicKitPage"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the default page layout information for this category page.
+		-->
+		<GetChildrenService objectTypes="TopCategoryPageReferenceDefaultTopCategoryPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForCatalogPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="TopCategoryPage"/>
+		</GetChildrenService>
+		
+	    <!--- This navigation list definition is used to display {@link pglChildCatalogEntryPage}. -->	
+		<NavigationListDefinition displayName="${pglPageLayoutResources.catalogEntryPageList}"
+		 isDefault="true"
+		 listDefinitionName="pglCatalogEntryPageChildList" 
+		 listTitle="${pglPageLayoutResources.catalogEntryPageList}"
+		 name="CatalogEntryPageChildList"
+		 toolbarIcon="catalogEntriesListToolbarIcon" 
+		 helpLink="tasks/tpn_topcatentry.htm"/>
+		
+				
+        <!--- This navigation list definition is used to display {@link pglChildCatalogGroupPage}. -->
+		<NavigationListDefinition displayName="${pglPageLayoutResources.categoryPagesList}" 
+			listDefinitionName="pglCategoryPageChildList" 
+			listTitle="${pglPageLayoutResources.categoryPagesList}" 
+			name="CategoryPageChildList" toolbarIcon="categoryListToolbarIcon"
+			helpLink="tasks/tpn_topcategories.htm"/>
+		
+		<!---  
+		    Parent Reference object definition between the top category page and another child category page.
+		    This indicates that a category page can be a parent of another category page.
+		-->
+		<ParentReferenceObjectDefinition baseDefinitionName="pglChildCatalogGroupPage"/>
+		
+		<!---
+			Object filter used to select the object types that will be displayed in the utilities view details view when
+			an object of this object type is selected in the utilities view browse view.
+		-->
+		<ObjectTypeFilter filterType="utilitiesViewFilter" 
+			objectTypes="ChildCatalogGroupPage, ChildCatalogEntryPage"/>
+				
+		<!---  
+		    Reference object definition between the top category page and a child catalog entry page.
+		    This indicates that a top category page can be a parent of a product page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglChildCatalogEntryPage"/>
+		
+		<!---  
+		    Reference object definition between the top category page and a top category page layout. 
+		    A top category page can have multiple top category page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglTopCategoryPageLayoutAssociationReferencedTopCategoryPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the top category page and an inherited top category page layout.
+		    A top category page can have multiple inherited top category page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the inherited top category page and an inherited top category page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and a product page layout.
+		    The product page layout is assigned to only products that directly belong to the category.
+		    A category page can have multiple product page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedProductPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and an inherited product page layout.
+		    The inherited product page layout is assigned to only products that directly belong to the category.
+		    A category page can have multiple inherited product page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedInheritedProductPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the inherited category page and an inherited product page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedCategoryPageLayoutAssociationReferencedInheritedProductPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and a bundle page layout.
+		    The bundle page layout is assigned to only bundles that directly belong to the category.
+		    A category page can have multiple bundle page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedBundlePageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and an inherited bundle page layout.
+		    The inherited bundle page layout is assigned to only bundles that directly belong to the category.
+		    A category page can have multiple inherited bundle page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedInheritedBundlePageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the inherited category page and an inherited bundle page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedCategoryPageLayoutAssociationReferencedInheritedBundlePageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and a SKU page layout.
+		    The SKU page layout is assigned to only SKUs that directly belong to the category.
+		    A category page can have multiple SKU page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedSKUPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and an inherited SKU page layout.
+		    The inherited SKU page layout is assigned to only SKUs that directly belong to the category.
+		    A category page can have multiple inherited SKU page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedInheritedSKUPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the inherited category page and an inherited SKU page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedCategoryPageLayoutAssociationReferencedInheritedSKUPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and a kit page layout.
+		    The kit page layout is assigned to only kits that directly belong to the category.
+		    A category page can have multiple kit page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedKitPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and an inherited kit page layout.
+		    The inherited kit page layout is assigned to only kits that directly belong to the category.
+		    A category page can have multiple inherited kit page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedInheritedKitPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the inherited category page and an inherited kit page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedCategoryPageLayoutAssociationReferencedInheritedKitPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and a dynamic kit page layout.
+		    The dynamic kit page layout is assigned to only dynamic kits that directly belong to the category.
+		    A category page can have multiple dynamic kit page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedDynamicKitPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the category page and an inherited dynamic kit page layout.
+		    The inherited dynamic kit page layout is assigned to only dynamic kits that directly belong to the category.
+		    A category page can have multiple inherited dynamic kit page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCategoryPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the inherited category page and an inherited dynamic kit page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedCategoryPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts"/>
+	
+		<!---  
+		    Reference object definition between the category page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglTopCategoryPageReferenceDefaultTopCategoryPageLayout"/>
+    </PrimaryObjectDefinition>
+		
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseTopCatalogGroupPagePrimaryObjectDefinition"
+		definitionName="TopCatalogGroupPage"
+		headerIcon="catalogGroupPageHeaderIcon"
+		icon="catalogGroupPageIcon"
+		objectType="TopCatalogGroupPage">
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseTopCatalogGroupPagePrimaryObjectDefinition"
+		definitionName="InheritedTopCatalogGroupPage"
+		displayName="${catalogResources.inheritedMasterCategory_DisplayName}"
+		headerIcon="inheritedCatalogGroupPageHeaderIcon" 
+		icon="inheritedCatalogGroupPageIcon"
+		objectType="InheritedTopCatalogGroupPage">
+	</PrimaryObjectDefinition>
+
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" 
+		definitionName="pglTopCategoryPageLayoutAssociationReferencedTopCategoryPageLayouts" 
+		objectType="TopCategoryPageLayoutAssociationReferencedTopCategoryPageLayouts" 
+		referencedTypes="TopCategoryPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" 
+		compatibleObjectTypes="InheritedTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts" 
+		definitionName="pglTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts" 
+		objectType="TopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts" 
+		referencedTypes="InheritedTopCategoryPageLayout"/>
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" 
+		baseDefinitionName="BaseInheritedPageLayoutAssociation" 
+		compatibleObjectTypes="TopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts" 
+		definitionName="pglInheritedTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts" 
+		objectType="InheritedTopCategoryPageLayoutAssociationReferencedInheritedTopCategoryPageLayouts" 
+		referencedTypes="InheritedTopCategoryPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglTopCategoryPageReferenceDefaultTopCategoryPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="TopCategoryPageReferenceDefaultTopCategoryPageLayout" 
+		referencedTypes="TopCategoryPageLayout,InheritedTopCategoryPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

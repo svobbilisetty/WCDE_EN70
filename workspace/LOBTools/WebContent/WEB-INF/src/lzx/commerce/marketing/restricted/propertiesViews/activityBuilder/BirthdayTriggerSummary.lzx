@@ -1,0 +1,52 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktBirthdayTriggerSummary} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktBirthdayTriggerSummary} object:
+		<ul>
+			<li>numberOfDays</li>
+		</ul>
+	-->
+	<class name="mktBirthdayTriggerSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="numberOfDays" propertyName="numberOfDays"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryBirthdayNDaysText, "onstring");
+			]]>
+		</handler>
+		
+		<!---
+			Sets the summary text for the {@link mktBirthdayTriggerElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				var numOfDays = this.resolvedParams["numberOfDays"];
+				
+				if(numOfDays != null && numOfDays != "") {
+					var numOfDaysDisplay = wcfGlobalizationUtil.formatNumberToDisplayFormat(numOfDays);
+					summary = mktMarketingResources.replaceValues("summaryBirthdayNDaysText", [numOfDaysDisplay]);
+				}
+	
+				this.setSummaryText( wcfStringUtil.escapeText(summary) );
+			]]>
+		</method>
+		
+	</class>
+</library>

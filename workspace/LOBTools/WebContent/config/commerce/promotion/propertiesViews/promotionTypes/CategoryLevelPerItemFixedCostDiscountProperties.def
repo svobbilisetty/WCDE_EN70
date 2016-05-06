@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="proCategoryLevelPerItemFixedCostDiscountProperties">
+		<EnablementCondition conditionId="promotionType" enablementValue="CategoryLevelPerItemFixedCostDiscount" propertyName="promotionType"/>
+		
+		<PropertyGroup groupTitle="${promotionResources.promotion_purchaseConditionAndRewardTitle}" name="purchaseConditionAndRewardGroup" open="true">
+			<PropertyCombobox objectPath="CategoryLevelPerItemFixedCostDiscountPurchaseCondition/Identifier_PaymentType" promptText="${promotionResources.promotion_paymentType}" propertyName="PaymentType"/>
+
+			<PropertyCheckbox objectPath="CategoryLevelPerItemFixedCostDiscountPurchaseCondition" propertyName="siteWide" promptText="${promotionResources.promotion_siteWide}"
+				helpText="${promotionResources.promotion_siteWideCategory_helpText}"/>
+				
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Target_Category_helpText}" listDefinitionName="proCategoryElementTypeGrid" name="catalogGroup" objectPath="CategoryLevelPerItemFixedCostDiscountPurchaseCondition" objectTypes="Identifier_Category,Identifier_InheritedCategory" promptText="${promotionResources.promotion_Select_Category}"
+				validatorTypes="reqCatValidator,reqIncCatValidator,reqNoIncCatValidator"/>
+
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule_helpText}" listDefinitionName="proCatalogEntryAttributeRuleGrid" name="AttributesRule" objectPath="CategoryLevelPerItemFixedCostDiscountPurchaseCondition" objectTypes="CatalogEntryAttributeRule" promptText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule}"/>
+	
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Exclude_CatalogEntries_helpText}" listDefinitionName="proProductGrid" name="excludedCatalogEntry" objectPath="CategoryLevelPerItemFixedCostDiscountPurchaseCondition" objectTypes="Identifier_CatalogEntry,Identifier_InheritedCatalogEntry" promptText="${promotionResources.promotion_Select_Exclude_Catalog_Entry}"/>
+								
+			<PropertyCombobox objectPath="CategoryLevelPerItemFixedCostDiscountPurchaseCondition" promptText="${promotionResources.promotionElement_Currency}" propertyName="Currency" required="true"/>
+
+			<PropertyChildListEditor listDefinitionName="proCIFDRangeGrid" name="defaultRange" objectPath="CategoryLevelPerItemFixedCostDiscountPurchaseCondition" objectTypes="ProductLevelFixedCostDiscountRange" promptText="${promotionResources.promotion_Minimum_purchase_condition}" required="true"/>
+
+		</PropertyGroup>
+		
+	</PropertyGroup>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link proProductLevelFixedCostDiscountRangeObjectDefinition ProductLevelFixedCostDiscountRange promotion element sub type}
+		associated with the CategoryLevelPerItemFixedCostDiscount promotion type.
+	-->
+	<ObjectGrid definitionName="proCIFDRangeGrid" preferenceKey="proCIFDRangeGrid">
+		<GridNumeric editable="true" name="lowerBound" propertyName="LowerBound" required="true" text="${promotionResources.promotion_Minimum_purchase_quantityTitle}" visible="true" width="200"/>
+		<GridCurrency appendCurrencyCodeToHeader="false" cloneEnabled="false" editable="true" name="fixedPrice" propertyName="FixedPrice" required="true" setPropertyNameToCurrencyCode="false" text="${promotionResources.promotionElement_Fixed_Price}" visible="true" width="200"/>
+	</ObjectGrid>
+	
+</Definitions>

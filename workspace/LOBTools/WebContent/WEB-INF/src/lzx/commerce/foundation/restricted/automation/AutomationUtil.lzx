@@ -1,0 +1,347 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!--- 
+		@keywords private
+		Automation utilities.
+	  -->
+	<node id="wcfAutomationUtil">
+		<!---
+			@keywords private
+			Array of pending actions.
+		-->
+		<attribute name="actions" value="${[]}"/>
+		<!---
+			@keywords private
+			A map of named values that can be used by actions.
+		 -->
+		<attribute name="values" value="${{}}"/>
+		<!---
+			@keywords private
+			A map of named objects that can be used by actions.
+		 -->
+		<attribute name="objects" value="${{}}"/>
+		<!---
+			@keywords private
+			Indicates that automation is active.
+		-->
+		<attribute name="active" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			Indicates whether current action being executed should abort when error happens.
+		-->
+		<attribute name="abortOnError" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			The active tool being processed by the automation framework.
+		-->
+		<attribute name="activeTool" value="null"/>
+		
+		<!--- keyword private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["doNextActionDel"]) {
+				this.doNextActionDel.unregisterAll();
+				delete this.doNextActionDel;
+			}
+			if (this["objectDestroyedDel"]) {
+				this.objectDestroyedDel.unregisterAll();
+				delete this.objectDestroyedDel;
+			}
+			]]>
+		</method>
+
+		<!--- keyword private -->
+		<method name="run" args="url">
+			<![CDATA[
+			messageLogger.logStatus(foundationResources.automationInitiated.string);
+			callJSFunction("setAutomationStatusMsg", "initiated");
+			this.active = true;
+			wcfLogger.componentsLevel["com.ibm.commerce.lobtools.foundation.auto"] = 700; // "INFO"
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "INFO", "wcfAutomationUtil", "run", foundationResources.automationInitiated.string);
+			var actionXML = '<action name="wcfAutoRunTestCaseAction"><param name="url" /></action>';
+			var downloadAction = wcfXMLUtil.parseXML(actionXML);
+			downloadAction.firstChild.attributes["value"] = url;
+			this.insertAction(downloadAction);
+			if (wcfContextUtil.findContextValue(null, "workspacesEnabled").value == "true") {
+				wcfWorkspaceUtil.workOnBase();
+				if (configProperties.readOnlyOnApprovedContent) {
+					wcfContextUtil.findContextValue(null, "readOnlyMode").setAttribute("value", "false");
+				}
+				this.setValue("workspacesEnabled", "true");
+			}
+			this.executeNext();
+			]]>
+		</method>
+
+		<!--- 
+			@keywords private
+			This method inserts the specified action at the first action in the list of pending actions.
+		-->
+		<method name="insertAction" args="action">
+			<![CDATA[
+			if (action) {
+				this.actions.unshift(action);
+			}
+			]]>
+		</method>
+		
+		<!--- keyword private -->
+		<method name="executeNext" args="e=null">
+			<![CDATA[
+			if (typeof(this["executeNextDel"]) == "undefined") {
+				this.executeNextDel = new lz.Delegate(this, "executeNext");
+			}
+			if (!this.isActionInProgress()) {
+				if (actions.length > 0) {
+					var action = this.actions.shift();
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "INFO", "wcfAutomationUtil", "executeNext", "Executing action " + this.getLogString(action));
+					callJSFunction("setAutomationLastAction", this.getLogString(action));
+					var actionName = action.attributes["name"];
+					if (global[actionName]) {
+						this.abortOnError = true;
+						global[actionName].execute(action);
+					}
+					else {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutomationUtil", "executeNext", "Undefined action " + actionName);
+						wcfAutomationUtil.abort();
+					}
+					lz.Timer.resetTimer(this.executeNextDel, 50);
+				}
+				else if (this.active) {
+					this.active = false;
+					this.releaseObjects();
+					this.values = {};
+					this.activeTool = null;
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "INFO", "wcfAutomationUtil", "executeNext", "Automation complete.");
+					wcfLogger.flush();
+					messageLogger.logStatus(foundationResources.automationComplete.string);
+					callJSFunction("setAutomationStatusMsg", "complete");
+				}
+				else {
+					wcfLogger.flush();
+				}
+			}
+			else {
+				lz.Timer.resetTimer(this.executeNextDel, 50);
+			}
+			]]>
+		</method>
+		
+		<!--- keyword private -->
+		<method name="abort">
+			<![CDATA[
+			this.active = false;
+			this.releaseObjects();
+			this.values = {};
+			this.activeTool = null;
+			this.actions = [];
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "wcfAutomationUtil", "abort", "Automation aborted.");
+			wcfLogger.flush();
+			messageLogger.logException(null, foundationResources.automationAborted.string);
+			callJSFunction("setAutomationStatusMsg", "aborted");
+			]]>
+		</method>
+		
+		<!--- keyword private -->
+		<method name="isActionInProgress">
+			<![CDATA[
+			return this.hasActiveTransaction() ||
+					this.hasActiveDataset() ||
+					wcfCallbackUtil.deferredCallbacks.length >0;
+			]]>
+		</method>
+		
+		<!--- keyword private -->
+		<method name="hasActiveDataset">
+			<![CDATA[
+			var activeDataset = false;
+			for (var i=0; i < wcfServiceUtil.serviceDatasets.length; i++) {
+				if (wcfServiceUtil.serviceDatasets[i].submitted) {
+					activeDataset = true;
+					break;
+				}
+			}
+			return activeDataset;
+			]]>
+		</method>
+		
+		<!--- keyword private -->
+		<method name="hasActiveTransaction">
+			<![CDATA[
+			var activeDataset = false;
+			for (var i=0; i < wcfServiceTransactionUtil.activeTransactions.length; i++) {
+				if (wcfServiceTransactionUtil.activeTransactions[i].serviceDataset.submitted) {
+					activeDataset = true;
+					break;
+				}
+			}
+			return activeDataset;
+			]]>
+		</method>
+		
+		<!---@keywords private -->
+		<method name="getValue" args="key">
+			<![CDATA[
+			var value = this.values[key];
+			if (typeof(value) == "undefined") {
+				value = global["testdata." + key];
+				if (typeof(value) == "undefined") {
+					value = null;
+				}
+			}
+			return value;
+			]]>
+		</method>
+		
+		<!---@keywords private -->
+		<method name="setValue" args="key,value">
+			<![CDATA[
+			this.values[key] = value;
+			]]>
+		</method>
+		
+		<!---@keywords private -->
+		<method name="getObject" args="key">
+			<![CDATA[
+			var o = key ? this.objects[key] : null;
+			if (o != null && this.activeTool != null && (o.model != this.activeTool.model || o.modelInitializationIdentifier != o.model.initializationIdentifier)) {
+				o = null;
+			}
+			return o;
+			]]>
+		</method>
+		
+		<!---@keywords private -->
+		<method name="setObject" args="key,object">
+			<![CDATA[
+			if (this.objects[key]) {
+				if (this.objects[key].openGroupObject != null) {
+					this.objects[key].openGroupObject.decrementReferenceCount();
+				}
+				delete this.objects[key];
+			}
+			if (object) {
+				if (object.openGroupObject != null) {
+					object.openGroupObject.incrementReferenceCount();
+					if (object.openGroupObject.objectDefinition.primary) {
+						object.openGroupObject.hasReleasableChildren = false;
+					}
+					else {
+						var primaryObject = object.getParentPrimaryObject();
+						if (primaryObject != null) {
+							primaryObject.hasReleasableChildren = false;
+						}
+					}
+				}
+				if (!this["objectDestroyedDel"]) {
+					this.objectDestroyedDel = new lz.Delegate(this, "objectDestroyed");
+				}
+				this.objectDestroyedDel.register(object, "beingDestroyed");
+				this.objects[key] = object;
+			}
+			]]>
+		</method>
+		
+		<!--- keyword private -->
+		<method name="objectDestroyed" args="o">
+			<![CDATA[
+			var keys = [];
+			for (var key in this.objects) {
+				if (this.objects[key] == o) {
+					keys.push(key);
+				} 
+			}
+			for (var i = 0; i < keys.length; i++) {
+				delete this.objects[keys[i]];
+			}
+			this.objectDestroyedDel.unregisterAll();
+			for (var key in this.objects) {
+				this.objectDestroyedDel.register(this.objects[key], "beingDestroyed");
+			}
+			]]>
+		</method>
+		
+		<!--- keyword private -->
+		<method name="releaseObjects">
+			<![CDATA[
+			if (this["objectDestroyedDel"]) {
+				this.objectDestroyedDel.unregisterAll();
+			}
+			var keys = [];
+			for (var key in this.objects) {
+				keys.push(key);
+			}
+			for (var i = 0; i < keys.length; i++) {
+				var o = this.objects[keys[i]];
+				if (o.openGroupObject != null) {
+					o.openGroupObject.decrementReferenceCount();
+				}
+				delete this.objects[keys[i]];
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private  
+			Use this method to parse a parameter map {name:value}. 
+		-->
+		<method name="parseParameters" args="action">
+			<![CDATA[
+			var params = {};
+			if (action) {
+				var paramNodes = action.childNodes;
+				for (var i = 0; i < paramNodes.length; i++) {
+					if (paramNodes[i].attributes["name"] && paramNodes[i].attributes["value"]) {
+						params[paramNodes[i].attributes["name"]] = paramNodes[i].attributes["value"];
+					}
+				}
+			}
+			this.abortOnError = params["abortOnError"] != "false";
+			return params;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private  
+			Constructs a log string for the specified action.
+		-->
+		<method name="getLogString" args="action">
+			<![CDATA[
+			var logString = action.attributes["name"];
+			if (action) {
+				var paramNodes = action.childNodes;
+				for (var i = 0; i < paramNodes.length; i++) {
+					logString += " " + paramNodes[i].attributes["name"] + "=" + paramNodes[i].attributes["value"];
+				}
+			}
+			return logString;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Log a message using the automation component.
+			@param string messageText: The message text.
+			@param string level: The message level. Valid values are "SEVERE", "WARNING", "INFO". The default is "INFO".
+		-->
+		<method name="logMessage" args="messageText,level='INFO'">
+			<![CDATA[
+			wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", level, "wcfAutomationUtil", "logMessage", messageText);
+			]]>
+		</method>
+	</node>
+</library>

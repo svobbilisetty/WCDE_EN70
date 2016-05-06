@@ -1,0 +1,1089 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		This class implements a time picker that allows a user to select time. The time
+		picker consists an input field for a user to enter time, an panel for a user to select time
+		using mouse, and an icon for a user to toggle the time picker panel. The following code
+		shows how to instantiate a time picker. The time picker instance binds the the property
+		parent.property, and will display time in the format "HH:MM"
+		
+		@START_CODE
+			new lz.wcfTimePicker(parent, {
+				name: "timepicker",
+				property: parent.property,
+			});
+		@END_CODE
+	 -->
+	<class name="wcfTimePicker" extends="basecomponent" focusable="false">
+		<!---
+			Reference to {@link wcfModelProperty} instance that is being edited. The
+			value of this property will be updated with the selected time.
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		
+		<!--- The time format for setting and retrieving the property -->
+		<attribute name="timeFormat" value="${wcfDateUtil.TIME_FORMAT}" type="string"/>
+		
+		<!---
+			The pattern used to format the time for display. This value should not be
+			set directly. It is taken from the current user preference.
+		-->
+		<attribute name="displayFormat" value="$once{wcfDateUtil.getTimePreferenceFormat()}"/>
+		<!---
+			The prompt text displayed when no time has been entered. This value should
+			not be set directly. It is taken from the current user preference.
+		-->
+		<attribute name="promptText" value="$once{wcfDateUtil.getTimePreferenceFormatDisplayKey().string}"/>
+		
+		<!---
+			Display the preferred time zone next to the time picker. The default value is <code>true<code>.
+		-->
+		<attribute name="showTimeZone" type="boolean" value="true"/>
+		
+		<!--
+			@keywords private
+		 -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			if(this["updatePromptDel"]){
+				this.updatePromptDel.unregisterAll();
+				delete this.updatePromptDel;
+			}
+			if(this["updateTimeZoneDisplayNameDel"]){
+				this.updateTimeZoneDisplayNameDel.unregisterAll();
+				delete this.updateTimeZoneDisplayNameDel;
+			}
+			
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		 -->
+		<handler name="oninit">
+			<![CDATA[
+			if (this["property"]) {
+				this.updateValue();
+			}
+			this.updatePrompt();
+			this.updateTimeZoneDisplayNameDel = new lz.Delegate(this, "updateTimeZoneDisplayName");
+			wcfContextUtil.findContextValue(null, "timeZoneDisplayName", this.updateTimeZoneDisplayNameDel);
+			this.updateTimeZoneDisplayName();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Updates the displayed prompt text in the time picker's text box
+		 -->
+		<method name="updatePrompt" args="e=null">
+			<![CDATA[
+			if(this["updatePromptDel"]){
+				this.updatePromptDel.unregisterAll();
+			}
+			else {
+				this.updatePromptDel = new lz.Delegate(this, "updatePrompt");
+			}
+			this.updatePromptDel.register(wcfDateUtil.getTimePreferenceFormatDisplayKey(), "onstring");
+			var timeString = this.getTimeString();
+			this.promptText = wcfDateUtil.getTimePreferenceFormatDisplayKey().string;
+			if (this.enabled && timeString == "" && !wcfViewUtil.containsView(this.timeInput.timeText, lz.Focus.getFocus())) {
+				this.timeInput.timeText.setText(this.promptText);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This handler will update the time field if the user changes their time format preference
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+			//if this event is for the CMCTimeFormat preference
+			if (preference == "CMCTimeFormat") {
+				var time = this.getTime();
+				this.displayFormat = wcfDateUtil.getTimePreferenceFormat();
+				if (time != null) {
+					this.setTime(time);
+				}
+				this.updatePrompt();
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateTimeZoneDisplayName" args="e=null">
+			<![CDATA[
+			if (this.showTimeZone) {
+				this.timeInput.timeZoneDisplayName.setAttribute("text", wcfContextUtil.findContextValue(null, "timeZoneDisplayName").value);
+			}
+			]]>
+		</method>	
+
+		<!---
+			@keywords private
+			Sets the selected time with the given new time.
+			@param Date newTime the new time
+		-->
+		<method name="setTime" args="newTime">
+			<![CDATA[
+			var timeString = "";
+			if (newTime != null) {
+				timeString = wcfDateUtil.getFormattedTime(newTime, false, this.displayFormat);
+			}
+			this.setTimeString(timeString);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Gets the selected time as a date object.
+			@return Date the selected time of this time picker
+		-->
+		<method name="getTime">
+			<![CDATA[
+			var timeString = this.getTimeString();
+			return wcfDateUtil.parseFormattedTime(timeString, this.displayFormat);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Gets the selected time as a string.
+			@return string the selected time as a string
+		-->
+		<method name="getTimeString">
+			<![CDATA[
+			var timeString = this.timeInput.timeText.getText();
+			if (timeString == this.promptText) {
+				timeString = "";
+			}
+			return timeString;
+			]]>
+		</method>
+		
+		<!---
+			Set the time to the specified string.
+			@keywords private
+		-->
+		<method name="setTimeString" args="timeString">
+			<![CDATA[
+			this.timeInput.timeText.setText(timeString);
+			this.updatePrompt();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Binds a new {@link wcfModelProperty} instance to this time picker.
+			@param newProperty the new property to be bound to this time picker.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+				else if (this.isinited) {
+					this.setTimeString("");
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Updates the widget with a new property value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this.isinited) {
+				var value = this.property.value;
+				var newTime = wcfDateUtil.parse(value, this.timeFormat);
+				if (newTime != null) {
+					this.setTime(newTime);
+				}
+				else {
+					this.setTimeString(value);
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Stores the selected time to the value of the bound model property
+		-->
+		<method name="storeValue">
+			<![CDATA[
+			var newValue = null;
+			var time = this.getTime();
+			if (time != null) {
+				this.setTime(time);
+				newValue = wcfDateUtil.format(time, this.timeFormat);
+			}
+			else {
+				newValue = this.getTimeString();
+			}
+			if (this["property"]) {
+				this.property.change(newValue);
+				if(wcfLogger.enabled){
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfTimePicker", "storeValue", "updates the model property " + this.property.propertyName + " with new value " + newValue + this.property.o.logString());
+				}
+			}
+			]]>
+		</method>
+		
+		<!--
+			@keywords private
+			Rounds the current time to the multiple of 15 minutes.
+			@return Date the time whose minute is multiple of 15
+		 -->
+		<method name="getTimeRoundedToQuaterHour"><![CDATA[
+			var now = new Date();
+			// 15 means 15 minutes. We round the current time to
+			// the closest quater of an hour.
+			now.setMinutes(Math.round(now.getMinutes() / 15) * 15);
+			now.setSeconds(0);
+			now.setMilliseconds(0);
+			return now;
+			]]>
+		</method>	
+
+		<!--
+			@keyword private
+			Closes time picker panel if a mouse click happens outside of this panel
+		 -->
+		<method name="mouseDownHandler" args="e=null"><![CDATA[
+			var button = this.timeInput.toggleButton;
+			if(button.containsPt(button.getMouse("x"), button.getMouse("y"))){
+				return; // let the toggle button itself to decide what to do.
+			}
+			
+			if(!timePickerPanel.containsPt(timePickerPanel.getMouse("x"), timePickerPanel.getMouse("y"))){
+				this.closeTimePickerPanel();
+			}
+
+			]]>
+		</method>
+		
+		<!--
+			@keywords private
+			Attaches a time picker panel to this time picker
+		 -->
+		<method name="attachTimePickerPanel"><![CDATA[
+			if(!this['updateAttachmentDel']){
+				this.updateAttachmentDel = new lz.Delegate(this, "updateAttachment");
+				this.updateAttachmentDel.register(this, "ony");
+				this.updateAttachmentDel.register(this, "onx");
+			}
+			if (!timePickerPanel.isinited) {
+				timePickerPanel.completeInstantiation();
+			}
+			timePickerPanel.setAttribute("visible", true);
+			timePickerPanel.setAttribute("timePicker", this);
+			timePickerPanel.bringToFront();
+			this.updateAttachment();
+			]]>
+		</method>
+		
+		<!--
+			@keywords private
+			Updates the location of the attached time picker panel
+		 -->
+		<method name="updateAttachment" args="e=null"><![CDATA[
+			timePickerPanel.setAttribute('x', this.timeInput.getAttributeRelative("x", canvas));
+			
+			// If drop down will be over the bottom of the canvas, flip it to the top
+			if(this.timeInput.getAttributeRelative("y", canvas) + +this.timeInput.height + timePickerPanel.height > canvas.height){
+				// 7 is used to offset the shadow
+				timePickerPanel.setAttribute('y', this.timeInput.getAttributeRelative("y", canvas) - timePickerPanel.height + 7);
+			}else{
+				timePickerPanel.setAttribute('y', this.timeInput.getAttributeRelative("y", canvas) + this.timeInput.height);
+			}
+			
+			]]>
+		</method>
+		
+		<!--
+			@keywords private
+			Shows the currently selected time in the time picker panel.
+		 -->
+		<method name="showTimeInTimePickerPanel"><![CDATA[
+			var time = this.getTime();
+			if (time == null) {
+				time = this.getTimeRoundedToQuaterHour();
+			}
+			var hours = time.getHours();
+			timePickerPanel.setAttribute("timeSlotStart", hours - 5); // make sure panle is sync'ed with current time
+			timePickerPanel.showTime(time);
+			]]>
+		</method>
+		
+		<!--
+			@keywords private
+			Opens the time picker panel attached to this time picker.
+		 -->
+		<method name="openTimePickerPanel"><![CDATA[
+			var newTime = this.getTime();
+			this.setTime(newTime);
+			this.attachTimePickerPanel();
+			
+			if(!this['mouseDownDel']){
+				this.mouseDownDel = new lz.Delegate(this, "mouseDownHandler");
+			}
+			this.mouseDownDel.register(lz.GlobalMouse,"onmousedown");
+			
+			if (!this['cancelTimePickerPanelDel']){
+				this.cancelTimePickerPanelDel = new lz.Delegate(this, "cancelTimePickerPanel");
+			}
+			lz.Keys.callOnKeyCombo(this.cancelTimePickerPanelDel, ['esc']);
+			
+			this.showTimeInTimePickerPanel();
+			lz.Focus.setFocus(timePickerPanel.timeIndicator, false);
+			lz.ModeManager.makeModal(timePickerPanel);
+			]]>
+		</method>
+		
+		<!--
+			@keywords private
+			Closes the time picker panel, and sets the selected time to the value of the panel.
+		 -->
+		<method name="closeTimePickerPanel"><![CDATA[
+			this.setTime(timePickerPanel.selectedTime);
+			this.storeValue();
+			this.cancelTimePickerPanel();			
+			]]>
+		</method>
+		
+		<!--
+			@keywords private
+			Closes the time picker panel.
+		 -->
+		<method name="cancelTimePickerPanel" args="e=null"><![CDATA[
+			lz.ModeManager.release(timePickerPanel);
+			lz.Keys.removeKeyComboCall(this.cancelTimePickerPanelDel, ['esc']);
+			timePickerPanel.setAttribute("visible", false);
+			timePickerPanel.setAttribute("timePicker", null);
+			this.mouseDownDel.unregisterAll();
+		    this.updateAttachmentDel.unregisterAll();
+			lz.Focus.setFocus(this.timeInput.toggleButton, false);
+		    ]]>
+		</method>
+		
+		<view name="timeInput">
+			<simplelayout axis="x" spacing="5"/>
+			
+			<wcfInputText name="timeText" enabled="${classroot.enabled}" width="${classroot.style.formshortinputwidth}" height="${classroot.style.forminputheight}">
+					<handler name="onfocus">
+						<![CDATA[
+						if (this.enabled && this.getText() == classroot.promptText) {
+							this.setText("");
+						}
+						]]>
+					</handler>
+					
+					<handler name="onblur">
+						<![CDATA[
+						if(this.enabled){
+							classroot.storeValue();
+							if (this.getText() == "") {
+								this.setText(classroot.promptText);
+							}
+						}
+						]]>
+					</handler>
+					
+					<handler name="onkeydown" args="key">
+						<![CDATA[
+						if (key == 13) {
+							classroot.storeValue();
+						}
+						]]>
+					</handler>
+					
+					<handler name="onenabled">
+						<![CDATA[
+						if (!this.enabled && this.getText() == classroot.promptText) {
+							this.setText("");
+						}else if (this.enabled && this.getText() == "") {
+							this.setText(classroot.promptText);
+						}
+						]]>
+					</handler>
+			</wcfInputText>
+
+			<wcfFocusableBaseButton name="toggleButton" enabled="${classroot.enabled}" resource="timePickerToggleIcon">
+				<wcfTooltip text="${foundationResources.timePickerTip.string}"/>				
+				<handler name="onclick"><![CDATA[
+					if(!timePickerPanel.visible && classroot.enabled){
+						classroot.openTimePickerPanel();
+					}
+					]]>
+				</handler>
+			</wcfFocusableBaseButton>
+			<text name="timeZoneDisplayName"/>
+		</view>	
+	</class>
+	
+	<resource name="timePickerTop">
+		<frame src="resources/timepicker/timepicker_top.png"/>
+	</resource>
+	
+	<resource name="timePickerBottom">
+		<frame src="resources/timepicker/timepicker_bottom.png"/>
+	</resource>
+	<resource name="timePickerUpArrow">
+		<frame src="resources/timepicker/timepicker_up_arrow.png"/>
+		<frame src="resources/timepicker/timepicker_up_arrow_hover.png"/>
+		<frame src="resources/timepicker/timepicker_up_arrow_pressed.png"/>
+	</resource>
+	
+	<resource name="timePickerDownArrow">
+		<frame src="resources/timepicker/timepicker_down_arrow.png"/>
+		<frame src="resources/timepicker/timepicker_down_arrow_hover.png"/>
+		<frame src="resources/timepicker/timepicker_down_arrow_pressed.png"/>
+	</resource>
+	
+	<resource name="timePickerBackground">
+		<frame src="resources/timepicker/timepicker_back.png"/>
+	</resource>
+	
+	<resource name="timePickerTimeDivider">
+		<frame src="resources/timepicker/timepicker_time_divider.png"/>
+	</resource>
+	
+	<resource name="timeSlotIndicator">
+		<frame src="resources/timepicker/timepicker_12.png"/>
+		<frame src="resources/timepicker/timepicker_1215.png"/>
+		<frame src="resources/timepicker/timepicker_1230.png"/>
+		<frame src="resources/timepicker/timepicker_1245.png"/>
+		<frame src="resources/timepicker/timepicker_1.png"/>
+		<frame src="resources/timepicker/timepicker_115.png"/>
+		<frame src="resources/timepicker/timepicker_130.png"/>
+		<frame src="resources/timepicker/timepicker_145.png"/>
+		<frame src="resources/timepicker/timepicker_2.png"/>
+		<frame src="resources/timepicker/timepicker_215.png"/>
+		<frame src="resources/timepicker/timepicker_230.png"/>
+		<frame src="resources/timepicker/timepicker_245.png"/>
+		<frame src="resources/timepicker/timepicker_3.png"/>
+		<frame src="resources/timepicker/timepicker_315.png"/>
+		<frame src="resources/timepicker/timepicker_330.png"/>
+		<frame src="resources/timepicker/timepicker_345.png"/>
+		<frame src="resources/timepicker/timepicker_4.png"/>
+		<frame src="resources/timepicker/timepicker_415.png"/>
+		<frame src="resources/timepicker/timepicker_430.png"/>
+		<frame src="resources/timepicker/timepicker_445.png"/>
+		<frame src="resources/timepicker/timepicker_5.png"/>
+		<frame src="resources/timepicker/timepicker_515.png"/>
+		<frame src="resources/timepicker/timepicker_530.png"/>
+		<frame src="resources/timepicker/timepicker_545.png"/>
+		<frame src="resources/timepicker/timepicker_6.png"/>
+		<frame src="resources/timepicker/timepicker_615.png"/>
+		<frame src="resources/timepicker/timepicker_630.png"/>
+		<frame src="resources/timepicker/timepicker_645.png"/>
+		<frame src="resources/timepicker/timepicker_7.png"/>
+		<frame src="resources/timepicker/timepicker_715.png"/>
+		<frame src="resources/timepicker/timepicker_730.png"/>
+		<frame src="resources/timepicker/timepicker_745.png"/>
+		<frame src="resources/timepicker/timepicker_8.png"/>
+		<frame src="resources/timepicker/timepicker_815.png"/>
+		<frame src="resources/timepicker/timepicker_830.png"/>
+		<frame src="resources/timepicker/timepicker_845.png"/>
+		<frame src="resources/timepicker/timepicker_9.png"/>
+		<frame src="resources/timepicker/timepicker_915.png"/>
+		<frame src="resources/timepicker/timepicker_930.png"/>
+		<frame src="resources/timepicker/timepicker_945.png"/>
+		<frame src="resources/timepicker/timepicker_10.png"/>
+		<frame src="resources/timepicker/timepicker_1015.png"/>
+		<frame src="resources/timepicker/timepicker_1030.png"/>
+		<frame src="resources/timepicker/timepicker_1045.png"/>
+		<frame src="resources/timepicker/timepicker_11.png"/>
+		<frame src="resources/timepicker/timepicker_1115.png"/>
+		<frame src="resources/timepicker/timepicker_1130.png"/>
+		<frame src="resources/timepicker/timepicker_1145.png"/>
+	</resource>
+	<resource name="timePickerToggleIcon">
+		<frame src="resources/timepicker/time.png"/>
+		<frame src="resources/timepicker/time_hover.png"/>
+		<frame src="resources/timepicker/time_pressed.png"/>
+		<frame src="resources/timepicker/time_disabled.png"/>
+	</resource>
+	
+	<!--- @keywords private -->
+	<class name="wcfTimePickerPanel" extends="basewindow" initstage="defer">
+		<attribute name="timeSlotStart" value="0"/>
+		<attribute name="timeSlotTotal" value="10"/>
+		<attribute name="timeInterval" value="15"/>
+		<!--  Each time slot counts for an hour -->
+		<attribute name="timeSlotMaxNumber" value="24"/>
+		<attribute name="selectedTime" value="null"/>
+		<attribute name="timeSlots" value="${[]}"/>
+		<attribute name="activeTimeSlot" value="null"/>
+		<attribute name="timeDividerHeight" value="2"/>
+		<attribute name="horizontalShadowOffset" value="7"/>
+		<attribute name="verticalShadowOffset" value="7"/>
+		
+		<attribute name="timeSlotsTrackName" type="string" value="timeslots"/>
+		<attribute name="timePicker"/>
+		
+		<handler name="oninit"><![CDATA[
+			for(var i = this.timeSlotStart; i < timeSlotTotal - 1; ++i){
+				this.addTimeSlot(i);
+				
+				new lz.view(this.middle.content.timeSlots, {
+					resource: "timePickerTimeDivider",
+					x: this.middle.content.timeSlots.borderLeftSize
+				});
+			}
+			addTimeSlot(i);
+			
+			]]>
+		</handler>
+		
+		<!--
+			Sets the active time slot by mouse position. A time slot is set to
+			active if the mouse's y position is below the slot's top and above
+			the slot's bottom.
+		 -->
+		<method name="setActiveTimeSlotByMouseY"><![CDATA[
+			for(var i = 0; i < this.timeSlots.length; ++i){
+				var timeSlot = this.timeSlots[i];
+				var mouseY = timeSlot.getMouse("y");
+				if(0 <= mouseY && mouseY <= timeSlot.height && timeSlot !== this.activeTimeSlot){
+					this.setAttribute("activeTimeSlot", timeSlot);
+					return;
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="getLastTimeSlot"><![CDATA[
+			return this.timeSlots[this.timeSlots.length - 1];
+			]]>
+		</method>
+		
+		<method name="getFirstTimeSlot"><![CDATA[
+			return this.timeSlots[0];
+			]]>
+		</method>
+		
+		<method name="updateSelectedTime" args="delta"><![CDATA[
+			var time = new Date(this.selectedTime);
+			if(!!delta['hours']){
+				time.setHours(time.getHours() + delta.hours);
+			}
+			
+			if(!!delta['minutes']){
+				time.setMinutes(time.getMinutes() + delta.minutes);
+			}
+			
+			if(!!delta['seconds']){
+				time.setSeconds(time.getSeconds() + delta.seconds);
+			}
+			
+			this.setAttribute("selectedTime", time);
+			return time;
+			]]>
+		</method>
+		<method name="addTimeSlot" args="slotIndex"><![CDATA[
+			var slot = new lz.wcfTimePickerSlot(this.middle.content.timeSlots, {
+				slotIndex: slotIndex,
+				timePicker: this
+			});
+			this.timeSlots.push(slot);
+			lz.Track.register(slot, this.timeSlotsTrackName);
+			]]>
+		</method>
+		
+		<method name="getNextTimeSlotStart" args="direction"><![CDATA[
+			direction = direction > 0? 1 : -1; // normalize direction
+			
+			return (this.timeSlotStart + 1 * direction) % this.timeSlotMaxNumber;
+			]]>
+		</method>
+
+		<method name="showTime" args="time"><![CDATA[
+			var timeSlotIndex = Math.round(this.timeSlotTotal / 2);
+			
+			var hour = time.getHours();
+			if(hour < this.timeSlotStart || hour > this.timeSlots.length - 1){
+				this.setAttribute("timeSlotStart", hour - timeSlotIndex);
+			}
+			
+			var timeSlot = this.timeSlots[timeSlotIndex];
+			this.setAttribute("activeTimeSlot", timeSlot);
+			this.timeIndicator = this.getTimeIndicator(timeSlot);
+			this.setAttribute("selectedTime", time);
+			this.setTimeIndicatorY(timeSlot, time.getMinutes() / 60 * timeSlot.height);
+			this.timeIndicator.setAttribute("visible", true);
+			
+			]]>
+		</method>
+		
+		<method name="getTimeIndicator" args="timeSlot"><![CDATA[
+			if(!this['timeIndicator']){
+				this.timeIndicator = new lz.wcfTimeIndicator(this.middle, {
+					name: 'timeIndicator',
+					timePicker: this,
+					resource: 'timeSlotIndicator',
+					x: horizontalShadowOffset,
+					step: timeSlot.intervalHeight,
+					visible:false
+				});
+			}
+			return this.timeIndicator;
+			]]>
+		</method>
+		
+		<method name="setTimeIndicatorY" args="timeSlot, yInTimeSlot"><![CDATA[
+			this.timeIndicator.setAttribute('y', timeSlot.getAttributeRelative("y", this.middle.content) - verticalShadowOffset + yInTimeSlot);
+			]]>
+		</method>
+		
+		<method name="showTimeIndicator" args="timeSlot"><![CDATA[
+			// To align this indicator, we need to make sure shadow size is not counted
+			var horizontalShadowOffset = 7;
+			var verticalShadowOffset = 4;
+			
+			if(!timeSlot){
+				timeSlot = this.activeTimeSlot;
+			}
+			
+			
+			this.timeIndicator = this.getTimeIndicator(timeSlot);
+			
+			// The slot should move to the position so that the mouse cursor is in the middle of its height.
+			this.setTimeIndicatorY(timeSlot, timeSlot.getMouse("y") - this.timeIndicator.height/2);
+			this.timeIndicator.setAttribute("timeString", timeSlot.getTimeString(true));
+			this.timeIndicator.setAttribute("visible", true);
+			
+			this.timeIndicator.dragger.setAttribute('applied', true);
+			]]>
+		</method>
+		
+		<method name="getTodayStart"><![CDATA[
+			return wcfDateUtil.getCurrentDate();
+			]]>
+		</method>
+		
+		
+		<!--
+			Updates all the time slots based on the current starting point of time slot.
+			
+			@param direction -1 if all the time slots will be decreased, 1 otherwise.
+		 -->
+		<method name="updateTimeSlots" args="direction"><![CDATA[
+			this.setAttribute("timeSlotStart", this.getNextTimeSlotStart(direction));
+			
+			if(this['timeIndicator']){
+				if(this.timeIndicator.visible){
+					var nextSlotIndex = this.activeTimeSlot.slotIndex - direction;
+					if(nextSlotIndex < 0 || nextSlotIndex >= this.timeSlots.length){
+						this.timeIndicator.setAttribute("visible", false);
+					}else{
+						this.activeTimeSlot = this.timeSlots[this.activeTimeSlot.slotIndex - direction];
+						this.timeIndicator.setAttribute("y", this.timeIndicator.y - direction * (this.activeTimeSlot.height + this.timeDividerHeight));
+					}
+				}else if(this.selectedTime.getHours() == this.activeTimeSlot.getNormalizedHour()){
+					this.timeIndicator.setAttribute("visible", true);
+				}
+			}
+			
+			]]>
+		</method>
+		
+		<view name="top" resource="timePickerTop"/>
+		<view width="${classroot.top.width}" name="middle">
+			<view name="background" resource="timePickerBackground" x="0" y="0" height="${parent.height}" width="${parent.width}" stretches="both"/>
+			<view name="content" width="${parent.width}" x="0" y="0">
+				<resizelayout axis="y"/>
+				<wcfTimeSlotsUpdater name="upArrow" direction="-1" timePicker="${classroot}"
+					resource="timePickerUpArrow" x="${(parent.width - this.width)/ 2}"/>
+				
+				<wcfBorderedView borderSize="1" borderColor="0x51659d" name="timeSlots" bgcolor="0xebebeb" x="${(parent.width - this.width)/2}">
+					<simplelayout axis="y"/>
+				</wcfBorderedView>
+				<wcfTimeSlotsUpdater name="downArrow"	direction="1" timePicker="${classroot}"
+					resource="timePickerDownArrow" x="${(parent.width - this.width + 1) / 2}" />
+				
+			</view>
+		</view>
+		<view name="bottom" resource="timePickerBottom"/>
+		<resizelayout axis="y"/>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfTimePickerSlot">
+		<attribute name="slotIndex" value="0"/>
+		<attribute name="height" value="20"/>
+		<attribute name="width" value="73"/>
+		<attribute name="timePicker"/>
+		<attribute name="totalIntervals" type="number" value="4"/>
+		<attribute name="intervalHeight" type="number" value="${this.height / this.totalIntervals}"/>
+		
+		<wcfBorderedView name="cell" height="${parent.height}" width="${parent.width}" x="0" y="0">
+			<text x="${(parent.width - this.width)/2}" text="${classroot.getTimeString()}">
+				<handler name="ontimeSlotStart" reference="classroot.timePicker">
+					<![CDATA[
+					this.setAttribute("text", classroot.getTimeString());
+					]]>
+				</handler>
+			</text>
+			
+		</wcfBorderedView>
+		
+		<method name="getTime" args="includeMinute=false"><![CDATA[
+			var today = new Date();
+			today.setHours(this.getNormalizedHour());
+			today.setMinutes(0);
+			if(includeMinute){
+				today.setMinutes(this.getMinuteForMousePosition());
+			}
+			today.setSeconds(0);
+			today.setMilliseconds(0);
+			
+			return today;
+			]]>
+		</method>
+		
+		<method name="getTimeString" args="includeMinute=false"><![CDATA[
+			return wcfDateUtil.getFormattedTime(this.getTime(includeMinute));
+			]]>
+		</method>
+		
+		<!--  Normalized hour ranges from 0 to 23. 0 is corresponding to 12:00 in the morning -->
+		<method name="getNormalizedHour"><![CDATA[
+			// Making time circular. That is, 11:00 PM is always before 12:00AM. The magical number is the number
+			// of hours in a day.
+			return (this.timePicker.timeSlotStart + this.slotIndex + 24) % 24;
+			]]>
+		</method>
+		
+		<method name="getHourString"><![CDATA[
+			return wcfDateUtil.get12HourFormattedHours(this.getNormalizedHour());
+			]]>
+		</method>
+		
+		<method name="getIntervalForMousePosition"><![CDATA[	
+			var interval = Math.floor(this.getMouse("y") / this.intervalHeight);
+			// Interval is greater than or equal to 0. This is necessary as openlaszlo
+			// may give a negative mouse coordinate.
+			if(interval < 0){
+				interval = 0;
+			}
+			
+			if(interval >= this.totalIntervals){
+				// Make sure the intervals range from 0 to this.totalIntervals - 1.
+				// That is, there shouldn't be 3:60, which should be rounded to 4:00.
+				interval -= 1;
+			}
+			return interval;
+			]]>
+		</method>
+		
+		<method name="getMinuteForMousePosition"><![CDATA[
+			// We calculate only minute within an hour, so we use 60 minutes as base
+			return getIntervalForMousePosition() * 60 / this.totalIntervals;
+			]]>
+		</method>
+		<handler name="onmousetrackover"><![CDATA[
+			timePickerPanel.setAttribute("activeTimeSlot", this);
+			]]>
+		</handler>
+		<handler name="onmousedown"><![CDATA[
+			var minute = this.getMinuteForMousePosition();
+			
+			timePickerPanel.setAttribute("activeTimeSlot", this);
+			this.timePicker.showTimeIndicator(this);
+			lz.Track.activate(this.timePicker.timeSlotsTrackName);
+			]]>
+		</handler>
+		
+		<handler name="onmouseup"><![CDATA[
+			this.timePicker.timeIndicator.dragger.setAttribute('applied', false);
+			lz.Track.deactivate(this.timePicker.timeSlotsTrackName);
+			]]>
+		</handler>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="wcfTimeSlotsUpdater" extends="view">
+		<!-- @keywords private -->
+		<attribute name="timePicker" value="null" type="expression"/>
+		<attribute name="direction" value="1"/>
+		<attribute name="initialDelay" value="1000"/> <!-- 1000ms = 1 second -->
+		<attribute name="acceleration" value="100"/>
+		<attribute name="minDelay" value="50"/>
+		
+		<attribute name="mouseOutState" type="number" value="1"/>
+		<attribute name="mouseOverState" type="number" value="2"/>
+		<attribute name="mousePressedState" type="number" value="3"/>
+		
+		<method name="resetMouseDownTimer"><![CDATA[
+			this.mouseDownDelay = -1;
+			if(this['repeatDownDel']){
+				lz.Timer.removeTimer(this.repeatDownDel);	
+			}
+			]]>
+		</method>
+		<handler name="onmouseup"><![CDATA[
+			if(this.containsPt(this.getMouse("x"), this.getMouse("y"))){
+				// The mouse is still on the view
+				this.setAttribute('frame', this.mouseOverState);
+			}else{
+				this.setAttribute('frame', this.mouseOutState);
+			}
+			resetMouseDownTimer();
+			]]>
+		</handler>
+		<handler name="onmousedown"><![CDATA[
+			this.setAttribute('frame', this.mousePressedState);
+			this.mouseDownDelay = initialDelay;
+			updateTimeSlotsWithTimer();
+			
+			]]>
+		</handler>
+		<handler name="onmouseout"><![CDATA[
+			this.setAttribute('frame', this.mouseOutState);
+			resetMouseDownTimer();
+			]]>
+		</handler>
+
+		<handler name="onmouseover"><![CDATA[
+			this.setAttribute('frame', this.mouseOverState);
+			]]>
+		</handler>
+		<method name="updateTimeSlotsWithTimer" args="e=null"><![CDATA[
+			this.timePicker.updateTimeSlots(direction);
+			if(this.mouseDownDelay >= 0){
+				this.repeatDownDel = new lz.Delegate(this, "updateTimeSlotsWithTimer");
+				lz.Timer.addTimer(this.repeatDownDel, this.mouseDownDelay);
+				this.mouseDownDelay -= this.acceleration;
+				if(this.mouseDownDelay < this.minDelay){
+					this.mouseDownDelay = this.minDelay;
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfTimeIndicator" extends="basecomponent" doesenter="true" focusable="true">
+		<!--
+			The number of pixels the mouse cursor should move before the dragged object moves.
+			The dragged object should move this many pixels each time.
+		 -->
+		<attribute name="step" type="number" value="1"/>
+		
+		<attribute name="timePicker"/>
+		
+		<attribute name="timeString" type="string" value=""/>
+		
+		<!--  By default the time indicator's image has a clock on the right side. This clock
+			should not be counted as part of the text space if we want to place a piece of text
+			in the middle of time indicator. Therefore, we need to compensate the size of this
+			clock.
+		 -->
+		<attribute name="backgroundOffset" type="number" value="8"/>
+		
+		<!--
+			@keywords private
+			Set resource for selected time
+		 -->
+		<method name="setResourceByTime"><![CDATA[
+				var time = this.timePicker.selectedTime;
+				var hour = time.getHours();
+				if(hour > 11){
+					hour -= 12;
+				}
+				// Image starts with 12:00. Each clock has 4 images, :00, :15, :30, :45
+				this.setAttribute('frame', hour * 4 + time.getMinutes() / 15 + 1);	
+			]]>
+		</method>
+		
+		<state name="dragger">
+          	<attribute name="drag_min_y" type="number" value="0"/>
+          	<attribute name="drag_max_y" type="number" value="$once{parent.height - this.height}"/>
+			<!--- @keywords private -->
+		    <attribute name="offset" value="this.getMouse('y')" when="once"/>
+		    <attribute name="y" value="getNewY(this.immediateparent.getMouse( 'y' ) - this.offset)" when="always"/>
+			<attribute name="mousePosY" value="this.immediateparent.getMouse('y') - this.offset" when="always"/>
+			
+		    <!--- @keywords private -->
+		    <method name="getNewY" args="newpos"> <![CDATA[
+		        var min = this.drag_min_y;
+		        var max = this.drag_max_y;
+		        if ((min != null) && (newpos < min)){
+		        	newpos = min;
+		        }
+		
+		        if ((max != null) && (newpos > max)){
+		       		newpos = max;
+		       	}
+		       	
+		        return snapToTimeGrid(newpos);
+		    ]]>
+		    </method>
+			
+			<method name="snapToTimeGrid" args="newpos"><![CDATA[
+				return Math.round((newpos / this.step)) * this.step;
+				]]>
+			</method>
+			
+			<method name="isOverTop"><![CDATA[
+				var mouseY = this.immediateparent.getMouse("y");
+				var firstTimeSlot = this.timePicker.getFirstTimeSlot();
+				
+				return mouseY < drag_min_y && !firstTimeSlot.containsPt(firstTimeSlot.getMouse("x"), firstTimeSlot.getMouse("y"));
+				]]>
+			</method>
+			
+			<method name="isBelowBottom"><![CDATA[
+				var mouseY = this.immediateparent.getMouse("y");
+				var lastTimeSlot = this.timePicker.getLastTimeSlot();
+				
+				return mouseY > drag_max_y && !lastTimeSlot.containsPt(lastTimeSlot.getMouse("x"), lastTimeSlot.getMouse("y"));
+				]]>
+			</method>
+			
+			
+			
+			<method name="updateTimeIndicator"><![CDATA[
+				var mouseY = this.immediateparent.getMouse("y");
+				if(this.isBelowBottom()){
+					// Updates selected time every two pixels. This effectively slows updates down.
+					if(mouseY % 2 == 0){
+						// The bottom time ends at x:45, so we add 15 minutes to make it 0
+						this.timePicker.updateSelectedTime({minutes:15});
+					}
+				}else if(this.isOverTop()){
+					if(mouseY % 2 == 0){
+						this.timePicker.updateSelectedTime({minutes:-15});
+					}
+				}else{
+					timePickerPanel.setActiveTimeSlotByMouseY();
+					this.timePicker.setAttribute("selectedTime", timePickerPanel.activeTimeSlot.getTime(true));
+				}
+				
+				//this.setAttribute("timeString", wcfDateUtil.get12HourFormattedTime(this.timePicker.selectedTime));
+				this.setAttribute("timeString", wcfDateUtil.getFormattedTime(this.timePicker.selectedTime));
+				this.setResourceByTime();				
+				]]>
+			</method>
+			
+			<handler name="ony"><![CDATA[
+				this.updateTimeIndicator();
+				]]>
+			</handler>
+			
+			<handler name="onmousePosY"><![CDATA[
+				if(this.isBelowBottom()){
+					this.timePicker.setAttribute("timeSlotStart", this.timePicker.getNextTimeSlotStart(1));
+					this.timePicker.updateSelectedTime({hours:1});
+					return;
+				}
+				if(this.isOverTop()){
+					this.updateTimeIndicator();
+					this.timePicker.setAttribute("timeSlotStart", this.timePicker.getNextTimeSlotStart(-1));
+					this.timePicker.updateSelectedTime({hours:-1});
+				}
+				]]>
+			</handler>
+        </state>
+
+		<handler name="onmousedown"><![CDATA[
+			this.dragger.setAttribute('applied', true);
+			lz.Track.activate(this.timePicker.timeSlotsTrackName);
+			]]>
+		</handler>
+		
+		<handler name="onmouseup"><![CDATA[
+			this.dragger.setAttribute('applied', false);
+			lz.Track.deactivate(this.timePicker.timeSlotsTrackName);
+			]]>
+		</handler>
+		
+		<handler name="onkeydown" args="key"><![CDATA[
+	        // 38 is up-arrow
+	        // 40 is down-arrow
+	        if (key == 40) {
+	        	var minutes = this.timePicker.selectedTime.getMinutes();
+	        	var delta = (15 - minutes % 15) == 0 ? 15 : (15 - minutes % 15);
+	        	this.timePicker.updateSelectedTime({minutes:delta});
+	        	var curMinutes = this.timePicker.selectedTime.getMinutes();
+	        	
+	        	if (curMinutes == 0) {
+	        		if (this.timePicker.activeTimeSlot.slotIndex >= this.timePicker.timeSlots.length - 2) {
+	        			this.timePicker.updateTimeSlots(1);
+	        		}
+	        		this.timePicker.setAttribute("activeTimeSlot", this.timePicker.timeSlots[this.timePicker.activeTimeSlot.slotIndex + 1]);
+	        	}
+	        	this.timePicker.setTimeIndicatorY(this.timePicker.activeTimeSlot, curMinutes / 60 * this.timePicker.activeTimeSlot.height);
+	        	this.setResourceByTime();
+	        }else if (key == 38) {
+	        	var minutes = this.timePicker.selectedTime.getMinutes();
+	        	var delta = minutes % 15 == 0 ? 15 : (minutes % 15);
+	        	this.timePicker.updateSelectedTime({minutes:-delta});
+	        	var curMinutes = this.timePicker.selectedTime.getMinutes();
+	        	//move upwards when we start from an even hour, e.g. 1:00PM
+	        	if (minutes ==0) {
+	        		if (this.timePicker.activeTimeSlot.slotIndex <= 1) {
+	        			this.timePicker.updateTimeSlots(-1);
+	        		}
+	        		this.timePicker.setAttribute("activeTimeSlot", this.timePicker.timeSlots[this.timePicker.activeTimeSlot.slotIndex -1]);
+		        }
+		        this.timePicker.setTimeIndicatorY(this.timePicker.activeTimeSlot, curMinutes / 60 * this.timePicker.activeTimeSlot.height);
+		        this.setResourceByTime();
+	        }
+	        ]]>
+      	</handler>
+      	
+      	<method name="doEnterDown">
+      		<![CDATA[
+      		this.timePicker.timePicker.closeTimePickerPanel();
+      		]]>
+      	</method>
+		
+		<text name="time" x="${(parent.width - this.width)/2 - 8}" y="${(parent.height - this.height)/2}" text="${parent.timeString}">
+			<handler name="onselectedTime" reference="classroot.timePicker">
+				<![CDATA[
+				if(!classroot.timePicker.selectedTime){
+					this.setAttribute("text", wcfDateUtil.getFormattedTime(new Date()));
+				}else{
+					this.setAttribute("text", wcfDateUtil.getFormattedTime(classroot.timePicker.selectedTime));
+				}
+				]]>
+			</handler>
+		</text>
+	</class>
+		
+	<wcfTimePickerPanel id="timePickerPanel" visible="false"/>
+</library>

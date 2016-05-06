@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="pglBundlePageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.bundlePageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="BundlePageReferenceDefaultBundlePageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="BundlePageReferenceDefaultBundlePageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="BundlePageReferenceDefaultBundlePageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display bundle page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglBundlePageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localBundlePageCondition" enablementValue="InheritedBundlePage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglBundlePageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited bundle page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedBundlePageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedBundlePageCondition" enablementValue="InheritedBundlePage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedBundlePageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglBundlePageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglBundlePageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_bundlePageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="BundlePageLayoutAssociationReferencedBundlePageLayouts,BundlePageLayoutAssociationReferencedInheritedBundlePageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglBundlePageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_bundlePageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="BundlePageLayoutAssociationReferencedBundlePageLayouts,BundlePageLayoutAssociationReferencedInheritedBundlePageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedBundlePageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_bundlePageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedBundlePageLayoutAssociationReferencedInheritedBundlePageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

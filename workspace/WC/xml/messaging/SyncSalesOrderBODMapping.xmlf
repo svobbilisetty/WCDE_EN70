@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sync Sales Order BOD Mapping for Websphere Commerce Telesales -->
+   <TemplateDocument>
+      <DocumentType version="8.1">SyncSalesOrder</DocumentType>
+      <StartElement>SyncSalesOrder</StartElement>
+      <TemplateTagName>SyncSalesOrder81</TemplateTagName>
+      <CommandMapping>
+         <Command CommandName="com.ibm.commerce.ordermanagement.commands.BlockNotifyCmd" Condition='action="Block" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.OrderEditBusinessChannelCmd" Condition='action="EditBusinessChannel" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.orderitems.commands.OrderItemAddCmd" Condition='action="Add" AND commerceObject="OrderItem"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">*aig</Constant>
+            <Constant Field="allocate">*ubg</Constant>
+            <Constant Field="allocate">**</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+            <Constant Field="calculateOrder">1</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.orderitems.commands.OrderItemUpdateCmd" TemplateTagName="SyncSalesOrderUpdateItem81" Condition='action="Change" AND commerceObject="OrderItem"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">***</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+            <Constant Field="calculateOrder">1</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.orderitems.commands.OrderItemDeleteCmd" TemplateTagName="SyncSalesOrderDeleteItem81" Condition='action="Delete" AND commerceObject="OrderItem"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="calculateOrder">1</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.OrderPrepareCmd" Condition='action="Prepare" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">*aig</Constant>
+            <Constant Field="allocate">*ubg</Constant>
+            <Constant Field="allocate">**</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.OrderProcessCmd" Condition='action="Submit" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.ordermanagement.commands.AdvancedOrderEditBeginCmd" Condition='action="Begin" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.ordermanagement.commands.AdvancedOrderEditEndCmd" Condition='action="End" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.OrderCopyCmd" TemplateTagName="SyncSalesOrderCopyOrder81" Condition='action="Copy" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">*aig</Constant>
+            <Constant Field="allocate">*ubg</Constant>
+            <Constant Field="allocate">**</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.OrderCopyCmd" TemplateTagName="SyncSalesOrderChangeOrder81" Condition='action="Change" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="sensitiveInfoCopy">Y</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.edp.commands.PIAddCmd" Condition='action="Add" AND commerceObject="OrderPayment"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+            <!-- All other required fields are stored in the PaymentInstruction UserData area -->
+         </Command>
+         <Command CommandName="com.ibm.commerce.edp.commands.PIEditCmd" Condition='action="Change" AND commerceObject="OrderPayment"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+            <!-- All other required fields are stored in the PaymentInstruction UserData area -->
+         </Command>
+         <Command CommandName="com.ibm.commerce.edp.commands.PIRemoveCmd" Condition='action="Delete" AND commerceObject="OrderPayment"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+            <!-- All other required fields are stored in the PaymentInstruction UserData area -->
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.calculation.ServiceAdjustShippingChargesCmd" Condition='action="Add" AND commerceObject="OrderShippingAdjustment"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">*aig</Constant>
+            <Constant Field="allocate">*ubg</Constant>
+            <Constant Field="allocate">**</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+            <Constant Field="flattenMessageClass" FieldInfo="CONTROL">com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.calculation.ServiceAdjustShippingChargesCmd" Condition='action="Change" AND commerceObject="OrderShippingAdjustment"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">*aig</Constant>
+            <Constant Field="allocate">*ubg</Constant>
+            <Constant Field="allocate">**</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+            <Constant Field="flattenMessageClass" FieldInfo="CONTROL">com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.calculation.ServiceAdjustShippingChargesCmd" Condition='action="Delete" AND commerceObject="OrderShippingAdjustment"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">*aig</Constant>
+            <Constant Field="allocate">*ubg</Constant>
+            <Constant Field="allocate">**</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+            <Constant Field="flattenMessageClass" FieldInfo="CONTROL">com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.orderitems.commands.AdminOrderItemUpdateCOCmd" Condition='action="Change" AND commerceObject="OrderItemPrice"'>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.ShipInfoAddCmd" TemplateTagName="OrderShipInfoInstructions81" Condition='action="Add" AND commerceObject="OrderItemShippingInstruction"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.ShipInfoUpdateCmd" TemplateTagName="OrderShipInfoInstructions81" Condition='action="Change" AND commerceObject="OrderItemShippingInstruction"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.ShipInfoDeleteCmd" TemplateTagName="OrderShipInfoInstructions81" Condition='action="Delete" AND commerceObject="OrderItemShippingInstruction"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.ShipInfoAddCmd" TemplateTagName="OrderShipInfoCarrierAccount81" Condition='action="Add" AND commerceObject="OrderShippingCarrier"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.ShipInfoUpdateCmd" TemplateTagName="OrderShipInfoCarrierAccount81" Condition='action="Change" AND commerceObject="OrderShippingCarrier"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.ShipInfoDeleteCmd" TemplateTagName="OrderShipInfoCarrierAccount81" Condition='action="Delete" AND commerceObject="OrderShippingCarrier"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+         <Command CommandName="com.ibm.commerce.order.commands.OrderCalculateCmd" Condition='action="Calculate" AND commerceObject="Order"'>
+            <Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+            <Constant Field="updatePrices">1</Constant>
+            <Constant Field="calculationUsageId">-1</Constant>
+            <Constant Field="merge">*n</Constant>
+            <Constant Field="remerge">*</Constant>
+            <Constant Field="allocate">*aig</Constant>
+            <Constant Field="allocate">*ubg</Constant>
+            <Constant Field="allocate">**</Constant>
+            <Constant Field="backorder">*aig</Constant>
+            <Constant Field="backorder">*ubg</Constant>
+            <Constant Field="backorder">**</Constant>
+            <Constant Field="reverse">*n</Constant>
+            <Constant FieldInfo='CONTROL' Field='flattenMessageClass'>com.ibm.commerce.messaging.programadapter.messagemapper.ecsax.ECSAXOrderMessageFlattener</Constant>
+         </Command>
+	<Command CommandName="com.ibm.commerce.marketing.commands.PromotionCodeAddRemoveControllerCmd" TemplateTagName="SyncSalesOrderAddRemovePromotionCode81" Condition='action="Add" AND commerceObject="OrderPromotionCode"'>
+		<Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+		<Constant Field="taskType">A</Constant>
+	</Command>
+	<Command CommandName="com.ibm.commerce.marketing.commands.PromotionCodeAddRemoveControllerCmd" TemplateTagName="SyncSalesOrderAddRemovePromotionCode81" Condition='action="Delete" AND commerceObject="OrderPromotionCode"'>
+		<Constant Field="URL">NoURL</Constant>
+            <Constant Field="ReUrl">NoReURL</Constant>
+		<Constant Field="taskType">R</Constant>
+	</Command>
+      </CommandMapping>
+   </TemplateDocument>
+   <TemplateTag name="SyncSalesOrder81">
+      <!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/CustomerParty/PartyId/Id" Field="customerId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/ShipAsComplete" Field="ShipAsComplete"/>
+      <Tag XPath="DataArea/SalesOrder/Header/isPIAddNeeded" Field="isPIAddNeeded"/>
+      <Tag XPath="DataArea/SalesOrder/Header/PONumber" Field="purchaseorder_id"/>
+	<Tag XPath="DataArea/SalesOrder/Header/takeOverLock" Field="takeOverLock"/>
+      <Tag XPath="DataArea/SalesOrder/Header/PaymentNotificationToCustomer" Field="notifyShopper"/>
+      <Tag XPath="DataArea/SalesOrder/Header/EmailToCustomerInd" Field="notifyOrderSubmitted"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock" XPathType="VECTOR" Field="blocksVector" FieldType="STRING"/>
+
+      <Tag XPath="DataArea/SalesOrder/Header/OrderChangeInformation/OrderVersion" Field="orderVersion"/>
+	  <Tag XPath="DataArea/SalesOrder/Header/OrderChangeInformation/CurrentOrderEditorId" Field="csrId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderChangeInformationLine" XPathType="VECTOR" Field="orderChangesVector"/>
+	  <Tag XPath="DataArea/SalesOrder/Header/OrderChangeInformationLine/ChangeReason" Field="orderChangeReasonId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderChangeInformationLine/ChangeComment" Field="orderComment"/>
+
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/BlockedInd" Field="notifyBlock"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/BlockReasonCodeId" Field="reasonCodeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/Description" Field="blockOrUnblockComments"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Description" Field="orderDesc"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="orderId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Note" Field="orderComment"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/Addresses/Address/AddressId" Field="billing_address_id"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingAdjustments"  XPathType="VECTOR" Field="adjustVector" FieldType="STRING"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingAdjustments/ShipModeId" Field="shipModeId"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingAdjustments/AdjustmentPercent" Field="adjustmentPercentageValue"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingAdjustments/AdjustmentReasonCode" Field="overrideReasonCode"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingAdjustments/ProcessFlag" Field="processFlag"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingAdjustments/Description" Field="remark"/>
+      <Tag XPath="DataArea/SalesOrder/Line" XPathType="VECTOR" Field="orderItem"/>
+      <Tag XPath="DataArea/SalesOrder/Line/LineNumber" Field="orderItemId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemIds/ItemId/Id" Field="catEntryId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemIds/SupplierItemId/Id" Field="partNumber"/>
+      <Tag XPath="DataArea/SalesOrder/Line/UnitPriceOverride/OverridePrice" Field="price"/>
+      <Tag XPath="DataArea/SalesOrder/Line/UnitPriceOverride/OverridePrice@currency" Field="currency"/>
+      <Tag XPath="DataArea/SalesOrder/Line/UnitPriceOverride/ReasonCode" Field="overrideReasonCode"/>
+      <Tag XPath="DataArea/SalesOrder/Line/UnitPriceOverride/Description" Field="remark"/>
+      <Tag XPath="DataArea/SalesOrder/Line/DocumentReferences/ContractDocumentReference/DocumentIds/DocumentId/Id" Field="contractId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemIds/SupplierItemId/AssigningPartyId/Id" Field="memberId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderQuantity" Field="quantity"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderQuantity/@uom" Field="UOM"/>
+      <Tag XPath="DataArea/SalesOrder/Line/ExpediteOrderItem" Field="isExpedited"/>
+      <Tag XPath="DataArea/SalesOrder/Line/Parties/CustomerParty/Addresses/Address/AddressId" Field="addressId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/TransportationTerm/TermCode" Field="shipModeId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/Note" Field="comment"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemCategoryId" Field="offerId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemType" Field="configurationId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemCategoryId" Field="correlationGroup"/>
+      <Tag XPath="DataArea/SalesOrder/Line/NeedDeliveryDate" Field="requestedShipDate"/>
+      <Tag XPath="DataArea/SalesOrder/Line/UserData/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="x" Field="expandConfigurationId_1"/>
+      <Tag XPath="x" Field="attrName_1"/>
+      <Tag XPath="x" Field="attrValue_1"/>
+      <Tag XPath="x" Field="field1_1"/>
+      <Tag XPath="x" Field="field2_1"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/SupplierDocumentId/Id" Field="listId"/>
+      <Tag XPath="x" Field="billingAddressId"/>
+      <Tag XPath="x" Field="merge"/>
+      <Tag XPath="x" Field="check"/>
+      <Tag XPath="x" Field="reverse"/>
+      <Tag XPath="DataArea/SalesOrder/UserData/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/PaymentInstructions/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/Header/BusinessChannel/BusinessChannelId" Field="businessChannelId"/>
+   </TemplateTag>
+   <TemplateTag name="SyncSalesOrderUpdateItem81">
+      <!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/CustomerParty/PartyId/Id" Field="customerId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/ShipAsComplete" Field="ShipAsComplete"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Description" Field="orderDesc"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="orderId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Note" Field="orderComment"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/Addresses/Address/AddressId" Field="billtoAddressId"/>
+      <Tag XPath="DataArea/SalesOrder/Line" XPathType="VECTOR" Field="orderItem"/>
+      <Tag XPath="DataArea/SalesOrder/Line/LineNumber" Field="orderItemId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemIds/ItemId/Id" Field="catEntryId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemIds/SupplierItemId/Id" Field="partNumber"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderItem/ItemIds/SupplierItemId/AssigningPartyId/Id" Field="memberId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderQuantity" Field="quantity"/>
+      <Tag XPath="DataArea/SalesOrder/Line/OrderQuantity/@uom" Field="UOM"/>
+      <Tag XPath="DataArea/SalesOrder/Line/ExpediteOrderItem" Field="isExpedited"/>
+      <Tag XPath="DataArea/SalesOrder/Line/Parties/CustomerParty/Addresses/Address/AddressId" Field="addressId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/TransportationTerm/TermCode" Field="shipModeId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/Note" Field="comment"/>
+      <Tag XPath="DataArea/SalesOrder/Line/TieCode" Field="tieShipCode"/>
+      <Tag XPath="DataArea/SalesOrder/Line/DocumentReferences/ContractDocumentReference/DocumentIds/DocumentId/Id" Field="contractId_1"/>
+      <Tag XPath="DataArea/SalesOrder/Line/NeedDeliveryDate" Field="requestedShipDate"/>
+      <Tag XPath="DataArea/SalesOrder/Line/UserData/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/UserData/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/PaymentInstructions/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/Line/DocumentReferences/ContractDocumentReference/DocumentIds/DocumentId/Id" Field="contractId"/>
+   </TemplateTag>
+   <TemplateTag name="SyncSalesOrderDeleteItem81">
+      <!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="orderId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/LineNumber" Field="orderItemId"/>
+      <Tag XPath="DataArea/SalesOrder/UserData/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/PaymentInstructions/UserDataField" XPathType="USERDATA"/>
+   </TemplateTag>
+   <TemplateTag name="SyncSalesOrderChangeOrder81">
+      <!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/CustomerParty/PartyId/Id" Field="customerId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/ShipAsComplete" Field="ShipAsComplete"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock" XPathType="VECTOR" Field="blocksVector" FieldType="STRING"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/BlockedInd" Field="notifyBlock"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/BlockReasonCodeId" Field="reasonCodeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/Description" Field="blockOrUnblockComments"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Description" Field="orderDesc"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="toOrderId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Note" Field="orderComment"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/Addresses/Address/AddressId" Field="billtoAddressId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/NeedDeliveryDate" Field="requestedShipDate_1"/>
+      <Tag XPath="DataArea/SalesOrder/UserData/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/PaymentInstructions/UserDataField" XPathType="USERDATA"/>
+   </TemplateTag>
+   <TemplateTag name="SyncSalesOrderCopyOrder81">
+      <!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/CustomerParty/PartyId/Id" Field="customerId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/ShipAsComplete" Field="ShipAsComplete"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock" XPathType="VECTOR" Field="blocksVector" FieldType="STRING"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/BlockedInd" Field="notifyBlock"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/BlockReasonCodeId" Field="reasonCodeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/OrderBlocks/OrderBlock/Description" Field="blockOrUnblockComments"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Description" Field="orderDesc"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CopySensitiveInfo" Field="sensitiveInfoCopy"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="fromOrderId_1"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Note" Field="orderComment"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/Addresses/Address/AddressId" Field="billtoAddressId"/>
+      <Tag XPath="DataArea/SalesOrder/Line/NeedDeliveryDate" Field="requestedShipDate_1"/>
+      <Tag XPath="DataArea/SalesOrder/UserData/UserDataField" XPathType="USERDATA"/>
+      <Tag XPath="DataArea/SalesOrder/Header/Parties/BillToParty/PaymentInstructions/UserDataField" XPathType="USERDATA"/>
+   </TemplateTag>
+   <TemplateTag name="OrderShipInfoInstructions81">
+      <!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="orderId"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingInstructions" XPathType="VECTOR" Field="instructionsBlocks"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingInstructions/ShipModeId"  Field="shipModeId"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingInstructions/AddressId"  Field="addressId"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingInstructions/ShippingInstruction"  Field="shipInstructions"/>
+   </TemplateTag>
+   <TemplateTag name="OrderShipInfoCarrierAccount81">
+      <!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+      <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="orderId"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingCarriers" XPathType="VECTOR" Field="carriersBlocks"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingCarriers/ShipModeId"  Field="shipModeId"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingCarriers/CarrierAccount"  Field="shipCarrAccntNum"/>
+      <Tag XPath="DataArea/SalesOrder/OrderShippingInformation/ShippingCarriers/ShipChargeAccountType"  Field="shipChargTypeId"/>
+   </TemplateTag>
+
+<TemplateTag name="SyncSalesOrderAddRemovePromotionCode81">
+<!-- Command Parameters -->
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression@action" Field="action" FieldInfo="COMMAND"/>
+      <Tag XPath="DataArea/Sync/SyncCriteria/SyncExpression" Field="commerceObject" FieldInfo="COMMAND"/>
+	 <Tag XPath="DataArea/SalesOrder/Header/DocumentIds/DocumentId/Id" Field="orderId"/>
+	<Tag XPath="DataArea/SalesOrder/Header/OrderPromotionCodes/PromotionCode/Code" Field="promoCode"/> 
+	<Tag XPath="DataArea/SalesOrder/UserData/UserDataField" XPathType="USERDATA"/>
+</TemplateTag>

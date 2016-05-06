@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This object definition defines a purchase condition of buying A (and B and C) and getting a fixed amount off Y. 
+		A and B are defined using {@link proMultipleItemsPromotionElementObjectDefinition} and may be categories or catalog entries. 
+		Y is defined using {@link proMultipleItemsRewardElement} and may be categories.
+		This object definition is one of the root element definitions extending the promotion purchase condition root element; 
+		the element sub type is <b>MultipleItemsGetYFixedAmountOffDiscountPurchaseCondition</b>.		
+	-->
+	<PromotionElementObjectDefinition baseDefinitionName="proPurchaseConditionObjectDefinition" definitionName="proMultipleItemsGetYFixedAmountOffDiscountPurchaseConditionObjectDefinition" objectType="MultipleItemsGetYFixedAmountOffDiscountPurchaseCondition" package="pro">
+		
+		<!--- To specify if the catalog entry attribute names and values must be treated as case-sensitive or not on validation and evaluation. -->
+		<PropertyDefinition copyProtected="true" propertyName="CatalogEntryAttributeRuleCaseSensitive"/>	
+
+		<!--- The payment type that must be chosen to qualify for the promotion. -->
+		<PromotionElementObjectDefinition baseDefinitionName="proIdentifierPaymentTypeObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>IncludePaymentTypeIdentifier</elementType>
+				<PaymentType>Any</PaymentType>
+			</Xml>
+		</PromotionElementObjectDefinition>
+		
+		<!--- Promotion minimum purchase condition type. Valid options include "Quantity", "MinimumAmount". -->
+		<PropertyDefinition displayName="${promotionResources.promotion_PurchaseConditionType}" propertyName="PurchaseType">
+			<PropertyValue displayName="${promotionResources.promotion_Quantity_purchased}" value="Quantity"/>
+			<PropertyValue displayName="${promotionResources.promotion_Minimum_Amount_purchased}" value="MinimumAmount"/>
+		</PropertyDefinition>	
+		
+		<!--- Multiple items promotion element to define each block of the AND purchase condition. -->
+		<PromotionElementObjectDefinition baseDefinitionName="proMultipleItemsPromotionElementObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>MultipleItemsPromotionElement</elementType>
+				<selectCatalogEntryOrCategory>catalogEntry</selectCatalogEntryOrCategory>
+				<PurchaseType>Quantity</PurchaseType>
+				<Quantity>1</Quantity>
+			</Xml>
+		</PromotionElementObjectDefinition>
+		
+		<!--- Multiple items promotion element to define the reward Y. -->
+		<PromotionElementObjectDefinition baseDefinitionName="proMultipleItemsRewardElementObjectDefinition" package="pro">
+			<Xml name="template">
+				<elementType>MultipleItemsRewardElement</elementType>
+				<Quantity>1</Quantity>
+			</Xml>
+		</PromotionElementObjectDefinition>		
+		
+		<!--- Used to specify whether additional block (B) needs to be added to the purchase condition(A).  -->
+		<PropertyDefinition displayName="${promotionResources.promotion_MultipleItems_SpecifyAdditionalItemsForB}" propertyName="specifyAdditionalItemsForB"/>
+
+		<!--- Used to specify whether additional block (C) needs to be added to the purchase condition(A and B).  -->
+		<PropertyDefinition displayName="${promotionResources.promotion_MultipleItems_SpecifyAdditionalItemsForC}" propertyName="specifyAdditionalItemsForC"/>
+
+		<!--- Validator for currency format of FixedAmount property. -->
+		<CurrencyFormatValidator currencyPropertyName="Currency" validatorId="FixedAmountValidator" valuePropertyName="FixedAmount"/>
+		<!--- Used to define the fixed amount discount off Y. -->
+		<PropertyDefinition displayName="${promotionResources.promotionElement_Amount_OffTitle}" minValue="0" propertyName="FixedAmount" required="true" type="currency"/>
+					
+		<!--- Used to define the price adjustment base for the promotion - standard offer price with value -1 or contract price with value -2.  -->			
+		<PropertyDefinition displayName="${promotionResources.promotion_Select_PriceAdjustmentBase}" propertyName="PriceAdjustmentBase" required="true">
+			<PropertyValue displayName="${promotionResources.DiscountedPrice}" value="-3"/>
+			<PropertyValue displayName="${promotionResources.StandardOfferPrice}" value="-1"/>
+			<PropertyValue displayName="${promotionResources.ContractPrice}" value="-2"/>			
+		</PropertyDefinition>		
+
+		<Xml name="template">
+			<PriceAdjustmentBase>-3</PriceAdjustmentBase>
+			<CatalogEntryAttributeRuleCaseSensitive>false</CatalogEntryAttributeRuleCaseSensitive>
+			<PurchaseType>Quantity</PurchaseType>
+			<specifyAdditionalItemsForB>false</specifyAdditionalItemsForB>
+			<specifyAdditionalItemsForC>false</specifyAdditionalItemsForC>
+		</Xml>	
+
+		<MultipleItemsGetYPurchaseConditionValidator package="pro" validatorType="MultipleItemsGetYPurchaseCondition"/> 
+		
+	</PromotionElementObjectDefinition>
+	
+</Definitions>

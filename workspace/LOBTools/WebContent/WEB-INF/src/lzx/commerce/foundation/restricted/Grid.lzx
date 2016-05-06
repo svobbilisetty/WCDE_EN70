@@ -1,0 +1,4961 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		This class defines the checkbox used by the column settings window of a grid column.
+	-->
+	<class name="wcfGridColumnSettingsCheckBox" extends="wcfBaseCheckbox" focusable="false">
+		<!---
+			A reference to the column of the grid that this checkbox represents.
+		-->
+		<attribute name="column" value="null"/>
+		<!---
+			This varaible indicates that this column has been selected. The selected column can be
+			moved up and down within the column list.
+		-->
+		<attribute name="isSelected" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			Store the minimum width of the column
+		-->
+		<attribute name="minimumColumnWidth" type="number"/>
+
+		<!---
+			@keywords private
+			Store the maximum width of the column
+		-->
+		<attribute name="maximumColumnWidth" type="number" value="1000"/>
+		
+		<!---
+			@keywords private
+			Store the current width of the column
+		-->
+		<attribute name="currentColumnWidth" type="number"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				if (this.column != null) {
+					this.minimumColumnWidth = this.column.minwidth;
+					if (this.column.visible) {
+						this.currentColumnWidth = this.column.width;
+					}
+					else if (this.column["originalColumn"]) {
+						this.currentColumnWidth = this.column.originalColumn["restoreWidth"] ? this.column.originalColumn.restoreWidth : this.column.originalColumn.width;
+					}
+					else {
+						this.currentColumnWidth = this.column["restoreWidth"] ? this.column.restoreWidth : this.column.width;
+					}
+				}
+			]]>
+		</handler>
+		
+		<text name="checkBoxName" x="16" y="${classroot.text_y}" text="${parent.text}" resize="true" selectable="true">
+			<!---
+				The handler for mouse clicks.
+			-->
+			<handler name="onclick">
+				<![CDATA[
+				classroot.parent.clearSelection();
+				classroot.setAttribute("isSelected", true);
+				classroot.parent.valignCheckBox(this.classroot);
+				lz.Focus.setFocus(classroot.parent.parent, false);
+				]]>
+			</handler>
+			
+			<!---
+				The handler for changes to the "isSelected" attribute.
+			-->
+			<handler name="onisSelected" reference="classroot">
+				<![CDATA[
+				if (classroot.isSelected) {
+            		this.setAttribute('bgcolor', classroot.style['selectedcolor']);
+            		wcfGridColumnSettings.setAttribute("selectedCheckbox", classroot);
+            		wcfGridColumnSettings.pixeltext.columnWidth.setAttribute("minimumValue", classroot.minimumColumnWidth);
+            		wcfGridColumnSettings.pixeltext.columnWidth.setAttribute("maximumValue", classroot.maximumColumnWidth);
+            		wcfGridColumnSettings.pixeltext.columnWidth.setAttribute("enabled", classroot.value);
+            		wcfGridColumnSettings.pixeltext.columnWidth.setAttribute("value", classroot.currentColumnWidth);
+            	}
+            	else {
+					this.setAttribute('bgcolor', undefined);
+            	}
+				]]>
+			</handler>
+		</text>
+			
+		<handler name="onvalue">
+			<![CDATA[
+			this.parent.updateVisibleColumns(this.value);
+			wcfGridColumnSettings.pixeltext.columnWidth.setAttribute("enabled", this.value);
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class defines the grid column settings dialog.
+	-->
+	<wcfDialog id="wcfGridColumnSettings" title="${foundationResources.gridColumnSettingsTitle.string}">
+		<!---
+			A reference to the grid that this settings dialog affects.
+		-->
+		<attribute name="grid"/>
+		<!---
+			An array of column checkboxes.
+		-->
+		<attribute name="columnCheckBoxes" value="${[]}"/>
+		<!---
+			A counter that indicates how many columns are selected in the column settings pane.
+		-->
+		<attribute name="numColumnsVisible" type="number" value="0"/>
+		<!---
+			 This variable points to the one column that is selected to be visible. If there is more than one column
+			 selected, this variable is null.
+		-->
+		<attribute name="onlyVisibleColumn" value="null"/>
+
+		<!---
+			The currently selected checkbox.
+		-->
+		<attribute name="selectedCheckbox" value="null"/>
+				
+		<!---
+			Select first column in list.
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			this.column.columnList.contents.checkBoxLayout.subviews[0].checkBoxName.onclick.sendEvent();
+			]]>
+		</method>
+		
+		<!---
+			Handler for setting the grid attribute.
+		-->
+		<handler name="ongrid">
+			<![CDATA[
+			while (this.columnCheckBoxes.length > 0) {
+				this.columnCheckBoxes.shift().destroy();
+			}
+			this.columnsInitialized = false;
+			this.numColumnsVisible = 0;
+			this.onlyVisibleColumn = null;
+			this.selectedCheckbox = null;
+			this.pixeltext.columnWidth.setAttribute("enabled", false);
+			this.pixeltext.columnWidth.setAttribute("value", 0);
+			
+			if (this.grid) {
+				var columns = grid.columns;
+				for (var i = 0; i < columns.length; i++) {	
+					var columnCheckBox = new lz.wcfGridColumnSettingsCheckBox(this.column.columnList.contents, {
+						name: columns[i].name,
+						column: columns[i],
+						text: columns[i].displayText,
+						value: columns[i].visible
+					});
+					if (columns[i].visible) {
+						numColumnsVisible++;
+					}
+					if (columns[i].required) {
+						columnCheckBox.setAttribute('enabled', false);
+					}
+					this.columnCheckBoxes.push(columnCheckBox);
+				}
+				this.column.columnList.contents.updateResourceSize();
+			}
+			this.columnsInitialized = true;
+			if (this.numColumnsVisible == 1) {
+				this.disableLastColumn();
+			}
+					
+			]]>
+		</handler>
+
+		<!---
+			A method to apply the column changes and dismiss the dialog.
+		-->
+		<method name="ok">
+			<![CDATA[
+			this.applySettings();
+			this.closeWindow();
+			]]>
+		</method>
+		
+		<!---
+			A method to close the dialog and release the grid.
+		-->
+		<method name="closeWindow">
+			super.closeWindow();
+			this.setAttribute("grid", null);
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.grid.restoreFocus();
+			}
+			]]>
+		</method>
+
+		<!---
+			This method will apply the column changes to the grid and save the preferences.
+		-->
+		<method name="applySettings">
+			<![CDATA[
+			var newColumns = [];
+			var checkBoxLayout = this.column.columnList.contents.checkBoxLayout;
+			for (var i = 0; i < checkBoxLayout.subviews.length; i++) {
+				newColumns.push(checkBoxLayout.subviews[i].column);
+			}
+			grid.columns = newColumns;
+			for (var i = 0; i < this.columnCheckBoxes.length; i++) {
+				grid.columns[i].setAttribute("visible", this.columnCheckBoxes[i].value);
+				if (this.columnCheckBoxes[i].value) {
+					grid.columns[i].setAttribute("width", this.columnCheckBoxes[i].currentColumnWidth);
+				}
+			}
+			grid.updateColumnOrder();
+			grid.savePreferences();
+			]]>
+		</method>
+
+		<!---
+			This method will move the selected column up one position in the list.
+		-->
+		<method name="moveUp">						
+			<![CDATA[
+			var checkBoxLayout = this.column.columnList.contents.checkBoxLayout;
+			for (var i = 1; i < checkBoxLayout.subviews.length; i++) {
+				var currentCheckBox = checkBoxLayout.subviews[i];
+				if (currentCheckBox.isSelected) {
+					var previousCheckBox = checkBoxLayout.subviews[i-1];
+					var clipView = currentCheckBox.parent.immediateparent;
+					var viewHeight = clipView.height - (this.column.columnList.objectsHScrollbar.visible ? this.column.columnList.objectsHScrollbar.height : 0);
+					var checkboxTop = previousCheckBox.getAttributeRelative("y", clipView);
+					var checkboxEnd = currentCheckBox.getAttributeRelative("y", clipView) + currentCheckBox.height;
+										
+					wcfGridUtil.swap(this.columnCheckBoxes, i-1, i);
+					checkBoxLayout.swapSubviewOrder(previousCheckBox, currentCheckBox);
+					
+					if (checkboxTop < 0) { // if selected checkbox is still outside of the visible area
+						this.column.columnList.objectsVScrollbar.step(Math.floor(checkboxTop / this.column.columnList.objectsVScrollbar["stepsize"]));
+					} else if (checkboxEnd > viewHeight) {
+						this.column.columnList.objectsVScrollbar.step(Math.ceil((checkboxEnd - viewHeight) / this.column.columnList.objectsVScrollbar["stepsize"]));
+					}
+					break;
+				}
+			}
+			checkBoxLayout.update();
+			]]>
+		</method>
+		
+		<!---
+			This method will move the selected column down one position in the list.
+		-->
+		<method name="moveDown">						
+			<![CDATA[				
+			var checkBoxLayout = this.column.columnList.contents.checkBoxLayout;	
+			for (var i = checkBoxLayout.subviews.length - 2; i >= 0; i--) {
+				var currentCheckBox = checkBoxLayout.subviews[i];
+				if (currentCheckBox.isSelected) {
+					var nextCheckBox = checkBoxLayout.subviews[i+1];
+					var clipView = currentCheckBox.parent.immediateparent;
+					var viewHeight = clipView.height - (this.column.columnList.objectsHScrollbar.visible ? this.column.columnList.objectsHScrollbar.height : 0);
+					var checkboxTop = currentCheckBox.getAttributeRelative("y", clipView);
+					var checkboxEnd = nextCheckBox.getAttributeRelative("y", clipView) + nextCheckBox.height;
+					
+					wcfGridUtil.swap(this.columnCheckBoxes, i, i+1);
+					checkBoxLayout.swapSubviewOrder(nextCheckBox, currentCheckBox);
+										
+					if (checkboxTop < 0) { // if selected checkbox is still outside of the visible area
+					 	this.column.columnList.objectsVScrollbar.step(Math.floor(checkboxTop / this.column.columnList.objectsVScrollbar["stepsize"]));
+					} else if (checkboxEnd > viewHeight) {
+						this.column.columnList.objectsVScrollbar.step(Math.ceil((checkboxEnd - viewHeight) / this.column.columnList.objectsVScrollbar["stepsize"]));
+					}
+					break;
+				}
+			}
+			checkBoxLayout.update();	
+			]]>												
+		</method>
+
+		<!---
+			return the selected checkbox
+		-->
+		<method name="getSelected">						
+			<![CDATA[
+			var checkBoxLayout = this.column.columnList.contents.checkBoxLayout;
+			var len = checkBoxLayout.subviews.length;
+			for (var i = 0; i < len; i++) {
+				var currentCheckBox = checkBoxLayout.subviews[i];
+				if (currentCheckBox.isSelected) {
+					return currentCheckBox;
+				}
+			}
+			return null;
+			]]>
+		</method>
+
+		<!---
+			return checkbox under the selected checkbox
+			return first checkbox if none selected
+		-->		
+		<method name="getNext">						
+			<![CDATA[
+			var checkBoxLayout = this.column.columnList.contents.checkBoxLayout;
+			var len = checkBoxLayout.subviews.length;
+			for (var i = 0; i < len; i++) {
+				var currentCheckBox = checkBoxLayout.subviews[i];
+				if (currentCheckBox.isSelected) {
+					var nextCheckBox;
+					if ((i+1) == len) {
+						nextCheckBox = currentCheckBox;
+					} else {
+						nextCheckBox = checkBoxLayout.subviews[i+1];
+					}
+					return nextCheckBox;
+				}
+			}
+			return checkBoxLayout.subviews[0];
+			]]>
+		</method>
+		
+		<!---
+			return checkbox above the selected checkbox
+			return last checkbox if none selected
+		-->		
+		<method name="getPrevious">						
+			<![CDATA[	
+			var checkBoxLayout = this.column.columnList.contents.checkBoxLayout;
+			var len = checkBoxLayout.subviews.length;
+			for (var i = 0; i < len; i++) {
+				var currentCheckBox = checkBoxLayout.subviews[i];
+				if (currentCheckBox.isSelected) {
+					var nextCheckBox;
+					if (i == 0) {
+						nextCheckBox = currentCheckBox;
+					} else {
+						nextCheckBox = checkBoxLayout.subviews[i-1];
+					}
+					return nextCheckBox;
+				}
+			}
+			return checkBoxLayout.subviews[len-1];
+			]]>												
+		</method>		
+
+		<!---
+			This method re-enables the checkbox of what was the only column selected to be visible. It will have no effect
+			if it is a required column.
+		-->
+		<method name="enableLastColumn">
+			<![CDATA[	
+			if (this["onlyVisibleColumn"] != null) {
+				this.onlyVisibleColumn.setAttribute("enabled", true)
+				this.setAttribute("onlyVisibleColumn", null);
+			}
+			]]>
+		</method>
+
+		<!---
+			This method disables the checkbox of what is the only column selected for visibility. It will have no affect if it is a
+			required column.
+		-->		
+		<method name="disableLastColumn">
+			<![CDATA[
+			for (var i = 0; i < this.columnCheckBoxes.length; i++) {				
+				if (this.columnCheckBoxes[i].value && this.columnCheckBoxes[i].enabled) {
+					this.setAttribute("onlyVisibleColumn", this.columnCheckBoxes[i]);
+					this.onlyVisibleColumn.setAttribute("enabled", false);
+					break;
+				}
+			}
+			]]>
+		</method>
+		
+		<simplelayout axis="y" spacing="1"/>
+		<text text="${foundationResources.gridColumnSettingsPrompt.string}"/>
+		<view name="column">	
+			<simplelayout axis="x" spacing="10"/>	
+				
+			<wcfBorderedView name="columnList" height="140" width="${this.parent.parent.pixeltext.width}" clip="true" borderSize="1" borderColor="${parent.parent.style.bordercolumnlistcolor}" focusable="true">
+
+				<!--- @keywords private -->
+				<handler name="onfocus" >
+				<![CDATA[
+		 		if(!this["indicator"]){
+				    new lz.wcfFocusIndicator(this, {
+				    	name: "indicator",
+				    	focusableView: this,
+				    	indicatorView: this
+					});
+				}
+				]]>
+				</handler>
+				<!---
+					The handler for move selection and toggle checkbox selection
+				-->
+				<handler name="onkeydown" args="k">
+					<![CDATA[
+					if (k == 38) { // key up
+						var cb = this.parent.parent.getPrevious();
+						cb.checkBoxName.onclick.sendEvent();
+					} else if (k == 40) { // key down
+						var cb = this.parent.parent.getNext();
+						cb.checkBoxName.onclick.sendEvent();
+					} else if (k == 32) { // space
+						var cb = this.parent.parent.getSelected();
+						if (cb != null && cb.enabled) {
+							cb.setAttribute("value", !cb.value);
+							this.contents.valignCheckBox(cb);
+						}
+					}
+					]]>
+				</handler>
+				<view name="contents" x="2" y="2">
+					<simplelayout name="checkBoxLayout" axis='y' inset="2"/>
+					
+					<!---
+						@keywords private
+					-->
+					<method name="valignCheckBox" args="currentCheckBox">
+						<![CDATA[
+						var checkBoxLayout = this.checkBoxLayout;
+						var clipView = currentCheckBox.parent.immediateparent;
+						var viewHeight = clipView.height - (this.parent.objectsHScrollbar.visible ? this.parent.objectsHScrollbar.height : 0);
+						var checkboxTop = currentCheckBox.getAttributeRelative("y", clipView);
+						var checkboxEnd = checkboxTop + currentCheckBox.height;
+																
+						if (checkboxTop < 0) { // if selected checkbox is still outside of the visible area
+						 	this.parent.objectsVScrollbar.step(Math.floor(checkboxTop / this.parent.objectsVScrollbar["stepsize"]));
+						} else if (checkboxEnd > viewHeight) {
+							this.parent.objectsVScrollbar.step(Math.ceil((checkboxEnd - viewHeight) / this.parent.objectsVScrollbar["stepsize"]));
+						}
+						checkBoxLayout.update();	
+						]]>
+					</method>
+					
+					<!---
+						A method to clear the current selection.
+					-->
+					<method name="clearSelection">
+						<![CDATA[
+						var checkBoxes = parent.parent.parent.columnCheckBoxes;
+						for (var i = 0; i < checkBoxes.length; i++) {
+							var cb = checkBoxes[i];
+							if (cb.isSelected) {
+								cb.setAttribute("isSelected", false);
+							}
+						}
+						]]>
+					</method>
+					<method name="updateVisibleColumns" args="value">
+						<![CDATA[
+						if (parent.parent.parent.columnsInitialized) {					
+							if (value) {
+								parent.parent.parent.numColumnsVisible++;
+								if (parent.parent.parent.numColumnsVisible == 2) {
+									parent.parent.parent.enableLastColumn();
+								}
+							} else {
+								parent.parent.parent.numColumnsVisible--;
+								if (parent.parent.parent.numColumnsVisible == 1) {
+									parent.parent.parent.disableLastColumn();
+								}
+							}
+						}
+						]]>
+					</method>
+					<view name="bottomPadding" height="2" x="0" y="${parent.height - 2}" options="ignorelayout"/>
+				</view>
+				<wcfHorizontalScrollbar name="objectsHScrollbar" height="18" visible="${this.scrollable}"/>
+				<view name="objectsVScrollbarBottom"
+					bgcolor="0xE0EAEF"
+					x="${parent.objectsVScrollbar.x}"
+					y="${parent.objectsVScrollbar.y + parent.objectsVScrollbar.height}"
+					height="${parent.objectsHScrollbar.height}"
+					width="${parent.objectsVScrollbar.width}"
+					visible="${parent.objectsVScrollbar.visible &amp;&amp; parent.objectsHScrollbar.visible}"
+				  	options="ignorelayout">
+				</view>
+				<wcfVerticalScrollbar name="objectsVScrollbar" options="ignorelayout" visible="${this.scrollable}" stepsize="11"/>
+			</wcfBorderedView>
+			<view name="UpDownButtons">
+				<simplelayout axis="y" spacing="3"/>
+				<basebutton name="up" onclick="parent.parent.parent.moveUp()" resource="upArrowIcon" onmouseout="this.setAttribute('frame', 1)" onmouseover="this.setAttribute('frame', 2)" onmousedown="this.setAttribute('frame', 3)" focusable="true">
+					<!--- @keywords private -->
+					<handler name="onfocus" >
+						<![CDATA[
+						if(!this["indicator"]){
+							new lz.wcfFocusIndicator(this, {
+								name: "indicator",
+								focusableView: this,
+								indicatorView: this,
+								offset: 1
+							});
+						}
+						]]>
+					</handler>
+				</basebutton>
+				<basebutton name="down" onclick="parent.parent.parent.moveDown()" resource="downArrowIcon" onmouseout="this.setAttribute('frame', 1)" onmouseover="this.setAttribute('frame', 2)" onmousedown="this.setAttribute('frame', 3)" focusable="true">
+					<!--- @keywords private -->
+					<handler name="onfocus" >
+						<![CDATA[
+						if(!this["indicator"]){
+							new lz.wcfFocusIndicator(this, {
+								name: "indicator",
+								focusableView: this,
+								indicatorView: this
+							});
+						}
+						]]>
+					</handler>
+				</basebutton>
+			</view>	
+		</view>
+		<view name="blank" height="5"/>
+		<view name="pixeltext">	
+			<simplelayout axis="x" spacing="10"/>
+			<text text="${foundationResources.gridColumnSettingsColumnWidth.string}"/>
+			<wcfBaseStepper minimumValue="1" name="columnWidth" value="0" width="50" enabled="false">
+				<handler name="onvalue">
+					<![CDATA[
+						if (wcfGridColumnSettings.selectedCheckbox != null) {
+							var newWidth = parseInt(this.value);
+							if (isNaN(newWidth) || newWidth <  wcfGridColumnSettings.selectedCheckbox.minimumColumnWidth) {
+								wcfGridColumnSettings.selectedCheckbox.currentColumnWidth = wcfGridColumnSettings.selectedCheckbox.minimumColumnWidth;
+							}
+							else if (newWidth > wcfGridColumnSettings.selectedCheckbox.maximumColumnWidth) {
+								wcfGridColumnSettings.selectedCheckbox.currentColumnWidth = wcfGridColumnSettings.selectedCheckbox.maximumColumnWidth;;
+							}
+							else {
+								wcfGridColumnSettings.selectedCheckbox.currentColumnWidth = newWidth;
+							}
+						}
+					]]>
+				</handler>
+			</wcfBaseStepper>
+		</view>
+		
+		<view name="buttons" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton name="ok" text="${foundationResources.gridColumnSettingsOkButton.string}" onclick="parent.parent.ok()"/>
+			<wcfButton name="cancel" text="${foundationResources.gridColumnSettingsCancelButton.string}" onclick="parent.parent.closeWindow()"/>
+		</view>
+	</wcfDialog>
+
+	<!---
+		@keywords abstract
+		Base class for a grid that displays a list of objects. Each row represents an object in the list. Each column displays an attribute
+		or property of that object. This class should not be used directly for a list of wcfModelObject instances. Use {@link wcfObjectGrid}
+		for model objects.
+	-->
+	<class name="wcfGrid" extends="basecomponent" clip="true" focusable="false" showhandcursor="false">
+		<!---
+			Preferences key for this grid instance. When the columns in the grid are reconfigured, the new column settings will
+			be saved in the preference manager using this key. If the key is null, then the configuration will not be saved.
+		-->
+		<attribute name="preferenceKey" type="string" value="${null}"/>
+		<!---
+			This flag indicates whether the columns of the grid can be reconfigured. By default all grids are configurable.
+		-->
+		<attribute name="isConfigurable" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			This flag indicates whether find and replace operates on this grid. By default, grids are not findable..
+		-->
+		<attribute name="findable" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Array of wcfGridColumn to show in the wcfGrid.
+		-->
+		<attribute name="columns" value="${[]}"/>
+		<!---
+			@keywords private
+			Array of disabled columns.
+		-->
+		<attribute name="disabledColumns" value="${[]}"/>
+		<!---
+			@keywords private
+			The class used to create rows for all the objects contained in the grid.
+		-->
+		<attribute name="objectClass" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			The grid content view.
+		-->
+		<attribute name="content" value="${borderView.clippedContent.gridContent.content}"/>
+		<!---
+			@keywords private
+			The grid header view.
+		-->
+		<attribute name="header" value="${borderView.clippedContent.gridContent.header}"/>
+		<!---
+			@keywords private
+			The grid clipped content view.
+		-->
+		<attribute name="clippedContent" value="${borderView.clippedContent}"/>
+		<!---
+			@keywords private
+			The grid footer view.
+		-->
+		<attribute name="footer" value="${borderView.footer}"/>
+		<!---
+			@keywords private
+			Reference to the column layout instance.
+		-->
+		<attribute name="columnLayout" value="${borderView.clippedContent.gridContent.header.columns.columnLayout}"/>
+		<!---
+			@keywords private
+			Border color.
+		-->
+		<attribute name="borderColor" type="color" value="black"/>
+		<!---
+			@keywords private
+			Header background color.
+		-->
+		<attribute name="headerBackgroundColor" type="color" value="0xffffff"/>
+		<!---
+			@keywords private
+			Header selected color.
+		-->
+		<attribute name="headerSelectedColor" type="color" value="0xa3b2d5"/>
+		<!---
+			@keywords private
+			Border size of the list.
+		-->
+		<attribute name="listBorderSize" type="number" value="0"/>
+		<!---
+			@keywords private
+			Show horizontal lines between cells.
+		-->
+		<attribute name="showhlines" value="true" type="boolean"/>
+		<!---
+			@keywords private
+			Show vertical lines between cells.
+		-->
+		<attribute name="showvlines" value="false" type="boolean"/>
+		<!---
+			@keywords private
+			Context menu class for grid rows.
+		-->
+		<attribute name="rowMenuClass" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Context menu class for the background of the grid.
+		-->
+		<attribute name="menuClass" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Grid footer class.
+		-->
+		<attribute name="footerClass" type="string" value="wcfGridFooter"/>
+		<!---
+			@keywords private
+			Model object list {@link wcfModelObjectList}. This list of Model Objects displayed in the grid.
+		-->
+		<attribute name="oList" value="null"/>
+		<!---
+			@keywords private
+			Array of user selectable filters.  These will filter out which the oList objects are displayed in the grid.
+		-->
+		<attribute name="filters" value="${[]}"/>
+		<!---
+			@keywords private
+			Default filter applied to the oList.
+		-->
+		<attribute name="defaultFilter" value="null"/>
+		<!---
+			@keywords private
+			Indicates that this grid will be sized to fit the existing rows.
+		-->
+		<attribute name="fitExistingRows" value="false"/>
+		<!---
+			@keywords private
+			Shows the dummy column. Default value for this attribute is "true".
+		-->
+		<attribute name="showDummyColumn" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Shows the prefix column. Default value for this attribute is "false".
+		-->
+		<attribute name="showPrefixColumn" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Controls the display of the horizontal scroll bar.
+		-->
+		<attribute name="showHorizontalScrollbar" value="true" type="boolean"/>
+		<!---
+			@keywords private
+			The available height.
+		-->
+		<attribute name="availableHeight" type="number" value="300"/>
+		<!---
+			@keywords private
+			Minimum height.
+		-->
+		<attribute name="minimumHeight" type="number" value="60"/>
+		<!---
+			@keywords private
+			The grid content height.
+		-->
+		<attribute name="contentHeight" type="number" value="300"/>
+		<!---
+			@keywords private
+			Available width.
+		-->
+		<attribute name="availableWidth" type="number" value="${null}"/>
+		<!---
+			@keywords private
+			Minimum width.
+		-->	
+		<attribute name="minimumWidth" type="number" value="0"/>
+		<!---
+			@keywords private
+			Start index for displayed rows used in scrolling and paging.
+		-->
+		<attribute name="startIndex" type="number" value="0"/>
+		<!---
+			@keywords private
+			End index for displayed rows used in scrolling and paging.
+		-->
+		<attribute name="endIndex" type="number" value="0"/>
+		<!---
+			@keywords private
+			Total number of rows in the grid.
+		-->
+		<attribute name="numberOfItems" type="number" value="0"/>
+		<!---
+			@keywords private
+			Parent panel that contains the grid view.
+		-->
+		<attribute name="panel" value="${null}"/>
+		<!---
+			@keywords private
+			Vertical padding used in the spacing of the grid title elements.
+		-->
+		<attribute name="padding" type="number" value="8"/>
+		<!---
+			@keywords private
+			Filter selector control {@link wcfGridFilterSelector}. Combobox to control which filter is
+			applied to the grid.
+		-->
+		<attribute name="filterSelector" value="null" />
+		<!---
+			@keywords private
+			Filter help text to show on {@link wcfExtendedHelpIcon} display.
+		-->
+		<attribute name="filterHelpText" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Filter extended help text to show on {@link wcfExtendedHelpIcon} display.
+		-->
+		<attribute name="filterExtendedHelpText" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Help link text for this properties view component to show on {@link wcfExtendedHelpIcon} display.
+		-->
+		<attribute name="filterHelpLinkText" type="string" value=""/>
+		<!---
+			@keywords private
+			Help link URL for this properties view component to show on {@link wcfExtendedHelpIcon} display.
+		-->
+		<attribute name="filterHelpLinkURL" type="string" value=""/>
+		<!---
+			@keywords private
+			Top padding used in the spacing of the grid filter selector.
+		-->
+		<attribute name="filterTopPadding" type="number" value="0" />
+		<!---
+			@keywords private
+			Left padding used in the spacing of the grid filter selector.
+		-->
+		<attribute name="filterLeftPadding" type="number" value="3" />
+		<!---
+			@keywords private
+			The default configuration of this grid before any preference is applied.
+		-->
+		<attribute name="defaultConfiguration" type="string" value="${null}" />
+		<!---
+			@keywords private
+			
+			The closest ancestor view that defines an "availableHeight" attribute. This
+			is used to calculate the list view's available height.
+		-->
+		<attribute name="availableHeightView" value="${wcfViewUtil.getAvailableHeightView(this)}" when="once"/>
+		<!---
+			@keywords private
+			
+			The closest ancestor view that defines an "availableWidth" attribute. This
+			is used to calculate the list view's available width.
+		-->
+		<attribute name="availableWidthView" value="${wcfViewUtil.getAvailableWidthView(this)}" when="once"/>
+		<!---
+			@keywords private
+			Indicates that this grid can have more than one selected row
+		-->
+		<attribute name="multiSelect" type="boolean" value="true"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="currentObject" value="null"/>
+		<!---
+			@keywords private
+			The cell currently in focus.
+		-->
+		<attribute name="currentCell" value="null"/>
+		<!---
+			@keywords private
+			An ancestor view that will be updated with the currently selected object.
+		-->
+		<attribute name="selectedObjectView" value="null"/>
+		<!---
+			@keywords private
+			The name of the attribute of the selectedObjectView that will be updated with the currently selected object.
+		-->
+		<attribute name="selectedObjectName" type="string" value="${null}"/>
+		
+		<!---
+			@keywords private
+			A flag that indicates sorting should be turned off for the grid. 
+		-->
+		<attribute name="sortingOff" type="boolean" value="false"/>
+		<!---
+			@keywords private
+		-->
+		<event name="onselect"/>
+
+		<!---
+			@keywords private
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			this.updateVerticalDimensionsDel = new lz.Delegate(this, "updateVerticalDimensions");
+					
+			if (this.availableHeightView) {
+				this.updateVerticalDimensionsDel.register(this.availableHeightView, "onavailableHeight");
+			}
+			this.updateVerticalDimensionsDel.register(this.borderView.horizontalScroll, "onvisible");
+			this.updateVerticalDimensionsDel.register(this.header, "onheight");
+			this.updateVerticalDimensionsDel.register(this.borderView.footer, "onheight");
+			this.updateVerticalDimensionsDel.register(this.filterSelectorArea, "onheight");
+			this.updateVerticalDimensionsDel.register(this, "onpadding");
+			this.updateVerticalDimensionsDel.register(this.borderView.clippedContent.gridContent.content.rowparent, "onheight");
+			this.updateVerticalDimensions();
+			
+			this.registerScrollbarDel = new lz.Delegate(this, "registerScrollbar");			
+			this.registerScrollbarDel.register(this.borderView.rowScroll, "onvisible");
+			wcfViewUtil.registerVisibilityDelegate(this,this.registerScrollbarDel);
+			this.registerScrollbar();
+			
+			var ip = immediateparent;
+			while (!(ip instanceof lz.wcfPanel) && ip != canvas) {
+				ip = ip.immediateparent;
+			}
+			if (ip != canvas) {
+				this.panel = ip;
+			}
+
+			this.oListUpdatedDel = new lz.Delegate(this, "oListUpdated");
+			this.oListUpdatedDel.register(this, "onoList");
+			this.oListUpdated();
+			
+			if (this["footerClass"]) {
+				new lz[this.footerClass](this.borderView.footer, {
+					name: "footerView",
+					grid: this
+				});
+			}
+			this.updateHorizontalDimensionsDel = new lz.Delegate(this, "updateHorizontalDimensions");
+			if (this.availableWidthView) {
+				this.updateHorizontalDimensionsDel.register(this.availableWidthView, "onavailableWidth");
+			}
+			this.updateHorizontalDimensionsDel.register(this.borderView.rowScroll, "onvisible");
+			this.updateHorizontalDimensionsDel.register(this.borderView.clippedContent.gridContent, "onwidth");
+			this.updateHorizontalDimensionsDel.register(this, "onminimumWidth");
+			this.updateHorizontalDimensions();
+
+			this.checkVisibilityDel = new lz.Delegate(this, "checkVisibility");
+			this.checkVisibility();
+	
+			this.defaultConfiguration = this.getConfiguration();
+			this.loadPreferences();
+			
+			if (this.menuClass != null) {
+ 				new lz[this.menuClass](this, {
+					name: "menu",
+					grid: this
+				});
+				this.menu.addView(this.content.emptyArea);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when the visibility of the grid changes. When the grid is made visible, the list of filtered objects is refreshed.
+			When the grid is made invisible the currentCell of the grid is set to null.
+		-->
+		<method name="checkVisibility" args="e=null">
+			<![CDATA[
+			this.checkVisibilityDel.unregisterAll();
+			var visibilityView = wcfViewUtil.getInvisibleAncestor(this);
+			if (visibilityView != null) {
+				this.checkVisibilityDel.register(visibilityView, "onvisible");
+				this.currentCell = null;
+			} else if (!this.visible) {
+				this.checkVisibilityDel.register(this, "onvisible");
+				this.currentCell = null;
+			} else {
+				wcfViewUtil.registerVisibilityDelegate(this, this.checkVisibilityDel);
+				if (this.oList != null) {
+					this.oList.refreshFilteredObjects();
+				}
+				if (this.selectedObjectView != null) {
+					this.selectedObjectView.setAttribute(this.selectedObjectName, this.getSelectedObject());
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Destroy delegates.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateVerticalDimensionsDel"]) {
+				this.updateVerticalDimensionsDel.unregisterAll();
+				delete this.updateVerticalDimensionsDel;
+			}
+			if (this["updateHorizontalDimensionsDel"]) {
+				this.updateHorizontalDimensionsDel.unregisterAll();
+				delete this.updateHorizontalDimensionsDel;
+			}
+			if (this["oListUpdatedDel"]) {
+				this.oListUpdatedDel.unregisterAll();
+				delete this.oListUpdatedDel;
+			}
+			if (this["updateIndicesDel"]) {
+				this.updateIndicesDel.unregisterAll();
+				delete this.updateIndicesDel;
+			}
+			if(this["registerScrollbarDel"]) {
+				this.registerScrollbarDel.unregisterAll();
+				delete this.registerScrollbarDel;
+			}
+			this.checkVisibilityDel.unregisterAll();
+			delete this.checkVisibilityDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Handle onconstruct event.
+		-->
+		<handler name="onconstruct">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "FINER", "wcfGrid:" + preferenceKey, "onconstruct", "Initialize begin...");
+			}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			Handle oninit event.
+		-->
+		<handler name="oninit">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "FINER", "wcfGrid:" + preferenceKey, "oninit", "Initialize end.");
+			}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			Display the first page of rows.
+		-->
+		<method name="top">
+			<![CDATA[
+			this.setStartIndex(0);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Display the last page of rows.
+		-->
+		<method name="bottom">
+			<![CDATA[
+			this.setEndIndex(this.numberOfItems - 1);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns currently displayed rows.
+			@return wcfGridRow
+		 -->
+		<method name="getRows">
+			<![CDATA[
+			return this.content.rowparent.subviews;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Select the specified object.
+			@param wcfModelObject o: the model object.
+		-->
+		<method name="selectObject" args="o">
+			<![CDATA[
+			this.oList.showObjectInView(o);
+			var rows = this.getRows();
+			for (var i = 0; i < rows.length; i++) {
+				if (rows[i].o == o) {
+					this.selectRow(rows[i]);
+					break;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Release a grid column
+			@param wcfGridColumn column: The grid column
+		-->
+		<method name="releaseColumn" args="column">
+			<![CDATA[
+			for (var i = 0; i < this.columns.length; i++) {
+				if (this.columns[i] == column) {
+					this.columns.splice(i, 1);
+					break;
+				}
+			}
+			column.setAttribute("pooled", true);
+			column.setAttribute("visible", false);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Adds a grid column
+			@param wcfGridColumn column: The grid column
+			@param boolean visible: display the column
+		-->
+		<method name="addColumn" args="column,visible=true">
+			<![CDATA[
+			this.columns.push(column);
+			column.setAttribute("pooled", false);
+			if (visible) {
+				column.setAttribute("visible", true);
+			} else {
+				column.setAttribute("visible", false);
+			}	
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the model object list to that specified by the filterSelector.
+		-->
+		<method name="oListUpdated" args="e=null">
+			<![CDATA[
+			if (this["oList"]) {
+				if (this.filters.length > 0) {
+					if (this.filterSelector == null) {
+						this.filterSelector = new lz.wcfGridFilterSelector(this.filterSelectorArea, {
+							name: "filterSelector",
+							grid: this,
+							oList: this.oList,
+							width: 150
+						});
+						if ((this.filterHelpText != null && this.filterHelpText != "") || (this.filterExtendedHelpText != null && this.filterExtendedHelpText != "")) {
+							new lz.wcfGridExtendedHelpIcon(this.filterSelectorArea, {
+								name: "extendedHelpIcon",
+								y: 2,
+								grid: this
+							});
+						}
+					}
+					else {
+						this.filterSelector.setAttribute("oList", this.oList);
+					}
+				}
+				if (this["updateIndicesDel"]) {
+					this.updateIndicesDel.unregisterAll();
+				}
+				else {
+					this.updateIndicesDel = new lz.Delegate(this, "updateIndices");
+				}
+				this.updateIndicesDel.register(this.oList, "objectViewsUpdated");
+				this.updateIndicesDel.register(this.content.rowparent, "ony");
+				this.updateIndices();
+				
+				this.content.rowparent.selector.setAttribute("oList", this.oList);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the start and end indices for the current rows.
+		-->
+		<method name="updateIndices" args="e=null">
+			<![CDATA[
+			if (this["oList"] && this.oList["filteredObjects"]) {
+				this.startIndex = this.oList.fromIndex;
+				this.endIndex = this.oList.toIndex;
+				this.numberOfItems = this.oList.filteredObjects.length;
+				this.content.emptyRowView.setAttribute('visible',(numberOfItems==0?true:false));
+				if (this.content.rowparent.height > this.availableHeight) {
+					if (this.content.rowparent.y < 0) {
+						this.content.rowparent.setAttribute("y", this.availableHeight - this.content.rowparent.height);
+						if (((this.content.rowparent.height - this.availableHeight)/this.oList.getView(0).height) > 0.5) {
+							this.startIndex = this.startIndex + 1;
+						}							
+					}
+					else {
+						if (((this.content.rowparent.height - this.availableHeight)/this.oList.getView(this.oList.getViewsLength()-1).height) > 0.5) {
+							this.endIndex = this.endIndex - 1;
+						}
+					}
+				}
+				else {
+					this.content.rowparent.setAttribute("y", 0);
+				}	
+								
+				if (this["onupdateIndices"]) {
+					this.onupdateIndices.sendEvent();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the start index for the currently displayed rows.
+			@param number pStartIndex: the start index.
+		-->
+		<method name="setStartIndex" args="pStartIndex">
+			<![CDATA[
+			this.verticalLock = true;
+			var deltaStartIndex = pStartIndex - this.startIndex;
+			if (this.content.rowparent.height > this.availableHeight) {
+				if ((this.oList.fromIndex + deltaStartIndex) < 0) {
+					this.content.rowparent.setAttribute("y", 0);
+				}
+				else if ((this.oList.toIndex + deltaStartIndex) > (this.numberOfItems - 1)) {
+					this.content.rowparent.setAttribute("y", this.availableHeight - this.content.rowparent.height);
+				}
+			}
+			else {
+				this.content.rowparent.setAttribute("y", 0);
+			}
+			this.oList.setFromIndex(this.oList.fromIndex + deltaStartIndex);
+			this.verticalLock = false;
+			this.updateVerticalDimensions();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the end index for the currently displayed rows.
+			@param number pEndIndex: the end index
+		-->
+		<method name="setEndIndex" args="pEndIndex">
+			<![CDATA[
+			this.verticalLock = true;
+			var deltaEndIndex = pEndIndex - this.endIndex;
+			if (this.content.rowparent.height > this.availableHeight) {
+				if ((this.oList.fromIndex + deltaEndIndex) < 0) {
+					this.content.rowparent.setAttribute("y", 0);
+				}
+				else if ((this.oList.toIndex + deltaEndIndex) > (this.numberOfItems - 1)) {
+					this.content.rowparent.setAttribute("y", this.availableHeight - this.content.rowparent.height);
+				}
+			}
+			else {
+				this.content.rowparent.setAttribute("y", 0);
+			}
+			this.oList.setToIndex(this.oList.toIndex + deltaEndIndex);
+			this.verticalLock = false;
+			this.updateVerticalDimensions();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the available height of the grid.
+		-->
+		<method name="updateAvailableHeight">
+			<![CDATA[
+			if (!this.fitExistingRows) {
+				var newGridHeight = this.availableHeightView.availableHeight;
+				if (newGridHeight < this.minimumHeight) {
+					newGridHeight = this.minimumHeight;
+				}
+				if (newGridHeight != this.height) {
+					this.setAttribute('height', newGridHeight);
+				}
+			}
+			var newAvailableHeight = Math.max(this.minimumHeight, this.availableHeightView.availableHeight)-this.filterSelectorArea.height-this.header.height-this.borderView.footer.height-this.listBorderSize+1;
+			if (this.filterSelectorArea.height > 0) {
+				newAvailableHeight = newAvailableHeight - this.filterTopPadding - this.padding;
+			}
+			if (this.borderView.horizontalScroll.visible) {
+				newAvailableHeight = newAvailableHeight - this.borderView.horizontalScroll.height;
+			}
+			if (newAvailableHeight != this.availableHeight) {
+				this.setAttribute("availableHeight", newAvailableHeight);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the available width of the grid.
+		-->
+		<method name="updateAvailableWidth">
+			<![CDATA[
+				
+			if (!this.fitExistingRows) {
+				if (this.availableWidthView.availableWidth != this.width) {
+					this.setAttribute('width', this.availableWidthView.availableWidth);
+				}
+			}
+			var newAvailableWidth = this.availableWidthView.availableWidth;
+			if (this.borderView.rowScroll.visible) {
+				newAvailableWidth = newAvailableWidth - this.borderView.rowScroll.width;
+			}
+			if (newAvailableWidth != this.availableWidth) {
+				this.setAttribute("availableWidth", newAvailableWidth);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the vertical dimensions of the grid.
+		-->
+		<method name="updateVerticalDimensions" args="e=null">
+			<![CDATA[
+			if (!this["verticalLock"]) {
+				if (this.availableHeightView) {
+					this.updateAvailableHeight();
+				}
+				var newHeight = null;
+				if (this.fitExistingRows) {
+					newHeight = Math.max(22, Math.min(this.borderView.clippedContent.gridContent.content.rowparent.height, this.availableHeight));
+				}
+				else {
+					newHeight = this.availableHeight;
+				}
+				
+				if (newHeight != this.contentHeight) {
+					this.setAttribute("contentHeight", newHeight);
+				}
+				
+				if (this.content.rowparent.height < this.availableHeight) {
+					this.content.rowparent.setAttribute("y", 0);
+				}			
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the horizontal dimensions of the grid.
+		-->
+		<method name="updateHorizontalDimensions" args="e=null">
+			<![CDATA[
+			if (this.availableWidthView) {
+				this.updateAvailableWidth();
+			}
+			var newWidth = null;
+			if (!this.fitExistingRows && this.availableWidth != null) {
+				newWidth = this.availableWidth;
+			}
+			else {
+				newWidth = Math.max(this.borderView.clippedContent.gridContent.width, this.minimumWidth);
+			}
+			
+			if (newWidth != this.borderView.clippedContent.width) {
+				this.borderView.clippedContent.setAttribute('width', newWidth);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the column position for the specified column relative to the other columns then persist as a grid preference.
+			@param wcfGridColumn c: the grid column
+			@param number pos: new index
+			@param boolean update: update the columns
+		-->
+		<method name="setColumnPosition" args="c,pos,update=true">
+			<![CDATA[
+			var oldPos = this.columns.indexOf(c);
+			if (oldPos != pos) {
+				this.columns.splice(oldPos, 1);
+				this.columns.splice(pos, 0, c);
+				if (update) {
+					this.updateColumnOrder();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the index of the specified column.
+			@param wcfGridColumn c: the grid column
+			@return number: column position
+		-->
+		<method name="getColumnPosition" args="c">
+			<![CDATA[
+			return this.columns.indexOf(c);
+			]]>
+		</method>		
+		
+		<!---
+			@keywords private
+			Update the columns to display in the proper order.
+		-->
+		<method name="updateColumnOrder">
+			<![CDATA[
+			var columnParent = this.header.columns;
+			columnParent.columnLayout.lock();
+			var currentLayoutView = "first";
+			for (var i = 0; i < this.columns.length; i++) {
+				var column = this.columns[i];
+				var index = columnParent.subviews.indexOf(column);
+				if (index != i) {
+					columnParent.subviews.swap(index, i);
+				}
+				columnParent.columnLayout.setLayoutOrder(currentLayoutView, column);
+				currentLayoutView = column;
+			}
+			var rows = this.getRows();
+			for (var i = 0; i < rows.length; i++) {
+				if (rows[i]['updateCellOrder']){
+					rows[i].updateCellOrder();
+				}
+			}
+			columnParent.columnLayout.unlock();
+			columnParent.columnLayout.update();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Apply the current style to this grid.
+			@param wcfStyle s: style to apply to grid
+		-->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			super._applystyle(s);
+			this.setAttribute("borderColor", s.bordercolor);
+			this.setAttribute("bgcolor", s.bgcolor);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Launch the column configure dialog for this grid.
+		-->
+		<method name="configure">	
+			<![CDATA[
+			wcfGridColumnSettings.openWindow();
+			wcfGridColumnSettings.setAttribute("grid", this);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Determine the placement for this grid.
+			@param view v: indicates view
+			@param placement p: placment name
+			@param args a: The initialization args for the view
+			@return view: the placement for the view
+		-->
+		<method name="determinePlacement" args="v,p,a">
+			<![CDATA[
+			if (p == "content") {
+				return this.borderView.clippedContent.gridContent.content;
+			}
+			else if (p == "rowparent") {
+				return this.borderView.clippedContent.gridContent.content.rowparent;
+			}
+			else if (p == "columns") {
+				return this.borderView.clippedContent.gridContent.header.columns;
+			}
+			else if (p == "gridContent") {
+				return this.borderView.clippedContent.gridContent;
+			}
+			return this;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Save the column preferences for this grid.
+		-->
+		<method name="savePreferences">
+			<![CDATA[
+			if (this.preferenceKey != null) {
+				preferenceManager.setPreference(this.preferenceKey, this.getConfiguration());
+			}
+			]]>
+		</method>		
+
+		<!---
+			@keywords private
+			Load the column preferences for this grid.
+		-->
+		<method name="loadPreferences">
+			<![CDATA[
+			if (this.preferenceKey != null) {
+				this.applyConfiguration(preferenceManager.getPreference(preferenceKey));
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the currently selected object. This method will return null if there
+			is no selection, or if more than one object is selected.
+			@return wcfModelObject: the selected object
+		-->
+		<method name="getSelectedObject">
+			<![CDATA[
+			var o = null;
+			var selectedObjects = this.content.rowparent.selector.getSelectedObjects();
+			if (selectedObjects && selectedObjects.length == 1) {
+				o = selectedObjects[0];
+			}
+			return o;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns an array of the current selected objects.
+			@return array: array of model objects
+		-->
+		<method name="getSelectedObjects">
+			<![CDATA[
+			return this.content.rowparent.selector.getSelectedObjects();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Select all objects displayed in the grid.
+		-->
+		<method name="selectAll">
+			<![CDATA[
+			var selector = this.content.rowparent.selector;
+			selector.clearSelection();
+			selector.setAttribute("rangeSelect", true);
+			selector.selectAllObjects();
+			selector.setAttribute("rangeSelect", false);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Deselect all currently selected objects in the grid.
+		-->
+		<method name="deselectAll">
+			<![CDATA[
+			this.content.rowparent.selector.clearSelection();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Select the specified row.
+			@param wcfGridRow row
+		-->
+		<method name="selectRow" args="row">
+			<![CDATA[
+			this.content.rowparent.selector.select(row);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle new selection.
+		-->
+		<handler name="onselect">
+			<![CDATA[
+			if (!this.multiSelect) {
+				this.setAttribute("currentObject", this.getSelectedObject());
+			}
+			if (this.selectedObjectView != null) {
+				this.selectedObjectView.setAttribute(this.selectedObjectName, this.getSelectedObject());
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Get the selection state of the specified row.
+			@param wcfGridRow row
+			@return boolean: true if the row is selected.
+		-->
+		<method name="isSelectedRow" args="row">
+			<![CDATA[
+			return this.content.rowparent.selector.isSelected(row);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Unselect the specified row.
+			@param wcfGridRow row
+		-->
+		<method name="unselectRow" args="row">
+			<![CDATA[
+			this.content.rowparent.selector.unselect(row);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			refresh the oList
+		-->
+		<method name="refresh">
+			<![CDATA[
+			var rows = this.getRows();
+			for (var i = 0; i < rows.length; i++) {
+				rows[i].refreshRow();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Reset the filter on each column.
+		-->		
+		<method name="resetColumnFilters">
+			<![CDATA[
+			for (var i = 0; i < this.columns.length; i++) {		
+				if (columns[i]["enableFilter"] && columns[i]["columnFilter"] != null) {
+					columns[i].title.filterButton.resetFilter();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method tests if the column passed in is the only visible column in the grid. It will return
+			true if it is, and false otherwise.
+			@param wcfGridColumn columnToCheck
+			@return boolean
+		-->		
+		<method name="isOnlyColumnVisible" args="columnToCheck">
+			<![CDATA[
+			for (var i = 0; i < this.columns.length; i++) {		
+				if (columns[i].visible && columns[i] != columnToCheck) {
+					return false;
+				}
+			}
+			return true;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			register the scrollbar for the grid
+		-->
+		<method name="registerScrollbar" args="e=null">
+			<![CDATA[
+			var panelView = wcfPanelManager.findPanel(this);
+			if(panelView!=null){
+				if(wcfViewUtil.getInvisibleAncestor(this)==null && this.borderView.rowScroll.visible)
+					panelView.registerScrollableDescendant(this);
+				else
+					panelView.unregisterScrollableDescendant(this);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Applies the given configuration to this grid.
+			@param gridConfig The grid configuration to be applied.
+		-->
+		<method name="applyConfiguration" args="gridConfig">
+			<![CDATA[
+				if (gridConfig != null) {
+					var gridPreferences = wcfXMLUtil.parseXML(gridConfig);
+					var nodes = gridPreferences.childNodes;
+					var newOrderedColumns = [];
+					var newOrderedColPos = [];
+					var numOfColumns = 0;
+					for (var i=0; i<this.columns.length; i++) {
+						var column = this.columns[i];
+						var pos = i;
+						if (column.name) {
+							var isVisible = column["required"] ? true : false;
+							for (var j=0; j<nodes.length; j++) {
+								var columnElement = nodes[j];
+								var columnName = columnElement.attributes["name"];
+								if (column.name == columnName) {
+									isVisible = true;
+									column.setAttribute('width', parseInt(columnElement.attributes["width"]));
+									pos = parseInt(columnElement.attributes["pos"]);
+									break;
+								}
+							}
+							column.setAttribute("visible", isVisible);
+						}
+						var k = 0;
+						while (k<numOfColumns && newOrderedColPos[k] < pos) {
+							k++;
+						}
+						if (k<numOfColumns) {
+							newOrderedColPos.splice(k, 0, pos);
+							newOrderedColumns.splice(k, 0, column);
+						} else {
+							newOrderedColPos.push(pos);
+							newOrderedColumns.push(column);
+						}
+						numOfColumns++;
+					}
+					this.columns = newOrderedColumns;
+					this.updateColumnOrder();
+					for (var i=0; i<this.disabledColumns.length; i++) {
+						var column = this.disabledColumns[i];
+						if (column.name) {
+							var isVisible = column["required"] ? true : false;
+							for (var j=0; j<nodes.length; j++) {
+								var columnElement = nodes[j];
+								var columnName = columnElement.attributes["name"];
+								if (column.name == columnName) {
+									isVisible = true;
+									column.setAttribute('width', parseInt(columnElement.attributes["width"]));
+									column.savedColumnPos = columnElement.attributes["pos"];
+									break;
+								}
+							}
+							column.savedVisible = isVisible;
+						}
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Gets the current configuration of this grid.
+			@return The current configuration of this grid.
+		-->
+		<method name="getConfiguration">
+			<![CDATA[
+				var gridPreferences = new LzDataElement("gridPreferences");
+				for (var i=0; i<this.columns.length; i++) {
+					var column = this.columns[i];
+					if (column.visible && column.name != null) {
+						var columnElement = new LzDataElement("column", {
+							name: column.name,
+							pos: String(i),
+							width: String(column.width)
+						});
+						gridPreferences.appendChild(columnElement);
+					}
+				}
+				for (var i=0; i<this.disabledColumns.length; i++) {
+					var column = this.disabledColumns[i];
+					if (column.savedVisible && column.name != null) {
+						var columnElement = new LzDataElement("column", {
+							name: column.name,
+							pos: String(column.savedColumnPos),
+							width: String(column.width)
+						});
+						gridPreferences.appendChild(columnElement);
+					}
+				}
+				return gridPreferences.serialize();
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to the grid header.
+			@keywords private
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			lz.Focus.setFocus(this.header.columns, false);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="keyDown" args="code" />
+		
+		<!---
+			@keywords private
+		-->
+		<method name="activateObject" args="o" />
+
+		<!---
+			@keywords private
+			This handler will load the configuration for this grid based on preference if it exists.
+		-->
+		<handler name="onload" reference="preferenceManager">
+			<![CDATA[
+				this.loadPreferences();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			This handler will reset this grid to its original configuration.
+		-->
+		<handler name="onreset" reference="preferenceManager">
+			<![CDATA[
+				this.applyConfiguration(this.defaultConfiguration);
+			]]>
+		</handler>
+		
+		<simplelayout axis="y" spacing="0"/>
+
+		<view name="filterTopPaddView" height="${classroot.filterTopPadding}" visible="${parent.filterSelectorArea.height > 0}"  width="${parent.borderView.width}" bgcolor="${classroot.headerBackgroundColor}"/>
+
+		<view name="filterSelectorArea" width="${parent.borderView.width}" bgcolor="${classroot.headerBackgroundColor}">
+			<view name="filterLeftPaddView" width="${classroot.filterLeftPadding}" visible="${this.width > 0}" />
+			<simplelayout axis="x" spacing="5"/>
+		</view>
+
+		<view name="paddView" height="${classroot.padding}" visible="${parent.filterSelectorArea.height > 0}" width="${parent.borderView.width}" bgcolor="${classroot.headerBackgroundColor}" />
+		
+		<wcfBorderedView name="borderView"
+			borderTopSize="0"
+			borderRightSize="${classroot.listBorderSize}"
+			borderLeftSize="${classroot.listBorderSize}"
+			borderBottomSize="${classroot.listBorderSize}"
+			borderColor="${classroot.style.forminputbordercolor}"
+		>
+			<view name="clippedContent" clip="true" x="0">
+				<view name="gridContent" x="0" y="0">
+					<view name="header">
+						<simplelayout axis="x"/>
+						<view name="prefixColumn" resource="listHeaderBackground" stretches="both"
+							height="${parent.height}"
+							width="${classroot.showPrefixColumn ? 15 : 0}">
+							<method name="init">
+								<![CDATA[
+								super.init();
+								if (classroot.columns.length > 0) {
+									var column = classroot.columns[0];
+									if (column["columnHeaderMenuClass"]) {
+										new lz[column.columnHeaderMenuClass](this, {
+											name: "menu",
+											dummyColumn: true,
+											column: column
+										});
+										this.menu.addView(this);
+									}
+								}
+								this.updateResourceDel = new lz.Delegate(this, "updateResource");
+								this.updateResourceDel.register(classroot, "onactivated");
+								]]>
+							</method>
+							<method name="destroy">
+								<![CDATA[
+								this.updateResourceDel.unregisterAll();
+								delete this.updateResourceDel;
+								super.destroy();
+								]]>
+							</method>	
+							<method name="updateResource" args="e=null">
+								<![CDATA[
+								if (classroot.activated) {
+									this.setAttribute('frame', 3);
+								}
+								else {
+									this.setAttribute('frame', 1);
+								}
+								]]>
+							</method>
+						</view>
+						<view name="columns">
+							<simplelayout axis="x" name="columnLayout">
+								<method name="addSubview" args="newsub">
+									super.addSubview(newsub);
+									if (!newsub.visible) {
+										this.update();
+									}	
+								</method>
+							</simplelayout>
+						</view>
+						<view name="dummyColumn" resource="listHeaderBackground" stretches="both" height="${parent.height}">
+							<method name="init">
+								<![CDATA[
+								super.init();
+								if (classroot.columns.length > 0) {
+									var column = classroot.columns[0];
+									if (column["columnHeaderMenuClass"]) {
+										new lz[column.columnHeaderMenuClass](this, {
+											name: "menu",
+											dummyColumn: true,
+											column: column
+										});
+										this.menu.addView(this);
+									}
+								}
+								this.updateResourceDel = new lz.Delegate(this, "updateResource");
+								this.updateResourceDel.register(classroot, "onactivated");
+								this.adjustWidthDel = new lz.Delegate(this, "adjustWidth");
+								if (classroot.showDummyColumn) {
+									if (classroot.fitExistingRows) {
+										this.adjustWidthDel.register(classroot, "onminimumWidth");
+									}
+									else {
+										this.adjustWidthDel.register(classroot.borderView.clippedContent, "onwidth");
+									}
+									this.adjustWidthDel.register(parent.columns, "onwidth");
+									this.adjustWidthDel.register(parent.prefixColumn, "onwidth");
+									this.adjustWidth();
+								}
+								else {
+									this.setAttribute("width", 0);
+								}
+								]]>
+							</method>
+							<method name="destroy">
+								<![CDATA[
+								this.updateResourceDel.unregisterAll();
+								delete this.updateResourceDel;
+								this.adjustWidthDel.unregisterAll();
+								delete this.adjustWidthDel;
+								super.destroy();
+								]]>
+							</method>	
+							<method name="updateResource" args="e=null">
+								if (classroot.activated) {
+									this.setAttribute('frame', 3);
+								}
+								else {
+									this.setAttribute('frame', 1);
+								}
+							</method>
+							<method name="adjustWidth" args="e=null">
+								<![CDATA[
+								var newWidth = Math.max(0, (classroot.fitExistingRows ? classroot.minimumWidth : classroot.borderView.clippedContent.width - 1) - parent.columns.width - parent.prefixColumn.width);
+								if (this.width != newWidth) {
+									this.setAttribute("width", newWidth);
+								}
+								]]>
+							</method>
+						</view>	
+					</view>
+					<basecomponent name="content" clip="true" y="${parent.header.height}" height="${classroot.contentHeight}" focusable="${!classroot.multiSelect}" doesenter="true">
+						<!---
+							@keywords private
+						-->
+						<handler name="onfocus">
+							<![CDATA[
+							if(!parent["indicator"]){
+								new lz.wcfFocusIndicator(parent, {
+									name: "indicator",
+									focusableView: this,
+									indicatorView: this
+								});
+							}
+							]]>
+						</handler>
+						<!---
+							@keywords private
+							Handle key down events.
+						-->
+						<handler name="onkeydown" args="code">
+							<![CDATA[
+							classroot.keyDown(code);
+							]]>
+						</handler>
+						<!---
+							@keywords private
+						-->
+						<method name="doEnterDown">
+							<![CDATA[
+							if (classroot.currentObject) {
+								classroot.activateObject(classroot.currentObject);
+							}
+							]]>
+						</method>
+						<view name="emptyArea" height="${classroot.availableHeight}" width="${classroot.borderView.clippedContent.gridContent.header.width - 1}" bgcolor="${classroot.style.emptyareacolor}"/>
+						<view name="emptyRowView"
+							bgcolor="${classroot.borderColor}"
+							height="1"
+							width="${classroot.borderView.clippedContent.gridContent.header.width}"
+							y="24"/>
+						<view name="rowparent">
+							<simplelayout/>
+							<wcfModelObjectListSelectionManager name="selector" multiSelect="${classroot.multiSelect}">
+								<!--- @keywords private -->
+								<attribute name="rangeSelect" type="boolean" value="false"/>
+								
+								<!--- @keywords private -->
+								<method name="isRangeSelect">
+									<![CDATA[
+									var result = false;
+									if (this.multiSelect) {
+										result = this.rangeSelect ? true : super.isRangeSelect();
+									}
+									return result;
+									]]>
+								</method>
+								<!--- @keywords private -->
+								<handler name="onselectedObjects">
+									<![CDATA[
+									if (classroot["onselect"]) {
+										classroot.onselect.sendEvent();
+									}
+									]]>
+								</handler>
+							</wcfModelObjectListSelectionManager>
+						</view>
+					</basecomponent>
+				</view>
+			</view>
+			<!-- +1 to scrollbar height to align with top of horizontal scroll bar -->
+			<wcfGridScrollBar name="rowScroll" visible="false" grid="${classroot}"
+					x="${classroot.borderView.clippedContent.width}"
+					y="${classroot.borderView.clippedContent.y}"
+					height="${classroot.borderView.clippedContent.height + (classroot.borderView.horizontalScroll.visible?1:0)}"/>
+			<view name="rowScrollBottom" bgcolor="0xE0EAEF"
+				x="${classroot.borderView.rowScroll.x}"
+				y="${classroot.borderView.rowScroll.y + classroot.borderView.rowScroll.height}"
+				height="${classroot.borderView.horizontalScroll.height}"
+				width="${classroot.borderView.rowScroll.width}"
+				visible="${classroot.borderView.rowScroll.visible}">			
+			</view>					
+			<wcfHorizontalScrollbar name="horizontalScroll" scrolltarget="classroot.borderView.clippedContent.gridContent"
+					x="-1"
+					y="${classroot.borderView.clippedContent.y + classroot.borderView.clippedContent.height}"
+					width="${classroot.borderView.clippedContent.width + 1}"
+					visible="${classroot.showHorizontalScrollbar &amp;&amp; classroot.borderView.clippedContent.width + 1 &lt; classroot.borderView.clippedContent.gridContent.width}"/>
+			<view name="footer"
+						x="0"
+						y="${classroot.borderView.clippedContent.y + classroot.borderView.clippedContent.height + (classroot.borderView.horizontalScroll.visible?classroot.borderView.horizontalScroll.height:0)}"
+						width="${classroot.borderView.clippedContent.width + (classroot.borderView.rowScroll.visible?classroot.borderView.rowScroll.width:0)}"/>
+		</wcfBorderedView>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Grid cell.
+	-->
+	<class name="wcfGridCell" extends="basecomponent" focusable="false">
+		<!---
+			The grid that owns this cell.
+		-->
+		<attribute name="grid"/>
+		<!---
+			The grid column for this cell.
+		-->
+		<attribute name="column"/>
+		<!---
+			The grid row for this cell.
+		-->
+		<attribute name="row"/>
+		<!---
+			The default placement for content added to this cell.
+		-->
+		<attribute name="defaultplacement" value="content"/>
+		<!---
+			x position. This is bound to the associated column's x position.
+		-->
+		<attribute name="x" value="${column.x + (grid.showPrefixColumn ? 15 : 0)}"/>
+		<!---
+			Cell visibility. This is bound to the column's visibility.
+		-->
+		<attribute name="visible" value="${column.visible}"/>
+		<!---
+			Cell width. This is bound to the column's width.
+		-->
+		<attribute name="width" value="${column.width}"/>
+		<!---
+			wcfModelProperty instance associated with this cell.
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		<!---
+			wcfModelObject instance associated with this cell.
+		-->
+		<attribute name="o" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();			
+			if (this.grid.rowMenuClass != null) {
+				new lz[this.grid.rowMenuClass](this, {
+					name: "menu",
+					row: this.row,
+					cell: this
+				});
+				this.menu.addView(this);
+			}
+			else if (this.grid["menu"]) {
+				this.grid.menu.addView(this);
+			}
+			this.updateObjectDel = new lz.Delegate(this, "updateObject");			
+			this.updateObject();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			wcfViewUtil.releaseLayouts(this);
+			if (this["updateValidationErrorDel"]) {
+				this.updateValidationErrorDel.unregisterAll();
+				delete this.updateValidationErrorDel;
+			}
+			
+			if (this["resetFilterDel"]) {
+				this.resetFilterDel.unregisterAll();
+				delete this.resetFilterDel;
+			}
+			
+			if (this["updateObjectDel"]) {
+				this.updateObjectDel.unregisterAll();
+				delete this.updateObjectDel;
+			}
+			if (this["updateLayoutDel"]) {
+				this.updateLayoutDel.unregisterAll();
+				delete this.updateLayoutDel;
+			}
+			if (this["updateMessageTextDel"]) {
+				this.updateMessageTextDel.unregisterAll();
+				delete this.updateMessageTextDel;
+			}
+			if (this["updateEnablementDel"]) {
+				this.updateEnablementDel.unregisterAll();
+				delete this.updateEnablementDel;
+			}
+			if (this["updateCurrentCellDel"]) {
+				this.updateCurrentCellDel.unregisterAll();
+				delete this.updateCurrentCellDel;
+			}
+			if (this["updatePropertyDel"]) {
+				this.updatePropertyDel.unregisterAll();
+				delete this.updatePropertyDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onvisible">
+			<![CDATA[
+			if (!this.visible && this == this.grid.currentCell) {
+				this.grid.currentCell = null;
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Calls the layouts update delegates. Must first call to update the width, and then to update the
+			height since the change in width can affect the height.
+		-->
+		<method name="updateLayouts" args="e=null">
+			<![CDATA[
+			if (this.row.o != null) {
+				if (this["viewer"] && this.viewer.visible) {
+					this.updateLayoutDel.register(this.viewer, "onvisible");
+					this.updateLayoutDel.register(this.viewer, "onwidth");
+					this.updateLayoutDel.register(this.viewer, "onheight");
+				}
+				if (this["editor"] && this.editor.visible) {
+					this.updateLayoutDel.register(this.editor, "onvisible");
+					this.updateLayoutDel.register(this.editor, "onheight");
+				}
+	
+				this.cellWidthLayout.update();
+				this.cellHeightLayout.update();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set the new wcfModelProperty instance.
+			@param wcfModelProperty newProperty: the new property instance
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || this.property != newProperty) {
+				this.property = newProperty;
+				
+				/* Find and replace */
+				this.updateCurrentCellDel.unregisterAll();
+				if (this.property != null) {									
+					this.updateCurrentCellDel.register(lz.Focus, "onfocus");
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Refresh the display of the validation error.
+		 -->
+		<method name="updateValidationError" args="e=null">
+			<![CDATA[
+			if (this.grid.editable) {
+				this.updateValidationErrorDel.unregisterAll();
+				var validationErrors = null;
+				if (this["property"]) {
+					if (this.column.isEditable(this.row.o)) {
+						validationErrors = this.property.getValidationErrors();
+						this.updateValidationErrorDel.register(this.property, "onvalidationErrors");
+					}
+					this.updateValidationErrorDel.register(this.property, "onreadOnly");
+				}
+				else if (this.column.validatorTypes != "" && this["o"]) {
+					if (!this.o.readOnly) {
+						validationErrors = this.o.getValidationErrorsByValidatorTypes(wcfStringUtil.splitAndTrim(this.column.validatorTypes, ","));
+						this.updateValidationErrorDel.register(this.o, "onvalidationErrors");
+					}
+					this.updateValidationErrorDel.register(this.o, "onreadOnly");
+				}
+				if (validationErrors == null || validationErrors.length == 0) {
+					validationErrors = this.column.getValidationErrors(this, this.updateValidationErrorDel);
+				}
+				if (validationErrors != null && validationErrors.length > 0) {
+					this.updateValidationErrorDel.register(lz.Focus, "onfocus");
+					if (wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+						wcfErrorMessage.setAttribute("attachTarget", this);
+						wcfErrorMessage.show(validationErrors[0]);
+					}
+					else {
+						wcfErrorMessage.hide(this);
+					}
+					//always set the border to be visible if there is an error
+					this.border.setAttribute("borderColor", this.style.errorreminderbordercolor);
+					this.border.setAttribute("borderSize", this.style.errorreminderbordersize);
+				}
+				else{
+					wcfErrorMessage.hide(this);
+					if (this["border"] && this.border.borderSize > 0) {
+						this.border.setAttribute("borderSize", 0);
+					}
+				}
+			}
+			]]>
+		</method>
+		<!---
+			Update the current cell of the {@link wcfGrid}. 
+		-->
+		<method name="updateCurrentCell" args="e=null">
+			<![CDATA[
+			if (wcfViewUtil.containsView(this, lz.Focus.getFocus())) {			
+				this.grid.setAttribute("currentCell", this);				
+			}			
+			]]>
+		</method>
+
+		<!---
+			Handle object changed event.
+		-->
+		<handler name="objectChanged" reference="row">
+			<![CDATA[
+			this.updateObject();
+			]]>
+		</handler>
+
+		
+		<!--- @keywords private -->		
+		<handler name="onconstruct">
+			<![CDATA[
+			this.updateValidationErrorDel = new lz.Delegate(this, "updateValidationError");
+			this.updateCurrentCellDel = new lz.Delegate(this, "updateCurrentCell");
+			this.updateLayoutDel = new lz.Delegate(this, "updateLayouts");
+			]]>
+		</handler>
+		
+		<!---
+			Update the object associated with this cell.
+		-->
+		<method name="updateObject" args="e=null">
+			<![CDATA[
+			this.updateObjectDel.unregisterAll();
+			this.updateObjectDel.register(this.column, "onpooled");
+			if (this.row.o == null || this.row.o.objectDefinition == null) {
+				this.o = null;
+			}
+			else {
+				this.o = this.column.getObject(this.row.o, this.updateObjectDel);
+			}
+			
+			if (this.row.o != null && this.column.loadChildren) {
+				this.loadChildren();
+			}
+			this.updateProperty();
+			this.updateMessageText();
+			this.updateEnablement();
+			if (this.grid.currentCell == this) {
+				this.grid.setAttribute("currentCell", null);
+			}
+			]]>
+		</method>
+
+		
+		<!--- @keywords private -->		
+		<method name="loadChildren">
+			<![CDATA[
+			if (this.row.o.objectDefinition.primary || this.row.o.objectDefinition.reference) {
+				var referencedObject = this.row.o.getReferencedObject();
+				var loadDefs = [];
+				var cellDescriptors = this.column.getCellDescriptorMap().getCellDescriptors(this.row.o);
+				for (var i = 0; i < cellDescriptors.length; i++) {
+					if (cellDescriptors[i].objectPath) {
+						var primaryObjectTypeFound = this.row.o.objectDefinition.primary;
+						var types = cellDescriptors[i].objectPath.split("/");
+						for (var j = 0; j < types.length; j++) {
+							var type = types[j];
+							var index = type.indexOf("[");
+							if (index != -1) {
+								type = type.substring(0, index);
+							}
+							if (!primaryObjectTypeFound) {
+						 		if (referencedObject.objectDefinition.matchesType(type)) {							
+									primaryObjectTypeFound = true;
+								}
+								else {
+									break;
+								}
+							}
+							else {
+								for (var k = 0; k < referencedObject.objectDefinition.objectDefinitions.length; k++) {
+									var childDef = referencedObject.objectDefinition.getChildDefinition(referencedObject.objectDefinition.objectDefinitions[k].objectType);
+									if (childDef.matchesType(type)) {
+										loadDefs.push(childDef);
+									}
+								}
+								break;
+							}
+						}
+					}
+				}
+				referencedObject.loadChildren(loadDefs, false, false, true);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update message text
+		-->
+		<method name="updateMessageText" args="e=null">
+			<![CDATA[
+			if (!this["updateMessageTextDel"]) {
+				this.updateMessageTextDel = new lz.Delegate(this, "updateMessageText");
+			}
+			else {
+				this.updateMessageTextDel.unregisterAll();
+			}
+
+			if (this.row.o == null || this.row.o.objectDefinition == null || this.o != null) {
+				if (this["messageViewer"] && this.messageViewer.visible) {
+					this.messageViewer.setAttribute("messageText", "");
+					this.messageViewer.setAttribute("visible", false);
+				}
+			}
+			else {
+				var referencedObject = this.row.o.getReferencedObject();
+				var messageText = null;
+				if (this.column.loadChildren && referencedObject.getChildrenServicesLoading.length > 0) {
+					messageText = "";
+					this.updateMessageTextDel.register(referencedObject, "onGetChildrenServiceCompleted");
+					this.updateMessageTextDel.register(referencedObject, "onGetChildrenServiceError");
+				}
+				else if (this.column.isDisabled(this.row.o)) {
+					messageText = "";
+				}
+				else if (this.column.isMultipleMatch(this.row.o, this.updateMessageTextDel)) {
+					messageText = this.column.multipleMatchText;
+					this.updateMessageTextDel.register(this.column, "onmultipleMatchText");
+				}
+				else {
+					messageText = this.column.noMatchText;
+					this.updateMessageTextDel.register(this.column, "onnoMatchText");
+				}
+				
+				if (!this["messageViewer"] && messageText) {
+					new lz.wcfMessageViewer(this, {
+						name: "messageViewer"
+					});
+				}
+				if (this["messageViewer"]) {
+					this.messageViewer.setAttribute("messageText", messageText);
+					if (!this.messageViewer.visible) {
+						this.messageViewer.setAttribute("visible", true);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update this cell with the new property.
+		-->
+		<method name="updateProperty" args="e=null">
+			<![CDATA[
+			if (!this["updatePropertyDel"]) {
+				this.updatePropertyDel = new lz.Delegate(this, "updateProperty");
+			}
+			else {
+				this.updatePropertyDel.unregisterAll();
+			}
+			if (this.o == null || this.row.o.objectDefinition == null || this.column.isDisabled(this.row.o, this.updatePropertyDel)) {
+				this.setAttribute("property", null);
+				if (this["editor"] && this.editor.visible && this.column.editable) {
+					this.column.releaseEditor(this);
+				}
+				this.column.releaseViewer(this);
+			}
+			else {
+				var propertyName = this.column.getPropertyName(this.row.o, this.updatePropertyDel);
+				if (propertyName != null) {
+					var newProperty = propertyName == "" ? null : this.o.getProperty(propertyName);
+					if (newProperty != this["property"]) {
+						this.setAttribute("property", newProperty);
+					}
+					if (this.column.editable) {
+						this.column.createEditor(this, this.property, this.o);
+					}
+					if (this["editor"] && this.editor.visible) {
+						this.column.releaseViewer(this);
+					}
+					else {
+						this.column.createViewer(this, this.property, this.o);
+					}
+				}
+				else {
+					this.setAttribute("property", null);
+					this.column.createViewer(this, this.property, this.o);
+					this.column.releaseEditor(this);
+				}
+			}
+			this.updateValidationError();
+			wcfCallbackUtil.addDeferredCallback(this.updateLayoutDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the enabled attribute based on whether the object is readonly.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			if (this["updateEnablementDel"] == undefined) {
+				this.updateEnablementDel = new lz.Delegate(this, "updateEnablement");
+			}
+			else {
+				this.updateEnablementDel.unregisterAll();
+			}
+			if (this["editor"] && this.parent.visible) {
+				if (this.property != null) {
+					this.editor.setAttribute("enabled", !this.property.readOnly);
+					this.updateEnablementDel.register(this.property, "onreadOnly");
+				}
+				else if (this.o != null) {
+					this.editor.setAttribute("enabled", !this.o.readOnly);
+					this.updateEnablementDel.register(this.o, "onreadOnly");
+				}
+				else {
+					this.editor.setAttribute("enabled", false);
+				}
+			} else {
+				this.updateEnablementDel.register(this.parent, "onvisible");
+			}
+			]]>
+		</method>
+		
+		<layout name="cellWidthLayout">
+			<!--- @keywords private -->
+			<method name="init">
+				<![CDATA[
+				super.init();
+				this.updateDelegate.register(parent, "onwidth");
+				this.updateDelegate.register(parent, "onx");
+				this.updateDelegate.register(parent.border, "onborderSize");
+				]]>
+			</method>
+			
+			<!---
+				Update the cell layout.
+			-->
+			<method name="update" args="e=null">
+				<![CDATA[
+				if (!this.locked && classroot.row.o != null) {
+					this.lock();
+					var padding = classroot.style.gridcellpaddingsize;
+					var rightBorderWidth = parent.grid.showvlines ? 1 : 0;
+					var viewerWidth = parent["viewer"] ? parent.viewer.width : 0;
+					var viewerVisible = parent["viewer"] ? parent.viewer.visible : false;				
+					var availableWidth = parent.width - (2 * padding) - rightBorderWidth;
+					if (availableWidth < 0) {
+						availableWidth = 0;
+					}
+					var contentX;
+					var contentWidth;
+					var columnAlignment = parent.column.getAlignment(classroot.row.o);
+					if (columnAlignment == "center" && viewerVisible) {
+						contentX = (parent.width - viewerWidth - rightBorderWidth) / 2;
+						contentWidth = viewerWidth;
+					}
+					else if (columnAlignment == "right" && viewerVisible) {
+						contentX = parent.width - viewerWidth - rightBorderWidth - padding;
+						contentWidth = parent.width - contentX - padding - rightBorderWidth;
+					}
+					else {
+						contentX = padding;
+						contentWidth = parent.width - contentX - padding - rightBorderWidth;
+					}
+					if (contentX < padding) {
+						contentX = padding;
+					}
+					if (contentWidth > parent.width - contentX - padding - rightBorderWidth) {
+						contentWidth = parent.width -  contentX - padding - rightBorderWidth;
+						if (contentWidth < 0) {
+							contentWidth = 0;
+						}
+					}
+					if (parent.content.availableWidth != availableWidth) {
+						parent.content.setAttribute("availableWidth", availableWidth);
+					}
+					if (parent.content.x != contentX) {
+						parent.content.setAttribute("x", contentX);
+					}
+					if (parent.content.width != contentWidth) {
+						parent.content.setAttribute("width", contentWidth);
+					}
+					var rightBorderX = parent.width - rightBorderWidth;
+					if (rightBorderX != parent.rightBorder.x) {
+						parent.rightBorder.setAttribute('x', rightBorderX);
+					}
+					if (rightBorderWidth != parent.rightBorder.width) {
+						parent.rightBorder.setAttribute('width', rightBorderWidth);
+					}
+					parent.rightBorder.bringToFront();
+					var cellWidth = parent.width - rightBorderWidth;
+					if (cellWidth != parent.menuView.width) {
+						parent.menuView.setAttribute('width', cellWidth);
+					}
+					
+					parent.border.render();
+			        this.locked = false;
+				}
+				]]>
+			</method>
+		</layout>
+		
+		<layout name="cellHeightLayout">
+			<!--- @keywords private -->
+			<method name="init">
+				<![CDATA[
+				super.init();
+				]]>
+			</method>
+			
+			<!---
+				Update the cell layout.
+			-->
+			<method name="update" args="e=null">
+				<![CDATA[
+				if (!this.locked && classroot.row.o != null) {
+					this.lock();
+					var padding = classroot.style.gridcellpaddingsize;
+					var contentHeight = 0;
+					if (parent["editor"] && parent.editor.visible) {
+						contentHeight = parent.editor.height;
+					}
+					else if (parent["viewer"] && parent.viewer.visible) {
+						contentHeight = parent.viewer.height;
+					}
+					
+					if (contentHeight > parent.content.maximumHeight) {
+						contentHeight = parent.content.maximumHeight;
+					}
+					if (contentHeight < 20) {
+						contentHeight = 20;
+					}
+					var contentY = padding;
+					if (contentY != parent.content.y) {
+						parent.content.setAttribute("y", contentY);
+					}
+					if (contentHeight != parent.content.height) {
+						parent.content.setAttribute("height", contentHeight);
+					}
+					var cellHeight = contentHeight + (2 * padding);
+					if (parent.height != cellHeight) {
+						parent.setAttribute('height', cellHeight);
+						parent.menuView.setAttribute('height', cellHeight);
+					}
+					parent.border.render();
+			        this.locked = false;
+				}
+				]]>
+			</method>
+		</layout>
+		
+		<drawview name="border" clip="true" width="${parent.width - parent.rightBorder.width}" height="${parent.height}" >
+			<attribute name="borderSize" type="number" value="0"/>
+			<attribute name="borderColor" type="color" value="0x000000"/>
+			
+			<method name="render">
+				<![CDATA[
+				this.clear();
+				if (this.borderSize > 0) {
+					this.beginPath();
+					this.lineTo(this.width - this.borderSize, 0);
+					this.lineTo(this.width - this.borderSize, this.height - this.borderSize);
+					this.lineTo(0, this.height - this.borderSize);
+					this.lineTo(0, 0);
+					this.strokeStyle = this.borderColor;
+					this.lineWidth = this.borderSize;
+					this.stroke();
+				}
+				]]>
+			</method>
+		</drawview>
+		<view name="menuView" bgcolor="white" opacity="0.001"/>
+		<view name="content" clip="true">
+			<attribute name="availableWidth" value="0" type="number"/>
+			<attribute name="maximumHeight" value="150" type="number"/>
+		</view>
+		<view name="rightBorder" bgcolor="${parent.grid.borderColor}" height="${classroot.row.height}"/>
+	</class>
+	
+	<!---
+		@keywords private
+		Grid row.
+	-->
+	<class name="wcfGridRow" extends="basecomponent" focusable="${parent.multiSelect}" doesenter="true">
+		<!---
+			By default, children of a grid row instance are added to the "content" view.
+		-->
+		<attribute name="defaultplacement" value="content"/>
+		<!---
+			Place grid rows under the "rowparent" view.
+		-->
+		<attribute name="placement" value="rowparent"/>
+		<!---
+			Indicates that this row is currently selected.
+		-->
+		<attribute name="selected" value="false"/>
+		<!---
+			Indicates the row will accept click events.
+		-->
+		<attribute name="clickable" value="true"/>
+		<!---
+			wcfModelObject instances associated with this row instance.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			Array of cells.
+		-->
+		<attribute name="cells" value="${[]}"/>
+		<!---
+			Array of released cells.
+		-->
+		<attribute name="releasedCells" value="${[]}"/>
+		<!---
+			Width of the row is constrained to the grid row columns width.
+		-->
+		<attribute name="width" value="${parent.header.width}"/>
+		<!---
+			Indicates that the mouse is over this row.
+		-->
+		<attribute name="mouseIn" type="boolean" value="false"/>
+		<!---
+			This event is trigged when the associated object's instance is changed.
+		-->
+		<event name="objectChanged"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (parent.rowMenuClass != null) {
+				new lz[parent.rowMenuClass](this, {
+					name: "menu",
+					row: this
+				});
+				this.menu.addView(this);
+			}
+			else if (parent["menu"]) {
+				parent.menu.addView(this);
+			}
+			this.updateBackgroundColorDel = new lz.Delegate(this, "updateBackgroundColor");
+			this.updateBackgroundColorDel.register(this, "onmouseIn");
+			this.updateBackgroundColorDel.register(this, "onselected");
+			this.updateBackgroundColorDel.register(parent, "onactivated");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			wcfViewUtil.releaseLayouts(this);
+			this.updateBackgroundColorDel.unregisterAll();
+			delete this.updateBackgroundColorDel;
+			if (this.o != null && this.parent.currentObject == this.o) {
+				this.parent.setAttribute("currentObject", null);
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the background color.
+		-->
+		<method name="updateBackgroundColor" args="e=null">
+			<![CDATA[
+			var newColor = parent.bgcolor;
+			if (this.selected) {
+				if (parent.activated) {
+					newColor = this.style.selectedcolor;
+				}
+				else {
+					newColor = this.style.inactiveselectedcolor;
+				}
+			}
+			else if (this.mouseIn) {
+				newColor = this.style.hilitecolor;
+			}
+			if (this.bgcolor != newColor) {
+				this.setAttribute("bgcolor", newColor);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Creates all the grid cells
+		-->
+		<method name="createGridCells">
+			<![CDATA[
+			var column = this.getNextCreateColumn();
+			while (column != null) {
+				var cell = null;
+				for (var i = 0; i < this.releasedCells.length; i++) {
+					if (this.releasedCells[i].column == column) {
+						cell = releasedCells[i];
+						this.releasedCells.splice(i, 1);
+					}
+				}
+				if (cell == null) {
+					cell = new lz.wcfGridCell(this, {
+						grid: parent,
+						row: this,
+						column: column
+					});
+				}
+				this.cells.push(cell);
+				column = this.getNextCreateColumn();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the next visible column for which no cell exists.
+		-->
+		<method name="getNextCreateColumn">
+			<![CDATA[
+			var columns = parent.columns;
+			var column = null;
+			for (var i = 0; i < columns.length && column == null; i++) {
+				if (columns[i].visible) {
+					column = columns[i];
+					var cells = this.cells;
+					for (var j = 0; j < cells.length; j++) {
+						if (cells[j].column == column) {
+							column = null;
+							break;
+						}
+					}
+				}
+			}
+			return column;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the model object instance for this row.
+			@param wcfModelObject newObject: the new model object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				var oldObject = this["o"];
+				this.o = newObject;
+				this.objectChanged.sendEvent(newObject);
+				if (oldObject && oldObject.objectDefinition != null) {
+					oldObject.releaseReleasableProperties();
+					var referencedObject = oldObject.getReferencedObject();
+					if (referencedObject != null && referencedObject != oldObject) {
+						referencedObject.releaseReleasableProperties();
+					}
+				}
+				if (this.o) {
+					this.createGridCells();
+					this.setSelected(parent.isSelectedRow(this));
+				}
+				if (lz.Focus.getFocus() == this) {
+					this.parent.setAttribute("currentObject", this.o);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Refresh this row to match the visible columns.
+		-->
+		<method name="refreshRow">
+			<![CDATA[
+			var cells = this.cells;
+			var columns = parent.columns;
+			for (var i = 0; i < cells.length; i++) {
+				if (columns.indexOf(cells[i].column) == -1) {
+					var cell = cells[i];
+					cells.splice(i, 1);
+					i--;
+					this.releasedCells.push(cell);
+				}
+			}
+			if (this.o) {
+				this.createGridCells();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the order of the cells to match the order of the columns.
+		-->
+		<method name="updateCellOrder">
+			<![CDATA[
+			for (var i = 0; i < this.cells.length; i++) {
+				var cell = this.cells[i];
+				var subviewIndex = this.content.subviews.indexOf(cell);
+				if (subviewIndex != i) {
+					this.content.subviews.swap(subviewIndex, i);
+				}
+				var columnIndex = parent.columns.indexOf(cell.column);
+				if (columnIndex != -1) {
+					for (var j = i - 1; j >= 0 && columnIndex < parent.columns.indexOf(this.cells[j].column); j--) {
+						this.content.subviews.swap(j, j+1);
+						this.cells.swap(j, j+1);
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Select this row.
+		-->
+		<method name="select">
+			<![CDATA[
+		    parent.selectRow(this);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the selected attribute for the row.
+		-->
+		<method name="setSelected" args="isSelected">
+			<![CDATA[
+			this.setAttribute("selected", isSelected);
+			if (isSelected && this.parent.panel != null) {
+				this.parent.model.setAttribute("activeSelectionView", this.parent);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Handle single click.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			this.select();
+			if(!parent.multiSelect){	
+				lz.Focus.setFocus(parent.borderView.clippedContent.gridContent.content, false);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle double click.
+		-->
+		<handler name="ondblclick">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start(this.parent + " ondblclick: " + this.o.objectDisplayName);
+			parent.activateObject(this.o);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle mouse over.
+		-->
+		<handler name="onmouseover">
+			<![CDATA[
+			if (wcfViewUtil.getLastMouseMove() < 100) {
+				this.setAttribute("mouseIn", true);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle mouse out.
+		-->
+		<handler name="onmouseout">
+			<![CDATA[
+			this.setAttribute("mouseIn", false);
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle opening a modal dialog.
+		-->
+		<handler name="onmode" reference="lz.ModeManager" args="m">
+			<![CDATA[
+			this.setAttribute("mouseIn", false);
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle focus.
+		-->
+		<handler name="onfocus">
+			<![CDATA[
+			if(!this["indicator"]){
+				this.indicator = new lz.wcfFocusIndicator(this.immediateparent.immediateparent, {
+					focusableView: this,
+					indicatorView: this,
+					offset: 1
+				});
+			}
+			if (this["menu"]) {
+				wcfContextMenuUtil.setAsDefault(this.menu);
+			}
+			if (this.parent.currentObject != this.o) {
+				this.parent.setAttribute("currentObject", this.o);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle onblur.
+		-->
+		<handler name="onblur">
+			<![CDATA[
+			if (this["menu"]) {
+				wcfContextMenuUtil.resetDefault(this.menu);
+			}
+			if (this.o != null && this.parent.currentObject == this.o) {
+				this.parent.setAttribute("currentObject", null);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle key down events.
+		-->
+		<handler name="onkeydown" args="code">
+			<![CDATA[
+			parent.keyDown(code);
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="doEnterDown">
+			<![CDATA[
+			parent.activateObject(this.o);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle sapace down events.
+		-->
+		<method name="doSpaceDown">
+			<![CDATA[
+			this.select();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return the next tab view.
+		-->
+		<method name="getNextSelection">
+			<![CDATA[
+			var nextView = lz.Focus.getNext(this);
+			if (!wcfViewUtil.containsView(this, nextView)) {
+				if (this._objectIndex + 1 < this.parent.oList.filteredObjects.length) {
+					var o = this.parent.oList.filteredObjects[this._objectIndex + 1];
+					this.parent.showObjectInView(o);
+					nextView = this.parent.locateRow(o);
+				}
+			}
+			return nextView;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return the previous tab view.
+		-->
+		<method name="getPrevSelection">
+			<![CDATA[
+			var prevView = lz.Focus.getPrev(this);
+			if (!wcfViewUtil.containsView(this, prevView)) {
+				if (this._objectIndex > 0) {
+					var o = this.parent.oList.filteredObjects[this._objectIndex - 1];
+					this.parent.showObjectInView(o);
+					prevView = lz.Focus.getPrev(this);
+				}
+			}
+			return prevView;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return the cell in the given column.
+			@args wcfGridColumn col The column whose cell to find.
+			@return wcfGridCell cell The cell that is in the given row and column
+		-->
+		<method name="getCell" args="col">
+			<![CDATA[
+			var cell = null;
+			for (var i = 0;	i < cells.length; i++) {
+				if (cells[i].column == col) {
+					cell = cells[i];
+					break;
+				}
+			}
+			return cell;
+			]]>
+		</method>
+		
+		<simplelayout/>
+		<view name="content">
+		</view>
+
+		<view name="bottomBorder"
+				bgcolor="${classroot.parent.borderColor}"
+				height="${classroot.parent.showhlines &amp;&amp; classroot.content.height > 0 ? 1 : 0}"
+				width="${parent.width}"/>
+				
+		<wcfDragSource name="dragSource" targetKeys="${['element','browseElement']}" dragAndDropManager="${wcfDndManager}" dragParent="${classroot.parent}" enabled="${classroot.parent.dragEnabled}">
+			<!---
+				Returns the drag source objects to be dragged. If the this row is part of the grid selection, then
+				all of the selected rows will be added as drag objects.
+			-->	
+			<method name="getDragSources">
+				<![CDATA[
+				var dragSources = null;
+				if (classroot.selected) {
+					dragSources = classroot.parent.getDragSources();
+				}
+				else {
+					dragSources = super.getDragSources();
+				}
+				return dragSources;
+				]]>
+			</method>
+			
+			<method name="startDrag" args="v=null">
+				<![CDATA[
+				var po = classroot.o.getReferencedObject();
+				if (po.objectDefinition.primary && (v == null || v == parent || !v.focusable)) {
+					super.startDrag();	
+				}
+				]]>		
+			</method>		
+		</wcfDragSource>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Standard grid footer class.
+	-->
+	<class name="wcfGridFooter" width="${parent.width}">
+		<!---
+			Reference to object grid.
+		-->
+		<attribute name="grid"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel = new lz.Delegate(this, "updateSummary");
+			this.updateSummaryDel.register(this.grid, "onupdateIndices");
+			this.updateSummaryDel.register(this.grid, "onselect");
+			this.updateSummaryDel.register(foundationResources.objectgrid_visibleRowsMsg, "onstring");
+			this.updateSummary();
+			this.updatePagingControlsDel = new lz.Delegate(this, "updatePagingControls");
+			this.updatePagingControls();
+			]]>
+		</handler>
+
+		<method name="destroy">
+			<![CDATA[
+			this.updateSummaryDel.unregisterAll();
+			delete this.updateSummaryDel;
+			this.updatePagingControlsDel.unregisterAll();
+			delete this.updatePagingControlsDel;
+			super.destroy();
+			]]>				
+		</method>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+			var newSummary = "";
+			if (this.grid.numberOfItems > 0) {
+				newSummary = foundationResources.replaceValues("objectgrid_visibleRowsMsg", 
+						[(this.grid.getSelectedObjects().length), (this.grid.numberOfItems)]);
+			} else if (this.grid.numberOfItems == 0) {
+				newSummary = foundationResources.replaceValues("objectgrid_visibleRowsMsg", [0, 0]);
+			}
+			if (newSummary != this.summary.text) {
+				this.summary.setAttribute("text", newSummary);
+				this.checkMinimumWidth();
+			}
+			]]>
+		</method>
+
+		<method name="updatePagingControls" args="e=null">
+			<![CDATA[
+			this.updatePagingControlsDel.unregisterAll();
+			this.updatePagingControlsDel.register(this.grid, "onoList");
+			var statusObject = null;
+			if (this.grid.oList) {
+				this.updatePagingControlsDel.register(this.grid.oList, "onstatusObject");
+				statusObject = this.grid.oList.statusObject;
+			}
+
+			var control = this.pagingControls.previousPageArrow;
+			var controlVisible = statusObject != null && statusObject.currPageNum > 1;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+
+			control = this.pagingControls.firstPage;
+			controlVisible = statusObject != null && statusObject.currPageNum > 1;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+
+			control = this.pagingControls.previousEllipsis;
+			controlVisible = statusObject != null && statusObject.currPageNum > 3;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+
+			control = this.pagingControls.previousPage;
+			controlVisible = statusObject != null && statusObject.currPageNum > 2;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+			if (controlVisible) {
+				var controlText = String(statusObject.currPageNum - 1);
+				if (controlText != control.text) {
+					control.setAttribute("text", controlText);
+				}
+			}
+
+			control = this.pagingControls.currentPage;
+			controlVisible = statusObject != null && statusObject.lastPageNum > 1;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+			if (controlVisible) {
+				var controlText = String(statusObject.currPageNum);
+				if (controlText != control.text) {
+					control.setAttribute("text", controlText);
+				}
+			}
+
+			control = this.pagingControls.nextPage;
+			controlVisible = statusObject != null && statusObject.currPageNum+1 < statusObject.lastPageNum;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+			if (controlVisible) {
+				var controlText = String(statusObject.currPageNum + 1);
+				if (controlText != control.text) {
+					control.setAttribute("text", controlText);
+				}
+			}
+
+			control = this.pagingControls.nextEllipsis;
+			controlVisible = statusObject != null && statusObject.currPageNum+2 < statusObject.lastPageNum;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+
+			control = this.pagingControls.lastPage;
+			controlVisible = statusObject != null && statusObject.currPageNum < statusObject.lastPageNum;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+			if (controlVisible) {
+				var controlText = String(statusObject.lastPageNum);
+				if (controlText != control.text) {
+					control.setAttribute("text", controlText);
+				}
+			}
+
+			var control = this.pagingControls.nextPageArrow;
+			var controlVisible = statusObject != null && statusObject.lastPageNum > statusObject.currPageNum;
+			if (controlVisible != control.visible) {
+				control.setAttribute("visible", controlVisible);
+			}
+
+			if (wcfViewUtil.containsView(this.pagingControls, lz.Focus.getFocus()) && !lz.Focus.getFocus().visible) {
+				this.grid.restoreFocus();
+			}
+			this.checkMinimumWidth();
+			]]>
+		</method>
+		
+		<method name="checkMinimumWidth">
+			<![CDATA[
+			var newMinimumWidth = 9 + this.summary.width + 9 + this.pagingControls.width + 9;
+			
+			if (this.grid.minimumWidth != newMinimumWidth) {
+				this.grid.setAttribute("minimumWidth", newMinimumWidth);
+			}
+			]]>
+		</method>
+	
+		<view y="-1" name="background" width="${parent.width}" resource="listFooterBackground" stretches="width">
+			<method name="init">
+				<![CDATA[
+				super.init();
+				this.updateResourceDel = new lz.Delegate(this, "updateResource");
+				this.updateResourceDel.register(classroot.grid, "onactivated");
+				this.updateResource();
+				]]>
+			</method>
+			<method name="updateResource" args="e=null">
+				<![CDATA[
+				if(classroot.grid["activated"]) {
+					this.setAttribute('frame', 2);
+				}
+				else {
+					this.setAttribute('frame', 1);
+				}
+				]]>
+			</method>
+			<method name="destroy">
+				<![CDATA[
+				this.updateResourceDel.unregisterAll();
+				delete this.updateResourceDel;
+				super.destroy();
+				]]>
+			</method>
+		</view>	
+		
+		<view name="pagingControls" x="${classroot.width-this.width-9}">
+			<simplelayout axis="x" spacing="2" />
+			<wcfFocusableBaseButton name="previousPageArrow" resource="previousPageArrow" doesenter="true">
+				<handler name="onclick">
+					<![CDATA[
+					if (wcfEventTimer.enabled) wcfEventTimer.start("previousPageArrow onclick");
+					classroot.grid.oList.doLoadPage(classroot.grid.oList.statusObject.currPageNum - 1);
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+					]]>
+				</handler>
+			</wcfFocusableBaseButton>
+			<wcfGridPagingControlButton name="firstPage" text="1" doesenter="true">
+				<handler name="onclick">
+					<![CDATA[
+					if (wcfEventTimer.enabled) wcfEventTimer.start("firstPage onclick");
+					classroot.grid.oList.doLoadPage(1);
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+					]]>
+				</handler>
+			</wcfGridPagingControlButton>
+			<text name="previousEllipsis" text="..." fontsize="11" fgcolor="0x0431c7"/>
+			<wcfGridPagingControlButton name="previousPage" doesenter="true">
+				<handler name="onclick">
+					<![CDATA[
+					if (wcfEventTimer.enabled) wcfEventTimer.start("previousPage onclick");
+					classroot.grid.oList.doLoadPage(classroot.grid.oList.statusObject.currPageNum - 1);
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+					]]>
+				</handler>
+			</wcfGridPagingControlButton>
+			<text name="currentPage" fontstyle="bold" fontsize="11" fgcolor="0x0" />
+			<wcfGridPagingControlButton name="nextPage" doesenter="true">
+				<handler name="onclick">
+					<![CDATA[
+					if (wcfEventTimer.enabled) wcfEventTimer.start("nextPage onclick");
+					classroot.grid.oList.doLoadPage(classroot.grid.oList.statusObject.currPageNum + 1);
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+					]]>	
+				</handler>
+			</wcfGridPagingControlButton>
+			<text name="nextEllipsis" text="..." fontsize="11" fgcolor="0x0431c7"/>
+			<wcfGridPagingControlButton name="lastPage" doesenter="true">
+				<handler name="onclick">
+					<![CDATA[
+					if (wcfEventTimer.enabled) wcfEventTimer.start("lastPage onclick");
+					classroot.grid.oList.doLoadPage(classroot.grid.oList.statusObject.lastPageNum);
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+					]]>	
+				</handler>
+			</wcfGridPagingControlButton>
+			<wcfFocusableBaseButton name="nextPageArrow" resource="nextPageArrow" doesenter="true">
+				<handler name="onclick">
+					<![CDATA[
+					if (wcfEventTimer.enabled) wcfEventTimer.start("nextPageArrow onclick");
+					classroot.grid.oList.doLoadPage(classroot.grid.oList.statusObject.currPageNum + 1);
+					if (wcfEventTimer.enabled) wcfEventTimer.end();
+					]]>	
+				</handler>
+			</wcfFocusableBaseButton >
+		</view>
+					
+		<text name="summary" x="9" fontsize="11" fgcolor="0x0"/>
+		
+	</class>
+
+	<resource name="previousPageArrow">
+		<frame src="resources/arrow_previous.png"/>
+		<frame src="resources/arrow_previous_hover.png"/>
+	</resource>
+	
+	<resource name="nextPageArrow">
+		<frame src="resources/arrow_next.png"/>
+		<frame src="resources/arrow_next_hover.png"/>
+	</resource>
+	
+	<!---
+		@keywords private
+		Paging control button.
+	-->
+	<class name="wcfGridPagingControlButton" extends="wcfFocusableBaseButton">
+		<text name="title" text="${parent.text}" fontsize="11" fgcolor="0x0431c7"/>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Grid vertical scrollbar.
+	-->
+	<class name="wcfGridScrollBar">
+		<!---
+			Reference to the object grid.
+		-->
+		<attribute name="grid"/>
+		<attribute name="startIndexYOffset" type="number" value="0"/>
+
+		<handler name="oninit">
+			<![CDATA[
+				this.updateScrollerPositionDel = new lz.Delegate(this, "updateScrollerPosition");
+				this.updateScrollerPositionDel.register(this.grid, "onupdateIndices");
+				this.updateScrollerPositionDel.register(this, "onheight");
+				
+				this.updateScrollerVisibilityDel = new lz.Delegate(this, "updateScrollerVisibility");
+				this.registerResizers(classroot);
+				
+				this.updateScrollerPosition();
+			]]>
+		</handler>
+					
+		<method name="registerResizers" args="v">
+			<![CDATA[
+				if (v["splitViewLayout"]) {
+					this.updateScrollerVisibilityDel.register(v.splitViewLayout.resizer, "ondragging");
+				}
+				if (v.parent != canvas) {
+					this.registerResizers(v.parent);
+				}
+			]]>
+		</method>
+				
+		
+		<method name="destroy">
+			<![CDATA[
+				if (this["updateScrollerPositionDel"]) {
+					this.updateScrollerPositionDel.unregisterAll();
+					delete this.updateScrollerPositionDel;
+				}
+				if (this["updateScrollerVisibilityDel"]) {
+					this.updateScrollerVisibilityDel.unregisterAll();
+					delete this.updateScrollerVisibilityDel;
+				}
+				super.destroy();
+			]]>
+		</method>
+		
+		<method name="updateScrollerVisibility" args="dragging">
+			<![CDATA[
+				if (dragging) {
+					this.setAttribute("visible", false);
+				}
+				else {
+					this.updateScrollerPosition();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Calculates the maximum height of the scroller
+			@return Number the maximum height the scroller can possibly have for this grid
+		 -->
+		<method name="getMaxScrollerHeight"><![CDATA[
+			return this.downArrow.y - this.upArrow.height;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Calculates the scroller height based on the currently displayed rows and the
+			total number of rows in the grid. The height will be at least of 10 pixels
+			@param pageSize number of rows currently being displayed
+			@return the height that the scroller is supposed to be
+		 -->
+		<method name="getScrollerHeight" args="pageSize"><![CDATA[
+			// Total height is estimated to be the product of the total number of rows in the grid and the the average height
+			// of the rows currently held by this grid.
+			var estimatedGridHeight = this.grid.numberOfItems * (this.grid.content.rowparent.height / pageSize);
+			var displayRatio = this.grid.content.height / estimatedGridHeight;
+			
+			return Math.max(getMaxScrollerHeight() * displayRatio, 10);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Updates the position and the height of the scroller. The height of the updated scroller roughly represents how much
+			content is being displayed, and the position of the scroller roughly represents how much more can be displayed. The
+			scrollbar will be set visible only if there is hidden content.
+		-->
+		<method name="updateScrollerPosition" args="e=null">
+			<![CDATA[
+				var pageSize = this.grid.endIndex - this.grid.startIndex + 1;
+
+				//set scrollbar visibility
+				var moreObjectsThanView = false;
+				if (this.grid["oList"] && this.grid.oList["filteredObjects"]) {
+					moreObjectsThanView = this.grid.oList.filteredObjects.length > this.grid.oList.getViewsLength();
+				}
+				this.setAttribute("visible", moreObjectsThanView || this.grid.content.rowparent.height > this.grid.content.height);
+				
+				//set downArrow Y, if it hasn't changed
+				var newDownArrowY = this.height - this.downArrow.height;
+				if (this.downArrow.y != newDownArrowY) {
+					this.downArrow.setAttribute("y",newDownArrowY);
+				}
+				
+				this.scroller.setAttribute("height", getScrollerHeight(pageSize));
+				
+				var newY = ((this.grid.startIndex / this.grid.numberOfItems) * getMaxScrollerHeight()) - this.startIndexYOffset + this.upArrow.height
+				
+				// Adjust the y-position when some content is already scrolled up and the last row is the
+				// last item
+				if (this.grid.content.rowparent.y < 0 && this.grid.endIndex == (this.grid.numberOfItems - 1)) {
+					this.startIndexYOffset = newY - (this.downArrow.y - this.scroller.height);
+					newY = (this.downArrow.y - this.scroller.height);
+				}
+				else {
+					this.startIndexYOffset = 0;
+				}
+				
+				if (newY < this.upArrow.height) {
+					newY = this.upArrow.height;
+				}
+								
+				this.scroller.setAttribute("y", newY);
+			]]>
+		</method>
+		
+		<method name="upClick">
+			<![CDATA[
+				this.grid.setStartIndex(this.grid.startIndex-1);
+				//this.updateScrollerPosition();
+			]]>
+		</method>
+		
+		<method name="downClick">
+			<![CDATA[
+				this.grid.setEndIndex(this.grid.endIndex+1);
+				//this.updateScrollerPosition();
+			]]>
+		</method>
+		
+		<handler name="onmousewheeldelta" reference="lz.Keys" args="k">
+			<![CDATA[
+			if(this['visible']){
+				if(wcfViewUtil.isMouseOver(this.grid) && wcfViewUtil.containedInModalView(this.grid)){
+					if (k < 0) {
+						this.grid.setEndIndex(this.grid.endIndex-Math.round(k-0.5));
+					}
+					else if(k > 0) {
+						this.grid.setStartIndex(this.grid.startIndex-Math.round(k+0.5));
+					}
+				}
+			}
+			]]>
+		</handler>
+		
+		<basebuttonrepeater name="scrollback" resource="verticalScrollBack" height="${parent.height}" stretches="height">
+
+			<handler name="onmousestilldown">
+				<![CDATA[
+				this.pageScroll();
+				]]>
+			</handler>
+
+			<handler name="onmousedown">
+				<![CDATA[
+				this.pageScroll();
+				]]>
+			</handler>
+			
+			<!---
+				@keywords private
+				Display the previous page of rows.
+			-->
+			<method name="pageUp">
+				<![CDATA[
+				if(wcfViewUtil.containedInModalView(classroot.grid) && classroot.grid.oList.filteredObjects.length > 0){
+					classroot.grid.setEndIndex(classroot.grid.startIndex - 1);
+				}
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Display the next page of rows.
+			-->
+			<method name="pageDown">
+				<![CDATA[
+				if(wcfViewUtil.containedInModalView(classroot.grid) && classroot.grid.oList.filteredObjects.length > 0){
+					classroot.grid.setStartIndex(classroot.grid.endIndex + 1);
+				}
+				]]>
+			</method>
+			
+			<method name="pageScroll">
+				<![CDATA[
+				var mouseY = classroot.getMouse("y");
+				if (mouseY < classroot.scroller.y) {
+					this.pageUp();
+				}
+				else if (mouseY > (classroot.scroller.y + classroot.scroller.height)) {
+					this.pageDown();
+				}
+				]]>
+			</method>
+		</basebuttonrepeater>
+		
+		<basebuttonrepeater name="upArrow"
+			y="0"
+			resource="verticalScrollUpArrow"
+			normalResourceNumber="1"
+			overResourceNumber="2">
+			<handler name="onmousestilldown">
+				classroot.upClick();
+			</handler>
+			<handler name="onmousedown">
+				classroot.upClick();
+			</handler>
+		</basebuttonrepeater>
+
+		<basebuttonrepeater name="downArrow"
+			resource="verticalScrollDownArrow"
+			normalResourceNumber="1"
+			overResourceNumber="2">
+			<handler name="onmousestilldown">
+				classroot.downClick();
+			</handler>
+			<handler name="onmousedown">
+				classroot.downClick();
+			</handler>
+		</basebuttonrepeater>
+		
+		<view name="scroller"
+			width="${parent.width}"
+			height="10">
+		
+			<view name="scrollerTop"
+				align="center"
+				y="0"
+				resource="verticalScrollerTop"/>
+				
+			<view name="scrollerBottom"	
+				align="center"
+				y="${parent.height-this.height}"
+				resource="verticalScrollerBottom"/>
+			
+			<view name="scrollerMid"
+				align="center"
+				y="${parent.scrollerTop.height}"
+				height="${parent.height-parent.scrollerTop.height-parent.scrollerBottom.height}"
+				resource="verticalScrollerMid"
+				stretches="height"
+				onmouseover="this.setAttribute('frame', 2)"
+				onmouseout="this.setAttribute('frame', 1)">
+				
+				<handler name="onmousedown">
+					parent.startDragging();
+	    		</handler>	
+				
+				<handler name="onmouseup">
+					parent.stopDragging();
+				</handler>	
+			</view>
+			
+			<method name="startDragging" args="e=null">
+				if (classroot.grid.panel) {
+					classroot.grid.panel.lockAvailableCalcs();
+				}
+			    this.deltaY = canvas.getMouse("y") - this.getAttributeRelative("y", canvas);
+				this.dragging = true;
+				this._y1 = this.y;
+				this._time1 = (new Date()).getTime();
+				lz.Cursor.lock();
+				classroot.updateScrollerPositionDel.unregisterAll();
+			    this.dragger.setAttribute('applied', true);
+			</method>
+			
+			<method name="stopDragging" args="e=null">
+				this.dragging = false;
+				lz.Cursor.unlock();
+				this.dragger.setAttribute('applied', false);
+				classroot.updateScrollerPositionDel.register(classroot.grid, "onupdateIndices");
+				classroot.updateScrollerPositionDel.register(classroot, "onheight");
+				this.updateGrid();
+				if (classroot.grid.panel) {
+					classroot.grid.panel.unlockAvailableCalcs();
+				}
+			</method>
+			
+		  	<handler name="ony">
+				<![CDATA[
+					if (this["dragging"]) {
+						var deltaTime = (new Date()).getTime() - this._time1;
+						if (deltaTime > 0 && (Math.abs(this.y - this._y1) * 1000 / deltaTime) < 200) {
+							this.updateGrid();
+						}
+						this._y1 = this.y;
+						this._time1 = (new Date()).getTime();
+					}
+				]]>
+			</handler>
+			
+			<method name="updateGrid">
+				<![CDATA[
+					if ((this.y - classroot.upArrow.height) <= 0) {
+						classroot.grid.setStartIndex(-1);
+					}
+					else if ((this.y + this.height) >= classroot.downArrow.y) {
+						classroot.grid.setStartIndex(classroot.grid.numberOfItems-1);
+					}
+					else {
+						classroot.grid.setStartIndex(Math.round((this.y + classroot.startIndexYOffset - classroot.upArrow.height) * classroot.grid.numberOfItems / (classroot.downArrow.y - classroot.upArrow.height)) );
+					}
+				]]>
+			</method>
+ 				
+			<method name="checkDrag" args="mouseY">
+				<![CDATA[
+				if (mouseY < classroot.upArrow.height) {
+					return classroot.upArrow.height;
+				}
+				else if ((mouseY+this.height) > classroot.downArrow.y) {
+					return classroot.downArrow.y-this.height;
+				}
+				return mouseY;
+				]]>
+			</method>
+			
+			<state name="dragger">
+			    <attribute name="y" value="${this.checkDrag(parent.getMouse('y')-this.deltaY)}"/>
+			</state>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Grid filter selector.
+	-->
+	<class name="wcfGridFilterSelector" extends="wcfBaseComboBox">
+		<!---
+			Reference to object grid instance.
+		-->
+		<attribute name="grid"/>
+		<!---
+			Current model object list.
+		-->
+		<attribute name="oList"/>
+		<!---
+			Show all filter.
+		-->
+		<attribute name="showAllFilter" value="null"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfGridFilterSelector", "init");				
+			}
+			super.init();
+			var filters = this.grid.filters;
+			this.showAllFilter = new lz.wcfGridShowAllFilter(this);
+			this.addValue(this.showAllFilter);
+			for (var i = 0;	i < filters.length; i++) {
+				this.addValue(filters[i]);
+			}
+			this.resetFilterDel = new lz.Delegate(this, "resetFilter");
+			this.resetFilter();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfGridFilterSelector", "init");				
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.resetFilterDel.unregisterAll();
+			delete this.resetFilterDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Handle changes to the model object list.
+		-->
+		<handler name="onoList">
+			<![CDATA[
+			this.resetFilter();
+			]]>
+		</handler>
+
+		<!---
+			Handle selection of a new value.
+		-->
+		<handler name="onselectedValue">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfGridFilterSelector", "onselectedValue");				
+			}	
+			if (this.grid["oList"]) {
+				if (this.selectedValue == this.showAllFilter) {
+					this.grid.oList.setAttribute("filterList", []);
+				}
+				else {
+					this.grid.oList.setAttribute("filterList", [ this.selectedValue ]);
+				}
+				this.grid.resetColumnFilters();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfGridFilterSelector", "onselectedValue");				
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Resets the filter to its default value.
+		-->
+		<method name="resetFilter" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfGridFilterSelector", "resetFilter");				
+			}			
+			this.resetFilterDel.unregisterAll();
+			if (this.oList.filterList.length == 0) {
+				this.setAttribute("selectedValue", this.grid.defaultFilter == null ? this.showAllFilter : this.grid.defaultFilter);				
+			}
+			this.resetFilterDel.register(this.oList, "onfilterList");
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfGridFilterSelector", "resetFilter");				
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		"Show all" item in grid filter.
+	-->
+	<class name="wcfGridShowAllFilter" extends="node">
+		<!---
+			Display name.
+		-->
+		<attribute name="displayName" value="${foundationResources.gridFilterShowAll.string}"/>
+	</class>
+		
+	<!---
+		@keywords abstract
+		<p>
+		The wcfObjectGrid class is the base class for all business object list views. wcfObjectGrid must not be instantiated directly.
+		Definitions that extend wcfObjectGrid may be declared as the "listDefinitionName" attribute of definitions that extend from
+		{@link wcfChildListViewer}, {@link wcfChildListEditor}, {@link wcfPropertyChildListEditor}, {@link wcfSearchDefinition},
+		{@link wcfReferenceList} and {@link wcfPropertyReferenceList}. The framework will determine when the list view is required and instantiate the specified wcfObjectGrid
+		definition to display a list of business objects. The grid instance will create a row for every object in the list of business objects.
+		</p><p>
+		Grid columns are defined by declaring instances of {@link wcfGridColumn} as children of the wcfObjectGrid definition.
+		Each column displays an attribute or property of that object.  A grid can also include a filter selector. Filters are defined by
+		declaring instances of {@link wcfFilter} as children of the wcfObjectGrid instance. If no filters are declared, then the filter
+		selector will not be visible.
+		</p><p>
+		The following example demonstrates the declaration of a grid definition that will display a list of catalog entries columns.
+		When an instance of this grid is created, it will use the specified preference key to load the
+		grid preferences for the current user. The grid includes columns that display the object type
+		and some catalog entry properties. The grid will display a filter selector at the top that will
+		allow the user to select between the declared filters.
+		</p>
+		@START_CODE
+		    <ObjectGrid definitionName="catCatalogEntrySearchGrid" preferenceKey="catCatalogEntrySearchGrid">
+		        <GridIconTypeImage name="typeIcon" propertyName="null" text="${catalogResources.productType_ColumnHeader}"
+		                visible="true" required="true" width="60" sortable="false"/>
+		        <GridText editable="true" name="partnumber" propertyName="partnumber" required="true"
+		                text="${catalogResources.productPartnumber_ColumnHeader}" visible="true" width="90"/>
+		        <GridRichText name="lDesc" objectPath="CatalogEntryDescription" propertyName="lDesc"
+		                text="${catalogResources.productLongDesc_ColumnHeader}" visible="false" width="200"/>
+		        <GridImage name="thumbnailImage" objectPath="CatalogEntryDescription" propertyName="tImage"
+		                text="${catalogResources.productThumbnail_ColumnHeader}" visible="true" sortable="false"/>
+		        <GridCheckbox trueValue="1" falseValue="0" name="xdesc_published" objectPath="CatalogEntryDescription"
+		                propertyName="xdesc_published" text="${catalogResources.productPublished_ColumnHeader}"
+		                visible="true" width="140" alignment="center"/>
+
+		        <ObjectTypeFilter displayName="${catalogResources.catalogEntryGridFilter_Products}"
+		                objectTypes="Product"/>
+		        <ObjectTypeFilter displayName="${catalogResources.catalogEntryGridFilter_SKUs}"
+		                objectTypes="SKU"/>
+		    </ObjectGrid>
+		@END_CODE
+		<p>	
+		In the example below a search definition is defined and the listDefinitionName attribute is set to the class catCatalogEntrySearchGrid created in the
+		example above.  This will generate a list of search results for search type Kits to display inside the catCatalogEntrySearchGrid.
+		@START_CODE	
+		<SearchDefinition definitionName="catFindKitsSearchDefinition"
+				searchType="FindKits"
+				displayName="${catalogResources.findKitsSearchDefinition_DisplayName}"
+				isDefault="false"
+				listDefinitionName="catCatalogEntrySearchGrid"
+				listTitle="${catalogResources.catalogGroupChildListTitle}">
+			<SearchService name="findKits" url="/cmc/FindKits">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="masterCatalogId"/>
+			</SearchService>
+		</SearchDefinition>
+		@END_CODE	
+		</p>		
+		@see wcfGridColumn
+		@see wcfFilter
+	-->
+	<class name="wcfObjectGrid" extends="wcfGrid" objectClass="wcfGridRow" showPrefixColumn="${this.editable}">
+		<!---
+			@keywords private
+			Model instance for this view {@link wcfModelObject} used to change actived state.
+		-->
+		<attribute name="model" value="null"/>
+		<!---
+			@keywords private
+			Indicates that this grid is the active selection view. When activated is true button and shortcut key actions
+			will be applied to currently selected object within this grid view.
+		-->
+		<attribute name="activated" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Array of drag sources used when objects are selected and dragged
+		-->
+		<attribute name="objectDragSources" value="null"/>
+		<!---
+			@keywords private
+			Array of pooled drag sources that are available for re-use.
+		-->
+		<attribute name="availableObjectDragSources" value="${[]}"/>
+		<!---
+			@keywords private
+			Indicates that this grid currently has registered shortcut keys.
+		-->
+		<attribute name="registeredShortcutKeys" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Indicates that cells in this grid can be edited.
+		-->
+		<attribute name="editable" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Indicates that drag action is enabled.
+		-->
+		<attribute name="dragEnabled" type="boolean" value="true"/>
+				
+		<!--- @keywords private -->
+        <handler name="onconstruct">
+			<![CDATA[
+			this.model = wcfModelUtil.findModelForView(this);
+			]]>
+        </handler>
+
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+			super.postCreateDefinitionChildren();
+			this.updateActivatedDel = new lz.Delegate(this, "updateActivated");
+			this.updateActivatedDel.register(this.model, "onactiveSelectionView");
+
+			this.updateLanguageColumnsDel = new lz.Delegate(this, "updateLanguageColumns");
+			this.oView = wcfModelUtil.findObjectView(this);
+			
+			this.nextRowDel = new lz.Delegate(this, "nextRow");
+			this.prevRowDel = new lz.Delegate(this, "prevRow");
+			this.focusCellDel = new lz.Delegate(this, "focusCell");
+			
+			this.updateLanguageColumns();
+			
+			if (this.panel == null) {
+				this.setAttribute("activated", true);
+			}
+			if(!this.editable){
+				for (var i = 0; i < this.columns.length; i++) {
+					var column = this.columns[i];
+					if (column.editable){
+						column.setAttribute("editable", false);
+					}
+				}
+			}
+			if (this.sortingOff) {
+				for (var i = 0; i < this.columns.length; i++) {
+					var column = this.columns[i];
+					if (column.sortable){
+						column.setAttribute("sortable", false);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateLanguageColumnsDel.unregisterAll();
+			delete this.updateLanguageColumnsDel;
+			this.updateActivatedDel.unregisterAll();
+			delete this.updateActivatedDel;
+			if (this["resetDragSourcesDel"]) {
+				this.resetDragSourcesDel.unregisterAll();
+				delete this.resetDragSourcesDel;
+			}
+			if (this["checkTabDel"]) {
+				this.checkTabDel.unregisterAll();
+				delete this.checkTabDel;
+			}
+			this.nextRowDel.unregisterAll();
+			delete this.nextRowDel;
+			this.prevRowDel.unregisterAll();
+			delete this.prevRowDel;
+			this.focusCellDel.unregisterAll();
+			delete this.focusCellDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="keyDown" args="code">
+			<![CDATA[
+			switch (code) {
+				case 33:
+					this.pageUp();
+					break;
+				case 34:
+					this.pageDown();
+					break;
+				case 35:
+					this.end();
+					break;
+				case 36:
+					this.home();
+					break;
+				case 37:
+					this.left();
+					break;
+				case 38:
+					if (lz.Keys.isKeyDown("shift") && this.multiSelect) {
+						this.selectUp();
+					}else {
+						this.up();
+					}
+					break;
+				case 39:
+					this.right();
+					break;
+				case 40:
+					if (lz.Keys.isKeyDown("shift") && this.multiSelect) {
+						this.selectDown();
+					}else {
+						this.down();
+					}
+					break;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sets this view as the active selection view and registers the shortcut keys.
+		-->
+		<method name="updateActivated" args="e=null">
+			<![CDATA[
+			if (this.panel != null) {
+				this.setAttribute("activated", this.model.activeSelectionView == this);
+				this.checkShortcutKeys();
+				if (this.activated && !wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+					this.restoreFocus();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check whether the selected objects has any column editable.
+		-->
+		<method name="isEditColumnEnabled" args="del">
+			<![CDATA[
+			var actionEnabled = false;
+			var selectedObjects = this.getSelectedObjects();
+			if (this.editable && selectedObjects && selectedObjects.length > 0) {
+				for (var i=0; i<this.columns.length; i++) {
+					var column = this.columns[i];
+					if (del) {
+						del.register(column, "onvisible");
+					}
+					if (column.visible && column.editable && column["columnEditorClass"]) {
+						actionEnabled = true;
+						break;
+					}
+				}
+			}
+			return actionEnabled;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Checks whether find is enabled. 
+		-->
+		<method name="isFindEnabled" args="del">
+			<![CDATA[
+			var actionEnabled = false;
+			if (this.findable && this.editable) {
+				for (var i=0; i<this.columns.length; i++) {
+					var column = this.columns[i];
+					if (del) {
+						del.register(column, "onvisible");
+					}
+					if (column.visible && column.editable && column.findable) {
+						actionEnabled = true;
+						break;
+					}
+				}
+			}
+			return actionEnabled;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check the short cut keys and register/unregister as necessary.
+		-->
+		<method name="checkShortcutKeys">
+			<![CDATA[
+			if (this.activated) {
+				if (!this.registeredShortcutKeys) {
+					this.nextRowDel.register(lz.Keys, "onkeydown");
+					this.prevRowDel.register(lz.Keys, "onkeydown");					
+					this.setAttribute("registeredShortcutKeys", true);
+				}
+			}
+			else {
+				if (this.registeredShortcutKeys) {
+					this.nextRowDel.unregisterAll();
+					this.prevRowDel.unregisterAll();
+					this.setAttribute("registeredShortcutKeys", false);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Display the previous page of rows.
+		-->
+		<method name="pageUp" args="e=null">
+			<![CDATA[
+			if(this.currentObject != null){
+				this.showObjectInView(this.currentObject);
+				var relativeIndex = this.endIndex - this.oList.filteredObjects.indexOf(this.currentObject);
+				var start = this.startIndex;
+				this.setEndIndex(start - 1);
+				if (start == 0) {
+					relativeIndex = 0;
+				}
+				else {		
+					relativeIndex =  Math.max(this.endIndex - relativeIndex,0);
+				}
+				
+				var newRow = this.locateRow(this.oList.filteredObjects[relativeIndex]);
+				if(newRow == null){
+					newRow = this.locateRow(this.oList.filteredObjects[this.startIndex]);
+				}
+				this.moveToRow(newRow);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Display the next page of rows.
+		-->
+		<method name="pageDown" args="e=null">
+			<![CDATA[
+			if(this.currentObject != null){
+				this.showObjectInView(this.currentObject);
+				var relativeIndex = this.oList.filteredObjects.indexOf(this.currentObject) - this.startIndex;
+				var end = this.endIndex;
+				this.setStartIndex(end + 1);
+				if (end == this.oList.filteredObjects.length - 1) {
+					relativeIndex = end;
+				}
+				else {
+					relativeIndex = Math.min(relativeIndex + this.startIndex, this.oList.filteredObjects.length - 1);
+				}
+				
+				var newRow = this.locateRow(this.oList.filteredObjects[relativeIndex]);
+				if (newRow == null) {
+					newRow = this.locateRow(this.oList.filteredObjects[this.endIndex]);
+				}
+				this.moveToRow(newRow);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Display the end row.
+		-->
+		<method name="end" args="e=null">
+			<![CDATA[
+			if(this.currentObject != null){
+				var o = this.oList.filteredObjects[this.oList.filteredObjects.length - 1];
+				this.showObjectInView(o);
+				var newRow = this.locateRow(o);
+				this.moveToRow(newRow);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Display the first row.
+		-->
+		<method name="home" args="e=null">
+			<![CDATA[
+			if(this.currentObject != null){
+				var o = this.oList.filteredObjects[0];
+				this.showObjectInView(o);
+				var newRow = this.locateRow(o);
+				this.moveToRow(newRow);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sets this view as the active selection view.
+		-->
+		<handler name="onmousedown">
+			<![CDATA[
+			if (this.panel != null) {
+				this.model.setAttribute("activeSelectionView", this);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			This method will call the updateLanguageColumns method inside {@link wcfGridColumn} for each
+			column that is language sensitive.
+		-->
+		<method name="updateLanguageColumns" args="e=null">
+			<![CDATA[
+			this.updateLanguageColumnsDel.unregisterAll();
+			if(this.oView) {
+				this.updateLanguageColumnsDel.register(this.oView, "ono");
+				var o = this.oView.o;
+				if (o != null) {
+					wcfContextUtil.findContextValue(o, "inputLanguageIds", this.updateLanguageColumnsDel);
+				}
+			}
+			else {
+				wcfContextUtil.findContextValue(this.model.oEditor, "inputLanguageIds", this.updateLanguageColumnsDel);
+			}
+			var languageColumns = [];
+			for (var i = 0; i < this.columns.length; i++) {
+				var column = this.columns[i];
+				if (column.languageSensitive) {
+					languageColumns.push(column);
+				}
+			}
+			for (var i = 0; i < languageColumns.length; i++) {
+				languageColumns[i].updateLanguageColumns();
+			}
+			this.refresh();
+			this.updateColumnOrder();
+			]]>
+		</method>
+		
+		
+		<!---
+			@keywords private
+			Move focus to the same cell on the next row if enter was pressed.
+			@param Number kc: The keycode for the key that is down.
+		-->
+		<method name="nextRow" args="kc">
+			<![CDATA[
+			// This method is called on every key down. Only go to the next row if enter was pressed when neither the control or the shift key is down
+			if (kc != 13 || lz.Keys.isKeyDown('shift') || lz.Keys.isKeyDown('control')) {
+				return;			
+			}
+					
+			if (this.multiSelect && this.currentObject == null && this.oList.filteredObjects.length > 0) {
+				var v = lz.Focus.getFocus();
+				if (wcfViewUtil.containsView(this, v)) {
+					var cell = null;
+					var col = null;
+					var objects = this.oList.filteredObjects;
+					var objectIndex = objects.length;
+					while (v.parent != this) {
+						v = v.parent;
+						if (v instanceof lz.wcfGridCell) {
+							if (v["editor"]) {
+								lz.Focus.clearFocus();
+								cell = v;
+								col = v.column;
+								objectIndex = v.row._objectIndex + 1;		
+							}				
+							break;
+						}
+					}
+					if (col != null) {
+						while (objectIndex < objects.length) {
+							if (col.isEditable(objects[objectIndex])) {
+								this.showObjectInView(objects[objectIndex]);
+								var row = this.locateRow(objects[objectIndex]);
+								cell = row.getCell(col);
+								break;
+							}
+							objectIndex++;
+						}
+						if (cell != null) {
+							wcfCallbackUtil.addDeferredCallback(this.focusCellDel, cell, wcfCallbackUtil.PRIORITY_FOREGROUND);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Move focus to the same cell on the previous row if enter was pressed and shift is down.
+			@param Number kc: The keycode for the key that is down.
+		-->
+		<method name="prevRow" args="kc">
+			<![CDATA[
+			// This method is called on every key down. Only go to the previous row if enter was pressed when shift is down			 
+			if (kc != 13 || !lz.Keys.isKeyDown('shift')) {
+				return;			
+			}
+			
+			if (this.multiSelect && this.currentObject == null && this.oList.filteredObjects.length > 0) {
+				var v = lz.Focus.getFocus();
+				if (wcfViewUtil.containsView(this, v)) {
+					var cell = null;
+					var col = null;
+					var objects = this.oList.filteredObjects;
+					var objectIndex = -1;
+					while (v.parent != this) {
+						v = v.parent;
+						if (v instanceof lz.wcfGridCell) {
+							if (v["editor"]) {
+								lz.Focus.clearFocus();
+								cell = v;
+								col = v.column;
+								objectIndex = v.row._objectIndex - 1;
+							}						
+							break;
+						}
+					}
+					if (col != null) {
+						while (objectIndex >= 0) {
+							if (col.isEditable(objects[objectIndex])) {
+								this.showObjectInView(objects[objectIndex]);
+								var row = this.locateRow(objects[objectIndex]);
+								cell = row.getCell(col);
+								break;
+							}
+							objectIndex--;
+						}
+						if (cell != null) {
+							wcfCallbackUtil.addDeferredCallback(this.focusCellDel, cell, wcfCallbackUtil.PRIORITY_FOREGROUND);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set focus on the specified cell.
+		-->
+		<method name="focusCell" args="cell">
+			<![CDATA[
+			if (cell["editor"]) {
+				lz.Focus.setFocus(cell.editor, false);
+			}
+			else {
+				lz.Focus.setFocus(cell.row, false);
+			}
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			Check if paste is enabled for this grid. This method delegates the check to the grid's parent.
+			@return boolean: true if the "paste" action is allowed
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+			return parent["isPasteEnabled"] ? parent.isPasteEnabled() : false;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Perform paste for this grid. This method delegates the paste action to the grid's parent.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			if (parent["doPaste"]) {
+				parent.doPaste();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if delete is enabled for this grid. This method delegates the check to the grid's parent.
+		-->
+		<method name="isDeleteEnabled">
+			<![CDATA[
+			return parent["isDeleteEnabled"] ? parent.isDeleteEnabled() : false;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Perform delete for this grid. This method delegates the delete action to the grid's parent.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+			if (parent["doDelete"]) {
+				parent.doDelete();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if sequence up is enabled for this grid. This method delegates the check to the grid's parent.
+		-->
+		<method name="isSequenceUpEnabled">
+			<![CDATA[
+			return parent["isSequenceUpEnabled"] ? parent.isSequenceUpEnabled() : false;			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Perform sequence up for this grid. This method delegates the sequence up action to the grid's parent.
+		-->
+		<method name="doSequenceUp">
+			<![CDATA[
+			if (parent["doSequenceUp"]) {
+				parent.doSequenceUp();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if sequence down is enabled for this grid. This method delegates the check to the grid's parent.
+		-->
+		<method name="isSequenceDownEnabled">
+			<![CDATA[
+			return parent["isSequenceDownEnabled"] ? parent.isSequenceDownEnabled() : false;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Perform sequence down for this grid. This method delegates the sequence down action to the grid's parent.
+		-->
+		<method name="doSequenceDown">
+			<![CDATA[
+			if (parent["doSequenceDown"]) {
+				parent.doSequenceDown();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the custom services available for this grid. This method delegates to the grid's parent to
+			get the list of custom services.
+			@return array: Array of wcfCustomService instances.
+		-->
+		<method name="getCustomServices">
+			<![CDATA[
+			var customServices;
+			if (parent["getCustomServices"]) {
+				customServices = parent.getCustomServices();
+			}
+			else {
+				customServices = [];
+			}
+			return customServices;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the client actions available for this grid. This method delegates to the grid's parent to
+			get the list of client actions.
+			@return array: Array of wcfClientAction instances.
+		-->
+		<method name="getClientActions">
+			<![CDATA[
+			var clientActions;
+			if (parent["getClientActions"]) {
+				clientActions = parent.getClientActions();
+			}
+			else {
+				clientActions = [];
+			}
+			return clientActions;
+			]]>
+		</method>
+		
+		
+		<!---
+			@keywords private
+			Show an object in the properties view pane.	This is for paging and scrolling, as the business user
+			navigates through a large list of grid rows, not all objects can be displayed at once.  This method
+			manages the visibility of the object.		
+			@param wcfModelObject o: object to display in properties view.
+			@param boolean setFocus: if true, set the focus of object o in it's own properties view.
+				Else, set the focus in the first visible cell for o.
+		-->		
+		<method name="showObjectInView" args="o, setFocus=false">
+			<![CDATA[
+			this.oList.showObjectInView(o);
+			if (this.content.rowparent.height > this.availableHeight) {
+				if (o == this.oList.getView(this.oList.getViewsLength()-1)["o"]) {
+					this.content.rowparent.setAttribute("y", this.availableHeight - this.content.rowparent.height);					
+				}
+				else if (o == this.oList.getView(0)["o"]) {
+					this.content.rowparent.setAttribute("y", 0);				
+				}
+			}
+			else {
+				this.content.rowparent.setAttribute("y", 0);
+			}
+
+			if (setFocus) {
+			
+				// set focus to new object properties view
+				if (o.objectDefinition.openGroupTop && o.objectDefinition.propertiesClass != null) {
+					o.model.oEditor.selectOpenObject(o);		
+				
+				// select new row and set focus on the first editable cell
+				} else {
+					this.selectObject(o);
+					var row = this.locateRow(o);
+					var cells = row.cells;
+					for (var i = 0; i < cells.length; ++i) {
+						var cell = cells[i];
+						if (cell["editor"] && cell.editor.visible) {
+							lz.Focus.setFocus(cell.editor, false);
+							break;
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Locate the row that represents the given object. Returns null if no such row is found.
+			@param wcfModelObject o: the model object
+			@return wcfGridRow: the row for this object
+		-->
+		<method name="locateRow" args="o">
+			<![CDATA[
+			var rows = this.getRows();
+			for (var i = 0; i < rows.length; i++) {
+				if (rows[i].o == o) {
+					return rows[i];
+				}
+			}
+			return null;
+		 	]]>
+		 </method>
+
+		<!---
+			@keywords private
+			
+			Returns the left most visible column.
+			@return wcfGridColumn: left most visible column.		
+		-->
+		<method name="getFirstVisibleColumn">
+			<![CDATA[
+			var columns = this.columns;
+			for(var i = 0; i < columns.length; ++i){
+				if(columns[i].visible){
+					return columns[i];
+				}
+			}
+			return null;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Returns the right most visible column
+			@return wcfGridColumn: right most visible column.			
+		-->
+		<method name="getLastVisibleColumn">
+			<![CDATA[
+			var columns = this.columns;
+			for(var i = columns.length - 1; i >= 0; --i){
+				if(columns[i].visible){
+					return columns[i];
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Move to the specified row 
+		-->
+		<method name="moveToRow" args="row">
+			<![CDATA[
+			if(this.multiSelect){
+				lz.Focus.setFocus(row, false);
+			}else{
+				row.select();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Move the focus up one row
+		-->
+		<method name="up">
+			<![CDATA[
+			if (this.currentObject != null) {
+				var o = this.currentObject;
+				var oIndex = this.oList.filteredObjects.indexOf(o);
+				if (oIndex > 0) {
+					o = this.oList.filteredObjects[oIndex - 1];
+					this.showObjectInView(o);
+					var newRow = this.locateRow(o);
+					this.moveToRow(newRow);
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			Move the focus down one row
+		-->
+		<method name="down">
+			<![CDATA[
+			if (this.currentObject != null) {
+				var o = this.currentObject;
+				var oIndex = this.oList.filteredObjects.indexOf(o);
+				if (oIndex + 1 < this.oList.filteredObjects.length) {
+					o = this.oList.filteredObjects[oIndex + 1];
+					this.showObjectInView(o);
+					var newRow = this.locateRow(o);
+					this.moveToRow(newRow);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Move to the next focused cell left
+			@return wcfGridCell: the focused cell left
+		-->
+		<method name="left">
+			<![CDATA[
+			this.borderView.horizontalScroll.setPosRelative(-Math.floor(this.borderView.clippedContent.width / 2));
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Move to the next focused cell right
+			@return wcfGridCell: the focused cell right
+		-->
+		<method name="right">
+			<![CDATA[
+			this.borderView.horizontalScroll.setPosRelative(Math.floor(this.borderView.clippedContent.width / 2));
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			
+			Select a the next row above while keeping current selections
+		-->
+		<method name="selectUp">
+			<![CDATA[
+			if (this.currentObject != null) {
+				var selector = this.content.rowparent.selector;
+				selector.setAttribute("rangeSelect", true);
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				this.up();
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				selector.setAttribute("rangeSelect", false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Select a the next row below while keeping current selections
+		-->
+		<method name="selectDown">
+			<![CDATA[
+			if (this.currentObject != null) {
+				var selector = this.content.rowparent.selector;
+				selector.setAttribute("rangeSelect", true);
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				this.down();
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				selector.setAttribute("rangeSelect", false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Reset the array of drag sources.
+		-->
+		<method name="resetDragSources" args="e=null">
+			<![CDATA[
+			this.resetDragSourcesDel.unregisterAll();
+			if (this.objectDragSources != null) {
+				while (this.objectDragSources.length > 0) {
+					var dragSource = this.objectDragSources.shift();
+					if (dragSource.dragObject == null) {
+						dragSource.o = null;
+						this.availableObjectDragSources.push(dragSource);
+					}
+				}
+				this.objectDragSources = null;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Returns array of draggable sources.
+			@return array: draggable sources.
+		-->
+		<method name="getDragSources">
+			<![CDATA[
+			if (this.objectDragSources == null) {
+				var selector = this.content.rowparent.selector;
+				this.objectDragSources = [];
+				var objects = selector.getSelectedObjects();
+				var hasViewDragSource = false;
+				for (var i = 0; i < objects.length; i++) {
+					var dragSource = null;
+				
+					var objectView = selector.getObjectView(objects[i]);
+					if (objectView != null) {
+						dragSource = objectView["dragSource"];
+						hasViewDragSource = true;
+					}
+
+					if (dragSource == null) {
+						if (this.availableObjectDragSources.length > 0) {
+							dragSource = this.availableObjectDragSources.shift();
+						}
+						else {
+							dragSource = new lz.wcfGridObjectDragSource(this, {dragParent: this});
+						}
+						dragSource.o = objects[i];
+					}
+				
+					this.objectDragSources.push(dragSource);
+				}
+				if (this["resetDragSourcesDel"]) {
+					this.resetDragSourcesDel.unregisterAll();
+				}
+				else {
+					this.resetDragSourcesDel = new lz.Delegate(this, "resetDragSources");
+				}
+				this.resetDragSourcesDel.register(selector, "onselectedObjects");
+				if (hasViewDragSource) {
+					this.resetDragSourcesDel.register(this.oList, "objectViewsUpdated");
+				}
+			}
+			return this.objectDragSources;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the error message from the first visible cell that contains an error
+			@param lz.Delegate del This method will register the specified delegate to be called if the returned error changes.
+			
+			@return string The error message
+		-->
+		<method name="getFirstError" args="del">
+			<![CDATA[
+			if(this.editable){
+				if (!this["oList"]) {
+					if (del) {
+						del.register(this, "onoList");
+					}
+				}
+				else {
+					var rowIndex = 0;
+					var row = this.oList.getView(0);
+					var columns = this.columns;
+					if (del) {
+						del.register(this.oList, "objectViewsUpdated");
+					}
+					while (row) {
+						for (var i = 0; i < row.cells.length; i++) {
+							var cell = row.cells[i];
+							var column = cell.column;
+							if (del) {
+								del.register(column, "onvisible");
+							}
+							if (column.visible){
+								if(cell["property"] && cell.column.isEditable(cell.row.o)){
+									if (del) {
+										del.register(cell.property, "onvalidationErrors");
+									}
+									var validationErrors = cell.property.getValidationErrors();
+									if (validationErrors != null && validationErrors.length > 0) {
+										return validationErrors[0];
+									}
+								}
+							}
+						}
+						rowIndex++;
+						row = this.oList.getView(rowIndex);
+					}
+				}
+			}
+			return null;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handles ondblclick action from the row.  This method will open the objects property view.
+			@param modelObject o: The object to activate.
+		-->
+		<method name="activateObject" args="o">
+			<![CDATA[
+			o.doOpen();
+			]]>
+		</method>
+		
+		<!---
+			Handle focus change.
+		-->
+		<handler name="onfocus" reference="lz.Focus">
+			<![CDATA[
+			if (this["checkTabDel"]) {
+				this.checkTabDel.unregisterAll();
+			}
+			else {
+				this.checkTabDel = new lz.Delegate(this, "checkTab");
+			}
+			var v = lz.Focus.getFocus();
+			if (wcfViewUtil.containsView(this, v)) {
+				if (v instanceof lz.wcfGridRow) {
+					if (lz.Keys.isKeyDown("tab")) {
+						this.selectRow(v);
+					}
+				}
+				else {
+					while (v.parent != this) {
+						v = v.parent;
+						if (v instanceof lz.wcfGridCell) {
+							this.selectRow(v.row);
+							v.column.show();
+							this.checkTabDel.register(lz.Focus.getFocus(), "onkeydown");
+							break;
+						}
+					}
+				}
+			}
+			]]>
+		</handler>
+		
+		<method name="checkTab" args="key">
+			<![CDATA[
+			if (key == lz.Keys.keyCodes.tab && !lz.Keys.isKeyDown("shift")) {
+				var v = lz.Focus.getFocus();
+				var nextView = lz.Focus.getNext(v);
+				while (v.parent != this) {
+					v = v.parent;
+					if (v instanceof lz.wcfGridRow) {
+						if (!wcfViewUtil.containsView(v, nextView)) {
+							if (v._objectIndex + 1 < this.oList.filteredObjects.length) {
+								var o = this.oList.filteredObjects[v._objectIndex + 1];
+								this.showObjectInView(o);
+							}
+						}
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfGridObjectDragSource" extends="wcfBaseDragSource">
+		<attribute name="o" value="null"/>
+		
+		<!---
+			@keywords private
+		-->	
+		<method name="getDragableView" args="dragger">
+			<![CDATA[
+			return null;
+			]]>
+		</method>
+	</class>	
+	
+	<!---
+		@keywords private
+		
+		Message viewer class for internal use by the grid column to display messages.
+		
+		Extends openlaszlo's {@OLlink text}.
+	-->
+	<class name="wcfMessageViewer" extends="text" resize="true" multiline="true">
+		<!--- A string for the message text -->
+		<attribute name="messageText" value="" type="string" setter="setMessageText(messageText)"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.updateFGColorDel = new lz.Delegate(this, "updateFGColor");
+			this.updateFGColorDel.register(parent.row, "onselected");
+			this.updateFGColorDel.register(parent, "onfocused");
+			this.updateFGColor();
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateFGColorDel.unregisterAll();
+			delete this.updateFGColorDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Update the foreground color.
+		-->
+		<method name="updateFGColor" args="e=null">
+			<![CDATA[
+			var c = parent.style["textcolor"];
+			if (parent.focused) {
+				c = parent.style["texthilitecolor"];
+			}
+			else if (parent.row.selected) {
+				c = parent.style["textselectedcolor"];
+			}
+			this.setAttribute("fgcolor", c);
+			]]>
+		</method>
+		
+		<!---
+			Sets the text of this viewer to the message text
+			@param string newMessageText: new message text associated with this text box
+		-->
+		<method name="setMessageText" args="newMesssageText">
+			<![CDATA[
+			if (this["messageText"] != newMesssageText) {
+				this.messageText = newMesssageText;
+				this.setAttribute("text", this.messageText);
+			}
+			]]>
+		</method>
+		
+		<layout name="viewerLayout">
+			<!--- @keywords private -->
+			<method name="init">
+				<![CDATA[
+				super.init();
+				this.updateDelegate.register(parent.immediateparent, "onavailableWidth");
+				this.updateDelegate.register(parent, "ontext");
+				]]>
+			</method>
+			
+			<!---
+				@keywords private
+				Update the cell layout.
+			-->
+			<method name="update" args="e=null">
+				<![CDATA[
+				if (!this.locked) {
+					this.lock();
+					var newWidth = parent.getTextWidth() + 1;
+					var availableWidth = parent.immediateparent.availableWidth;
+					if (availableWidth < 75) {
+						availableWidth = 75;
+					}
+					if (newWidth > availableWidth) {
+						newWidth = availableWidth;
+					}
+					if (parent.width != newWidth) {
+						parent.setAttribute("width", newWidth);
+					}
+			        this.locked = false;
+				}
+				]]>
+			</method>
+		</layout>
+	</class>
+
+	<!---
+		@keywords private
+		Grid utilities methods
+	-->
+	<node id="wcfGridUtil">
+		
+		<!---
+			Swap the reference of 2 items in an array
+			@a Array: target array
+			@i1 number: first index in the the target array
+			@i2 number: second index in the target array
+		-->		
+		<method name="swap" args="a, i1, i2">
+			<![CDATA[	
+			var temp = a[i2]
+			a[i2] = a[i1];
+			a[i1] = temp;
+			]]>
+		</method>
+
+	</node>
+	
+</library>

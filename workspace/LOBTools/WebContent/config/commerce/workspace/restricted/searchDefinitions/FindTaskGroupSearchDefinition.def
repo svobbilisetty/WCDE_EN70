@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<!---
+		This search is used to find {@link TaskGroup}. The search retrieves objects that match the search term. The search term text is compared with the values of the following properties:
+			<ul>
+			<li>taskGroupId
+			<li>name
+			<li>dueDate
+			<li>status
+			</ul>
+	 -->
+	<SearchDefinition advancedSearchContentClass="wspTaskGroupAdvancedSearchContent" definitionName="FindTaskGroups" displayName="${wspWorkspaceResources.taskGroup}" icon="taskGroupIcon" listDefinitionName="wspTaskGroupSearchResultGrid" listTitle="${wspWorkspaceResources.taskGroupSearchTitle}" searchType="FindTaskGroups" tooltip="${wspWorkspaceResources.searchTaskGroupTooltip}" objectTypeDisplayName="${wspWorkspaceResources.taskGroup}">
+		<EnablementOrCondition>
+			<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+			<EnablementCondition contextName="workspaceApprover" enablementValue="true" />
+		</EnablementOrCondition>	
+		<SearchService name="findTaskGroups" url="/cmc/FindTaskGroups" >
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</SearchService>
+	</SearchDefinition>
+</Definitions>	

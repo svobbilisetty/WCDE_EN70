@@ -1,0 +1,257 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>	
+	
+	 <!---
+    	@keywords private
+    	Search Service to get the list of operators support to string type
+    -->
+    <wcfService id="cftFindOperatorsForStringTypeService" url="/cmc/FindStringTypeOperators" retryOnError="true">
+
+        <method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+        	<![CDATA[
+			requestParent.setValues([]);
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                var operator = this.parseOperator(dataElement.childNodes[i]);
+                requestParent.addValue(operator);
+            }
+             if (requestParent.property != null) {
+			 	requestParent.selectItem(requestParent.property.value);
+			 }
+			]]>
+		</method>
+
+		<!---
+			Parses each catalog object.
+			@param XML dataElement: the child data element
+			@returns wcfCatalogSelection : a wcfCatalogSelection catalog object.
+		-->
+        <method name="parseOperator" args="dataElement"><![CDATA[
+			var operator = {};
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                var e = dataElement.childNodes[i];
+                if (e.nodeName == "displayName") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        operator.displayName = textNode.nodeValue;
+                    }
+                }
+                if (e.nodeName == "value") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        operator.value = textNode.nodeValue;
+                    }
+                }
+            }
+			return operator;
+			]]></method>
+    </wcfService>
+    
+	<!---
+    	@keywords private
+    	Search Service to get the list of operators support to string type
+    -->
+    <wcfService id="cftFindOperatorsForIntegerTypeService" url="/cmc/FindIntegerTypeOperators" retryOnError="true">
+
+        <method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+        	<![CDATA[
+			requestParent.setValues([]);
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                var operator = this.parseOperator(dataElement.childNodes[i]);
+                requestParent.addValue(operator);
+            }
+             if (requestParent.property != null) {
+			 	requestParent.selectItem(requestParent.property.value);
+			 }
+			]]>
+		</method>
+
+		<!---
+			Parses each catalog object.
+			@param XML dataElement: the child data element
+			@returns wcfCatalogSelection : a wcfCatalogSelection catalog object.
+		-->
+        <method name="parseOperator" args="dataElement"><![CDATA[
+			var operator = {};
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                var e = dataElement.childNodes[i];
+                if (e.nodeName == "displayName") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        operator.displayName = textNode.nodeValue;
+                    }
+                }
+                if (e.nodeName == "value") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        operator.value = textNode.nodeValue;
+                    }
+                }
+            }
+			return operator;
+			]]></method>
+    </wcfService>
+    
+    <!---
+    	@keywords private
+    	Search Service to get the list of operators support to integer type
+    -->
+    <wcfService id="cftFindPropertiesService" url="/cmc/FindFilterProperties" retryOnError="true">
+
+        <method name="parseObjects" args="requestParent, dataElement, hasMoreRecordsFlag, reqIdentifier, startIndex">
+        	<![CDATA[
+			requestParent.setValues([]);
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+//            	Debug.debug(dataElement.childNodes.length);
+                var property = this.parseProperty(dataElement.childNodes[i]);
+                requestParent.addValue(property);
+            }
+             if (requestParent.property != null) {
+			 	requestParent.selectItem(requestParent.property.value);
+			 }
+			]]>
+		</method>
+
+		<!---
+			Parses each catalog object.
+			@param XML dataElement: the child data element
+			@returns property : a catalog entry property object used by catalog filter
+		-->
+        <method name="parseProperty" args="dataElement"><![CDATA[
+			var property = {};
+            for (var i = 0; i < dataElement.childNodes.length; i++) {
+                var e = dataElement.childNodes[i];
+                if (e.nodeName == "displayName") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        property.displayName = textNode.nodeValue;
+                    }
+                }
+                if (e.nodeName == "type") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+                        property.type = textNode.nodeValue;
+                    }
+                }
+                if (e.nodeName == "value") {
+                    var textNode = e.firstChild;
+                    if (textNode != null && textNode.nodeType == 3) {
+//                    	Debug.debug(textNode.nodeValue);
+                        property.value = textNode.nodeValue;
+                    }
+                }
+            }
+			return property;
+			]]></method>
+    </wcfService>
+    
+	<class name="cftPropertyNameGridComboBox" extends="wcfGridColumn">
+		<!---
+			@keywords private
+			Use "wcfGridComboBoxViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridComboBoxViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridComboBoxEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="cftPropertyNameGridComboBoxEditor"/>
+		
+    </class>
+    
+    <class name="cftPropertyNameGridComboBoxEditor" extends="wcfGridComboBoxEditor">
+		
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			
+			if (this.values.length == 0){
+				cftFindPropertiesService.doRequest(this,{});
+			}
+			var value = this.property.value;
+			if (this.selectedValue == null || value != this.selectedValue.value) {
+				if (value != null && value != "") {
+					this.selectItem(value);
+				}
+				else {
+					this.clearSelection();
+				}
+			}
+			]]>
+		</method>
+		
+	</class>
+	
+	<class name="cftOperatorGridComboBox" extends="wcfGridColumn">
+		<!---
+			@keywords private
+			Use "wcfGridComboBoxViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridComboBoxViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridComboBoxEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="cftOperatorGridComboBoxEditor"/>
+		
+    </class>
+	
+	<class name="cftOperatorGridComboBoxEditor" extends="wcfGridComboBoxEditor">
+		
+		<handler name="oninit"><![CDATA[
+			
+			 var gridrow = this.parent.parent;
+			 var propertyNameCell = gridrow.cells[0];
+			 var propertyNameCellEditor = propertyNameCell.editor;
+			 
+			 this.updateOperatorsDel = new lz.Delegate(this, "updateOperators");
+			 this.updateOperatorsDel.register(propertyNameCellEditor, "onselectedValue");
+			 
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateOperatorsDel.unregisterAll();
+			delete this.updateOperatorsDel;
+			
+			super.destroy();
+			]]>
+		</method>
+		
+		<method name="updateOperators"  args="e=null">
+			<![CDATA[
+			
+			 var gridrow = this.parent.parent;
+			 var propertyNameCell = gridrow.cells[0];
+			 var propertyNameCellEditor = propertyNameCell.editor;
+			
+			 if (propertyNameCellEditor.selectedValue) {
+			 var type = propertyNameCellEditor.selectedValue.type;
+			 
+			 if (type == 'String') {
+			 	 cftFindOperatorsForStringTypeService.doRequest(this,{});
+			 } else if (type == 'Integer'){
+			 	 cftFindOperatorsForIntegerTypeService.doRequest(this,{});
+			 }
+			  if (this.property != null) {
+			 	this.selectItem(this.property.value);
+			 }
+			 }
+			]]>
+		</method>
+		
+	</class>
+	
+</library>

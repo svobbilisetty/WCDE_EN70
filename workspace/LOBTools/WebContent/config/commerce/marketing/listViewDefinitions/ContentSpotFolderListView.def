@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+ 
+	<!--
+            Defines the views to display top level folder, sub folders and the corresponding Content in the folders.
+            A list view lists objects in the form of a table, providing selected information about the object, within table cells.
+            For example, a list of folders showing the type, Store, Name, Description, etc.
+       -->
+<Definitions>
+      <!--- This grid displays the contents and characteristics of a list of top level ContentFolder Marketing folders}. -->
+      <ObjectGrid definitionName="mktTopContentFolderGrid" preferenceKey="mktContentFolderGrid">
+            <GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.ContentFolderType}" width="60"/>
+            <GridStoreName name="store" objectPath="ContentFolderGroup" propertyName="objectStoreId" text="${mktMarketingResources.ContentFolderStore}" width="125"/>
+            <GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId"  text="${mktMarketingResources.ContentFolderList_uniqueID}" visible="false" width="90"/>
+            <GridText editable="true" name="folderName" propertyName="identifier" required="true" text="${mktMarketingResources.ContentFolderList_identifier}" visible="true" width="180"/>
+            <GridText editable="true"  name="folderDescription" propertyName="description" text="${mktMarketingResources.ContentFolderList_description}" visible="true" width="350"/>          
+      </ObjectGrid>
+     
+      <!-- This child list editor shows a list of top level folders when the 'Content Folders' organizational node is selected in the navigation view. -->
+      <ChildListEditor definitionName="mktTopContentFolderGridEditor" listDefinitionName="mktTopContentFolderGrid" objectTypes="ContentFolder,InheritedContentFolder"/>
+     
+      <!--- This navigation list definition is used to display top level ContentFolder. -->
+      <NavigationListDefinition definitionName="mktTopContentFolderGridChildList" displayName="${mktMarketingResources.ContentFolderListMenuTitle}" listDefinitionName="mktTopContentFolderGridEditor" listTitle="${mktMarketingResources.ContentFolderListTitle}" toolbarIcon="folderListToolbarIcon"/>
+     
+      <!--- This grid displays the contents and characteristics of a list of ContentFolders -->
+      <ObjectGrid definitionName="mktContentFolderGrid" preferenceKey="mktContentFolderGrid">
+            <GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.ContentFolderType}" width="60"/>
+            <GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.ContentFolderStore}" width="125"/>
+            <GridText datatype="number" editable="false" name="uniqueID" propertyName="ContentFolderId" objectPath="ContentFolderGroup" text="${mktMarketingResources.ContentFolderList_uniqueID}" visible="false" width="90"/>
+            <GridText editable="true" name="folderName" propertyName="identifier" objectPath="ContentFolderGroup" required="true" text="${mktMarketingResources.ContentFolderList_identifier}" visible="true" width="180"/>
+            <GridText editable="true"  name="folderDescription" propertyName="description" objectPath="ContentFolderGroup" text="${mktMarketingResources.ContentFolderList_description}" visible="true" width="350"/>          
+      </ObjectGrid>
+     
+      <!-- This child list editor shows a list of Content folders that are children of a Content folder. -->
+      <ChildListEditor definitionName="mktContentFolderGridEditor" listDefinitionName="mktContentFolderGrid" objectTypes="ContentFolderReference,InheritedContentFolderReference"/>
+     
+      <!--- This navigation list definition is used to display ContentFolders -->
+      <NavigationListDefinition definitionName="mktContentFolderGridChildList" displayName="${mktMarketingResources.ContentFolderListMenuTitle}" listDefinitionName="mktContentFolderGridEditor" listTitle="${mktMarketingResources.ContentFolderListTitle}" toolbarIcon="listToolbarIcon"/>          
+     
+      <!--- This grid displays the contents and characteristics of a list of Contents-->
+      <ObjectGrid definitionName="mktContentFolderItemGrid" preferenceKey="mktMarketingContentGrid">
+            <GridIconTypeImage objectPath="MarketingContentGroup" name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+            <GridStoreName objectPath="MarketingContentGroup" name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+            <GridText objectPath="MarketingContentGroup" alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+            <GridText objectPath="MarketingContentGroup" editable="true" name="contentName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" width="200"/>
+            <GridComboBox objectPath="MarketingContentGroup" editable="false" enableFilter="true" name="format" propertyName="format" text="${mktMarketingResources.format}" width="125"/>
+            <GridText objectPath="MarketingContentGroup" editable="false" name="url" propertyName="url" text="${mktMarketingResources.url}" width="400"/>
+      </ObjectGrid>
+     
+      <!-- Child list editor to display Content in a folder. -->
+      <ChildListEditor definitionName="mktContentFolderItemGridEditor" listDefinitionName="mktContentFolderItemGrid" objectTypes="ContentFolderItemReference,ContentFolderInheritedItemReference,InheritedContentFolderInheritedItemReference"/>
+  
+   <!--- This navigation list definition is used to display Content Folder Item References} -->
+      <NavigationListDefinition definitionName="mktContentFolderItemGridChildList" displayName="${mktMarketingResources.ContentFolderItemListMenuTitle}" listDefinitionName="mktContentFolderItemGridEditor" listTitle="${mktMarketingResources.ContentFolderItemListTitle}" toolbarIcon="listToolbarIcon"/>
+           
+</Definitions>

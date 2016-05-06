@@ -1,0 +1,252 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	
+	<!---
+		Top object definition for the Page Layout business object editor tool. This object creates instances of the following
+		organizational objects:<ul>
+			<li>{@link PageLayoutsTop Page Layouts Organizational ObjectDefinition}</li>
+		</ul>
+	-->
+    <TopObjectDefinition definitionName="pglPageLayoutTopObjectDefinition">
+
+        <Xml name="template">
+        	<object objectType="PageLayoutsTop"/>
+        	<object objectType="StaticStorePagesTop"/>
+		</Xml>
+		<!--- Retrieves the {@link LayoutCatalog} child objects. -->
+		<GetChildrenService objectTypes="LayoutCatalog,InheritedLayoutCatalog" url="/cmc/GetLayoutMasterCatalog">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+		</GetChildrenService>
+
+		<!--- Retrieves the {@link LayoutSalesCatalog} child objects. -->
+		<GetChildrenService objectTypes="LayoutSalesCatalog,InheritedLayoutSalesCatalog" url="/cmc/GetLayoutSalesCatalogs">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+			
+			
+			
+	</TopObjectDefinition>
+	
+	<!---
+		Organizational object definition for the Page Layout node in the navigation tree. 
+	-->
+	<OrganizationalObjectDefinition definitionName="PageLayoutsTop" displayName="${pglPageLayoutResources.organizationalPageLayouts}" objectType="PageLayoutsTop">
+        <Xml name="template">
+        	<object objectType="HomePageLayoutsTop"/>
+        	<object objectType="TopCategoryPageLayoutsTop"/>
+        	<object objectType="CategoryPageLayoutsTop"/>
+        	<object objectType="ProductPageLayoutsTop"/>
+        	<object objectType="SKUPageLayoutsTop"/>	
+        	<object objectType="BundlePageLayoutsTop"/>
+        	<object objectType="KitPageLayoutsTop"/>
+        	<object objectType="DynamicKitPageLayoutsTop"/>
+        	<object objectType="HelpPageLayoutsTop"/>
+        	<object objectType="ContactUsPageLayoutsTop"/>
+        	<object objectType="ReturnPolicyPageLayoutsTop"/>
+        	<object objectType="PrivacyPolicyPageLayoutsTop"/>
+        	<object objectType="CorporateInfoPageLayoutsTop"/>
+        	<object objectType="CorporateContactUsPageLayoutsTop"/>
+        	<object objectType="SiteMapPageLayoutsTop"/>
+		</Xml>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Home Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="HomePageLayoutsTop" displayName="${pglPageLayoutResources.organizationalHomePageLayouts}" objectType="HomePageLayoutsTop" organizedObjectTypes="HomePageLayout,InheritedHomePageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="HomePage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglHomePageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for Top Category Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="TopCategoryPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalTopCategoryPageLayouts}" objectType="TopCategoryPageLayoutsTop" organizedObjectTypes="TopCategoryPageLayout,InheritedTopCategoryPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="TopCategoryPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglTopCategoryPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Category Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="CategoryPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalCategoryPageLayouts}" objectType="CategoryPageLayoutsTop" organizedObjectTypes="CategoryPageLayout,InheritedCategoryPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="CategoryPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglCategoryPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+
+	<!---
+		Organizational object definition for Product Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="ProductPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalProductPageLayouts}" objectType="ProductPageLayoutsTop" organizedObjectTypes="ProductPageLayout,InheritedProductPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="ProductPage"/>
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="pglProductPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+		
+	<!---
+		Organizational object definition for Bundle Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="BundlePageLayoutsTop" displayName="${pglPageLayoutResources.organizationalBundlePageLayouts}" objectType="BundlePageLayoutsTop" organizedObjectTypes="BundlePageLayout,InheritedBundlePageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="BundlePage"/>
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="pglBundlePageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Kit Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="KitPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalKitPageLayouts}" objectType="KitPageLayoutsTop" organizedObjectTypes="KitPageLayout,InheritedKitPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="StaticKitPage"/>
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="pglKitPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for DynamicKit Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="DynamicKitPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalDynamicKitPageLayouts}" objectType="DynamicKitPageLayoutsTop" organizedObjectTypes="DynamicKitPageLayout,InheritedDynamicKitPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="DynamicKitPage"/>
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="pglDynamicKitPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for SKU Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="SKUPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalSKUPageLayouts}" objectType="SKUPageLayoutsTop" organizedObjectTypes="SKUPageLayout,InheritedSKUPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="ItemPage"/>
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="pglSKUPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Help Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="HelpPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalHelpPageLayouts}" objectType="HelpPageLayoutsTop" organizedObjectTypes="HelpPageLayout,InheritedHelpPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="HelpPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglHelpPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Contact Us Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="ContactUsPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalContactUsPageLayouts}" objectType="ContactUsPageLayoutsTop" organizedObjectTypes="ContactUsPageLayout,InheritedContactUsPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="ContactUsPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglContactUsPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Return Policy Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="ReturnPolicyPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalReturnPolicyPageLayouts}" objectType="ReturnPolicyPageLayoutsTop" organizedObjectTypes="ReturnPolicyPageLayout,InheritedReturnPolicyPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="ReturnPolicyPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglReturnPolicyPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Privacy Policy Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="PrivacyPolicyPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalPrivacyPolicyPageLayouts}" objectType="PrivacyPolicyPageLayoutsTop" organizedObjectTypes="PrivacyPolicyPageLayout,InheritedPrivacyPolicyPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="PrivacyPolicyPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglPrivacyPolicyPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Corporate Info Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="CorporateInfoPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalCorporateInfoPageLayouts}" objectType="CorporateInfoPageLayoutsTop" organizedObjectTypes="CorporateInfoPageLayout,InheritedCorporateInfoPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="CorporateInfoPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglCorporateInfoPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Corporate Contact Us Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="CorporateContactUsPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalCorporateContactUsPageLayouts}" objectType="CorporateContactUsPageLayoutsTop" organizedObjectTypes="CorporateContactUsPageLayout,InheritedCorporateContactUsPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="CorporateContactUsPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglCorporateContactUsPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	
+	<!---
+		Organizational object definition for Site Map Page Layout node in the navigation tree.
+	-->
+	<OrganizationalObjectDefinition definitionName="SiteMapPageLayoutsTop" displayName="${pglPageLayoutResources.organizationalSiteMapPageLayouts}" objectType="SiteMapPageLayoutsTop" organizedObjectTypes="SiteMapPageLayout,InheritedSiteMapPageLayout" utilitiesListDefinitionName="pglPageLayoutBrowseGrid">
+		<GetChildrenService url="/cmc/GetPageLayoutChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageLayoutTypeId" value="SiteMapPage"/>
+		</GetChildrenService>
+		
+		<NavigationListDefinition baseDefinitionName="pglSiteMapPageLayoutGridChildList"/>
+	</OrganizationalObjectDefinition>
+	<!---
+		Organizational object definition for the Static Store Pages node in the navigation tree. 
+	-->
+	<OrganizationalObjectDefinition definitionName="StaticStorePagesTop" displayName="${pglPageLayoutResources.organizationalStaticStorePages}" objectType="StaticStorePagesTop" organizedObjectTypes="HomePage, InheritedHomePage">
+		<GetChildrenService url="/cmc/GetStaticStorePages">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+	</OrganizationalObjectDefinition>
+</Definitions>

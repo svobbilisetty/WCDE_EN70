@@ -1,0 +1,189 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktEventAndParametersElementObject} flow element.
+		The generated text is shown beneath the element on the Activity Builder flow diagram.
+	-->
+	<class name="mktEventAndParametersSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="parametersToMatch" propertyName="parametersToMatch"/>
+		<wcfFlowSummaryParam name="comparison" propertyName="comparison"/>
+		<wcfFlowSummaryParam name="eventName" propertyName="eventName"/>
+		<wcfFlowSummaryParam name="parameterOneName" propertyName="parameterOneName"/>
+		<wcfFlowSummaryParam name="parameterOneValueList" objectPath="parameterOneValue" propertyName="parameterOneValue"/>
+		<wcfFlowSummaryParam name="parameterTwoName" propertyName="parameterTwoName"/>
+		<wcfFlowSummaryParam name="parameterTwoValue" propertyName="parameterTwoValue"/>
+		<wcfFlowSummaryParam name="daysOperator" propertyName="daysOperator"/>
+		<wcfFlowSummaryParam name="days" propertyName="days"/>
+		<wcfFlowSummaryParam name="date1" propertyName="date1"/>
+		<wcfFlowSummaryParam name="date2" propertyName="date2"/>
+		<wcfFlowSummaryParam name="beforeDate" propertyName="beforeDate"/>
+		<wcfFlowSummaryParam name="beforeAfterOnDate" propertyName="beforeAfterOnDate"/>
+		<wcfFlowSummaryParam name="numberOfTimes" propertyName="numberOfTimes"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryEventAndParametersExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryEventAndParametersStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryEventAndParametersContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryEventAndParametersEndsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryEventAndParametersAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryEventAndParametersOptionalParameter, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWithinLastXDays, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedAtLeastXDaysAgo, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedBeforeXDate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedAfterXDate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedBetweenXandYDates, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedOnXDate, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var dateText = "";
+				
+				summaryText = this.getEventSummary();
+				dateText = this.getDateSummary();
+
+				if((dateText != "") && (summaryText != "")) {
+					summaryText += "\n" + dateText;
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getEventSummary">
+			<![CDATA[
+				var summary = "";
+				var eventName = this.resolvedParams["eventName"];
+				
+				if (eventName != null && eventName != "" && this.resolvedParams["numberOfTimes"] != "") {
+					var numberOfTimes = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfTimes"]);
+
+					var parameterOneName = this.resolvedParams["parameterOneName"];
+					var comparison = this.resolvedParams["comparison"];
+						
+					if ((parameterOneName != null) && (parameterOneName != "") && (comparison != null) && (comparison != "")) {
+					
+				  		var compText = "";
+				
+				  		switch(comparison) {
+							case "=":
+								compText = "Exactly";
+								break;
+							case "start":
+								compText = "StartsWith";
+								break;
+							case "contain":
+								compText = "Contains";
+								break;
+							case "end":
+								compText = "EndsWith";
+								break;
+							case "any":
+								compText = "Any";
+								break;
+				  		}
+					  	
+				  		var valueText = this.getValuesList("parameterOneValueList");
+					
+				  		if(((valueText != null) && (valueText != "")) || (compText == "Any")) {
+
+							summary = mktMarketingResources.replaceValues("summaryEventAndParameters" + compText, [eventName, numberOfTimes, parameterOneName, valueText]);
+							
+							var parametersToMatch = this.resolvedParams["parametersToMatch"];
+							if (parametersToMatch == "2") {
+								var	parameterText = this.getParameterSummary();
+								if((parameterText != "")) {
+									summary += "\n" + parameterText;
+								}
+							}
+				  		} // end valueText
+				  	} // end parameterOneName
+
+				} // end eventName
+			  
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getDateSummary">
+			<![CDATA[
+				var summary = "";
+
+				if (this.resolvedParams["daysOperator"] == "<=") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryPerformedWithinLastXDays", [days]);
+					}
+				}
+				else if (this.resolvedParams["daysOperator"] == ">") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryPerformedAtLeastXDaysAgo", [days]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "<") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"], wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedBeforeXDate", [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedAfterXDate", [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">=" && this.resolvedParams["beforeDate"] == "<=") {
+					if(this.resolvedParams["date1"] != "" && this.resolvedParams["date2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedBetweenXandYDates", [date1, date2]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "=") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedOnXDate", [date1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getParameterSummary">
+			<![CDATA[
+				var summary = "";
+
+				var parameterName = this.resolvedParams["parameterTwoName"];
+				var parameterValue = this.resolvedParams["parameterTwoValue"];
+
+				if ((parameterName != null) && (parameterName != "") && (parameterValue != null) && (parameterValue != "")) {
+					summary = mktMarketingResources.replaceValues("summaryEventAndParametersOptionalParameter", [parameterName, parameterValue]);
+				}	
+				return summary;
+			]]>
+		</method>
+				
+	</class>
+
+</library>

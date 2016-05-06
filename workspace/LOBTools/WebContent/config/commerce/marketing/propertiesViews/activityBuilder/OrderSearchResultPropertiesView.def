@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktOrderSearchResultElementObject Order Search Result action}.		
+	-->
+	<FlowElementProperties definitionName="mktOrderSearchResultProperties">
+
+		<PropertyGroup collapsable="false" name="orderSearchResultcriteria">
+			<PropertyRadioGroup helpText="${mktMarketingResources.help_orderSearchResultAction}" promptText="${mktMarketingResources.orderSearchResultAction}" propertyName="orderSearchResultChoice"/>
+
+			<PropertyGroup collapsable="false" name="orderSearchResultByRank">
+				<EnablementCondition conditionId="orderSearchResultRank" enablementValue="orderSearchResultRank" propertyName="orderSearchResultChoice"/>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_orderSearchResult_searchFilters}" listDefinitionName="mktRankGrid" 
+					name="rankEditor" objectTypes="mfName_ntk,partNumber_ntk,mfPartNumber_ntk,catenttype_id_ntk_cs,name,shortDescription,ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.orderSearchResult_searchFilters}" 
+					required="false" sequencePropertyName="sequence" validatorTypes="noRankingCriteriaSpecified"/>	
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="orderSearchResultBySort">
+				<EnablementCondition conditionId="orderSearchResultSort" enablementValue="orderSearchResultSort" propertyName="orderSearchResultChoice"/>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_orderSearchResult_orderBy}" listDefinitionName="mktOrderByGrid" 
+				name="orderByEditor" objectTypes="searchActionOrderBy" promptText="${mktMarketingResources.orderSearchResult_orderBy}" required="false"
+				sequencePropertyName="sequence" validatorTypes="sortCriteriaUniquenessValidator, noSortCriteriaSpecified"/>
+			</PropertyGroup>
+		</PropertyGroup>
+
+	</FlowElementProperties>
+	
+	<!---
+		Properties view for the {@link mktOrderSearchResultElementObjectV7FEP6 Order Search Result action}.		
+	-->
+	<FlowElementProperties definitionName="mktOrderSearchResultPropertiesV7FEP6">
+
+		<PropertyGroup collapsable="false" name="orderSearchResultcriteria">
+			<PropertyRadioGroup helpText="${mktMarketingResources.help_orderSearchResultActionV7FEP6}" promptText="${mktMarketingResources.orderSearchResultAction}" propertyName="orderSearchResultChoice"/>
+
+			<PropertyGroup collapsable="false" name="orderSearchResultByRank">
+				<EnablementCondition conditionId="orderSearchResultRank" enablementValue="orderSearchResultRank" propertyName="orderSearchResultChoice"/>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_orderSearchResult_searchFiltersV7FEP6}" listDefinitionName="mktRankGridV7FEP6" 
+					name="rankEditor" objectTypes="catalogEntryPropertySearchFilter,ChildAttributeWithAllowedValues,ChildInheritedAttributeWithAllowedValues,catenttype_id_ntk_cs,ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.orderSearchResult_searchFilters}" 
+					required="false" sequencePropertyName="sequence" validatorTypes="noRankingCriteriaSpecified"/>	
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="orderSearchResultBySort">
+				<EnablementCondition conditionId="orderSearchResultSort" enablementValue="orderSearchResultSort" propertyName="orderSearchResultChoice"/>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_orderSearchResult_orderBy}" listDefinitionName="mktOrderByCombinedGrid" 
+				name="orderByEditor" objectTypes="searchActionOrderBy" promptText="${mktMarketingResources.orderSearchResult_orderBy}" required="false"
+				sequencePropertyName="sequence" validatorTypes="sortCriteriaUniquenessValidator, noSortCriteriaSpecified"/>
+			</PropertyGroup>
+		</PropertyGroup>
+
+	</FlowElementProperties>
+</Definitions>

@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- DOCTYPE BusinessAuditDataCapture SYSTEM "BusinessAuditDataCapture.dtd" -->
+<BusinessAuditDataCapture>
+   <!-- This field is encrypted using the wcs_encrypt utility, and contains the key used for encrypting business audit data. -->
+   <AuditKey value="rZ15ws0ely9yHk3zCs3sTMv/ho8fY17s" />
+
+   <!-- Use the EventTypes section to define the possible event types and specify whether or not they are enabled. -->
+   <EventTypes>
+      <!-- Event types are used to group specific types of business logic. Each event type defines the the following event attributes:
+            - name: the name of the event
+            - enabled: whether or not auditing this event type is enabled
+            - (optional) default: whether or not this is the default configuration if a command is not associated with an event.
+               Valid values are true and false. The default is false.
+            - (optional) eventFactory: the factory class to use to generate the business audit event.
+               The default is com.ibm.commerce.event.businessaudit.BusinessAuditCommandExecutionEventFactory
+
+         - For each event, additional command context data (that is not part of the request header) can be captured.
+         Also, you can specify a set of attribute parameters to be excluded when the audit is performed.  The default
+         behaviour when no data is specified, <EventDataCapture/>, is to capture no additional command context information
+         and include all request parameters.
+
+         - Since events are a way to group specific types of business logic, there are five customizable search fields in
+         the BUSAUDIT database table can specify what parameter names should be sorted and in what search field position.
+         Based on the event type, these search fields will have some meaning and can be used for reporting purposes. By default
+         behaviour when no data is specified, <SearchFields/>,no attributes will be captured during a search. There are only
+         5 customizable search fields and valid position values is 0 to 4.
+
+         - Include Addtional audit attribute types to allow the command to add additional attributes to the audit, based on
+         some identifier string. The default is the command to not include additional information, <AdditionalAuditAttributeTypes/>.
+         For each attribute defined, the command will be called and should return additional information based on the identifier specified.
+
+       -->
+      <EventType name="GEN" enabled="true" default="true"
+         eventFactory="com.ibm.commerce.event.businessaudit.BusinessAuditCommandExecutionEventFactory">
+<!-- other eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionForUserEventFactory" -->
+<!-- other eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionAdminEventFactory" -->
+         <!-- the data to capture for this command for the general event type -->
+         <EventDataCapture>
+            <!-- if command context not specified, none of the attributes are logged.
+               this is additional parameters.  The values in the audit header will still
+               be taken from the command context -->
+            <CommandContext>
+               <ActivityId attributeName="activityId" capture="false" />
+               <Country attributeName="country" capture="false" />
+               <Currency attributeName="currency" capture="false" />
+               <CurrentTradingAgreements attributeName="currentTradingAgreements" capture="false" />
+               <DefaultDeviceFormat attributeName="defaultDeviceFormat" capture="false" />
+               <DeviceFormatId attributeName="deviceFormatId" capture="false" />
+               <DeviceFormatTypeId attributeName="deviceFormatTypeId" capture="false" />
+               <DeviceType attributeName="deviceType" capture="false" />
+               <EligibleTradingAgreementIds attributeName="eligibleTradingAgreementId" capture="false" />
+               <ExpiryDate attributeName="expiryDate" capture="false" />
+               <ForUserId attributeName="forUserId" capture="false" />
+               <ForStoreId attributeName="forStoreId" capture="false" />
+               <Language attributeName="language" capture="false" />
+               <LanguageId attributeName="languageId" capture="false" />
+               <Locale attributeName="locale" capture="false" />
+               <LogId attributeName="logId" capture="false" />
+               <OriginalUserId attributeName="originalUserId" capture="false" />
+               <PreferredCurrency attributeName="preferredCurrency" capture="false" />
+               <PreferredLanguage attributeName="preferredLanguage" capture="false" />
+               <RedirectionURL attributeName="redirectionURL" capture="false" />
+               <RemoteAddr attributeName="remoteAddr" capture="false" />
+               <RemoteHost attributeName="remoteHost" capture="false" />
+               <SessionTradingAgreementIdsAsString attributeName="sessionTradingAgreementsAsString" capture="false" />
+               <StoreId attributeName="storeId" capture="false" />
+               <Timestamp attributeName="timestamp" capture="false" />
+               <UniqueSessionTag attributeName="uniqueSessionTag" capture="false" />
+               <UserId attributeName="userId" capture="false" />
+               <ViewCommand attributeName="viewCommand" capture="false" />
+               <Webpath attributeName="webpath" capture="false" />
+            </CommandContext>
+            <!-- if exclude properties not specified, all attributes will be captured -->
+            <ExcludeProperties/>
+         </EventDataCapture>
+         <!-- search fields and addition audit attributes are not specified. -->
+         <SearchFields/>
+         <AdditionAuditAttributeTypes/>
+      </EventType>
+
+      <!-- The following configuration is for auditing payment related command for PCI purposes.  -->
+      
+            <!-- MEMBER AUDIT EVENTS -->
+      <EventType name="MBR" enabled="true"
+               eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionAdminEventFactory">
+<!--             eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionForUserEventFactory"> -->
+<!--             eventFactory="com.ibm.commerce.event.businessaudit..BusinessAuditCommandExecutionEventFactory"> -->
+         <EventDataCapture>
+            <ExcludeProperties>
+               <Attribute attributeName="logonPassword" />
+               <Attribute attributeName="logonPasswordVerify" />
+            </ExcludeProperties>
+         </EventDataCapture>
+         <!-- if search field not specified, none of the attributes can be used for searching -->
+         <SearchFields>
+            <Attribute attributeName="logonId" searchField="0" />
+         </SearchFields>
+         <AdditionAuditAttributeTypes/>
+      </EventType>
+      
+      <!-- ORDER AUDIT EVENTS -->
+      <!--
+         These events only will be captured when the forUserId is specified when the command is executed.
+         There are some additional command context information that will be record which some common
+         attributes for searching.
+       -->
+      <EventType name="ORD" enabled="false"
+               eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionAdminEventFactory">
+<!--             eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionForUserEventFactory"> -->
+<!--             eventFactory="com.ibm.commerce.event.businessaudit..BusinessAuditCommandExecutionEventFactory"> -->
+         <!-- if search field not specified, none of the attributes can be used for searching -->
+         <EventDataCapture>
+         	<ExcludeProperties/>
+         </EventDataCapture>
+         <SearchFields>
+            <Attribute attributeName="orderId" searchField="0" />
+            <Attribute attributeName="orderItemId" searchField="1" />
+            <Attribute attributeName="catEntryId_1" searchField="2" />
+            <Attribute attributeName="partNumber_1" searchField="3" />
+         </SearchFields>
+         <AdditionAuditAttributeTypes/>
+      </EventType>
+      
+      <EventType name="CSR" enabled="true"
+           eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionForUserEventFactory">
+<!--             eventFactory="com.ibm.commerce.event.businessaudit.BusinessAuditCommandExecutionEventFactory"> -->
+         <EventDataCapture>
+            <!-- if command context not specified, none of the attributes are logged.
+               this is additional parameters.  The values in the audit header will still
+               be taken from the command context -->
+            <CommandContext>
+               <ForStoreId attributeName="forStoreId" capture="true" />
+            </CommandContext>
+           	<ExcludeProperties/>
+         </EventDataCapture>
+         <!-- if search field not specified, none of the attributes can be used for searching -->
+         <SearchFields>
+            <Attribute attributeName="orderId" searchField="0" />
+            <Attribute attributeName="orderItemId" searchField="1" />
+         </SearchFields>
+         <AdditionAuditAttributeTypes/>
+      </EventType>
+
+      <!-- CONTRACT AUDIT EVENT -->
+      <EventType name="CON" enabled="true"
+                          eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionAdminEventFactory">
+         <EventDataCapture/>
+         <!-- if search field not specified, none of the attributes can be used for searching -->
+         <SearchFields>
+            <Attribute attributeName="contractId" searchField="0" />
+            <Attribute attributeName="fileName" searchField="1" />
+         </SearchFields>
+         <AdditionAuditAttributeTypes/>
+      </EventType>
+
+      <!-- CATALOG AUDIT EVENT -->
+      <EventType name="CAT" enabled="false"
+                          eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionAdminEventFactory">
+         <EventDataCapture/>
+         <!-- if search field not specified, none of the attributes can be used for searching -->
+         <SearchFields>
+            <Attribute attributeName="catalogId" searchField="0" />
+            <Attribute attributeName="catentryId" searchField="1" />
+            <Attribute attributeName="productId" searchField="2" />
+         </SearchFields>
+         <AdditionAuditAttributeTypes/>
+      </EventType>
+
+      <!-- CONTENET MANAGEMENT EVENT -->
+      <EventType name="CMR" enabled="false"
+                          eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionAdminEventFactory">
+         <SearchFields>
+            <Attribute attributeName="containterId" searchField="0" />
+            <Attribute attributeName="resourceManagerId" searchField="1" />
+         </SearchFields>
+      </EventType>
+   
+   <!-- TICKLER EVENT -->
+      <EventType name="TCK" enabled="false"
+                          eventFactory="com.ibm.commerce.event.businessaudit.eventfactory.BusinessAuditCommandExecutionAdminEventFactory">
+         <SearchFields>
+            <Attribute attributeName="ticklerId" searchField="0" />
+            <Attribute attributeName="ticklerReasonId" searchField="1" />            
+            <Attribute attributeName="ticklerObjectId" searchField="2" />            
+            <Attribute attributeName="ticklerActionId" searchField="3" />                                    
+         </SearchFields>
+      </EventType>
+      
+   </EventTypes>
+   
+   <!-- defines the auditable commands -->
+   <AuditCommands>
+
+      <!-- contract event type -->
+      <AuditCommand eventType="CON" command="com.ibm.commerce.account.commands.AccountDeleteCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.account.commands.AccountImportCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.account.commands.AccountSaveCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractCancelCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractCloseCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractCreateCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractDeleteCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractDeployCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractImportApprovedVersionCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractImportDraftVersionCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractNewVersionCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractRejectCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractResumeCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractSaveCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractSubmitPostApprovalCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractSubmitPostCancelCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractSubmitPostRejectCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractSubmitPreApprovalCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractSubmitResponseCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractSuspendCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractUnlockCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.ContractUpdateCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.PolicyAddCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.PolicyDeleteCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.commands.PolicyUpdateCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.tc.commands.ContractTCCreateCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.tc.commands.ContractTCDeleteCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.tc.commands.ContractTCDeployCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.tc.commands.ContractTCSaveCmd" audit="true"/>
+      <AuditCommand eventType="CON" command="com.ibm.commerce.contract.tc.commands.ContractTCUpdateCmd" audit="true"/>
+
+
+      <!-- order audit event type -->
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.AdminOrderCancelCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderCancelCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderProcessCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderProcessPostApprovalCmd" audit="false"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderProcessPostRejectCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.orderitems.commands.AddOrderItemComponentsCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.orderitems.commands.AdminOrderItemUpdateCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.orderitems.commands.AdminOrderItemUpdateCOCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSRCustomerAddressAddCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSREmailOrderCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSRGuestCustomerAddCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderAdjustmentUpdateCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderCancelCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderCommentsAddCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderCommentsNotifyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderCopyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderItemAddCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderItemAddressUpdateCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderItemDeleteCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderItemSplitCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderItemUpdateCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderPaymentBillingUpdateCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderPrepareCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderProcessCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderProductContractPriceCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderRollBackCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.order.commands.CSROrderStatusChangeCmd" audit="true"/>     
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.ordermanagement.commands.AdvancedOrderEditBeginCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.ordermanagement.commands.AdvancedOrderEditEndCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.ordermanagement.commands.OrderEditBusinessChannelCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.ServiceAdjustShippingChargesCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.returns.commands.ReturnCreateCmd" audit="true"/>
+
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.GetOrderPaymentInfoCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.SetOrderPaymentInfoCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.commands.CheckPaymentAcceptPMCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.requisitionlist.commands.RequisitionListSubmitCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderProcessCheckApprovalCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderProcessPreApprovalCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.ProcessOrderCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.PreProcessOrderCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.requisitionlist.commands.RequisitionListUpdateCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.commands.CheckCCNumberCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.commands.DoLuhnCheckCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.commands.DoPaymentCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.commands.DoPaymentPMCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.commands.DoPaymentMPFCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.commands.PaySynchronizePMCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.tools.optools.returns.commands.CSRDisplayRefundByOriginalPaymentCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderCopyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.orderitems.commands.OrderItemMoveCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.commands.OrderProfileUpdateCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.wcmpi.commands.SecureThreeDCmd" audit="true"/>
+
+      <!-- Payment Commands -->
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.CancelOrderCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.ChangePaymentCurrencyTaskCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.CheckOrderEditableTaskCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.CheckOrderPaymentAuthorizedCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.CheckOrderPaymentDepositedCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EditCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPCompleteOrderActivityHistoryBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPDepositableAmountProcessCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPPaymentActivityHistoryBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPPaymentInstructionActivityHistoryBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPPaymentInstructionsBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPPaymentMethodsBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPPaymentStatusBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPRefundInstructionsBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPRefundMethodsBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPRefundStatusBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EDPReleasesBeanCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.EvaluatePaymentRulesCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.FinalizePaymentCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.PICopyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.PrepareLineOfCreditPIsForEditPolicyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.PreparePIsForEditPolicyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.PrimePaymentCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.QueryPIsCmd" audit="true"/>
+
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.ReservePaymentCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.StoreAndValidatePaymentCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.SynchronizeOrderWithBackendCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.SynchronizeReturnWithBackendCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.edp.commands.TriggerPaymentActionsCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.actions.commands.DoPaymentActionsCompatiblePolicyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.actions.commands.DoPaymentActionsPolicyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.actions.commands.EditPaymentInstructionCompatiblePolicyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.actions.commands.EditPaymentInstructionPolicyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.actions.commands.PaymentEventPublisherCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.actions.commands.QueryPaymentsInfoCompatiblePolicyCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.actions.commands.QueryPaymentsInfoPolicyCmdImpl" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCGetCreditCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCGetPaymentCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCListCreditsForPICmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCListPaymentsForPICmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCListPendingCreditsForPluginCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCListPendingPaymentsForPluginCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCListPIsForOrderCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCListPIsForReturnCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.bean.commands.PPCPIExtendedDataCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.commands.PaymentActionProcessCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.commands.PaymentChangeFinancialObjectCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.commands.PaymentEntityGetCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.commands.PaymentProcessFinancialTransactionCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.commands.PPCCreditEditCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.commands.PPCPayInstExtendedEditCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.commands.PPCPaymentEditCmd" audit="true"/>
+
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.returns.commands.PrimeRefundCmd" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.returns.commands.FinalizeRefundCmd" audit="true"/>
+      
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.order.beans.OrderDataBean" audit="true"/>
+      <AuditCommand eventType="ORD" command="com.ibm.commerce.payment.ppc.beans.PPCPIExtendedDataDataBean" audit="true"/>
+
+      <AuditCommand eventType="CSR" command="com.ibm.commerce.edp.commands.PIAddCmd" audit="true"/>
+      <AuditCommand eventType="CSR" command="com.ibm.commerce.edp.commands.PIEditCmd" audit="true"/> 
+      <AuditCommand eventType="CSR" command="com.ibm.commerce.edp.commands.PIRemoveCmd" audit="true"/>
+      <AuditCommand eventType="CSR" command="com.ibm.commerce.order.commands.OrderCreateCmd" audit="true"/>
+      <AuditCommand eventType="CSR" command="com.ibm.commerce.orderitems.commands.OrderItemUpdateCmd" audit="true"/>
+      <AuditCommand eventType="CSR" command="com.ibm.commerce.orderitems.commands.OrderItemAddCmd" audit="true"/>
+      <AuditCommand eventType="CSR" command="com.ibm.commerce.orderitems.commands.OrderItemDeleteCmd" audit="true"/>
+      
+      <!-- member audit event type -->
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.tools.optools.user.commands.CSRCustomerEnableAccountCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.tools.optools.user.commands.CSRCustomerInfoCreateCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.tools.optools.user.commands.CSRCustomerInfoUpdateCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.MemberGroupMemberUpdateCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.MemberLockCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.MemberRoleAssignCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.MemberRoleUnassignCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.OrgEntityPolicySubscriptionAddCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.OrgEntityPolicySubscriptionRemoveCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.RoleAddCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.UserRegistrationAdminAddCmd" audit="true"/>
+      <AuditCommand eventType="MBR" command="com.ibm.commerce.usermanagement.commands.UserRegistrationAdminUpdateCmd" audit="true"/>
+
+      <!-- Tickler -->            
+      <AuditCommand eventType="TCK" command="com.ibm.commerce.tickler.commands.TicklerCreateCmd" audit="true"/>      
+      <AuditCommand eventType="TCK" command="com.ibm.commerce.tickler.commands.TicklerLockCmd" audit="true"/>
+      <AuditCommand eventType="TCK" command="com.ibm.commerce.tickler.commands.TicklerUnlockCmd" audit="true"/>
+      <AuditCommand eventType="TCK" command="com.ibm.commerce.tickler.commands.TicklerActionRecordCmd" audit="true"/>
+      <AuditCommand eventType="TCK" command="com.ibm.commerce.tickler.commands.TicklerAssignCmd" audit="true"/>   
+      
+   </AuditCommands>
+</BusinessAuditDataCapture>

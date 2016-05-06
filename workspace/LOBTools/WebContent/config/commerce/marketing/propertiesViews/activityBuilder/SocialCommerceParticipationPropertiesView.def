@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktSocialCommerceParticipationElementObject Social Commerce Participation target}.
+	-->
+	<FlowElementProperties definitionName="mktSocialCommerceParticipationProperties">
+		<PropertyGroup collapsable="false" name="container">
+
+			<MultiValueSelector name="anyOrAll" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+				<MultiValueSelection displayName="${mktMarketingResources.equals}" name="select1">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.notEquals}" name="select2">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>!=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+			
+			<MultiValueSelector helpText="${mktMarketingResources.help_socialActivityType}" name="activityType" promptText="${mktMarketingResources.socialActivityType}" useRadioButtons="false">
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_Any}" name="any">
+					<Xml name="values">
+						<comparison>any</comparison>
+						<socialActivityType>*</socialActivityType>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_Review}" name="review">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>review</socialActivityType>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_Comment}" name="comment">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>comment</socialActivityType>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_Photo}" name="photo">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>photo</socialActivityType>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_Blog}" name="blog">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>blog</socialActivityType>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_Recommendation}" name="recommendation">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>recommendation</socialActivityType>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_LikesHomepage}" name="likesHomepage">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>likesHomepage</socialActivityType>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_LikesProduct}" name="likesProduct">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>likesProduct</socialActivityType>
+					</Xml>
+				</MultiValueSelection>				
+				<MultiValueSelection displayName="${mktMarketingResources.socialActivityType_ReportInappropriate}" name="flagInappropriate">
+					<Xml name="values">
+						<comparison>=</comparison>
+						<socialActivityType>flagInappropriate</socialActivityType>
+					</Xml>
+				</MultiValueSelection>				
+			</MultiValueSelector>
+
+			<PropertyGroup collapsable="false" name="socialActivityReview">
+				<EnablementOrCondition conditionId="anyOrReview">
+					<EnablementCondition conditionId="socialActivityAny" enablementValue="*" propertyName="socialActivityType"/>
+					<EnablementCondition conditionId="socialActivityReview" enablementValue="review" propertyName="socialActivityType"/>
+				</EnablementOrCondition>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_socialActivityFilters}" listDefinitionName="mktSocialActivityFiltersGrid" 
+					name="reviewFilterEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup,rating,ChildCatentry,ChildInheritedCatentry,manufacturerName" promptText="${mktMarketingResources.socialActivityFilters}"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="socialActivityCommentPhotoBlogRecommendation">
+				<EnablementOrCondition conditionId="commentOrPhotoOrBlogOrRecommendation">
+					<EnablementCondition conditionId="socialActivityComment" enablementValue="comment" propertyName="socialActivityType"/>
+					<EnablementCondition conditionId="socialActivityPhoto" enablementValue="photo" propertyName="socialActivityType"/>
+					<EnablementCondition conditionId="socialActivityBlog" enablementValue="blog" propertyName="socialActivityType"/>
+					<EnablementCondition conditionId="socialActivityRecommendation" enablementValue="recommendation" propertyName="socialActivityType"/>
+				</EnablementOrCondition>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_socialActivityFilters}" listDefinitionName="mktSocialActivityFiltersGrid" 
+					name="commentFilterEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.socialActivityFilters}" alwaysShowNewButton="true"/>
+			</PropertyGroup>
+
+			<PropertyGroup collapsable="false" name="socialActivityLikesProduct">
+				<EnablementCondition conditionId="socialActivityLikesProductCond" enablementValue="likesProduct" propertyName="socialActivityType"/>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_socialActivityFilters}" listDefinitionName="mktSocialActivityFiltersGrid"
+                    name="likesFilterEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup,ChildCatentry,ChildInheritedCatentry,manufacturerName" promptText="${mktMarketingResources.socialActivityFilters}"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="frequencyGroup">
+				<EnablementCondition conditionId="numberOfTimesCondition1" enablementValue="likesHomepage" negate="true" propertyName="socialActivityType"/>
+				
+				<PropertyCombobox helpText="${mktMarketingResources.help_socialCommerce_frequency}" promptText="${mktMarketingResources.frequency}" propertyName="numberOfTimesOperator"/>
+				<PropertyStepper minimumValue="1" promptText="${mktMarketingResources.times}" propertyName="numberOfTimes"/>
+			</PropertyGroup>
+			
+			<BaseDateProperties helpText="${mktMarketingResources.help_timeframe_socialCommerce}" package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

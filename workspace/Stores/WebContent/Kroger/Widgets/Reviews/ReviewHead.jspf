@@ -1,0 +1,59 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<flow:ifEnabled feature="RatingReviewIntegration">
+
+<c:choose>
+	<c:when test="${reviewParameters.provider eq 'BV'}">
+	
+		<%-- Calculate the submission container page URL. --%>
+		<%-- Passing the Page URL to the BVSubmissionRedirect so it is leveraged in an IE Browser.
+		 Defect 219733, IE Breaks in scenario where user enters bad user d or password as it generated long
+		 URL that breaks IE 8.--%>
+		<wcf:url var="bvSubmissionUrl" value="BVSubmissionRedirect">
+			<wcf:param name="catalogId" value="${catalogId}"/>
+			<wcf:param name="storeId" value="${storeId}"/>
+			<wcf:param name="langId" value="${langId}"/>
+			<wcf:param name="scProductURL" value="${ProductDisplayURL}"/>
+		</wcf:url>		
+	    
+		<%-- Invoke BV API js script. --%>
+		<script type="text/javascript" src="${reviewParameters.bvApiUrl}" >
+		</script>
+
+		<%-- Set bvSubmissionReturnUrl and provide to Bazaarvoice in review submission. This because
+ 		in some cases the &krypto paramter is added to url breaking IE 8 because url to long.--%>
+		<c:set var="bvSubmissionReturnUrl" value="${ProductDisplayURL}" scope="request">   </c:set>
+
+		<script type="text/javascript">
+			<%-- Inform BV the submission URL --%>
+			$BV.configure("global", {
+			submissionContainerUrl: "${bvSubmissionUrl}",
+			submissionReturnUrl: "${bvSubmissionReturnUrl}"
+			});
+
+			<%--  Pass productId to BV. If item is SKU, ProductDisplay.jsp passes in the parentID --%>
+			$BV.ui("rr", "show_reviews", {
+			productId: "${catalogId}_${storeId}_${productId}",
+			doShowContent: function() {
+				if ( ProductTabJS != null ) {
+					ProductTabJS.selectTab('tab2');
+				}
+			}
+			});
+		</script>
+	</c:when>
+</c:choose>
+	
+</flow:ifEnabled>	

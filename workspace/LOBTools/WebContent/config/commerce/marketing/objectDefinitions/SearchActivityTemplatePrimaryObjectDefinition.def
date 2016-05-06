@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PrimaryObjectDefinition baseDefinitionName="mktBaseSearchActivityTemplatePrimaryObjectDefinition" compatibleObjectTypes="SearchActivity" creatable="true" definitionName="SearchActivityTemplate" objectType="SearchActivityTemplate">
+		
+		<CreateService url="/cmc/CreateActivity">
+			<ServiceParam name="storeId"/>
+		</CreateService>
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="mktBaseSearchActivityTemplatePrimaryObjectDefinition" compatibleObjectTypes="SearchActivity,SearchActivityTemplate" creatable="false" definitionName="InheritedSearchActivityTemplate" headerIcon="searchActivityTemplateInheritedHeaderIcon" icon="searchActivityTemplateInheritedIcon" objectType="InheritedSearchActivityTemplate"/>
+
+	<PrimaryObjectDefinition creatable="false" definitionName="mktBaseSearchActivityTemplatePrimaryObjectDefinition" displayName="${mktMarketingResources.searchActivityTemplate}" displayNameProperty="name" headerIcon="searchActivityTemplateHeaderIcon" helpLink="concepts/csbsearchtemplates.htm" icon="searchActivityTemplateIcon" idProperty="activityId" isBaseDefinition="true" newDisplayName="${mktMarketingResources.searchActivityTemplateNew}" newObjectMenuItemText="${mktMarketingResources.contextMenuNewSearchActivityTemplate}" objectGroups="ActivityTemplatesGroup,SearchActivityTemplatesGroup" propertiesDefinitionName="mktSearchActivityTemplateBuilder" searchType="FindSearchActivityTemplates" writeUsage="IBM_ManageMarketingTool">
+
+		<RefreshService url="/cmc/GetActivity">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="activityId" propertyName="activityId"/>
+		</RefreshService>
+		<!--- Retrieves the child {@link mktFlowElementObjectDefinition flow element} objects. -->
+		<GetChildrenService url="/cmc/GetActivityChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="activityId" propertyName="activityId"/>
+			<ServiceParam name="masterCatalogId"/>
+			<ServiceParam name="masterCatalogIdentifier"/>
+			<ServiceParam name="masterCatalogStoreId"/>
+		</GetChildrenService>
+		<UpdateService url="/cmc/SaveActivity">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="activityCondition" enablementValue="SearchActivityTemplate" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="activityCondition" enablementValue="InheritedSearchActivityTemplate" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="activityId" propertyName="activityId"/>
+		</UpdateService>
+		<DeleteService url="/cmc/DeleteActivity">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="activityCondition" enablementValue="SearchActivityTemplate" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="activityCondition" enablementValue="InheritedSearchActivityTemplate" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="activityId" propertyName="activityId"/>
+		</DeleteService>
+
+		<Xml name="template">
+			<activityType>Search</activityType>
+			<templateType>Open</templateType>
+			<repeatable>1</repeatable>
+			<priority>0</priority>
+			<object objectType="path">
+				<sequence>0</sequence>
+				<name>rootPath</name>
+				<object objectType="viewSearchEMarketingSpot">
+					<sequence>1000</sequence>
+				</object>
+			</object>
+		</Xml>
+		
+		<CreateNewObjectTypeFromObjectClientAction displayName="${mktMarketingResources.createSearchRuleFromSearchTemplate}" package="mkt" targetObjectType="SearchActivity"/>
+		
+		<FlowElementObjectDefinition baseDefinitionName="mktFlowPathElementObject" isTopElement="true" package="mkt"/>
+
+		<PropertyDefinition copyProtected="true" propertyName="templateType"/>
+		<PropertyDefinition copyProtected="true" displayName="${mktMarketingResources.objectName}" maximumSize="64" propertyName="name" required="true" trim="true"/>
+		<PropertyDefinition displayName="${mktMarketingResources.description}" maximumSize="254" propertyName="description"/>
+		<PropertyDefinition displayName="${mktMarketingResources.priority}" maxValue="1000" minValue="0" propertyName="priority" type="number"/>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.startDate}" propertyName="startdate" type="datetime"/>
+		<PropertyDefinition displayName="${mktMarketingResources.endDate}" propertyName="enddate" type="datetime"/>
+		<StartDateEndDateValidator endDatePropertyName="enddate" startDatePropertyName="startdate" validatorId="dateValidator"/>
+	</PrimaryObjectDefinition>
+	
+</Definitions>

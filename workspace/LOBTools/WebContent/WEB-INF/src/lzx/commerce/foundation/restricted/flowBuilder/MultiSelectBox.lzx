@@ -1,0 +1,140 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!--- @keywords private -->
+	<class name="wcfMultiSelectBox" visible="false" opacity="0.2" bgcolor="blue" options="ignorelayout">
+
+		<!--- @keywords private -->
+		<attribute name="selectArea" value="null"/>
+	
+		<!--- @keywords private -->
+		<attribute name="selecting" type="boolean" value="false"/>
+		<!--- @keywords private -->
+		<attribute name="enabled" type="boolean" value="true"/>
+		<!--- @keywords private -->
+		<attribute name="callback" value="null"/>
+
+		<handler name="oninit">
+			this.trackMouseDel = new lz.Delegate(this, "trackMouse");
+			this.mouseDownDel = new lz.Delegate(this, "mouseDown"); 
+			this.mouseUpDel = new lz.Delegate(this, "mouseUp"); 
+			
+			if (this.selectArea) {
+				this.selectArea.setAttribute("clickable", true);
+				this.mouseDownDel.register(this.selectArea, "onmousedown");
+			}
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			super.destroy();
+			this.trackMouseDel.unregisterAll();
+			delete this.trackMouseDel;
+			
+			this.mouseDownDel.unregisterAll();
+			delete this.mouseDownDel;
+			
+			this.mouseUpDel.unregisterAll();
+			delete this.mouseUpDel;
+		</method>
+		
+		<handler name="onmouseover" reference="selectArea">
+			lz.Cursor.showHandCursor(false);
+		</handler>
+		
+		<handler name="onmouseout" reference="selectArea">
+			lz.Cursor.showHandCursor(true);
+		</handler>
+		
+		<handler name="onselectArea">
+			this.mouseDownDel.unregisterAll();
+			if (this.selectArea) {
+				this.mouseDownDel.register(this.selectArea, "onmousedown");
+			}
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="mouseDown" args="e=null">
+			if (this.enabled) {
+				this.startX = canvas.getMouse("x");
+				this.startY = canvas.getMouse("y");
+				
+				this.trackMouseDel.register(lz.Idle, "onidle");
+				this.mouseUpDel.register(lz.GlobalMouse, "onmouseup");
+			}
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="mouseUp" args="e=null">
+			this.trackMouseDel.unregisterAll();
+			this.mouseUpDel.unregisterAll();
+			if (this.selecting) {
+				this.selecting = false;
+				if (this.callback) {
+					this.callback.selectAreaCreated();
+				}
+				this.setAttribute("visible", false);
+			}
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="trackMouse" args="e=null">
+			<![CDATA[
+				if (this.selecting) {
+					var mouseX = canvas.getMouse("x");
+					var mouseY = canvas.getMouse("y");
+					
+					var newX = 0;
+					var newY = 0;
+					var newWidth = 0;
+					var newHeight = 0;
+	
+					if (mouseX > this.startX) {
+						newX = this.startX;
+						newWidth = mouseX - this.startX;
+					}
+					else {
+						newX = mouseX;
+						newWidth = this.startX - mouseX;
+					}
+					
+					if (mouseY > this.startY) {
+						newY = this.startY;
+						newHeight = mouseY - this.startY;
+					}
+					else {
+						newY = mouseY;
+						newHeight = this.startY - mouseY;
+					}
+					
+					this.setAttribute('x', newX);
+					this.setAttribute('y', newY);
+					this.setAttribute('width', newWidth);
+					this.setAttribute('height', newHeight);
+				}
+				else if (this.startX != canvas.getMouse("x") || this.startY != canvas.getMouse("y")) {
+					this.selecting = true;
+					this.setAttribute('x', this.startX);
+					this.setAttribute('y', this.startY);
+					this.setAttribute('width', 0);
+					this.setAttribute('height', 0);
+					this.setAttribute("visible", true);
+				}
+			]]>
+		</method>
+		
+	</class>
+	
+</library>

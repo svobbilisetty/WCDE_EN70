@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<!---
+		@keywords private
+	-->
+	<PropertyPane definitionName="wspTaskPropertiesPane">
+		<PropertyGroup name="taskPropertiesGroupForUpdate" collapsable="false">
+			<PropertyViewLongText promptText="${wspWorkspaceResources.taskIdentifier}" propertyName="taskIdentifier"/>
+			<PropertyInputText helpText="${wspWorkspaceResources.taskNameTooltip}" promptText="${wspWorkspaceResources.taskName}" propertyName="taskName" required="true"/>
+			<PropertyInputMultiLineText helpText="${wspWorkspaceResources.taskDescriptionTooltip}" promptText="${wspWorkspaceResources.taskDescription}" propertyName="taskDescription"/>
+			<PropertyDatePicker helpText="${wspWorkspaceResources.dueDateToolkit}" promptText="${wspWorkspaceResources.dueDate}" propertyName="dueDate"/>
+			<PropertyDateTimePicker helpText="${wspWorkspaceResources.dateCompletedTooltip}" promptText="${wspWorkspaceResources.completionDate}" propertyName="completionDate">
+				<FalseEnablementCondition/>
+			</PropertyDateTimePicker>
+			<PropertyDateTimePicker helpText="${wspWorkspaceResources.dateApprovedTooltip}" promptText="${wspWorkspaceResources.approvalDate}" propertyName="approvalDate">
+				<FalseEnablementCondition/>
+			</PropertyDateTimePicker>
+			<PropertyGroup name="contributorEditorGroup" collapsable="false">
+				<EnablementOrCondition>
+					<EnablementCondition contextName="workspaceManager" enablementValue="true"/>
+					<EnablementCondition contextName="workspaceApprover" enablementValue="true"/>
+				</EnablementOrCondition>
+				<PropertyChildListEditor listDefinitionName="wspContributorGrid" name="contributorEditor" objectTypes="ContributorAssociation" promptText="${wspWorkspaceResources.contributorPromptText}" />
+			</PropertyGroup>
+			<PropertyInputText helpText="${wspWorkspaceResources.taskGroupNameTooltip}" parentProperty="true" parentType="TaskGroup" promptText="${wspWorkspaceResources.taskTaskGroupName}" propertyName="taskGroupName">
+				<FalseEnablementCondition/>
+			</PropertyInputText>
+			<PropertyInputText helpText="${wspWorkspaceResources.workspaceNameTooltip}" parentProperty="true" parentType="Workspace" promptText="${wspWorkspaceResources.taskWorkspaceName}" propertyName="wrkspcName">
+				<FalseEnablementCondition/>
+			</PropertyInputText>
+			<EnablementCondition propertyName="taskId" enablementValue="" negate="true"/>
+		</PropertyGroup>
+		<PropertyGroup name="taskPropertiesGroupForCreate" collapsable="false">
+			<PropertyInputText helpText="${wspWorkspaceResources.taskNameTooltip}" promptText="${wspWorkspaceResources.taskName}" propertyName="taskName" required="true"/>
+			<PropertyInputMultiLineText helpText="${wspWorkspaceResources.taskDescriptionTooltip}" promptText="${wspWorkspaceResources.taskDescription}" propertyName="taskDescription"/>
+			<PropertyDatePicker helpText="${wspWorkspaceResources.dueDateToolkit}" promptText="${wspWorkspaceResources.dueDate}" propertyName="dueDate"/>
+			<PropertyChildListEditor listDefinitionName="wspContributorGrid" name="contributorEditor" objectTypes="ContributorAssociation" promptText="${wspWorkspaceResources.contributorPromptText}">
+				<EnablementCondition contextName="workspaceManager" enablementValue="true"/>
+			</PropertyChildListEditor>
+			<ReferenceEditor name="parentTaskGroupReferenceEditor" parentObjectTypes="TaskGroup" promptText="${wspWorkspaceResources.parentTaskGroup}" referenceObjectTypes="ChildTask" required="true" validatorTypes="requiredParentTaskGroupValidator">
+				<EnablementCondition contextName="workspaceManager" enablementValue="true"/>
+			</ReferenceEditor>
+			<EnablementCondition propertyName="taskId" enablementValue=""/>
+		</PropertyGroup>
+	</PropertyPane>
+
+	<!---
+		@keywords private
+	-->
+	<PropertyPane definitionName="wspTaskCommentsPane">
+		<PropertyGroup collapsable="false" name="taskGroupPropertiesGroup">
+			<PropertyInputText parentProperty="true" parentType="TaskGroup" promptText="${wspWorkspaceResources.taskTaskGroupName}" propertyName="taskGroupName">
+				<FalseEnablementCondition/>
+			</PropertyInputText>
+			<PropertyChildListEditor helpLinkURL="tasks/twoaddcomtaskwm.htm" helpText="${wspWorkspaceResources.commentsPropertyTooltip}" hideEditColumnAction="true" listDefinitionName="wspTaskCommentsListView" name="taskCommentList" objectTypes="TaskGroupComment" promptText="${wspWorkspaceResources.commentsPropertyPrompt}"/>
+		</PropertyGroup>
+	</PropertyPane>
+
+	<!---
+		@keywords private
+	-->
+	<PropertyPane definitionName="wspTaskHistoryPane">
+		<PropertyGroup collapsable="false" name="taskHistoryGroup">
+			<PropertyInputText parentProperty="true" parentType="TaskGroup" promptText="${wspWorkspaceResources.taskTaskGroupName}" propertyName="taskGroupName">
+				<FalseEnablementCondition/>
+			</PropertyInputText>
+			<PropertyChildListEditor listDefinitionName="wspTaskGroupHistoryListView" name="taskHistoryList" objectTypes="TaskGroupHistory" parentProperty="true" 
+				parentType="TaskGroup" promptText="${wspWorkspaceResources.historyPropertyPrompt}" helpText="${wspWorkspaceResources.historyListHelpText}" 
+		    	helpLinkURL="tasks/twoviewtghistory.htm"
+		    	hideEditColumnAction="true"
+		    	hideDeleteAction="true"/>
+		</PropertyGroup>
+	</PropertyPane>	
+
+	<!---
+		@keywords private
+	-->
+	<ObjectProperties definitionName="wspTaskProperties">
+		<PropertyTabs name="taskTabs">
+			<PropertyTabPane name="propertiesTab" text="${wspWorkspaceResources.taskPropertyPanePropertiesTab}">
+				<PropertyPane baseDefinitionName="wspTaskPropertiesPane"/>
+			</PropertyTabPane>
+			<PropertyTabPane name="commentsTab" text="${wspWorkspaceResources.taskPropertyPaneCommentsTab}">
+				<PropertyPane baseDefinitionName="wspTaskCommentsPane"/>
+				<EnablementCondition propertyName="taskId" enablementValue="" negate="true"/>
+			</PropertyTabPane>
+			<PropertyTabPane name="historyTab" text="${wspWorkspaceResources.taskGroupPropertyPaneHistoryTab}">
+				<PropertyPane baseDefinitionName="wspTaskHistoryPane"/>
+				<EnablementCondition checkNewObject="true" conditionId="existingTaskGroupCondition" enablementValue="false"/>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+
+</Definitions>

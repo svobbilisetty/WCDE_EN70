@@ -1,0 +1,43 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for a {@link proIdentifierShipModeObjectDefinition Identifier_ShipMode} object. 
+		This ensures the following cases: 
+		<ul>
+			<li>When any shipping method is unchecked, ensure that one of the shipping method for the current store is specified.</li>
+			<li>When any shipping method is checked, delete any selected shipping methods. 
+		</ul>
+	-->
+	<class extends="wcfValidator" name="proIdentifierShipModeObjectValidator">
+
+		<!--- @keywords private -->
+		<method args="o, property=null" name="validate">
+			<![CDATA[
+			o.clearValidationError(this);
+			
+			if (o.getPropertyValue("elementType") == "IncludeShipModeIdentifier") {
+				var shipModeId = o.getPropertyValue("Id");
+				if (shipModeId == null || shipModeId == "" ) {
+					o.addValidationError(this, promotionResources.promotion_error_AtLeastOneShipMode.string);
+				}
+			}
+			
+			if (o.getPropertyValue("elementType") == "AnyShipMode") {
+				o.setPropertyValue("Id",null,"");					
+			}
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		This definition represents the base definition for the attribute dictionary for a store.
+		The definition has the following implicit properties:
+			attributeDictionaryId - The unique ID.
+			attributeDictionaryIdentifier - The	display name.
+		The dictionary is modeled as a top group.
+	-->
+	<PrimaryObjectDefinition
+		definitionName="catBaseAttributeDictionaryPrimaryObjectDefinition"
+		detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}"
+		displayName="${catalogResources.attributeDictionary}"
+		displayNameProperty="attributeDictionaryIdentifier"
+		idProperty="attributeDictionaryId"
+		isBaseDefinition="true"
+		objectGroups="AttributeDictionaryAlias"
+		utilitiesListDefinitionName="catUtilitiesAttributeBrowseGrid"
+		writeUsage="IBM_ManageAttributeDictionary">
+				
+		<!---
+			An instantiation of the definition {@link catChildAttributeDictionaryAttributeWithAllowedValues} which represents
+			child attribute dictionary attributes with allowed values.
+		 -->		  
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildAttributeDictionaryAttributeWithAllowedValues"/>
+		
+		<!---
+			An instantiation of the definition {@link catChildAttributeDictionaryAttributeWithAssignedValues} which represents
+			child attribute dictionary attributes with assigned values.
+		 -->		  
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildAttributeDictionaryAttributeWithAssignedValues"/>
+		
+		<!---
+			List to display the top-level attributes for an attribute dictionary.
+			This list is the default list to be displayed.
+		-->		 
+		<NavigationListDefinition baseDefinitionName="catAttributeDictionaryAttributeAttributesNavigationList" />
+		
+		<!---
+			This service returns the child {@link catChildAttributeDictionaryAttributeWithAllowedValues}, {@link catChildAttributeDictionaryAttributeWithAssignedValues}, 
+			{@link catChildInheritedAttributeDictionaryAttributeWithAllowedValues} and {@link catChildInheritedAttributeDictionaryAttributeWithAssignedValues} objects
+			for an attribute dictionary.
+		-->		 
+		<GetChildrenService 
+			objectTypes="ChildAttributeDictionaryAttributeWithAssignedValues,ChildInheritedAttributeDictionaryAttributeWithAssignedValues,ChildAttributeDictionaryAttributeWithAllowedValues,ChildInheritedAttributeDictionaryAttributeWithAllowedValues"
+			url="/cmc/GetAttributeDictionaryChildren-Attributes">
+			<ServiceParam name="storeId"/>
+		</GetChildrenService>
+       	 	
+	</PrimaryObjectDefinition>
+	
+	<!---
+		This definition represents the attribute dictionary for a store.	
+	-->   	
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryPrimaryObjectDefinition"
+		definitionName="AttributeDictionary"
+		headerIcon="attributeDictionaryHeaderIcon"
+		icon="attributeDictionaryIcon"
+		objectType="AttributeDictionary">
+	</PrimaryObjectDefinition>
+	
+	<!---
+		This definition represents the inherited attribute dictionary for a store.
+		Only the inherited dictionary can contain inherited groups and attributes.	
+	-->   	
+	<PrimaryObjectDefinition
+		baseDefinitionName="catBaseAttributeDictionaryPrimaryObjectDefinition"
+		definitionName="InheritedAttributeDictionary"
+		headerIcon="inheritedAttributeDictionaryHeaderIcon"
+		icon="inheritedAttributeDictionaryIcon"
+		objectType="InheritedAttributeDictionary">
+			
+		<!---
+			An instantiation of the definition {@link catChildInheritedAttributeDictionaryAttributeWithAllowedValues} which represents
+			child inherited attribute dictionary attributes with allowed values.
+		-->		 
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedAttributeDictionaryAttributeWithAllowedValues"/>
+		
+		<!---
+			An instantiation of the definition {@link catChildInheritedAttributeDictionaryAttributeWithAssignedValues} which represents
+			child inherited attribute dictionary attributes with assigned values.
+		-->		 
+		<ParentReferenceObjectDefinition baseDefinitionName="catChildInheritedAttributeDictionaryAttributeWithAssignedValues"/>
+					
+	</PrimaryObjectDefinition>
+	
+</Definitions>

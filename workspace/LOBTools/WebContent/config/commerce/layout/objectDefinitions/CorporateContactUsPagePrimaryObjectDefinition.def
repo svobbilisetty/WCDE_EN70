@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBaseCorporateContactUsPagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglCorporateContactUsPageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglCorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts}
+			representing the reference to the corporate contact us page layout objects which hold a page layout association with this static corporate contact us page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts}
+			representing the reference to the inherited corporate contact us page layout objects which hold a page layout association with this static corporate contact us page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts}
+			representing the reference to the inherited corporate contact us page layout objects which hold a page layout association with this inherited corporate contact us page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the static corporate contact us page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglCorporateContactUsPageReferenceDefaultCorporateContactUsPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglCorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts},
+			{@link pglCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts} and {@link pglInheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts}
+			references for this static corporate contact us page.
+		-->
+		<GetChildrenService objectTypes="CorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts,CorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts,InheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="CorporateContactUsPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this Corporate Contact Us Page.
+		-->
+		<GetChildrenService objectTypes="CorporateContactUsPageReferenceDefaultCorporateContactUsPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="CorporateContactUsPage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for corporate contact us page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="CorporateContactUs"/>
+		</GetPreviewURLService>
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Corporate Contact Us Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseCorporateContactUsPagePrimaryObjectDefinition"
+     	definitionName="CorporateContactUsPage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="CorporateContactUsPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Corporate Contact Us Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseCorporateContactUsPagePrimaryObjectDefinition"
+     	definitionName="InheritedCorporateContactUsPage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedCorporateContactUsPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglCorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts" objectType="CorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts" referencedTypes="CorporateContactUsPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" definitionName="pglCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" objectType="CorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" referencedTypes="InheritedCorporateContactUsPageLayout"/>
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="CorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" definitionName="pglInheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" objectType="InheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" referencedTypes="InheritedCorporateContactUsPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglCorporateContactUsPageReferenceDefaultCorporateContactUsPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="CorporateContactUsPageReferenceDefaultCorporateContactUsPageLayout" 
+		referencedTypes="CorporateContactUsPageLayout,InheritedCorporateContactUsPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

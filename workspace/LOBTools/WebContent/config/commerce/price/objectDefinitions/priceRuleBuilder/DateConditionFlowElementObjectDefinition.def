@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcDateConditionElementObject" displayName="${prcPriceResources.dateCondition_DisplayName}" elemTemplateType="Condition" flowIcon="dateConditionElementIcon" headerIcon="dateConditionElementHeaderIcon" helpLink="concepts/cpidatecondition.htm" objectType="dateCondition" package="prc" paletteIcon="dateConditionPaletteIcon" propertiesDefinitionName="prcDateConditionElementProperties" summaryClass="prcDateConditionElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name = "PROPERTY_startDate" propertyName = "startDate"/>
+			<ServiceParam name = "PROPERTY_endDate" propertyName = "endDate" optional="true"/>
+			<ServiceParam name = "PROPERTY_isEveryDayOfTheWeek" propertyName = "isEveryDayOfTheWeek" optional="true"/>
+			<ServiceParam name = "PROPERTY_weekDay" objectPath="WeekDay" propertyName = "day" optional="true">
+				<EnablementCondition conditionId="notAllDays" enablementValue="false" propertyName="isEveryDayOfTheWeek"/>
+			</ServiceParam>
+			<ServiceParam name = "PROPERTY_isAllThroughTheDay" propertyName = "isAllThroughTheDay" optional="true"/>
+			<ServiceParam name = "PROPERTY_startTime" propertyName = "startTime" optional="true"/>
+			<ServiceParam name = "PROPERTY_endTime" propertyName = "endTime" optional="true"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name = "PROPERTY_startDate" propertyName = "startDate"/>
+			<ServiceParam name = "PROPERTY_endDate" propertyName = "endDate" optional="true"/>
+			<ServiceParam name = "PROPERTY_isEveryDayOfTheWeek" propertyName = "isEveryDayOfTheWeek" optional="true"/>
+			<ServiceParam name = "PROPERTY_weekDay" objectPath="WeekDay" propertyName = "day" optional="true">
+				<EnablementCondition conditionId="notAllDays" enablementValue="false" propertyName="isEveryDayOfTheWeek"/>
+			</ServiceParam>
+			<ServiceParam name = "PROPERTY_isAllThroughTheDay" propertyName = "isAllThroughTheDay" optional="true"/>
+			<ServiceParam name = "PROPERTY_startTime" propertyName = "startTime" optional="true"/>
+			<ServiceParam name = "PROPERTY_endTime" propertyName = "endTime" optional="true"/>
+		</UpdateService>
+		
+		<Xml name="template">
+			<elemTemplateName>dateCondition</elemTemplateName>
+			<startDate></startDate>
+			<endDate></endDate>
+			<isEveryDayOfTheWeek>true</isEveryDayOfTheWeek>
+			<isAllThroughTheDay>true</isAllThroughTheDay>
+			<day/>
+			<startTime/>
+			<endTime/>
+		</Xml>
+		
+		<PropertyDefinition displayName="${prcPriceResources.startDate}" propertyName="startDate" type="datetime" required="true"/>
+		<PropertyDefinition displayName="${prcPriceResources.endDate}" propertyName="endDate" type="datetime"/>
+		
+		<PropertyDefinition propertyName="isEveryDayOfTheWeek" send="false">
+			<PropertyValue displayName="${promotionResources.promotion_EveryDayOfTheWeek}" value="true"/>
+			<PropertyValue displayName="${promotionResources.promotion_SelectedDaysOfTheWeek}" value="false"/>
+		</PropertyDefinition>
+		
+		<!--- Property to define the start time within a day for the condition. -->
+		<PropertyDefinition displayName="${promotionResources.promotion_StartTime}" propertyName="startTime" type="time"/>
+		
+		<!--- Property to define the end time within a day for the condition. -->
+		<PropertyDefinition displayName="${promotionResources.promotion_EndTime}" propertyName="endTime" type="time"/>
+		
+		<!--- A child object definition for the week days of a date time condition.  -->
+		<ChildObjectDefinition idProperty="day" objectType="WeekDay" releaseWhenClosed="false">
+			<PropertyDefinition copyProtected="false" propertyName="day"/>				
+		</ChildObjectDefinition>
+		
+		<DateConditionValidator package="prc" endDatePropertyName="endDate" startDatePropertyName="startDate" validatorId="priceRuleDateValidator"/>
+		
+	</FlowElementObjectDefinition>
+</Definitions>

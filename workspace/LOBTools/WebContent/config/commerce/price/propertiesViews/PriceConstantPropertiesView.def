@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="prcPriceConstantProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="generalProperties" text="${prcPriceResources.generalProperties}">
+				<PropertyPane name="generalPane">
+					<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+					<PropertyGroup groupTitle="${prcPriceResources.priceConstantProperties}" name="group" open="true" hideHeaderWhenOnlyGroup="true">
+						<PropertyInputText promptText="${prcPriceResources.nameString}" propertyName="name"/>
+						<PropertyInputMultiLineText promptText="${prcPriceResources.description}" propertyName="description"/>
+						<PropertyViewLongText promptText="${prcPriceResources.format}" propertyName="format"/>
+						<PropertyGroup collapsable="false" name="percentType">
+							<EnablementCondition conditionId="percentType" enablementValue="Percent" propertyName="format"/>
+							<PropertyNumericText promptText="${prcPriceResources.valueInPercent}" propertyName="numericalValue" helpText="${prcPriceResources.helpText_percentageConstant}"/>
+						</PropertyGroup>
+						
+						<PropertyGroup collapsable="false" name="numberType">
+							<EnablementCondition conditionId="numberType" enablementValue="Number" propertyName="format"/>
+							<PropertyNumericText promptText="${prcPriceResources.number}" propertyName="numericalValue" helpText="${prcPriceResources.helpText_numberConstant}"/>
+						</PropertyGroup>
+						
+						<PropertyGroup collapsable="false" name="currencyType">
+							<EnablementCondition conditionId="currencyType" enablementValue="Currency" propertyName="format"/>
+							<ChildListViewer listDefinitionName="prcPriceConstantValueGrid" name="MonetaryValuesCle" objectTypes="PriceConstantCurrencyValue" promptText="${prcPriceResources.currency}" helpText="${prcPriceResources.helpText_currencyConstant}" validatorTypes="noCurrencyValueProvided"/>
+						</PropertyGroup>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<PropertyTabPane name="reference"  text="${prcPriceResources.references}">
+				<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+				<PropertyPane name="referencePane">
+					<PropertyGroup name="priceRuleRef" groupTitle="${prcPriceResources.priceRules}" open="true">
+						<PropertyReferenceList promptText="${prcPriceResources.priceRules}" listDefinitionName="prcPriceRuleRefGrid" name="priceRuleRefList" referenceObjectPaths="*/InputPriceConstantGroup,*/ComparisonPriceConstantGroup" helpText="${prcPriceResources.helpText_priceRuleRefConstant}"/>
+					</PropertyGroup>
+					<PropertyGroup name="priceEquationRef" groupTitle="${prcPriceResources.priceEquations}" open="true">
+						<PropertyReferenceList promptText="${prcPriceResources.priceEquations}" listDefinitionName="prcPriceEquationRefGrid" name="priceEquationRefList" referenceObjectPaths="PriceEquationGroup/RefPriceConstantGroup" helpText="${prcPriceResources.helpText_equationRefConstant}"/>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+	
+	<ObjectGrid definitionName="prcPriceConstantValueGrid" preferenceKey="prcPriceConstantValueGrid">
+    	
+        <GridCurrency alignment="right" cloneEnabled="true" editable="true" name="monetaryValues" required="true" visible="true" width="80"/>
+    </ObjectGrid>
+	
+
+</Definitions>

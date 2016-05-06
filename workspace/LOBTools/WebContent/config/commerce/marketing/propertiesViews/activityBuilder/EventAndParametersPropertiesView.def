@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktEventAndParametersElementObject Wait for Event trigger}.
+	-->
+	<FlowElementProperties definitionName="mktEventAndParametersProperties">
+		<PropertyGroup collapsable="false" name="container">
+
+			<PropertyInputText helpLinkURL="tasks/tsbcusttriwaitforevent.htm" helpText="${mktMarketingResources.help_waitforevent_eventname}" promptText="${mktMarketingResources.triggerEventName}" propertyName="eventName" required="true"/>
+			
+			<PropertyCombobox helpText="${mktMarketingResources.help_waitforevent_numberofparameters}" promptText="${mktMarketingResources.parametersToMatch}" propertyName="parametersToMatch"/>
+
+			<PropertyInputText helpLinkURL="tasks/tsbcusttriwaitforevent.htm" helpText="${mktMarketingResources.help_waitforevent_parametername}" promptText="${mktMarketingResources.urlName}" propertyName="parameterOneName" required="true"/>
+
+			<PropertyCombobox name="parameterComparison" promptText="${mktMarketingResources.urlCondition}" propertyName="comparison"/>		
+
+			<PropertyGroup collapsable="false" name="parameterOneValues">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+				<PropertyChildListEditor helpLinkURL="tasks/tsbcusttriwaitforevent.htm" helpText="${mktMarketingResources.help_waitforevent_parametervalue}" listDefinitionName="mktParameterValueGrid" name="parameterEditor" objectTypes="parameterOneValue" promptText="${mktMarketingResources.urlTerms}" required="true" validatorTypes="noParameterValueProvided"/>	
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="parameterTwoGroup">
+				<EnablementCondition conditionId="parameterTwoGroup11" enablementValue="2" propertyName="parametersToMatch"/>
+				
+				<PropertyInputText helpText="${mktMarketingResources.help_waitforevent_secondparametername}" promptText="${mktMarketingResources.triggerParameterTwoName}" propertyName="parameterTwoName" required="true"/>
+						
+				<PropertyInputText promptText="${mktMarketingResources.triggerParameterTwoValue}" propertyName="parameterTwoValue" required="true"/>
+			</PropertyGroup>
+						
+			<PropertyStepper helpText="${mktMarketingResources.help_waitforevent_times}" minimumValue="1" promptText="${mktMarketingResources.times}" propertyName="numberOfTimes"/>
+			
+			<BaseTriggerDateProperties helpText="${mktMarketingResources.help_waitforevent_timeframe}" package="mkt"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

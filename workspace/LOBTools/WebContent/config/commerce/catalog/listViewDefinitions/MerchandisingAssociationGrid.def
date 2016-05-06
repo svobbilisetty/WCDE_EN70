@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyChildListEditor definitionName="catMerchandisingAssociationListNoStoreName" extendedHelpText="${catalogResources.extendedHelpText_MerchandisingAssociations}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpnmanew.htm" listDefinitionName="catMerchandisingAssociationGrid" objectTypes="MerchandisingAssociationReferencedCatalogEntries,MerchandisingAssociationReferencedInheritedCatalogEntries" promptText="${catalogResources.merchandisingAssociationsSection}"/>
+				
+	<PropertyChildListEditor definitionName="catMerchandisingAssociationListStoreName" displayStoreName="true" extendedHelpText="${catalogResources.extendedHelpText_MerchandisingAssociations}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpnmanew.htm" listDefinitionName="catMerchandisingAssociationGrid" objectTypes="MerchandisingAssociationReferencedInheritedCatalogEntries,MerchandisingAssociationReferencedCatalogEntries" promptText="${catalogResources.merchandisingAssociationsSection}"/>
+	
+				
+	<PropertyChildListEditor definitionName="catMerchandisingAssociationSourceList" displayStoreName="false" extendedHelpText="${catalogResources.extendedHelpText_ManyToManyMerchandisingAssociationsSource}" fractionOfAvailableHeight="0.5" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpnmanew.htm" listDefinitionName="catMerchandisingAssociationSourceGrid" objectTypes="MerchandisingAssociationReferencedManytoManyCatalogSourceEntries" promptText="${catalogResources.manyToManyMerchandisingAssociationSource}"/>
+			
+	<PropertyChildListEditor definitionName="catMerchandisingAssociationTargetList" displayStoreName="false" extendedHelpText="${catalogResources.extendedHelpText_ManyToManyMerchandisingAssociationsTarget}" fractionOfAvailableHeight="0.5" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpnmanew.htm" listDefinitionName="catMerchandisingAssociationGrid" objectTypes="MerchandisingAssociationReferencedManytoManyCatalogEntries" promptText="${catalogResources.manyToManyMerchandisingAssociationTarget}"/>
+	
+	<PropertyChildListEditor definitionName="catInheritedMerchandisingAssociationList" displayObjectStoreName="true" extendedHelpText="${catalogResources.extendedHelpText_MerchandisingAssociations}" helpLinkText="${foundationResources.helpDefaultLinkText}" helpLinkURL="tasks/tpnmanew.htm" listDefinitionName="catMerchandisingAssociationGrid" objectTypes="InheritedMerchandisingAssociationReferencedInheritedCatalogEntries" promptText="${catalogResources.merchandisingAssociationsSection}"/>
+			
+	<!---
+		This definition displays the contents and characteristics of a list of {@link BaseMerchandisingAssociation}.
+	-->
+	<ObjectGrid definitionName="catMerchandisingAssociationGrid" preferenceKey="catMerchandisingAssociationGrid">
+		<GridNumeric editable="true" name="sequence" numDecimalPlaces="1" propertyName="sequence" required="false" text="${catalogResources.displaySequence}" visible="true" width="130"/>
+		<GridComboBox editable="true" name="merchandisingAssocType" propertyName="name" required="true" text="${catalogResources.merchandisingAssociationAssocType_ColumnHeader}" width="120"/>
+		<GridIconTypeImage name="typeIcon" enableFilter="true" propertyName="typeIcon" required="true" sortable="false" text="${catalogResources.productType_ColumnHeader}" visible="true" width="80"/>
+		<GridStoreName name="store" objectPath="CatalogEntry"/>		
+		<GridText editable="false" name="associationId" propertyName="associationId" text="${catalogResources.merchandisingAssociationUniqueId_ColumnHeader}" visible="false" width="90"/>
+		<GridText editable="false" name="partnumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${catalogResources.merchandisingAssociationPartNumber_ColumnHeader}" width="90"/>
+		<GridText editable="false" name="merchandisingAssocName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" text="${catalogResources.merchandisingAssociationName_ColumnHeader}" width="200"/>
+		<GridComboBox editable="true" name="semantic" propertyName="semantic" required="false" text="${catalogResources.merchandisingAssociationAssocSemantic_ColumnHeader}" visible="false" width="120"/>
+		<GridDateTime editable="true" name="xasso_date1" propertyName="xasso_date1" required="false" text="${catalogResources.merchandisingAssociationAssocDate1_ColumnHeader}" visible="false"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="9999999999" minimumValue="1" name="quantity" propertyName="quantity" text="${catalogResources.merchandisingAssociationQuantity_ColumnHeader}" width="80"/> 					
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="catMerchandisingAssociationSourceGrid" preferenceKey="catMerchandisingAssociationSourceGrid">
+		<GridIconTypeImage name="typeIcon" propertyName="typeIcon" required="true" sortable="false" text="${catalogResources.productType_ColumnHeader}" visible="true" width="60"/>
+		<GridText editable="false" name="partnumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${catalogResources.merchandisingAssociationPartNumber_ColumnHeader}" width="90"/>
+		<GridText editable="false" name="merchandisingAssocName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" text="${catalogResources.merchandisingAssociationName_ColumnHeader}" width="200"/>
+	</ObjectGrid>		
+</Definitions>

@@ -1,0 +1,228 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This class describes the characteristics of an object search type that is available from the search widget.
+		This is a base class and must be extended before it can be instantiated. 
+		
+		<p>Instances of wcfSearchDefinition can only be declared as immediate children of an instance of {@link wcfBusinessObjectEditor}.
+		
+		<p>Search definitions must include one child instance of {@link wcfSearchService} that describes
+		the service to be used when performing the search type.
+		
+		<p>The following example demonstrates the declaration of a search definition. The search
+		definition will be the default search definition for its parent business object editor and
+		it will create an instance of "SampleObjectGridClass" for display in the main work area to
+		display the search results. The advanced search dialog will include a page that contains
+		the content specified by the view class called "advancedSampleObjectSearchContentObjectClass".
+		The search request will be handled by the URL at "/sample.jsp".
+		
+		<p>Search definitions can be registered using {@link wcfRegisterSearchDefinition} so they can be used
+		by business object editors without being explicitly declared. This is useful when business object editors
+		use each other's object definitions and those object definitions refer to search definitions.
+		
+		@START_CODE
+		<SearchDefinition searchType="SampleObjectsSearch" displayName="Sample Objects Search"
+				isDefault="true" listDefinitionName="SampleObjectGridClass"
+				listTitle="Sample Objects Search Results"
+				advancedSearchContentClass="advancedSampleObjectSearchContentObjectClass">
+			<SearchService url="/sample.jsp"/>
+		</SearchDefinition>
+		@END_CODE
+		
+		<p>A single instance of {@link wcfEnablementCondition} can be declared as a child of a search definition. If
+		the enablement condition evaluates to false then the search definition will not be available.</p>
+	-->
+	<class name="wcfSearchDefinition" extends="node">
+		<!---
+			A string to identify the search type. All search definitions declared under the same business object editor must have
+			unique search types. An object definition can be associated with a specific search definition by specifying the search
+			type with the {@link wcfObjectDefinition#searchType} attribute. This is a required attribute.
+		-->
+		<attribute name="searchType" type="string"/>
+		<!---
+			@keywords private
+			A reference to the instance of {@link wcfSearchService} declared for this search definition. 
+			The wcfSearchDefinition expects a child of type {@link wcfSearchService}. 
+		-->
+		<attribute name="searchService" value="null"/>
+		<!---
+			The display name to use in the user interface for this search type.
+		-->
+		<attribute name="displayName" value="" type="string"/>
+		<!---
+			This attribute contains the name of the image file to use as the icon for instances of this search definition.
+		-->
+		<attribute name="icon" value="" type="string"/>
+		<!--- 
+			This attribute defines the Tooltip text for this search definition.
+		-->
+		<attribute name="tooltip" value="" type="string"/>
+		<!---
+			This attribute contains the name of the class to use for displaying the search results view.
+			This must be a class that extends {@link wcfObjectGrid}.
+			@type string
+		-->
+		<attribute name="listClass" type="string" value="${null}"/>
+		<!---
+			The name of the definition to use for viewing this list. 
+			This must be a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value
+			for <code>listClass</code>.
+			@type string
+		-->
+		<attribute name="listDefinitionName" type="string" value="${null}"/>
+		<!---
+			This attribute contains the name of the class to use for displaying the search results view in the utilities pane.
+			This must be a class that extends {@link wcfObjectGrid}.
+			@type string
+		-->
+		<attribute name="utilitiesListClass" type="string" value="${null}"/>
+		<!---
+			This attribute contains the name of the definition to use for displaying the search results view in the utilities pane.
+			This must be a definition that extends {@link wcfObjectGrid}.
+			Only specify this attribute if you are not providing a value for <code>utilitiesListClass</code>.
+			@type string
+		-->
+		<attribute name="utilitiesListDefinitionName" type="string" value="${null}"/>
+		<!---
+			The title to use in the search results view.
+		-->
+		<attribute name="listTitle" value="" type="string"/>
+		<!---
+			This attribute will declare that this wcfSearchDefinition is the default search type.
+		-->
+		<attribute name="isDefault" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			This attribute specifies that search definition nodes are created as children of the model.
+		-->
+		<attribute name="placement" value="model"/>
+		<!---
+			This attribute defines the view class for the advanced search options for this search definition.
+			This view will be presented as part of the advanced search dialog and the class must be a subclass 
+			of {@link wcfAdvancedSearchContent}.
+			@type string
+		-->
+		<attribute name="advancedSearchContentClass" type="string" value="${null}"/>		
+		<!---
+			@keywords private
+			This attribute defines whether to add a seperator before list item for this definition or not. The default
+			value for this attribute is "false". 
+		-->
+		<attribute name="addSeparatorBefore" type="boolean" value="false"/>
+		<!---
+			This attribute defines the relative URL that contains the main help file for this business editor tool. There is no 
+			value provided by default for this attribute. 
+		-->	
+		<attribute name="helpLink" type="string" value=""/>
+		<!---
+			This attribute identifies the column header name for the utilities view find tab.
+			
+			If the value is empty, then <code>utilitiesGrid_name</code> in {@link wcfFoundationResourceBundle} will be used.
+		-->
+		<attribute name="headerText" type="string" value="${foundationResources.utilitiesGrid_name.string}"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="showInUtilitiesView" type="boolean" value="true"/>
+		<!---
+			The display name of the type of the object that this search service searches for.
+		-->
+		<attribute name="objectTypeDisplayName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			The enablement condition for this search definition.
+		-->
+		<attribute name="enablementCondition" value="${null}"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (this.listClass == null) {
+				this.listClass = this.listDefinitionName;
+			}
+			if (this.utilitiesListClass == null) {
+				this.utilitiesListClass = this.utilitiesListDefinitionName;
+			}
+			var definitions = immediateparent["searchDefinitions"];
+			if (!definitions) {
+				definitions = [];
+				immediateparent.searchDefinitions = definitions;
+			}
+			definitions.push(this);
+			if (this.isDefault || !immediateparent["defaultSearchDefinition"]) {
+				immediateparent["defaultSearchDefinition"] = this;
+			}
+			super.init();
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		<p>This class is used to register a search definition so it can be used by a {@link wcfBusinessObjectEditor} instance
+		without being explicitly instantiated as a child of the business object editor instance. This is useful when business
+		object editors use each other's services and object definitions. When the framework encounters a search type
+		that has not been declared, it will check the search definition registry and if a matching class is found, then
+		the search definition will be implicitly instantiated under the business object editor instance.</p>
+		
+		<p>Business object editor instances should still explicitly declare all of the search definitions for object definitions that the business
+		object editor is intending to manage. Search definitions that are used indirectly do not need to
+		be declared.</p>
+		
+		<p>Instances of <code>wcfRegisterSearchDefinition</code> must be declared directly under the <code>library</code> tag in the same
+		library as the class being registered.</p>
+		
+		<p>The following is an example registers the <code>catFindAllCatalogEntriesSearchDefinition</code> class to
+		the <code>FindAllCatalogEntries</code> search type.</p>
+		@START_CODE
+		<RegisterSearchDefinition searchType="FindAllCatalogEntries" searchDefinitionClass="catFindAllCatalogEntriesSearchDefinition"/>
+		@END_CODE
+	-->
+	<class name="wcfRegisterSearchDefinition" extends="node">
+		<!---
+			A string to identify the search type. All registed search definitions must have a unique search type.
+			This is a required attribute.
+		-->
+		<attribute name="searchType" type="string"/>
+		<!---
+			The search definition class that will be instantiated when the search definition is required. This
+			class must extend {@link wcfSearchDefinition}.
+			@type string
+		-->
+		<attribute name="searchDefinitionClass" type="string"/>
+		
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			var sDefs = global["searchDefinitionRegistry"];
+			if (!sDefs) {
+				sDefs = {};
+				global.searchDefinitionRegistry = sDefs;
+			}
+			if (sDefs[this.searchType]) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "SEVERE", "wcfRegisterSearchDefinition", "onconstruct", "Duplicate registered search definition: " + this.searchType);
+			}
+			else {
+				sDefs[this.searchType] = this;
+				if (wcfLogger.enabled) {			
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINEST", "wcfRegisterSearchDefinition", "onconstruct", this.searchType);
+				}
+			}
+			]]>
+		</handler>
+	</class>
+	
+</library>

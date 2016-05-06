@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--
+		This navigation list definition is used to display {@link PriceList Price lists}.
+	-->
+	<NavigationListDefinition definitionName="prcPriceListGridChildList" displayName="${prcPriceResources.priceListList}" isDefault="true" listDefinitionName="prcPriceListListEditor" listTitle="${prcPriceResources.list}"/>
+
+	<ChildListEditor definitionName="prcPriceListListEditor" listDefinitionName="prcPriceListGrid" objectTypes="PriceList,InheritedPriceList"/>
+
+	<ObjectGrid definitionName="prcPriceListGrid" preferenceKey="prcPriceListGrid">
+		<GridText editable="false" name="priceListId" propertyName="priceListId" visible="false" text="${prcPriceResources.uniqueId}"/>
+		<GridIconTypeImage name="typeIcon" propertyName="" required="true" text="${prcPriceResources.type}" width="100"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+		<GridText editable="true" name="priceListName" propertyName="name" text="${prcPriceResources.nameString}" width="300"/>
+		<GridText editable="true" name="priceListDescription" propertyName="description" text="${prcPriceResources.description}" width="500"/>
+	</ObjectGrid> 
+
+	<!--
+		This object grid definition is used to display the contents of price list search in Utilities view.
+	-->
+	<ObjectGrid definitionName="prcPriceListUtilitiesSearchGrid" preferenceKey="prcPriceListUtilitiesSearchGrid">
+		<GridIconTypeImage name="typeIcon" propertyName="" required="true" text="${prcPriceResources.type}" width="100"/>
+		<GridText editable="false" name="priceListId" propertyName="priceListId" visible="false" text="${prcPriceResources.uniqueId}"/>
+		<GridText editable="false" name="priceListName" propertyName="name" text="${prcPriceResources.nameString}" width="160"/>
+	</ObjectGrid>
+
+	<!--
+		This object grid definition is used to display the contents of price entries.
+	-->
+	<ObjectGrid definitionName="prcPriceEntryGrid" preferenceKey="prcPriceEntryGrid">
+		<GridImage name="thumbnailImage" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="tImage" text="${catalogResources.productThumbnail_ColumnHeader}" visible="false" width="100"/>
+		<GridIconTypeImage name="typeIcon" propertyName="" required="true" text="${prcPriceResources.type}" width="100"/>
+		<GridText editable="false" name="partnumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${catalogResources.productPartnumber_ColumnHeader}" width="114"/>
+		<GridText editable="false" name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" required="true" text="${catalogResources.productName_ColumnHeader}" width="164"/>
+		<GridText editable="false" name="qualifier" propertyName="qualifier" text="${catalogResources.qualifier_ColumnHeader}" visible="false" width="150"/>
+		<GridNumeric editable="true" name="minimumQuantity" propertyName="minimumQuantity" required="true" text="${catalogResources.minimumQuantity_ColumnHeader}" width="150"/>
+		<GridNumeric editable="true" name="maximumQuantity" propertyName="maximumQuantity" text="${catalogResources.maximumQuantity_ColumnHeader}" width="150"/>
+		<GridDateTime editable="true" name="startDate" propertyName="startDate" text="${catalogResources.startDate_ColumnHeader}" visible="false" />
+		<GridDateTime editable="true" name="endDate" propertyName="endDate" text="${catalogResources.endDate_ColumnHeader}" visible="false" />
+		<GridNumeric editable="true" name="precedence" propertyName="precedence" text="${catalogResources.precedence_ColumnHeader}" visible="false" width="120"/>
+		<GridCurrency alignment="right" editable="true" name="offerPrices" propertyName="offerPrices" required="true" width="80"/>
+		<GridText editable="false" name="priceEntryId" propertyName="priceEntryId" text="${prcPriceResources.uniqueId}" visible="false"/>
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="prcAssignedToPriceRuleGrid" preferenceKey="prcAssignedToPriceRuleGrid">
+		<GridIconTypeImage editable="false" name="type" propertyName="" required="true" text="${prcPriceResources.type}" visible="true" width="90"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+		<GridText editable="false" name="priceRuleName" propertyName="name" text="${prcPriceResources.nameString}" visible="true" width="100"/>
+		<GridText editable="false" name="priceRuleDescription" propertyName="description" text="${prcPriceResources.description}" visible="true" width="200"/>
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="prcAssignedToPriceEquationGrid" preferenceKey="prcAssignedToPriceEquationGrid">
+		<GridIconTypeImage editable="false" name="type" propertyName="" required="true" text="${prcPriceResources.type}" visible="true" width="90"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+		<GridText editable="false" name="priceEquationName" propertyName="name" text="${prcPriceResources.nameString}" visible="true" width="100"/>
+		<GridText editable="false" name="priceEquationDescription" propertyName="description" text="${prcPriceResources.description}" visible="true" width="200"/>
+	</ObjectGrid>
+
+</Definitions>

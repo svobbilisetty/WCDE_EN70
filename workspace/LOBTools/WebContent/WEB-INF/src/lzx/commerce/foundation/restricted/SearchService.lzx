@@ -1,0 +1,386 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		A service that will search for business objects based on user specified criteria. A search service
+		may only be declared as a child of an instance of {@link wcfSearchDefinition}.
+		
+		<p>Search services must be prepared to accept the following implicit parameters:
+		<ul>
+			<li>searchText: This parameter is included if the search is launched from the business object
+			editor search area. The value of the "searchText" parameter is the text entered
+			by the user. Search services should interpret leading and trailing asterisk characters
+			as a request for wild card search.</li>
+			<li>maxItems: This is an integer value that indicates the desired page size for the result set.</li>
+			<li>recordSetStartNumber: This is an integer value that is sent if the result set is broken up
+			into multiple pages. The second and subsequent page requests will include this parameter.</li>
+			<li>dataLanguageIds: This is the default language ID. Search services that return translated data
+			must respect this parameter and only return the translated data that matches the specified language ID.</li>
+		</ul>
+		
+		<p>Search definitions that include a value for "advancedSearchContentClass" can add
+		the advanced search parameters without explicitly declaring instances of wcfServiceParam.
+		If the advanced search dialog is used to launch the search service, then the "searchText"
+		parameter will not be included in the request.
+
+		<p>Additional service parameters can be defined by declaring instances of
+		{@link wcfServiceParam} as children of the wcfSearchService instance.
+		
+		<p>The following example demonstrates the declaration of a search service
+		that returns products. It declares two additional service parameters (storeId and masterCatalogId) that are resolved
+		from context values.
+		
+		@START_CODE
+		<SearchService name="findProducts" url="/cmc/FindProducts">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"/>
+		</SearchService>
+		@END_CODE
+		
+		<p>The successful response from a search service must be an XML document that has a root element named
+		"objects". The child elements of the "objects" element must all be named "object" and they
+		must identify their object type by the specification of a the "objectType" attribute. The "objects"
+		element must include the following attributes:
+		<ul>
+			<li>recordSetCompleteIndicator - this value is true if the response is the last page of the result set</li>
+			<li>recordSetStartNumber - the starting index into the result set for the current page</li>
+			<li>recordSetCount - the number of objects returned by this page</li>
+			<li>recordSetTotal - the total number of objects in the complete result set</li>
+		</ul>
+		The "objects" element may optionally include an attribute called "recordSetReferenceId" that will be sent back
+		as a parameter on the request for the next page of search results. This may be used to optimize the search service.
+		
+		<p>Object and property elements returned from a search service may optionally include a "readonly" attribute.
+		If the value is set to "true", then the framework will prevent the user from making changes to that object
+		or property instance.
+		
+		<p>The following sample demonstrates a response that returns three product objects. Notice that
+		in addition to some object properties each product object includes an embedded
+		child object for the catalog entry description.
+		
+		@START_CODE
+		<objects recordSetCompleteIndicator="true"
+				recordSetReferenceId="ac97a350-df32-11dc-83e5-829b47bb4a4f:3"
+				recordSetStartNumber="0" recordSetCount="3" recordSetTotal="3">
+			<object objectType="Product">
+ 				<catentryId>10275</catentryId>
+				<catenttypeId>ProductBean</catenttypeId>
+				<partnumber>FUCO-01</partnumber>
+				<object objectType="CatalogEntryDescription">
+					<languageId>-1</languageId>
+					<name>Sleek Occasional Table</name>
+					<sDesc>The sleek styling makes this occasional table a
+					perfect addition to your home.</sDesc>
+				</object>
+			</object>
+			<object objectType="Product">
+				<catentryId>10277</catentryId>
+				<catenttypeId>ProductBean</catenttypeId>
+				<partnumber>FUCO-02</partnumber>
+				<object objectType="CatalogEntryDescription">
+					<languageId>-1</languageId>
+					<name>Modern Occasional Table</name>
+					<sDesc>Modern occasional table to go with the
+					modern decor.</sDesc>
+				</object>
+			</object>
+			<object objectType="Product">
+				<catentryId>10279</catentryId>
+				<catenttypeId>ProductBean</catenttypeId>
+				<partnumber>FUCO-03</partnumber>
+				<object objectType="CatalogEntryDescription">
+					<languageId>-1</languageId>
+					<name>Two-Drawer Coffee Table</name>
+					<sDesc>This beautiful coffee table will fit
+					perfectly into any living area.</sDesc>
+				</object>
+			</object>
+		</objects>
+		@END_CODE
+		
+		<p>If an exception occurs while processing a search service, the response must be an XML document that
+		has a root element named "errors". The "errors" element must include one child element named "exception".
+		The "exception" element includes a message suitable for display to the user. The following example demonstrates
+		a valid error response for a search service.
+
+		@START_CODE
+		<errors>
+			<exception>You do not have the required access rights to perform this search.</exception>
+		</errors>
+		@END_CODE
+	-->
+	<class name="wcfSearchService" extends="wcfService" sendMaxItems="true" stoppable="true" sendDefaultLanguageId="true" abortResultsOverLimit="false" retryOnError="true">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			parent.searchService = this;
+			this.doParseCompleteDel = new lz.Delegate(this, "doParseComplete");
+			this.doParseStopDel = new lz.Delegate(this, "doParseStop");
+			]]>
+		</method>
+
+		<!--- @keywords private -->		
+		<method name="destroy">
+			<![CDATA[
+			super.destroy();
+			delete this.doParseCompleteDel;
+			delete this.doParseStopDel;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create a meaningful message about the search results.
+			@param wcfModelSearchResults s: the search results object
+			@param XML e: "values" data element
+			@param string numberOfObjects: the total number of objects returned (use this for services with no paging support)
+		-->
+		<method name="buildSearchStatusMessage" args="s, e, numberOfObjects=undefined">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfSearchService", "buildSearchStatusMessage(s, e, numberOfObjects)", [s, e, numberOfObjects]);
+			}
+			var message = null;
+			var isException = e ? false : true;
+			if (!isException) {
+				var totalRecords = Number(e.attributes["recordSetTotal"]);
+				var recordSetComplete = e.attributes["recordSetCompleteIndicator"] != "false";
+				
+				if (typeof(s.searchOptions["searchUniqueId"]) != "undefined") {
+					// search for wcfOpenObjectActionHandler
+					if (!isNaN(totalRecords) && totalRecords == 0) {
+						message = foundationResources.replaceValues("searchObjectNotFoundMsg", [s.searchOptions.searchText]);	
+					} else {
+						message = foundationResources.replaceValues("searchObjectFoundMsg", [s.searchOptions.searchText]);
+					}
+				} else if (typeof(s.searchOptions["searchText"]) != "undefined") {
+					//simple search
+					if (isNaN(totalRecords) && typeof(numberOfObjects) != "undefined") {
+						message = foundationResources.replaceValues("searchResultsSuccessMsg", [numberOfObjects, s.searchOptions.searchText]);
+					} else if (isNaN(totalRecords)) {
+						message = foundationResources.replaceValues("searchResultsGeneralMsg", [s.searchOptions.searchText]);
+					} else if (totalRecords == 0 && s.searchOptions.searchText == "") {
+						message = foundationResources.searchResultsNoCriteriaMsg.string;
+					} else if (totalRecords == 0 && s.searchOptions.searchText != "") {
+						message = foundationResources.replaceValues("searchResultsNoResultsMsg", [s.searchOptions.searchText]);	
+					} else if (!recordSetComplete || s.currPageNum > 0) {
+						message = foundationResources.replaceValues("searchResultsOverLimitMsg", [s.currPageNum, totalRecords, s.searchOptions.searchText]);
+					} else {
+						message = foundationResources.replaceValues("searchResultsSuccessMsg", [totalRecords, s.searchOptions.searchText]);
+					}				
+				} else {
+					// advanced search
+					if (isNaN(totalRecords) && typeof(numberOfObjects) != "undefined") {
+						message = foundationResources.replaceValues("advSearchResultsSuccessMsg", [numberOfObjects]);
+					} else if (isNaN(totalRecords)) {
+						message = foundationResources.advSearchResultsGeneralMsg.string;
+					} else if (totalRecords == 0) {
+						message = foundationResources.advSearchResultsNoResultsMsg.string;
+					} else if (totalRecords > this.getMaxRecordSetTotal()) {
+						message = foundationResources.replaceValues("advSearchResultsOverLimitMsg", [s.currPageNum, totalRecords]);
+					} else {
+						message = foundationResources.replaceValues("advSearchResultsSuccessMsg", [totalRecords]);
+					}
+				}
+			} else {
+				message = foundationResources.serviceError.string;
+			}
+			return message;
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfSearchService", "buildSearchStatusMessage(s, e, numberOfObjects)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when a service response is successfuly returned from the server. This does
+			not necessarily mean that the service completed successfully, it just means that there were no
+			communication errors. The specified dataset contains the response XML.
+			@param wcfServiceDataset ds: dataset
+		-->
+		<method name="serviceComplete" args="ds">
+			<![CDATA[
+			if (!ds.args["recordSetStartNumber"] || ds.args["recordSetStartNumber"] == ds.startIndex) {
+				ds.requestParent.reset();
+			}
+			super.serviceComplete(ds);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check if there are more results awaiting to be returned from this service
+			@param wcfServiceDataset ds: dataset
+			@param XML e: "objects" element
+		-->		
+		<method name="hasMoreRecords" args="ds,e">
+			<![CDATA[
+			//if this search request is not the current one that the modelSearchResults is serving then
+			//we should not trigger any sub-sequent requests
+			if (this.requestIdentifier != ds.requestIdentifier) {
+				return false;
+			}
+			return super.hasMoreRecords(ds,e);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Parse the "objects" element returned from a successful request.
+			@param wcfModelSearchResults s: the search results object
+			@param XML e: the objects data element
+			@param boolean hasMoreRecordsFlag: true when more records exist that have not been loaded
+			@param string reqIdentifier: the request identifier associated with the dataset that returned this data
+			@param number startIndex: the start index for this request
+		-->
+		<method name="parseObjects" args="s,e,hasMoreRecordsFlag,reqIdentifier,startIndex">
+			<![CDATA[
+			s.model.doDeferredParseObjects(e, null, this.doParseCompleteDel, {e: e, s: s, reqIdentifier: reqIdentifier, hasMoreRecordsFlag: hasMoreRecordsFlag, startIndex: startIndex}, this.stoppable, this.doParseStopDel, {s: s, reqIdentifier: reqIdentifier, hasMoreRecordsFlag: hasMoreRecordsFlag}, null, s.localContext);
+			]]>
+		</method>
+			
+		<!--- @keywords private -->
+		<method name="doParseComplete" args="args">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfSearchService", "doParseComplete", "Start update UI for " + args.objects.length + " Objects returned");
+			}
+			
+			var objects = args.objects;
+			var s = args.s;
+			var e = args.e;
+			var reqIdentifier = args.reqIdentifier;
+			
+			var maxRecordSetTotal = this.getMaxRecordSetTotal();	
+			var startIndex = args.startIndex;
+			var totalRecords = Number(e.attributes["recordSetTotal"]);
+			var currPageNum = Math.ceil((startIndex+maxRecordSetTotal) / maxRecordSetTotal);
+			var lastPageNum = currPageNum;
+			if (startIndex + maxRecordSetTotal < totalRecords) {
+				lastPageNum += Math.ceil((totalRecords-startIndex-maxRecordSetTotal)/maxRecordSetTotal);
+			}					
+			s.setAttribute("startIndex", args.startIndex);
+			s.setAttribute("totalRecords", totalRecords);
+			s.setAttribute("currPageNum", currPageNum);
+			s.setAttribute("lastPageNum", lastPageNum);	
+			
+			var statusMessage = this.buildSearchStatusMessage(s,e, objects.length);
+			var params = {};
+			params.requestIdentifier = reqIdentifier;
+			params.searchResultObjects = objects;
+			params.statusMessage = statusMessage;
+			s.onsearchComplete.sendEvent(params);
+			
+			if (this.requestIdentifier == reqIdentifier) {
+				if (!args.hasMoreRecordsFlag) {
+					s.setAttribute("statusMessage", statusMessage);
+				}
+			
+				var searchResultObjects = s.searchResultObjects;
+				for (var i = 0; i < objects.length; i++) {
+					var o = objects[i];
+					s.objectDestroyedDel.register(o, "beingDestroyed");
+					s.searchResultObjects.push(o);
+				}
+				s.updateModelObjectLists();
+			}
+			if (wcfEventTimer.enabled) {
+				wcfEventTimer.updateObjCount(args.objects.length);
+			}
+			
+			if (wcfLogger.enabled) {
+	        	wcfLogger.log("com.ibm.commerce.lobtools.foundation.service", "CONFIG", "wcfSearchService", "doParseComplete", "requestIdentifier=" + reqIdentifier + " " + this.url);
+			}
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfSearchService", "doParseComplete", "End update UI for for " + args.objects.length + " Objects returned");
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="doParseStop" args="args">
+			<![CDATA[
+			var s = args.s;
+			var reqIdentifier = args.reqIdentifier;
+			var hasMoreRecordsFlag = args.hasMoreRecordsFlag;
+
+			if (!hasMoreRecordsFlag) {
+				var statusMessage = foundationResources.searchStopped.string;
+				var params = {};
+				params.requestIdentifier = this.requestIdentifier;
+				params.statusMessage = statusMessage;
+				s.onsearchComplete.sendEvent(params);
+				
+				if (this.requestIdentifier == reqIdentifier) {
+					s.setAttribute("statusMessage", statusMessage);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when the service has been stopped, aborting a request or response.
+			@param wcfServiceDataset ds: dataset
+		-->
+		<method name="serviceStopped" args="ds">
+			<![CDATA[
+			var s = ds.requestParent;
+			var statusMessage = foundationResources.searchStopped.string;
+			var params = {};
+			params.requestIdentifier = this.requestIdentifier;
+			params.statusMessage = statusMessage;
+			s.onsearchComplete.sendEvent(params);
+			
+			if (this.requestIdentifier == ds.requestIdentifier) {
+				s.setAttribute("statusMessage", statusMessage);
+			}
+			super.serviceStopped(ds);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle service exception.
+			@param wcfServiceDataset ds: dataset
+			@param string message: the exception message
+			@param string code: the exception code
+		-->
+		<method name="handleException" args="ds,message,code=null">
+			<![CDATA[
+			var s = ds.requestParent;
+			var statusMessage = message;
+			if (code == wcfFoundationConstants.ERROR_SEARCH_RESULTS_OVER_SERVER_LIMIT) {
+				if (typeof(s.searchOptions["searchText"]) != "undefined") {
+					statusMessage = foundationResources.replaceValues("searchResultsOverServerLimitMsg", [s.searchOptions.searchText]);
+				} else {
+					statusMessage = foundationResources.advSearchResultsOverServerLimitMsg.string;
+				}
+			}
+			var params = {};
+			params.requestIdentifier = this.requestIdentifier;
+			params.statusMessage = statusMessage;
+			s.onsearchComplete.sendEvent(params);
+			
+			if (this.requestIdentifier == ds.requestIdentifier) {
+				s.hasError = true;
+				s.setAttribute("statusMessage", statusMessage);
+			}
+			]]>
+		</method>
+
+	</class>
+</library>

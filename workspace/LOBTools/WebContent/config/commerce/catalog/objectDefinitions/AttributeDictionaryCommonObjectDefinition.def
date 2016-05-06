@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	
+	<!--- 
+		Attribute Dictionary Attribute Object (Parent Reference Object) 
+		
+		This definition will represent child attribute dictionary attributes for
+		the attribute dictionary as well as attribute dictionary groups.
+	-->
+    <ParentReferenceObjectDefinition
+	    definitionName="catBaseChildAttributeDictionaryAttribute"
+	    idProperty="attrId"
+	    isBaseDefinition="true">
+        
+		<!---
+			Update service to update the relationship between the parent group/dictionary and a child attribute
+		--> 
+		<UpdateService url="/cmc/UpdateChildAttributeDictionaryAttribute">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="attrDictAttrId"  propertyName="attrId"/>
+		</UpdateService>
+		
+	
+		<!--- Sequence -->
+		<PropertyDefinition displayName="${catalogResources.catalogGroupChildSequence_DisplayName}" maxValue="9999999999" maximumSize="14" minValue="-9999999999" propertyName="sequence" required="true" type="number"/>
+       
+		<!--- Enablement Condition to allow the parent identifier to be locked independently of referenced object. -->
+		<EnablementCondition checkHasAccessRight="true" conditionId="parentLockingCondition" conditionType="childObjectCondition" enablementValue="true"/>
+						
+		<!---  Default values -->
+		<Xml name="template">
+			<sequence>0</sequence>
+		</Xml>
+            
+	</ParentReferenceObjectDefinition>
+    
+	<!---
+		Attribute Dictionary Attribute Object (Parent Reference Object) 
+		
+		This definition will represent child attribute dictionary attributes for
+		the attribute dictionary as well as attribute dictionary groups.
+	-->    
+    <ParentReferenceObjectDefinition
+	    baseDefinitionName="catBaseChildAttributeDictionaryAttribute"
+	    definitionName="catChildAttributeDictionaryAttributeWithAllowedValues"
+	    objectType="ChildAttributeDictionaryAttributeWithAllowedValues"
+	    objectGroups="ChildAttributeDictionaryAttributeWithAllowedValuesGroup"
+	    referencedType="AttributeDictionaryAttributeWithAllowedValues"/>
+	    
+	<!---
+		Attribute Dictionary Attribute Object (Parent Reference Object)
+		
+		This definition will represent child inherited attribute dictionary attributes for
+		the attribute dictionary as well as attribute dictionary groups.
+	-->        
+    <ParentReferenceObjectDefinition
+	    allowCrossStoreReferences="false"
+	    baseDefinitionName="catBaseChildAttributeDictionaryAttribute"
+	    definitionName="catChildInheritedAttributeDictionaryAttributeWithAllowedValues"
+	    objectType="ChildInheritedAttributeDictionaryAttributeWithAllowedValues"
+	    objectGroups="ChildAttributeDictionaryAttributeWithAllowedValuesGroup"
+	    referencedType="InheritedAttributeDictionaryAttributeWithAllowedValues"/>
+	
+	<!---
+		Attribute Dictionary Attribute Object (Parent Reference Object) 
+		
+		This definition will represent child attribute dictionary attributes with assigned values for
+		the attribute dictionary as well as attribute dictionary groups.
+	-->    
+    <ParentReferenceObjectDefinition
+	    baseDefinitionName="catBaseChildAttributeDictionaryAttribute"
+	    definitionName="catChildAttributeDictionaryAttributeWithAssignedValues"
+	    objectType="ChildAttributeDictionaryAttributeWithAssignedValues"
+	    objectGroups="ChildAttributeDictionaryAttributeWithAssignedValuesGroup"
+	    referencedType="AttributeDictionaryAttributeWithAssignedValues"/>
+	    
+	<!---
+		Attribute Dictionary Attribute Object (Parent Reference Object)
+		
+		This definition will represent child inherited attribute dictionary attributes with assigned values for
+		the attribute dictionary as well as attribute dictionary groups.
+	-->        
+    <ParentReferenceObjectDefinition
+	    allowCrossStoreReferences="false"
+	    baseDefinitionName="catBaseChildAttributeDictionaryAttribute"
+	    definitionName="catChildInheritedAttributeDictionaryAttributeWithAssignedValues"
+	    objectType="ChildInheritedAttributeDictionaryAttributeWithAssignedValues"
+	    objectGroups="ChildAttributeDictionaryAttributeWithAssignedValuesGroup"
+	    referencedType="InheritedAttributeDictionaryAttributeWithAssignedValues"/>
+	
+	<!---
+		This definition represents the base definition for a reference to an
+		attribute dictionary attributes for descriptive purposes with assigned values.
+		The idProperty is a composite of attribute id and assigned value id.
+		Duplicates are allowed to support future multi value attributes.
+	-->
+	<ReferenceObjectDefinition
+		isBaseDefinition="true"
+		definitionName="catBaseCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAssignedValues"
+		idProperty="referenceAttributeDictionaryAttributeId">
+        
+        <!---
+		    This property definition represents the display sequence.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeSequencePrompt}" maxValue="9999999999" minValue="-9999999999" propertyName="attrDisplaySequence" type="number"/>
+		
+		<!---
+  			Property Definition for the field1 property of an attribute relationship.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field1}" maxValue="2147483647" minValue="-2147483648" propertyName="xreldata_AttributeRelationshipField1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field2}" maxValue="2147483647" minValue="-2147483648" propertyName="xreldata_AttributeRelationshipField2" type="number"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field3}" maximumSize="254" propertyName="xreldata_AttributeRelationshipField3" type="string"/>
+		
+		<!--- 
+        	A property definition for the id of the assigned attribute value.
+        -->
+        <PropertyDefinition displayName="${catalogResources.chooseDescriptiveAttributeValue}" propertyName="attrValId" serverManaged="true" copyProtected="true"/>
+        
+        <!--- 
+        	A property definition for the id of the assigned attribute.
+        -->
+        <PropertyDefinition displayName="${catalogResources.chooseDescriptiveAttributeValue}" propertyName="attrId" serverManaged="true"/>
+        
+        <!--- 
+        	A property definition for the type of the assigned attribute.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeTypePrompt}" propertyName="attrDataType" serverManaged="true"/>
+        
+        <!---
+  			Property Definition for the field1 property of the assigned attribute value.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValuePropertiesField1_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xvaldata_AttributeValueField1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of the assigned attribute value.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValuePropertiesField2_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xvaldata_AttributeValueField2" type="number"/>
+		
+		<!---
+			Property Definition for the field3 property of the assigned attribute value.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeValuePropertiesField3_DisplayName}" maximumSize="254" propertyName="xvaldata_AttributeValueField3" type="string"/>
+		
+		<!---
+        	The description for the assigned attribute.
+         -->
+        <ChildObjectDefinition baseDefinitionName="catAttributeDictionaryAttributeAssignedValueDescription"/>
+        
+		<!--- Create service. -->
+        <CreateService url="/cmc/CreateCatalogEntryAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="languageId" objectPath="AttributeDictionaryAttributeAssignedValueDescription" propertyName="languageId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        	<ServiceParam name="attrDataType" objectPath="AttributeDictionaryAttributes" propertyName="attrDataType"/>
+        	<ServiceParam name="attrDictAttrValue" objectPath="AttributeDictionaryAttributeAssignedValueDescription" propertyName="value" optional="false" sendEmpty="false"/>
+        	<ServiceParam name="type" value="assigned"/>
+        </CreateService>
+                
+        <!--- Update service. -->
+        <UpdateService url="/cmc/UpdateCatalogEntryAttributeDictionaryAttributeValue">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="attrDictAttrValue" objectPath="AttributeDictionaryAttributeAssignedValueDescription" propertyName="value" optional="false" sendEmpty="false"/>
+        	<ServiceParam name="type" value="assigned"/>
+        	<ServiceParam name="attrDataType" objectPath="AttributeDictionaryAttributes" propertyName="attrDataType"/> 
+        </UpdateService>
+        
+        <!--- Delete service. -->
+        <DeleteService url="/cmc/DeleteCatalogEntryAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+		</DeleteService>
+		
+		<!---  Default values -->
+		<Xml name="template">
+			<attrDisplaySequence>0</attrDisplaySequence>
+		</Xml>
+		
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an attribute dictionary attributes
+		with assigned values for descriptive purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catBaseCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAssignedValues"
+		definitionName="catCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAssignedValues"
+		objectType="CatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAssignedValues"
+		referencedTypes="AttributeDictionaryAttributeWithAssignedValues"
+		objectGroups="CatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAssignedValuesAlias">
+		<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an inherited attribute dictionary attributes
+		with assigned values for descriptive purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catBaseCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAssignedValues"
+		definitionName="catCatalogEntryReferenceDescriptiveInheritedAttributeDictionaryAttributeWithAssignedValues"
+		objectType="CatalogEntryReferenceDescriptiveInheritedAttributeDictionaryAttributeWithAssignedValues"
+		referencedTypes="InheritedAttributeDictionaryAttributeWithAssignedValues"
+		objectGroups="CatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAssignedValuesAlias">
+		<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>	
+	</ReferenceObjectDefinition>
+	
+	<!---
+		This definition represents the base definition for a reference to an
+		attribute dictionary attributes with allowed values for descriptive purposes.
+		The idProperty is a composite of attribute id and selected allowed value id.
+		Duplicates are allowed to support future multi value attributes.
+	-->
+	<ReferenceObjectDefinition
+		isBaseDefinition="true"
+		definitionName="catBaseCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAllowedValues"
+		idProperty="referenceAttributeDictionaryAttributeId">
+        
+        <!--- 
+        	A property definition for the id of the selected allowed attribute value that is the
+        	descriptive attribute value.
+        -->
+        <PropertyDefinition displayName="${catalogResources.chooseDescriptiveAttributeValue}" propertyName="attrValId" required="true"/>
+        
+        <!---
+		    This property definition represents the display sequence.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeSequencePrompt}" maxValue="9999999999" minValue="-9999999999" propertyName="attrDisplaySequence" type="number"/>
+		
+		<!---
+  			Property Definition for the field1 property of an attribute relationship.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field1}" maxValue="2147483647" minValue="-2147483648" propertyName="xreldata_AttributeRelationshipField1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field2}" maxValue="2147483647" minValue="-2147483648" propertyName="xreldata_AttributeRelationshipField2" type="number"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field3}" maximumSize="254" propertyName="xreldata_AttributeRelationshipField3" type="string"/>
+		
+		<!---
+			Property Definition for the existing attribute Value ID of an attribute relationship.
+		-->
+		<PropertyDefinition copyProtected="true" serverManaged="true" propertyName="xdata_existingAttrValId"/>
+		
+		<!--- Create service. -->
+        <CreateService url="/cmc/CreateCatalogEntryAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        	<ServiceParam name="type" value="allowed"/>
+        </CreateService>
+
+        <!--- Update service. -->
+        <UpdateService url="/cmc/UpdateCatalogEntryAttributeDictionaryAttributeValue">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="xdata_existingAttrValId" propertyName="xdata_existingAttrValId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        	<ServiceParam name="type" value="allowed"/>
+        </UpdateService>
+        
+        <!--- Delete service. -->
+        <DeleteService url="/cmc/DeleteCatalogEntryAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Descriptive"/>
+        </DeleteService>
+        
+		<!---  Default values -->
+		<Xml name="template">
+			<attrDisplaySequence>0</attrDisplaySequence>
+		</Xml>
+		
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an attribute dictionary attributes
+		with allowed values for descriptive purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catBaseCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAllowedValues"
+		definitionName="catCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAllowedValues"
+		objectType="CatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAllowedValues"
+		objectGroups="CatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAllowedValuesAlias"
+		referencedTypes="AttributeDictionaryAttributeWithAllowedValues">
+		<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>	
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an inherited attribute dictionary attributes
+		with allowed values for descriptive purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catBaseCatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAllowedValues"
+		definitionName="catCatalogEntryReferenceDescriptiveInheritedAttributeDictionaryAttributeWithAllowedValues"
+		objectType="CatalogEntryReferenceDescriptiveInheritedAttributeDictionaryAttributeWithAllowedValues"
+		objectGroups="CatalogEntryReferenceDescriptiveAttributeDictionaryAttributeWithAllowedValuesAlias"
+		referencedTypes="InheritedAttributeDictionaryAttributeWithAllowedValues">
+		<EnablementOrCondition baseDefinitionName="catCatalogEntryEnablement"/>
+	</ReferenceObjectDefinition>
+	
+	<!---
+		This definition represents the base definition for a reference to an
+		attribute dictionary attributes for defining purposes.
+	-->
+	<ReferenceObjectDefinition
+		isBaseDefinition="true"
+		definitionName="catCatalogEntryReferenceDefiningAttributeDictionaryAttribute"
+		idProperty="attrId"
+		allowDuplicates="false">
+        
+        <!---
+		    This property definition represents the display sequence.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeSequencePrompt}" maxValue="9999999999" minValue="-9999999999" propertyName="attrDisplaySequence" type="number"/>
+		
+		<!---
+  			Property Definition for the field1 property of an attribute relationship.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field1}" maxValue="2147483647" minValue="-2147483648" propertyName="xreldata_AttributeRelationshipField1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field2}" maxValue="2147483647" minValue="-2147483648" propertyName="xreldata_AttributeRelationshipField2" type="number"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributeRelationship_Field3}" maximumSize="254" propertyName="xreldata_AttributeRelationshipField3" type="string"/>
+		
+		
+		<!--- Create service. -->
+        <CreateService url="/cmc/CreateCatalogEntryAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Defining"/>
+        </CreateService>
+                
+        <!--- Update service. -->
+        <UpdateService url="/cmc/UpdateCatalogEntryAttributeDictionaryAttributeValue">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Defining"/>
+        </UpdateService>
+        
+        <!--- Delete service. -->
+        <DeleteService url="/cmc/DeleteCatalogEntryAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" objectPath="AttributeDictionaryAttributes" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Defining"/>
+		</DeleteService>
+		
+		<!---  Default values -->
+		<Xml name="template">
+			<attrDisplaySequence>0</attrDisplaySequence>
+		</Xml>
+		
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an attribute dictionary attributes
+		with allowed values for defining purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catCatalogEntryReferenceDefiningAttributeDictionaryAttribute"
+		definitionName="catCatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues"
+		objectType="CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues"
+		referencedTypes="AttributeDictionaryAttributeWithAllowedValues">
+		<EnablementOrCondition> 
+			<EnablementCondition checkObjectDefinition="true" conditionId="enableProductDefiningAllowedAttribute" enablementValue="Product" propertyName="objectType"/>
+		</EnablementOrCondition>	
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an inherited attribute dictionary attributes
+		with allowed values for defining purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catCatalogEntryReferenceDefiningAttributeDictionaryAttribute"
+		definitionName="catCatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues"
+		objectType="CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues"
+		referencedTypes="InheritedAttributeDictionaryAttributeWithAllowedValues">
+		<EnablementOrCondition> 
+			<EnablementCondition checkObjectDefinition="true" conditionId="enableProductDefiningInheritedAllowedAttribute" enablementValue="Product" propertyName="objectType"/>
+		</EnablementOrCondition>	
+	</ReferenceObjectDefinition>
+	
+	<!---
+		This definition represents the base definition for a Product SKU reference to an
+		attribute dictionary attributes for defining purposes.
+	-->
+	<ReferenceObjectDefinition
+		isBaseDefinition="true"
+		definitionName="catProductSKUReferenceDefiningAttributeDictionaryAttribute"
+		idProperty="attrId"
+		copyProtected="true"
+		allowDuplicates="false">
+        
+        <!--- 
+        	A property definition for the id of the selected allowed attribute value that is the
+        	defining attribute value for the SKU.
+        -->
+        <PropertyDefinition displayName="${catalogResources.chooseDefiningAttributeValue}" propertyName="attrValId" required="true"/>
+        
+        <!---
+		    This property definition represents the display sequence.
+        -->
+        <PropertyDefinition displayName="${catalogResources.attributeSequencePrompt}" maxValue="9999999999" minValue="-9999999999" propertyName="attrDisplaySequence" type="number"/>
+		
+		<!---
+  			Property Definition for the field1 property of an attribute relationship.
+  		-->
+		<PropertyDefinition displayName="${catalogResources.attributePropertiesField1_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xdata_Field1" type="number"/>
+		
+		<!---
+			Property Definition for the field2 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributePropertiesField2_DisplayName}" maxValue="2147483647" minValue="-2147483648" propertyName="xdata_Field2" type="number"/>
+		
+		<!---
+			Property Definition for the field3 property of an attribute relationship.
+		-->
+		<PropertyDefinition displayName="${catalogResources.attributePropertiesField3_DisplayName}" maximumSize="254" propertyName="xdata_Field3" type="string"/>
+		
+		<!--- Create service. -->
+        <CreateService url="/cmc/CreateSKUDefiningAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Defining"/>
+        </CreateService>
+
+        <!--- Update service. -->
+        <UpdateService url="/cmc/UpdateSKUDefiningAttributeDictionaryAttribute">
+        	<ServiceParam name="storeId"/>
+        	<ServiceParam name="attrDictAttrValId" propertyName="attrValId"/>
+        	<ServiceParam name="attrDisplaySequence" propertyName="attrDisplaySequence"/>
+        	<ServiceParam name="catentryId" parentProperty="true"/>
+        	<ServiceParam name="attrDictAttrId" propertyName="attrId"/>
+        	<ServiceParam name="attrUsage" value="Defining"/>
+        </UpdateService>
+		
+		<!---  Default values -->
+		<Xml name="template">
+			<attrDisplaySequence>0</attrDisplaySequence>
+		</Xml>
+		
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an attribute dictionary attributes
+		with allowed values for defining purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catProductSKUReferenceDefiningAttributeDictionaryAttribute"
+		definitionName="catProductSKUReferenceDefiningAttributeDictionaryAttributeWithAllowedValues"
+		objectType="ProductSKUReferenceDefiningAttributeDictionaryAttributeWithAllowedValues"
+		referencedTypes="AttributeDictionaryAttributeWithAllowedValues">
+		
+	</ReferenceObjectDefinition>
+	
+	<!--- 
+		This definition represents a reference to an inherited attribute dictionary attributes
+		with allowed values for defining purposes.
+	-->
+	<ReferenceObjectDefinition
+		baseDefinitionName="catProductSKUReferenceDefiningAttributeDictionaryAttribute"
+		definitionName="catProductSKUReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues"
+		objectType="ProductSKUReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues"
+		referencedTypes="InheritedAttributeDictionaryAttributeWithAllowedValues">
+		
+	</ReferenceObjectDefinition>
+	
+	<!---
+		This child object will contain a flag indicating whether the product has defining 
+		attributes from the attribute dictionary.
+	-->
+	<ChildObjectDefinition definitionName="catCatalogEntryAttributeDictionaryDefiningAttributeProperties" idProperty="catentryId" objectType="CatalogEntryAttributeDictionaryDefiningAttributeProperties">
+        
+        <!---
+        	This property definition represents a flag indicating whether the product has defining 
+			attributes from the attribute dictionary.         	
+        -->            
+        <PropertyDefinition propertyName="catalogEntryHasAttributeDictionaryDefiningAttributes"/>
+            
+    </ChildObjectDefinition>
+	
+</Definitions>

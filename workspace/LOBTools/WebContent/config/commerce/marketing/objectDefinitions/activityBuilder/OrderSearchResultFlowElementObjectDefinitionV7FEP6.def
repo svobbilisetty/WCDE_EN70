@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the Order Search Result action. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService}</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService}</li>
+			<li>{@link wcfChildObjectDefinition mktBaseSearchFilterChildObjectDefinition} that defines a new ranking product property filters</li>
+			<li>{@link wcfChildObjectDefinition mktBaseSearchFilterChildObjectDefinition} that defines a new ranking catalog entry type filters</li>
+			<li>{@link wcfReferenceObjectDefinition mktBaseSearchFilterChildAttributeWithAllowedValues} that defines a new ranking AD attribute filters</li>
+			<li>{@link wcfReferenceObjectDefinition mktBaseSearchFilterCatalogGroup} that defines a new ranking category filters</li>
+			<li>{@link wcfReferenceObjectDefinition mktBaseSearchFilterCatalogGroup} that defines a new ranking inherited category filters</li>
+			<li>{@link wcfChildObjectDefinition searchActionOrderBy} that defines a new sorting product property filters</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>elemTemplateName</b>: required flow element template name. Must be one of orderSearchResultRank or orderSearchResultSort </li>
+			<li><b>override</b>: optional field with possible values "true" and "false", that specifies if it should override previously defined search ordering</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktOrderSearchResultElementObjectV7FEP6"
+		displayName="${mktMarketingResources.orderSearchResultName}"
+		elemTemplateType="Action"
+		flowIcon="orderSearchResultIcon"
+		headerIcon="orderSearchResultHeaderIcon"
+		helpLink="concepts/csbactsearchreorder.htm"
+		objectType="orderSearchResultV7FEP6"
+		package="mkt"
+		paletteIcon="orderSearchResultPaletteIcon"
+		propertiesDefinitionName="mktOrderSearchResultPropertiesV7FEP6"
+		summaryClass="mktOrderSearchResultV7FEP6Summary"
+		templateTypeProperty="orderSearchResultChoice">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>orderSearchResultActionV7FEP6</elemTemplateName>
+			<orderSearchResultChoice>orderSearchResultRank</orderSearchResultChoice>
+		</Xml>
+
+		<ObjectTemplate displayName="${mktMarketingResources.orderSearchResult_rank}" templateType="orderSearchResultRank" deleteObjectTypes="filterGroup"/>
+		<ObjectTemplate displayName="${mktMarketingResources.orderSearchResult_sort}" templateType="orderSearchResultSort" deleteObjectTypes="searchActionOrderByGroup"/>
+
+		<!--- Ranking by: Product Property -->
+		<ChildObjectDefinition baseDefinitionName="mktBaseSearchFilterChildObjectDefinition"
+			objectType="catalogEntryPropertySearchFilter"
+			displayName="${mktMarketingResources.displayProduct_searchFilterProperty}"
+			icon="propertyAttributeIcon">			
+		
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingAction}" propertyName="rankingAction" required="true">
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_promoteAction}" value="promote" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_demoteAction}" value="demote"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingFactor}" propertyName="filterWeight" required="true" type="number">
+				<PropertyRangeValidator package="mkt" minValue="1" maxValue="999"/>
+			</PropertyDefinition>
+			
+			<!--- This property is for the name of the property -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterFilterProperties}" propertyName="filterName" required="true">
+				<PropertyValueTypeService package="mkt" url="/cmc/GetSearchRankProperties">
+ 					<ServiceParam name="storeId"/>
+		  		 </PropertyValueTypeService>
+			</PropertyDefinition>
+			
+			<!--- This property is for the datatype of the property -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterFilterType}" propertyName="filterDataType" required="true">
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_searchFilterFilterExactStringType}" value="EXACTSTRING"/>
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_searchFilterFilterAnyStringType}" value="ANYSTRING"/>
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_searchFilterFilterNumberType}" value="NUMERIC"/>
+			</PropertyDefinition>
+			
+			<!--- This property is for exact string type operators and is not send to the server -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" propertyName="filterOperatorExactString" required="true" send="false">
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_matchesOneOf}" value="=" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_doesNotMatchAny}" value="!="/>
+			</PropertyDefinition>
+			
+			<!--- This property is for any string type operators and is not send to the server -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" propertyName="filterOperatorAnyString" required="true" send="false">
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_contains}" value="contain" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_doesNotContain}" value="NotContain"/>
+			</PropertyDefinition>
+			
+			<!--- This property is for numeric type operators and is not send to the server -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" propertyName="filterOperatorNumeric" required="true" send="false">
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_equals}" value="=" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_notEquals}" value="!="/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_greaterThan}" value="&gt;"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_lessThan}" value="&lt;"/>
+			</PropertyDefinition>
+			
+			<!--- This property is for property value in the case of a single value -->
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterValue}" propertyName="filterValue" type="number">
+				<RequiredPropertyValidator validatorId="requiredPropertyValidator">
+					<EnablementCondition propertyName="filterDataType" enablementValue="NUMERIC"/>
+				</RequiredPropertyValidator>
+			</PropertyDefinition>
+			
+			<!--- These child objects are used to hold values in the case of multiple values -->
+			<ChildObjectDefinition idProperty="filterValue" objectType="filterValue">
+				<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterValue}" propertyName="filterValue" forceParentValidation="true"/>
+			</ChildObjectDefinition>
+			
+			<RequiredChildObjectValidator objectPath="filterValue" propertyName="filterValue" validatorId="reqValueValidator" validatorType="noFilterValue">
+				<EnablementOrCondition>
+					<EnablementCondition conditionId="ExactStringValueCondition" enablementValue="EXACTSTRING" propertyName="filterDataType"/>
+					<EnablementCondition conditionId="AnyStringValueCondition" enablementValue="ANYSTRING" propertyName="filterDataType"/>
+				</EnablementOrCondition>	
+			</RequiredChildObjectValidator>
+			
+			<!--- This is the property identifier  -->
+			<Xml name="template">
+				<filterType>catalogEntryProperty</filterType>
+				<filterWeight>1</filterWeight>
+			</Xml>
+		</ChildObjectDefinition>
+
+		<!--- Ranking by: Attribute dictionary attribute -->
+		<!---  This reference object definition is for an attribute dictionary attribute with allowed values for search filter. -->
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterChildAttributeWithAllowedValues" 
+			objectType="ChildAttributeWithAllowedValues"
+			allowDuplicates="false" 
+			allowedParentTypes="SearchActivity,SearchActivityTemplate"
+			referencedTypes="AttributeDictionaryAttributeWithAllowedValues">
+			
+	 		<Xml name="template">
+				<filterWeight>1</filterWeight>
+			 	<filterType>attributeType</filterType>
+			</Xml> 
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingAction}" propertyName="rankingAction" required="true">
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_promoteAction}" value="promote" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_demoteAction}" value="demote"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingFactor}" propertyName="filterWeight" required="true" type="number">
+				<PropertyRangeValidator package="mkt" minValue="1" maxValue="999"/>
+			</PropertyDefinition>
+			
+			<!--- Attributes must be defined as merchandisable -->
+			<EnablementCondition conditionType="childObjectCondition" propertyName="merchandisable" enablementValue="true"/>
+			
+		</ReferenceObjectDefinition>
+		
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterChildAttributeWithAllowedValues" 
+			objectType="ChildInheritedAttributeWithAllowedValues"
+			allowDuplicates="false" 
+			referencedTypes="InheritedAttributeDictionaryAttributeWithAllowedValues">
+			
+	 		<Xml name="template">
+				<filterWeight>1</filterWeight>
+			 	<filterType>attributeType</filterType>
+			</Xml> 
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingAction}" propertyName="rankingAction" required="true">
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_promoteAction}" value="promote" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_demoteAction}" value="demote"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingFactor}" propertyName="filterWeight" required="true" type="number">
+				<PropertyRangeValidator package="mkt" minValue="1" maxValue="999"/>
+			</PropertyDefinition>
+			
+			<!--- Attributes must be defined as merchandisable -->
+			<EnablementCondition conditionType="childObjectCondition" propertyName="merchandisable" enablementValue="true"/>
+			
+		</ReferenceObjectDefinition>
+		
+		<!--- Ranking by: Catalog Entry Type-->
+		<ChildObjectDefinition baseDefinitionName="mktBaseSearchFilterChildObjectDefinition" 
+			objectType="catenttype_id_ntk_cs" 
+			displayName="${mktMarketingResources.displayProduct_catalogEntryType}"
+			icon="productIcon">
+			
+			<Xml name="template">
+				<filterWeight>1</filterWeight>
+				<filterName>catenttype_id_ntk_cs</filterName>
+				<filterType>catalogEntryType</filterType>				
+			</Xml>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingAction}" propertyName="rankingAction" required="true">
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_promoteAction}" value="promote" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_demoteAction}" value="demote"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingFactor}" propertyName="filterWeight" required="true" type="number">
+				<PropertyRangeValidator package="mkt" minValue="1" maxValue="999"/>
+			</PropertyDefinition>
+					
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" propertyName="filterOperator" required="true">
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_matchesOneOf}" value="=" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.filterMatchingRule_doesNotMatchAny}" value="!="/>
+			</PropertyDefinition>
+			
+			<ChildObjectDefinition idProperty="filterValue" objectType="filterValue">
+				<PropertyDefinition displayName="${mktMarketingResources.displayProduct_searchFilterValue}" propertyName="filterValue" forceParentValidation="true">
+					<PropertyValue displayName="${mktMarketingResources.displayProduct_product}" value="ProductBean"/>
+					<PropertyValue displayName="${mktMarketingResources.displayProduct_sku}" value="ItemBean"/>
+					<PropertyValue displayName="${mktMarketingResources.displayProduct_bundle}" value="BundleBean"/>
+					<PropertyValue displayName="${mktMarketingResources.displayProduct_kit}" value="PackageBean"/>
+					<PropertyValue displayName="${mktMarketingResources.displayProduct_dynamicKit}" value="DynamicKitBean"/>
+				</PropertyDefinition>
+			</ChildObjectDefinition>
+			
+			<RequiredChildObjectValidator objectPath="filterValue" propertyName="filterValue" validatorId="reqValueValidator" validatorType="noFilterValue"/>			
+		</ChildObjectDefinition>
+
+		<!--- Ranking by: Child CatalogGroup -->
+		<!--- Filter by: Catgroup -->
+		<!---  These reference object definitions define a category for search filter. -->		
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterCatalogGroup" allowedParentTypes="SearchActivity,SearchActivityTemplate" objectType="ChildCatalogGroup" referencedTypes="CatalogGroup,SalesCatalogGroup">
+			<Xml name="template">
+				<filterWeight>1</filterWeight>
+				<filterType>catgroupType</filterType>						
+			</Xml>
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingAction}" propertyName="rankingAction" required="true">
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_promoteAction}" value="promote" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_demoteAction}" value="demote"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingFactor}" propertyName="filterWeight" required="true" type="number">
+				<PropertyRangeValidator package="mkt" minValue="1" maxValue="999"/>
+			</PropertyDefinition>
+		</ReferenceObjectDefinition>
+		
+		<ReferenceObjectDefinition baseDefinitionName="mktBaseSearchFilterCatalogGroup" objectType="ChildInheritedCatalogGroup" referencedTypes="InheritedCatalogGroup,InheritedSalesCatalogGroup">
+			<Xml name="template">
+				<filterWeight>1</filterWeight>
+				<filterType>catgroupType</filterType>		
+			</Xml>
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingAction}" propertyName="rankingAction" required="true">
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_promoteAction}" value="promote" isDefault="true"/>
+				<PropertyValue displayName="${mktMarketingResources.orderSearchResult_demoteAction}" value="demote"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.orderSearchResult_searchFilterRankingFactor}" propertyName="filterWeight" required="true" type="number">
+				<PropertyRangeValidator package="mkt" minValue="1" maxValue="999"/>
+			</PropertyDefinition>
+		</ReferenceObjectDefinition>
+				
+
+		<!--- Sorting by: Product property -->
+		<!--- This object defines a property as a sort criteria for the displayed products. -->
+		<ChildObjectDefinition
+			displayName="${mktMarketingResources.displayProduct_searchFilterProperty}"
+			idProperty="elementName"
+			objectType="searchActionOrderBy"
+			objectGroups="searchActionOrderByGroup"
+			icon="propertyAttributeIcon">
+			
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_orderByField}" propertyName="orderByField" required="true" forceParentValidation="true">
+				 <PropertyValueService url="/cmc/GetSearchSortColumns">
+ 					<ServiceParam name="storeId"/>
+		  		 </PropertyValueService>				 
+			</PropertyDefinition>
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_orderBySequence}" propertyName="orderBySequence" required="true">
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_orderByAscending}" value="asc"/>
+				<PropertyValue displayName="${mktMarketingResources.displayProduct_orderByDescending}" isDefault="true" value="desc"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition displayName="${mktMarketingResources.displayProduct_orderByPriority}" propertyName="sequence" required="true" type="number"/>
+
+			<CreateService sendMultiValues="true" sendPrefix="true" url="/cmc/CreateCampaignElement">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="activityId" parentProperty="true"/>
+				<ServiceParam name="parentElementName" parentProperty="true" propertyName="elementName" resolvePrimaryParent="false"/>
+				<ServiceParam name="PROPERTY_elemTemplateType" value="Data"/>
+				<ServiceParam name="PROPERTY_orderByFieldType" propertyName="orderByFieldType"/>
+				<ServiceParam name="PROPERTY_orderByFieldCode" value=" "/>
+				<ServiceParam name="PROPERTY_elemTemplateName" value="searchActionOrderBy"/>
+			</CreateService>
+
+			<UpdateService  sendAll="true" sendMultiValues="true" sendPrefix="true" url="/cmc/SaveCampaignElement">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="activityId" parentProperty="true"/>
+				<ServiceParam name="parentElementName" parentProperty="true" propertyName="elementName" resolvePrimaryParent="false"/>
+				<ServiceParam name="PROPERTY_elemTemplateType" value="Data"/>
+				<ServiceParam name="PROPERTY_orderByFieldType" propertyName="orderByFieldType"/>
+				<ServiceParam name="PROPERTY_orderByFieldCode" value=" "/>
+				<ServiceParam name="PROPERTY_elemTemplateName" value="searchActionOrderBy"/>
+			</UpdateService>
+
+			<DeleteService url="/cmc/DeleteCampaignElement">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="activityId" parentProperty="true"/>
+				<ServiceParam name="PROPERTY_elementName" propertyName="elementName"/>
+			</DeleteService>
+			
+			<!--- This is the property identifier  -->
+			<Xml name="template">
+				<orderByFieldType>catalogEntryProperty</orderByFieldType>				
+			</Xml>
+		</ChildObjectDefinition>
+		
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.help_orderSearchResult_searchFiltersV7FEP6}" objectPath="filterGroup" validatorId="reqFilterValidator" validatorType="noRankingCriteriaSpecified">
+			<EnablementCondition conditionId="orderSearchResultRank" enablementValue="orderSearchResultRank" propertyName="orderSearchResultChoice"/>
+		</RequiredChildObjectValidator>
+
+	 	<RequiredChildObjectValidator errorMessage="${mktMarketingResources.help_orderSearchResult_orderBy}" objectPath="searchActionOrderByGroup" validatorId="reqSortValidator" validatorType="noSortCriteriaSpecified">
+			<EnablementCondition conditionId="orderSearchResultSort" enablementValue="orderSearchResultSort" propertyName="orderSearchResultChoice"/>	
+		</RequiredChildObjectValidator>
+
+		<UniqueValueForChildObjectPropertyValidator objectPath="searchActionOrderBy" propertyName="orderByField" validatorId="sortCriteriaUniquenessValidator"/>
+					
+	</FlowElementObjectDefinition>	
+	
+</Definitions>

@@ -1,0 +1,478 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		This single instance of {@link wcfBorderedView} with id wcfTooltipView is reused to display the tooltip for
+		all objects in the Management Center. The look and feel of a {@link wcfTooltip} is defined in this instance. 
+		Before displaying a tooltip the view must be associated with an instance of {@link wcfTooltip} which
+		describes the tooltip content.
+	-->
+	<wcfBorderedView id="wcfTooltipView"
+			borderSize="1"
+			borderColor="0x5272cc" 
+			visible="false"
+			defaultplacement="tipcontent">
+		<!---
+			Array of registered wcfTooltip instances. This array is checked to determine the active tooltip.
+		-->
+		<attribute name="registeredSources" value="${[]}"/>
+		<!---
+			The wcfTooltip instance currently associated with the tool tip view.
+		-->
+		<attribute name="tooltipSource" value="null" setter="this.setTooltipSource(tooltipSource)"/>
+		<!---
+			The time that the tooltip was displayed. The tooltip will be closed after 16 seconds.
+		-->
+		<attribute name="showTime" type="number" value="${null}"/>
+		<!---
+			The time that the mouse moved out of the tooltip source.
+		-->
+		<attribute name="mouseOutTime" type="number" value="${null}"/>
+		<!---
+			(Optional) The relative URL of the link which refers to the Information Center page. The absolute URL is constructed
+			by prepending the help server address, port, jsp page, locale and "topic=/com.ibm.commerce.management-center.doc/" 
+			to this relative URL.
+		-->
+		<attribute name="linkURL" value="" type="text" />
+		
+		<!---
+			Flag which indicates whether the mouse pointer is over the tooltip view.
+		-->
+		<attribute name="mouseInTip" type="boolean" value="false"/>
+		<!---
+			@keywords private 
+			Maximum width of the tooltip view.
+		-->
+		<attribute name="MAX_WIDTH" value="200"/>
+		<!---
+			@keywords private 
+			The padding to the left and right of the text shown in the tooltip.
+		-->
+		<attribute name="WIDTH_PADDING" value="20"/>
+
+		<!---
+			The view where the tooltip contents are displayed.
+		-->
+		<view name="tipcontent" bgcolor="0xfff1c2">
+			<!---
+				Font size of text in the tooltip.
+			-->
+			<attribute name="font_size" value="11"/>
+			<!--- 
+				Font color of text in the tooltip.
+			-->
+			<attribute name="font_color" value="0x000000"/>
+			<!---
+				Font color of text in the link in the tooltip.
+			-->
+			<attribute name="link_font_color" value="0x063bcd"/>
+
+			<simplelayout axis="y"/>
+			<!---
+				Placeholder for the text in the tooltip.
+			-->
+			<text x="6" name="t" fgcolor="${parent.font_color}" fontsize="${parent.font_size}" resize="true" multiline="true"/>
+			<!---
+				The padding to the bottom of the text shown in the tooltip.
+			-->
+			<view name="padTextView" height="10"/>
+			<!---
+				Placeholder for the link in the tooltip.
+			-->
+			<text x="6" name="linkTextView" fgcolor="${parent.link_font_color}" fontsize="${parent.font_size}" resize="true" multiline="true" onclick="wcfTooltipView.launchLink()"/>
+			<!---
+				The padding to the bottom of the link in the tooltip.
+			-->
+			<view name="padLinkTextView" height="10" visible="${parent.linkTextView.visible}"/>
+			
+			<!---
+				Placeholder for the image in the tooltip.
+			-->
+			<image name="imageView" stretches="both">
+			
+				<handler name="onload">
+	    		<![CDATA[
+					parent.parent.setAttribute('height', null);
+					this.scaleImage();
+					parent.parent.setTipLocation();				
+					]]>
+				</handler>
+				<!---
+					@keywords private
+					This method will scale the image down if required, and otherwise resets the image to its fullsize.
+				-->
+				<method name="scaleImage">
+					<![CDATA[
+					var maxWidth = canvas.width -10;
+					if (this.unstretchedwidth > maxWidth) {
+						var scale = this.unstretchedwidth/maxWidth;	
+						this.setAttribute('width', maxWidth);	
+						this.setAttribute('height', this.unstretchedheight/scale);	
+					} else {	
+						//reset the image sizes
+						this.setAttribute('height', this.unstretchedheight);
+						this.setAttribute('width', this.unstretchedwidth);
+					}
+					]]>
+				</method>
+			</image>			
+		</view>
+
+		<!---
+			@keywords private 
+			
+			Initialization method for this class.
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.checkTooltipDel = new lz.Delegate(this, "checkTooltip");
+			this.launchLinkDel = new lz.Delegate(this, "launchLink");
+			lz.Keys.callOnKeyCombo(this.launchLinkDel, ['Control', 'Shift', 'd']);
+			lz.Keys.callOnKeyCombo(this.launchLinkDel, ['Control', 'Shift', '3']);
+			this.setModalDel = new lz.Delegate(this, "setModal");
+			this.setModalDel.register(this, "onmouseInTip");
+			this.setModalDel.register(this, "onvisible");
+			this.hideTipDel = new lz.Delegate(this, "hideTip");
+			this.checkTooltip();
+			]]>
+		</method>
+
+		<!---
+			keywords private 
+			Destroy method for this class.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.checkTooltipDel.unregisterAll();
+			delete this.checkTooltipDel;
+			this.launchLinkDel.unregisterAll();
+			lz.Keys.removeKeyComboCall(this.launchLinkDel, ['Control', 'Shift', 'd']);
+			lz.Keys.removeKeyComboCall(this.launchLinkDel, ['Control', 'Shift', '3']);
+			delete this.launchLinkDel;
+			this.mouseInTipDel.unregisterAll();
+			delete this.mouseInTipDel;
+			this.hideTipDel.unregisterAll();
+			delete this.hideTipDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Register the specified tooltip source.
+			@param wcfTooltip source: the tooltip source
+		-->
+		<method name="registerTooltipSource" args="source">
+			<![CDATA[
+			this.registeredSources.push(source);
+			]]>
+		</method>
+		
+		<!---
+			Unregister the specified tooltip source.
+			@param wcfTooltip source: the tooltip source
+		-->
+		<method name="unregisterTooltipSource" args="source">
+			<![CDATA[
+			for (var i = 0; i < this.registeredSources.length; i++) {
+				if (source == this.registeredSources[i]) {
+					this.registeredSources.splice(i, 1);
+					break;
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private 
+			Checks whether the tooltip should be displayed. The tooltip will be displayed if
+			more than 750 milliseconds have passed since a tooltip parent recieved keyboard
+			focus or if the mouse has been left over a tooltip parent for more than 750
+			milliseconds.
+		-->
+		<method name="checkTooltip" args="e=null">
+			<![CDATA[
+			var focusIdle = wcfViewUtil.getLastKeyStroke();
+			var mouseIdle = wcfViewUtil.getLastMouseMove();
+			if (this.tooltipSource != null) {
+				if (this.visible && this.linkURL != "" && mouseIdle < focusIdle) {
+					var newMouseInTip = false;
+					var mouseX = canvas.getMouse("x");
+					var mouseY = canvas.getMouse("y");
+					if (mouseX >= this.x && mouseX <= (this.x + this.width) && mouseY >= this.y && mouseY <= (this.y + this.height)) {
+						newMouseInTip = true;
+					}
+					else {
+						newMouseInTip = false;
+					}
+					if (newMouseInTip != this.mouseInTip) {
+						this.setAttribute("mouseInTip", newMouseInTip);
+					}
+				}
+				var currentTime = (new Date).getTime();
+				if (!this.mouseInTip && this.showTime != null && currentTime - this.showTime > 16000) {
+					this.hideTip();
+				}
+				if (mouseIdle < focusIdle) {
+					if (this.mouseOutTime == null) {
+						var mouseX = canvas.getMouse("x");
+						var mouseY = canvas.getMouse("y");
+						var sourceX = this.tooltipSource.parent.getAttributeRelative("x", canvas);
+						var sourceY = this.tooltipSource.parent.getAttributeRelative("y", canvas);
+						var sourceWidth= this.tooltipSource.parent.width;
+						var sourceHeight = this.tooltipSource.parent.height;
+						if (mouseX < sourceX || mouseX > (sourceX + sourceWidth) || mouseY < sourceY || mouseY > (sourceY + sourceHeight)) {
+							this.mouseOutTime = currentTime;
+						}
+					}
+					if (!this.mouseInTip && this.mouseOutTime != null && (this.linkURL == "" || currentTime - this.mouseOutTime > 1000)) {
+						this.setTooltipSource(null);
+					}
+				}
+				else if (!wcfViewUtil.containsView(lz.Focus.getFocus(), this.tooltipSource.parent)) {
+					this.setTooltipSource(null);
+				}
+			}
+			else {
+				if (focusIdle <= mouseIdle && focusIdle >= 750) {
+					for (var i = 0; i < this.registeredSources.length; i++) {
+						var source = this.registeredSources[i];
+						if (source.parentVisible && source.enabled && (wcfViewUtil.containsView(lz.Focus.getFocus(), source.parent) || wcfViewUtil.containsView(source.parent, lz.Focus.getFocus()))) {
+							this.setTooltipSource(source);
+							this.hideTipDel.register(source.parent, "onclick");
+							this.hideTipDel.register(source.parent, "onmousedown");
+							break;
+						}
+					}
+				}
+				else if (mouseIdle < focusIdle && mouseIdle >= 750) {
+					var mouseX = canvas.getMouse("x");
+					var mouseY = canvas.getMouse("y");
+					for (var i = 0; i < this.registeredSources.length; i++) {
+						var source = this.registeredSources[i];
+						if (source.parentVisible && source.enabled) {
+							var sourceX = source.parent.getAttributeRelative("x", canvas);
+							var sourceY = source.parent.getAttributeRelative("y", canvas);
+							var sourceWidth = source.parent.width;
+							var sourceHeight = source.parent.height;
+							if (mouseX >= sourceX && mouseX <= (sourceX + sourceWidth) && mouseY >= sourceY && mouseY <= (sourceY + sourceHeight)) {
+								if ((wcfViewUtil.checkDescendant(source.parent, wcfViewUtil.mouseOverView) || wcfViewUtil.checkDescendant(wcfViewUtil.mouseOverView, source.parent)) &&
+									wcfViewUtil.containedInModalView(source.parent)) {
+									this.setTooltipSource(source);
+									this.hideTipDel.register(source.parent, "onclick");
+									this.hideTipDel.register(source.parent, "onmousedown");
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			lz.Timer.resetTimer(this.checkTooltipDel, 250);
+			]]>
+		</method>
+
+		<!---
+			Set the current tooltip.
+		-->
+		<method name="setTooltipSource" args="tooltip">
+			<![CDATA[
+			if (this["hideTipDel"]) {
+				this.hideTipDel.unregisterAll();
+			}
+			this.tooltipSource = tooltip;
+			if (tooltip != null) {
+				this.showTip();
+			}
+			else {
+				this.hideTip();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Show the tooltip. Do not call this method directly. It is called by setTooltipSource.
+		-->
+		<method name="showTip">
+			<![CDATA[
+			var source = this.tooltipSource;
+
+			var newText = "";
+			var newLinkText = "";
+			var newLinkURL = "";
+			var newImageURL =source.imageURL;
+			if (preferenceManager.getPreference("CMCEnableExtendedHelp") == "true") {
+				//if user wants to see extended text then show the extended text instead of the short text
+				if (source.extendedText != null && source.extendedText != "") {
+					newText = source.extendedText;
+				}
+				else if (source.text != null && source.text != "") {
+					newText = source.text;
+				}
+				if (source.linkURL != null && source.linkURL != "") {
+					newLinkURL = source.linkURL;
+					if (source.linkText != null && source.linkText != "") {
+						newLinkText = source.linkText;
+					}
+					else {
+		   				newLinkText = foundationResources.helpDefaultLinkText.string;
+					}
+				}
+			}
+			else if (source.text != null && source.text != "") {
+				newText = source.text;
+			}
+			this.tipcontent.t.setAttribute('text', newText);
+			this.tipcontent.linkTextView.setAttribute('text', newLinkText);
+			this.setAttribute("linkURL", newLinkURL);
+			
+			if (newText != "" || newLinkText != "") {
+				if(this.tipcontent.imageView.visible){
+					this.tipcontent.imageView.setAttribute('visible', false);
+				}
+				if(!this.tipcontent.t.visible){
+					this.tipcontent.t.setAttribute('visible', true);
+				}
+				if (newLinkText != "") {
+					//we are displaying a link so take care of the 2 text views
+					if (!this.tipcontent.linkTextView.visible) {
+						this.tipcontent.linkTextView.setAttribute('visible', true);
+					}
+					if ((this.tipcontent.t.getTextWidth() + this.WIDTH_PADDING > this.MAX_WIDTH) ||
+						(this.tipcontent.linkTextView.getTextWidth() + this.WIDTH_PADDING > this.MAX_WIDTH)) {
+						this.tipcontent.t.setAttribute('width', this.MAX_WIDTH);
+						this.tipcontent.linkTextView.setAttribute('width', this.MAX_WIDTH);
+						this.setAttribute('width', 210);
+					}
+					else {
+						this.tipcontent.t.setAttribute('width', this.tipcontent.t.getTextWidth() + this.WIDTH_PADDING);
+						this.tipcontent.linkTextView.setAttribute('width', this.tipcontent.linkTextView.getTextWidth() + this.WIDTH_PADDING);
+						this.setAttribute('width', Math.max(this.tipcontent.t.width, this.tipcontent.linkTextView.width));
+					}
+				} else {
+					//we are displaying just text so take care of the 1 view
+					//set the link text view to width and height of 0
+					if (this.tipcontent.linkTextView.visible) {
+						this.tipcontent.linkTextView.setAttribute('visible', false);
+			       	}
+					if (this.tipcontent.t.getTextWidth() + this.WIDTH_PADDING > this.MAX_WIDTH) {
+						this.tipcontent.t.setAttribute('width', this.MAX_WIDTH);
+					}
+					else {
+						this.tipcontent.t.setAttribute('width', this.tipcontent.t.getTextWidth() + this.WIDTH_PADDING);
+					}
+					this.setAttribute('width', this.tipcontent.t.width);
+				}
+				this.setTipLocation();
+
+		    }else if (newImageURL!= null && newImageURL !="") {
+				if(!this.tipcontent.imageView.visible){
+					this.tipcontent.imageView.setAttribute('visible', true);
+				}
+				if(this.tipcontent.linkTextView.visible){
+					this.tipcontent.linkTextView.setAttribute('visible', false);
+				}
+				if(this.tipcontent.t.visible){
+					this.tipcontent.t.setAttribute('visible', false);
+				}
+				if(this.tipcontent.padTextView.visible){
+					this.tipcontent.padTextView.setAttribute('visible', false);
+				}
+				this.tipcontent.imageView.setAttribute('src',newImageURL);
+				this.setTipLocation();
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private 
+			Hides the tooltip view.
+		-->
+	    <method name="hideTip" args="e=null">
+			<![CDATA[
+			if (this.visible) {
+				this.showTime = null;
+				this.setAttribute("visible", false);
+				if (this.mouseInTip) {
+					this.setAttribute("mouseInTip", false);
+				}
+			}
+	  		]]>
+	  	</method>
+	  	
+	  	<method name ="setTipLocation">
+	  		<![CDATA[
+	  			var source = this.tooltipSource;
+	  			var tipx;
+				var tipy;
+				if (wcfViewUtil.containsView(lz.Focus.getFocus(), source.parent)) {
+					tipx = source.parent.getAttributeRelative("x", canvas) + source.parent.width / 2;
+					tipy = source.parent.getAttributeRelative("y", canvas) + source.parent.height / 2;
+				}
+				else {
+					tipx = canvas.getMouse("x");
+					tipy = canvas.getMouse("y");
+				}
+				tipy += 25;
+				//need to make sure that the tooltip is visible
+				var bottomOfTooltip = this.tipcontent.height + tipy;
+				var bottomOfCanvas = canvas.getBounds().height;
+				if (bottomOfCanvas < bottomOfTooltip) {
+					tipy = tipy - 35 - this.tipcontent.height; 
+				}
+
+				tipx -= 5;
+				if (tipx + this.width + 10 > canvas.width) {
+					tipx = canvas.width - this.width - 10;
+				}
+
+				this.setAttribute('x', tipx);
+				this.setAttribute('y', tipy);
+				this.bringToFront();
+				this.setAttribute("visible", true);
+				this.showTime = (new Date).getTime();
+				this.mouseOutTime = null;	
+			]]>
+	  	</method>
+
+		<!---
+			@keywords private 
+			Makes the tooltip view modal depending upon the value of mouseInTip.
+		-->
+		<method name="setModal" args="e=null">
+			<![CDATA[
+			if (this.mouseInTip && this.visible) {
+				lz.ModeManager.makeModal(this);
+			}
+			else {
+				lz.ModeManager.release(this);
+			}
+			]]>
+		</method>
+
+		<!---
+			This method launches the Information Center page referred by the link.
+		-->
+		<method name="launchLink" args="e=null">
+			<![CDATA[
+			if (this.visible && this.linkURL != "") {
+				helpManager.openHelpLink(this.linkURL);
+				this.hideTip();
+			}
+			]]>
+		</method>
+	</wcfBorderedView>
+
+</library>

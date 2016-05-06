@@ -1,0 +1,934 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This class describes a named property of a business object. Instances of this class 
+		can only be declared as immediate sub-nodes of {@link wcfObjectDefinition}. Property 
+		definitions can be used to define information that will be automatically validated by
+		the validators. Not all the properties of a business
+		object need to be defined using {@link wcfPropertyDefinition}, only the ones with 
+		special processing information.
+		
+		<p>The following example shows how to define a weight measure property for an object with
+		a few property values:  
+		@START_CODE	
+			<PropertyDefinition propertyName="xprop_weightMeasure">
+				<PropertyValue displayName="Kilogram" value="KGM"/>
+				<PropertyValue displayName="milligram" value="LBR"/>
+				<PropertyValue displayName="1 Unit" value="C62"/>
+			</PropertyDefinition>
+		@END_CODE
+		
+		<p>Multiple instances of {@link wcfPropertyValue} may be declared as children of a property definition. The values
+		will be used by property editors that display a list of values from which the user may select.
+
+		<p>A single instance of {@link wcfPropertyValueService} may be declared as a child of a property definition.
+		The value service will be invoked when the property definition is instantiated. The value service must return
+		possible values for the property.
+
+		<p>Multiple instances of {@link wcfValidator} may be declared as children of a property definition. Validators declared as
+		immediate children of a property definition are expected to perform property level validation.
+		
+		<p>A single instance of {@link wcfEnablementCondition} may be declared as a child of a property definition. If
+		the enablement condition evaluates to false for a property instance, then the property will not be available.
+		Validation will only be performed for properties that are currently enabled.
+	-->
+	<class name="wcfPropertyDefinition" extends="node">
+		<!---
+			@keywords private
+			A map of property values.
+		-->
+		<attribute name="propertyValues" value="${{}}"/>
+		<!---
+			@keywords private
+			An array of available property values for re-use.
+		-->
+		<attribute name="availablePropertyValues" value="${[]}"/>
+		<!---
+			@keywords private
+			The constant for the value key for the base set of property values declared with the property definition.
+		-->
+		<attribute name="BASE_VALUES_KEY" type="string" value="base"/>
+		<!---
+			The name of the property being defined.
+		-->
+		<attribute name="propertyName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			The handler to the {@link wcfPropertyValueService} instance that is used
+			to retrieve the values of this property.
+		-->
+		<attribute name="valueService" value="null"/>
+		<!---
+			@keywords private
+			This map keeps a list of value services that have been requested for a particular
+			value service key.
+		-->
+		<attribute name="requestedValueServices" value="${{}}"/>
+		<!---
+			Display name for this property.
+		-->
+		<attribute name="displayName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Display name qualifier. This value is used to distinguish between properties that have the same display name.
+		-->
+		<attribute name="displayNameQualifier" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Qualified display name for this property. This attribute will be set to the concatenated values
+			of displayName and displayNameQualifier.
+		-->
+		<attribute name="qualifiedDisplayName" type="string" value="${null}"/>
+		<!---
+			Indicates that this property is a required field. The Management Center user
+			interface will automatically append an asterisk besides the required properties.
+			@type boolean
+		-->
+		<attribute name="required"  type="boolean" value="false" />
+		<!---
+			The maximum size for this property. This value is used by the property size 
+			validator.
+		-->
+		<attribute name="maximumSize" type="number" value="null"/>
+		<!---
+			The maximum decimal places for this property. This value is used by the property decimal places 
+			validator.
+		-->
+		<attribute name="maximumDecimalPlaces" type="number" value="null"/>
+		<!---
+			The maximum value for this property. This value is used by the property range 
+			validator.
+		-->
+		<attribute name="maxValue" type="number" value="null"/>
+		<!---
+			Th minimum value for this property. This value is used by the property range 
+			validator.
+		-->
+		<attribute name="minValue" type="number" value="null"/>
+		<!---
+			The data type for this property.
+			Valid values are "string", "number", "integer", "date", "datetime", "time", "currency" and "email". The default value is "string".
+		-->
+		<attribute name="type" type="string" value="string"/>
+		<!---
+			Flag to indicate that this property should not be copied when the parent object
+			is copied.
+		-->
+		<attribute name="copyProtected" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			A list of {@link wcfValidator} instances that will be used to validate this 
+			property.
+		-->
+		<attribute name="validators" value="${[]}"/>
+		<!---
+			@keywords private
+			The enablement condition for this property. Enablement condition refers to the
+			state needed for this property to be active and seen by the user. If the condition 
+			is not satisfied then this property is not visible to the user.
+		-->
+		<attribute name="enablementCondition" value="${null}"/>
+		<!---
+			Flag to indicate whether or not this property should be trimmed before sending
+			it to the server.
+		-->
+		<attribute name="trim" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			String to indicate the format type of this property. For example, HTML text format.
+			This attribute is used for displaying a more informative error message in case
+			of a validator error.
+		-->
+		<attribute name="format" type="string" value="${null}"/>
+		<!--- 
+			Flag to indicate whether or not this property should be sent to the server as a URL parameter
+			when the framework invokes the {@link wcfCreateService create service} or
+			{@link wcfUpdateService update service}.
+			The default value is <code>true</code>.
+		-->	
+		<attribute name="send" type="boolean" value="true"/>
+		<!--- 
+			@keywords private
+			Flag to indicate whether or not this property is defined as an XML element.
+		-->
+		<attribute name="xmlArgument" type="boolean" value="false"/>
+		<!--- 
+			Flag to indicate that this property's value is managed by the server. Set this flag to "true" if this property is returned in 
+			the response of the {@link wcfCreateService} or {@link wcfUpdateService}. This will tell the framework to wait until the 
+			response comes back from the create or update service before resolving a {@link wcfServiceParam} instance that refers to this property.
+		-->
+		<attribute name="serverManaged" type="boolean" value="false"/>
+		<!---
+			Indicates that validation is to be performed on the parent object of this property's parent object when the property
+			value is changed.
+		-->
+		<attribute name="forceParentValidation" type="boolean" value="false"/>
+		<!---
+			Indicates that the parent object will be recreated when the property value is changed. The
+			object will be recreated by calling the object's delete and create services instead of the
+			update service.
+		-->
+		<attribute name="recreateObject" type="boolean" value="false"/>
+		<!---
+			Indicates that the property should be marked as dirty if it has been changed and needs to be saved.
+		-->
+		<attribute name="markDirtyOnChange" value="true" type="boolean"/>
+		
+		<!--- 
+			@keywords private
+			Initialization method for this class.
+		-->
+		<method name="init">
+			<![CDATA[
+			var definitions = parent["propertyDefinitions"];
+			if (!definitions) {
+				definitions = {};
+				this.parent.propertyDefinitions = definitions;
+			}
+			var propDefArray = definitions[this.propertyName];
+			if (typeof(propDefArray) == "undefined") {
+				propDefArray = [];
+				definitions[this.propertyName] = propDefArray;
+			}
+			propDefArray.push(this);
+			this.updateQualifiedDisplayNameDel = new lz.Delegate(this, "updateQualifiedDisplayName");
+			this.updateQualifiedDisplayNameDel.register(this, "ondisplayName");
+			this.updateQualifiedDisplayNameDel.register(this, "ondisplayNameQualifier");
+			this.updateQualifiedDisplayName();
+			
+			if (this.valueService != null) {
+				var model = wcfModelUtil.findModelForView(this);
+				if(model != null) {
+					this.doRefreshOnInitDel = new lz.Delegate(this, "doRefreshOnInit");
+					this.doRefreshOnInitDel.register(model, "onmodelInitialized");
+					this.doRefreshOnInit(model.modelInitialized);
+				}
+			}
+			super.init();
+			if (this.required) {
+				new lz.wcfRequiredPropertyValidator(this);
+			}
+			if (this.maximumSize != null) {
+				new lz.wcfPropertySizeValidator(this, {maximumSize: this.maximumSize});
+			}
+			if (this.maximumDecimalPlaces != null) {
+				new lz.wcfDecimalPlacesValidator(this, {maximumDecimalPlaces: this.maximumDecimalPlaces});
+			}
+			if (this.minValue != null || this.maxValue != null) {
+				new lz.wcfPropertyRangeValidator(this, {minValue: this.minValue, maxValue: this.maxValue});
+			}
+			if (this.type != "string") {
+				new lz.wcfPropertyValueTypeValidator(this);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.updateQualifiedDisplayNameDel.unregisterAll();
+			delete this.updateQualifiedDisplayNameDel;
+			if (this["doRefreshOnInitDel"]) {
+				this.doRefreshOnInitDel.unregisterAll();
+				delete this.doRefreshOnInitDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Creates a new property value for the given arguments.
+			@param Map args: A map of arguments for the new property value
+			@return wcfPropertyValue: The new wcfPropertyValue instance
+		 -->
+		<method name="createPropertyValue" args="args">
+			<![CDATA[
+			var newPropertyValue = null;
+			if (this.availablePropertyValues.length > 0) {
+				newPropertyValue = this.availablePropertyValues.pop();
+			}
+			else {
+				newPropertyValue = new lz.wcfPropertyValue(this);
+			}
+			newPropertyValue.initializePropertyValue(args);
+			return newPropertyValue;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Release the property values associated with the specified key.
+			@param String key: The key for the set of values
+		 -->
+		<method name="releasePropertyValues" args="key">
+			<![CDATA[
+			var values = this.propertyValues[key];
+			if (typeof values != "undefined") {
+				for (var i = 0; i < values.length; i++) {
+					values[i].release();
+					this.availablePropertyValues.push(values[i]);
+				}
+				delete this.propertyValues[key];
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			When the model is re-initialized, this method removes all the service based
+			property values
+		 -->
+		<method name="doRefreshOnInit" args="modelInitialized">
+			<![CDATA[
+			if(modelInitialized == true) {
+				for (var key in this.propertyValues) {
+					if (key != this.BASE_VALUES_KEY) {
+						var values = this.propertyValues[key];
+						for (var i = 0; i < values.length; i++) {
+							values[i].release();
+							this.availablePropertyValues.push(values[i]);
+						}
+						delete this.propertyValues[key];
+					}
+				}
+				this.requestedValueServices = {};
+			}
+			]]>
+		</method>
+
+		<!---
+			Update the qualified display name.
+			@keywords private
+		-->
+		<method name="updateQualifiedDisplayName" args="e=null">
+			<![CDATA[
+			var newName = null;
+			if (this.displayName != null) {
+				newName = this.displayName;
+				if (this.displayNameQualifier != null) {
+					newName += this.displayNameQualifier;
+				}
+			}
+			this.setAttribute("qualifiedDisplayName", newName);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns an instance of wcfPropertyValue associated with the given value
+			@param @param wcfModelProperty property: The model property of the property value to look up
+			@param lz.Delegate del: An optional parameter, to register a delegate if the property 
+									values change due to a value service.
+			@return wcfPropertyValue: The instance of wcfPropertyValue for the associated value
+		-->
+		<method name="getPropertyValue" args="property, del">
+			<![CDATA[
+			var propValues = this.getPropertyValues(property.o, del, true);
+			for (var i = 0; i < propValues.length; i++) {
+				if (propValues[i].value == property.value) {
+					return propValues[i];
+				}
+			}
+			return null;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the property values for this property definition.
+			@param wcfModelObject o The model object that contains the property.
+			@param lz.Delegate del: An optional parameter, to register a delegate if the property 
+									values change due to a value service.
+			@return Array: An array of property values
+		-->
+		<method name="getPropertyValues" args="o=null, del=null, all=false">
+			<![CDATA[
+			var propValues = [];
+			var values = this.propertyValues[this.BASE_VALUES_KEY];
+			if (values) {
+				for (var i = 0; i < values.length; i++) {
+					if (all || values[i].enablementCondition == null || values[i].enablementCondition.isEnabled(o)) {
+						propValues.push(values[i]);
+					}
+					if (del && values[i].enablementCondition != null) {
+						values[i].enablementCondition.registerDelegate(o, del);
+					}
+				}
+			}
+			
+			if (this.valueService != null) {
+				var valuesKey = this.valueService.getValuesKey(o, del);
+			  	if (valuesKey != null) {
+					var values = this.propertyValues[valuesKey];
+					if (values) {
+						for (var i = 0; i < values.length; i++) {
+							propValues.push(values[i]);
+						}					
+					}
+					if (del) {
+						del.register(this, "onvalueServiceComplete");
+					}
+					if (!this.requestedValueServices[valuesKey]) {
+						this.requestedValueServices[valuesKey] = true;
+						this.valueService.doRequest(o);
+					}
+			  	}
+			}
+			
+			return propValues;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Returns the instance of wcfPropertyValue that has <code>isDefault</code> set to <code>true</code>,
+			if one exists.
+			@param wcfModelObject o The model object that contains the property.
+			@param lz.Delegate del: An optional parameter, to register a delegate if the property 
+									values change due to a value service.
+			@return wcfPropertyValue: The default instance of wcfPropertyValue. <code>null</code> if there is no default wcfPropertyValue.
+		-->
+		<method name="getDefaultPropertyValue" args="o, del">
+			<![CDATA[
+			var defaultValue = null;
+			var propValues = this.getPropertyValues(o, del);
+			for (var i = 0; i < propValues.length; i++) {
+				if (propValues[i].isDefault) {
+					defaultValue = propValues[i];
+				}
+			}
+			return defaultValue;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns a name suitable for use within messages that are displayed to the
+			user. If <code>displayName</code> is not specified, then this method will
+			return the <code>propertyName</code>.
+			@return string: the display name for this property definition
+		-->
+		<method name="getDisplayName">
+			<![CDATA[
+			return this.qualifiedDisplayName != null ? this.qualifiedDisplayName : this.propertyName;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Initialize this property definition.
+		-->
+		<method name="initializeDefinition" args="model">
+			<![CDATA[
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if the specified value is valid. False if it is invalid there
+			is a validator that does not support checkPropertyValue.
+			@param wcfModelObject o the model object associated to the property
+			@param String value the value of the property to check to see whether or not it is valid
+			@return boolean <code>true</code> if all associated, enabled validators verify that the provided <code>value</code> is valid 
+		-->
+		<method name="checkPropertyValue" args="o, value">
+			<![CDATA[
+			var valid = true;
+			for (var i = 0; i < this.validators.length; i++) {
+				var validator = this.validators[i];
+				if (!validator["checkPropertyValue"] || (validator.isEnabled(o) && !validator.checkPropertyValue(this, value))) {
+					valid = false;
+					break;
+				}
+			}
+			return valid;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		This class is used for defining currency property in an object for the default currency of the current store. While using this class, 
+		unlike its parent class {@link wcfPropertyDefinition}, the <code>propertyName</code> attribute need not be specified. It gets the 
+		default currency of the current store and sets the currency code to the <code>propertyName</code> attribute and adds itself to the 
+		object definition. {@link wcfGridCurrency} uses the currency properties in an object to define the columns in the currency list view. 
+		The default and non-default currencies are treated differently by {@link wcfGridCurrency}. 
+		
+		<p>Instances of this class can only be declared as immediate sub-nodes of {@link wcfObjectDefinition}.
+		
+		<p>The following example demonstrates the declaration of a default currency property for an object. If 'USD' is the default
+		currency for a store, then the following code will create a property definition with the name 'USD'.
+		
+		@START_CODE	
+			<ChildObjectDefinition objectType="ProductListPrice">
+				...
+				<DefaultCurrencyPropertyDefinition type="number" minValue="0"/>
+			</ChildObjectDefinition>
+		@END_CODE
+	-->
+	<class name="wcfDefaultCurrencyPropertyDefinition" extends="wcfPropertyDefinition">
+		<!---
+			Check that the specified number of decimal places does not exceed the maximum
+			allowed for the default currency.
+		-->
+		<attribute name="validateDecimalPlaces" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Map of all cloned currency properties
+		-->
+		<attribute name="currencyProperties" value="${{}}"/>
+		
+		<!--- 
+			@keywords private
+			Initialization method for this class.
+		-->
+		<method name="init">
+			<![CDATA[
+			this.propertyName = "defaultCurrencyProperty";
+			super.init();
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Initialize this property definition.
+			@param wcfModelObject model The model object being used.
+		-->
+		<method name="initializeDefinition" args="model">
+			<![CDATA[
+			this.parent.removePropertyDefinition(this);
+			this.updateDefaultCurrencyDel = new lz.Delegate(this, "updateDefaultCurrency");
+			var storeConfig = wcfStoreUtil.getStore("0");
+			this.updateDefaultCurrencyDel.register(storeConfig, "onconfigurationLoaded");
+			if (!storeConfig.configurationLoaded) {
+				storeConfig.loadConfiguration();
+			}
+			this.updateDefaultCurrency();
+			]]>			
+		</method>
+		
+		<!--- 
+			@keywords private 
+			Destroy method for this class.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.updateDefaultCurrencyDel.unregisterAll();
+			delete this.updateDefaultCurrencyDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private 
+			Update the default currency property definition when user switches to a new store.
+		-->
+		<method name="updateDefaultCurrency" args="e=null">
+			<![CDATA[
+			var storeConfig = wcfStoreUtil.getStore("0");
+			if (storeConfig.supportedCurrencies != null) {
+				var currencies = storeConfig.supportedCurrencies;
+				for (var i = 0; i < currencies.length; i++) {
+					var currencyCode = currencies[i].currencyCode;
+					var definition = this.currencyProperties[currencyCode];
+					if (definition == null) {
+						definition = new lz.wcfPropertyDefinition(this.parent, {
+							propertyName:currencyCode,
+							propertyValues:this.propertyValues,
+							valueService:this.valueService,
+							copyProtected:this.copyProtected,
+							trim:this.trim,
+							xmlArgument:this.xmlArgument,
+							send:this.send
+						});
+						this.currencyProperties[currencyCode] = definition;
+						definition.type = this.type;
+						for (var i = 0; i < this.validators; i++) {
+							definition.validators.push(this.validators[i]); 
+						}
+						if (this.validateDecimalPlaces) {
+							new lz.wcfCurrencyFormatValidator(definition, {
+								name: "currencyValidator",
+								valuePropertyName: currencyCode,
+								currencyCode: currencyCode
+							});
+						}
+						var defaultCurrencyEnablementCondition = new lz.wcfEnablementCondition(definition, {
+							contextName: "defaultCurrencyCode",
+							enablementValue: currencyCode
+						});
+						if (this.enablementCondition) {
+							var enablementAndCondition = new lz.wcfEnablementAndCondition(definition);
+							enablementAndCondition.enablementConditions.push(defaultCurrencyEnablementCondition);
+							enablementAndCondition.enablementConditions.push(this.enablementCondition);
+						}
+						else {
+							definition.enablementCondition = defaultCurrencyEnablementCondition;
+						}
+					}
+					var currencyDesc = currencies[i].currencyDescription;
+					definition.setAttribute("displayNameQualifier", " (" + currencyDesc + ")");
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		This class is used for determining the enablement of an alternative currency property definition. If the specified
+		currency is a supported currency that is not the default currency, then the property definition is enabled. 
+	-->
+	<class name="wcfAlternateCurrencyPropertyDefinitionEnablementCondition" extends="node">
+		<attribute name="currencyCode" type="string" required="true"/>
+	
+		<!--- @keywords private -->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var result = false;
+			var storeConfig = wcfContextUtil.findStoreConfig(o);
+			if (storeConfig != null && storeConfig.supportedCurrencies != null) {
+				var currencies = storeConfig.supportedCurrencies;
+				var defaultCurrencyCode = storeConfig.defaultCurrency != null ? storeConfig.defaultCurrency.currencyCode : null;
+				for (var i = 0; i < currencies.length; i++) {
+					var code = currencies[i].currencyCode;
+					if (defaultCurrencyCode != code) {
+						if (code == this.currencyCode) {
+							result = true;
+							break;
+						}
+					}
+				}
+			}
+			return result;
+			]]>
+		</method>
+		
+		<!---
+			Register a delegate to be executed when the resolved value changes
+			for the specified model object.
+			@param wcfModelObject o: the model object
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerDelegate" args="o, del">
+			<![CDATA[
+			wcfContextUtil.findStoreConfig(o, del);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This class is used for defining currency properties in an object for all the available currencies in the current store excluding the 
+		default currency. While using this class, unlike its parent class {@link wcfPropertyDefinition}, the <code>propertyName</code> attribute
+		need not be specified. It iterates through all the available currencies in the selected store excluding the default currency and for 
+		each currency it creates a {@link wcfPropertyDefinition} instance with the <code>propertyName</code> attribute set to the currency code
+		and adds this {@link wcfPropertyDefinition} instance to the object definition. {@link wcfGridCurrency} uses the currency properties in 
+		an object to define the columns in the currency list view. The default and non-default currencies are treated differently by 
+		{@link wcfGridCurrency}. 
+		
+		<p>Instances of this class can only be declared as immediate sub-nodes of {@link wcfObjectDefinition}.
+		
+		<p>The following example demonstrates the declaration of the non-default currency properties for an object. If 'USD', 'EUR', 'CAD' and 'INR'
+		are the currency codes available for the current store and 'USD' is the default currency, then the following
+		code will create property definitions for the currency codes 'EUR', 'CAD' and 'INR'.
+		
+		@START_CODE	
+			<ChildObjectDefinition objectType="ProductListPrice">
+				...
+				<AlternativeCurrencyPropertyDefinition type="number" minValue="0"/>
+			</ChildObjectDefinition>
+		@END_CODE
+	-->
+	<class name="wcfAlternativeCurrencyPropertyDefinition" extends="wcfPropertyDefinition">
+		<!---
+			Check that the specified number of decimal places does not exceed the maximum
+			allowed for the currency.
+		-->
+		<attribute name="validateDecimalPlaces" type="boolean" value="true"/>
+		<!---
+			@keywords private
+			Map of all cloned currency properties
+		-->
+		<attribute name="currencyProperties" value="${{}}"/>
+		
+		<!--- 
+			@keywords private
+			Initialization method for this class.
+		-->
+		<method name="init">
+			<![CDATA[
+			this.propertyName = "alternativeCurrencyProperty";
+			super.init();
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private
+			Initialize this property definition.
+			@param wcfModelObject model The model object being used.
+		-->
+		<method name="initializeDefinition" args="model">
+			<![CDATA[
+			this.parent.removePropertyDefinition(this);
+			this.updateAlternativeCurrencyDel = new lz.Delegate(this, "updateAlternativeCurrencies");
+			var storeConfig = wcfStoreUtil.getStore("0");
+			this.updateAlternativeCurrencyDel.register(storeConfig, "onconfigurationLoaded");
+			if (!storeConfig.configurationLoaded) {
+				storeConfig.loadConfiguration();
+			}
+			this.updateAlternativeCurrencyDel.register(this, "ondisplayName");
+			this.updateAlternativeCurrencies();
+			]]>			
+		</method>
+		
+		<!--- 
+			@keywords private 
+			Destroy method for this class.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			this.updateAlternativeCurrencyDel.unregisterAll();
+			delete this.updateAlternativeCurrencyDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update the property definitions of alternative currencies when user switches to a new store.
+		-->
+		<method name="updateAlternativeCurrencies" args="e=null">
+			<![CDATA[
+			var storeConfig = wcfStoreUtil.getStore("0");
+			if (storeConfig.supportedCurrencies != null) {
+				var currencies = storeConfig.supportedCurrencies;
+				for (var i = 0; i < currencies.length; i++) {
+					var currencyCode = currencies[i].currencyCode;
+					var definition = this.currencyProperties[currencyCode];
+					if (definition == null) {
+						definition = new lz.wcfPropertyDefinition(this.parent, {
+							propertyName:currencyCode,
+							propertyValues:this.propertyValues,
+							valueService:this.valueService,
+							type:this.type,
+							copyProtected:this.copyProtected,
+							trim:this.trim,
+							xmlArgument:this.xmlArgument,
+							send:this.send
+						});
+						this.currencyProperties[currencyCode] = definition;
+						definition.type = this.type;
+						for (var i = 0; i < this.validators; i++) {
+							definition.validators.push(this.validators[i]); 
+						}
+						if (this.validateDecimalPlaces) {
+							new lz.wcfCurrencyFormatValidator(definition, {
+								name: "currencyValidator",
+								valuePropertyName: currencyCode,
+								currencyCode: currencyCode
+							});
+						}
+						var alternateCurrencyEnablementCondition = new lz.wcfAlternateCurrencyPropertyDefinitionEnablementCondition(definition, {
+							currencyCode: currencyCode
+						});
+						if (this.enablementCondition) {
+							var enablementAndCondition = new lz.wcfEnablementAndCondition(definition);
+							enablementAndCondition.enablementConditions.push(alternateCurrencyEnablementCondition);
+							enablementAndCondition.enablementConditions.push(this.enablementCondition);
+						}
+						else {
+							definition.enablementCondition = alternateCurrencyEnablementCondition;
+						}
+					}
+					var currencyDesc = currencies[i].currencyDescription;
+					var dName = this.displayName;
+					var qualifier = null;
+					if (dName == null) {
+						dName = currencyDesc;
+					}
+					else {
+						qualifier = " (" + currencyDesc + ")";
+					}
+					definition.setAttribute("displayName", dName);
+					definition.setAttribute("displayNameQualifier", qualifier);
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		<p>Use this class to declare a property definition for a {@link wcfModelProperty property} that represents a currency.
+		Do not explicitly include instances of {@link wcfPropertyValue} with this class. An instance of {@link wcfPropertyValue} 
+		is implicitly created for each supported currency in the selected store. The three-letter currency code 
+		(for example, USD) is the attribute value of each instance of {@link wcfPropertyValue}.</p>
+		
+		<p>Instances of this class can only be declared as immediate sub-nodes of {@link wcfObjectDefinition}.</p>
+		
+		<p>The following example shows how to declare a property used to manage the purchase currency of an object.
+		@START_CODE	
+			<CurrencyPropertyDefinition propertyName="purchaseCurrency" displayName="Purchase currency"/>
+		@END_CODE
+		</p>
+	-->
+	<class name="wcfCurrencyPropertyDefinition" extends="wcfPropertyDefinition">
+		<!---
+			@keywords private
+			Returns the property values for the given property
+			@param wcfModelObject o The model object that contains the property.
+			@param lz.Delegate del: An optional parameter, to register a delegate if the property 
+									values change.
+			@return Array: An array of property values
+		-->
+		<method name="getPropertyValues" args="o=null, del=null, all=false">
+			<![CDATA[
+			var propValues = [];
+			var storeConfig = wcfContextUtil.findStoreConfig(o != null ? o : this.parent.model.oEditor, del);
+			if((storeConfig != null) && (storeConfig.supportedCurrencies != null)) {
+				var values = this.propertyValues[storeConfig.storeId];
+				if (typeof(values) == "undefined") {
+					values = [];
+					this.propertyValues[storeConfig.storeId] = values;
+				}
+				var defaultCurrency = storeConfig.defaultCurrency;
+				var currencies = storeConfig.supportedCurrencies;
+				for(var i = 0; i < currencies.length; i++) {
+					var propertyValue = null;
+					if (values.length > i) {
+						propertyValue = values[i];
+					}
+					else {
+						propertyValue = this.createPropertyValue({valuesKey: storeConfig.storeId});
+					}
+					propertyValue.value = currencies[i].currencyCode;
+					propertyValue.displayName = currencies[i].currencyDescription;
+					if(defaultCurrency != null){
+						propertyValue.isDefault = currencies[i].currencyCode == defaultCurrency.currencyCode;
+					}else if(i==0){
+						propertyValue.isDefault = true;
+					}
+					propValues.push(propertyValue);
+				}
+			}
+			return propValues;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		<p>Use this class to declare a property definition for a {@link wcfModelProperty property} that represents a 
+		language. Do not explicitly include instances of {@link wcfPropertyValue} with this class. An instance of 
+		{@link wcfPropertyValue} is implicitly created for each supported language in the selected store. 
+		The attribute value of each instance of {@link wcfPropertyValue} can be the language ID (for example, -1), 
+		or the locale (for example, en_US). This is controlled by the <code>{@link wcfLanguagePropertyDefinition#useLanguageId useLanguageId}</code> attribute.</p>
+		
+		<p>Instances of this class can only be declared as immediate sub-nodes of {@link wcfObjectDefinition}.</p>
+		
+		<p>The following example shows how to declare a property used to manage the language of a shopper based on the
+		locale name.
+		@START_CODE	
+			<LanguagePropertyDefinition propertyName="shopperLanguage" displayName="Shopper language"/>
+		@END_CODE
+		</p>
+	-->
+	<class name="wcfLanguagePropertyDefinition" extends="wcfPropertyDefinition">
+		<!---
+			Indicates that the language ID (for example, '-1') is to be used as the value when saving the property.
+			If this value is <code>false</code>, the locale (for example, 'en_US') will be used as the value. 
+			The default value is <code>false</code>.
+		-->
+		<attribute name="useLanguageId" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			Returns the property values for the given property
+			@param wcfModelObject o The model object that contains the property.
+			@param lz.Delegate del: An optional parameter, to register a delegate if the property 
+									values change.
+			@return Array: An array of property values
+		-->
+		<method name="getPropertyValues" args="o=null, del=null, all=false">
+			<![CDATA[
+			var propValues = [];
+			var storeConfig = wcfContextUtil.findStoreConfig(o != null ? o : this.parent.model.oEditor, del);
+			if((storeConfig != null) && (storeConfig.supportedLanguages != null)) {
+				var values = this.propertyValues[storeConfig.storeId];
+				if (typeof(values) == "undefined") {
+					values = [];
+					this.propertyValues[storeConfig.storeId] = values;
+				}
+				var defaultLang = storeConfig.defaultLanguage;
+				var languages = storeConfig.supportedLanguages;
+				for(var i = 0; i < languages.length; i++) {
+					var propertyValue = null;
+					if (values.length > i) { 
+						propertyValue = this.values[i];
+					}
+					else {
+						propertyValue = this.createPropertyValue({valuesKey: storeConfig.storeId});
+					}
+					if(this.useLanguageId) {
+						propertyValue.value = languages[i].languageId;
+					}
+					else {
+						propertyValue.value = languages[i].localeName;
+					}
+					
+					propertyValue.displayName = languages[i].languageDescription;
+					if(defaultLang != null){
+						propertyValue.isDefault = languages[i].languageId == defaultLang.languageId;
+					}else if(i==0){
+						propertyValue.isDefault = true;
+					}
+					propValues.push(propertyValue);
+				}
+			}
+			return propValues;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		<p>Use this class to declare a property definition for a {@link wcfModelProperty property} that represents a 
+		county. 
+		
+		<p>The following example shows how to declare a property used to manage countries.
+		@START_CODE	
+			<CountriesPropertyDefinition propertyName="country" displayName="${stoStoreResources.countryLabel}" />
+		@END_CODE
+		</p>
+	-->
+	<class name="wcfCountriesPropertyDefinition" extends="wcfPropertyDefinition">
+		<wcfPropertyValueService url="/cmc/GetCountries"/>
+	</class>
+	
+	<!---
+		<p>Use this class to declare a property definition for a {@link wcfModelProperty property} that represents a 
+		state or province. 
+		
+		<p>The following example shows how to declare a property used to manage the states or provinces.
+		@START_CODE	
+			<StateProvincesPropertyDefinition propertyName="stateOrProvinceName" displayName="${stoStoreResources.stateLabel}" />
+		@END_CODE
+		</p>
+	-->
+	<class name="wcfStateProvincesPropertyDefinition" extends="wcfPropertyDefinition">
+		<wcfPropertyValueService url="/cmc/GetStateProvinces"/>
+	</class>
+	
+</library>
+

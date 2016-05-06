@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBaseContactUsPagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglContactUsPageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglContactUsPageLayoutAssociationReferencedContactUsPageLayouts}
+			representing the reference to the contact us page layout objects which hold a page layout association with this static contact us page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglContactUsPageLayoutAssociationReferencedContactUsPageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts}
+			representing the reference to the inherited contact us page layout objects which hold a page layout association with this static contact us page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts}
+			representing the reference to the inherited contact us page layout objects which hold a page layout association with this inherited static contact us page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the static contact us page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglContactUsPageReferenceDefaultContactUsPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglContactUsPageLayoutAssociationReferencedContactUsPageLayouts},
+			{@link pglContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts} and {@link pglInheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts}
+			references for this static contact us page.
+		-->
+		<GetChildrenService objectTypes="ContactUsPageLayoutAssociationReferencedContactUsPageLayouts,ContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts,InheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ContactUsPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this Contact Us page.
+		-->
+		<GetChildrenService objectTypes="ContactUsPageReferenceDefaultContactUsPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ContactUsPage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for the contact us page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="ContactUs"/>
+		</GetPreviewURLService>
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Contact Us Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseContactUsPagePrimaryObjectDefinition"
+     	definitionName="ContactUsPage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="ContactUsPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Contact Us Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseContactUsPagePrimaryObjectDefinition"
+     	definitionName="InheritedContactUsPage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedContactUsPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglContactUsPageLayoutAssociationReferencedContactUsPageLayouts" objectType="ContactUsPageLayoutAssociationReferencedContactUsPageLayouts" referencedTypes="ContactUsPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" definitionName="pglContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" objectType="ContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" referencedTypes="InheritedContactUsPageLayout"/>  
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="ContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" definitionName="pglInheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" objectType="InheritedContactUsPageLayoutAssociationReferencedInheritedContactUsPageLayouts" referencedTypes="InheritedContactUsPageLayout"/>
+		
+	<ReferenceObjectDefinition definitionName="pglContactUsPageReferenceDefaultContactUsPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="ContactUsPageReferenceDefaultContactUsPageLayout" 
+		referencedTypes="ContactUsPageLayout,InheritedContactUsPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

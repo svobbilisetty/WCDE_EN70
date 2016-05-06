@@ -1,0 +1,117 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<%--  @pre List of CatalogEntry SDOs populated, variable name 'catentries' --%>
+
+<c:if test="${catentry.catalogEntryTypeCode == 'ProductBean' || catentry.catalogEntryTypeCode == 'ItemBean' || catentry.catalogEntryTypeCode == 'BundleBean' || catentry.catalogEntryTypeCode == 'DynamicKitBean' || catentry.catalogEntryTypeCode == 'PackageBean'}">
+	<c:choose>
+		<c:when test="${catentry.catalogEntryTypeCode == 'ProductBean'}">
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID == param.storeId }">
+				<c:set var="objectType" value="Product"/>
+			</c:if>
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+				<c:set var="objectType" value="InheritedProduct"/>
+			</c:if>
+			<c:set var="icon" value="productIcon.gif" />
+		</c:when>
+		<c:when test="${catentry.catalogEntryTypeCode == 'BundleBean'}">
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID == param.storeId }">
+				<c:set var="objectType" value="Bundle"/>
+			</c:if>
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+				<c:set var="objectType" value="InheritedBundle"/>
+			</c:if>
+			<c:set var="icon" value="bundleIcon.gif" />
+		</c:when>
+		<c:when test="${catentry.catalogEntryTypeCode == 'PackageBean'}">
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID == param.storeId }">
+				<c:set var="objectType" value="Kit"/>
+			</c:if>
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+				<c:set var="objectType" value="InheritedKit"/>
+			</c:if>
+			<c:set var="icon" value="kitIcon.gif" />
+		</c:when>
+		<c:when test="${catentry.catalogEntryTypeCode == 'DynamicKitBean'}">
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID == param.storeId }">
+				<c:set var="objectType" value="Kit"/>
+			</c:if>
+			<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+				<c:set var="objectType" value="InheritedKit"/>
+			</c:if>
+			<c:set var="icon" value="kitIcon.gif" />
+		</c:when>
+		<c:when	test="${catentry.catalogEntryTypeCode == 'ItemBean'}">
+			<c:set var="icon" value="skuIcon.gif" />
+			<c:choose>
+				<c:when test="${(!empty catentry.parentCatalogEntryIdentifier)}">
+					<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID == param.storeId }">
+						<c:set var="objectType" value="ProductSKU"/>
+					</c:if>
+					<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+						<c:set var="objectType" value="InheritedProductSKU"/>
+					</c:if>
+				</c:when>
+				<c:when test="${(empty catentry.parentCatalogEntryIdentifier) && (!empty catentry.parentCatalogGroupIdentifier)}">
+					<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID == param.storeId }">
+						<c:set var="objectType" value="CatalogGroupSKU"/>
+					</c:if>
+					<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+						<c:set var="objectType" value="InheritedCatalogGroupSKU"/>
+					</c:if>
+				</c:when>
+				<c:otherwise>
+					<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID == param.storeId }">
+						<c:set var="objectType" value="ProductSKU"/>
+					</c:if>
+					<c:if test="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID != param.storeId }">
+						<c:set var="objectType" value="InheritedProductSKU"/>
+					</c:if>
+				</c:otherwise>
+			</c:choose>
+		</c:when>
+	</c:choose>
+	<object objectType="${objectType}">
+		<typeIcon>${icon}</typeIcon>
+		<catentryId>${catentry.catalogEntryIdentifier.uniqueID}</catentryId>
+		<ownerId>${catentry.catalogEntryIdentifier.externalIdentifier.ownerID}</ownerId>
+		<partnumber><wcf:cdata data="${catentry.catalogEntryIdentifier.externalIdentifier.partNumber}"/></partnumber>
+		<objectStoreId>
+			<wcf:cdata data="${catentry.catalogEntryIdentifier.externalIdentifier.storeIdentifier.uniqueID}"/>
+		</objectStoreId>
+		<c:forEach var="description" items="${catentry.description}">
+			<object objectType="CatalogEntryDescription">
+				<descriptionId>${catentry.catalogEntryIdentifier.uniqueID}_${description.language}</descriptionId>
+				<catentryId>${catentry.catalogEntryIdentifier.uniqueID}</catentryId>
+				<languageId>${description.language}</languageId>
+				<name><wcf:cdata data="${description.name}"/></name>
+				<tImage><wcf:cdata data="${description.thumbnail}"/></tImage>
+				<fImage><wcf:cdata data="${description.fullImage}"/></fImage>
+				<sDesc><wcf:cdata data="${description.shortDescription}"/></sDesc>
+				<lDesc><wcf:cdata data="${description.longDescription}"/></lDesc>
+				<keyword><wcf:cdata data="${description.keyword}"/></keyword>
+				<tImage><wcf:cdata data="${description.thumbnail}"/></tImage>
+				<fImage><wcf:cdata data="${description.fullImage}"/></fImage>
+			</object>
+		</c:forEach>
+		<object objectType="CatalogEntryListPrice">
+			<listpriceId>${catentry.catalogEntryIdentifier.uniqueID}_${catentry.listPrice.price.currency}</listpriceId>
+			<catentryId>${catentry.catalogEntryIdentifier.uniqueID}</catentryId>
+			<listprice>${catentry.listPrice.price.value}</listprice>
+			<listpriceCurrency>${catentry.listPrice.price.currency}</listpriceCurrency>
+		</object>
+		<c:set var="catalogEntry" value="${catentry}"/>
+		<jsp:directive.include file="SerializeCatalogEntryExtraProperties.jspf"/>	
+	</object>
+</c:if>

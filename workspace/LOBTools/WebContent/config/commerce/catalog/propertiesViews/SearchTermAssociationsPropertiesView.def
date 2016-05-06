@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	
+	<PropertyPane definitionName="catSynonym">
+		<!--
+    	This is used to list the Synonyms.
+    	-->
+		<PropertyChildListEditor findable="true" listDefinitionName="catSynonymGrid" name="synonymEditor" objectPath="SearchTermAssociationsLanguageSensitiveObject" objectTypes="Synonym,InheritedSynonym" promptText=" ${catalogResources.synonymsSection}"/>
+	</PropertyPane>
+	
+	<PropertyPane definitionName="catReplacement">
+		<!--
+    	This is used to list the replacements.
+    	-->
+		<PropertyChildListEditor findable="true" listDefinitionName="catReplacementGrid" name="replacementEditor" objectPath="SearchTermAssociationsLanguageSensitiveObject" objectTypes="Replacement,InheritedReplacement" promptText="${catalogResources.replacementsSection}"/>
+	</PropertyPane>
+	
+	<PropertyPane definitionName="catLandingPage">
+		<!--
+    	This is used to list the Landing Pages.
+    	-->
+		<PropertyChildListEditor findable="true" listDefinitionName="catLandingPageGrid" name="landingPageEditor" objectPath="SearchTermAssociationsLanguageSensitiveObject" objectTypes="LandingPage,InheritedLandingPage" promptText="${catalogResources.landingPagesSection}"/>
+	</PropertyPane>
+	
+	<PropertyPane definitionName="catTopSearchHitPage">
+		<!--
+    	This is used to list the top search hits.
+    	-->
+    	<PropertyGroup name="topSearchHitGroup1" collapsable="false" dividerAtBottom="false">
+			<PropertyGroup name="topSearchHitReportOptionGroup" collapsable="false" dividerAtBottom="false" dividerAtTop="true" displayBackground="true">	
+				<ReportRangePropertyEditor package="cat" name="reportRangeView"
+					objectPath="SearchTermAssociationsTopSearchHitsStatisticsObject"
+					propertyName="reportRange" startDatePropertyName="datestart" endDatePropertyName="dateend"
+					promptText="${catalogResources.topSearchHitsReportOption_ReportingPeriod}"/>
+	
+				<PropertyInputText name="keywordView"
+					objectPath="SearchTermAssociationsTopSearchHitsStatisticsObject"
+					propertyName="searchTerm" promptText="${catalogResources.topSearchHitsReportOption_Keyword}"/>
+		
+				<PropertyCombobox name="showTopKeywordsView" 
+					objectPath="SearchTermAssociationsTopSearchHitsStatisticsObject"
+					propertyName="topkeywords" promptText="${catalogResources.topSearchHitsReportOption_ShowTopKeywords}"/>
+			
+				<PropertyCombobox name="languageView"
+					objectPath="SearchTermAssociationsTopSearchHitsStatisticsObject"
+					propertyName="reportLanguageId" promptText="${catalogResources.topSearchHitsReportOption_Language}"/>
+					
+				<ReportOptionsPropertyButton package="cat" name="applyButtonView" 
+					objectPath="SearchTermAssociationsTopSearchHitsStatisticsObject"/>
+			</PropertyGroup>
+			
+			<PropertyGroup name="topSearchHitReportGroup" collapsable="false" dividerAtBottom="false" dividerAtTop="true">
+				<SearchTotalPropertyViewLongText package="cat"
+					objectPath="SearchTermAssociationsTopSearchHitsStatisticsObject/TopSearchHitTotal" propertyName="totalSessionCount"/>
+				<ChildListViewer listDefinitionName="catTopSearchHitGrid" name="topSearchHitEditor" 
+					objectPath="SearchTermAssociationsTopSearchHitsStatisticsObject" objectTypes="TopSearchHit" 
+					promptText="${catalogResources.topSearchHitsStatisticsTitle}" 
+					helpLinkURL="concepts/cpnsearchstatsov.htm"
+					extendedHelpText="${catalogResources.extendedHelpText_topSearchHitsStatistics}"/>
+			</PropertyGroup>
+		</PropertyGroup>
+	</PropertyPane>
+	
+	<PropertyPane definitionName="catTopSearchMissPage">
+		<!--
+    	This is used to list the top search misses.
+    	-->
+		<PropertyGroup name="topSearchMissGroup1" collapsable="false" dividerAtBottom="false">
+			<PropertyGroup name="topSearchMissReportOptionGroup" collapsable="false" dividerAtBottom="false" dividerAtTop="true" displayBackground="true">	
+				<ReportRangePropertyEditor package="cat" name="reportRangeView"
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject"
+					propertyName="reportRange" startDatePropertyName="datestart" endDatePropertyName="dateend"
+					promptText="${catalogResources.topSearchMissesReportOption_ReportingPeriod}"/>
+				
+				<PropertyInputText name="keywordView"
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject"
+					propertyName="searchTerm" promptText="${catalogResources.topSearchMissesReportOption_Keyword}"/>
+		
+				<PropertyCombobox name="showTopMissedKeywordsView"
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject"
+					propertyName="topkeywords" promptText="${catalogResources.topSearchMissesReportOption_ShowTopMissedKeywords}"/>
+			
+				<PropertyCombobox name="languageView"
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject"
+					propertyName="reportLanguageId" promptText="${catalogResources.topSearchMissesReportOption_Language}"/>
+				
+				<PropertyCombobox name="showSuggestedKeywordResultView"
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject"
+					propertyName="suggestion" promptText="${catalogResources.topSearchMissesReportOption_SuggestedKeywordResult}"/>
+				
+				<ReportOptionsPropertyButton package="cat" name="applyButtonView"
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject"/>
+			</PropertyGroup>	
+			
+			<PropertyGroup name="topSearchMissReportGroup" collapsable="false" dividerAtBottom="false" dividerAtTop="true">
+				<SearchTotalPropertyViewLongText package="cat"
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject/TopSearchMissTotal" propertyName="totalSessionCount"/>
+				<ChildListViewer listDefinitionName="catTopSearchMissGrid" name="topSearchMissEditor" 
+					objectPath="SearchTermAssociationsTopSearchMissesStatisticsObject" objectTypes="TopSearchMiss" 
+					promptText="${catalogResources.topSearchMissesSection}" 
+					helpLinkURL="concepts/cpnsearchstatsmiss.htm"
+					extendedHelpText="${catalogResources.extendedHelpText_topSearchMissesStatistics}"/>
+			</PropertyGroup>
+		</PropertyGroup>
+	</PropertyPane>
+	
+	<ObjectProperties definitionName="catSearchTermAssociationsProperties">
+		<!-- This is the set of tabs to display on the Search Term Associations properties view -->
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="SynonymTab" text="${catalogResources.STASynonymTab}" >
+					<PropertyPane baseDefinitionName="catSynonym" />
+			</PropertyTabPane>
+			
+			<PropertyTabPane name="ReplacementTab" text="${catalogResources.STAReplacementTab}">
+					<PropertyPane baseDefinitionName="catReplacement"/>
+			</PropertyTabPane>
+			
+			<PropertyTabPane name="LandingPageTab" text="${catalogResources.STALandingPageTab}">
+					<PropertyPane baseDefinitionName="catLandingPage"/>
+			</PropertyTabPane>
+			
+			<PropertyTabPane name="TopSearchHitTab" text="${catalogResources.STATopSearchHitsTab}">
+				<!-- do not display in catalog asset store because it does not have statistics -->
+				<EnablementCondition conditionId="storeTypeCondition" contextName="storeType" enablementValue="CPS" negate="true"/>	
+				<PropertyPane baseDefinitionName="catTopSearchHitPage"/>
+			</PropertyTabPane>
+			
+			<PropertyTabPane name="TopSearchMissTab" text="${catalogResources.STATopSearchMissesTab}">
+				<!-- do not display in catalog asset store because it does not have statistics -->
+				<EnablementCondition conditionId="storeTypeCondition" contextName="storeType" enablementValue="CPS" negate="true"/>
+				<PropertyPane baseDefinitionName="catTopSearchMissPage"/>
+			</PropertyTabPane>	
+		</PropertyTabs>
+	</ObjectProperties>
+</Definitions>

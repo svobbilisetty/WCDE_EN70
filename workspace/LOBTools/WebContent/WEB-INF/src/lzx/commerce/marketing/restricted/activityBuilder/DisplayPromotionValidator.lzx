@@ -1,0 +1,142 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		<p>Validator for {@link mktDisplayPromotionElementObject Display Promotion action}. This ensures that the
+		the promotion redemption method and content click action are valid.</p>
+		
+		<p>These are the valid combinations promotion redemption method and content click action:</p>
+		<p>
+		<table cellspacing="5">
+		<tr>
+		<td><u>Promotion</u></td>			<td><u>Content</u></td>
+		<tr>
+		<td>Qualifying purchase</td>		<td>Display promotion description</td>
+		<tr>
+		<td>Requires promotion codes</td>	<td>Display promotion description</td>
+		<tr>
+		<td></td>							<td>Add to shopping cart</td>
+		</tr>
+		<tr>
+		<td>Coupon promotion</td>			<td>Display promotion description</td>
+		<tr>
+		<td></td>							<td>Add coupon to customer's coupon wallet</td>
+		</tr>
+		</table>
+		</p>
+		
+		<p>There should only be one instance of this class defined for each {@link mktFlowElementObjectDefinition}.</p>
+	-->	 
+	<class name="mktDisplayPromotionValidator" extends="wcfValidator">
+		<!--- 
+			The object path that describes required child promotion objects. 
+		 -->
+		<attribute name="objectPathPromotion" value="ChildPromotion/PromotionGroup" type="string"/>
+		
+		<!--- 
+			The object path that describes required child content objects. 
+		 -->
+		<attribute name="objectPathContent" value="ChildContent/MarketingContentGroup" type="string"/>
+		
+		<!--- 
+			The error message to be added when the click action is not promotion-related.
+		 -->
+		<attribute name="errorMessageWrongClickAction" value="${mktMarketingResources.promotionWrongClickAction.string}" type="string"/>
+		
+		<!--- 
+			The error message to be added when the click action is "Add coupon to customer's coupon wallet" and the promotion is not a coupon promotion.
+		 -->
+		<attribute name="errorMessagePromotionNotCoupon" value="${mktMarketingResources.promotionNotCoupon.string}" type="string"/>
+		
+		<!--- 
+			The error message to be added when the click action is "Add to shopping cart" and the promotion is not a code promotion.
+		 -->
+		<attribute name="errorMessagePromotionNotCode" value="${mktMarketingResources.promotionNotCode.string}" type="string"/>
+		
+		<!---
+			The store front command name to recommend a promotion. The default value is 'DiscountDetailsDisplayView'.
+		-->
+		<attribute name="promotionURL" type="string" value="DiscountDetailsDisplayView"/>
+		
+		<!---
+			The store front command name to issue a coupon. The default value is 'CouponsIssue'.
+		-->
+		<attribute name="couponURL" type="string" value="CouponsIssue"/>
+		
+		<!---
+			The store front command name to add the item to the shopping cart with promotion or coupon. The default value is 'AddOrderItemWithPromotionCodeOrCoupon'.
+		-->
+		<attribute name="addItemURL" type="string" value="AddOrderItemWithPromotionCodeOrCoupon"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			
+			var childObjectsPromotion = o.getObjects(this.objectPathPromotion);
+			var childObjectsContent = o.getObjects(this.objectPathContent);
+			
+			// This test should only be performed when both a promotion and a content were selected
+			if (childObjectsPromotion.length>= 1 && childObjectsContent.length>=1) {
+				
+				var promotion = childObjectsPromotion[0];
+				var couponRequired = promotion.getPropertyValue("couponRequired");
+				var codeRequired = promotion.getPropertyValue("promotionCodeRequired");
+				
+				var content = childObjectsContent[0];
+				var clickAction = content.getPropertyValue("url");
+				
+				// If promotionURL, couponURL or addItemURL change their values, then classes:
+				// mktPropertyURLGenerator and mktURLGenerator attributes (on URLGenerator.lzx) need to be changed accordingly.
+				
+				var index = clickAction.indexOf('?');
+				if (index > -1) {
+					clickAction = clickAction.substring(0, index);
+				}
+				var isPromotionURL = clickAction == promotionURL;
+				var isCouponURL = clickAction == couponURL;
+				var isAddItemURL = clickAction == addItemURL;
+				
+				// The click action must be promotion-related 
+				if (!isPromotionURL && !isCouponURL && !isAddItemURL) {
+					o.addValidationError(this, this.errorMessageWrongClickAction);
+					return;
+				}
+				
+				// Display promotion description click action is valid for any type of promotion.
+				// No need to control anything further here.
+				// if (isPromotionURL) {
+				// }
+					
+				// Add coupon to customer's coupon wallet click action requires a coupon promotion.
+				if (isCouponURL && couponRequired!="true") {
+					o.addValidationError(this, this.errorMessagePromotionNotCoupon);
+					return;
+				}
+					
+				// Add to shopping cart click action requires a promotion with codes.
+				if (isAddItemURL && codeRequired!="true") {
+					o.addValidationError(this, this.errorMessagePromotionNotCode);
+					return;
+				}
+			}
+			
+			o.clearValidationError(this);
+			]]>
+		</method>
+	</class>
+
+</library>

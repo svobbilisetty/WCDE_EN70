@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This grid displays the contents and characteristics of a list of {@link WebActivity Web Activities}
+		for use in a properties view of another object. It is assumed that a {@link wcfReferenceObjectDefinition} has been defined for
+		the object referencing {@link WebActivity}.
+	-->
+	<ObjectGrid definitionName="mktChildActivityGrid" preferenceKey="mktActivityGrid">
+		<GridIconTypeImage name="type" objectPath="ActivityGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="ActivityGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="true" name="activityName" objectPath="ActivityGroup" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridText editable="true" name="description" objectPath="ActivityGroup" propertyName="description" text="${mktMarketingResources.description}" width="250"/>
+		<GridDateTime editable="true" name="startdate" objectPath="ActivityGroup" propertyName="startdate" text="${mktMarketingResources.startDate}"/>
+		<GridDateTime editable="true" endOfDay="true" name="enddate" objectPath="ActivityGroup" propertyName="enddate" text="${mktMarketingResources.endDate}"/>
+		<GridPropertyImage editable="false" enableFilter="true" name="state" objectPath="ActivityGroup" propertyName="state" text="${mktMarketingResources.state}" visible="true" width="70"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="1000" minimumValue="0" name="priority" objectPath="ActivityGroup" propertyName="priority" text="${mktMarketingResources.priority}" visible="false" width="45"/>
+		<GridCheckbox alignment="center" editable="false" name="experiment" objectPath="ActivityGroup" propertyName="experimentType" text="${mktMarketingResources.experiment}" trueValue="Experiment" visible="false" width="100"/>
+		<GridDisplayName name="campaign" objectPath="ActivityGroup" parentObject="true" propertyName="" text="${mktMarketingResources.campaign}" width="150"/>
+		<GridDateTime editable="false" name="created" objectPath="ActivityGroup" propertyName="created" text="${mktMarketingResources.created}" visible="false"/>
+		<GridDateTime editable="false" name="lastUpdated" objectPath="ActivityGroup" propertyName="lastupdate" text="${mktMarketingResources.lastUpdated}" visible="false"/>
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="ActivityGroup" propertyName="activityId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link CatalogGroup Categories} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing {@link CatalogGroup}.
+	-->
+	<ObjectGrid definitionName="mktCategoryGrid" preferenceKey="mktCategoryGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogGroupAlias" propertyName="catgroupId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogGroupAlias" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogGroupAlias" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="categoryName" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="175"/>
+		<GridText editable="false" name="shortDescription" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="sDesc" text="${mktMarketingResources.description}" width="250"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link CatalogGroup Categories} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing {@link CatalogGroup}. The sequence property
+		is used to preserve the order of the list of objects.
+	-->
+	<ObjectGrid definitionName="mktCategorySequenceGrid" preferenceKey="mktCategorySequenceGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogGroupAlias" propertyName="catgroupId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogGroupAlias" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogGroupAlias" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="categoryName" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="175"/>
+		<GridText editable="false" name="shortDescription" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="sDesc" text="${mktMarketingResources.description}" width="250"/>
+		<GridNumeric name="orderBySequence" required="false" propertyName="sequence" visible="true" editable="false" text="${mktMarketingResources.displayProduct_orderBySequence}" width="90"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents and characteristics of a list of {@link MarketingContent Marketing Content} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing {@link MarketingContent}.
+	-->
+	<ObjectGrid definitionName="mktContentGrid" preferenceKey="mktContentGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="MarketingContentGroup" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="MarketingContentGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="MarketingContentGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="contentName" objectPath="MarketingContentGroup" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="250"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link MarketingContent Marketing Content} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing {@link MarketingContent}. The sequence property
+		is used to preserve the order of the list of objects.
+	-->
+	<ObjectGrid definitionName="mktContentSequenceGrid" preferenceKey="mktContentSequenceGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="MarketingContentGroup" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="MarketingContentGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="MarketingContentGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="contentName" objectPath="MarketingContentGroup" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="250"/>
+		<GridNumeric name="orderBySequence" required="false" propertyName="sequence" visible="true" editable="false" text="${mktMarketingResources.displayProduct_orderBySequence}" width="90"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents and characteristics of a list of {@link Promotion Promotion} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing {@link Promotion}.
+	-->
+	<ObjectGrid definitionName="mktPromotionGrid" preferenceKey="mktPromotionGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="PromotionGroup" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="PromotionGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="PromotionGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="adminName" objectPath="PromotionGroup" propertyName="adminName" required="true" text="${mktMarketingResources.promotionName}" visible="true" width="250"/>
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="mktLocationPOIGrid" preferenceKey="mktLocationPOIGrid">
+		<GridText alignment="left" editable="false" name="regionId"            objectPath="LocationPOI"  propertyName="regionId"          text="${mktMarketingResources.regionId}"          visible="false" width="30"  />
+		<GridText alignment="left" editable="false" name="pointOfInterestName" objectPath="LocationPOI"  propertyName="name"              text="${mktMarketingResources.objectName}"        visible="true"  width="100"  />
+		<GridText alignment="left" editable="false" name="description"         objectPath="LocationPOI"  propertyName="description"       text="${mktMarketingResources.description}"       visible="true"  width="180" />
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="mktLocationRegionGrid" preferenceKey="mktLocationRegionGrid">
+		<GridText alignment="left" editable="false" name="regionId"          objectPath="LocationRegion" propertyName="regionId"          text="${mktMarketingResources.regionId}"          visible="false" width="30"  />
+		<GridText alignment="left" editable="false" name="pointOfInterestId" objectPath="LocationRegion" propertyName="pointOfInterestId" text="${mktMarketingResources.pointOfInterestId}" visible="false" width="30"  />
+		<GridText alignment="left" editable="false" name="regionName"        objectPath="LocationRegion" propertyName="name"              text="${mktMarketingResources.objectName}"        visible="true"  width="100"  />
+		<GridText alignment="left" editable="false" name="description"       objectPath="LocationRegion" propertyName="description"       text="${mktMarketingResources.description}"       visible="true"  width="180" />
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link CustomerSegment Customer Segments} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing {@link CustomerSegment}.
+	-->
+	<ObjectGrid definitionName="mktCustomerSegmentGrid" preferenceKey="mktCustomerSegmentGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CustomerSegmentGroup" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CustomerSegmentGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CustomerSegmentGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="segmentName" objectPath="CustomerSegmentGroup" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridText editable="false" name="description" objectPath="CustomerSegmentGroup/CustomerSegmentDescription" propertyName="longDescription" text="${mktMarketingResources.description}" width="250"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link EMarketingSpot e-Marketing Spots} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing {@link EMarketingSpot}.
+	-->
+	<ObjectGrid definitionName="mktChildEMarketingSpotGrid" preferenceKey="mktChildEMarketingSpotGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="EMarketingSpotGroup" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="EMarketingSpotGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="EMarketingSpotGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="eMarketingSpotName" objectPath="EMarketingSpotGroup" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridText editable="false" name="description" objectPath="EMarketingSpotGroup" propertyName="description" text="${mktMarketingResources.description}" width="250"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link Bundle Bundles},
+		{@link CatalogGroupSKU Category SKUs}, {@link ProductSKU Product SKUs},
+		{@link Kit Kits}, and {@link Product Products} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing one of the above catalog entry types.
+	-->
+	<ObjectGrid definitionName="mktProductGrid" preferenceKey="mktProductGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogEntry" propertyName="catentryId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogEntry" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogEntry" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="partNumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${mktMarketingResources.code}" visible="true" width="90"/>
+		<GridText editable="false" name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" text="${mktMarketingResources.objectName}" width="170"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link Bundle Bundles},
+		{@link CatalogGroupSKU Category SKUs}, {@link ProductSKU Product SKUs},
+		{@link Kit Kits}, and {@link Product Products} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing one of the above catalog entry types. The sequence property
+		is used to preserve the order of the list of objects.
+	-->
+	<ObjectGrid definitionName="mktProductOrderedGrid" preferenceKey="mktProductOrderedGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogEntry" propertyName="catentryId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogEntry" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogEntry" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="partNumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${mktMarketingResources.code}" visible="true" width="90"/>
+		<GridText editable="false" name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" text="${mktMarketingResources.objectName}" width="170"/>
+		<GridNumeric name="orderByPriority" propertyName="sequence" visible="false" editable="false" text="${mktMarketingResources.displayProduct_orderByPriority}" width="130"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link Bundle Bundles},
+		{@link CatalogGroupSKU Category SKUs}, {@link ProductSKU Product SKUs},
+		{@link Kit Kits}, and {@link Product Products} for use in
+		a properties view of a {@link mktFlowElementObjectDefinition}. It is assumed that a {@link wcfReferenceObjectDefinition} has been
+		defined for the {@link mktFlowElementObjectDefinition} referencing one of the above catalog entry types. The sequence property
+		is used to preserve the order of the list of objects.
+	-->
+	<ObjectGrid definitionName="mktProductSequenceGrid" preferenceKey="mktProductSequenceGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogEntry" propertyName="catentryId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogEntry" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogEntry" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="partNumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${mktMarketingResources.code}" visible="true" width="90"/>
+		<GridText editable="false" name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" text="${mktMarketingResources.objectName}" width="170"/>
+		<GridNumeric name="orderBySequence" required="false" propertyName="sequence" visible="true" editable="false" text="${mktMarketingResources.displayProduct_orderBySequence}" width="90"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents and characteristics of a list of {@link EmailTemplate Email Templates},
+		for use in a properties view of a {@link EmailActivity}.
+	-->
+	<ObjectGrid definitionName="mktActivityEmailTemplateGrid" preferenceKey="mktActivityEmailTemplateGrid">
+		<GridIconTypeImage name="type" objectPath="EmailTemplateGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="EmailTemplateGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="eMailTemplateName" objectPath="EmailTemplateGroup" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridText editable="false" name="description" objectPath="EmailTemplateGroup" propertyName="description" text="${mktMarketingResources.description}" width="250"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents and characteristics of a list of {@link Attachment Attachments} for use in
+		a properties view of a {@link MarketingContent}.
+	-->
+	<ObjectGrid definitionName="mktContentAttachmentGrid" preferenceKey="mktContentAttachmentGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="AttachmentGroup" propertyName="attachmentId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="AttachmentGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="AttachmentGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="code" objectPath="AttachmentGroup" propertyName="identifier" text="${mktMarketingResources.code}" width="200"/>
+		<GridText editable="true" implicitCreate="false" loadChildren="true" multipleMatchText="${mktMarketingResources.attachmentMultiplePaths}" name="path" noMatchText="${mktMarketingResources.attachmentNoPath}" propertyName="" text="${mktMarketingResources.path}" width="250">
+			<GridCellDescriptor name="managedFilePath" objectPath="AttachmentGroup/AttachmentAssetGroup/ManagedFileGroup" propertyName="fullPath"/>
+			<GridCellDescriptor name="urlTypePath" objectPath="AttachmentGroup/AttachmentAssetWithURLType" propertyName="path"/>
+		</GridText>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents and characteristics of a list of {@link MarketingContentSpot Marketing Content Spot} for use in
+		a properties view of a {@link EmailTemplate}.
+	-->
+	<ObjectGrid definitionName="mktContentSpotGrid" preferenceKey="mktContentSpotGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="MarketingContentSpotGroup" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="MarketingContentSpotGroup" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="MarketingContentSpotGroup" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="false" name="contentSpotName" objectPath="MarketingContentSpotGroup" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridText editable="false" name="description" objectPath="MarketingContentSpotGroup" propertyName="description" text="${mktMarketingResources.description}" width="250"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents of a list of URL values for use in a properties view of another object.
+	-->
+	<ObjectGrid definitionName="mktURLValueGrid" preferenceKey="mktURLValueGrid">
+		<GridText editable="true" name="urlValue" propertyName="urlValue" required="true" text="${mktMarketingResources.urlValues}" visible="true" width="150"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents of a list of parameter values for use in a properties view of another object.
+	-->
+	<ObjectGrid definitionName="mktParameterValueGrid" preferenceKey="mktParameterValueGrid">
+		<GridText editable="true" name="parameterOneValue" propertyName="parameterOneValue" required="true" text="${mktMarketingResources.urlValues}" visible="true" width="150"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents of a list of search term values for use in a properties view of another object.
+	-->
+	<ObjectGrid definitionName="mktSearchTermValueGrid" preferenceKey="mktSearchTermValueGrid">
+		<GridText editable="true" name="searchTerm" propertyName="searchTerm" required="true" text="${mktMarketingResources.searchValues}" visible="true" width="150"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents of a list of search term values for use in a properties view of another object.
+	-->
+	<ObjectGrid definitionName="mktSearchKeywordValueGrid" preferenceKey="mktSearchKeywordValueGrid">
+		<GridText editable="true" name="searchKeyword" propertyName="searchKeyword" required="true" text="${mktMarketingResources.searchValues}" visible="true" width="150"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents of a list of Cookie values for use in a properties view of another object.
+	-->
+	<ObjectGrid definitionName="mktCookieValueGrid" preferenceKey="mktCookieValueGrid">
+		<GridText editable="true" name="cookieValue" propertyName="cookieValue" required="true" text="${mktMarketingResources.cookieValue}" visible="true" width="150"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the contents of a list of order by clauses for use in a properties view of another object.
+		@deprecated Use {@link mktOrderByCombinedGrid} 
+	-->
+	<ObjectGrid definitionName="mktOrderByGrid" preferenceKey="mktOrderByGrid">
+		<GridComboBox name="orderByField" propertyName="orderByField" required="true" visible="true" editable="true" text="${mktMarketingResources.displayProduct_orderByField}" width="180"/>
+		<GridComboBox name="orderBySequence" propertyName="orderBySequence" required="true" visible="true" editable="true" text="${mktMarketingResources.displayProduct_orderBySequence}" width="130"/>
+		<GridNumeric name="orderByPriority" propertyName="sequence" visible="false" editable="false" text="${mktMarketingResources.displayProduct_orderByPriority}" width="80"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays a list of sort criteria for use in the properties view of a {@link mktFlowElementObjectDefinition}.		
+	-->
+	<ObjectGrid definitionName="mktOrderByCombinedGrid" preferenceKey="mktOrderByCombinedGrid">
+		<GridIconTypeImage name="type" enableFilter="true" required="true" text="${mktMarketingResources.type}" width="90"/>
+		<GridComboBox name="orderByField" required="true" propertyName="orderByField" text="${mktMarketingResources.displayProduct_orderByField}" visible="true" width="180"/>
+		<GridComboBox name="orderBySequence" propertyName="orderBySequence" required="true" text="${mktMarketingResources.displayProduct_orderBySequence}" width="130"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays the default content associated with an e-Marketing Spot. It can list marketing content,
+		categories and catalog entries in the same grid.
+	-->
+	<ObjectGrid definitionName="mktEMarketingSpotDefaultContentGrid" preferenceKey="mktEMarketingSpotDefaultContentGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="60">
+			<GridCellDescriptor name="contentType" objectPath="MarketingContentGroup"/>
+			<GridCellDescriptor name="categoryType" objectPath="CatalogGroupAlias"/>
+			<GridCellDescriptor name="catentryType" objectPath="CatalogEntry"/>
+		</GridIconTypeImage>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125">
+			<GridCellDescriptor name="contentStore" objectPath="MarketingContentGroup" propertyName="objectStoreId"/>
+			<GridCellDescriptor name="categoryStore" objectPath="CatalogGroupAlias" propertyName="objectStoreId"/>
+			<GridCellDescriptor name="catentryStore" objectPath="CatalogEntry" propertyName="objectStoreId"/>
+		</GridStoreName>
+		<GridText editable="false" name="contentName" required="true" text="${mktMarketingResources.objectName}" visible="true" width="250">
+			<GridCellDescriptor name="contentName" objectPath="MarketingContentGroup" propertyName="name"/>
+			<GridCellDescriptor name="categoryName" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="name"/>
+			<GridCellDescriptor name="catentryName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name"/>
+		</GridText>
+	</ObjectGrid>
+	<!---
+		This grid displays a list of searchActionFilter objects, for use in a properties view of a {@link mktFlowElementObjectDefinition}.
+	-->
+	<ObjectGrid definitionName="mktSearchFiltersGrid" preferenceKey="mktSearchFiltersGrid">
+		<GridDisplayName name="filterName" required="true" propertyName="" text="${mktMarketingResources.displayProduct_searchFilterName}" visible="true" width="120" resolveReferencedObject="false" showObjectDefinitionDisplayName="true"/>
+		<GridComboBox name="filterOperator" editable="true" propertyName="filterOperator" required="true" text="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" visible="true" width="120"/>
+		<GridColumn name="filterValue" editable="true" required="true" text="${mktMarketingResources.displayProduct_searchFilterValue}" visible="true" width="120" validatorTypes="noFilterValue">
+			<GridChildObjectCheckboxCellDescriptor name="catentTypeValue" childObjectType="filterValue" childPropertyName="filterValue">
+				<EnablementCondition conditionId="catentTypeCondition" enablementValue="catenttype_id_ntk_cs" propertyName="objectType" checkObjectDefinition="true"/>
+			</GridChildObjectCheckboxCellDescriptor>
+			<GridChildObjectTextCellDescriptor name="textFilterValue" childObjectType="filterValue" childPropertyName="filterValue">
+				<EnablementOrCondition conditionId="textFilterValueCondition">
+					<EnablementCondition conditionId="mfNameFilterValueCondition" enablementValue="mfName_ntk" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="partNumber_ntkFilterValueCondition" enablementValue="partNumber_ntk" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="mfPartNumber_ntkFilterValueCondition" enablementValue="mfPartNumber_ntk" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="nameFilterValueCondition" enablementValue="name" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="shortDescriptionFilterValueCondition" enablementValue="shortDescription" propertyName="objectType" checkObjectDefinition="true"/>
+				</EnablementOrCondition>
+			</GridChildObjectTextCellDescriptor>
+			<GridDisplayNameCellDescriptor name="category">
+				<EnablementOrCondition conditionId="catalogGroupCondition">
+					<EnablementCondition conditionId="catalogGroupCondition" enablementValue="ChildCatalogGroup" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="inheritedCatalogGroupCondition" enablementValue="ChildInheritedCatalogGroup" propertyName="objectType" checkObjectDefinition="true"/>
+				</EnablementOrCondition>
+			</GridDisplayNameCellDescriptor>
+		</GridColumn>		
+		<GridNumeric name="sequence" propertyName="sequence" visible="false" editable="false" text="${mktMarketingResources.displayProduct_orderByPriority}" width="130"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays a list of search filter objects for use in the properties view of a {@link mktFlowElementObjectDefinition}.
+	-->
+	<ObjectGrid definitionName="mktSearchFiltersCombinedGrid" preferenceKey="mktSearchFiltersCombinedGrid">
+		<GridIconTypeImage name="type" enableFilter="true" required="true" text="${mktMarketingResources.type}" width="90"/>
+		<GridColumn name="filterName" required="true" text="${mktMarketingResources.displayProduct_searchFilterName}" visible="true" width="180">
+			<GridDisplayNameCellDescriptor name="catalogEntryTypeSearchFilterNameCellDescriptor" objectType="catenttype_id_ntk_cs" showObjectDefinitionDisplayName="true"/>
+			<GridDisplayNameCellDescriptor name="categorySearchFilterNameCellDescriptor" objectType="ChildCatalogGroupGroup" showObjectDefinitionDisplayName="true" resolveReferencedObject="false"/>
+			<GridComboBoxPropertyCellDescriptor package="mkt" objectType="catalogEntryPropertySearchFilter" name="catalogEntryPropertySearchFilterName" propertyName="filterName"/>
+			<GridTextCellDescriptor name="attributeName" objectType="ChildAttributeWithAllowedValuesGroup" objectPath="AttributeDictionaryAttributes" propertyName="attributeCode" editable="false"/>
+		</GridColumn>
+		<GridColumn name="filterOperator" editable="true" required="true" text="${mktMarketingResources.displayProduct_searchFilterMatchingRule}" visible="true" width="180">
+			<GridComboBoxCellDescriptor name="filterOperator1" editable="true" objectType="catenttype_id_ntk_cs" propertyName="filterOperator" />
+			<GridComboBoxCellDescriptor name="filterOperator2" editable="true" objectType="ChildCatalogGroupGroup" propertyName="filterOperator" />
+			<GridComboBoxCellDescriptor name="filterOperator3" editable="true" objectType="catalogEntryPropertySearchFilter" propertyName="filterOperatorExactString" >
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="EXACTSTRING" propertyName="filterDataType"/>
+			</GridComboBoxCellDescriptor>
+			<GridComboBoxCellDescriptor name="filterOperator4" editable="true" objectType="catalogEntryPropertySearchFilter" propertyName="filterOperatorNumeric" >
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="NUMERIC" propertyName="filterDataType"/>
+			</GridComboBoxCellDescriptor>
+			<GridComboBoxCellDescriptor name="filterOperator5" editable="true" objectType="ChildAttributeWithAllowedValuesGroup" propertyName="filterOperator"/>
+			<GridComboBoxCellDescriptor name="filterOperator6" editable="true" objectType="catalogEntryPropertySearchFilter" propertyName="filterOperatorAnyString" >
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="ANYSTRING" propertyName="filterDataType"/>
+			</GridComboBoxCellDescriptor>
+		</GridColumn>
+		<GridColumn name="filterValue" editable="true" required="true" text="${mktMarketingResources.displayProduct_searchFilterValue}" visible="true" width="200" validatorTypes="noFilterValue">
+			<GridChildObjectCheckboxCellDescriptor name="catalogEntryTypeFilterValueCellDescriptor" objectType="catenttype_id_ntk_cs" childObjectType="filterValue" childPropertyName="filterValue"/>
+			<GridNumericCellDescriptor name="catalogEntryPropertyFilterNumericValueCellDescriptor" objectType="catalogEntryPropertySearchFilter" propertyName="filterValue">
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="NUMERIC" propertyName="filterDataType"/>
+			</GridNumericCellDescriptor>
+			<GridChildObjectTextCellDescriptor name="catalogEntryPropertyFilterStringValueCellDescriptor" objectType="catalogEntryPropertySearchFilter" childObjectType="filterValue" childPropertyName="filterValue">
+				<EnablementOrCondition conditionId="multipleValuesChoiceCondition">
+					<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition1" enablementValue="EXACTSTRING" propertyName="filterDataType"/>
+					<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition2" enablementValue="ANYSTRING" propertyName="filterDataType"/>
+				</EnablementOrCondition>
+			</GridChildObjectTextCellDescriptor>						
+			<GridDisplayNameCellDescriptor objectType="ChildCatalogGroupGroup" name="categoryFilterValueCellDescriptor"/>
+			<MultipleAttributeValueCellDescriptor package="cat" name="attributeValue1" objectType="ChildAttributeWithAllowedValuesGroup" childObjectType="ChildAttributeAllowedValues" childPropertyName="attrValId">				
+				<EnablementAndCondition>
+					<EnablementOrCondition negate="true" conditionId="multipleValuesChoiceCondition">
+						<EnablementCondition propertyName="filterOperator" enablementValue="&lt;" conditionId="lessThanCondition" />
+						<EnablementCondition propertyName="filterOperator" enablementValue="&gt;" conditionId="greaterThanCondition" />
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+			</MultipleAttributeValueCellDescriptor>
+			<SingleAttributeValueCellDescriptor package="cat" name="attributeValue2" objectType="ChildAttributeWithAllowedValuesGroup" childObjectType="ChildAttributeAllowedValues" childPropertyName="attrValId">
+				<EnablementAndCondition>
+					<EnablementOrCondition conditionId="singleValueChoiceCondition">
+						<EnablementCondition propertyName="filterOperator" enablementValue="&lt;" conditionId="lessThanCondition" />
+						<EnablementCondition propertyName="filterOperator" enablementValue="&gt;" conditionId="greaterThanCondition" />
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+			</SingleAttributeValueCellDescriptor>
+		</GridColumn>
+	</ObjectGrid>
+
+	<!---
+		This grid displays a list of searchActionFilter objects, for use in a properties view of a {@link mktFlowElementObjectDefinition}.
+	-->
+	<ObjectGrid definitionName="mktRankGrid" preferenceKey="mktRankGrid">
+		<GridNumeric name="filterWeight" editable="true" propertyName="filterWeight" required="true" text="${mktMarketingResources.orderSearchResult_searchFilterBoostFactor}" visible="true" width="120"/>
+		<GridDisplayName name="filterName" required="true" propertyName="" text="${mktMarketingResources.displayProduct_searchFilterName}" visible="true" width="120" resolveReferencedObject="false" showObjectDefinitionDisplayName="true"/>
+		<GridComboBox name="filterOperator" editable="true" propertyName="filterOperator" required="true" text="${mktMarketingResources.orderSearchResult_searchFilterMatchingRule}" visible="true" width="120"/>
+		<GridColumn name="filterValue" editable="true" required="true" text="${mktMarketingResources.orderSearchResult_searchFilterValue}" visible="true" width="120">
+			<GridComboBoxCellDescriptor name="catentTypeValue" objectPath="filterValue" propertyName="filterValue">
+				<EnablementCondition conditionId="catentTypeCondition" enablementValue="catenttype_id_ntk_cs" propertyName="objectType" checkObjectDefinition="true"/>
+			</GridComboBoxCellDescriptor>
+			<GridTextCellDescriptor name="mfNameFilterValue" objectPath="filterValue" propertyName="filterValue">
+				<EnablementOrCondition conditionId="textFilterValueCondition">
+					<EnablementCondition conditionId="mfNameFilterValueCondition" enablementValue="mfName_ntk" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="partNumber_ntkFilterValueCondition" enablementValue="partNumber_ntk" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="mfPartNumber_ntkFilterValueCondition" enablementValue="mfPartNumber_ntk" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="nameFilterValueCondition" enablementValue="name" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="shortDescriptionFilterValueCondition" enablementValue="shortDescription" propertyName="objectType" checkObjectDefinition="true"/>
+				</EnablementOrCondition>
+			</GridTextCellDescriptor>
+			<GridDisplayNameCellDescriptor name="category">
+				<EnablementOrCondition conditionId="catalogGroupCondition">
+					<EnablementCondition conditionId="catalogGroupCondition" enablementValue="ChildCatalogGroup" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="inheritedCatalogGroupCondition" enablementValue="ChildInheritedCatalogGroup" propertyName="objectType" checkObjectDefinition="true"/>
+				</EnablementOrCondition>
+			</GridDisplayNameCellDescriptor>
+		</GridColumn>		
+		<GridNumeric name="sequence" propertyName="sequence" visible="false" editable="false" text="${mktMarketingResources.orderSearchResult_orderByPriority}" width="130"/>
+	</ObjectGrid>
+	
+	<!---
+		This grid displays a list of searchActionFilter objects, for use in a properties view of a {@link mktFlowElementObjectDefinitionV7FEP6}.
+	-->
+	<ObjectGrid definitionName="mktRankGridV7FEP6" preferenceKey="mktRankGridV7FEP6">
+		<GridComboBox name="rankingAction" editable="true" propertyName="rankingAction" required="true" text="${mktMarketingResources.orderSearchResult_searchFilterRankingAction}" visible="true" width="120"/>
+		<GridStepper name="filterWeight" propertyName="filterWeight" required="true" text="${mktMarketingResources.orderSearchResult_searchFilterRankingFactor}" visible="true" width="120" alignment="right" datatype="number" editable="true" maximumValue="999" minimumValue="1"/>
+		<GridIconTypeImage name="type" enableFilter="true" required="true" text="${mktMarketingResources.type}" width="80"/>
+		<GridColumn name="filterName" required="true" text="${mktMarketingResources.displayProduct_searchFilterName}" visible="true" width="160">
+			<GridDisplayNameCellDescriptor name="catalogEntryTypeSearchFilterNameCellDescriptor" objectType="catenttype_id_ntk_cs" showObjectDefinitionDisplayName="true"/>
+			<GridDisplayNameCellDescriptor name="categorySearchFilterNameCellDescriptor" objectType="ChildCatalogGroupGroup" showObjectDefinitionDisplayName="true" resolveReferencedObject="false"/>
+			<GridComboBoxPropertyCellDescriptor package="mkt" objectType="catalogEntryPropertySearchFilter" name="catalogEntryPropertySearchFilterName" propertyName="filterName"/>
+			<GridTextCellDescriptor name="attributeName" objectType="ChildAttributeWithAllowedValuesGroup" objectPath="AttributeDictionaryAttributes" propertyName="attributeCode" editable="false"/>
+		</GridColumn>
+		<GridColumn name="filterOperator" editable="true" required="true" text="${mktMarketingResources.orderSearchResult_searchFilterMatchingRule}" visible="true" width="160">
+			<GridComboBoxCellDescriptor name="filterOperator1" editable="true" objectType="catenttype_id_ntk_cs" propertyName="filterOperator" />
+			<GridComboBoxCellDescriptor name="filterOperator2" editable="true" objectType="ChildCatalogGroupGroup" propertyName="filterOperator" />
+			<GridComboBoxCellDescriptor name="filterOperator3" editable="true" objectType="catalogEntryPropertySearchFilter" propertyName="filterOperatorExactString" >
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="EXACTSTRING" propertyName="filterDataType"/>
+			</GridComboBoxCellDescriptor>
+			<GridComboBoxCellDescriptor name="filterOperator4" editable="true" objectType="catalogEntryPropertySearchFilter" propertyName="filterOperatorNumeric" >
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="NUMERIC" propertyName="filterDataType"/>
+			</GridComboBoxCellDescriptor>
+			<GridComboBoxCellDescriptor name="filterOperator5" editable="true" objectType="ChildAttributeWithAllowedValuesGroup" propertyName="filterOperator"/>
+			<GridComboBoxCellDescriptor name="filterOperator6" editable="true" objectType="catalogEntryPropertySearchFilter" propertyName="filterOperatorAnyString" >
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="ANYSTRING" propertyName="filterDataType"/>
+			</GridComboBoxCellDescriptor>
+		</GridColumn>
+		
+		<GridColumn name="filterValue" editable="true" required="true" text="${mktMarketingResources.orderSearchResult_searchFilterValue}" visible="true" width="160" validatorTypes="noFilterValue">
+			<GridChildObjectCheckboxCellDescriptor name="catalogEntryTypeFilterValueCellDescriptor" objectType="catenttype_id_ntk_cs" childObjectType="filterValue" childPropertyName="filterValue"/>
+			<GridNumericCellDescriptor name="catalogEntryPropertyFilterNumericValueCellDescriptor" objectType="catalogEntryPropertySearchFilter" propertyName="filterValue">
+				<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition" enablementValue="NUMERIC" propertyName="filterDataType"/>
+			</GridNumericCellDescriptor>
+			<GridChildObjectTextCellDescriptor name="catalogEntryPropertyFilterStringValueCellDescriptor" objectType="catalogEntryPropertySearchFilter" childObjectType="filterValue" childPropertyName="filterValue">
+				<EnablementOrCondition conditionId="multipleValuesChoiceCondition">
+					<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition1" enablementValue="EXACTSTRING" propertyName="filterDataType"/>
+					<EnablementCondition conditionId="catalogEntryPropertySearchFilterCondition2" enablementValue="ANYSTRING" propertyName="filterDataType"/>
+				</EnablementOrCondition>
+			</GridChildObjectTextCellDescriptor>					
+			<GridDisplayNameCellDescriptor objectType="ChildCatalogGroupGroup" name="categoryFilterValueCellDescriptor"/>
+			<MultipleAttributeValueCellDescriptor package="cat" name="attributeValue1" objectType="ChildAttributeWithAllowedValuesGroup" childObjectType="ChildAttributeAllowedValues" childPropertyName="attrValId">				
+				<EnablementAndCondition>
+					<EnablementOrCondition negate="true" conditionId="multipleValuesChoiceCondition">
+						<EnablementCondition propertyName="filterOperator" enablementValue="&lt;" conditionId="lessThanCondition" />
+						<EnablementCondition propertyName="filterOperator" enablementValue="&gt;" conditionId="greaterThanCondition" />
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+			</MultipleAttributeValueCellDescriptor>
+			<SingleAttributeValueCellDescriptor package="cat" name="attributeValue2" objectType="ChildAttributeWithAllowedValuesGroup" childObjectType="ChildAttributeAllowedValues" childPropertyName="attrValId">
+				<EnablementAndCondition>
+					<EnablementOrCondition conditionId="singleValueChoiceCondition">
+						<EnablementCondition propertyName="filterOperator" enablementValue="&lt;" conditionId="lessThanCondition" />
+						<EnablementCondition propertyName="filterOperator" enablementValue="&gt;" conditionId="greaterThanCondition" />
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+			</SingleAttributeValueCellDescriptor>
+		</GridColumn>
+		<GridNumeric name="sequence" propertyName="sequence" visible="false" editable="false" text="${mktMarketingResources.orderSearchResult_orderByPriority}" width="130"/>
+	</ObjectGrid>
+		
+	<!---
+		This grid displays the contents of a list of zone ID values for use in a properties view of another object.
+	-->
+	<ObjectGrid definitionName="mktZoneIdValueGrid" preferenceKey="mktZoneIdValueGrid">
+		<GridText editable="true" name="zoneId" propertyName="zoneId" required="true" text="${mktMarketingResources.intelligentOfferRecommendationZoneID}" visible="true" width="150"/>
+	</ObjectGrid>
+		
+	<!---
+		This grid displays a list of SocialActivityFilters objects, for use in a properties view of a {@link mktFlowElementObjectDefinition}.
+	-->
+	<ObjectGrid definitionName="mktSocialActivityFiltersGrid" preferenceKey="mktSocialActivityFiltersGrid">
+		<GridDisplayName name="filterName" required="true" propertyName="" text="${mktMarketingResources.socialActivityFiltersName}" visible="true" width="120" resolveReferencedObject="false" showObjectDefinitionDisplayName="true"/>
+		<GridComboBox name="filterOperator" editable="true" propertyName="filterOperator" required="true" text="${mktMarketingResources.socialActivityFilter_MatchingRule}" visible="true" width="120"/>
+		<GridColumn name="filterValue" editable="true" required="true" text="${mktMarketingResources.socialActivityFilterValue}" visible="true" width="220">
+			<GridStepperCellDescriptor alignment="right" datatype="number" editable="true" maximumValue="5" minimumValue="1" objectPath="filterValue" propertyName="filterValue">
+				<EnablementCondition conditionId="starRaitingFilterValueCondition" enablementValue="rating" propertyName="objectType" checkObjectDefinition="true"/>
+			</GridStepperCellDescriptor>
+			<GridChildObjectTextCellDescriptor name="mfNameFilterValue" childObjectType="filterValue" childPropertyName="filterValue">
+				<EnablementCondition conditionId="mfNameFilterValueCondition" enablementValue="manufacturerName" propertyName="objectType" checkObjectDefinition="true"/>
+			</GridChildObjectTextCellDescriptor>
+			<GridDisplayNameCellDescriptor name="category">
+				<EnablementOrCondition conditionId="catalogGroupCondition">
+					<EnablementCondition conditionId="catalogGroupCondition" enablementValue="ChildCatalogGroup" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="inheritedCatalogGroupCondition" enablementValue="ChildInheritedCatalogGroup" propertyName="objectType" checkObjectDefinition="true"/>
+				</EnablementOrCondition>
+			</GridDisplayNameCellDescriptor>
+			<GridDisplayNameCellDescriptor name="catalogEntry">
+				<EnablementOrCondition conditionId="catalogEntryCondition">
+					<EnablementCondition conditionId="catalogEntryCondition" enablementValue="ChildCatentry" propertyName="objectType" checkObjectDefinition="true"/>
+					<EnablementCondition conditionId="inheritedCatalogGroupCondition" enablementValue="ChildInheritedCatentry" propertyName="objectType" checkObjectDefinition="true"/>
+				</EnablementOrCondition>
+			</GridDisplayNameCellDescriptor>			
+		</GridColumn>				
+	</ObjectGrid>
+			
+	<!---
+		This grid displays a list of Name Value Pair objects, for use in a properties view of a {@link mktFlowElementObjectDefinition}.
+	-->
+	<ObjectGrid definitionName="mktNvpDataGrid" preferenceKey="mktNvpDataGrid">
+		<GridText editable="true" columnEditorClass="${null}" name="nvpName" propertyName="nvpName" required="true" text="${mktMarketingResources.returnNvpDataEntryName}" visible="true" width="150"/>
+		<GridText editable="true" columnEditorClass="${null}" name="nvpValue" propertyName="nvpValue" required="true" text="${mktMarketingResources.returnNvpDataEntryValue}" visible="true" width="300"/>
+	</ObjectGrid>
+				
+</Definitions>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the promotion element object definition for the Identifier_MemberGroup element sub type.		
+	-->
+	<PromotionElementReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="Promotion" definitionName="proIdentifierMemberGroupObjectDefinition" displayName="${promotionResources.promotion_ConsumerSegments}" objectGroups="Identifier_MemberGroupGroup" objectType="Identifier_MemberGroup" package="pro" referencedTypes="CustomerSegment">
+		
+		<!--- Creates the object with service parameter uniqueId from object path CustomerSegment. -->
+		<CreateService baseDefinitionName="proPromotionElementCreateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="CustomerSegment" propertyName="uniqueId"/>
+		</CreateService>
+		
+		<!--- Updates the object with service parameter uniqueId from object path CustomerSegment. -->
+		<UpdateService baseDefinitionName="proPromotionElementUpdateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="CustomerSegment" propertyName="uniqueId"/>
+		</UpdateService>	
+		
+		<!--- 
+			The element type of this promotion element object which will be used by the XML transformation layer during promotion activation.
+			Possible values include "IncludeMemberGroupIdentifier" and "ExcludeMemberGroupIdentifier".
+		-->
+		<PropertyDefinition propertyName="elementType">
+			<PropertyValue value="IncludeMemberGroupIdentifier"/>
+			<PropertyValue value="ExcludeMemberGroupIdentifier"/>
+		</PropertyDefinition>
+		
+	</PromotionElementReferenceObjectDefinition>
+
+	<!---
+		This is the promotion element object definition for the Identifier_InheritedMemberGroup element sub type.		
+	-->
+	<PromotionElementReferenceObjectDefinition allowDuplicates="false" definitionName="proIdentifierInheritedMemberGroupObjectDefinition" displayName="${promotionResources.promotion_ConsumerSegments}" objectGroups="Identifier_MemberGroupGroup" objectType="Identifier_InheritedMemberGroup" package="pro" referencedTypes="InheritedCustomerSegment">
+		
+		<!--- Creates the object with service parameter uniqueId from object path InheritedCustomerSegment. -->
+		<CreateService baseDefinitionName="proPromotionElementCreateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="InheritedCustomerSegment" propertyName="uniqueId"/>
+		</CreateService>
+		
+		<!--- Updates the object with service parameter uniqueId from object path InheritedCustomerSegment. -->
+		<UpdateService baseDefinitionName="proPromotionElementUpdateService">
+			<ServiceParam name="PROPERTY_Id" objectPath="InheritedCustomerSegment" propertyName="uniqueId"/>
+		</UpdateService>	
+		
+		<!--- 
+			The element type of this promotion element object which will be used by the XML transformation layer during promotion activation.
+			Possible values include "IncludeMemberGroupIdentifier" and "ExcludeMemberGroupIdentifier".
+		-->
+		<PropertyDefinition propertyName="elementType">
+			<PropertyValue value="IncludeMemberGroupIdentifier"/>
+			<PropertyValue value="ExcludeMemberGroupIdentifier"/>
+		</PropertyDefinition>
+			
+	</PromotionElementReferenceObjectDefinition>
+</Definitions>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectGrid definitionName="istPaymentMethodsGrid" preferenceKey="istPaymentMethodsGrid">
+		<GridComboBox name="payMethod" propertyName="payMethod" required="true" text="${istInstallmentResources.payMethod}" visible="true" width="175"/>
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="istInstallmentOptionsGrid" preferenceKey="istInstallmentOptionsGrid">
+		<GridStepper name="numInstallments" propertyName="numInstallments" required="true" text="${istInstallmentResources.numInstallments}" visible="true" width="175"/>
+		<GridNumeric name="rate" numDecimalPlaces="2" propertyName="rate" required="true" text="${istInstallmentResources.interestRate}" visible="true" width="140"/>
+		<GridNumeric name="minInstallmentAmt" numDecimalPlaces="2" propertyName="minInstallmentAmt" required="true" text="${istInstallmentResources.minInstallmentAmt}" visible="true" width="190"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="istCategoryGrid" preferenceKey="istCategoryGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogGroupAlias" propertyName="catgroupId" text="${istInstallmentResources.uniqueID}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogGroupAlias" propertyName="" required="true" text="${istInstallmentResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogGroupAlias" propertyName="objectStoreId" text="${istInstallmentResources.store}" width="125"/>
+		<GridText editable="false" name="categoryName" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="name" required="true" text="${istInstallmentResources.categoryName}" visible="true" width="175"/>
+		<GridText editable="false" name="shortDescription" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="sDesc" text="${istInstallmentResources.description}" width="250"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="istProductGrid" preferenceKey="istProductGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogEntry" propertyName="catentryId" text="${istInstallmentResources.uniqueID}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogEntry" propertyName="" required="true" text="${istInstallmentResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogEntry" propertyName="objectStoreId" text="${istInstallmentResources.store}" width="125"/>
+		<GridText editable="false" name="partNumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${istInstallmentResources.code}" visible="true" width="90"/>
+		<GridText editable="false" name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" text="${istInstallmentResources.productName}" width="200"/>
+	</ObjectGrid>
+</Definitions>

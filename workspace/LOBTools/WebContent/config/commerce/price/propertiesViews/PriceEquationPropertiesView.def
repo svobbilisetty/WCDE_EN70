@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="prcPriceEquationBuilder" componentObjectNames="selectedEquationEntry">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="generalProperties" text="${prcPriceResources.generalProperties}">
+				<PropertyPane name="generalPane">
+					<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+					<PropertyGroup groupTitle="${prcPriceResources.priceEquationProperties}" name="group" open="true" hideHeaderWhenOnlyGroup="true">
+						<PropertyInputText promptText="${prcPriceResources.nameString}" propertyName="name" helpText="${prcPriceResources.helpText_equationName}" />
+						<PropertyInputMultiLineText promptText="${prcPriceResources.description}" propertyName="description"/>
+						<PropertyFormulaViewer name="equationEntryViewer" objectTypes="InputPriceEquationEntry,NumberEquationEntry,OperatorEquationEntry,LeftParenthesisEquationEntry,RightParenthesisEquationEntry,PriceListEquationEntry,InheritedPriceListEquationEntry,PriceConstantEquationEntry,InheritedPriceConstantEquationEntry" promptText="${prcPriceResources.equationViewer}" sequencePropertyName="sequence" helpText="${prcPriceResources.helpText_equationViewer}" startElementIcon="priceEquationFormulaIcon" startElementText="${prcPriceResources.priceEquationStartElementText}"/>
+						<PropertyChildListEditor listDefinitionName="prcPriceEquationEntryGrid" name="equationEntryGrid" objectTypes="InputPriceEquationEntry,NumberEquationEntry,OperatorEquationEntry,LeftParenthesisEquationEntry,RightParenthesisEquationEntry,PriceListEquationEntry,InheritedPriceListEquationEntry,PriceConstantEquationEntry,InheritedPriceConstantEquationEntry" promptText="${prcPriceResources.equationBuilder}" hideEditColumnAction="true" sequencePropertyName="sequence" helpText="${prcPriceResources.helpText_equationBuilder}" helpLinkURL="tasks/tpictequation.htm" newButtonHelpText="${prcPriceResources.priceEquationListNewButtonText}"/>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<PropertyTabPane name="reference"  text="${prcPriceResources.references}">
+				<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+				<PropertyPane name="referencePane">
+					<PropertyGroup name="priceRuleRef" groupTitle="${prcPriceResources.priceRules}" open="true">
+						<PropertyReferenceList promptText="${prcPriceResources.priceRules}" listDefinitionName="prcPriceRuleRefGrid" name="priceRuleRefList" referenceObjectPaths="*/InputPriceEquationGroup,*/ComparisonPriceEquationGroup,*/RefPriceEquationGroup" helpText="${prcPriceResources.helpText_priceRuleRefEquation}"/>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+	
+	<ObjectGrid definitionName="prcPriceEquationEntryGrid" preferenceKey="prcPriceEquationEntryGrid">
+    	<GridComboBox editable="false" name="type" propertyName="type" text="${prcPriceResources.type}" width="150"/>
+    	
+    	<GridColumn name="value" text="${prcPriceResources.value}" width="500">
+    	
+			<GridNumericCellDescriptor name="inputNumberValueCell" propertyName="value">
+				<EnablementCondition conditionId="numberEntry" enablementValue="Number" propertyName="type"/>
+			</GridNumericCellDescriptor>
+			<GridComboBoxCellDescriptor name="operatorValueCell" propertyName="value">
+				<EnablementCondition conditionId="operatorEntry" enablementValue="Operator" propertyName="type"/>
+			</GridComboBoxCellDescriptor>
+			<GridDisplayNameCellDescriptor name="priceListCell" editable="false">
+				<EnablementAndCondition>
+					<EnablementCondition conditionId="priceListEntry" enablementValue="PriceList" propertyName="type"/>
+				</EnablementAndCondition>
+			</GridDisplayNameCellDescriptor>
+			<GridDisplayNameCellDescriptor name="priceConstantCell" editable="false">
+				<EnablementAndCondition>
+					<EnablementCondition conditionId="priceConstantEntry" enablementValue="PriceConstant" propertyName="type"/>
+				</EnablementAndCondition>
+			</GridDisplayNameCellDescriptor>
+			<GridDisplayNameCellDescriptor name="parenthesisCell" editable="false">
+				<EnablementOrCondition>
+					<EnablementCondition conditionId="leftParenthesisEntry" enablementValue="LeftParenthesis" propertyName="type"/>
+					<EnablementCondition conditionId="rightParenthesisEntry" enablementValue="RightParenthesis" propertyName="type"/>
+				</EnablementOrCondition>
+			</GridDisplayNameCellDescriptor>
+		</GridColumn>
+    	
+    </ObjectGrid>
+	
+
+</Definitions>

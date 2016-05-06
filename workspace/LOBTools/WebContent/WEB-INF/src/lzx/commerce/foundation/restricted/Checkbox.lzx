@@ -1,0 +1,2428 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		The class wcfBaseCheckbox applies WeSphere Commerce own visual design to the base OpenLaszlo check box design.
+		This includes the image resource as well as the label color. Use wcfBaseCheckbox when implementing a basic check box
+		that has the WeSphere Commerce look and feel. Reference {@OLlink checkbox} for more details of the check box's
+		capabilities.
+		
+		The example below shows a check box that will enable help for the user.
+		@START_CODE		
+			<BaseCheckbox name="helpEnabledCheckbox" text="${resourceBundle.helpEnabled}" />
+		@END_CODE
+	-->
+	<class name="wcfBaseCheckbox" extends="checkbox">	
+		<!--- Flags whether to use radio button. The default value is checkbox. -->
+		<attribute name="useRadioButton" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			Updates the check box image to use depending on whether the check box is enabled or disable.
+		-->
+		<method name="init">
+			super.init();
+			// Change the default OpenLaszlo button background to wcf background.
+			if(this.useRadioButton){
+				//radio button look
+				this.cb.setAttribute('resource', "radioButton"); 
+			}else{
+				this.cb.setAttribute('resource', "checkboxButton"); 
+			}
+			this.cb.setStateNum(this.value? 1: 0);			
+		</method>
+
+        <!---
+			@keywords private
+			Updates the check box label color to use for both enabled and disabled states.
+		-->
+        <method name="_applystyle" args="s">
+            if (this.style != null) {
+            	// Change the default OpenLaszlo label color to wcf color.
+                if (_enabled) {
+                    _title.setAttribute('fgcolor',s.formlabeltextcolor);
+                } else {
+                    _title.setAttribute('fgcolor',s.textdisabledcolor);
+                }
+            }
+        </method>
+        
+        <!---
+			@keywords private
+			Handle onfocus event. 
+		-->
+		<handler name="onfocus">
+			<![CDATA[
+			if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this.cb,
+			    	offset: -1
+			    });
+		    }
+			]]>
+		</handler>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		This check box implementation is for internal use by both {@link wcfPropertyCheckbox} and {@link wcfGridCheckbox}
+		to bind a {@link wcfModelProperty} with the check box.
+		The relationship is bi-directional.  This means that the check box state will be refreshed to represent the value
+		of the property and the new property value will be stored when a user changes the check box state.
+	-->
+	<class name="wcfCheckbox" extends="wcfBaseCheckbox">
+		<!--- Reference to wcfModelProperty object that is being edited. -->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		
+		<!--- Optional value to return when checked. Default is "true" -->
+		<attribute name="trueValue" type="string" value="true"/>
+		
+		<!--- Optional value to return when not checked. Default is "false" -->
+		<attribute name="falseValue" type="string" value="false"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			super.init();
+			if (this["property"]) {
+				this.updateValue();
+			}
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+				
+		<!--- @keywords private -->
+        <method name="_applystyle" args="s">
+        	<![CDATA[
+        	if (this.style != null) {
+				// Change the default OpenLaszlo label color to wcf color.
+				if (_enabled) {
+					_title.setAttribute('fgcolor',0x000000);
+				} else {
+					_title.setAttribute('fgcolor',s.textdisabledcolor);
+				}
+			}
+        	]]>
+        </method>
+		
+
+		<!---
+			Set the {@link wcfModelProperty} to be associated with this check box. Listeners are created to
+			watch the property value. If the property changes at anytime, the value of this checkbox will be
+			refreshed.
+			@param wcfModelProperty newProperty: New Property associated with this check box.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+				else {
+					this.__updateValueLock = true;
+					this.setAttribute("value", false);
+					this.__updateValueLock = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update and refresh the wcfCheckbox value with a new wcfModelProperty value.
+			@event onvalue the event that indicates the value of this checkbox is changed
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this._initcomplete) {
+				var newValue = (this.property.value == this.trueValue);
+				if (newValue != this.value) {
+					this.__updateValueLock = true;
+					this.setAttribute("value", newValue);
+					this.__updateValueLock = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the wcfModelProperty to represent the wcfCheckbox value. This method is called when the check box
+			value is changed.
+		-->
+		<method name="storeValue">
+			<![CDATA[
+			if (this._initcomplete) {
+				if(this.property && (this.property != null)) {
+					var newValue = this.value ? this.trueValue : this.falseValue;
+					this.property.change(newValue);					
+					if (wcfLogger.enabled) {
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfCheckBox", "storeValue", "updates the model property " + this.property.propertyName + " with new value " + newValue + this.property.o.logString());
+					}
+				}
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			When the value of the check box is changed by the business user, the associated property will be updated
+			with the new checkbox value.
+		-->		
+		<handler name="onvalue">
+			// Do not need to store the value if this event is sent in updateValue() method
+			if (!this["__updateValueLock"]) {
+				this.storeValue();
+			}
+		</handler>
+	 </class>
+	
+	<!---
+		@keywords final
+		wcfPropertyCheckbox is a property editor and is used to create a check box that binds to a property
+		value {@link wcfModelProperty}.  Use wcfPropertyCheckbox when implementing a check box inside a
+		{@link wcfPropertyPane} or {@link wcfPropertyGroup}.  The class wcfPropertyCheckbox is final, to create
+		a new properties widget extend {@link wcfPropertyEditor}.
+		
+		The example	below would create a check box inside a properties view that would indicate the state of a help enabled
+		property. In this case, '1' would be used instead of 'true' while the help enabled check box is checked and '0'
+		instead of 'false' while the help enabled check box is unchecked.
+
+		@START_CODE
+			<PropertyCheckbox
+				trueValue="1"
+				falseValue="0"
+				propertyName="helpEnabled"
+				promptText="${resourceBundles.helpEnabled}"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyCheckbox" extends="wcfPropertyEditor">
+		<!--- Optional value to return when checked. Default is "true" -->
+		<attribute name="trueValue" type="string" value="true"/>
+		<!--- Optional value to return when not checked. Default is "false" -->
+		<attribute name="falseValue" type="string" value="false"/>
+		<!--- Optional text information displayed on the right hand side of the checkbox -->
+		<attribute name="text" type="string" value=""/>
+		
+		<!--- @keywords private -->
+		<handler name="ontext">
+			<![CDATA[
+			if (this["editor"]) {
+				this .editor.setAttribute("text", this.text);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			This method creates a {@link wcfPropertyCheckboxClone} for the given {@link wcfStoreLanguage}.
+			
+			@param cloneLanguage The wcfStoreLanguage for the new instance of wcfPropertyEditorClone.
+		-->
+		<method name="createLanguageClone" args="cloneLanguage">
+			<![CDATA[
+			return new lz.wcfPropertyCheckboxClone(this.parent,{
+				originalPropertyEditor: this,
+				language: cloneLanguage
+				});
+			]]>
+		</method>
+		
+
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+			super.createPrompt(parentComponent);
+			
+			if (parentComponent["prompt"]) {
+				parentComponent.prompt.setAttribute('y', 0);
+			}
+
+			if (parentComponent["extendedHelpIcon"]) {			
+				parentComponent.extendedHelpIcon.setAttribute('y', 0);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create the check box editor for the given property component. This method overrides the createEditor method in
+			the wcfPropertiesComponent class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfCheckbox(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				y: 1,
+				property: parentComponent.property,
+				trueValue: this.trueValue,
+				falseValue: this.falseValue,
+				text: this.text
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		A cloned wcfPropertyCheckbox for MLS support
+	-->
+	<class name="wcfPropertyCheckboxClone" extends="wcfPropertyEditorClone">
+		<!--- @keywords private -->
+		<attribute name="text" type="string" value="${originalPropertyEditor.text}"/>
+		<!--- @keywords private -->
+		<handler name="ontext">
+			<![CDATA[
+			if (this["editor"]) {
+				this .editor.setAttribute("text", this.text);
+			}
+			]]>
+		</handler>
+	</class>
+	
+	<!---
+		@keywords final
+		A wrapper around {@link wcfCheckbox} for use with the {@link wcfObjectGrid}.
+		Unlike the other grid wrappers,
+		this will not show text as the viewer class, but the actual check box widget.
+		wcfGridCheckbox works similar to {@link wcfPropertyCheckbox} except it will display a column of
+		check boxes inside of {@link wcfObjectGrid}.
+		
+		The below example goes inside {@link wcfObjectGrid} tag. It would create a {@link wcfCheckbox} column
+		that would associate a check box to the object_desc_published property for each object displayed in the grid.
+		In this case, '1' would be used instead of 'true' while the publish enabled check box is checked and '0'
+		instead of 'false' while the publish enabled check box is unchecked.
+		
+		@START_CODE
+		<GridCheckbox
+			trueValue="1"
+			falseValue="0"
+        	name="published"
+            objectPath="ObjectGroup/ObjectGroupDescription"
+            propertyName="object_desc_published"
+            text="${resourceBundle.displayToCustomers}"
+            visible="true"
+            width="140"
+            alignment="center"/>
+		@END_CODE
+	-->
+	<class name="wcfGridCheckbox" extends="wcfGridColumn">
+		<!---
+			@keywords private
+			Use "wcfGridCheckboxViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridCheckboxViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridCheckboxEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridCheckboxEditor"/>
+		<!---
+			@keywords private
+			Use "wcfColumnCheckboxEditor" to create Column Editor editor.
+		-->
+		<attribute name="columnEditorClass" value="wcfColumnCheckboxEditor"/>
+		<!--- Optional value to return when checked. Default is "true". -->
+		<attribute name="trueValue" type="string" value="true"/>
+		<!--- Optional value to return when checked. Default is "false". -->
+		<attribute name="falseValue" type="string" value="false"/>
+
+		<!--- Indicates that the grid cell is to be displayed as a radio button instead of a checkbox. Default is "false". -->
+		<attribute name="useRadioButton" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				trueValue: this.trueValue
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				trueValue: this.trueValue,
+				falseValue: this.falseValue,
+				align: this.alignment,
+				useRadioButton: this.useRadioButton
+			};
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		Use this class to display a check box in a grid cell. Use this class instead of
+		wcfGridCheckbox if you need to display a checkbox for some rows and something else
+		for other rows.
+	-->
+	<class name="wcfGridCheckboxCellDescriptor" extends="wcfGridCellDescriptor">
+		<!---
+			@keywords private
+			Use "wcfGridCheckboxViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridCheckboxViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridCheckboxEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridCheckboxEditor"/>
+		<!--- Optional value to return when checked. Default is "true". -->
+		<attribute name="trueValue" type="string" value="true"/>
+		<!--- Optional value to return when checked. Default is "false". -->
+		<attribute name="falseValue" type="string" value="false"/>
+		
+		<!--- Indicates that the grid cell is to be displayed as a radio button instead of a checkbox. Default is "false". -->
+		<attribute name="useRadioButton" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				trueValue: this.trueValue
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				trueValue: this.trueValue,
+				falseValue: this.falseValue,
+				align: this.alignment,
+				useRadioButton: this.useRadioButton
+			};
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Check box viewer class for internal use by {@link wcfGridCheckbox} to display a property status and will be
+		displayed while the grid is in view mode.
+	-->
+	<class name="wcfGridCheckboxViewer">
+		<!--- wcfModelProperty instance associated with this viewer. -->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		<!--- The true value for this check box -->
+		<attribute name="trueValue"/>
+		
+		<!---
+			Set the {@link wcfModelProperty} to be associated with this check box. Listeners are created to
+			watch the property value. If the property changes at anytime, the updateValue method will be called.
+			@param wcfModelProperty newProperty: New Property associated with this check box
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this["property"]) {
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+			}
+			]]>
+		</method>
+	
+		<!---
+			Update and refresh wcfGridCheckboxViewer value with a new {@link wcfModelProperty} value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this["property"]) {
+				var visible = false;
+				if(this.property.value == this.trueValue) {
+					visible = true;
+				}
+				if (this["display"]) {
+					this.display.setAttribute("visible", visible);
+				}
+			}
+			]]>
+		</method>
+		
+		<view name="display" resource="checkmarkIcon">
+			<!--- @keywords private -->
+			<handler name="oninit">
+				classroot.updateValue();
+			</handler>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Check box editor class for internal use by wcfGridCheckbox to bind a property to the grid check box and will be
+		displayed while the grid is in edit mode. Extends {@link wcfCheckbox} to handle transition from edit mode to view
+		mode with mouse and key navigation.
+	-->
+	<class name="wcfGridCheckboxEditor" extends="wcfCheckbox">
+	</class>
+
+	<!---
+		@keywords final
+		
+		Use this widget in grid when you want to allow the business user to select one or more languages from
+		the list of languages supported by the current store.
+		
+		When you create an instance of this widget in your grid, your grid will be populated by one column
+		per language in the current store. So if your store supports English, French, and Hindi, you will
+		get three columns - one with a column header for English...one with French...and one with Hindi.
+		For each row, the cell correpsonding to those three columns will have a checkbox.
+		
+		The checkboxes thus created for each row share a single model property. The name of the model property
+		is specified in its {@link wcfGridColumn#propertyName propertyName} attribute. The model property contains
+		a comma separated list of language ids. When a checkbox is checked, the language id of its corresponding
+		column is added to the model property, and when it is unchecked, the language id is removed from the model
+		property.
+		
+		For example, let the current store support <code>English, French and Hindi</code> and let <code>-1, -2 and -3</code>
+		be the language	ids respectively. Let <code>languageIds</code> be the model property. When you check all
+		the three checkboxes in the row, the value of <code>languageIds</code> will become <code>"-1,-2,-3"</code>.
+		Similarly if you uncheck <code>French</code>, the value of <code>languageIds</code> will become <code>"-1,-3"</code>.
+
+		Following is an example of using this class:
+				
+		@START_CODE
+		<GridLanguages
+        	name="language"
+            objectPath="ObjectGroup/Attachment"
+            propertyName="languageIds"
+            text="Language"
+            visible="true"
+            width="150"
+            alignment="center"/>
+		@END_CODE
+		
+		@see wcfGridCheckbox
+	-->
+	<class name="wcfGridLanguages" extends="wcfGridColumn">
+		<!---
+			@keywords private
+			Use "wcfGridLanguagesViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridLanguagesViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridLanguagesEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridLanguagesEditor"/>
+
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+				super.postCreateDefinitionChildren();
+				this.updateColumnsDel = new lz.Delegate(this, "updateColumns");
+				this.updateColumns();
+			]]>		
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateColumnsDel.unregisterAll();
+			delete this.updateColumnsDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				align: this.alignment
+			};
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the columns when switch to a new store.
+		-->
+		<method name="updateColumns" args="e=null">
+			<![CDATA[
+			this.updateColumnsDel.unregisterAll();
+			if (typeof(this["oView"]) == "undefined") {
+				this.oView = wcfModelUtil.findObjectView(this);
+			}
+			var o = null;				
+			if(this.oView) {
+				this.updateColumnsDel.register(this.oView, "ono");
+				o = this.oView.o;
+			}
+			var storeConfig = null;
+			if (o != null) {
+				storeConfig = wcfContextUtil.findStoreConfig(o, this.updateColumnsDel);
+			}
+			if (storeConfig != null && storeConfig.defaultLanguage != null)
+			{
+				var refreshRequired = false;
+				while (this.languageColumns.length > 0)
+				{
+					var languageColumn = this.languageColumns.shift();
+					languageColumn.setAttribute("language", null);
+					this.parent.releaseColumn(languageColumn);
+					this.languageColumnsPool.push(languageColumn);
+					refreshRequired = true;
+				}
+				var defaultLanguage = storeConfig.defaultLanguage;
+				if (!this["language"] || this.language.languageId != defaultLanguage.languageId)
+				{
+					this.setAttribute("language", defaultLanguage);
+				}
+				var languages = storeConfig.supportedLanguages;			
+				var columnPos = parent.columns.indexOf(this) + 1;
+				for (var i = 0; i < languages.length; i++)
+				{
+					var language = languages[i];
+					if (language.languageId != defaultLanguage.languageId)
+					{	
+						var languageColumn = null;
+						if (this.languageColumnsPool.length > 0) {
+							languageColumn = this.languageColumnsPool.pop();
+							languageColumn.setAttribute("language", language);
+							languageColumn.setAttribute('width', this.width);
+							this.parent.addColumn(languageColumn, this.visible);
+						}
+						else {
+							languageColumn = new lz.wcfGridColumnClone(this.parent, {
+								originalColumn: this,
+								language: language,
+								width: this.width,
+								visible: this.visible
+							});
+						}
+						this.languageColumns.push(languageColumn);	
+						parent.setColumnPosition(languageColumn, columnPos + i, true);
+						refreshRequired = true;
+					}
+				}
+				if (refreshRequired) {
+					parent.updateColumnOrder();
+					parent.refresh();
+				}
+			}		
+			]]>	
+		</method>					
+	</class>
+
+	<!---
+		@keywords private
+		Check box viewer class for internal use by {@link wcfGridLanguages} to display a property status and will be
+		displayed while the grid is in view mode.
+	-->
+	<class name="wcfGridLanguagesViewer" extends="wcfGridCheckboxViewer">
+		<!---
+			Update and refresh wcfGridLanguagesViewer value with a new {@link wcfModelProperty} value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this["property"]) {
+				var selectedlanguageIds = wcfStringUtil.splitAndTrim(this.property.value, ",");
+				var visible = selectedlanguageIds.indexOf(parent.column.language.languageId) != -1;
+				if (this["display"]) {
+					this.display.setAttribute("visible", visible);
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Check box editor class for internal use by {@link wcfGridLanguages} to bind a property to the grid check box
+		and will be	displayed while the grid is in edit mode.
+	-->
+	<class name="wcfGridLanguagesEditor" extends="wcfGridCheckboxEditor">
+		<!---
+			@keywords private
+			Update and refresh the wcfGridLanguagesEditor value with a new wcfModelProperty value.
+			@event onvalue the event that indicates the value of this checkbox is changed
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this._initcomplete) {
+				var selectedlanguageIds = wcfStringUtil.splitAndTrim(this.property.value, ",");
+				var newValue = selectedlanguageIds.indexOf(parent.column.language.languageId) != -1;
+				if (newValue != this.value) {
+					this.setAttribute("value", newValue);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the wcfModelProperty to represent the wcfGridLanguagesEditor value. This method is called when the check box
+			value is changed.
+		-->
+		<method name="storeValue">
+			<![CDATA[
+			if (this._initcomplete) {
+				if(this.property && (this.property != null)) {
+					var selectedLanguageIds = wcfStringUtil.splitAndTrim(this.property.value, ",");
+					var index = selectedLanguageIds.indexOf(parent.column.language.languageId);
+					if(this.value){
+						if(index == -1){
+							selectedLanguageIds.push(parent.column.language.languageId);
+						}
+					}else{
+						if(index != -1){
+							selectedLanguageIds.splice(index,1);
+						}
+					}
+					this.property.change(selectedLanguageIds.join());
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This check box implementation is for internal use by {@link wcfSaveDetectedUnsavedObjectsDialog}
+		to bind a {@link wcfModelObject} with the check box.
+		Both the icon and the display name of the object will be displayed beside the checkbox.
+	-->
+	<class name="wcfObjectCheckbox" extends="wcfBaseCheckbox">
+		<!---
+			A reference to the instance of the {@link wcfModelObject} whose icon is being displayed.
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			Object icon.
+		-->
+		<attribute name="icon" type="string" value="treeFolderResource"/>
+		<!---
+			Object display name.
+		-->
+		<attribute name="objectDisplayName" value="null"/>
+		<!---
+			Indicates that this object has an error.
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		<!---
+			wcfObjectSelectionList instance.
+		-->
+		<attribute name="objectSelectionList" value="null"/>
+		
+		<!---
+			@keywords private
+			Set the {@link wcfModelObject} to be associated with this check box.
+			@param wcfModelObject newObject New object associated with this check box.
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				this.o = newObject;
+				
+				if (this.o == null) {
+					this.setAttribute("icon", null);
+					this.setAttribute("objectDisplayName", "");
+					this.setAttribute("hasError", false);
+				
+				} else {				
+					if (this.o.getIcon() != null) {
+						this.setAttribute("icon", this.o.getIcon());
+					}
+					
+					if (this.o.objectDisplayName != null) {
+						this.setAttribute("objectDisplayName", this.o.objectDisplayName);
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "FINER", "wcfObjectCheckbox", "setModelObject(newObject)", "objectDisplayName: " + this.objectDisplayName);						
+						}
+					}
+					
+					var newHasError = this.o.openGroupObject != null && this.o.openGroupObject.errorInOpenGroup;
+					if (newHasError != this.hasError) {
+						this.setAttribute("hasError", newHasError);
+					}
+				}
+				
+				// make sure text is not set
+				this.setAttribute("text", "");
+				
+				if (this["ono"]) {
+					this.ono.sendEvent(o);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Handle onclick event.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			if (this.objectSelectionList != null) {
+				this.objectSelectionList.setCurrentCheckbox(this);
+				lz.Focus.setFocus(this.objectSelectionList);
+			}
+			]]>
+		</handler>
+		
+		<view name="checkboxTitle" x="${classroot._title.x}" y="${classroot.text_y}">
+			<view name="_icon" resource="${classroot.icon}"/>
+			<view name="_errorIcon"
+				x="${parent._icon.x + parent._icon.width - this.width - 1}"
+				y="${parent._icon.y + parent._icon.height - this.height}"
+				resource="treeErrorResource"
+				visible="${classroot.hasError}"/>
+			<text name="_displayName"
+				x="${parent._errorIcon.x + parent._errorIcon.width + 1}"
+				text="${this.escapeText(classroot.objectDisplayName)}"
+				resize="true"/>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		List of selectable objects.
+	-->
+	<class name="wcfObjectSelectionList" extends="basecomponent">
+		<!---
+			Array of check boxes.
+		-->
+		<attribute name="objectCheckboxes" value="${[]}"/>
+		<!---
+			The index of the current checkbox.
+		-->
+		<attribute name="currentCheckboxIndex" type="number" value="-1"/>
+		<!---
+			Indicates that the list has focus.
+		-->
+		<attribute name="hasFocus" type="boolean" value="false"/>
+		
+		<!---
+			Set the array of objects.
+			@param [wcfModelObject] newObjects: array of model objects
+		-->
+		<method name="setObjects" args="newObjects">
+			<![CDATA[
+			for (var i = 0; i < objectCheckboxes.length; i++) {
+				this.objectCheckboxes[i].setAttribute("o", null);
+				this.objectCheckboxes[i].setAttribute("value", false);
+				this.objectCheckboxes[i].setAttribute("visible", false);
+			}
+			var boxIndex = 0;
+			for (var i = 0; i < newObjects.length; i++) {
+				var o = newObjects[i];
+				if (boxIndex < this.objectCheckboxes.length) {
+					this.objectCheckboxes[boxIndex].setAttribute("o", o);
+					this.objectCheckboxes[boxIndex].setAttribute("value", true);
+					this.objectCheckboxes[boxIndex].setAttribute("visible", true);
+				}
+				else {
+					this.objectCheckboxes.push(new lz.wcfObjectCheckbox(this.borderedView.clippedContent.content, {
+						objectSelectionList: this,
+						o: o,
+						value: true,
+						focusable: false
+					}));
+				}
+				boxIndex++;
+			}
+			if (newObjects.length > 0) {
+				this.currentCheckboxIndex = 0;
+			}
+			else {
+				this.currentCheckboxIndex = -1;
+			}
+			this.updateHilite();
+			this.updateScroll();
+			]]>
+		</method>
+		
+		<!---
+			Get the selection status of the specified model object
+			@param wcfModelObject o: the object to check
+		-->
+		<method name="isSelected" args="o">
+			<![CDATA[
+			var selected = false;
+			for (var i = 0; i < this.objectCheckboxes.length; i++) {
+				var cb = this.objectCheckboxes[i];
+				if (cb.visible && cb.o == o) {
+					selected = cb.value;
+				}
+			}
+			return selected;
+			]]>
+		</method>
+		
+		<!---
+			Handle onfocus event.
+		-->
+		<handler name="onfocus">
+			<![CDATA[
+			this.hasFocus = true;
+			this.updateHilite();
+			]]>
+		</handler>
+		
+		<!---
+			Handle onblur event.
+		-->
+		<handler name="onblur">
+			<![CDATA[
+			this.hasFocus = false;
+			this.updateHilite();
+			]]>
+		</handler>
+		
+		<!---
+			Update the background color of the highlighted checkbox.
+		-->
+		<method name="updateHilite">
+			<![CDATA[
+			for (var i = 0; i < this.objectCheckboxes.length; i++) {
+				var c = this.bgcolor;
+				if (this.hasFocus && this.currentCheckboxIndex == i) {
+					c = this.style["hilitecolor"];
+				}
+				this.objectCheckboxes[i].setAttribute("bgcolor", c);
+			}
+			]]>
+		</method>
+
+		<!---
+			Update the scroll to ensure that the highlighted checkbox is visible.
+		-->
+		<method name="updateScroll">
+			<![CDATA[
+			var cb = this.getCheckbox(this.currentCheckboxIndex);
+			if (cb != null) {
+				var clipView = this.borderedView.clippedContent;
+				var cbTop = cb.getAttributeRelative("y", clipView);
+				var cbBottom = cbTop + cb.height;
+				if (cbTop < 0) { // if selected checkbox is still outside of the visible area
+					this.borderedView.vScroll.step(Math.floor(cbTop / this.borderedView.vScroll["stepsize"]));
+				}
+				else if (cbBottom > clipView.height) {
+					this.borderedView.vScroll.step(Math.ceil((cbBottom - clipView.height) / this.borderedView.vScroll["stepsize"]));
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Returns the checkbox at the specified index. If no such checkbox exists, then this method returns
+			null.
+			@param integer index: the checkbox index
+		-->
+		<method name="getCheckbox" args="index">
+			<![CDATA[
+			var cb = null;
+			if (index >= 0 && index < this.objectCheckboxes.length && this.objectCheckboxes[index].visible) {
+				cb = this.objectCheckboxes[index];
+			}
+			return cb;
+			]]>
+		</method>
+
+		<!---
+			Sets the current checkbox.
+			@param wcfObjectCheckbox cb: the checkbox
+		-->
+		<method name="setCurrentCheckbox" args="cb">
+			<![CDATA[
+			if (cb.visible) {
+				for (var i = 0; i < this.objectCheckboxes.length; i++) {
+					if (this.objectCheckboxes[i] == cb) {
+						this.currentCheckboxIndex = i;
+						this.updateHilite();
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Handle key down event.
+		-->
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+			if (k == 38) { // key up
+				var cb = this.getCheckbox(this.currentCheckboxIndex - 1);
+				if (cb != null) {
+					this.currentCheckboxIndex--;
+					this.updateHilite();
+					this.updateScroll();
+				}
+			}
+			else if (k == 40) { // key down
+				var cb = this.getCheckbox(this.currentCheckboxIndex + 1);
+				if (cb != null) {
+					this.currentCheckboxIndex++;
+					this.updateHilite();
+					this.updateScroll();
+				}
+			}
+			else if (k == 37) { // left
+				this.borderedView.hScroll.step(-1);
+			}
+			else if (k == 39) { // right
+				this.borderedView.hScroll.step(1);
+			}
+			else if (k == 32) { // space
+				var cb = this.getCheckbox(this.currentCheckboxIndex);
+				if (cb != null && cb.enabled) {
+					cb.setAttribute("value", !cb.value);
+					this.updateScroll();
+				}
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Select all of the objects.
+		-->
+		<method name="selectAll">
+			<![CDATA[
+			for (var i = 0; i < this.objectCheckboxes.length; i++) {
+				var cb = this.objectCheckboxes[i];
+				if (cb.visible) {
+					cb.setAttribute("value", true);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Deselect all of the objects.
+		-->
+		<method name="deselectAll">
+			<![CDATA[
+			for (var i = 0; i < this.objectCheckboxes.length; i++) {
+				var cb = this.objectCheckboxes[i];
+				if (cb.visible) {
+					cb.setAttribute("value", false);
+				}
+			}
+			]]>
+		</method>
+		
+		<wcfBorderedView name="borderedView" height="${parent.height}" width="${parent.width}" borderSize="1" borderColor="${classroot.style.bordercolumnlistcolor}">
+			<attribute name="hScrollHeight" type="number" value="${(this.hScroll.visible ? this.hScroll.height : 0)}"/>
+			<attribute name="vScrollWidth" type="number" value="${(this.vScroll.visible ? this.vScroll.width : 0)}"/>
+
+			<view name="clippedContent" clip="true"
+				x="3"
+				y="3"
+				width="${parent.width - parent.vScrollWidth - 6}"
+				height="${parent.height - parent.hScrollHeight - 6 }">
+				<view name="content">
+					<simplelayout axis="y"/>
+				</view>
+			</view>
+			<wcfHorizontalScrollbar name="hScroll" scrolltarget="parent.clippedContent.content"
+			    visible="${this.scrollable}"
+				x="-1"
+				y="${parent.clippedContent.y + parent.clippedContent.height + 2}"
+				width="${parent.width-parent.vScrollWidth}"/>
+			<wcfVerticalScrollbar name="vScroll" scrolltarget="parent.clippedContent.content"
+				visible="${this.scrollable}"
+				x="${parent.clippedContent.x + parent.clippedContent.width + 2}"
+				y="-1"
+				height="${parent.height-parent.hScrollHeight}"/>
+			<view name="vScrollBottom"
+				bgcolor="0xE0EAEF"
+				x="${parent.vScroll.x}"
+				y="${parent.vScroll.y + parent.vScroll.height}"
+				height="${parent.hScrollHeight - 1}"
+				width="${parent.vScrollWidth - 1}"
+			  	visible="${parent.vScroll.visible &amp;&amp; parent.hScroll.visible}"/>
+		</wcfBorderedView>
+	</class>
+	
+	<!---
+		@keywords private
+		This checkbox editor is used  by the Column Editor dialog to edit {@link wcfGridCheckbox} column
+	 -->
+	<class name="wcfColumnCheckboxEditor" extends="wcfBaseCheckbox">
+		<!--- 
+			@keywords private
+			The column {@link wcfGridCheckbox} being edited by {@link wcfColumnCheckboxEditor}
+		 -->
+		<attribute name="column" value="null"/>
+		
+		<!--- Selected objects {@link wcfModelObject} in grid -->
+		<attribute name="selectedObjects" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="getValue">
+			<![CDATA[
+			return super.getValue() ? this.column.trueValue : this.column.falseValue;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="resetValue" args="initialValue">
+			<![CDATA[
+			this.setValue(initialValue == this.column.trueValue);
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		This check box implementation is for internal use by {@link wcfPropertyChildObjectCheckbox}. This 
+		check box will manage the creation and deletion of the specified child object. When the
+		check box is selected, the child object will be created. When the check box is deselected,
+		the child object will be deleted. 
+	-->
+	<class name="wcfChildObjectCheckbox" extends="wcfBaseCheckbox">
+		<!--- Reference to wcfModelObject that is the parent of the object being created and deleted. -->
+		<attribute name="o" value="null" setter="setModelObject(o)"/>
+		
+		<!--- The object type of the object to be created.  -->
+		<attribute name="objectType" type="string" value=""/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (this.o) {
+				this.updateValue();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Set the parent {@link wcfModelObject}.
+			@param wcfModelObject newObject: New parent object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (typeof(this["o"]) == "undefined" || newObject != this["o"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.o = newObject;
+				if (this.o) {
+					this.updateValueDel.register(this, "onobjectType");
+					this.updateValueDel.register(this.o, "onchildObjects");
+					this.updateValue();
+				}
+				else {
+					this.__updateValueLock = true;
+					this.setAttribute("value", false);
+					this.__updateValueLock = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Update and refresh the wcfCheckbox value with a new wcfModelProperty value.
+			@event onvalue the event that indicates the value of this checkbox is changed
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this._initcomplete) {
+				var newValue = this.o.getObject(this.objectType) != null;
+				if (newValue != this.value) {
+					this.__updateValueLock = true;
+					this.setAttribute("value", newValue);
+					this.__updateValueLock = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Creates or deletes the child model object based on the current value of the checkbox.
+		-->
+		<method name="storeValue">
+			<![CDATA[
+			if (this._initcomplete) {
+				if(this.o) {
+					if (this.value) {
+						var childObject = this.o.getObject(this.objectType, true);
+						if(childObject.implicitNewObject) {
+							childObject.setAttribute("implicitNewObject", false);
+							childObject.openGroupObject.checkUnsavedChanges();
+						}
+					}
+					else {
+						var childObject = this.o.getObject(this.objectType);
+						if (childObject != null) {
+							childObject.deleteObject();
+						}
+					}
+				}
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			When the value of the check box is changed by the business user, the specified child object
+			will be created or deleted.
+		-->		
+		<handler name="onvalue">
+			<![CDATA[
+			// Do not need to store the value if this event is sent in updateValue() method
+			if (!this["__updateValueLock"]) {
+				this.storeValue();
+			}
+			]]>
+		</handler>
+	 </class>
+	 
+	<!---
+		<p>This class defines the child object check box for use within a properties view. 
+		
+		<p>When a business user selects the check box, the child object check box widget creates an instance of the specified child object. 
+		When a business user clears the check box, the specified child object is deleted.</p>
+		
+		<p>The following example demonstrates the declaration of a check box that will create
+		and delete a child object with object type "Element". The child object will have a property named
+		"value" and the value will be set to "M".
+		
+		@START_CODE
+			<PropertyChildObjectCheckbox
+					objectType="Element[value=M]"/>
+		@END_CODE
+	-->
+	<class name="wcfPropertyChildObjectCheckbox" extends="wcfPropertiesComponent">
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="objectType" type="string"/>
+		<!---
+			The name of the property that will be used to automatically create check boxes. The property
+			must have a {@link wcfPropertyDefinition property definition} declared as part of the object definition identified by
+			<code>objectType</code>. The property definition must include one or more {@link wcfPropertyValue property values}.
+			This attribute is optional. Do not specify this attribute if you are explicitly declaring a list of check boxes.
+		-->
+		<attribute name="propertyName" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			This attribute holds the list of clones created for this checkbox.
+		-->
+		<attribute name="clones" value="${[]}"/>
+	
+		<!---
+			@keywords private
+			This method creates an instance of {@link wcfChildObjectCheckbox}.
+			@param wcfPropertiesComponent parentComponent The parent properties component.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var refEditor = new lz.wcfChildObjectCheckbox(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				y: 1,
+				o: parentComponent.o,
+				objectType: parentComponent.objectType,
+				text: ""
+			});
+			if (parentComponent == this && this.propertyName != null) {
+				this.updateClones();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method updates the clone checkboxes to match the values found in the property definition.
+		-->
+		<method name="updateClones" args="e=null">
+			<![CDATA[
+			if (this["updateClonesDel"]) {
+				this.updateClonesDel.unregisterAll();
+			}
+			else {
+				this.updateClonesDel = new lz.Delegate(this, "updateClones");
+			}
+			this.updateClonesDel.register(this, "ono");
+			var propertyValues = [];
+			if (this.o != null) {
+				var childDefinition = this.o.model.getObjectDefinition(this.o, this.objectType, true);
+				if (childDefinition != null) {
+					var propertyDefinition = childDefinition.getPropertyDefinition(this.o, this.propertyName);
+					if (propertyDefinition) {
+						propertyValues = propertyDefinition.getPropertyValues(this.o, this.updateClonesDel);
+					}
+				}
+			}
+			var activeCloneCount = 0;
+			for (var i = 0; i < propertyValues.length; i++) {
+				var propertyValue = propertyValues[i];
+				var objectType = this.objectType + "[" + this.propertyName + "=" + propertyValue.value + "]";
+				if (i == 0) {
+					if (this.promptText != propertyValue.displayName) {
+						this.setAttribute("promptText", propertyValue.displayName);
+					}
+					if (this.editor.objectType != objectType) {
+						this.editor.setAttribute("objectType", objectType);
+					}
+				}
+				else if (this.clones.length > (i - 1)) {
+					var clone = this.clones[i-1];
+					if (clone.promptText != propertyValue.displayName) {
+						clone.setAttribute("promptText", propertyValue.displayName);
+					}
+					if (clone.objectType != objectType) {
+						clone.setAttribute("objectType", objectType);
+					}
+					if (clone["editor"] && clone.editor.objectType != objectType) {
+						clone.editor.setAttribute("objectType", objectType);
+					}
+					if (!clone.visible) {
+						clone.setAttribute("visible", true);
+					}
+					if (clone.o == null) {
+						clone.updateModelObject();
+					}
+					activeCloneCount++;
+				}
+				else {
+					var clone = new lz.wcfPropertiesComponentClone(this.parent,{
+						originalPropertiesComponent: this,
+						objectType: objectType,
+						promptText: propertyValue.displayName
+					});
+					var prevView = this;
+					if (clones.length > 0) {
+						prevView = clones[clones.length - 1];
+					}
+					var oldPos = immediateparent.subviews.indexOf(clone);
+					var newPos = immediateparent.subviews.indexOf(prevView) + 1;
+					if (oldPos != newPos) {
+						immediateparent.subviews.splice(oldPos, 1);
+						immediateparent.subviews.splice(newPos, 0, clone);
+						immediateparent.layout.setLayoutOrder(prevView, clone);
+						var nextSubView = immediateparent.subviews[newPos+1];
+						if(typeof(nextSubView)!="undefined"){
+							immediateparent.layout.setLayoutOrder(clone, nextSubView);
+						}
+					}
+					clones.push(clone);
+					activeCloneCount++;
+				}
+				this.updateClonesDel.register(propertyValue, "ondisplayName");
+			}
+			for (var i = activeCloneCount; i < this.clones.length; i++) {
+				var clone = this.clones[i];
+				clone.updateModelObjectDel.unregisterAll();
+				clone.setAttribute("visible", false);
+				clone.setAttribute("o", null);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		<p>This class defines the child object check box list for use within a properties view. 
+		
+		<p>If the object associated with the cell is editable, then the user can select the edit icon which
+		will launch a dialog with a list of check boxes.
+		When a business user selects the check box, the widget creates an
+		instance of the specified child object. When a business user clears the check box,
+		the specified child object is deleted. When OK is selected and the dialog is dismissed,
+		the selected child objects will be displayed in the grid cell as a comma separated list.</p>
+		
+		<p>The following example demonstrates the declaration of a grid column that will create
+		and delete a child objects with object type "Element". The list of check boxes will
+		be derived from a property named "type".
+		
+		@START_CODE
+			<GridChildObjectCheckbox
+				childObjectType="Element"
+				childPropertyName="type"
+				text="${resourceBundle.displayToCustomers}"
+				visible="true"
+				width="140"/>
+		@END_CODE
+	-->
+	<class name="wcfGridChildObjectCheckbox" extends="wcfGridColumn" propertyName="">
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectCheckboxViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridChildObjectCheckboxViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectCheckboxEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridChildObjectCheckboxEditor"/>
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property that will be used to automatically create check boxes. The property
+			must have a {@link wcfPropertyDefinition property definition} declared as part of the object definition identified by
+			<code>childObjectType</code>. The property definition must include one or more {@link wcfPropertyValue property values}.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the column filter display value.
+			@param wcfModelObject o: the model object instance
+		-->
+		<method name="getColumnFilterDisplayValue" args="o">
+			<![CDATA[
+			var value = null;
+			if (o != null) {
+				if (this.objectPath != null) {
+					o = o.getObject(this.objectPath);
+				}
+				if (o != null) {
+					var propertyValues = [];
+					var childDefinition = o.model.getObjectDefinition(o, this.childObjectType, true);
+					if (childDefinition != null) {
+						var propertyDefinition = childDefinition.getPropertyDefinition(o, this.childPropertyName);
+						if (propertyDefinition) {
+							propertyValues = propertyDefinition.getPropertyValues(o);
+						}
+					}
+					for (var i = 0; i < propertyValues.length; i++) {
+						var propertyValue = propertyValues[i];
+						var objectType = this.childObjectType + "[" + this.childPropertyName + "=" + propertyValue.value + "]";
+						if (o.getObject(objectType, false, null) != null) {
+							if (value == null) {
+								value = propertyValue.displayName;
+							}
+							else {
+								value += ", " + propertyValue.displayName;
+							}
+						}
+					}
+				}
+			}
+			return value;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final
+		Use this class to show a child object checkbox list editor in a grid cell. Use this class instead of wcfGridChildObjectCheckbox if you
+		need to display text for some rows and something else for other rows.
+	-->
+	<class name="wcfGridChildObjectCheckboxCellDescriptor" extends="wcfGridCellDescriptor" propertyName="">
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectCheckboxViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfGridChildObjectCheckboxViewer"/>
+		<!---
+			@keywords private
+			Use "wcfGridChildObjectCheckboxEditor" to create cell editor instances.
+		-->
+		<attribute name="cellEditorClass" value="wcfGridChildObjectCheckboxEditor"/>
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property that will be used to automatically create check boxes. The property
+			must have a {@link wcfPropertyDefinition property definition} declared as part of the object definition identified by
+			<code>childObjectType</code>. The property definition must include one or more {@link wcfPropertyValue property values}.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+
+		<!---
+			@keywords private
+			This method returns the viewer initialization arguments.
+		-->
+		<method name="getViewerInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				childObjectType: this.childObjectType,
+				childPropertyName: this.childPropertyName
+			};
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the column filter display value.
+			@param wcfModelObject o: the model object instance
+		-->
+		<method name="getColumnFilterDisplayValue" args="o">
+			<![CDATA[
+			var value = null;
+			if (o != null) {
+				if (this.objectPath != null) {
+					o = o.getObject(this.objectPath);
+				}
+				if (o != null) {
+					var propertyValues = [];
+					var childDefinition = o.model.getObjectDefinition(o, this.childObjectType, true);
+					if (childDefinition != null) {
+						var propertyDefinition = childDefinition.getPropertyDefinition(o, this.childPropertyName);
+						if (propertyDefinition) {
+							propertyValues = propertyDefinition.getPropertyValues(o);
+						}
+					}
+					for (var i = 0; i < propertyValues.length; i++) {
+						var propertyValue = propertyValues[i];
+						var objectType = this.childObjectType + "[" + this.childPropertyName + "=" + propertyValue.value + "]";
+						if (o.getObject(objectType, false, null) != null) {
+							if (value == null) {
+								value = propertyValue.displayName;
+							}
+							else {
+								value += ", " + propertyValue.displayName;
+							}
+						}
+					}
+				}
+			}
+			return value;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Child object checkbox viewer.
+	-->
+	<class name="wcfGridChildObjectCheckboxViewer" extends="wcfGridTextViewer">
+		<!--- {@link wcfModelObject} instance associated with this viewer. -->
+		<attribute name="o" value="${null}"/>
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property that will be used to automatically create check boxes. The property
+			must have a {@link wcfPropertyDefinition property definition} declared as part of the object definition identified by
+			<code>childObjectType</code>. The property definition must include one or more {@link wcfPropertyValue property values}.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="setProperty" args="newProperty"/>
+
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateValue();
+			]]>
+		</method>
+
+		<!---
+			Update and refresh wcfGridTextViewer value with a new {@link wcfModelProperty} value.			
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateValueDel) == "undefined") {
+				this.updateValueDel = new lz.Delegate(this, "updateValue");
+			}
+			this.updateValueDel.unregisterAll();
+			this.updateValueDel.register(this, "ono");
+			var newText = "";
+			var propertyValues = this.getPropertyValues(this.updateValueDel);
+			for (var i = 0; i < propertyValues.length; i++) {
+				var propertyValue = propertyValues[i];
+				var objectType = this.childObjectType + "[" + this.childPropertyName + "=" + propertyValue.value + "]";
+				if (this.o.getObject(objectType, false, null, this.updateValueDel) != null) {
+					if (newText != "") {
+						newText += ", ";
+					}
+					newText += propertyValue.displayName;
+				}
+			}
+			if (this.text != newText) {
+				this.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the list of property values.
+			@keywords private		
+		-->
+		<method name="getPropertyValues" args="del=null">
+			<![CDATA[
+			var propertyValues = [];
+			if (this.o != null) {
+				var childDefinition = this.o.model.getObjectDefinition(this.o, this.childObjectType, true);
+				if (childDefinition != null) {
+					var propertyDefinition = childDefinition.getPropertyDefinition(this.o, this.childPropertyName);
+					if (propertyDefinition) {
+						propertyValues = propertyDefinition.getPropertyValues(this.o, del);
+					}
+				}
+			}
+			return propertyValues;
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Child object check box editor class for internal use by {@link wcfGridChildObjectCheckbox}.
+		
+		In edit mode, a dialog {@link wcfDialog} named wcfChildObjectCheckboxDialog is opened that contains a
+		list of check boxes that allow the business user to select the desired child objects.
+	-->
+	<class name="wcfGridChildObjectCheckboxEditor" extends="basecomponent" width="${immediateparent.availableWidth}" focusable="false">	
+		<!---
+			The {@link wcfObjectDefinition#objectType object type} of the child object that will be created and deleted.
+			This attribute is required.
+		-->
+		<attribute name="childObjectType" type="string"/>
+		<!---
+			The name of the property that will be used to automatically create check boxes. The property
+			must have a {@link wcfPropertyDefinition property definition} declared as part of the object definition identified by
+			<code>childObjectType</code>. The property definition must include one or more {@link wcfPropertyValue property values}.
+			This attribute is required.
+		-->
+		<attribute name="childPropertyName" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			updateValue();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Update and refresh wcfGridTextEditor value with a new {@link wcfModelProperty} value.
+			@keywords private			
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (typeof(this.updateValueDel) == "undefined") {
+				this.updateValueDel = new lz.Delegate(this, "updateValue");
+			}
+			this.updateValueDel.unregisterAll();
+			this.updateValueDel.register(this, "ono");
+			var newText = "";
+			var propertyValues = this.getPropertyValues(this.updateValueDel);
+			for (var i = 0; i < propertyValues.length; i++) {
+				var propertyValue = propertyValues[i];
+				var objectType = this.childObjectType + "[" + this.childPropertyName + "=" + propertyValue.value + "]";
+				if (this.o.getObject(objectType, false, null, this.updateValueDel) != null) {
+					if (newText != "") {
+						newText += ", ";
+					}
+					newText += propertyValue.displayName;
+				}
+			}
+			if (this.textView.text != newText) {
+				this.textView.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the list of property values.
+			@keywords private		
+		-->
+		<method name="getPropertyValues" args="del=null">
+			<![CDATA[
+			var propertyValues = [];
+			if (this.o != null) {
+				var childDefinition = this.o.model.getObjectDefinition(this.o, this.childObjectType, true);
+				if (childDefinition != null) {
+					var propertyDefinition = childDefinition.getPropertyDefinition(this.o, this.childPropertyName);
+					if (propertyDefinition) {
+						propertyValues = propertyDefinition.getPropertyValues(this.o, del);
+					}
+				}
+			}
+			return propertyValues;
+			]]>
+		</method>
+		
+		<simplelayout axis="x" spacing="0"/>
+		
+		<text name="textView" width="${parent.width-parent.openDialogButton.width}" multiline="true"/>	
+
+		<basebutton name="openDialogButton" enabled="${classroot.enabled}" resource="rteGridIcon" focusable="true">
+			<!--
+				@keyword private
+				onclick is fired not only on mouse click but also when a business user hits the enter key.  onkeyup was being called
+				after the dialog was opened and causing the value to be stored even though there was no change.
+				 An lz.Timer was added to let the flash stack clear before the rte is opened to prevent this.
+			-->
+			<handler name="onclick">
+				<![CDATA[
+				wcfChildObjectCheckboxDialog.openChildObjectCheckboxDialog(classroot);
+				]]>
+			</handler>
+			
+			<!---
+				@keywords private
+				Handle focus.
+			-->
+			<handler name="onfocus">
+				<![CDATA[
+				if(!this["indicator"]){
+					new lz.wcfFocusIndicator(this, {
+						name: "indicator",
+						focusableView: this,
+						indicatorView: this
+					});
+				}
+				]]>
+			</handler>
+		</basebutton>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Child Object Checkbox Dialog.
+	-->
+	<wcfDialog name="wcfChildObjectCheckboxDialog" contentPaddingLeftSize="0" contentPaddingRightSize="0" contentPaddingTopSize="0" contentPaddingBottomSize="0" minWidth="100">
+		<!---
+			Reference to grid editor from which this dialog was launched.
+		-->
+		<attribute name="gridEditor"/>
+		<!---
+			Array of check boxes.
+		-->
+		<attribute name="checkboxes" value="${[]}"/>
+		<!---
+			Array of property values.
+		-->
+		<attribute name="propertyValues" value="${null}"/>
+
+		<!---
+			Handle OK. 
+		-->
+		<method name="onOk">
+			<![CDATA[
+			for (var i = 0; i < this.propertyValues.length; i++) {
+				var objectType = this.gridEditor.childObjectType + "[" + this.gridEditor.childPropertyName + "=" + this.propertyValues[i].value + "]";
+				if (checkboxes[i].value) {
+					var childObject = this.gridEditor.o.getObject(objectType, true);
+					if(childObject.implicitNewObject) {
+						childObject.setAttribute("implicitNewObject", false);
+						childObject.openGroupObject.checkUnsavedChanges();
+					}
+				}
+				else {
+					var childObject = this.gridEditor.o.getObject(objectType);
+					if (childObject != null) {
+						childObject.deleteObject();
+					}
+				}
+			}
+			this.closeWindow();
+			]]>
+		</method>
+
+		<!---
+			Handle Cancel. 
+		-->
+		<method name="onCancel">
+			<![CDATA[
+			this.closeWindow();
+			]]>
+		</method>
+
+		<!---
+			Open the child object checkbox dialog.
+			@param wcfGridChildObjectCheckboxEditor gridEditor grid cell editor
+		 -->
+		<method name="openChildObjectCheckboxDialog" args="gridEditor">
+			<![CDATA[
+			this.openWindow();
+			this.gridEditor = gridEditor;
+			var childDefinition = gridEditor.o.model.getObjectDefinition(gridEditor.o, gridEditor.childObjectType, true);
+			if (childDefinition != null) {
+				this.propertyValues = gridEditor.getPropertyValues();
+				var boxIndex = 0;
+				for (var i = 0; i < this.propertyValues.length; i++) {
+					var propertyValue = this.propertyValues[i];
+					var objectType = gridEditor.childObjectType + "[" + gridEditor.childPropertyName + "=" + propertyValue.value + "]";
+					var value = gridEditor.o.getObject(objectType) != null;
+					if (boxIndex < this.checkboxes.length) {
+						this.checkboxes[boxIndex].setAttribute("text", propertyValue.displayName);
+						this.checkboxes[boxIndex].setAttribute("value", value);
+						this.checkboxes[boxIndex].setAttribute("visible", true);
+					}
+					else {
+						this.checkboxes.push(new lz.wcfBaseCheckbox(this.borderedView.clippedContent.content, {
+							text: propertyValue.displayName,
+							value: value,
+							focusable: false
+						}));
+					}
+					boxIndex++;
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Close the dialog.
+		 -->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.propertyValues = null;
+			for (var i = 0; i < this.checkboxes.length; i++) {
+				this.checkboxes[i].setAttribute("visible", false);
+			}
+			]]>
+		</method>
+
+		<wcfBorderedView name="borderedView" width="180" height="150" borderSize="1" borderColor="${parent.style.bordercolumnlistcolor}">
+			<attribute name="hScrollRequired" type="boolean" value="${this.clippedContent.content.width > this.clippedContent.width}"/>
+			<attribute name="vScrollRequired" type="boolean" value="${this.clippedContent.content.height > this.clippedContent.height}"/>
+			<attribute name="hScrollHeight" type="number" value="${(this.hScrollRequired ? this.hScroll.height : 0)}"/>
+			<attribute name="vScrollWidth" type="number" value="${(this.vScrollRequired ? this.vScroll.width : 0)}"/>
+			<view name="clippedContent" clip="true"
+					x="3"
+					y="3"
+					width="${parent.width - parent.vScrollWidth - 6}"
+					height="${parent.height - parent.hScrollHeight - 6 }">
+				<view x="3" y="3" name="content">
+					<simplelayout axis="y"/>
+				</view>
+			</view>
+			<wcfHorizontalScrollbar name="hScroll" scrolltarget="parent.clippedContent.content"
+					x="-1"
+					y="${parent.clippedContent.y + parent.clippedContent.height + 2}"
+					width="${parent.width-parent.vScrollWidth}"
+					visible="${parent.hScrollRequired}"/>
+			
+			<wcfVerticalScrollbar name="vScroll" scrolltarget="parent.clippedContent.content"
+					x="${parent.clippedContent.x + parent.clippedContent.width + 2}"
+					y="-1"
+					height="${parent.height-parent.hScrollHeight}"
+					visible="${parent.vScrollRequired}"/>
+		</wcfBorderedView>
+		
+		<view name="buttonSection" placement="footer">
+			<wcfButton name="okButton" text="${foundationResources.simpleDialogOK.string}" isdefault="true">
+				<handler name="onclick">
+					<![CDATA[
+					parent.parent.onOk();
+					]]>
+				</handler>
+			</wcfButton>
+			<wcfButton name="cancelButton" text="${foundationResources.simpleDialogCancel.string}">
+				<handler name="onclick">
+					<![CDATA[
+					parent.parent.onCancel();
+					]]>
+				</handler>
+			</wcfButton>
+			<simplelayout axis="x"/>
+		</view>
+
+	</wcfDialog>
+		
+	<!---
+		Use this widget in a grid when you need to allow the business user to select one or more currencies from
+		the list of currencies supported by the current store.
+		
+		When you add an instance of this widget in your grid, your grid will be populated by one column
+		per currency in the current store. If your store supports US Dollars, Chinese Yuan and Japanese Yen, you will
+		get three columns - one with a column header for USD, one with CNY and one with JPY.
+		For each row, the cell corresponding to those three columns will have a check box.
+		
+		The check boxes for each row share a single model property. The name of the model property
+		is specified with the {@link wcfGridColumn#propertyName propertyName} attribute. The model property contains
+		a comma separated list of currency codes. When a check box is checked, the currency code of its corresponding
+		column is added to the model property, and when it is unchecked, the currency code is removed from the model
+		property.
+		
+		For example, if the current store supports <code>USD, CNY and JPY</code> and <code>currencyCodes</code> is the model property,
+		then when you check all three check boxes in a row, the value of <code>currencyCodes</code> will become <code>"USD,CNY,JPY"</code>.
+		Similarly if you uncheck <code>CNY</code>, the value of <code>currencyCodes</code> will become <code>"USD,JPY"</code>.
+
+		The following is an example of using this class:
+				
+		@START_CODE
+		<GridCurrencyCheckbox
+			name="currencyCodes"
+			propertyName="currencyCodes"
+			visible="true"
+			width="150"
+			alignment="center"/>
+		@END_CODE
+	-->
+	<class name="wcfGridCurrencyCheckbox" extends="wcfGridColumn">
+		<!--- @keywords private -->
+		<attribute name="currencyColumns" value="${[]}"/>
+		<!--- @keywords private -->
+		<attribute name="currencyColumnsPool" value="${[]}"/>
+		<!--- @keywords private -->
+		<attribute name="cellViewerClass" value="wcfGridCurrencyCheckboxViewer"/>
+		<!--- @keywords private -->
+		<attribute name="cellEditorClass" value="wcfGridCurrencyCheckboxEditor"/>
+		
+		<!--- @keywords private -->
+		<method name="postCreateDefinitionChildren">
+			<![CDATA[
+				super.postCreateDefinitionChildren();
+				this.updateColumnsDel = new lz.Delegate(this, "updateColumns");
+				this.updateColumns();
+			]]>		
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateColumnsDel.unregisterAll();
+			delete this.updateColumnsDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns the editor initialization arguments.
+		-->					
+		<method name="getEditorInitArgs">
+			<![CDATA[
+			return {
+				align: this.alignment
+			};
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Update the columns when switch to a new store.
+		-->
+		<method name="updateColumns" args="e=null">
+			<![CDATA[
+			this.updateColumnsDel.unregisterAll();
+			if (typeof(this["oView"]) == "undefined") {
+				this.oView = wcfModelUtil.findObjectView(this);
+			}
+			var o = null;				
+			if(this.oView) {
+				this.updateColumnsDel.register(this.oView, "ono");
+				o = this.oView.o;
+			}
+			var storeConfig = null;
+			if (o != null) {
+				storeConfig = wcfContextUtil.findStoreConfig(o, this.updateColumnsDel);
+			}
+			if (storeConfig != null && storeConfig.defaultCurrency != null)
+			{
+				var refreshRequired = false;
+				while (this.currencyColumns.length > 0)
+				{
+					var currencyColumn = this.currencyColumns.shift();
+					currencyColumn.setAttribute("text", null);
+					this.parent.releaseColumn(currencyColumn);
+					this.currencyColumnsPool.push(currencyColumn);
+					
+					refreshRequired = true;
+				}
+				
+				var defaultCode = storeConfig.defaultCurrency.currencyCode;
+				
+				if (this["currencyCode"] != defaultCode)
+				{
+					this.setAttribute("text", defaultCode);
+					this.setAttribute("currencyCode", defaultCode);
+				}
+				var currencies = storeConfig.supportedCurrencies;	
+				var columnPos = parent.columns.indexOf(this) + 1;
+				for (var i = 0; i < currencies.length; i++)
+				{
+					var currency = currencies[i];
+					var currencyCode = currency.currencyCode;
+
+					if (currencyCode != defaultCode)
+					{	
+						var currencyColumn = null;
+						if (this.currencyColumnsPool.length > 0) {
+							currencyColumn = this.currencyColumnsPool.pop();
+							currencyColumn.setAttribute("currencyCode", currencyCode);
+							currencyColumn.setAttribute("text", currencyCode);
+							currencyColumn.setAttribute('width', this.width);
+							this.parent.addColumn(currencyColumn, this.visible);
+						}
+						else {
+							currencyColumn = new lz.wcfGridColumnClone(this.parent, {
+								originalColumn: this,
+								currencyCode: currencyCode,
+								text:currencyCode,
+								width: this.width,
+								visible: this.visible
+							});
+						}
+						
+						this.currencyColumns.push(currencyColumn);	
+						parent.setColumnPosition(currencyColumn, columnPos + i, false);
+						refreshRequired = true;
+					}
+				}
+				if (refreshRequired) {
+					parent.updateColumnOrder();
+					parent.refresh();
+				}
+			}		
+			]]>	
+		</method>					
+	</class>
+
+	<!---
+		@keywords private
+		Check box viewer class for internal use by {@link wcfGridCurrencyCheckbox} to display a property status and will be
+		displayed while the grid is in view mode.
+	-->
+	<class name="wcfGridCurrencyCheckboxViewer" extends="wcfGridCheckboxViewer">
+		<!---
+			Update and refresh wcfGridCurrencyCheckboxViewer value with a new {@link wcfModelProperty} value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this["property"]) {
+				var selectedCurrencyCodes = wcfStringUtil.splitAndTrim(this.property.value, ",");
+				var visible = selectedCurrencyCodes.indexOf(parent.column.currencyCode) != -1;
+				if (this["display"]) {
+					this.display.setAttribute("visible", visible);
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Check box editor class for internal use by {@link wcfGridCurrencyCheckbox} to bind a property to the grid check box
+		and will be	displayed while the grid is in edit mode.
+	-->
+	<class name="wcfGridCurrencyCheckboxEditor" extends="wcfGridCheckboxEditor">
+		<!---
+			@keywords private
+			Update and refresh the wcfGridCurrencyCheckboxEditor value with a new wcfModelProperty value.
+			@event onvalue the event that indicates the value of this checkbox is changed
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this._initcomplete) {
+				var selectedCurrencyCodes = wcfStringUtil.splitAndTrim(this.property.value, ",");
+				var newValue = selectedCurrencyCodes.indexOf(parent.column.currencyCode) != -1;
+				if (newValue != this.value) {
+					this.__updateValueLock = true;
+					this.setAttribute("value", newValue);
+					this.__updateValueLock = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Set the wcfModelProperty to represent the wcfGridCurrencyCheckboxEditor value. This method is called when the check box
+			value is changed.
+		-->
+		<method name="storeValue">
+			<![CDATA[
+			if (this._initcomplete) {
+				if(this.property && (this.property != null)) {
+					var selectedCurrencyCodes = wcfStringUtil.splitAndTrim(this.property.value, ",");
+					var index = selectedCurrencyCodes.indexOf(parent.column.currencyCode);
+					if(this.value){
+						if(index == -1){
+							selectedCurrencyCodes.push(parent.column.currencyCode);
+						}
+					}else{
+						if(index != -1){
+							selectedCurrencyCodes.splice(index,1);
+						}
+					}
+					this.property.change(selectedCurrencyCodes.join());
+				}
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!--- 
+		@keywords private 
+		This check box implementation is for internal use by {@link wcfListCheckbox}. 
+	-->
+	<class name="wcfListItemCheckbox" extends="wcfBaseCheckbox" enabled="${this.parent.enabled}">
+		
+		<!---
+			@keywords private
+			The property value associated with this checkbox.
+		-->
+		<attribute name="propertyValue" value="null"/>
+		
+		<!---
+			@keywords private
+			Handle onvalue event. 
+		-->		
+		<handler name="onvalue">
+			<![CDATA[
+			if (this._initcomplete) {
+				if (!this.parent["_initializingCheckboxes"]) {
+					this.parent.storeValue();
+				}
+			}
+			]]>
+		</handler>
+			
+	</class>
+	
+	<!--- 
+		@keywords private 
+		
+		This check box list implementation is for internal use by {@link wcfPropertyListCheckbox}.
+		Given a wcfPropertyDefinition as an input, this class generates check boxes for each of the defined property values.
+		Check box values are stored in the property as a comma-separated list of values.
+	-->
+	<class name="wcfListCheckbox">
+		
+		<!---
+			@keywords private
+		-->
+		<attribute name="enabled" value="true" type="boolean"/>
+		
+		<!--- 
+			@keywords private 
+			Reference to wcfModelProperty object that is being edited. 
+		-->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+		
+		<!--- 
+			@keywords private
+			Array of check boxes
+		-->
+		<attribute name="checkboxItems"/>
+		
+		<!--- @keywords private -->
+		<attribute name="delimiter" type="string" value=","/>
+		
+		<simplelayout axis="y" spacing="3" />
+		
+		<!---
+			@keywords private
+			Set the property to be associated with the check boxes.
+			Listeners are created to watch the property value. If the property changes at anytime, the value of the checkboxes will be
+			refreshed.
+			@param wcfModelProperty newProperty: New Property associated with the check boxes.
+		-->		
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					this.createCheckboxes();
+					this.updateValueDel.register(this.property, "onvalue");
+				}	
+			}	
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			Update and refresh the check box values with a new {@link wcfModelProperty} value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this["property"] && this["checkboxItems"]) {
+				var values = wcfStringUtil.splitAndTrim(this.property.value, this.delimiter);
+				for (var i = 0; i < this.checkboxItems.length; i++) {
+					var checkbox = this.checkboxItems[i];
+					if (checkbox.propertyValue != null) {
+						checkbox.setAttribute("value", values.indexOf(checkbox.propertyValue.value) != -1);
+					}
+				}
+			}
+			]]>	
+		</method>
+		
+		<!--- 
+			@keywords private	
+			Create and updates the check boxes to match the values found in the property definition.
+		-->
+		<method name="createCheckboxes" args="e=null">
+			<![CDATA[
+			var checkboxCount = 0;
+			
+			this._initializingCheckboxes = true;
+			if (!this["propValueDel"]) {
+				this.propValueDel = new lz.Delegate(this, "createCheckboxes");
+			}
+			else {
+				this.propValueDel.unregisterAll();
+			}
+			
+			if (this["property"] && this.property.propertyDefinition != null) {
+				var propDef = this.property.propertyDefinition;	
+				var propertyValues = this.property.propertyDefinition.getPropertyValues(this.property.o, this.propValueDel);
+				
+				if (this.checkboxItems == null) {
+					this.checkboxItems = [];
+				}
+				
+				checkboxCount = propertyValues.length;	
+				for (var i = 0; i < propertyValues.length; i++) {
+					var propertyValue = propertyValues[i];
+					
+					if (this.checkboxItems.length > i) {
+						var checkboxItem = this.checkboxItems[i];
+						checkboxItem.setAttribute("propertyValue", propertyValue);
+						checkboxItem.setAttribute("text", propertyValue.displayName);
+						
+						if (!checkboxItem.visible)
+						{
+							checkboxItem.setAttribute("visible", true);
+						} 
+					}
+					else {
+						this.checkboxItems.push(new lz.wcfListItemCheckbox(this, {
+							propertyValue: propertyValue,
+							focusable: false,
+							text: propertyValue.displayName
+						}));
+					}
+					this.propValueDel.register(propertyValue, "ondisplayName");
+				}
+			}
+			for (var i = checkboxCount; i < this.checkboxItems.length; i++) {
+				var checkboxItem = this.checkboxItems[i];
+				checkboxItem.setAttribute("visible", false);
+				checkboxItem.setAttribute("propertyValue", null);
+				checkboxItem.setAttribute("value", false);
+			}					
+			this.updateValue();
+			this._initializingCheckboxes = false;
+			]]>
+		</method>	
+		
+		<!--- 
+			@keywords private
+			Update the list check box widget with a new property value. 
+		-->
+		<method name="storeValue">
+			<![CDATA[
+			if (this["property"]) {
+				var newText = "";
+				for (var i = 0; i < this.checkboxItems.length; i++) {
+					var checkboxItem = this.checkboxItems[i];
+					if (checkboxItem.value) {
+						if (newText != "") {
+							newText += this.delimiter;
+						}
+						newText += checkboxItem.propertyValue.value;
+					}
+				}
+				this.property.change(newText);
+			}
+			]]>
+		</method>		
+	
+		<!--- 
+			@keywords private
+			Cleanup delegates when destroyed  
+		-->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			
+			if (this["propValueDel"]) {
+				this.propValueDel.unregisterAll();
+				delete this.propValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords final 
+		This class defines a widget that displays multiple check boxes for the user to select from. The wcfPropertyListCheckbox
+		widget is for use in a properties view. 
+		
+		The name of the property specified by the {@link wcfPropertyEditor#propertyName propertyName} attribute is resolved to 
+		the associated {@link wcfPropertyDefinition}. A check box is then created for each {@link wcfPropertyValue possible value}
+		of the associated {@link wcfPropertyDefinition}.
+		
+		The wcfPropertyListCheckbox widget allows multiple check box value to bind to a {@link wcfModelProperty} 
+		as a comma-separated list of values.
+		
+		The code snippet below demonstrates how this class is used:
+
+		@START_CODE
+			...
+			<PropertyDefinition propertyName="currencies">
+				<PropertyValue displayName="US Dollar" value="USD"/>
+				<PropertyValue displayName="Canadian Dollar" value="CAD"/>
+				<PropertyValue displayName="Chinese Yen" value="CNY"/>
+			</PropertyDefinition>
+			...
+			<PropertyGroup>
+				<PropertyListCheckbox propertyName="currencies" promptText="Select the Currencies you want to use" />
+			</PropertyGroup>
+		@END_CODE
+		
+		The code above creates 3 check boxes with three possible values. These three check box items will correspond to the three 
+		{@link wcfPropertyValue property values} defined for <CODE>currencies</CODE>.
+	-->
+	<class name="wcfPropertyListCheckbox" extends="wcfPropertyEditor">
+		
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfListCheckbox(parentComponent, {
+				name: "editor",
+				property: parentComponent.property,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+	
+	</library>

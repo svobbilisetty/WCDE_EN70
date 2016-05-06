@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--
+		<p>This is the primary object definition for a approver (Person) object. This object
+		is read-only and can not be updated or deleted.</p>
+	-->
+	<PrimaryObjectDefinition creatable="false" definitionName="Approver" objectType="Approver" displayName="${wspWorkspaceResources.approverDisplayName}" 
+		displayNameProperty="logonId" icon="approverIcon" idProperty="memberId" searchType="FindApprovers" />
+	
+	<!---
+		@keywords private
+	-->
+	<SearchDefinition definitionName="FindApprovers" displayName="${wspWorkspaceResources.approverDisplayName}" icon="approverIcon" isDefault="false" 
+		listTitle="FindApprovers" searchType="FindApprovers" utilitiesListDefinitionName="wspPersonSearchGrid">
+		<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+		<SearchService name="findApprovers" url="/cmc/FindApprovers" >
+			<ServiceParam name="storeId"/>
+		</SearchService>
+	</SearchDefinition>
+	 
+</Definitions>

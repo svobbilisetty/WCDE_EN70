@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>  
+	<PrimaryObjectDefinition creatable="false" definitionName="prcBasePriceRulePrimaryObjectDefinition" displayNameProperty="name" idProperty="priceRuleId" isBaseDefinition="true" objectGroups="PriceRuleGroup" searchType="FindPriceRuleByName">
+		
+		<EnablementOrCondition baseDefinitionName="prcPriceRuleObjectsCreationRestriction"/>
+		
+		<!-- Property Definitions -->
+		<PropertyDefinition displayName="${prcPriceResources.nameString}" maximumSize="64" propertyName="name" required="true" trim="true"/>
+		<PropertyDefinition displayName="${prcPriceResources.description}" maximumSize="254" propertyName="description"/>
+    	
+    	<PropertyDefinition propertyName="format">
+			<PropertyValue displayName="${prcPriceResources.internalFormat}" value="Internal"/>
+			<PropertyValue displayName="${prcPriceResources.externalFormat}" value="External"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="dependent">
+			<PropertyValue displayName="${prcPriceResources.independent}" value="false"/>
+			<PropertyValue displayName="${prcPriceResources.dependent}" value="true"/>
+		</PropertyDefinition>
+		
+    	<!-- Refresh service -->
+    	<RefreshService url="/cmc/GetPriceRule">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceRuleId" propertyName="priceRuleId"/>
+		</RefreshService>
+    	
+    	<!--- Retrieves the child {@link prcFlowElementObjectDefinition flow element} objects. -->
+		<GetChildrenService url="/cmc/GetPriceRuleElements">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceRuleId" propertyName="priceRuleId"/>
+		</GetChildrenService>
+    	
+    	<UpdateService url="/cmc/SavePriceRule">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition1" enablementValue="PriceRule" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition2" enablementValue="WrappedPriceRule" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition1" enablementValue="InheritedPriceRule" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition2" enablementValue="InheritedWrappedPriceRule" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="priceRuleId" propertyName="priceRuleId"/>
+		</UpdateService>
+    	
+    	<DeleteService url="/cmc/DeletePriceRule">
+			<ServiceParam name="storeId" parameterName="storeId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition1" enablementValue="PriceRule" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition2" enablementValue="WrappedPriceRule" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="storeId2" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementOrCondition>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition1" enablementValue="InheritedPriceRule" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="PriceRuleCondition2" enablementValue="InheritedWrappedPriceRule" propertyName="objectType"/>
+				</EnablementOrCondition>
+			</ServiceParam>
+			<ServiceParam name="priceRuleId" propertyName="priceRuleId"/>
+		</DeleteService>
+		
+		<GetReferencesService primaryObjectTypes="PriceRule,InheritedPriceRule" referenceObjectTypes="RefPriceRule,RefInheritedPriceRule" url="/cmc/GetPriceRulesReferenceForPriceRule">
+			<ServiceParam name="storeId" parameterName="storeId"/>
+			<ServiceParam name="priceRuleId" propertyName="priceRuleId"/>
+        </GetReferencesService>   
+        
+        <GetReferencesService primaryObjectTypes="Contract" referenceObjectTypes="RefPriceRule" url="/cmc/GetContractReferenceForPriceRule">
+			<ServiceParam name="storeId" parameterName="storeId"/>
+			<ServiceParam name="priceRuleId" propertyName="priceRuleId"/>
+        </GetReferencesService>  
+        
+        <PostSaveService url="/cmc/ValidatePriceRule">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="priceRuleId" propertyName="priceRuleId"/>
+		</PostSaveService>
+    	
+	</PrimaryObjectDefinition>
+	
+	<!-- Base definition for internal price rule -->
+	<PrimaryObjectDefinition baseDefinitionName="prcBasePriceRulePrimaryObjectDefinition" definitionName="prcBaseInternalPriceRulePrimaryObjectDefinition" displayName="${prcPriceResources.priceRulePrimaryObject_DisplayName}" newDisplayName="${prcPriceResources.priceRulePrimaryObject_NewDisplayName}" headerIcon="priceRuleHeaderIcon" icon="priceRuleIcon" propertiesDefinitionName="prcPriceRuleBuilder" newObjectMenuItemText="${prcPriceResources.contextMenuNewPriceRule}" isBaseDefinition="true">
+		
+		<Xml name="template">
+			<format>Internal</format>
+			<object objectType="path">
+				<sequence>0</sequence>
+				<name>rootPath</name>
+			</object>
+		</Xml>
+		  		
+		<FlowElementObjectDefinition baseDefinitionName="prcFlowPathElementObject" isTopElement="true" package="prc"/>
+		
+	</PrimaryObjectDefinition>
+	
+	<!--
+    	The primary objects for price rule represents a price rule in CMC. 
+    -->
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseInternalPriceRulePrimaryObjectDefinition" creatable="true" definitionName="PriceRule" objectType="PriceRule">
+		
+		<!-- Create Service -->
+    	<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreatePriceRule">
+    		<ServiceParam name="storeId"/>
+    	</CreateService> 
+	</PrimaryObjectDefinition>
+	
+	<!-- Inherited Price Rule -->
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseInternalPriceRulePrimaryObjectDefinition" creatable="false" definitionName="InheritedPriceRule" headerIcon="inheritedPriceRuleHeaderIcon" icon="inheritedPriceRuleIcon" objectType="InheritedPriceRule">
+	</PrimaryObjectDefinition>
+	
+	<!-- Base definition for wrapped external price rule -->
+	<PrimaryObjectDefinition baseDefinitionName="prcBasePriceRulePrimaryObjectDefinition" definitionName="prcBaseWrappedPriceRulePrimaryObjectDefinition" displayName="${prcPriceResources.wrappedPriceRulePrimaryObject_DisplayName}" newDisplayName="${prcPriceResources.wrappedPriceRulePrimaryObject_NewDisplayName}" headerIcon="wrappedRuleHeaderIcon" icon="wrappedRuleIcon" propertiesDefinitionName="prcWrappedPriceRuleProperties" newObjectMenuItemText="${prcPriceResources.contextMenuNewWrappedPriceRule}" isBaseDefinition="true">
+		
+		<Xml name="template">
+			<format>External</format>
+    		<object objectType="externalRule">
+				
+			</object>
+		</Xml>
+		  		
+		<FlowElementObjectDefinition baseDefinitionName="prcExternalPriceRuleElementObject" isTopElement="true" package="prc"/>
+		
+	</PrimaryObjectDefinition>
+	
+	<!--
+    	The wrapped price rule primary object. 
+    -->
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseWrappedPriceRulePrimaryObjectDefinition" creatable="true" definitionName="WrappedPriceRule" objectType="WrappedPriceRule">
+		
+		<!-- Create Service -->
+    	<CreateService sendDefaultLanguageProperties="true" url="/cmc/CreatePriceRule">
+    		<ServiceParam name="storeId"/>
+    	</CreateService> 
+	</PrimaryObjectDefinition>
+	
+	<!-- Inherited wrapped Price Rule -->
+	<PrimaryObjectDefinition baseDefinitionName="prcBaseWrappedPriceRulePrimaryObjectDefinition" creatable="false" definitionName="InheritedWrappedPriceRule" headerIcon="inheritedWrappedRuleHeaderIcon" icon="inheritedWrappedRuleIcon" objectType="InheritedWrappedPriceRule">
+	</PrimaryObjectDefinition>
+</Definitions>

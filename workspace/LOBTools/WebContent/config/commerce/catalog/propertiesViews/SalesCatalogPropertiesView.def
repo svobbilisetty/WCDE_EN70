@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	
+	<PropertyPane definitionName="catManageSalesCatalog">
+		
+		<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>
+		<!--- 
+			The property group which contains the general properties of the sales catalog object.
+		-->
+		<PropertyGroup groupTitle="${catalogResources.generalCatalogInformationSection}" name="generalPropertiesPropGrp" open="true">
+			<PropertyViewLongText promptText="${catalogResources.catalogUniqueID}" propertyName="catalogId">
+				<FalseEnablementCondition/>
+			</PropertyViewLongText>
+			<PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_Code}" promptText="${catalogResources.codePrompt}" propertyName="identifier" required="true"/> 
+			<PropertyInputText objectPath="SalesCatalogDescription" promptText="${catalogResources.catalogName}" propertyName="name" required="true"/>
+			<PropertyInputLongText objectPath="SalesCatalogDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc"/>
+			<PropertyRichTextEditor objectPath="SalesCatalogDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc"/>		
+		</PropertyGroup>
+		
+		<!--- 
+			The property group which contains the image related properties of the sales catalog object.
+		-->
+		<PropertyGroup groupTitle="${catalogResources.displaySection}" name="imagesPropGrp">
+			<ImageEditor objectPath="SalesCatalogDescription" promptText="${catalogResources.thumbnailPrompt}" propertyName="tImage"/>
+			<ImageEditor objectPath="SalesCatalogDescription" promptText="${catalogResources.fullImagePrompt}" propertyName="fImage"/>
+		</PropertyGroup>
+	</PropertyPane>
+	
+	<ObjectProperties definitionName="catSalesCatalogProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="manageSalesCatalogTab" text="${catalogResources.manageCatalogTab}">
+				<PropertyPane baseDefinitionName="catManageSalesCatalog"/>
+			</PropertyTabPane>
+			
+			<!-- Tab: the attachment references for the current catalog -->
+			<PropertyTabPane name="manageAttachmentTab" text="${catalogResources.manageAttachmentTab}">
+				<!-- Property Pane: Manage Attachment Reference . This is an instantiation of the property pane which contains attachment reference of this catalog. -->
+				<PropertyPane baseDefinitionName="catManageAttachment"/>
+			</PropertyTabPane>
+			
+			<!-- Tab: the version reference of the current catalog  -->
+			<PropertyTabPane name="manageVersionTab" text="${foundationResources.manageVersionTab}">
+				<!-- Only show this tab if the object type is SalesCatalog, Content Version is enabled and not new object -->
+				<EnablementAndCondition conditionId="salesCatalogManageVersionTabCondition">
+					<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="SalesCatalog" conditionId="salesCatalogManageVersionObjectTypeCondition"/>
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition contextName="contentVersionEnabled" enablementValue="true" conditionId="salesCatalogContentVersionContextValueCondition"/>
+					<EnablementCondition checkNewObject="true" enablementValue="false" conditionId="salesCatalogContentVersionNewObjectCondition"/>
+				</EnablementAndCondition>
+				<!-- Property Pane: Manage Version. This is an instantiation of the property pane definition which contains versions. -->
+				<PropertyPane baseDefinitionName="wcfManageContentVersion"/>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+</Definitions>

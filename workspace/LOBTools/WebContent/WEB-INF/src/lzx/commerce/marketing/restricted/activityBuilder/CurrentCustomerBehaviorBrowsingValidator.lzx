@@ -1,0 +1,78 @@
+ <!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2008 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		<p>Validator for {@link mktCurrentCustomerBehaviorBrowsingElementObject Customer Behavior Browsing Element}. 
+		If any of category, product or product in category option is selected, this validator ensures that at least 
+		one category or catalog entry is specified.
+		</p>
+		
+		<p>There should only be one instance of this class defined for each {@link mktFlowElementObjectDefinition}.</p>
+	-->
+	<class name="mktCurrentCustomerBehaviorBrowsingValidator" extends="wcfValidator">
+		<!--- Warning message to show when no catalog entries are selected -->
+		<attribute name="noProductsSelectedErrorMessage" value="${mktMarketingResources.noProductsSelected.string}" type="string"/>
+		<!--- Warning message to show when no category is selected -->
+		<attribute name="noCategoriesSelectedErrorMessage" value="${mktMarketingResources.noCategoriesSelected.string}" type="string"/>
+		<!--- The object path for catalog entry objects -->
+		<attribute name="catalogEntryObjectPath" value="ChildCatentry" type="string"/>
+		<!--- The object path for category objects -->
+		<attribute name="categoryEntryObjectPath" value="ChildCatalogGroup" type="string"/>
+		
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o) {
+				return; // nothing to validate
+			}
+			var elementTemplate = o.getProperty("elemTemplateName");
+			o.clearValidationError(this);
+			
+			if((elementTemplate.value == "currentCustomerBehaviorProductBrowsing") || (elementTemplate.value == "recordedCustomerBehaviorProductBrowsed")) {
+				var childObjects = o.getObjects(this.catalogEntryObjectPath);
+				var type = o.getObjects(this.catalogEntryObjectPath);
+				
+				if(childObjects.length <= 0) {
+					o.addValidationError(this, this.noProductsSelectedErrorMessage);
+				}
+				
+				// clean up categories
+				childObjects = o.getObjects(this.categoryEntryObjectPath);
+				for(var i = childObjects.length - 1; i >= 0; i--) {
+					childObjects[i].deleteObject();
+				}
+				o.setPropertyValue("type",null,"NVP");
+			}
+			else if((elementTemplate.value == "currentCustomerBehaviorCategoryBrowsing") || (elementTemplate.value == "currentCustomerBehaviorProductInCategoryBrowsing")
+				|| (elementTemplate.value == "recordedCustomerBehaviorCategoryBrowsed") || (elementTemplate.value == "recordedCustomerBehaviorProductInCategoryBrowsed")) {
+				
+				var childObjects = o.getObjects(this.categoryEntryObjectPath);
+				if(childObjects.length <= 0) {
+					o.addValidationError(this, this.noCategoriesSelectedErrorMessage);
+				}
+				
+				// clean up catalog entries
+				childObjects = o.getObjects(this.catalogEntryObjectPath);
+				for(var i = childObjects.length - 1; i >= 0; i--) {
+					childObjects[i].deleteObject();
+				}
+				
+				if((elementTemplate.value == "currentCustomerBehaviorProductInCategoryBrowsing") || (elementTemplate.value == "recordedCustomerBehaviorProductInCategoryBrowsed")) {
+					o.setPropertyValue("type",null,"PARENTCATEGORY");
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

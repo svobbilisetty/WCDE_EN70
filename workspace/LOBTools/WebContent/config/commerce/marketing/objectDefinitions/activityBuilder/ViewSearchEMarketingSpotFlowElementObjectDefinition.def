@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the flow element object definition for the View e-Marketing Spot trigger. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_searchKeyword as a parameter</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_searchKeyword as a parameter</li>
+			<li>{@link wcfChildObjectDefinition} that defines a new searchKeyword type which represent a list of string values</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator} to ensure at least one search keyword is provided when required</li>
+		</ul>
+	-->
+	<FlowElementObjectDefinition definitionName="mktViewSearchEMarketingSpotElementObject" displayName="${mktMarketingResources.viewSearchEMarketingSpotName}" elemTemplateType="Trigger" flowIcon="viewSearchEMarketingSpotIcon" headerIcon="viewSearchEMarketingSpotHeaderIcon" objectType="viewSearchEMarketingSpot" package="mkt" paletteIcon="viewSearchEMarketingSpotPaletteIcon" propertiesDefinitionName="mktViewSearchEMarketingSpotProperties" summaryClass="mktViewSearchEMarketingSpotSummary" releaseWhenClosed="false">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_searchKeyword" objectPath="searchKeyword" optional="true" propertyName="searchKeyword">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="searchOperator"/>
+			</ServiceParam>
+		</CreateService>
+
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_searchKeyword" objectPath="searchKeyword" optional="true" propertyName="searchKeyword">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="searchOperator"/>
+			</ServiceParam>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>viewSearchEMarketingSpot</elemTemplateName>
+			<searchOperator>any</searchOperator>
+		</Xml>
+		
+		<PropertyDefinition propertyName="searchOperator" required="true">
+			<PropertyValue displayName="${mktMarketingResources.searchPhraseAny}" value="any"/>
+			<PropertyValue displayName="${mktMarketingResources.searchPhraseIsExactly}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.searchPhraseStart}" value="start"/>
+			<PropertyValue displayName="${mktMarketingResources.searchPhraseContain}" value="contain"/>
+			<PropertyValue displayName="${mktMarketingResources.searchPhraseEnd}" value="end"/>
+		</PropertyDefinition>
+		<ChildObjectDefinition creatable="true" displayName="${mktMarketingResources.searchValues}" idProperty="searchKeyword" objectType="searchKeyword" releaseWhenClosed="false">
+			<PropertyDefinition displayName="${mktMarketingResources.searchValues}" maximumSize="254" propertyName="searchKeyword" required="true" trim="true"/>				
+		</ChildObjectDefinition>
+		
+		<SearchKeywordValidator package="mkt" validatorId="searchKeywordValidatorId"/>
+
+	</FlowElementObjectDefinition>
+</Definitions>

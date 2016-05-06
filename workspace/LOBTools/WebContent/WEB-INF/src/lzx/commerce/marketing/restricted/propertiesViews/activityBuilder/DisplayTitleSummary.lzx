@@ -1,0 +1,41 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktDisplayTitleFlowElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktDisplayTitleFlowElementObject} object:
+		<ul>
+			<li>ChildMarketingContent/MarketingContent[name]</li>
+		</ul>
+	-->
+	<class name="mktDisplayTitleSummary" extends="wcfFlowElementSummary">				
+		
+		<wcfFlowSummaryParam name="contentNames" objectPath="ChildContent/MarketingContentGroup" propertyName="name" sequencePropertyName="sequence" sequencePropertyPath="ChildContent" />
+
+		<!---
+			Sets the summary text for the {@link mktDisplayTitleFlowElementObject} flow element.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var content = this.getValuesList("contentNames");
+				if(content != "") {
+					content = wcfStringUtil.escapeText(content);
+				}
+
+				this.setSummaryText(content);
+			]]>
+		</method>
+	</class>
+</library>

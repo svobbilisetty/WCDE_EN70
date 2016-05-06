@@ -1,0 +1,503 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		A view consisting of a list and a details panel.
+	-->
+	<class name="wcfListWithDetails" visible="false">
+		<!---
+			Panel title.
+		-->
+		<attribute name="title" value="" type="string"/>
+		<!---
+			Panel title message.
+		-->
+		<attribute name="titleMessage" value="" type="string"/>
+		<!---
+			Panel error message.
+		-->
+		<attribute name="errorMessage" value="" type="string"/>
+		<!---
+			Panel header icon resource name.
+		-->
+		<attribute name="headerIconResource" value="${null}" type="string"/>
+		<!---
+			The associated instance of the business object editor. This value
+			must be an instance of wcfBusinessObjectEditor or a subclass. This is a required attribute.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			The list class. The list class may be any view class, but it
+			must trigger and "onselect" event when the selection changes
+			and it must support a method called "getSelectedObject" to return
+			the currently selected model object. This is a required attribute.
+		-->
+		<attribute name="listClass" type="string"/>
+		<!---
+			The availableHeight for the list class
+		-->		
+		<attribute name="availableHeight" type="number" value="300"/>
+		<!---
+			The availableWidth for the list class
+		-->		
+		<attribute name="availableWidth" type="number" value="${null}"/>
+		<!---
+			Indicate to the split layout that this view can be split into a master/details view.
+		-->
+		<attribute name="splittable" value="true"/>
+		<!---
+			The class that will be used by the list view to create the context menu.
+		-->
+		<attribute name="rowMenuClass" type="string" value="${null}"/>
+		<!---
+			@keywords private
+			Menu class for grid background.
+		-->
+		<attribute name="menuClass" type="string" value="${null}"/>
+
+		<!---
+			@keywords private
+			An instance of {@link wcfDisplayNameStyle} that the framework will use to display the display name of this
+			business object. If this value is null, then the default display name style will
+			be used.
+		-->
+		<attribute name="displayNameStyle" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (typeof(immediateparent["availableHeight"]) != "undefined") {
+				this.updateAvailableHeightDel = new lz.Delegate(this, "updateAvailableHeight");
+				this.updateAvailableHeightDel.register(immediateparent, "onavailableHeight");
+				this.updateAvailableHeight();
+			}
+			
+			if (typeof(immediateparent["availableWidth"]) != "undefined") {
+				this.updateAvailableWidthDel = new lz.Delegate(this, "updateAvailableWidth");
+				this.updateAvailableWidthDel.register(immediateparent, "onavailableWidth");
+				this.updateAvailableWidth();
+			}
+			
+			if (lz[this.listClass]) {
+				var v = new lz[this.listClass](this, {
+					name: "list",
+					rowMenuClass: this.rowMenuClass,
+					menuClass: this.menuClass,
+					embedded: false,
+					findable: true
+				});
+			}
+			else {
+				v = wcfDefinitionLoader.getDefinition(this.listClass, this, {
+					name: "list",
+					rowMenuClass: this.rowMenuClass,
+					menuClass: this.menuClass,
+					embedded: false,
+					findable: true
+				});
+			}
+			this.list = v;
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateAvailableHeightDel"]) {
+				this.updateAvailableHeightDel.unregisterAll();
+				delete this.updateAvailableHeightDel;
+			}
+			if (this["updateAvailableWidthDel"]) {
+				this.updateAvailableWidthDel.unregisterAll();
+				delete this.updateAvailableWidthDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+	
+		<method name="updateAvailableHeight" args="e=null">
+			<![CDATA[
+				this.setAttribute("availableHeight", immediateparent.availableHeight);
+			]]>
+		</method>
+		
+		<method name="updateAvailableWidth" args="e=null">
+			<![CDATA[
+				this.setAttribute("availableWidth", immediateparent.availableWidth);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the available custom services.
+		-->
+		<method name="getCustomServices">
+			<![CDATA[
+				var customServices = [];
+				var selectedObjects = this.list.getSelectedObjects();
+				if (selectedObjects != null && selectedObjects.length > 0) {
+					var oDef = selectedObjects[0].getReferencedObject().objectDefinition;
+					for (var i = 0; i < oDef.customServices.length; i++) {
+						var customService = oDef.customServices[i];
+						var customServiceEnabled = true;
+						for (var j = 0; j < selectedObjects.length; j++) {
+							var po = selectedObjects[j].getReferencedObject();
+							if (!po.objectDefinition.isCustomServiceDefined(customService)) {
+								customServiceEnabled = false;
+								break;
+							}
+						}
+						if (customServiceEnabled) {
+							customServices.push(customService);
+						}
+					}
+				}
+				return customServices;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the available client actions.
+		-->
+		<method name="getClientActions">
+			<![CDATA[
+				var clientActions = [];
+				var selectedObjects = this.list.getSelectedObjects();
+				if (selectedObjects != null && selectedObjects.length > 0) {
+					var oDef = selectedObjects[0].getReferencedObject().objectDefinition;
+					for (var i = 0; i < oDef.clientActions.length; i++) {
+						var clientAction = oDef.clientActions[i];
+						if (clientAction.availableFromMainListView && (clientAction.allowMultipleSelection || selectedObjects.length == 1)) {
+							var clientActionEnabled = true;
+							for (var j = 0; j < selectedObjects.length; j++) {
+								var po = selectedObjects[j].getReferencedObject();
+								if (!po.objectDefinition.isClientActionDefined(clientAction)) {
+									clientActionEnabled = false;
+									break;
+								}
+							}
+							if (clientActionEnabled) {
+								clientActions.push(clientAction);
+							}
+						}
+					}
+				}
+				return clientActions;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		A view consisting of a list and a details panel. This is specific for a model object.
+	-->
+	<class name="wcfNavigationList" extends="wcfListWithDetails">
+		<!---
+			The current model object.
+		-->
+		<attribute name="o" value="null"/>		
+		<!---
+			The navigation list definition for this list.
+		-->
+		<attribute name="navigationListDefinition" value="null"/>
+		
+		<handler name="onvisible">
+			<![CDATA[
+			if (this.visible && this.list["list"] && this.list.list["getSelectedObjects"]) {
+				this.o.model.setAttribute("workAreaActiveSelectionView", this.list.list);
+			}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.listClass = this.navigationListDefinition.listClass;
+			super.init();
+			this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+			this.updateHeaderDel = new lz.Delegate(this, "updateHeader");
+			this.updateHeader();
+			this.updateDisplayNameStyle();
+			this.updateTitleMessageDel = new lz.Delegate(this, "updateTitleMessage");
+			this.updateTitleMessageDel.register(this.list, "onstatusMessage");
+			this.updateTitleMessage();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			super.destroy();
+			this.updateHeaderDel.unregisterAll();
+			delete this.updateHeaderDel;
+			if (this["updateDisplayNameStyleDel"]) {
+				this.updateDisplayNameStyleDel.unregisterAll();
+				delete this.updateDisplayNameStyleDel;
+			}
+			this.updateTitleMessageDel.unregisterAll();
+			delete this.updateTitleMessageDel;
+			this.releaseModelObjectDel.unregisterAll();
+			delete this.releaseModelObjectDel;
+			]]>
+		</method>
+		
+		<!---
+			Update the header.
+		-->
+		<method name="updateHeader" args="e=null">
+			<![CDATA[
+			this.updateHeaderDel.unregisterAll();
+			var newTitle = "";
+			var newHeaderIconResource = null;
+			if (this.o != null) {
+				if (this.navigationListDefinition.listTitle != null && this.navigationListDefinition.listTitle != "") {
+					this.updateHeaderDel.register(this.navigationListDefinition, "onlistTitle");
+					newTitle = foundationResources.replaceValues("childListEditorTitle", [this.o.objectDisplayName, this.navigationListDefinition.listTitle]);
+				} else {
+					newTitle = wcfStringUtil.escapeText(this.o.objectDisplayName);
+				}
+				this.updateHeaderDel.register(this.o, "onobjectDisplayName");
+				newHeaderIconResource = this.o.objectDefinition.headerIcon;
+			}
+			if (newTitle != this.title) {
+				this.setAttribute("title", newTitle);
+			}
+			if (newHeaderIconResource != this.headerIconResource) {
+				this.setAttribute("headerIconResource", newHeaderIconResource);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the title message to reflect the current status message from the navigation results.
+		-->		
+		<method name="updateTitleMessage" args="e=null">
+			<![CDATA[
+			var newMessage = this.list.statusMessage;
+
+			if (!this.list.hasError) {
+				this.setAttribute("errorMessage", "");
+				this.setAttribute("titleMessage", newMessage);
+			} else {
+				this.setAttribute("titleMessage", "");
+				this.setAttribute("errorMessage", newMessage);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Release the model object.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+			this.setAttribute("o", null);
+			]]>
+		</method>
+		
+		<!---
+			Handle model object changed event.
+		-->
+		<handler name="ono">
+			<![CDATA[
+			this.releaseModelObjectDel.unregisterAll();
+			if (this.o) {
+				this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+				this.releaseModelObjectDel.register(this.o.model.oEditor, "onisOpen");
+			}
+			this.updateHeader();
+			this.updateDisplayNameStyle();
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Update display name style.
+		-->
+		<method name="updateDisplayNameStyle" args="e=null">
+			<![CDATA[
+			if (this["updateDisplayNameStyleDel"]) {
+				this.updateDisplayNameStyleDel.unregisterAll();
+			} else {
+				this.updateDisplayNameStyleDel = new lz.Delegate(this, "updateDisplayNameStyle");
+			}
+			var style = null;
+			if (this.o != null) {
+				this.updateDisplayNameStyleDel.register(this.o, "ondisplayNameStyle");
+				style = this.o.displayNameStyle;
+			}	
+			if (style != this.displayNameStyle) {
+				this.setAttribute("displayNameStyle", style);
+			}
+			]]>
+		</method>
+
+	</class>
+
+	<!---
+		@keywords private
+		
+		A view consisting of a list and a details panel. This is specific to search results.
+	-->
+	<class name="wcfSearchResultsList" extends="wcfListWithDetails">
+		<!---
+			The search results model object.
+		-->
+		<attribute name="searchResults" value="null"/>	
+		
+		<attribute name="headerIconResource" value="panelHeaderSearchResource"/>
+		<!---
+			@keywords private
+			Menu class for the grid background.
+		-->
+		<attribute name="menuClass" type="string" value="wcfSearchResultsBackgroundMenu"/>
+		
+		<handler name="onvisible">
+			<![CDATA[
+			if (this.visible && this.list["getSelectedObjects"]) {
+				this.oEditor.model.setAttribute("workAreaActiveSelectionView", this.list);
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.listClass = this.searchResults.searchDefinition.listClass;
+			super.init();
+			this.updateTitleMessageDel = new lz.Delegate(this, "updateTitleMessage");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			super.destroy();
+			this.updateTitleMessageDel.unregisterAll();
+			delete this.updateTitleMessageDel;
+			]]>
+		</method>
+				
+		<!---
+			Setup some preperties when the search results is set.
+		-->
+		<handler name="onsearchResults">
+			<![CDATA[
+			if (this.searchResults != null) {
+				this.setAttribute("title", foundationResources.replaceValues("searchResultsTitle", [this.searchResults.searchDefinition.displayName]));
+
+				if (!this.searchResults.hasError) {
+					this.setAttribute("errorMessage", "");
+					this.setAttribute("titleMessage", this.searchResults.statusMessage);
+				} else {
+					this.setAttribute("titleMessage", "");
+					this.setAttribute("errorMessage", this.searchResults.statusMessage);
+				}
+				
+				this.updateTitleMessageDel.unregisterAll();
+				this.updateTitleMessageDel.register(this.searchResults, "onstatusMessage");
+				this.updateTitleMessageDel.register(foundationResources.searchResultsTitle, "onstring");
+				this.updateTitleMessageDel.register(this.searchResults.searchDefinition, "ondisplayName");
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Update the title message to reflect the current status message from the search results.
+		-->		
+		<method name="updateTitleMessage" args="e=null">
+			<![CDATA[
+			this.setAttribute("title", foundationResources.replaceValues("searchResultsTitle", [this.searchResults.searchDefinition.displayName]));
+
+			if (!this.searchResults.hasError) {
+				this.setAttribute("errorMessage", "");
+				this.setAttribute("titleMessage", this.searchResults.statusMessage);
+			} else {
+				this.setAttribute("titleMessage", "");
+				this.setAttribute("errorMessage", this.searchResults.statusMessage);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check if delete is enabled.
+		-->
+		<method name="isDeleteEnabled">
+			<![CDATA[
+			var objects = this.list.getSelectedObjects();
+			var deleteEnabled = objects.length > 0;
+			if (deleteEnabled) {
+				for (var i = 0; i < objects.length; i++) {
+					var o = objects[i];
+					var oDef = o.objectDefinition;
+					if (!o.isDeletable()) {
+						deleteEnabled = false;
+						break;
+					}
+					if (oDef.parentReference) {
+						if (!o.getReferencedObject().isDeletable()) {
+							deleteEnabled = false;
+							break;
+						}
+					}
+				}
+			}
+			return deleteEnabled;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Invoke delete.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+			var selectedObjects = this.list.getSelectedObjects();
+			var objects = [];
+			for (var i = 0; i < selectedObjects.length; i++) {
+				objects[i] = selectedObjects[i];
+			}
+
+			var deleteObjects = [];
+			for (var i = 0; i < objects.length; i++) {
+				var o = objects[i];
+				var oDef = o.objectDefinition;
+				if (oDef.openGroupTop) {
+					deleteObjects.push(o);
+				}
+				else if (oDef.parentReference) {
+					deleteObjects.push(o.getReferencedObject());
+				} else {
+					o.deleteObject();
+				}
+			}
+			if (deleteObjects.length == 1) {
+				deleteObjects[0].deleteObject(true);
+			}
+			else if (deleteObjects.length > 0) {
+				wcfMultipleDeleteConfirmationDialog.openMultipleDeleteConfirmationDialog(deleteObjects);
+			}
+			]]>	
+		</method>
+
+
+	</class>
+
+</library>

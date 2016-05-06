@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE menu SYSTEM "Menu.dtd">
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2003
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+<!-- Commerce Accelerator menu (for Express edition)
+Note: user roles are defeined in Roles.xml
+-->
+<menu arrowGif="$wcs_accelerator$images/tools/mcc/arrow.gif"
+    bannerTitle="" frameset="common.MerchantCenterFrameset"
+    helpMap="common.MerchantCenterHelpMap"
+    homepage="$webapp_accelerator$tools/common/AcceleratorHomeB2C.jsp"
+    logoutPage="$webapp_accelerator$Logoff?URL=$wcs_accelerator$tools/common/blank.html&amp;storeId=0"
+    resourceBundle="common.mccNLS" space="20" startPos="20"
+    storeGif="$wcs_accelerator$images/tools/mcc/store_icon.jpg" storeSelectionPage="$webapp_accelerator$StoreLanguageSelection?mcurl=MerchantCenterView?XMLFile=common.merchantCenter">
+    <menuitem enabled="true" name="store" users="buyer catMgr cusRep cusSup makMgr opMgr pickPacker podMgr retAdmin seller">
+        <node keepBCT="true" name="preview" taskUsages="all"
+            url="$webapp_accelerator$DialogView?XMLFile=preview.PreviewDialog" users="buyer catMgr podMgr makMgr seller"/>
+        <node name="separator" url=""/>
+        <node name="contentSpot"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=campaigns.ContentSpotList&amp;cmd=ContentSpotListView" users="makMgr podMgr seller"/>
+        <node name="collateral"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=campaigns.CampaignCollateralList&amp;cmd=CampaignCollateralListView" users="makMgr podMgr seller"/>
+        <node name="separator" url=""/>
+        <node name="openClose"
+            url="$webapp_accelerator$DialogView?XMLFile=store.openclose" users="seller"/>
+        <node name="changeProfile"
+            url="$webapp_accelerator$NotebookView?XMLFile=devtools.StoreProfileNotebook" users="seller"/>
+        <node name="changeText"
+            url="$webapp_accelerator$DialogView?XMLFile=devtools.StoreTextDialog" users="seller"/>
+        <node name="uploadLogo"
+            url="$webapp_accelerator$DialogView?XMLFile=devtools.StoreLogoDialog" users="seller"/>
+        <node name="changeStyle"
+            url="$webapp_accelerator$StoreStyleWizardView" users="seller"/>
+        <node name="fileManager"
+            url="$webapp_accelerator$DialogView?XMLFile=filemgr.UploadFilesDialog&amp;filemgrResource=filemgr.UploadView" users="seller"/>
+        <node name="storeConfiguration"
+            url="$webapp_accelerator$FlexflowConfigure" users="seller"/>
+        <node name="separator" url=""/>
+        <node name="changeShipping"
+            url="$webapp_accelerator$ShippingMenuView" users="opMgr seller"/>
+        <node name="changeTax"
+            url="$webapp_accelerator$NotebookView?XMLFile=taxation.taxEditor" users="opMgr seller"/>
+        <node name="separator" url=""/>
+        <node name="fulfillmentCenters"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.FFMCenterList&amp;cmd=FFMCenterListView" users="opMgr seller"/>
+        <node name="reasonCodes"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.ReturnReasonsList&amp;cmd=ReturnReasonsListView" users="catMgr opMgr podMgr seller"/>
+        <node atp="true" name="inventoryAdjustmentCode"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.InventoryAdjustmentCodeList&amp;cmd=InventoryAdjustmentCodeListView" users="catMgr opMgr seller"/>
+        <node name="reportDeliverySetup"
+            url="$webapp_accelerator$DialogView?XMLFile=store.PeriodicReportSetup" users="opMgr seller"/>
+        <node component="CommerceAnalyzer" name="biReports"
+            url="$webapp_accelerator$ShowContextList?context=store&amp;contextConfigXML=bi.biContext&amp;ActionXMLFile=bi.biRptStoreContextList" users="buyer catMgr makMgr opMgr podMgr seller"/>
+    </menuitem>
+    <menuitem enabled="true" name="marketing" users="buyer catMgr makMgr podMgr seller">
+        <node name="customerProfiles"
+            url="$webapp_accelerator$SegmentsView?ActionXMLFile=segmentation.SegmentList&amp;cmd=SegmentListView&amp;orderby=name" users="makMgr podMgr seller"/>
+        <node name="campaigns"
+            url="$webapp_accelerator$CampaignsView?ActionXMLFile=campaigns.CampaignList&amp;cmd=CampaignListView&amp;orderby=name" users="makMgr podMgr seller"/>
+        <node name="campaignInitiatives"
+            url="$webapp_accelerator$CampaignInitiativesView?ActionXMLFile=campaigns.InitiativeList&amp;cmd=CampaignInitiativeListView&amp;orderby=name" users="makMgr podMgr seller"/>
+        <node component="RulesBasedDiscount" name="promotions"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=RLPromotion.RLPromotionList&amp;cmd=RLDiscountListView" users="buyer catMgr makMgr podMgr seller"/>
+        <node name="ems"
+            url="$webapp_accelerator$CampaignsEmsView?ActionXMLFile=campaigns.CampaignEmsList&amp;cmd=CampaignEmsListView" users="makMgr podMgr seller"/>
+        <node name="collateral"
+            url="$webapp_accelerator$CampaignsCollateralView?ActionXMLFile=campaigns.CampaignCollateralList&amp;cmd=CampaignCollateralListView" users="makMgr podMgr seller"/>
+    </menuitem>
+    <menuitem enabled="true" name="merchandise" taskUsages="all" users="buyer catMgr makMgr podMgr seller">
+        <!-- <node  name="productManagement"
+             url="$webapp_accelerator$ProductUpdateDialog"
+             users="buyer catMgr makMgr podMgr seller"/> -->
+        <node name="catalogManagement" taskUsages="all"
+            url="$webapp_accelerator$CategoryTreeView" users="catMgr makMgr podMgr seller"/>
+        <node name="findCatalogEntries" taskUsages="all"
+            url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;actionEP=PLU&amp;redirectXML=catalog.KitContentsDialog" users="buyer catMgr makMgr podMgr seller"/>
+        <node name="findCategories" taskUsages="all"
+            url="$webapp_accelerator$DialogView?XMLFile=catalog.categoryFindDialog" users="catMgr makMgr podMgr seller"/>
+        <node name="packagesBundles" taskUsages="all"
+            url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;searchType=package&amp;redirectURL=DialogView&amp;redirectXML=catalog.KitContentsDialog&amp;actionEP=PB" users="buyer catMgr makMgr podMgr seller"/>
+        <node name="merchandiseAssoc" taskUsages="all"
+            url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;searchType=catentry&amp;redirectURL=DialogView&amp;redirectXML=catalog.MAssociationDialog&amp;actionEP=MA" users="buyer catMgr makMgr podMgr seller"/>
+        <node component="CatalogDesign" name="CatalogDesign"
+            taskUsages="all"
+            url="$webapp_accelerator$NavCatCatalogListDialog?displayNumberOfProducts=true&amp;extendedFunction=(categoryTemplate=false, masterCatalog=false, sku=false)" users="catMgr makMgr podMgr seller"/>
+        <node name="catalogImport"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=catalogimport.catalogImportList&amp;cmd=CatalogImportListView" users="catMgr seller"/>
+        <node atp="true" name="expectedInventoryRecords"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.VendorPurchase&amp;cmd=VendorPurchaseView" users="buyer catMgr podMgr seller"/>
+        <node name="vendors"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.VendorList&amp;cmd=VendorListView" users="buyer catMgr podMgr seller"/>
+        <node name="separator" url=""/>
+        <node component="!RulesBasedDiscount" name="discounts"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=discount.discountList&amp;cmd=DiscountView" users="buyer catMgr podMgr seller"/>
+        <node component="Coupon" name="coupons"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=eCoupon.eCouponList&amp;cmd=eCouponView" users="buyer catMgr podMgr seller"/>
+        <node name="productAdvisor"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=productAdvisor.PACategoryList&amp;cmd=PACategoryListView&amp;orderby=name" users="catMgr podMgr seller"/>
+        <node name="guidedSell"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=guidedSell.GuidedSellList&amp;cmd=GSListView&amp;orderby=name" users="catMgr podMgr seller"/>
+        <node name="paStats" url="$webapp_accelerator$PAstatisticsView" users="podMgr seller catMgr"/>
+        <node name="peStats" url="$webapp_accelerator$PEstatisticsView" users="podMgr seller catMgr"/>
+        <node name="pcStats" url="$webapp_accelerator$PCstatisticsView" users="podMgr seller catMgr"/>
+        <node name="saStats" url="$webapp_accelerator$SAstatisticsView" users="podMgr seller catMgr"/>
+        <node name="priceRuleAndCatfilter"
+            url="$webapp_accelerator$DialogView?XMLFile=contract.PriceRuleDialog" users="catMgr seller"/>
+    </menuitem>
+    <menuitem enabled="true" name="auctions" users="buyer catMgr podMgr seller cusRep cusSup opMgr">
+        <node name="listauctions"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=negotiations.auctionListSC&amp;cmd=AuctionList" users="buyer catMgr podMgr seller"/>
+        <node name="viewauctions"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=negotiations.CSR_auctionListSC&amp;cmd=AuctionList" users="cusRep cusSup opMgr"/>
+        <node name="findAuctions"
+            url="$webapp_accelerator$DialogView?XMLFile=negotiations.auctionSearchDialog" users="buyer catMgr podMgr seller"/>
+        <node name="auctionStyles"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=negotiations.auctionstyleList&amp;cmd=AuctionStyleList" users="buyer catMgr podMgr seller"/>
+        <node name="bidRules"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=negotiations.bidruleList&amp;cmd=BidRuleList" users="buyer catMgr podMgr seller"/>
+    </menuitem>
+    <menuitem enabled="true" name="operations" users="buyer catMgr cusRep cusSup makMgr opMgr pickPacker podMgr receiver retAdmin seller">
+        <node name="newCustomer"
+            url="$webapp_accelerator$WizardView?XMLFile=csr.shopperWizard" users="cusRep cusSup opMgr seller"/>
+        <node name="findCustomers"
+            url="$webapp_accelerator$DialogView?XMLFile=csr.shopperSearchB2C" users="cusRep cusSup opMgr seller"/>
+        <node name="findOrders"
+            url="$webapp_accelerator$DialogView?XMLFile=order.CSROrderSearchB2C" users="cusRep cusSup opMgr seller"/>
+        <node name="omReports"
+            url="$webapp_accelerator$ShowContextList?context=B2C_Operations_OrderManagementReports&amp;contextConfigXML=reporting.OperationalReportsContext&amp;ActionXMLFile=bi.omRptscontextList" users="buyer catMgr makMgr opMgr podMgr seller"/>
+        <node name="operationalReports"
+            url="$webapp_accelerator$OperationalReportsHomeRHSView" users="buyer catMgr makMgr opMgr podMgr seller"/>
+        <node name="separator" url=""/>
+        <node name="returns"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.ReturnRecordsListOpMgr&amp;cmd=ReturnRecordsListOpMgrView" users="opMgr receiver retAdmin seller"/>
+        <node name="findReturns"
+            url="$webapp_accelerator$DialogView?XMLFile=returns.returnSearchDialog" users="cusRep cusSup opMgr seller"/>
+        <node name="pickBatches"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.PickBatchList&amp;cmd=PickBatchListView" users="opMgr pickPacker seller"/>
+        <node name="readyToShip"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.ReleaseConfirmList&amp;cmd=ReleaseConfirmListView" users="opMgr pickPacker seller"/>
+        <node atp="true" name="expectedInventoryRecords"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=inventory.VendorPurchase&amp;cmd=VendorPurchaseView" users="opMgr receiver seller"/>
+        <node name="findInventory" noInventory="false"
+            url="$webapp_accelerator$DialogView?XMLFile=inventory.ProductLookupDialog" users="opMgr receiver seller"/>
+        <node name="invReports" noInventory="false"
+            url="$webapp_accelerator$ShowContextList?context=B2C_Operations_InventoryReports&amp;contextConfigXML=reporting.OperationalReportsContext&amp;ActionXMLFile=bi.invRptscontextList" users="catMgr opMgr seller"/>
+    </menuitem>
+    <menuitem enabled="true" name="payments" users="cusRep cusSup seller opMgr">
+        <node name="approvePayment" payment="true"
+            remoteAccessHelpKey="MC.optoolsOrder.pmLauch.Help"
+            url="$webapp_accelerator$PMProcessingView?ProcOption=Approve" users="cusSup opMgr seller"/>
+        <node name="depositPayment" payment="true"
+            remoteAccessHelpKey="MC.optoolsOrder.pmLauch.Help"
+            url="$webapp_accelerator$PMProcessingView?ProcOption=Deposit" users="cusSup opMgr seller"/>
+        <node name="settlePayment" payment="true"
+            remoteAccessHelpKey="MC.optoolsOrder.pmLauch.Help"
+            url="$webapp_accelerator$PMProcessingView?ProcOption=Settle" users="cusSup opMgr seller"/>
+        <node name="findPayment" payment="true"
+            remoteAccessHelpKey="MC.optoolsOrder.pmLauch.Help"
+            url="$webapp_accelerator$PMProcessingView?ProcOption=OrderSearch" users="cusSup opMgr seller"/>
+        <node name="findPaymentBatch" payment="true"
+            remoteAccessHelpKey="MC.optoolsOrder.pmLauch.Help"
+            url="$webapp_accelerator$PMProcessingView?ProcOption=BatchSearch" users="cusSup opMgr seller"/>
+        <node name="ListInstalledPaymentPlugins"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=edp.ppcListAllPlugins&amp;cmd=ppcListAllPluginsView" users="cusSup opMgr seller cusRep"/>
+        <node name="ListRefundInstruction"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=edp.ppcSearchReturnPIDialog&amp;cmd=ppcSearchPIByReturnView&amp;rmaId=" users="cusSup opMgr seller cusRep"/>
+        <node name="ListPaymentInstructionPerOrder"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=edp.ppcSearchPIDialog&amp;cmd=ppcSearchPIByOrderView&amp;orderId=" users="cusSup opMgr seller cusRep"/>
+        <node name="pmSettings" payment="true"
+            remoteAccessHelpKey="MC.optoolsOrder.pmLauch.Help"
+            url="$webapp_accelerator$PMProcessingView?ProcOption=Merchants" users="opMgr seller"/>
+    </menuitem>
+    <menuitem component="WorkspaceTaskList" enabled="true" name="tasks"
+        taskUsages="all" users="wsMgr wsTGApprover wsCtntContributor">
+        <node component="WorkspaceTaskList" name="viewTasks"
+            taskUsages="all"
+            url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=workspaceadmin.TaskListActions&amp;cmd=TaskListView" users="wsMgr wsTGApprover wsCtntContributor"/>
+    </menuitem>
+    <menuitem enabled="true" name="help" taskUsages="all" type="help" users="all"/>
+</menu>

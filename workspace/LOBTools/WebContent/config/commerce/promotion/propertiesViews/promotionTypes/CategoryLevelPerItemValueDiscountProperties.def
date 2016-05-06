@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="proCategoryLevelPerItemValueDiscountProperties">
+		<EnablementCondition conditionId="promotionType" enablementValue="CategoryLevelPerItemValueDiscount" propertyName="promotionType"/>
+		
+		<PropertyGroup groupTitle="${promotionResources.promotion_purchaseConditionAndRewardTitle}" name="purchaseConditionAndRewardGroup" open="true">
+			<PropertyCombobox objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition/Identifier_PaymentType" promptText="${promotionResources.promotion_paymentType}" propertyName="PaymentType"/>
+
+			<PropertyCheckbox objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" propertyName="siteWide" promptText="${promotionResources.promotion_siteWide}"
+				helpText="${promotionResources.promotion_siteWideCategory_helpText}"/>
+				
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Target_Category_helpText}" listDefinitionName="proCategoryElementTypeGrid" name="catalogGroup" objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" objectTypes="Identifier_Category,Identifier_InheritedCategory" promptText="${promotionResources.promotion_Select_Category}"
+				validatorTypes="reqCatValidator,reqIncCatValidator,reqNoIncCatValidator"/>
+
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule_helpText}" listDefinitionName="proCatalogEntryAttributeRuleGrid" name="AttributesRule" objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" objectTypes="CatalogEntryAttributeRule" promptText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule}"/>
+	
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Exclude_CatalogEntries_helpText}" listDefinitionName="proProductGrid" name="excludedCatalogEntry" objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" objectTypes="Identifier_CatalogEntry,Identifier_InheritedCatalogEntry" promptText="${promotionResources.promotion_Select_Exclude_Catalog_Entry}"/>
+								
+			<PropertyCombobox objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" promptText="${promotionResources.promotionElement_Currency}" propertyName="Currency" required="true"/>
+
+			<PropertyRadioGroup objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" promptText="${promotionResources.promotionMinimumPurchaseConditionType}" propertyName="MinimumPurchaseType" required="true"/>
+			
+			<PropertyGroup name="promotionMinimumPurchaseConditionType1" open="true" showHeader="false">
+				<EnablementCondition conditionId="promotionMinimumPurchaseConditionType1" enablementValue="Quantity" objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" propertyName="MinimumPurchaseType"/>
+				<PropertyChildListEditor listDefinitionName="proCIDRangeGrid" name="defaultRange" objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" objectTypes="ProductLevelFixedAmountOffDiscountRange" promptText="${promotionResources.promotion_Minimum_purchase_condition}" required="true"/>
+			</PropertyGroup>
+
+			<PropertyGroup name="promotionMinimumPurchaseConditionType2" open="true" showHeader="false">
+				<EnablementCondition conditionId="promotionMinimumPurchaseConditionType2" enablementValue="Amount" objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" propertyName="MinimumPurchaseType"/>
+				<PropertyChildListEditor listDefinitionName="proCIDRangeGrid2" name="defaultRange" objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" objectTypes="ProductLevelFixedAmountOffDiscountRange" promptText="${promotionResources.promotion_Minimum_purchase_condition}" required="true"/>
+			</PropertyGroup>
+				
+			<PropertyCombobox objectPath="CategoryLevelPerItemValueDiscountPurchaseCondition" promptText="${promotionResources.promotion_Select_PriceAdjustmentBase}" propertyName="PriceAdjustmentBase" required="true" helpText="${promotionResources.promotion_priceAdjustmentBase_helpText}"/>			
+		</PropertyGroup>
+		
+	</PropertyGroup>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link proProductLevelFixedAmountOffDiscountRangeObjectDefinition ProductLevelFixedAmountOffDiscountRange promotion element sub type}
+		associated with the CategoryLevelPerItemValueDiscount promotion type.
+	-->
+	<ObjectGrid definitionName="proCIDRangeGrid" preferenceKey="proCIDRangeGrid">
+		<GridNumeric editable="true" name="lowerBound" propertyName="LowerBound" required="true" text="${promotionResources.promotion_Minimum_purchase_quantityTitle}" visible="true" width="200"/>
+		<GridCurrency appendCurrencyCodeToHeader="false" cloneEnabled="false" editable="true" name="amountOff" propertyName="AmountOff" required="true" setPropertyNameToCurrencyCode="false" text="${promotionResources.promotionElement_Amount_OffTitle}" visible="true" width="200"/>
+	</ObjectGrid>
+	<!---
+		This grid displays the contents and characteristics of a list of {@link proProductLevelFixedAmountOffDiscountRangeObjectDefinition ProductLevelFixedAmountOffDiscountRange promotion element sub type}
+		associated with the CategoryLevelPerItemValueDiscount promotion type.
+	-->
+	<ObjectGrid definitionName="proCIDRangeGrid2" preferenceKey="proCIDRangeGrid2">
+		<GridCurrency appendCurrencyCodeToHeader="false" cloneEnabled="false" editable="true" name="lowerBound" propertyName="LowerBound" required="true" setPropertyNameToCurrencyCode="false" text="${promotionResources.promotion_Minimum_purchase_amountTitle}" visible="true" width="200"/>
+		<GridCurrency appendCurrencyCodeToHeader="false" cloneEnabled="false" editable="true" name="amountOff" propertyName="AmountOff" required="true" setPropertyNameToCurrencyCode="false" text="${promotionResources.promotionElement_Amount_OffTitle}" visible="true" width="200"/>
+	</ObjectGrid>
+	
+</Definitions>

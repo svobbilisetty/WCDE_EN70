@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		This class displays the contents and characteristics of a list of {@link StoreFrontStore Stores}.
+	-->
+	<ObjectGrid definitionName="stoStoreGrid" preferenceKey="stoStoreGrid">
+		<GridIconTypeImage name="typeIcon" enableFilter="true" propertyName="" required="true" text="${stoStoreResources.typeHeader}" width="80"/>
+		<GridPropertyImage editable="false" enableFilter="true" name="storeState" text="${stoStoreResources.stateHeader}" propertyName="state" width="80" />
+		<GridText name="storeIdentifier" propertyName="storeIdentifier" editable="false" text="${stoStoreResources.storeIdentifierHeader}" width="280"/>
+		<GridText name="storeDescription" objectPath="StoreDescription" propertyName="description" text="${stoStoreResources.descriptionHeader}" width="280"/>
+		<GridText name="storeId" propertyName="storeId" editable="false" text="${stoStoreResources.uniqueIDHeader}" width="140" visible="false"/>
+		<GridText name="storeCategory" propertyName="storeCategory" editable="false" text="${stoStoreResources.categoryHeader}" width="140" visible="false"/>
+	</ObjectGrid>
+	
+	<ChildListEditor definitionName="stoStoreGridEditor" listDefinitionName="stoStoreGrid" objectTypes="DirectStore,EsiteStore,AssetStore,HubStore,CatAssetStore,AuxiliaryStore"/>
+
+	<NavigationListDefinition definitionName="stoStoreGridChildList" 
+			displayName="${stoStoreResources.list}" 
+			listDefinitionName="stoStoreGridEditor" 
+			listTitle="${stoStoreResources.list}"/>
+			
+	<ObjectGrid definitionName="stoCurrencyPropertiesGrid" preferenceKey="stoCurrencyPropertiesGrid">
+		<GridComboBox name="storeCategory" propertyName="currency" editable="true" text="${stoStoreResources.currencyHeader}" required="true" width="180" />
+		<GridCheckbox name="defaultCurrency" propertyName="default" useRadioButton="true" alignment="center" editable="true" text="${stoStoreResources.defaultHeader}" required="true" width="90" />
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="stoLanguagePropertiesGrid" preferenceKey="stoLanguagePropertiesGrid">
+		<GridComboBox name="storeCategory" propertyName="language" editable="true" text="${stoStoreResources.languageHeader}" required="true" width="180" />
+		<GridCheckbox name="defaultLangugae" propertyName="default" useRadioButton="true" alignment="center" editable="true" text="${stoStoreResources.defaultHeader}" required="true" width="90" />
+	</ObjectGrid>
+
+	<ObjectGrid definitionName="stoStaticPagesGrid" preferenceKey="stoStaticPagesGrid">
+	    <GridIconTypeImage name="typeIcon" propertyName="" required="true" text="${stoStoreResources.typeHeader}" width="80" />
+	    <GridText name="staticPageName" editable="false" propertyName="staticPageName" required="true" text="${stoStoreResources.seoStaticPageHeader}" width="280" />
+	</ObjectGrid>	
+
+	<ChildListViewer definitionName="stoStaticPagesList" helpText="${stoStoreResources.seoStaticPageList_helpText}" listDefinitionName="stoStaticPagesGrid" promptText="${stoStoreResources.seoStaticPageListLabel}" />			
+	
+</Definitions>

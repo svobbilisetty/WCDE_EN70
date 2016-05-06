@@ -1,0 +1,265 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktOnlineBehaviorElementObject} flow element.
+		The generated text is shown beneath the element on the Activity Builder flow diagram.
+	-->
+	<class name="mktOnlineBehaviorSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="containsOperator" propertyName="containsOperator"/>
+		<wcfFlowSummaryParam name="anyOrAll" propertyName="anyOrAll"/>
+		<wcfFlowSummaryParam name="searchTermList" objectPath="searchTerm" propertyName="searchTerm"/>
+		<wcfFlowSummaryParam name="comparison" propertyName="comparison"/>
+		<wcfFlowSummaryParam name="urlName" propertyName="urlName"/>
+		<wcfFlowSummaryParam name="urlValueList" objectPath="urlValue" propertyName="urlValue"/>
+		<wcfFlowSummaryParam name="daysOperator" propertyName="daysOperator"/>
+		<wcfFlowSummaryParam name="days" propertyName="days"/>
+		<wcfFlowSummaryParam name="date1" propertyName="date1"/>
+		<wcfFlowSummaryParam name="date2" propertyName="date2"/>
+		<wcfFlowSummaryParam name="beforeDate" propertyName="beforeDate"/>
+		<wcfFlowSummaryParam name="beforeAfterOnDate" propertyName="beforeAfterOnDate"/>
+		<wcfFlowSummaryParam name="numberOfTimesOperator" propertyName="numberOfTimesOperator"/>
+		<wcfFlowSummaryParam name="numberOfTimes" propertyName="numberOfTimes"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAnyExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAllExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAnyStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAllStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAnyContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAllContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAnyEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summarySearchedAllEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryWithinLastXDaysSearched, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAtLeastXDaysAgoSearched, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBeforeXDateSearched, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAfterXDateSearched, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBetweenXandYDatesSearched, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryOnXDateSearched, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryLessThanSearched, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAtLeastSearched, "onstring");
+
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAnyExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAllExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAnyStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAllStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAnyContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAllContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAnyEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAllEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryURLAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryWithinLastXDaysURL, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAtLeastXDaysAgoURL, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBeforeXDateURL, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAfterXDateURL, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBetweenXandYDatesURL, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryOnXDateURL, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryLessThanURL, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAtLeastURL, "onstring");
+			
+			this.updateSummaryDel.register(mktMarketingResources.summaryNone, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var dateText = "";
+				var numberText = "";
+				
+				if(this.resolvedParams["elemTemplateName"] == "recordedCustomerBehaviorURLContents") {
+					summaryText = this.getURLSummary();
+					dateText = this.getDateSummary("URL");
+					numberText = this.getNumberSummary("URL");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "recordedCustomerBehaviorSearched") {
+					summaryText = this.getSearchSummary();
+					dateText = this.getDateSummary("Searched");
+					numberText = this.getNumberSummary("Searched");
+				}
+				
+				if((numberText != "") && (summaryText != "")) {
+					summaryText += "\n" + numberText;
+				}
+				if((dateText != "") && (summaryText != "")) {
+					summaryText += "\n" + dateText;
+				}
+				
+				if((this.resolvedParams["containsOperator"] == "!=") && (summaryText != "")) {
+					summaryText = mktMarketingResources.summaryNone.string + "\n" + summaryText;
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getURLSummary">
+			<![CDATA[
+				var summary = "";
+				var valueText = this.getValuesList("urlValueList");
+
+				var urlName = this.resolvedParams["urlName"];
+				var comparison = this.resolvedParams["comparison"];
+				var anyOrAll = this.resolvedParams["anyOrAll"];
+				
+				if((urlName != null) && (urlName != "") && (comparison != null) && (comparison != "") &&
+						((anyOrAll == "any") || (anyOrAll == "all"))) {
+					
+					var anyText = (anyOrAll == "any") ? "Any" : "All";
+					var compText = "";
+					
+					switch(comparison) {
+						case "=":
+							compText = "Exactly";
+							break;
+						case "start":
+							compText = "StartsWith";
+							break;
+						case "contain":
+							compText = "Contains";
+							break;
+						case "end":
+							compText = "Ends";
+							break;
+						case "any":
+							anyText = "";
+							compText = "Any";
+							break;
+					}
+					
+					if(((valueText != null) && (valueText != "")) || (compText == "Any")) {
+						summary = mktMarketingResources.replaceValues("summaryURL" + anyText + compText, [urlName, valueText]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getSearchSummary">
+			<![CDATA[
+				var summary = "";
+				var valueText = this.getValuesList("searchTermList");
+
+				var comparison = this.resolvedParams["comparison"];
+				var anyOrAll = this.resolvedParams["anyOrAll"];
+				
+				if((valueText != null) && (valueText != "") && (comparison != null) && (comparison != "") &&
+						((anyOrAll == "any") || (anyOrAll == "all"))) {
+					
+					var anyText = (anyOrAll == "any") ? "Any" : "All";
+					var compText = "";
+					
+					switch(comparison) {
+						case "=":
+							compText = "Exactly";
+							break;
+						case "start":
+							compText = "StartsWith";
+							break;
+						case "contain":
+							compText = "Contains";
+							break;
+						case "end":
+							compText = "Ends";
+							break;
+					}
+					
+					summary = mktMarketingResources.replaceValues("summarySearched" + anyText + compText, [valueText]);
+				}
+				
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getDateSummary" args="usage">
+			<![CDATA[
+				if(usage == undefined) {
+					usage = "Searched";
+				}
+				var summary = "";
+
+				if (this.resolvedParams["daysOperator"] == "<=") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryWithinLastXDays" + usage, [days]);
+					}
+				}
+				else if (this.resolvedParams["daysOperator"] == ">") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryAtLeastXDaysAgo" + usage, [days]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "<") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"], wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryBeforeXDate" + usage, [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryAfterXDate" + usage, [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">=" && this.resolvedParams["beforeDate"] == "<=") {
+					if(this.resolvedParams["date1"] != "" && this.resolvedParams["date2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryBetweenXandYDates" + usage, [date1, date2]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "=") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryOnXDate" + usage, [date1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getNumberSummary" args="usage">
+			<![CDATA[
+				if(usage == undefined) {
+					usage = "Searched";
+				}
+				var summary = "";
+
+				if(this.resolvedParams["numberOfTimes"] != "") {
+					if (this.resolvedParams["numberOfTimesOperator"] == "<") {
+						var numberOfTimes = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfTimes"]);
+						summary = mktMarketingResources.replaceValues("summaryLessThan" + usage, [numberOfTimes]);
+					}
+					else if (this.resolvedParams["numberOfTimesOperator"] == ">=") {
+						var numberOfTimes = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfTimes"]);
+						summary = mktMarketingResources.replaceValues("summaryAtLeast" + usage, [numberOfTimes]);
+					}
+				}
+				
+				return summary;
+			]]>
+		</method>
+	</class>
+
+</library>

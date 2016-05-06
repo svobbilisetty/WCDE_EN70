@@ -1,0 +1,84 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktDisplayBestSellersElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktDisplayBestSellersElementObject} object:
+		<ul>
+			<li>categoryNames</li>
+			<li>size</li>			
+			<li>location</li>
+			<li>intervalNum</li>
+		</ul>
+	-->
+	<class name="mktDisplayBestSellersSummary" extends="wcfFlowElementSummary">				
+		
+		<wcfFlowSummaryParam name="size" propertyName="size"/>
+		<wcfFlowSummaryParam name="location" propertyName="location"/>
+		<wcfFlowSummaryParam name="intervalNum" propertyName="intervalNum"/>
+		<wcfFlowSummaryParam name="categoryNames" objectPath="ChildCatalogGroup/CatalogGroupAlias/CatalogGroupDescription" propertyName="name"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.updateSummaryDel.register(mktMarketingResources.rankingBestSellersSummary, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRankingLocationSpecificCategory, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRankingLocationCurrentCategory, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryRankingLocationCurrentOrSubCategory, "onstring");				
+			]]>
+		</handler>
+		
+		<!---
+			Sets the summary text for the {@link mktDisplayBestSellersElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = this.getBestSellers();
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+
+		<!--- @keywords private -->
+		<method name="getBestSellers">
+			<![CDATA[
+				var summary = "";
+
+				var categoryText = this.getValuesList("categoryNames");
+				var size = this.getValuesList("size");
+				var intervalNum = this.getValuesList("intervalNum");
+				if(categoryText != "" && size != "" && intervalNum != "") {
+					var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(size);
+					var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(intervalNum);
+					summary = mktMarketingResources.replaceValues("rankingBestSellersSummary", [value1, categoryText, value2]);
+					
+					var location = this.resolvedParams["location"]; 
+					if((location == "specificCategory")) {
+						summary += "\n" + mktMarketingResources.summaryRankingLocationSpecificCategory.string;
+					} else if ((location == "currentCategory")) {
+						summary += "\n" + mktMarketingResources.summaryRankingLocationCurrentCategory.string;
+					} else if ((location == "currentOrSubCategory")) {
+						summary += "\n" + mktMarketingResources.summaryRankingLocationCurrentOrSubCategory.string;
+					}					
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+	</class>
+</library>

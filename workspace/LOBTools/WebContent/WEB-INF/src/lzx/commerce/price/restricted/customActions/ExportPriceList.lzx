@@ -1,0 +1,87 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		Get SSO token service. This is used to retrieve the SSO token for the current session.
+	-->
+	<wcfService id="getSSOToken" sendIdentity="true" sendWorkspaceContext="false" url="/cmc/GetSSOToken">
+		<!---
+			Parse the response values from the get SSO token service.
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				super.parseValues(requestParent, e, requestIdentifier);
+				requestParent.popupExportWindow();
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		This client action is used to export files for the specified price lists.
+	-->
+	<class name="prcExportPriceListClientAction" extends="wcfClientAction" displayName="${prcPriceResources.priceListExport.string}">
+		
+		<attribute name="exportUrl" type="string" />
+		
+		<!---
+			@keywords private
+			@param wcfModelObject objects: The array of selected model objects.
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+			// construct the URL to launch export page
+			var storeId = objects[0].getPropertyValue("objectStoreId");
+			var type = "PriceList";
+			var format = "csv";
+			var SSOToken = wcfContextUtil.findContextValue(null, "SSOToken").value;
+			this.exportUrl = "ExportServlet?storeId=" + storeId + "&type=" + type + "&format=" + format + "&priceListId=";
+			for (var i = 0; i < objects.length; i++) {
+				var ro = objects[i].getReferencedObject();
+				var objectId = ro.getPropertyValue(ro.objectDefinition.idProperty);
+				this.exportUrl = this.exportUrl + objectId;
+				if (i != objects.length - 1) {
+					this.exportUrl = this.exportUrl + ",";
+				}
+			}
+			getSSOToken.doRequest(this, {});
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="popupExportWindow">
+			<![CDATA[
+			var SSOToken = wcfContextUtil.findContextValue(null, "SSOToken").value;
+			this.exportUrl = this.exportUrl + "&ActivityToken=" + SSOToken;
+			
+			// put together an object containing all required parameters
+			var newWindowObj = new Object();
+			newWindowObj.URL = exportUrl;
+			newWindowObj.windowName = "Export";
+			newWindowObj.windowFeatures = "left=0,top=0,width=1014,height=710,scrollbars=no,toolbar=no,directories=no,status=no,menubar=no,copyhistory=no,resizable=yes";
+			// call the javascript method in the parent window to launch export page
+			callJSFunction("openNewWindow", newWindowObj);
+			]]>
+		</method>
+	</class>
+
+</library>

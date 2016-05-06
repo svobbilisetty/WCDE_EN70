@@ -1,0 +1,176 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		@keywords private
+		
+		This class defines the content in message console dialog. It extends wcfDialog for dialog
+		implementation, and it contains the filter, message list and dialog buttons as the content.
+	-->
+	<class name="wcfMessageConsoleDialog" extends="wcfDialog"
+		title="${shellResourceBundle.messageConsoleDialogTitle.string}"
+		contentPaddingLeftSize="0"
+		contentPaddingRightSize="0"
+		contentPaddingTopSize="0"
+		contentPaddingBottomSize="0">
+
+		<!---
+			Indicates that the clear option is currently enabled.
+		-->
+		<attribute name="clearEnabled" type="boolean" value="false"/>
+		<!---
+			Indicates that the copy option is currently enabled.
+		-->
+		<attribute name="copyEnabled" type="boolean" value="false"/>
+		<!---
+			Model object list instance.
+		-->
+		<attribute name="oList" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.oList = new lz.wcfModelObjectList(this, {
+				v: this.messageConsoleGridView.messageConsoleGrid,
+				modelObjects: [],
+				ignoreReferenceCount: true
+			});
+			]]>
+		</method>
+		
+		<!---
+			Open the message console dialog.
+		-->
+		<method name="openWindow">
+			<![CDATA[
+			super.openWindow();
+			this.updateMessages();
+			]]>
+		</method>
+		
+		<!---
+			Close the message console dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.updateMessages();
+			]]>
+		</method>
+		
+		<!---
+			Update the messages.
+		-->
+		<method name="updateMessages">
+			<![CDATA[
+			var messages = [];
+			if (this.visible) {
+				messages = messageLogger.messages;
+			}
+			this.messageConsoleGridView.messageConsoleGrid.clearSelection();
+			this.oList.setAttribute("modelObjects", messages);
+			this.updateEnabled();
+			]]>
+		</method>
+		
+		<method name="updateEnabled">
+			<![CDATA[
+			var selectedMessages = this.messageConsoleGridView.messageConsoleGrid.getSelectedMessages();
+			var isEnabled = selectedMessages.length > 0;
+			this.setAttribute("copyEnabled", isEnabled);
+			for (var i = 0; i < selectedMessages.length; i++) {
+				var m = selectedMessages[i];
+				if (m.messageType == "ERROR") {
+					isEnabled = false;
+				}
+			}
+			this.setAttribute("clearEnabled", isEnabled);
+			]]>
+		</method>
+
+		<!---
+			Set initial focus to the filter selector.
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+				lz.Focus.setFocus(this.messageConsoleGridView.messageConsoleGrid.filterSelectorArea.filterSelector, false);
+			]]>
+		</method>
+
+		<view name="messageConsoleGridView" width="740" height="300" clip="true">
+			<attribute name="availableWidth" type="number" value="${width}"/>
+			<attribute name="availableHeight" type="number" value="${height}"/>
+
+			<wcfMessageGrid name="messageConsoleGrid"
+					filterHelpText="${shellResourceBundle.messageConsoleDialogFilterHelp.string}"
+					filterExtendedHelpText="${shellResourceBundle.messageConsoleDialogFilterExtendedHelp.string}"
+					filterHelpLinkURL="tasks/ttfviewmessages.htm">
+				<wcfMessageGridType name="typeColumn" width="22" minWidth="22" sortable="true"/>
+				<wcfMessageGridMessage name="messageColumn" text="${shellResourceBundle.messageConsoleDialogListMessageColumn.string}" width="420" minWidth="100" sortable="true"/>
+				<wcfMessageGridObject name="objectColumn" text="${shellResourceBundle.messageConsoleDialogListObjectColumn.string}" width="129" sortable="true"/>
+				<wcfMessageGridDate name="dateColumn" text="${shellResourceBundle.messageConsoleDialogListDateTimeColumn.string}" width="170" sortable="true"/>
+				<wcfMessageTypeFilter displayName="${shellResourceBundle.messageConsoleDialogFilterOptionError.string}" messageType="ERROR" />
+				<wcfMessageTypeFilter displayName="${shellResourceBundle.messageConsoleDialogFilterOptionException.string}" messageType="EXCEPTION" />
+				<wcfMessageTypeFilter displayName="${shellResourceBundle.messageConsoleDialogFilterOptionStatus.string}" messageType="STATUS" />
+		
+				<!--- @keywords private -->
+				<handler name="onselect">
+					<![CDATA[
+					classroot.updateEnabled();
+					]]>
+				</handler>
+			</wcfMessageGrid>
+		</view>
+
+		<view name="messageConsoleButtonView" placement="footer">
+			<wcfButton name="messageConsoleCopyToClipboard" text="${shellResourceBundle.copyButton.string}" enabled="${classroot.copyEnabled}">
+				<handler name="onclick">
+					messageLogger.copyMessageToClipBoard(classroot.messageConsoleGridView.messageConsoleGrid.getSelectedMessages());
+				</handler>
+				<!--- @keywords private -->
+				<method name="doEnterDown">
+					<![CDATA[
+					super.doEnterDown();
+					if ( this._enabled) {
+						this.onclick.sendEvent();
+					}
+					]]>
+				</method>
+				<!--- @keywords private -->
+				<method name="doSpaceDown">
+					<![CDATA[
+					super.doSpaceDown();
+					if ( this._enabled) {
+						this.onclick.sendEvent();
+					}
+					]]>
+				</method>
+			</wcfButton>
+			<wcfButton name="messageConsoleClearButton" text="${shellResourceBundle.clearButton.string}" enabled="${classroot.clearEnabled}">
+				<handler name="onclick">
+					<![CDATA[
+					messageLogger.clear(classroot.messageConsoleGridView.messageConsoleGrid.getSelectedMessages());
+					classroot.updateMessages();
+					]]>
+				</handler>
+			</wcfButton>
+			<wcfButton name="messageConsoleCloseButton" text="${shellResourceBundle.closeButton.string}" onclick="classroot.closeWindow();" isdefault="true" />
+			<simplelayout axis="x" spacing="5" />
+		</view>
+
+	</class>
+
+</library>

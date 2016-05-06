@@ -1,0 +1,78 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		This text viewer takes the SEO static page URL keyword and generates the full URL for display.
+	-->
+	<class name="stoUrlViewer" extends="wcfTextViewer" fgcolor="0x676767">
+		<!---
+			Generates and returns the full URL based on the properties value and sets it as the text
+			to be displayed in the viewer.
+			@param lz.Delegate del An optional delegate to call when a change in property value is caused by the value service.
+			@returns string: display value
+		-->
+		<method name="getDisplayValue" args="del">
+			<![CDATA[			
+			var displayValue = "";
+			
+			if (this.property != null) {
+				var prefixUrlProperty = this.property.o.getProperty("staticPagePrefixUrl");
+				del.register(prefixUrlProperty, "onvalue");
+				
+				var urlKeywordValue = this.property.value;
+				var prefixUrlValue = prefixUrlProperty.value;
+				
+				if (prefixUrlValue != "" && prefixUrlValue.indexOf("$SEO:PRIMARYTOKEN$") != -1 && urlKeywordValue != "") {
+					var fullURL = wcfStringUtil.replace(prefixUrlValue,"$SEO:PRIMARYTOKEN$", urlKeywordValue);
+					displayValue = stoStoreResources.replaceValues("seoStaticPageUrlPreviewPrompt", [fullURL]);
+					
+				}
+			}
+			
+			return displayValue;
+			]]>
+		</method>
+	</class>
+	
+	<!-- @keywords private -->
+	<class name="stoUrlPreview">
+		<simplelayout axis="y" spacing="3"/>	
+		<wcfTextEditor property="${classroot.property}" width="${classroot.width}"/>
+		<stoUrlViewer property="${classroot.property}" width="${classroot.width}"/>
+	</class>
+	
+	<!-- @keywords private -->
+	<class name="stoPropertyUrlPreview" extends="wcfPropertyEditor" sizeToAvailableWidth="true">
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.stoUrlPreview(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				width: availableWidth,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+	
+</library>

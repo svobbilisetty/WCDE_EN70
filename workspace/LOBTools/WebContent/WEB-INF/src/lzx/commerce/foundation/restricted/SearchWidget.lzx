@@ -1,0 +1,275 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- 
+		@keywords private
+		
+		Business Object Editor main search widget.
+	-->
+	<class name="wcfSearchWidget">
+		<!---
+			Reference to the business object editor. This is a required attribute.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			Array of search definitions.
+		-->
+		<attribute name="searchDefinitions" value="${[]}"/>
+		<!---
+			Current definition.
+		-->
+		<attribute name="currentDefinition" value="null"/>
+		<!---
+			Default search definition.
+		-->
+		<attribute name="defaultDefinition" value="null"/>
+		<!---
+			Current search options for this search widget.
+		-->
+		<attribute name="searchOptions" value="${{}}"/>
+
+		<simplelayout axis="x" />
+		<wcfCenterLayout axis="y"/>
+		
+		<view name="searchTextArea">
+			<view resource="${parent.searchText.enabled ? 'searchTextBackground' : 'searchTextDisabledBackground'}" />
+			<view name="currentSearchIcon" x="1" y="3" width="16" height="16" clickable="true">
+				<wcfTooltip name="currentSearchTip"/>
+			</view>
+			<inputtext name="searchText" y="1" x="17" width="116">
+				<!--- @keywords private -->
+				<handler name="onfocus">
+					<![CDATA[
+					if(!this["indicator"]){
+				    	new lz.wcfFocusIndicator(this, {
+					    	name: "indicator",
+					    	focusableView: this,
+					    	indicatorView: this
+					    });
+				    }
+					]]>
+				</handler>
+				<handler name="onkeydown" args="kc">
+					<![CDATA[
+					if (kc == 13) {
+						classroot.doSearch();
+					}
+					]]>
+				</handler>
+				
+				<handler name="oninit"><![CDATA[
+					this.setAttribute('enabled', classroot["oEditor"] && classroot.oEditor.isStoreSelected); 
+					]]>
+				</handler>
+				
+				<handler name="onisStoreSelected" reference="classroot.oEditor">
+					<![CDATA[
+					this.setAttribute('enabled', classroot.oEditor.isStoreSelected);
+					]]>
+				</handler>
+			</inputtext>
+		</view>
+		<wcfActionListButton name="searchButton" enabled="${classroot.oEditor.isStoreSelected}">
+			<attribute name="buttonResource" value="searchButtonResource"/>
+			<attribute name="dropdownResource" value="searchDropdownResource"/>
+			<attribute name="dropdownOffset" value="0"/>
+			<attribute name="displaySelectedIndicator" value="true"/>
+			
+			<wcfTooltip text="${foundationResources.searchButtonTip.string}" linkURL="tasks/ttfsearch.htm" extendedText="${foundationResources.searchButtonTipExtendedHelp.string}"/>
+			
+			<method name="doAction" args="definition">
+				<![CDATA[
+				if (!definition && classroot.currentDefinition == null) {
+					classroot.currentDefinition = classroot.defaultDefinition;
+				} else if (definition && definition != parent["advancedSearchActionDefinition"]) {
+					classroot.currentDefinition = definition;
+				}
+				parent.updateSearchIcon();
+				
+				if (definition && definition == parent["advancedSearchActionDefinition"]) {
+					classroot.advancedSearchActionDefinition.dialog.openWindow();
+				}
+				else {
+					// note: definition is passed in only when selecting from action list
+					if (typeof(definition) == "undefined" || definition == null) {
+						classroot.doSearch(classroot.currentDefinition);
+					}
+				}
+				]]>
+			</method>
+		</wcfActionListButton>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateSearchDefinitions();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateSearchDefinitionsDel"]) {
+				this.updateSearchDefinitionsDel.unregisterAll();
+				delete this.updateSearchDefinitionsDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateSearchDefinitions" args="e=null">
+			<![CDATA[
+			if (this["updateSearchDefinitionsDel"]) {
+				this.updateSearchDefinitionsDel.unregisterAll();
+			}
+			else {
+				this.updateSearchDefinitionsDel = new lz.Delegate(this, "updateSearchDefinitions");
+			}
+			var searchDefinitions = [];
+			this.defaultDefinition = this.oEditor.model.defaultSearchDefinition;
+			for (var i = 0; i < this.oEditor.model.searchDefinitions.length; i++) {
+				var def = this.oEditor.model.searchDefinitions[i];
+				if (def.listClass != null) {
+					if (def.enablementCondition == null || def.enablementCondition.isEnabled(null)) {
+						searchDefinitions.push(def);
+						if(def == this.defaultDefinition) {
+							this.currentDefinition = null;
+						}
+					}
+					else {
+						if (this.defaultDefinition == def) {
+							this.defaultDefinition = null;
+						}
+						if (this.currentDefinition == def) {
+							this.currentDefinition = null;
+						}
+					}
+					if (def.enablementCondition != null) {
+						def.enablementCondition.registerDelegate(null, this.updateSearchDefinitionsDel);
+					}
+				}
+			}
+			var advancedSearchDefinitions = [];
+			for (var i = 0; i < searchDefinitions.length; i++) {
+				var def = searchDefinitions[i];
+				if (def.advancedSearchContentClass != null) {
+					advancedSearchDefinitions.push(def);
+				}
+			}
+			if (advancedSearchDefinitions.length > 0) {
+				if (!this["advancedSearchActionDefinition"]) {
+					new lz.wcfAdvancedSearchActionDefinition(this, {
+						name: "advancedSearchActionDefinition",
+						searchDefinitions: advancedSearchDefinitions,
+						addSeparatorBefore:true,
+						oEditor: this.oEditor
+					});
+				}
+				else {
+					this.advancedSearchActionDefinition.setAttribute("searchDefinitions", advancedSearchDefinitions);
+				}
+				searchDefinitions.push(this.advancedSearchActionDefinition);
+			}
+			this.searchButton.setAttribute("actionDefinitions", searchDefinitions);
+			if (this.defaultDefinition == null) {
+				this.defaultDefinition = searchDefinitions[0];
+			}
+			if (this.currentDefinition == null) {
+				this.searchButton.setAttribute("defaultActionDefinition", this.defaultDefinition);
+				this.searchButton.actionList.setAttribute("value", this.defaultDefinition);
+				this.searchTextArea.searchText.setAttribute("text", "");
+				this.setAttribute("currentDefinition", this.defaultDefinition);
+				this.updateSearchIcon();
+			}
+			this.searchDefinitions = searchDefinitions;
+			]]>
+		</method>
+		
+		<!--- Reset this search widget to the model's default search definition. -->
+		<method name="reset">
+			<![CDATA[
+			this.currentDefinition = null;
+			this.updateSearchDefinitions();
+			this.updateSearchIcon();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateSearchIcon">
+			<![CDATA[
+			var icon = "";
+			var tooltip = "";
+			var displayName = "";
+			if (this.currentDefinition != null) {
+				icon = this.currentDefinition.icon;
+				tooltip = this.currentDefinition.tooltip;
+				displayName = this.currentDefinition.displayName;
+			}
+			if (icon == "") {
+				this.searchTextArea.currentSearchIcon.setAttribute("width", 0);
+				this.searchTextArea.searchText.setAttribute("x", 1);
+				this.searchTextArea.searchText.setAttribute("width", 133);
+			}
+			else {
+				this.searchTextArea.currentSearchIcon.setAttribute("width", 16);
+				this.searchTextArea.searchText.setAttribute("x", 17);
+				this.searchTextArea.searchText.setAttribute("width", 116);
+			}
+			this.searchTextArea.currentSearchIcon.setAttribute("resource", icon == '' ? null : icon);
+			this.searchTextArea.currentSearchIcon.currentSearchTip.setAttribute("extendedText", tooltip);
+			this.searchTextArea.currentSearchIcon.currentSearchTip.setAttribute("text", displayName);
+			]]>
+		</method>
+		
+		<!---
+			Invoke a new search request for the specified search definition.
+			@param wcfSearchDefinition definition: the search definition
+			@param object options: search options
+		-->
+		<method name="doSearch" args="definition=null, options=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+		    	wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfSearchWidget", "doSearch", "options: " + options);				
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSearchWidget doSearch: " + this.searchTextArea.searchText.getText());
+			if (options == null) {
+				var searchText = this.searchTextArea.searchText.getText();
+				this.searchOptions = {};
+				this.searchOptions.searchText = searchText;
+			}
+			else {
+				this.searchOptions = options;
+			}
+			
+			if (definition == null) {
+				definition = this.currentDefinition;
+			}
+			
+			messageLogger.clearStatusMessage();
+			this.oEditor.model.doSearch(definition.searchType, this.searchOptions);
+			this.oEditor.navigationTree.searchResultsTree.setAttribute("searchDefinition", definition);
+			this.oEditor.navigationTree.searchResultsTree.setAttribute("selected", true);
+			this.oEditor.navigationTree.searchResultsTree.changeFocus(null);
+			
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.enabled) {
+		    	wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "CONFIG", "wcfSearchWidget", "END doSearch", "options: " + options);				
+			}
+			]]>
+		</method>
+	</class>
+
+</library>

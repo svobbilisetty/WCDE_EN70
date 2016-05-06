@@ -1,0 +1,848 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		Input text widget that is similar to wcfPropertyInputText but does not understand the object model.
+		@keywords private
+	-->
+	<class name="mktEmailInputText" extends="basecomponent" width="235" focusable="false">
+		<!---
+			Indicates that this properties view component is a required.
+			@keywords private
+		-->
+		<attribute name="required" value="false" type="boolean" />
+		<!---
+			The prompt text for this properties view component.
+			@keywords private
+		-->
+		<attribute name="promptText" value="${null}" type="string"/>
+		<!--- @keywords private -->
+		<attribute name="helpText" value="${null}" type="string"/>
+		<!---
+			input text value
+			@keywords private
+		-->
+		<attribute name="value" type="string" value=""/>
+		<!--- Amount of padding to add to the left of the input widget -->
+		<attribute name="editorPadding" type="number" value="0"/>
+		<!--- Colour of the label text -->
+		<attribute name="labelColor" value="${this.style.texthilitecolor}"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+				this.createPrompt();
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This handler recreates the prompt if the user changes their tooltip preference
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCEnableExtendedHelp preference
+				if (preference == "CMCEnableExtendedHelp") {
+					//destroy the extendedHelpIcon
+					if (this.prompt["extendedHelpIcon"]) {
+						this.prompt.extendedHelpIcon.destroy();
+					}
+
+					//destroy the prompt
+					this.prompt.prompt.destroy();
+
+					//re-create the prompt
+					this.createPrompt();
+				}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			Creates the prompt.
+		-->
+		<method name="createPrompt">
+		<![CDATA[
+			var indent = 0;
+			var promptWidth = 177;
+			var totalWidth = 0;
+			new lz.mktPropertiesComponentPrompt(this.prompt, {
+				name: "prompt",
+				width: 100,
+				multiline: true,
+				fgcolor: this.labelColor,
+				resize: true,
+				x: indent,
+				y: this.style.forminputbordersize,
+				required: this.required
+			});
+
+			if ((preferenceManager.getPreference("CMCEnableExtendedHelp") == "true") && (this.helpText != null && this.helpText != "")) {
+				new lz.wcfExtendedHelpIcon(this.prompt, {
+					name: "extendedHelpIcon",
+					helpText: this.helpText,
+					x: indent + this.prompt.prompt.width,
+					y: this.style.forminputbordersize
+				});
+				totalWidth += this.prompt.extendedHelpIcon.width;
+			}
+			this.prompt.prompt.setAttribute('width', promptWidth-totalWidth);
+			if(this.prompt["extendedHelpIcon"]){
+				this.prompt.extendedHelpIcon.setAttribute('x',(this.prompt.prompt.x+this.prompt.prompt.width));
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Sets and updates the text in the input box.
+		-->
+		<method name="setText" args="text">
+			<![CDATA[
+			this.inputbox.setText(text);
+			]]>
+		</method>
+
+		<view name="prompt"/>
+
+		<wcfInputText name="inputbox" x="${parent.prompt.x + parent.prompt.width + 6 + classroot.editorPadding}">
+			<handler name="ontext">
+				classroot.setAttribute("value", this.getText());
+			</handler>
+		</wcfInputText>
+	</class>
+
+	<!--- @keywords private -->
+	<class name="mktTextlistitem" extends="node">
+		<attribute name="displayName" type="string"/>
+		<attribute name="value" type="string"/>
+		<attribute name="selected" type="boolean" value="false"/>
+		<attribute name="hide" type="boolean" value="false"/>
+
+		<handler name="oninit">
+			<![CDATA[
+				parent.addValue(this);
+				if(this.selected){
+					parent.selectItem(this.value);
+				}
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		@keywords private
+		Convenience class that extends {@OLlink text} and enforces text to be right-aligned.
+	-->
+	<class name="mktText" extends="text" multiline="true">
+		<setter name="text" args="t">
+			<![CDATA[
+				t = "<p align='right'>" + t + "</p>";
+				super.setAttribute("text", t);
+			]]>
+		</setter>
+	</class>
+
+	<!---
+		@keywords final
+		
+		mktPropertyEmailTemplateRichTextEditor is a property editor and is used to create a rich text editor that binds to a property 
+		value {@link wcfModelProperty}. Use mktPropertyEmailTemplateRichTextEditor inside a {@link wcfPropertyPane} or {@link wcfPropertyGroup}
+		for the properties view of an {@link mktEmailTemplatePrimaryObjectDefinition} object.
+	-->
+	<class name="mktPropertyEmailTemplateRichTextEditor" extends="wcfPropertyEditor" sizeToAvailableWidth="true" minWidth="708">
+		<!---
+			Name of the property that indicates whether the e-mail is plain text or HTML-based.
+			@deprecated This attribute is no longer used as plain text (HTML source) support is now built into
+				base rich text editor.
+		-->
+		<attribute name="plainTextPropertyName" type="string" value="${null}"/>
+		<!---
+			Name of the property that indicates whether Coremetrics is being used.
+			@deprecated This attribute has been replaced by the more generic <code>analyticsPropertyName</code>
+				property. If {@link mktPropertyEmailTemplateRichTextEditor#analyticsPropertyName}
+				is provided, this attribute is ignored.
+		-->
+		<attribute name="coremetricsPropertyName" type="string" value="${null}"/>
+		<!---
+			Name of the property that contains the name/value pair defined in
+			{@link mktPropertyEmailTemplateRichTextEditor#analyticsPropertyNVPName}. The
+			default value is <code>propertyFile</code>.
+		-->
+		<attribute name="analyticsPropertyName" type="string" value="propertyFile"/>
+		<!---
+			The name of the name/value pair stored in {@link mktPropertyEmailTemplateRichTextEditor#analyticsPropertyName}
+			that indicates whether or not an analytics provider is being used. If analytics should be collected,
+			the value of the name/value pair must be the string <code>true</code>. The
+			default value is <code>cmTrack</code>.
+		-->
+		<attribute name="analyticsPropertyNVPName" type="string" value="cmTrack"/>
+		<!---
+			The value of the name/value pair stored in {@link mktPropertyEmailTemplateRichTextEditor#analyticsPropertyName}.
+			If analytics should be collected, the value of the name/value pair must match this attribute value. The
+			default value is <code>true</code>.
+		-->
+		<attribute name="analyticsPropertyNVPTrueValue" type="string" value="true"/>
+		<!---
+			The name of the analytics provider as defined in biConfig.xml. The
+			default value is <code>coremetrics</code>.
+		-->
+		<attribute name="analyticsProvider" type="string" value="coremetrics"/>
+		<!---
+			<p>Array of strings that contain sets of search and replacement values. The length of this array must be an even
+			number and is in the format <code>['searchKey1', 'replacement1', 'searchKey2', 'replacement2', ... , 'searchKeyN', 'replacementN']</code>.
+			All values should be XML-encoded.</p>
+			
+			<p>Search key values are displayed in the rich text editor to the business user, where as replacement values are persisted on the server. The
+			search and replace action is performed when the user saves the e-mail template and the reverse is performed when the user loads an e-mail template.</p>
+			
+			<p>The default value is <code>['e-mail:Link', 'e-mail:CMLink', 'e-mail:EMSpot', 'e-mail:EMSpot cmaction=&amp;quot;1&amp;quot;', 'e-mail:Content', 'e-mail:Content cmaction=&amp;quot;1&amp;quot;']</code>.</p>
+		-->
+		<attribute name="replacementArray" value="['e-mail:Link', 'e-mail:CMLink', 'e-mail:EMSpot', 'e-mail:EMSpot cmaction=&quot;1&quot;', 'e-mail:Content', 'e-mail:Content cmaction=&quot;1&quot;']"/>
+		<!--- @keywords private -->
+		<attribute name="replacementArray__type" type="string" value="array"/>
+		<!---
+			<p>This flag controls the default protocol used when generating links to the store front. If this value is <code>true</code>, links
+			will be generated using regular HTTP (ie: http), by default. If this value is <code>false</code>, secure HTTP (ie: https) will be used,
+			by default.</p>
+			
+			<p>The protocol for each individual link can changed by the business user by modifying the <code>useHttp<code>
+			attribute on the <code>e-mail:Link</code> tag in the e-mail template. For example:
+			@START_CODE
+			<e-mail:Link type="shoppingCart" sku="ABC-123" name="Product X" emailaction="0" useHttp="false" />
+			<e-mail:Link type="product" sku="XYZ-789" name="Product Y" emailaction="0" useHttp="true" />
+			@END_CODE
+			The link to add Product X to the shopping cart will be generated using HTTPS and the link to show Product Y will be generated using HTTP.</p>
+			
+			<p>The default value for this flag is <code>false<code>.</p>
+		-->
+		<attribute name="useHttpForLinks" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			var analyticsProperty = (this.analyticsPropertyName) ? this.analyticsPropertyName : this.coremetricsPropertyName;
+			
+			var rte = new lz.mktEmailTemplateRichTextEditor(parentComponent, {
+				name: "editor",
+				o: parentComponent.o,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				enabled: parentComponent.enabled,
+				textAreaHeight: 140,
+				width: availableWidth,
+				analyticsPropertyName: analyticsProperty,
+				analyticsPropertyNVPName: this.analyticsPropertyNVPName,
+				analyticsPropertyNVPTrueValue: this.analyticsPropertyNVPTrueValue,
+				analyticsProvider: this.analyticsProvider,
+				replacementArray: this.replacementArray,
+				useHttpForLinks: this.useHttpForLinks
+			});
+			rte.setAttribute("property", parentComponent.property);
+			]]>
+		</method>
+
+	</class>
+
+	<!---
+		Marketing extension of the wcfRichTextEditor. E-mail specific forms are added below the editor as well as
+		some pre- and post-processing of the data to support the &lt;e-mail/&gt; tags.
+		@keywords private
+	-->
+	<class name="mktEmailTemplateRichTextEditor" extends="wcfRichTextEditor" editorPadding="7" usePercentageFontSizes="false">
+		<!---
+			Flag to indicate whether or not an analytics provider is defined for the store
+			@keywords private
+		-->
+		<attribute name="analyticsEnabled" type="boolean" value="false"/>
+		<!---
+			Flag to indicate whether or not to track e-mails with analytics provider
+			@keywords private
+		-->
+		<attribute name="useAnalytics" type="boolean" value="false"/>
+		<!---
+			The name of the analytics provider as defined in biConfig.xml.
+		-->
+		<attribute name="analyticsProvider" type="string" value=""/>
+		<!---
+			Name of the property that contains the name/value pair defined in
+			{@link mktPropertyEmailTemplateRichTextEditor#analyticsPropertyNameValuePair}.
+		-->
+		<attribute name="analyticsPropertyName" type="string" value=""/>
+		<!---
+			The name of the name/value pair stored in {@link mktEmailTemplateRichTextEditor#analyticsPropertyName}
+			that indicates whether or not an analytics provider is being used. If analytics should be collected,
+			the value of the name/value pair must be the string <code>true</code>.
+		-->
+		<attribute name="analyticsPropertyNVPName" type="string" value=""/>
+		<!---
+			The value of the name/value pair stored in {@link mktPropertyEmailTemplateRichTextEditor#analyticsPropertyName}.
+			If analytics should be collected, the value of the name/value pair must match this attribute value. The
+			default value is <code>true</code>.
+		-->
+		<attribute name="analyticsPropertyNVPTrueValue" type="string" value="true"/>
+		<!---
+			<p>Array of strings that contain sets of search and replacement values. The length of this array must be an even
+			number and is in the format <code>['searchKey1', 'replacement1', 'searchKey2', 'replacement2', ... , 'searchKeyN', 'replacementN']</code>.
+			All values should be XML-encoded.</p>
+			
+			<p>Search key values are displayed in the rich text editor to the business user, where as replacement values are persisted on the server. The
+			search and replace action is performed when the user saves the e-mail template and the reverse is performed when the user loads an e-mail template.</p>
+		-->
+		<attribute name="replacementArray" value="[]"/>
+		<!--- @keywords private -->
+		<attribute name="replacementArray__type" type="string" value="array"/>
+		<!---
+			<p>This flag controls the default protocol used when generating links to the store front. If this value is <code>true</code>, links
+			will be generated using regular HTTP (ie: http), by default. If this value is <code>false</code>, secure HTTP (ie: https) will be used,
+			by default.</p>
+			
+			<p>The protocol for each individual link can changed by the business user by modifying the <code>useHttp<code>
+			attribute on the <code>e-mail:Link</code> tag in the e-mail template. For example:
+			@START_CODE
+			<e-mail:Link type="shoppingCart" sku="ABC-123" name="Product X" emailaction="0" useHttp="false" />
+			<e-mail:Link type="product" sku="XYZ-789" name="Product Y" emailaction="0" useHttp="true" />
+			@END_CODE
+			The link to add Product X to the shopping cart will be generated using HTTPS and the link to show Product Y will be generated using HTTP.</p>
+			
+			<p>The default value for this flag is <code>false<code>.</p>
+		-->
+		<attribute name="useHttpForLinks" type="boolean" value="false"/>
+		
+		<!---
+			Whether or not the Add to Wish List option should be shown. This flag is set by
+			{@link mktEmailTemplateRichTextEditor#updateShowWishList} and should not be changed directly.
+			@keywords private
+		-->
+		<attribute name="showWishListOption" type="boolean" value="true"/>
+
+		<!--- @keywords private -->
+		<attribute name="o" setter="this.setModelObject(o)"/>
+
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+			this.updateValuesDel = new lz.Delegate(this, "updateValues");
+			this.showWishListDel = new lz.Delegate(this, "updateShowWishList");
+			this.o = null;
+			super.construct(args, parent);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateShowWishList();
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateValuesDel.unregisterAll();
+			delete this.updateValuesDel;
+
+			this.showWishListDel.unregisterAll();
+			delete this.showWishListDel;
+		
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Updates the @{link mktEmailTemplateRichTextEditor#showWishListOption} flag which controls whether or not the "Add to Wish List" item
+			is available. Wish lists are not supported on stores that are not direct to the consumer. These store types include "B2B", "BBB",
+			"BRH", "BRP", "BMH", "BMP", "CHS", "CPS", "SCS", "DPS", "DPX", "SCP", "SPS", "SHS", "HCP", and "PBS".
+			See the documentation for the STORE table in the WebSphere Commerce Information Center for more information about store types.
+		-->
+		<method name="updateShowWishList" args="e=null">
+			<![CDATA[
+			this.showWishListDel.unregisterAll();
+			if (this["o"]) {
+				var storeTypeContextValue = wcfContextUtil.findContextValue(this.o, "storeType", this.showWishListDel);
+				if(storeTypeContextValue != null) {
+					var b2bStores = ["B2B", "BBB", "BRH", "BRP", "BMH", "BMP", "CHS", "CPS", "SCS", "DPS", "DPX", "SCP", "SPS", "SHS", "HCP", "PBS"];
+					
+					var showWishList = true;
+					for(var i = 0; i < b2bStores.length; i++) {
+						if(storeTypeContextValue.value == b2bStores[i]) {
+							showWishList = false;
+							break;
+						}
+					}
+					this.setAttribute("showWishListOption", showWishList);
+
+					if(this["linkForm"]) {
+						var predefineSelector = this.linkForm.predefinedView.select.actionSelect;
+						predefineSelector.wishList.hide = !this.showWishListOption;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			this["_modelObjectLock"] = true;
+
+			if (newObject !== this.o) {
+				this.updateValuesDel.unregisterAll();
+				this.o = newObject;
+
+				if (this.o != null) {
+					if (this["property"] && this.property.o != this.o) {
+						this.setAttribute("property", null);
+					}
+					
+					if(this.analyticsPropertyName != null) {
+						var trackProp = this.o.getProperty(this.analyticsPropertyName);
+						if(trackProp != null) {
+							this.updateValuesDel.register(trackProp, "onvalue");
+						}
+					}
+					this.updateValues();
+					this.updateShowWishList();
+				}
+				
+				// need to update child list editors with new object and blank out input boxes
+				if(this["linkForm"]) {
+					this.linkForm.predefinedView.productView.product.editor.setModelObject(this.o);
+					this.linkForm.predefinedView.categoryView.category.editor.setModelObject(this.o);
+					this.linkForm.predefinedView.shopcartView.item.editor.setModelObject(this.o);
+					this.linkForm.predefinedView.wishlistView.item.editor.setModelObject(this.o);
+					this.linkForm.predefinedView.couponView.coupon.editor.setModelObject(this.o);
+					this.contentSpotForm.content.editor.setModelObject(this.o);
+					this.emSpotForm.emspot.editor.setModelObject(this.o);
+					this.promotionForm.promotion.editor.setModelObject(this.o);
+					
+					this.linkForm.predefinedView.unsubscribeView.url.setText("");
+					this.linkForm.predefinedView.unsubscribeView.urlText.setText("");
+					this.linkForm.urlView.url.setText("");
+					this.linkForm.urlView.urlText.setText("");
+					this.linkForm.linkName.setText("");
+				}
+			}
+			this["_modelObjectLock"] = false;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateValues" args="e=null">
+			<![CDATA[
+			// We need to control the events that get fired on the rich text editor.
+			// Only events are generated when changes to property values are a result of the user. Changes
+			// made by the model do not generate events. This is due to the fact that there are many property objects
+			// involved and if each property update generates an event, the data gets out of sync between objects.
+
+			var sendEvent = (this["_modelObjectLock"] == false);
+
+			var storeConfig = wcfContextUtil.findStoreConfig(this.o);
+			var analyticsEnabled = (storeConfig != null) && (storeConfig.analytics.isEnabled == 'true') && (storeConfig.analytics.provider == this.analyticsProvider);
+			if(sendEvent) {
+				this.setAttribute("analyticsEnabled", analyticsEnabled);
+			}
+			else {
+				this.analyticsEnabled = analyticsEnabled;
+			}
+
+			if(analyticsEnabled && (this.analyticsPropertyName != null)) {
+				var propertyNVP = this.o.getPropertyValue(this.analyticsPropertyName);
+				// check for 'NVP=true'
+				var isUsingAnalytics = (propertyNVP.indexOf(this.analyticsPropertyNVPName + "=" + this.analyticsPropertyNVPTrueValue) != -1);
+				if(sendEvent) {
+					this.setAttribute("useAnalytics", isUsingAnalytics);
+				}
+				else {
+					this.useAnalytics = isUsingAnalytics;
+				}
+			}
+			else {
+				if(sendEvent) {
+					this.setAttribute("useAnalytics", false);
+				}
+				else {
+					this.useAnalytics = false;
+				}
+			}
+			]]>
+		</method>
+
+		<handler name="onuseAnalytics">
+			<![CDATA[
+				var analyticsProp = this.o.getProperty(this.analyticsPropertyName);
+				if(analyticsProp.dirty) {
+					this.storeValue();
+				}
+			]]>
+		</handler>
+
+		<!---
+			Escape &lt;e-mail/&gt; tags so the rich text editor displays them.
+			Also hide analytics logic from the user.
+			@param string text: the original text from the server
+			@returns string: The input text with escaped &lt;e-mail/&gt; tags
+			@keywords private
+		-->
+		<method name="preFilter" args="text">
+			<![CDATA[
+				// replace analytics markup
+				if(this.useAnalytics && (this.replacementArray.length % 2 == 0)) {
+					for(var i = 0; i < this.replacementArray.length; i = i + 2) {
+						var strSearch = this.replacementArray[i + 1];
+						var strReplace = this.replacementArray[i];
+						text = wcfStringUtil.replace(text, strSearch, strReplace);
+					}
+				}
+
+				var startTag = "<e-mail:";
+				var endTag = "/>"
+
+				var start = "";
+				var middle = "";
+				var end = "";
+				var startIdx = text.indexOf(startTag);
+				var endIdx = text.indexOf(endTag, startIdx);
+
+				// escape tags
+				while((startIdx != -1) && (endIdx != -1)) {
+					start = text.substring(0, startIdx);
+					middle = text.substring(startIdx + 1, endIdx);
+					middle = wcfStringUtil.replace(middle, "&", "&amp;");
+					middle = wcfStringUtil.replace(middle, "\"", "&quot;");
+					end = text.substring(endIdx + 2, text.length);
+
+					text = start + "&lt;" + middle + "/&gt;" + end;
+
+					startIdx = text.indexOf(startTag);
+					endIdx = text.indexOf(endTag, startIdx);
+				}
+
+				return text;
+			]]>
+		</method>
+
+		<!---
+			Unescape <e-mail/> tags before we send to the service as runtime expects them
+			@param string text: the escaped text from the rich text editor
+			@returns string: The input text with unescaped &lt;e-mail/&gt; tags
+			@keywords private
+		-->
+		<method name="postFilter" args="text">
+			<![CDATA[
+				// replace analytics markup
+				if(this.useAnalytics && (this.replacementArray.length % 2 == 0)) {
+					for(var i = 0; i < this.replacementArray.length; i = i + 2) {
+						var strSearch = this.replacementArray[i];
+						var strReplace = this.replacementArray[i + 1];
+						text = wcfStringUtil.replace(text, strSearch, strReplace);
+					}
+				}
+
+				var startTag = "&lt;e-mail:";
+				var endTag = "/&gt;"
+
+				var start = "";
+				var middle = "";
+				var end = "";
+				var startIdx = text.indexOf(startTag);
+				var endIdx = text.indexOf(endTag, startIdx);
+
+				while((startIdx != -1) && (endIdx != -1)) {
+					start = text.substring(0, startIdx);
+					middle = text.substring(startIdx + 4, endIdx);
+					middle = wcfStringUtil.replace(middle, "&amp;", "&");
+					middle = wcfStringUtil.replace(middle, "&quot;", "\"");
+					end = text.substring(endIdx + 5, text.length);
+
+					text = start + "<" + middle + "/>" + end;
+
+					startIdx = text.indexOf(startTag);
+					endIdx = text.indexOf(endTag, startIdx);
+				}
+
+				return text;
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="13" inset="13"/>
+		<view name="insertContent" x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing - classroot.editorPadding}">
+			<mktText text="${mktMarketingResources['insertContent'].string}" width="${classroot.parent.promptWidth}" fgcolor="${classroot.parent.style.texthilitecolor}"/>
+	
+			<wcfBaseComboBox name="selector" x="${classroot.parent.promptWidth + classroot.parent.xspacing + classroot.editorPadding}" visible="${classroot.toolbarView.visible}" enabled="${classroot.enabled}">
+				<handler name="onvisible">
+					<![CDATA[
+					if(classroot["richInputText"]) {
+						classroot.richInputText.updateInputTextHeight();
+					}
+					]]>
+				</handler>
+				<mktTextlistitem value="firstName" displayName="${mktMarketingResources['firstName'].string}" selected="true"/>
+				<mktTextlistitem value="lastName" displayName="${mktMarketingResources['lastName'].string}"/>
+				<mktTextlistitem value="link" displayName="${mktMarketingResources['link'].string}"/>
+				<mktTextlistitem value="contentSpot" displayName="${mktMarketingResources['contentSpotLabel'].string}"/>
+				<mktTextlistitem value="emSpot" displayName="${mktMarketingResources['emSpot'].string}"/>
+				<mktTextlistitem value="promotionCode" displayName="${mktMarketingResources['promotionCode'].string}"/>
+			</wcfBaseComboBox>
+		</view>
+
+		<view name="linkForm" visible="${(parent.insertContent.selector.selectedValue &amp;&amp; parent.insertContent.selector.selectedValue.value == 'link') &amp;&amp; classroot.toolbarView.visible}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing - classroot.editorPadding}">
+			<simplelayout axis="y" spacing="13"/>
+
+			<view name="clickAction">
+				<mktText text="${mktMarketingResources['clickAction'].string}" width="${classroot.parent.promptWidth}" fgcolor="${classroot.parent.style.texthilitecolor}"/>
+				<wcfBaseComboBox name="clickActionSelect" x="${classroot.parent.promptWidth + classroot.parent.xspacing + classroot.editorPadding}">
+					<mktTextlistitem value="predefined" displayName="${mktMarketingResources['selectPredefined'].string}" selected="true"/>
+					<mktTextlistitem value="url" displayName="${mktMarketingResources['selectURL'].string}"/>
+				</wcfBaseComboBox>
+			</view>
+			
+			<view name="predefinedView" visible="${parent.clickAction.clickActionSelect.selectedValue &amp;&amp; parent.clickAction.clickActionSelect.selectedValue.value == 'predefined'}">
+				<simplelayout axis="y" spacing="13"/>
+				<view name="select">
+					<mktText text="${mktMarketingResources['selectPredefined'].string}" width="${classroot.parent.promptWidth}" fgcolor="${classroot.parent.style.texthilitecolor}"/>
+					<wcfBaseComboBox name="actionSelect" x="${classroot.parent.promptWidth + classroot.parent.xspacing + classroot.editorPadding}">
+						<mktTextlistitem value="product" displayName="${mktMarketingResources['displayProduct'].string}" selected="true"/>
+						<mktTextlistitem value="category" displayName="${mktMarketingResources['displayCategory'].string}"/>
+						<mktTextlistitem value="coupon" displayName="${mktMarketingResources['issueCouponLink'].string}"/>
+						<mktTextlistitem value="shopcart" displayName="${mktMarketingResources['addShopCart'].string}"/>
+						<mktTextlistitem name="wishList" value="wishlist" displayName="${mktMarketingResources['addInterestList'].string}"/>
+						<mktTextlistitem value="unsubscribe" displayName="${mktMarketingResources['unsubscribe'].string}"/>
+					</wcfBaseComboBox>
+				</view>
+
+				<view name="productView" visible="${parent.select.actionSelect.selectedValue &amp;&amp; parent.select.actionSelect.selectedValue.value == 'product'}">
+					<wcfPropertyChildListEditor name="product" objectTypes="ChildProducts,ChildInheritedProducts" listClass="mktProductGrid"
+						promptText="${mktMarketingResources.selectProduct.string}" required="true" singleChild="true" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+				</view>
+
+				<view name="categoryView" visible="${parent.select.actionSelect.selectedValue &amp;&amp; parent.select.actionSelect.selectedValue.value == 'category'}">
+					<wcfPropertyChildListEditor name="category" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" listClass="mktCategoryGrid"
+						promptText="${mktMarketingResources.selectCategory.string}" required="true" singleChild="true" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+				</view>
+
+				<view name="couponView" visible="${parent.select.actionSelect.selectedValue &amp;&amp; parent.select.actionSelect.selectedValue.value == 'coupon'}">
+					<simplelayout axis="y" spacing="13"/>
+					<wcfPropertyChildListEditor name="coupon" objectTypes="ChildCoupon,ChildInheritedCoupon" listClass="mktPromotionGrid"
+						promptText="${mktMarketingResources.coupon.string}" required="true" singleChild="true"
+						helpText="${mktMarketingResources.help_couponSelection.string}" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+					<mktEmailInputText name="url" required="true" promptText="${mktMarketingResources['url'].string}" helpText="${mktMarketingResources.help_email_url.string}" editorPadding="${classroot.editorPadding}"/>
+					<mktEmailInputText name="urlText" required="true" promptText="${mktMarketingResources['urlText'].string}" helpText="${mktMarketingResources.help_email_url_text.string}" editorPadding="${classroot.editorPadding}"/>
+				</view>
+
+				<view name="shopcartView" visible="${parent.select.actionSelect.selectedValue &amp;&amp; parent.select.actionSelect.selectedValue.value == 'shopcart'}">
+					<wcfPropertyChildListEditor name="item" objectTypes="ChildItems,ChildInheritedItems" listClass="mktProductGrid"
+						promptText="${mktMarketingResources.selectItem.string}" required="true" singleChild="true"
+						helpText="${mktMarketingResources.help_searchSKU.string}" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+				</view>
+
+				<view name="wishlistView" visible="${parent.select.actionSelect.selectedValue &amp;&amp; parent.select.actionSelect.selectedValue.value == 'wishlist'}">
+					<wcfPropertyChildListEditor name="item" objectTypes="ChildItems,ChildInheritedItems" listClass="mktProductGrid"
+						promptText="${mktMarketingResources.selectItem.string}" required="true" singleChild="true"
+						helpText="${mktMarketingResources.help_searchSKU.string}" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+				</view>
+
+				<view name="unsubscribeView" visible="${parent.select.actionSelect.selectedValue &amp;&amp; parent.select.actionSelect.selectedValue.value == 'unsubscribe'}">
+					<simplelayout axis="y" spacing="13"/>
+					<mktEmailInputText name="url" required="true" promptText="${mktMarketingResources['url'].string}" helpText="${mktMarketingResources.help_email_url.string}" editorPadding="${classroot.editorPadding}"/>
+					<mktEmailInputText name="urlText" required="true" promptText="${mktMarketingResources['urlText'].string}" helpText="${mktMarketingResources.help_email_url_text.string}" editorPadding="${classroot.editorPadding}"/>
+				</view>
+			</view>
+			
+			<view name="urlView" visible="${parent.clickAction.clickActionSelect.selectedValue &amp;&amp; parent.clickAction.clickActionSelect.selectedValue.value == 'url'}">
+				<simplelayout axis="y" spacing="13"/>
+				<mktEmailInputText name="url" required="true" promptText="${mktMarketingResources['url'].string}" helpText="${mktMarketingResources.help_email_url.string}" editorPadding="${classroot.editorPadding}"/>
+				<mktEmailInputText name="urlText" promptText="${mktMarketingResources['urlText'].string}" helpText="${mktMarketingResources.help_email_url_text.string}" editorPadding="${classroot.editorPadding}"/>
+			</view>
+
+			<mktEmailInputText name="linkName" promptText="${mktMarketingResources['linkNameReporting'].string}" visible="${classroot.analyticsEnabled}" helpText="${mktMarketingResources.help_email_linkname_reporting.string}"
+				editorPadding="${classroot.editorPadding}"/>
+
+			<wcfBaseCheckbox x="${classroot.parent.promptWidth + classroot.parent.xspacing + classroot.editorPadding}" name="recordClicks" text="${mktMarketingResources['recordClicks'].string}"
+				visible="${(parent.predefinedView.select.actionSelect.selectedValue &amp;&amp; parent.predefinedView.select.actionSelect.selectedValue.value != 'unsubscribe') || (parent.clickAction.clickActionSelect.selectedValue &amp;&amp; parent.clickAction.clickActionSelect.selectedValue.value == 'url')}"/>
+		</view>
+
+		<view name="contentSpotForm" visible="${parent.insertContent.selector.selectedValue &amp;&amp; parent.insertContent.selector.selectedValue.value == 'contentSpot' &amp;&amp; classroot.toolbarView.visible}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing - classroot.editorPadding}">
+			<wcfPropertyChildListEditor name="content" objectTypes="ChildMarketingContentSpot,ChildInheritedMarketingContentSpot" listClass="mktContentSpotGrid"
+				promptText="${mktMarketingResources['contentSpotLabel'].string}" required="true" singleChild="true" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+		</view>
+
+		<view name="emSpotForm" visible="${parent.insertContent.selector.selectedValue &amp;&amp; parent.insertContent.selector.selectedValue.value == 'emSpot' &amp;&amp; classroot.toolbarView.visible}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing - classroot.editorPadding}">
+			<wcfPropertyChildListEditor name="emspot" objectTypes="ChildEMarketingSpot,ChildInheritedEMarketingSpot" listClass="mktChildEMarketingSpotGrid"
+				promptText="${mktMarketingResources['emSpot'].string}" required="true" singleChild="true" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+		</view>
+		
+		<view name="promotionForm" visible="${parent.insertContent.selector.selectedValue &amp;&amp; parent.insertContent.selector.selectedValue.value == 'promotionCode' &amp;&amp; classroot.toolbarView.visible}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing - classroot.editorPadding}">
+			<wcfPropertyChildListEditor name="promotion" objectTypes="ChildPromotion,ChildInheritedPromotion" listClass="mktPromotionGrid"
+				promptText="${mktMarketingResources.promotion.string}" required="true" singleChild="true" xspacing="${classroot.parent.xspacing + classroot.editorPadding}"/>
+		</view>		
+			
+		<wcfButton text="${mktMarketingResources['insert'].string}">
+			<handler name="onclick">
+				<![CDATA[
+					var selected = parent.insertContent.selector.getValue();
+
+					if(selected == "firstName") {
+						classroot.insertTextAtSelection("<e-mail:FirstName />");
+					}
+					else if(selected == "lastName") {
+						classroot.insertTextAtSelection("<e-mail:LastName />");
+					}
+					else if(selected == "link") {
+						var emailTagStart = "<e-mail:Link ";
+						var emailTagEnd = "/>";
+						var emailTag = "";
+						var recordClicks = parent.linkForm.recordClicks.value;
+							
+						// strip single and double quotes from linkName which causes XML parse issues on the server
+						var linkName = parent.linkForm.linkName.value;
+						linkName = wcfStringUtil.replace(linkName, "\"", "");
+						linkName = wcfStringUtil.replace(linkName, "'", "");
+
+						if(parent.linkForm.clickAction.clickActionSelect.selectedValue.value == 'predefined') {
+							var selected = parent.linkForm.predefinedView.select.actionSelect.selectedValue.value;
+
+							if(selected == 'product') {
+								var sku = "";
+								var name = "";
+								var objects = parent.linkForm.predefinedView.productView.product.editor.list.oList.getMatchingModelObjects();
+								if(objects.length == 1) {
+									var obj = objects[0].getReferencedObject();
+									sku = obj.getPropertyValue("partnumber");
+									name = obj.getPropertyValue("name", "CatalogEntryDescription");
+								}
+								emailTag += "type=\"product\" sku=\"" + sku + "\" name=\"" + encodeURIComponent(name) + "\" ";
+								emailTag += (recordClicks) ? "emailaction=\"1\" " : "emailaction=\"0\" ";
+							}
+							else if(selected == 'category') {
+								var categoryId = "";
+								var name = "";
+								var objects = parent.linkForm.predefinedView.categoryView.category.editor.list.oList.getMatchingModelObjects();
+								if(objects.length == 1) {
+									var obj = objects[0].getReferencedObject();
+									categoryId = obj.getPropertyValue("catgroupId");
+									name = obj.getPropertyValue("name", "CatalogGroupDescription");
+								}
+								emailTag += "type=\"category\" categoryId=\"" + categoryId + "\" name=\"" + encodeURIComponent(name) + "\" ";
+								emailTag += (recordClicks) ? "emailaction=\"1\" " : "emailaction=\"0\" ";
+							}
+							else if(selected == 'coupon') {
+								var couponpromotion = "";
+								var url = "";
+								var urlText = "";
+								var objects = parent.linkForm.predefinedView.couponView.coupon.editor.list.oList.getMatchingModelObjects();
+								if(objects.length == 1) {
+									var obj = objects[0].getReferencedObject();
+									couponpromotion = obj.getPropertyValue("promotionId");
+									url = parent.linkForm.predefinedView.couponView.url.value;
+									urlText = parent.linkForm.predefinedView.couponView.urlText.value;
+								}
+								emailTag += "type=\"coupon\" couponpromotion=\"" + couponpromotion + "\" ";
+								emailTag += "url=\"" + url + "\" ";
+								emailTag += "text=\"" + encodeURIComponent(urlText) + "\" ";
+								emailTag += (recordClicks) ? "emailaction=\"1\" " : "emailaction=\"0\" ";
+							}
+							else if(selected == 'shopcart') {
+								var sku = "";
+								var name = "";
+								var objects = parent.linkForm.predefinedView.shopcartView.item.editor.list.oList.getMatchingModelObjects();
+								if(objects.length == 1) {
+									var obj = objects[0].getReferencedObject();
+									sku = obj.getPropertyValue("partnumber");
+									name = obj.getPropertyValue("name", "CatalogEntryDescription");
+								}
+								emailTag += "type=\"shoppingCart\" sku=\"" + sku + "\" name=\"" + encodeURIComponent(name) + "\" ";
+								emailTag += (recordClicks) ? "emailaction=\"1\" " : "emailaction=\"0\" ";
+							}
+							else if(selected == 'wishlist') {
+								var sku = "";
+								var name = "";
+								var objects = parent.linkForm.predefinedView.wishlistView.item.editor.list.oList.getMatchingModelObjects();
+								if(objects.length == 1) {
+									var obj = objects[0].getReferencedObject();
+									sku = obj.getPropertyValue("partnumber");
+									name = obj.getPropertyValue("name", "CatalogEntryDescription");
+								}
+								emailTag += "type=\"interestList\" sku=\"" + sku + "\" name=\"" + encodeURIComponent(name) + "\" ";
+								emailTag += (recordClicks) ? "emailaction=\"1\" " : "emailaction=\"0\" ";
+							}
+							else if(selected == 'unsubscribe') {
+								var url = parent.linkForm.predefinedView.unsubscribeView.url.value;
+								var urlText = parent.linkForm.predefinedView.unsubscribeView.urlText.value;
+								emailTag += "type=\"unsubscribe\" url=\"" + url + "\" text=\"" + encodeURIComponent(urlText) + "\" emailaction=\"2\" ";
+							}
+						}
+						else if(parent.linkForm.clickAction.clickActionSelect.selectedValue.value == 'url') {
+							var url = parent.linkForm.urlView.url.value;
+							var urlText = parent.linkForm.urlView.urlText.value;
+							emailTag += "type=\"URLClickAction\" url=\"" + url + "\" text=\"" + encodeURIComponent(urlText) + "\" ";
+							emailTag += (recordClicks) ? "emailaction=\"1\" " : "emailaction=\"0\" ";
+						}
+
+						if(classroot.analyticsEnabled) {
+							emailTag += "linkname=\"" + linkName + "\" ";
+						}
+						
+						emailTag += "useHttp=\"" + classroot.useHttpForLinks + "\"";
+						
+						classroot.insertTextAtSelection(emailTagStart + emailTag + emailTagEnd);
+					}
+					else if(selected == "contentSpot") {
+						var name = "";
+						var objects = parent.contentSpotForm.content.editor.list.oList.getMatchingModelObjects();
+						if(objects.length == 1) {
+							var obj = objects[0].getReferencedObject();
+							name = obj.getPropertyValue("name");
+						}
+						classroot.insertTextAtSelection("<e-mail:Content name=\"" + name + "\" display=\"" + "Email Content Display" + "\"/>");
+					}
+					else if(selected == "emSpot") {
+						var name = "";
+						var objects = parent.emSpotForm.emspot.editor.list.oList.getMatchingModelObjects();
+						if(objects.length == 1) {
+							var obj = objects[0].getReferencedObject();
+							name = obj.getPropertyValue("name");
+						}
+						classroot.insertTextAtSelection("<e-mail:EMSpot name=\"" + name + "\" display=\"" + "Email EMSpot Display" + "\"/>");
+					} else if(selected == "promotionCode") {
+						var promotionId = "";
+						var adminName = "";
+						var objects = parent.promotionForm.promotion.editor.list.oList.getMatchingModelObjects();
+						if(objects.length == 1) {
+							var obj = objects[0].getReferencedObject();
+							promotionId = obj.getPropertyValue("promotionId");
+							adminName = obj.getPropertyValue("adminName");
+						}
+						classroot.insertTextAtSelection("<e-mail:PromotionCode promotionId=\"" + promotionId + "\" name=\"" + adminName + "\"/>");
+					}
+				]]>
+			</handler>
+		</wcfButton>
+		<view height="5"/>
+	</class>
+	
+	<!---
+		@keywords private
+	 -->
+	<class name="mktPropertiesComponentPrompt" extends="wcfPropertiesComponentPrompt" text="${this.getPromptText(this.parent.parent.promptText)}"/>
+
+</library>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyPane definitionName="catManageSalesCategory">
+		<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"/>
+		<PropertyGroup groupTitle="${catalogResources.generalCategoryInformationSection}" name="salesCatPropGroup" open="true">
+            <!-- Catalog Group Unique ID -->
+			<PropertyViewLongText promptText="${catalogResources.uniqueId_ColumnHeader}" propertyName="catgroupId">
+				<FalseEnablementCondition/>
+			</PropertyViewLongText>
+			<PropertyInputText extendedHelpText="${catalogResources.extendedHelpText_Code}" promptText="${catalogResources.codePrompt}" propertyName="identifier" required="true"/> 
+			<PropertyInputText objectPath="CatalogGroupDescription" promptText="${catalogResources.categoryName}" propertyName="name" required="true"/>
+			
+			<PropertyInputLongText objectPath="CatalogGroupDescription" promptText="${catalogResources.shortDescriptionPrompt}" propertyName="sDesc"/>
+			<PropertyRichTextEditor objectPath="CatalogGroupDescription" promptText="${catalogResources.longDescriptionPrompt}" propertyName="lDesc"/>		
+			<PropertyInputMultiLineText extendedHelpText="${catalogResources.extendedHelpText_CatalogEntryKeyword}" objectPath="CatalogGroupDescription" promptText="${catalogResources.keywordPrompt}" propertyName="keyword"/>		
+			<!-- <PropertyInputText objectPath="SalesCategoryNavigationalRelationship" propertyName="sequence"	 promptText="${catalogResources.displaySequence}"/>	-->	
+
+		     <!--- A collection editor to manage the parents of a sale category -->	
+		     <CollectionListEditor listDefinitionName="catParentOfSalesCategoryCollectionGrid" name="ParentOfSalesCategoryCollectionListEditor" objectTypes="SalesCatalogGroup,SalesCatalog,InheritedSalesCatalogGroup,InheritedSalesCatalog" promptText="${catalogResources.parentsInSalesCatalogPrompt}" required="true" validatorTypes="parentValidator,versionedParentValidator"/>	
+		     	
+		<!--	<PropertyInputText propertyName="catalogId" promptText="${catalogResources.parentCatalogPrompt}"/>  -->
+		</PropertyGroup>
+		
+		<!-- This tag is disabled by default. To enable it, uncomment the tag below -->
+		<!-- 
+		<PropertyGroup groupTitle="${catalogResources.publishingSection}">
+			<PropertyInputText propertyName="xattr_field1" promptText="${catalogResources.field1Prompt}"/>
+			<PropertyInputText propertyName="xattr_field2" promptText="${catalogResources.field2Prompt}"/>
+			<PropertyInputText propertyName="xdesc_note" objectPath="CatalogGroupDescription" promptText="${catalogResources.note}"/>
+		</PropertyGroup>
+		--> 
+		 
+		<!--- 
+			The property group which contains the published flag and image related properties of the sales category object.
+		--> 
+		<PropertyGroup groupTitle="${catalogResources.displaySection}" name="imagePropGroup">
+			<!-- Property: Published. A checkbox for the published property (Display to customers). -->
+			<PropertyCheckbox extendedHelpText="${catalogResources.extendedHelpText_displayToCustomers}" falseValue="0" objectPath="CatalogGroupDescription" promptText="${catalogResources.displayToCustomerPrompt}" propertyName="xdesc_published" trueValue="1"/>
+			<ImageEditor objectPath="CatalogGroupDescription" promptText="${catalogResources.thumbnailPrompt}" propertyName="tImage"/>
+			<ImageEditor objectPath="CatalogGroupDescription" promptText="${catalogResources.fullImagePrompt}" propertyName="fImage"/>
+		</PropertyGroup>
+
+
+	</PropertyPane>
+	
+	<ObjectProperties definitionName="catSalesCategoryProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="manageSalesCategoryTab" text="${catalogResources.manageCategoryTab}">
+				<PropertyPane baseDefinitionName="catManageSalesCategory"/>
+			</PropertyTabPane>
+			
+		        <!-- 
+				A property tab pane for managing the Search Engine Optimization properties for a category.
+			-->
+	                <PropertyTabPane name="searchEngineOptimizationTab" text="${catalogResources.searchEngineOptimizationTab}">
+		            	<EnablementAndCondition>
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition conditionId="seoEnabledCondition" contextName="seoEnabled" enablementValue="true"/>
+				</EnablementAndCondition>
+		                <!-- 
+					An instantiation of 'catCatalogGroupSearchEngineOptimization", which represents the Search Engine Optimization 
+					properties for a category.
+				-->
+		                <PropertyPane baseDefinitionName="catCatalogGroupSearchEngineOptimization"/>
+		        </PropertyTabPane>				
+
+            <!-- Tab: the attachment references for the current category -->
+			<PropertyTabPane name="manageAttachmentTab" text="${catalogResources.manageAttachmentTab}">
+				<!-- Property Pane: Manage Attachment Reference . This is an instantiation of the property pane which contains attachment reference of this category. -->
+				<PropertyPane baseDefinitionName="catManageAttachment"/>
+		    </PropertyTabPane>	
+		    <!-- This is for supporting version reference of a sales catalog group -->
+			<PropertyTabPane name="manageVersionTab" text="${foundationResources.manageVersionTab}">
+				<!-- Only show this tab if content versioning feature is enabled, this is not a new object and the object type is SalesCatalogGroup -->
+				<EnablementAndCondition conditionId="salesCategoryManageVersionTabCondition">
+					<EnablementCondition checkObjectDefinition="true" propertyName="objectType" enablementValue="SalesCatalogGroup" conditionId="salesCategoryManageVersionObjectTypeCondition"/>
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>
+					<EnablementCondition contextName="contentVersionEnabled" enablementValue="true" conditionId="salesCategoryContentVersionContextValueCondition"/>
+					<EnablementCondition checkNewObject="true" enablementValue="false" conditionId="salesCategoryContentVersionNewObjectCondition"/>
+				</EnablementAndCondition>
+				
+				<!-- Property Pane: Manage Version. This is an instantiation of the property pane definition which contains versions of this category. -->
+				<PropertyPane baseDefinitionName="wcfManageContentVersion"/>
+			</PropertyTabPane>  
+			
+			<!-- Tab: References. This tab contains various types of references to the selected category. -->
+			<PropertyTabPane name="salesCategoryReferenceTab" text="${catalogResources.productReferenceTab}">
+				<!-- Property Pane: References. This is an instantiation of the property pane which contains references properties. -->
+				<PropertyPane name="salesCategoryReference">
+					<!-- Property Group: Activity Reference. A properties group that displays any marketing activity references to the category. -->
+					<PropertyGroup groupTitle="${catalogResources.marketingActivityReferencesSection}" name="salesCategoryReferenceActivities" open="true">
+							<!-- Reference List: A table to display activities from which this category is referenced. -->
+							<PropertyReferenceList listDefinitionName="catMarketingActivityReferenceGrid" name="catMarketingActivitySalesCatalogGroupReferenceList" promptText="${catalogResources.marketingActivityReferences}" referenceObjectPaths="*/ChildCatalogGroupGroup"/>
+					</PropertyGroup>
+				</PropertyPane>
+				<EnablementAndCondition>
+					<!-- do not display in catalog asset store because it does not refer to storefront asset store -->
+					<EnablementCondition conditionId="casCondition" contextName="storeType" enablementValue="CPS" negate="true"/>
+					<EnablementCondition enablementValue="" propertyName="objectVersionId" conditionId="noObjectVersionIdCondition"/>		
+				</EnablementAndCondition>							
+			</PropertyTabPane>
+						
+		</PropertyTabs>
+	</ObjectProperties>
+</Definitions>

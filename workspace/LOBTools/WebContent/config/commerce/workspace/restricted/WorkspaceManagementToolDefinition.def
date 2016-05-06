@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		@keywords private
+	-->
+	<BusinessObjectEditor definitionName="wspWorkspaceManagement" displayName="${shellResourceBundle.workspaceManagementDisplayName}" gettingStartedPageClass="wcfWorkspaceGettingStartedPage" 
+		helpLink="concepts/cwoworkspacetool.htm" multipleInputLanguages="false" respectWorkspaceContext="false" showStoreSelection="false" showUtilitiesView="true" explorerFilterTypes="MYTASKS,CURRENT,ALL">
+
+		<!--- Object filter will display the user specific Tasks for the Contributor and Approver role -->
+		<ObjectTypeFilter displayName="${wspWorkspaceResources.myTasksFilter}" filterType="MYTASKS" objectTypes="ToDoTasksTop,CompletedTasksTop,ApprovedTasksTop,CanceledTasksTop">
+			<EnablementOrCondition>
+				<EnablementCondition conditionId="WorkspaceApproverCondition" contextName="workspaceApprover" enablementValue="true"/>
+				<EnablementCondition conditionId="WorkspaceContributorCondition" contextName="workspaceContributor" enablementValue="true"/>
+			</EnablementOrCondition>
+		</ObjectTypeFilter>
+
+		<!--- Object filter will display the current Workspaces and current Task Groups for the Workspace Manager and Approver roles -->
+		<ObjectTypeFilter displayName="${wspWorkspaceResources.currentFilter}" filterType="CURRENT" objectTypes="Workspace[workspaceStatus=Active],
+			ChildTaskGroup/TaskGroup[status=0],ChildTaskGroup/TaskGroup[status=1],ChildTaskGroup/TaskGroup[status=2],ChildTaskGroup/TaskGroup[status=3],ChildTaskGroup/TaskGroup[status=4],
+			ChildTaskGroup/TaskGroup[status=7],ChildTaskGroup/TaskGroup[status=8],ChildTaskGroup/TaskGroup[status=9],ChildTaskGroup/TaskGroup[status=10],ChildTaskGroup/TaskGroup[status=11],
+			ChildTaskGroup/TaskGroup[status=12],ChildTaskGroup/TaskGroup[status=13]">  
+			<EnablementOrCondition>
+				<EnablementCondition conditionId="WorkspaceApproverCondition" contextName="workspaceApprover" enablementValue="true"/>
+				<EnablementCondition conditionId="WorkspaceManagerCondition" contextName="workspaceManager" enablementValue="true"/>
+			</EnablementOrCondition>
+		</ObjectTypeFilter>
+		
+		<!--- Object filter will display the all Workspaces and all Tasks Groups for the Workspace Manager and Approver roles  -->
+		<ObjectTypeFilter displayName="${wspWorkspaceResources.allFilter}" filterType="ALL" objectTypes="Workspace,ChildTaskGroup">
+			<EnablementOrCondition>
+				<EnablementCondition conditionId="WorkspaceApproverCondition" contextName="workspaceApprover" enablementValue="true"/>
+				<EnablementCondition conditionId="WorkspaceManagerCondition" contextName="workspaceManager" enablementValue="true"/>
+			</EnablementOrCondition>
+		</ObjectTypeFilter>
+
+		<!--- Top object definition -->
+		<TopObjectDefinition baseDefinitionName="wspWorkspaceTopObjectDefinition"/>
+
+		<!--- Organizational object definition to organize tasks that the Contributor or Approver needs to work on and complete-->
+		<OrganizationalObjectDefinition baseDefinitionName="ToDoTasksTop"/>
+		<!--- Organizational object definition to organize tasks that the Contributor or Approver have already completed -->
+		<OrganizationalObjectDefinition baseDefinitionName="CompletedTasksTop"/>
+		<!--- Organizational object definition to organize tasks that the Approver has already approved -->
+		<OrganizationalObjectDefinition baseDefinitionName="ApprovedTasksTop"/>
+		<!--- Organizational object definition to organize tasks that have been canceled -->
+		<OrganizationalObjectDefinition baseDefinitionName="CanceledTasksTop"/>
+
+		<!--- Primary object definitions for the workspaces -->
+		<PrimaryObjectDefinition baseDefinitionName="Workspace"/>
+		<!--- Primary object definitions for the taskgroups -->
+		<PrimaryObjectDefinition baseDefinitionName="TaskGroup"/>
+		<!--- Primary object definitions for the tasks -->
+		<PrimaryObjectDefinition baseDefinitionName="Task"/>
+		<!--- Primary object definitions for the approvers -->
+		<PrimaryObjectDefinition baseDefinitionName="Approver"/>
+		<!--- Primary object definitions for the contributor -->
+		<PrimaryObjectDefinition baseDefinitionName="Contributor"/>
+		
+		<!--- Search definition to locate approvers -->
+		<SearchDefinition baseDefinitionName="FindApprovers"/>
+		<!--- Search definition to locate contributors -->
+		<SearchDefinition baseDefinitionName="FindContributors"/>
+		<!--- Search definition to locate taskgroups -->
+		<SearchDefinition baseDefinitionName="FindTaskGroups" displayName="${wspWorkspaceResources.taskGroup}" isDefault="true"/>  
+		<!--- Search definition to locate tasks  -->
+		<SearchDefinition baseDefinitionName="FindTasks" displayName="${wspWorkspaceResources.task}"/>	 
+
+	</BusinessObjectEditor>
+
+</Definitions>

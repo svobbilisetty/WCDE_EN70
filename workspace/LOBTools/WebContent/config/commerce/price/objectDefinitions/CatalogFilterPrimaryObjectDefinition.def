@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+    <PrimaryObjectDefinition definitionName="cftBaseCatalogFilterPrimaryObjectDefinition"
+        objectGroups="CatalogFilterGroup" displayName="${cftCatalogFilterResources.displayName}"
+        displayNameProperty="name" newDisplayName="${cftCatalogFilterResources.newDisplayName}" idProperty="catalogFilterId"
+        searchType="FindCatalogFilters" propertiesClass="cftCatalogFilterPropertiesView" icon="catalogFilterIcon" headerIcon="catalogFilterHeaderIcon"
+        isBaseDefinition="true" newObjectMenuItemText="${cftCatalogFilterResources.contextMenuNewCatalogFilter}" helpLink="tasks/tpncreatecatalogfilter_main.htm">
+		
+		
+		<!--- Refresh service to return an updated version of the object from the server. -->
+        <RefreshService url="/cmc/GetCatalogFilter">
+            <ServiceParam name="storeId" />
+            <ServiceParam name="masterCatalogId" />
+            <ServiceParam name="uniqueId" propertyName="catalogFilterId" />
+        </RefreshService>
+		
+		<!--- This service retrieves all the catalogfilter child elements. -->
+        <GetChildrenService url="/cmc/GetCatalogFilterChildren">
+            <ServiceParam name="storeId" />
+            <ServiceParam name="uniqueId" propertyName="catalogFilterId"/>
+            <ServiceParam name="masterCatalogId" />
+            <ServiceParam name="defaultLanguageId" />
+        </GetChildrenService>
+
+        <UpdateService url="/cmc/SaveCatalogFilter">
+            <ServiceParam name="storeId" parameterName="storeId">
+                <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    enablementValue="CatalogFilter" conditionId="cftCondition" />
+            </ServiceParam>
+            <ServiceParam name="parentStoreId" parameterName="storeId" propertyName="objectStoreId">
+                <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    enablementValue="InheritedCatalogFilter" conditionId="cftCondition" />
+            </ServiceParam>
+            <ServiceParam name="catalogFilterId" propertyName="catalogFilterId" />
+        </UpdateService>
+
+       <DeleteService url="/cmc/DeleteCatalogFilter">
+       		<ServiceParam name="storeId" parameterName="storeId">
+                <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    enablementValue="CatalogFilter" conditionId="cftCondition" />
+            </ServiceParam>
+            <ServiceParam name="parentStoreId" parameterName="storeId" propertyName="objectStoreId">
+                <EnablementCondition checkObjectDefinition="true" propertyName="objectType"
+                    enablementValue="InheritedCatalogFilter" conditionId="cftCondition" />
+            </ServiceParam>
+            <ServiceParam name="catalogFilterId" propertyName="catalogFilterId" />
+        </DeleteService>
+
+        <PropertyDefinition propertyName="name" required="true" trim="true" maximumSize="254"
+            displayName="${cftCatalogFilterResources.catalogFilterName}" />
+
+        <PropertyDefinition propertyName="description" displayName="${cftCatalogFilterResources.catalogFilterDescription}"
+            maximumSize="254" type="string" />
+		
+		<PropertyDefinition propertyName="catalogId"/>
+            
+	<ViewOption displayName="${cftCatalogFilterResources.catalogFilterTreeMode}" viewOptionGroup="categoryDisplayMode" viewOptionType="treeView" value="true"/>
+	<ViewOption displayName="${cftCatalogFilterResources.catalogFilterListMode}" viewOptionGroup="categoryDisplayMode" viewOptionType="listView" value="false"/>
+
+	<ReferenceObjectDefinition baseDefinitionName="cftCatalogFilterExcludeInheritedCatalogEntryReferenceObjectDefinition" />
+        <ReferenceObjectDefinition baseDefinitionName="cftCatalogFilterIncludeInheritedCatalogEntryReferenceObjectDefinition" />
+        <ReferenceObjectDefinition baseDefinitionName="cftInheritedCatalogElementObjectDefinition"/>
+        <ReferenceObjectDefinition baseDefinitionName="cftInheritedCategoryElementObjectDefinition"/>
+        
+    </PrimaryObjectDefinition>
+
+    <PrimaryObjectDefinition definitionName="CatalogFilter"
+        baseDefinitionName="cftBaseCatalogFilterPrimaryObjectDefinition" objectType="CatalogFilter" creatable="true">
+        <!--- Create service to create the catalog filter object.  -->
+		<CreateService url="/cmc/CreateCatalogFilter">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="masterCatalogId"  parameterName="catalogId"/>
+		</CreateService>
+		
+		<ReferenceObjectDefinition baseDefinitionName="cftCatalogElementObjectDefinition" />
+		<ReferenceObjectDefinition baseDefinitionName="cftCategoryElementObjectDefinition" />
+        <ReferenceObjectDefinition baseDefinitionName="cftCatalogFilterIncludeCatalogEntryReferenceObjectDefinition" />
+        <ReferenceObjectDefinition baseDefinitionName="cftCatalogFilterExcludeCatalogEntryReferenceObjectDefinition" />
+    </PrimaryObjectDefinition>
+
+    <PrimaryObjectDefinition definitionName="InheritedCatalogFilter"
+        baseDefinitionName="cftBaseCatalogFilterPrimaryObjectDefinition" objectType="InheritedCatalogFilter" creatable="false"
+        compatibleObjectTypes="CatalogFilter" icon="catalogFilterInheritedIcon" headerIcon="catalogFilterInheritedHeaderIcon">
+    </PrimaryObjectDefinition>
+	
+</Definitions>

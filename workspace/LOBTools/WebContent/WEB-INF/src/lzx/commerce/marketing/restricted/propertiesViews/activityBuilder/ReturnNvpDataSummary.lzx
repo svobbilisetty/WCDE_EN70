@@ -1,0 +1,69 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktReturnNvpDataElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktReturnNvpDataElementObject} object:
+		<ul>
+			<li>nvpName</li>
+			<li>nvpValue</li>
+		</ul>
+	-->
+	<class name="mktReturnNvpDataSummary" extends="wcfFlowElementSummary">
+		
+		<wcfFlowSummaryParam name="nvpName" objectPath="nvp" propertyName="nvpName"/>
+		<wcfFlowSummaryParam name="nvpValue" objectPath="nvp" propertyName="nvpValue"/>				
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryNvpData, "onstring");
+			]]>
+		</handler>
+		
+		<!---
+			Sets the summary text for the {@link mktReturnNvpDataElementObject} flow element.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+
+				var nvpNames = this.getValuesList("nvpName");
+				var nvpValues = this.getValuesList("nvpValue");
+				
+				if ( nvpNames != "" && nvpValues != "" ) {
+				
+					var arrNvpNames = nvpNames.split(", ");
+					var arrNvpValues = nvpValues.split(", ");
+					
+					if (arrNvpNames.length == arrNvpValues.length) {
+						for(var i = 0; i < arrNvpNames.length; i++) {
+						    var name = arrNvpNames[i];
+						    var value = arrNvpValues[i];
+						    if (name != null && name != "" && value != null && value != "") {
+								if (i > 0) {
+								   summary += ", ";
+								}
+								summary += mktMarketingResources.replaceValues("summaryNvpData", [name, value]);
+							}
+						}
+					}
+				}	
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcCustomerConditionElementObject" displayName="${prcPriceResources.customerCondition_DisplayName}" elemTemplateType="Condition" flowIcon="customerConditionElementIcon" headerIcon="customerConditionElementHeaderIcon" helpLink="concepts/cpiconcust.htm" objectType="customerCondition" package="prc" paletteIcon="customerConditionPaletteIcon" propertiesDefinitionName="prcCustomerConditionElementProperties" summaryClass="prcCustomerConditionElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_customerSegmentIdentifier" objectPath="ChildSegment" propertyName="childCustomerSegmentId" optional="true">
+				<EnablementCondition conditionId="scopeIsCustomerSegments" enablementValue="customerSegments" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_memberGroupIdentifier" objectPath="MemberGroupEntry" propertyName="memberGroupIdentifier" optional="true">
+				<EnablementCondition conditionId="scopeIsMemberGroups" enablementValue="memberGroups" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_organizationIdentifier" objectPath="OrganizationEntry" propertyName="organizationIdentifier" optional="true">
+				<EnablementCondition conditionId="scopeIsOrganizations" enablementValue="organizations" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_buyerOrganizationIdentifier" objectPath="ChildBuyerOrganizationGroup" propertyName="childBuyerOrganizationId" optional="true">
+				<EnablementCondition conditionId="scopeIsBuyerOrganizations" enablementValue="buyerOrganizations" propertyName="scope"/>
+			</ServiceParam>
+		</CreateService>
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_customerSegmentIdentifier" objectPath="ChildSegment" propertyName="childCustomerSegmentId" optional="true">
+				<EnablementCondition conditionId="scopeIsCustomerSegments" enablementValue="customerSegments" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_memberGroupIdentifier" objectPath="MemberGroupEntry" propertyName="memberGroupIdentifier" optional="true">
+				<EnablementCondition conditionId="scopeIsMemberGroups" enablementValue="memberGroups" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_organizationIdentifier" objectPath="OrganizationEntry" propertyName="organizationIdentifier" optional="true">
+				<EnablementCondition conditionId="scopeIsOrganizations" enablementValue="organizations" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_buyerOrganizationIdentifier" objectPath="ChildBuyerOrganizationGroup" propertyName="childBuyerOrganizationId" optional="true">
+				<EnablementCondition conditionId="scopeIsBuyerOrganizations" enablementValue="buyerOrganizations" propertyName="scope"/>
+			</ServiceParam>
+		</UpdateService>
+	
+		<PropertyDefinition propertyName="scope" required="true">
+			<PropertyValue displayName="${prcPriceResources.scopeCustomerSegments}" value="customerSegments"/>
+			<PropertyValue displayName="${prcPriceResources.scopeMemberGroups}" value="memberGroups"/>
+			<PropertyValue displayName="${prcPriceResources.scopeOrganizations}" value="organizations"/>
+			<PropertyValue displayName="${prcPriceResources.scopeBuyerOrganizations}" value="buyerOrganizations"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="targetCustomerSegments">
+			<EnablementCondition conditionId="scopeIsCustomerSegments" enablementValue="customerSegments" propertyName="scope"/>
+			<PropertyValue displayName="${prcPriceResources.inAnyCustomerSegments}" value="inAny"/>
+			<PropertyValue displayName="${prcPriceResources.inAllCustomerSegments}" value="inAll"/>
+			<PropertyValue displayName="${prcPriceResources.notInCustomerSegments}" value="notIn"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="targetMemberGroups">
+			<EnablementCondition conditionId="scopeIsMemberGroups" enablementValue="memberGroups" propertyName="scope"/>
+			<PropertyValue displayName="${prcPriceResources.inAnyMemberGroups}" value="inAny"/>
+			<PropertyValue displayName="${prcPriceResources.inAllMemberGroups}" value="inAll"/>
+			<PropertyValue displayName="${prcPriceResources.notInMemberGroups}" value="notIn"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="targetOrganizations">
+			<EnablementCondition conditionId="scopeIsOrganizations" enablementValue="organizations" propertyName="scope"/>
+			<PropertyValue displayName="${prcPriceResources.inAnyOrganizations}" value="inAny"/>
+			<PropertyValue displayName="${prcPriceResources.inAllOrganizations}" value="inAll"/>
+			<PropertyValue displayName="${prcPriceResources.notInOrganizations}" value="notIn"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="targetBuyerOrganizations">
+			<EnablementCondition conditionId="scopeIsBuyerOrganizations" enablementValue="buyerOrganizations" propertyName="scope"/>
+			<PropertyValue displayName="${prcPriceResources.inAnyBuyerOrganizations}" value="inAny"/>
+			<PropertyValue displayName="${prcPriceResources.inAllBuyerOrganizations}" value="inAll"/>
+			<PropertyValue displayName="${prcPriceResources.notInBuyerOrganizations}" value="notIn"/>
+		</PropertyDefinition>
+
+		
+		<Xml name="template">
+			<elemTemplateName>customerCondition</elemTemplateName>
+			<scope>customerSegments</scope>
+			<targetCustomerSegments>inAny</targetCustomerSegments>
+			<targetMemberGroups>inAny</targetMemberGroups>
+			<targetOrganizations>inAny</targetOrganizations>
+			<targetBuyerOrganizations>inAny</targetBuyerOrganizations>
+		</Xml>
+
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCustomerSegmentId" objectGroups="ChildSegment" objectType="ChildCustomerSegment" referencedTypes="CustomerSegment" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCustomerSegmentId" objectGroups="ChildSegment" objectType="ChildInheritedCustomerSegment" referencedTypes="InheritedCustomerSegment"/>
+		
+		<ChildObjectDefinition creatable="true" displayName="${prcPriceResources.memberGroupEntry}" idProperty="memberGroupIdentifier" objectType="MemberGroupEntry">
+			<PropertyDefinition displayName="${prcPriceResources.uniqueId}" propertyName="memberGroupIdentifier" required="true" trim="true"/>				
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition creatable="true" displayName="${prcPriceResources.organizationEntry}" idProperty="organizationIdentifier" objectType="OrganizationEntry">
+			<PropertyDefinition displayName="${prcPriceResources.uniqueId}" propertyName="organizationIdentifier" required="true" trim="true"/>				
+		</ChildObjectDefinition>
+		
+		<ReferenceObjectDefinition objectGroups="ChildBuyerOrganizationGroup" allowDuplicates="false" derivedId="true" idProperty="childBuyerOrganizationId" objectType="ChildBuyerOrganization" referencedTypes="BuyerOrganization" allowedParentTypes="PriceRule"/>
+		
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingMemberGroupEntries}" objectPath="MemberGroupEntry" validatorId="reqMemberGroupEntryValidator" validatorType="noMemberGroupEntryProvided">
+			<EnablementCondition conditionId="scopeIsMemberGroups" enablementValue="memberGroups" propertyName="scope"/>
+		</RequiredChildObjectValidator>
+
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingOrganizationEntries}" objectPath="OrganizationEntry" validatorId="reqOrganizationEntryValidator" validatorType="noOrganizationEntryProvided">
+			<EnablementCondition conditionId="scopeIsOrganizationss" enablementValue="organizations" propertyName="scope"/>
+		</RequiredChildObjectValidator>
+
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingCustomerSegments}" objectPath="ChildSegment" validatorId="reqCustomerSegmentValidator" validatorType="noCustomerSegmentProvided">
+			<EnablementCondition conditionId="scopeIsCustomerSegments" enablementValue="customerSegments" propertyName="scope"/>
+		</RequiredChildObjectValidator>
+		
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingBuyerOrganizationEntries}" objectPath="ChildBuyerOrganizationGroup" validatorId="reqBuyerOrganizationValidator" validatorType="noBuyerOrganizationProvided">
+			<EnablementCondition conditionId="scopeIsBuyerOrganizationss" enablementValue="buyerOrganizations" propertyName="scope"/>
+		</RequiredChildObjectValidator>
+		
+	</FlowElementObjectDefinition>
+
+</Definitions>

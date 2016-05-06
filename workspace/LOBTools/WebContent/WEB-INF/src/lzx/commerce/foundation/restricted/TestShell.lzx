@@ -1,0 +1,271 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<include href="library.lzx"/>
+	<include href="../../shell/ConfigProperties.lzx"/>
+	<include href="../../shell/restricted/HelpManager.lzx"/>
+	<include href="../../shell/restricted/ShellResourceBundle.lzx"/>
+	<include href="../../shell/restricted/Resources.lzx"/>
+	<include href="../../shell/restricted/MessageLink.lzx"/>
+	<include href="../../shell/restricted/ProgressIndicator.lzx"/>
+	<include href="../../shell/ToolStatusArea.lzx"/>
+	<include href="../../shell/restricted/Logger.lzx" />
+	<include href="../../shell/restricted/LogTraceWindow.lzx"/>
+	<include href="../../shell/restricted/MessageGrid.lzx"/>
+	<include href="../../shell/restricted/MessageLogger.lzx"/>
+	<include href="../../shell/restricted/MessageConsoleDialog.lzx"/>
+	<include href="../../shell/restricted/UserPreferenceDialog.lzx"/>
+	<include href="../../shell/UserPreferencePanel.lzx"/>
+	<include href="../../shell/restricted/UserPreferenceObjects.lzx"/>
+	<include href="../../shell/restricted/Dialog.lzx"/>
+		
+	<!---
+		@keywords private
+		config properties
+	-->
+	<wcfConfigProperties id="configProperties" />
+
+	<!---
+		@keywords private
+		resource bundle for NL enablement
+	-->
+	<wcfShellResourceBundle id="shellResourceBundle" />
+		
+	<!---
+		@keywords private
+		help manager
+	-->
+	<wcfHelpManager id="helpManager" />
+	
+	<!--- 
+		@keywords private
+		Global instance of the preference manager class. 
+	-->
+	<wcfPreferenceManager id="preferenceManager" userPreferenceDialogClass="wcfUserPreferenceDialog" />
+	
+	<!---
+		@keywords private
+		message logger
+	-->
+	<wcfMessageLogger id="messageLogger" />
+	
+	<!--- @keywords private -->
+	<script>	
+		global.languageId = lz.Browser.getInitArg("languageId");
+		if (typeof(global["languageId"]) == "undefined" || global.languageId == null) {
+			global.languageId = -1;
+		}
+		global.locale = lz.Browser.getInitArg("locale");
+		if (typeof(global["locale"]) == "undefined" || global.locale == null) {
+			global.locale = "en_US";
+		}
+		global.defaultStore = lz.Browser.getInitArg("defaultStore");
+		if (typeof(global["defaultStore"]) == "undefined") {
+			global.defaultStore = null;
+		}
+		global.userId = lz.Browser.getInitArg("userId");
+		if (typeof(global["userId"]) == "undefined") {
+			global.userId = null;
+		}
+		
+		var toolPanesWidget;
+		var toolsController;
+		var wcfWorkspaceUtil;
+		var bannerAreaWidget;
+		var toolTabsWidget;
+		
+		function callJSFunction (functionName, arg) {
+		}
+		function doSessionTimeout () {
+		}
+
+		function doSessionTerminated () {
+		}
+
+		function doSessionCorrupted () {
+		}
+	</script>
+
+	<!--- @keywords private	-->
+	<handler name="oninit">
+		preferenceManager.load();
+		messageLogger.logStatus("Test Shell Initialized");
+	</handler>
+	
+	<!--- @keywords private -->
+	<wcfStandardStyle isdefault="true"/>
+
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="identityId"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="identitySignature"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="logonId" value="$once{global.userId}"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="password"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="locale" value="$once{global.locale}"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="maxRecordSetTotal" value="500"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="maxItems" value="20"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="developmentMode" value="false"/>
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="readOnlyMode" value="false" />	
+	<!--- @keywords private -->
+	<wcfContextValue parameterName="maxBrowseTreesExpanded" value="2" />
+	<!--- @keywords private -->
+	<wcfContextValue name="timeZoneIdContext" parameterName="timeZoneId" value="" />
+	<!--- @keywords private -->
+	<wcfContextValue name="timeZoneDisplayNameContext" parameterName="timeZoneDisplayName" value="" />
+	<!--- @keywords private -->
+	<wcfContextValue name="serverTimeZoneDisplayNameContext" parameterName="serverTimeZoneDisplayName" value="" />
+	
+	<resource name="menuDownArrow" src="resources/dwn_arrow.png" />
+	
+	<!--- @keywords private -->
+	<class name="wcfLogonService" extends="wcfService" sendIdentity="false" sendWorkspaceContext="false" sendTimeZoneId="false" url="/cmc/Logon">
+		<wcfServiceParam name="logonId"/>
+		<wcfServiceParam name="password"/>
+		
+		<method name="init">
+			super.init();
+			this.doRequest();
+		</method>
+	</class>
+	<!--- @keywords private -->
+	<wcfLogonService/>
+	
+	<!--- @keywords private -->
+	<class name="wcfTestToolTab" extends="basecomponent">
+		<attribute name="displayName" type="string"/>
+		<attribute name="active" type="boolean" value="false"/>
+		<attribute name="hover" type="boolean" value="false"/>
+		<attribute name="clickable" value="${!active}"/>
+		<attribute name="activeTabIcon" value="campaignsActiveTabIcon" type="string"/>
+		<attribute name="inactiveTabIcon" value="campaignsInactiveTabIcon" type="string"/>
+		
+		<simplelayout axis="x"/>
+		<state applied="${classroot.active}">
+			<view name="left" resource="resources/tool_tab_left_active.png"/>
+			<view>
+				<view name="background" resource="resources/tool_tab_center_active.png" width="${immediateparent.tabIcon.width}" stretches="width"/>
+				<view name="tabIcon" y="${classroot.getMiddleY(immediateparent.height, this.height)}" resource="${classroot.activeTabIcon}"/>
+			</view>
+			
+			<view>
+				<view name="background" resource="resources/tool_tab_center_active.png" width="${parent.text.width + 5}" stretches="width"/>
+				<text name="text" y="${classroot.getMiddleY(immediateparent.height, this.height)}" text="${classroot.displayName}" resize="true"/>
+			</view>
+			<view name="close" resource="resources/tool_tab_close.png" clickable="true"/>
+			<view name="right" resource="resources/tool_tab_right_active.png"/>
+		</state>
+		<state applied="${!classroot.active}">
+			<view name="left" resource="resources/tool_tab_left.png"/>
+			<view>
+				<view name="background" resource="resources/tool_tab_center.png" width="${immediateparent.tabIcon.width}" stretches="width"/>
+				<view name="tabIcon" y="${classroot.getMiddleY(immediateparent.height, this.height)}" resource="${classroot.inactiveTabIcon}"/>
+			</view>
+			<view>
+				<view name="background" resource="resources/tool_tab_center.png" width="${parent.text.width + 5}" stretches="width"/>
+				<text name="text" y="${classroot.getMiddleY(immediateparent.height, this.height)}" text="${classroot.displayName}" fgcolor="${classroot.style.textcolor}" resize="true"/>
+			</view>
+			<view name="right" resource="resources/tool_tab_right.png"/>
+		</state>
+		<handler name="onmouseover">
+			this.setAttribute("hover", true);
+		</handler>
+		<handler name="onmouseout">
+			this.setAttribute("hover", false);
+		</handler>
+
+		<method name="getMiddleY" args="containerHeight, subviewHeight"><![CDATA[
+			return (containerHeight - subviewHeight + 1) / 2;
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfTestLogonService" extends="wcfInitService" sendIdentity="false" sendWorkspaceContext="false" sendTimeZoneId="false" url="/cmc/Logon">
+		<dataset name="params">
+			<wcfServiceParam name="userId"/>
+		</dataset>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfTestShell" extends="basecomponent" width="100%" height="100%">
+		<attribute name="objectEditorClass" type="string"/>
+		<attribute name="displayName" type="string"/>
+		<attribute name="usage" type="string"/>
+		
+		<handler name="onload" reference="preferenceManager">
+			<![CDATA[
+			if (global["defaultStore"]) {
+				var defaultStore = preferenceManager.getPreference("CMCDefaultStore");
+				if (defaultStore == undefined) {
+					preferenceManager.setPreference("CMCDefaultStore", global.defaultStore);
+				}
+			}
+
+			new lz[objectEditorClass](this.editorArea, {
+				name: "editor",
+				languageId: global.languageId,
+				usage: this.usage
+			});
+			this.editorArea.editor.postCreateDefinitionChildren();
+
+			this.header.bringToFront();
+			]]>
+		</handler>
+		
+		<view name="header" width="100%" height="${background.height}">
+			<view name="background" resource="resources/header_back.png" stretches="width" width="100%"/>
+			<view name="title" x="8" y="3" font="Arial" fontsize="15"  onblur="downArrow.managementList.setAttribute('visible', false);">
+				<simplelayout axis="x" spacing="4"/>
+				<text fgcolor="${classroot.style.titletextcolor}" fontsize="13" fontstyle="bold" text="Management Center">
+					<handler name="onclick">
+						parent.downArrow.managementList.setAttribute("visible", !parent.downArrow.managementList.visible);
+					</handler>
+				</text>
+				<wcfToolBarButton name="downArrow" buttonResource="menuDownArrow" y="9" clickable="true">
+					<handler name="onclick">
+						managementList.setAttribute("visible", !managementList.visible);
+					</handler>
+					<floatinglist name="managementList" width="150" attach="right" visible="false">
+				      <textlistitem text="Logging and Tracing" onclick="wcfLogger.loadLogTraceWindow(); parent.setAttribute('visible', false)" />
+				      <textlistitem text="User Preferences" onclick="preferenceManager.loadUserPreferenceDialog(); parent.setAttribute('visible', false)"/>
+				    </floatinglist>
+				</wcfToolBarButton>
+			</view>
+			<view align="right" y="4">
+				<simplelayout axis="x" spacing="7"/>
+				<text y="1" fgcolor="${classroot.style.titletextcolor}" text="$once{'Welcome '+global.userId}"/>
+				<view resource="resources/v_line.swf" y="4"/>
+				<text y="1" fgcolor="${classroot.style.titletextcolor}" clickable="true" text="Logout"/>
+				<view align="right" resource="resources/ibm_logo.png" y="2" width="52"/>
+			</view>
+			<view name="tabs" x="3" y="${parent.height - height}" yoffset="-1">
+				<simplelayout axis="x"/>
+				<wcfTestToolTab active="true" displayName="${classroot.displayName}"/>
+			</view>
+		</view>
+		<view name="editorArea" width="100%" y="${parent.header.height}" height="${parent.height - parent.header.height - parent.statusArea.height}"/>
+		<view name="statusArea" width="${parent.width}" y="${parent.height - height}" height="24" align="center" valign="bottom">
+			<view name="backgroundView" width="${parent.width}" resource="statusBackground" stretches="both" />
+			<wcfStatusArea id="statusAreaWidget" width="${parent.width}" height="24" align="center" />
+		</view>
+	</class>
+</library>
+

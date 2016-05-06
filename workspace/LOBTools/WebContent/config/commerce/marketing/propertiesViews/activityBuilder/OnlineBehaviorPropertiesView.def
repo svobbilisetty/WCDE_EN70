@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktOnlineBehaviorElementObject Online Behavior target}.
+	-->
+	<FlowElementProperties definitionName="mktOnlineBehaviorProperties">
+		<PropertyGroup collapsable="false" name="containerGroup">
+			<PropertyCombobox helpText="${mktMarketingResources.help_customerbehavior_targetCondition_onlineBehavior}" promptText="${mktMarketingResources.onlineBehaviorCriteria}" propertyName="elemTemplateName"/>
+			
+			<PropertyGroup collapsable="false" name="searchedTermGroup">
+				<EnablementCondition conditionId="searchedTerm" enablementValue="recordedCustomerBehaviorSearched" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_searchTerms}" name="anyOrAll" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.anySearchedKeywords}" name="any">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.allSearchedKeywords}" name="all">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.notAnySearchedKeywords}" name="notAny">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<MultiValueSelector name="searchComparison" promptText="${mktMarketingResources.searchCondition}">		
+					<MultiValueSelection displayName="${mktMarketingResources.searchIsExactly}" name="isExactly">
+						<Xml name="values">
+							<comparison>=</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.searchStart}" name="startsWith">
+						<Xml name="values">
+							<comparison>start</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.searchContain}" name="contains">
+						<Xml name="values">
+							<comparison>contain</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.searchEnd}" name="endsWith">
+						<Xml name="values">
+							<comparison>end</comparison>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+				<PropertyGroup collapsable="false" name="synonymMatchGroup">
+					<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+					<PropertyCheckbox helpText="${mktMarketingResources.help_synonymMatch}" propertyName="synonymMatch" promptText="${mktMarketingResources.synonymMatch}" trueValue="true" falseValue="false" />
+				</PropertyGroup>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_searchTerms}" listDefinitionName="mktSearchTermValueGrid" name="searchTermEditor" objectTypes="searchTerm" promptText="${mktMarketingResources.searchTerms}" required="true" validatorTypes="noKeywordProvided"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="recordedURLGroup">
+				<EnablementCondition conditionId="recordedUrlContents" enablementValue="recordedCustomerBehaviorURLContents" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_urlContents}" name="anyOrAll" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.anyURLParameters}" name="any">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.allURLParameters}" name="all">
+						<Xml name="values">
+							<anyOrAll>all</anyOrAll>
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.notAnyURLParameters}" name="notAny">
+						<Xml name="values">
+							<anyOrAll>any</anyOrAll>
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyInputText helpText="${mktMarketingResources.help_urlcontent_name}" promptText="${mktMarketingResources.urlName}" propertyName="urlName" required="true"/>
+				<PropertyCombobox promptText="${mktMarketingResources.urlCondition}" propertyName="comparison"/>
+	
+				<PropertyGroup collapsable="false" name="groupURLValue">
+					<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+					<PropertyChildListEditor helpText="${mktMarketingResources.help_urlcontent_values}" listDefinitionName="mktURLValueGrid" name="urlNVPEditor" objectTypes="urlValue" promptText="${mktMarketingResources.urlTerms}" required="true" validatorTypes="noParameterValueProvided"/>	
+				</PropertyGroup>
+			</PropertyGroup>
+			
+			<MultiValueSelector helpText="${mktMarketingResources.help_onlinebehavior_frequency}" name="numTimes" promptText="${mktMarketingResources.frequency}">
+				<MultiValueSelection displayName="${mktMarketingResources.anyNumberTimes}" name="any">
+					<Xml name="values">
+						<numberOfTimesOperator/>
+						<numberOfTimes/>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.lessThanNumberTimes}" name="lessThan">
+					<Xml name="values">
+						<numberOfTimesOperator><![CDATA[<]]></numberOfTimesOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.atLeastNumberTimes}" name="atLeast">
+					<Xml name="values">
+						<numberOfTimesOperator><![CDATA[>=]]></numberOfTimesOperator>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+	
+			<PropertyGroup collapsable="false" name="groupTimes">
+				<EnablementCondition conditionId="notAny" enablementValue="" negate="true" propertyName="numberOfTimesOperator"/>
+				<PropertyStepper minimumValue="1" promptText="${mktMarketingResources.times}" propertyName="numberOfTimes"/>
+			</PropertyGroup>
+			
+			<BaseDateProperties helpText="${mktMarketingResources.help_timeframe_onlineBehavior}" package="mkt"/>		
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

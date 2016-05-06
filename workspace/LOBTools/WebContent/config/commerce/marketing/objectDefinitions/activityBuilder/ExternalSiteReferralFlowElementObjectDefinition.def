@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for the External Site Referral target. Defined as part of this
+		object is the following:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_urlValueList as a parameter</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_urlValueList as a parameter</li>
+			<li>{@link wcfChildObjectDefinition} that defines a new <code>urlValue</code> type which represents a search keyword or name-value pair value</li>
+			<li>instance of {@link mktExternalSiteReferralValidator} to ensure that a valid combination of values are specified for this target</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>containsOperator</b>: required field that indicates whether the customer must come from the specified domain or those who
+				do not come from the specified domain. The value must be one of "=" or "!=". Default is "=".</li>
+			<li><b>equalsOrEndsWith</b>: required field that indicates how the specified domain name should be matched.
+				The value must be one of "=", "contain" or "end". Default is "contain".</li>
+			<li><b>comparison</b>: required field that indicates how the specified search keywords or name-value pair values
+				should be matched. The value must be one of "=", "start", "contain", "end" or "any". Default is "=".</li>
+			<li><b>referralURLValue</b>: required string field that specifies the domain name of the external site. Maximum length of this string is 254 characters.</li>
+			<li><b>urlName</b>: optional string field that specifies the name of the parameter on the referral URL. Maximum length of this string is 254 characters.</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktExternalSiteReferralElementObject" displayName="${mktMarketingResources.externalSiteReferralName}" elemTemplateType="Target" flowIcon="externalReferralIcon" headerIcon="externalReferralHeaderIcon" helpLink="concepts/csbtarrefurl.htm" objectType="externalSiteReferral" package="mkt" paletteIcon="externalReferralPaletteIcon" propertiesDefinitionName="mktExternalSiteReferralProperties" summaryClass="mktExternalSiteReferralSummary">
+
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_urlValueList" objectPath="urlValue" optional="true" propertyName="urlValue">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+			</ServiceParam>
+		</CreateService>
+
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_urlValueList" objectPath="urlValue" optional="true" propertyName="urlValue">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+			</ServiceParam>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>currentCustomerBehaviorURLContentsFromDomain</elemTemplateName>
+			<anyOrAll>any</anyOrAll>
+			<containsOperator>=</containsOperator>
+			<referralURLValue>.google.</referralURLValue>
+			<equalsOrEndsWith>contain</equalsOrEndsWith>
+			<urlName>q</urlName>
+			<comparison>=</comparison>
+			<domainOption>predefined</domainOption>
+			<object objectType="urlValue"/>
+		</Xml>
+
+		<ChildObjectDefinition creatable="true" displayName="${mktMarketingResources.urlValues}" idProperty="urlValue" objectType="urlValue">
+			<PropertyDefinition displayName="${mktMarketingResources.urlValues}" maximumSize="254" propertyName="urlValue" required="true" trim="true">
+				<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" parentProperty="true" propertyName="comparison" resolvePrimaryParent="false"/>
+			</PropertyDefinition>
+		</ChildObjectDefinition>
+
+		<PropertyDefinition propertyName="containsOperator">
+			<PropertyValue displayName="${mktMarketingResources.anyURLContentsFromDomain}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.notAnyURLContentsFromDomain}" value="!="/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.referralCondition}" propertyName="equalsOrEndsWith" required="true">
+			<PropertyValue displayName="${mktMarketingResources.domainContain}" value="contain"/>
+			<PropertyValue displayName="${mktMarketingResources.domainIsExactly}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.domainEnd}" value="end"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.searchCondition}" propertyName="comparison">
+			<PropertyValue displayName="${mktMarketingResources.searchIsExactly}" value="="/>
+			<PropertyValue displayName="${mktMarketingResources.searchStart}" value="start"/>
+			<PropertyValue displayName="${mktMarketingResources.searchContain}" value="contain"/>
+			<PropertyValue displayName="${mktMarketingResources.searchEnd}" value="end"/>
+			<PropertyValue displayName="${mktMarketingResources.searchAny}" value="any"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.referralDomainName}" maximumSize="254" propertyName="referralURLValue" required="true" trim="true"/>		
+		<PropertyDefinition displayName="${mktMarketingResources.urlName}" maximumSize="254" propertyName="urlName" trim="true"/>
+		
+		<ExternalSiteReferralValidator package="mkt" validatorId="referralValidator"/>
+	</FlowElementObjectDefinition>
+
+</Definitions>

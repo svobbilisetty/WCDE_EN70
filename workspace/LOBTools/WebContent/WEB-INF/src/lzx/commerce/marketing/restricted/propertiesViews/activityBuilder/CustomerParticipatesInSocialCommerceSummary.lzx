@@ -1,0 +1,181 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktCustomerParticipatesInSocialCommerceElementObject} flow element.
+		The generated text is shown beneath the element on the Activity Builder flow diagram.
+	-->
+	<class name="mktCustomerParticipatesInSocialCommerceSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="daysOperator" propertyName="daysOperator"/>
+		<wcfFlowSummaryParam name="days" propertyName="days"/>
+		<wcfFlowSummaryParam name="date1" propertyName="date1"/>
+		<wcfFlowSummaryParam name="date2" propertyName="date2"/>
+		<wcfFlowSummaryParam name="beforeDate" propertyName="beforeDate"/>
+		<wcfFlowSummaryParam name="beforeAfterOnDate" propertyName="beforeAfterOnDate"/>
+		<wcfFlowSummaryParam name="numberOfTimes" propertyName="numberOfTimes"/>
+		<wcfFlowSummaryParam name="socialActivityType" propertyName="socialActivityType"/>
+		<wcfFlowSummaryParam name="filterName" objectPath="filterGroup" propertyName="displayName" checkObjectDefinition="true" forceResolveAll="true"/>
+		
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWithinLastXDays, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedAtLeastXDaysAgo, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedBeforeXDate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedAfterXDate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedBetweenXandYDates, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedOnXDate, "onstring");
+			
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastReview, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastComment, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastPhoto, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastBlog, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastRecommendation, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastReportInappropriate, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitAtLeastLikesProduct, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPerformedWaitLikesHomepage, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryActivityFilter, "onstring");
+			
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var numberAndActivityText = this.getNumberAndActivitySummary();
+								
+				if(numberAndActivityText != "") {
+					summaryText = numberAndActivityText;
+					
+					var filterText = this.getFilterSummary();
+					if (filterText != "") {
+						summaryText += "\n" + filterText;
+					}
+					
+					var dateText = this.getDateSummary();
+					if(dateText != "") {
+						summaryText += "\n" + dateText;
+					}
+				}
+				
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		
+		<!--- @keywords private -->
+		<method name="getDateSummary">
+			<![CDATA[
+				var summary = "";
+
+				if (this.resolvedParams["daysOperator"] == "<=") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryPerformedWithinLastXDays", [days]);
+					}
+				}
+				else if (this.resolvedParams["daysOperator"] == ">") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryPerformedAtLeastXDaysAgo", [days]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "<") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"], wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedBeforeXDate", [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedAfterXDate", [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">=" && this.resolvedParams["beforeDate"] == "<=") {
+					if(this.resolvedParams["date1"] != "" && this.resolvedParams["date2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedBetweenXandYDates", [date1, date2]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "=") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryPerformedOnXDate", [date1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getNumberAndActivitySummary">
+			<![CDATA[
+				var summary = "";
+				
+				if(this.resolvedParams["numberOfTimes"] && (this.resolvedParams["numberOfTimes"] != "")) {
+					var numberOfTimes = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfTimes"]);
+							
+					if(this.resolvedParams["socialActivityType"] == "*") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastAny", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "review") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastReview", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "comment") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastComment", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "photo") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastPhoto", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "blog") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastBlog", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "recommendation") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastRecommendation", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "likesProduct") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastLikesProduct", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "likesHomepage") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitLikesHomepage", [numberOfTimes]);
+					}
+					else if(this.resolvedParams["socialActivityType"] == "flagInappropriate") {
+						summary = mktMarketingResources.replaceValues("summaryPerformedWaitAtLeastReportInappropriate", [numberOfTimes]);
+					}
+				}
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getFilterSummary">
+			<![CDATA[
+				var summary = "";
+
+				var filterNames = this.getValuesList("filterName");
+				if ( filterNames != "" ){
+					summary = mktMarketingResources.replaceValues("summaryActivityFilter", [filterNames]);
+				}				
+				return summary;
+			]]>
+		</method>
+	</class>
+</library>

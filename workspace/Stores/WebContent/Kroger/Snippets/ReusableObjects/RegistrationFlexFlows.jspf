@@ -1,0 +1,223 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+
+<flow:ifEnabled  feature="EmailOption">
+	<div class="column" id="WC_UserRegistrationAddForm_div_24">
+		<div class="input_label" id="WC_UserRegistrationAddForm_div_25">
+			<div class="checkbox_registration" id="WC_UserRegistrationAddForm_div_26">
+				<c:choose>
+					<c:when test="${paramSource.sendMeEmail == 'on'}">
+						<input class="checkbox" type="checkbox" name="sendMeEmail" id="WC_UserRegistrationAddForm_FormInput_sendMeEmail_In_Register_1" checked/>
+					</c:when>
+					<c:otherwise>
+						<input class="checkbox" type="checkbox" name="sendMeEmail" id="WC_UserRegistrationAddForm_FormInput_sendMeEmail_In_Register_1"/>
+					</c:otherwise>
+				</c:choose>
+			</div>
+			<div class="checkbox_label_registration" id="WC_UserRegistrationAddForm_div_27">
+				<label for="WC_UserRegistrationAddForm_FormInput_sendMeEmail_In_Register_1"><fmt:message key="REGNEW_SENDMEEMAIL"/></label>
+			</div>
+		</div>
+	</div>
+	<br clear="all" />
+</flow:ifEnabled>
+
+<flow:ifEnabled feature="preferredLanguage">
+
+	<c:choose>
+		<c:when test="${b2bStore eq 'true'}">
+			<%--  preferred language drop down for B2B --%>
+			<flow:ifEnabled feature="preferredLanguage">
+				<c:set var="preferredLanguage" value="${paramSource.preferredLanguage}"/>
+				<c:if test="${empty preferredLanguage}">
+					<c:set var="preferredLanguage" value="${CommandContext.languageId}"/>
+				</c:if>
+		
+				<div class="column"  id="WC_OrganizationRegistration_66">
+					<div  id="WC_OrganizationRegistration_67">
+						<label for="WC_UserRegistrationAddForm_FormInput_preferredLanguage_In_Register_1"><fmt:message key="REGISTER_PREFERREDLANGUAGE"/></label>
+					</div>
+		
+					<select class="drop_down_registration" name="<c:out value="${paramPrefix}preferredLanguage"/>" id="WC_UserRegistrationAddForm_FormInput_preferredLanguage_In_Register_1">
+						<c:forEach items="${sdb.languageDataBeans}" var="language">
+							<option value="<c:out value="${language.languageId}"/>"<c:if test="${language.languageId == preferredLanguage}"> selected="selected"</c:if>>
+								<c:out value="${language.descriptionString}"/>
+							</option>
+						</c:forEach>
+					</select>
+				</div>
+			</flow:ifEnabled>
+         
+		</c:when>
+		<c:otherwise>
+			<div class="column" id="WC_UserRegistrationAddForm_div_28">
+				<div id="WC_UserRegistrationAddForm_div_29">
+					<label for="WC_UserRegistrationAddForm_FormInput_preferredLanguage_In_Register_1"><fmt:message key="REGISTER_PREFERREDLANGUAGE"/></label>
+				</div>
+				<wcf:getData type="com.ibm.commerce.infrastructure.facade.datatypes.ConfigurationType"
+					var="currentStoreLanguages"
+					expressionBuilder="findByUniqueID">
+					<wcf:param name="uniqueId" value="com.ibm.commerce.foundation.supportedLanguages" />
+					<wcf:contextData name="storeId" data="${storeId}"/>
+				</wcf:getData>
+				<c:set var="supportedLanguages" value="${currentStoreLanguages.configurationAttribute}"/>
+
+				<select class="drop_down" name="preferredLanguage" id="WC_UserRegistrationAddForm_FormInput_preferredLanguage_In_Register_1">
+					<%--  Get the languages supported by the store        --%>
+					<c:forEach var="supportedLanguage" items="${supportedLanguages}">
+						<c:forEach var="additionalValue" items="${supportedLanguage.additionalValue}">
+							<c:if test="${additionalValue.name == 'localeName'}">
+								<c:set var="currentLocaleName" value="${additionalValue.value}"/>
+							</c:if>
+						</c:forEach>
+						<c:choose>
+							<%--
+								***
+								* First, pre-select the value in paramSource.
+								* If an error occurs and the page refreshes, paramSource is set to the WCParam.
+								* Otherwise, it is set to the UserRegistrationDataBean (i.e. pre-select based on the information in the database).
+								***
+							--%>
+							<c:when test="${!empty paramSource.preferredLanguage && currentLocaleName == paramSource.preferredLanguage}">
+								<option value="<c:out value="${currentLocaleName}" />" selected="selected"><c:out value="${supportedLanguage.primaryValue.value}" /></option>
+							</c:when>
+							<c:when test="${currentLocaleName == CommandContext.locale}">
+								<option value="<c:out value="${currentLocaleName}" />" selected="selected"><c:out value="${supportedLanguage.primaryValue.value}" /></option>
+							</c:when>
+							<c:otherwise>
+								<option value="<c:out value="${currentLocaleName}" />"><c:out value="${supportedLanguage.primaryValue.value}" /></option>
+							</c:otherwise>
+						</c:choose>
+					</c:forEach>
+				</select>
+			</div>
+		</c:otherwise>
+	</c:choose>
+
+</flow:ifEnabled>
+
+<flow:ifDisabled feature="preferredLanguage">
+	<%-- The value is set to the previously entered preferredLanguage if available.  Otherwise, the value is set to the locale in the CommandContext. 
+	The default language code for B2C is the locale - en_US. But that cannot be used for B2B. The default preferredLanguage for B2B is an integerger.. --%>
+	<c:choose>
+		<c:when test="${b2bStore eq 'true'}">
+			<c:set var="preferredLanguage" value="${CommandContext.languageId}"/>
+		</c:when>
+		<c:otherwise>
+			<c:set var="preferredLanguage" value="${paramSource.preferredLanguage}"/>
+		</c:otherwise>
+	</c:choose>
+	<input type="hidden" name="preferredLanguage" value="<c:out value="${preferredLanguage}" default="${CommandContext.locale}" />" id="WC_UserRegistrationAddForm_inputs_1"/>
+</flow:ifDisabled>
+
+
+
+<flow:ifEnabled feature="preferredCurrency">
+	<div class="column" id="WC_UserRegistrationAddForm_div_30">
+		<div id="WC_UserRegistrationAddForm_div_31">
+			<label for="WC_UserRegistrationAddForm_FormInput_preferredCurrency_In_Register_1"><fmt:message key="REGISTER_PREFERREDCURRENCY"/></label>
+		</div>
+		<wcf:getData type="com.ibm.commerce.infrastructure.facade.datatypes.ConfigurationType"
+			var="currentStoreCurrencies"
+			expressionBuilder="findByUniqueID">
+			<wcf:param name="uniqueId" value="com.ibm.commerce.foundation.supportedCurrencies" />
+			<wcf:contextData name="storeId" data="${storeId}"/>
+		</wcf:getData>
+		<c:set var="supportedCurrencies" value="${currentStoreCurrencies.configurationAttribute}"/>
+		<select class="drop_down" name="preferredCurrency" id="WC_UserRegistrationAddForm_FormInput_preferredCurrency_In_Register_1">
+			<%--  Get the currencies supported by the store        --%>
+			<c:forEach var="supportedCurrency" items="${supportedCurrencies}">
+				<c:forEach var="additionalValue" items="${supportedCurrency.additionalValue}">
+					<c:if test="${additionalValue.name == 'currencyCode'}">
+						<c:set var="currentCurrencyCode" value="${additionalValue.value}"/>
+					</c:if>
+				</c:forEach>
+				<c:choose>
+					<%-- pre-select the appropriate value in the drop down list. --%>
+					<c:when test="${!empty paramSource.preferredCurrency && currentCurrencyCode == paramSource.preferredCurrency}">
+						<option value="<c:out value="${currentCurrencyCode}" />" selected="selected"><c:out value="${supportedCurrency.primaryValue.value}"/></option>
+					</c:when>
+					<c:when test="${currentCurrencyCode == CommandContext.currency}">
+						<option value="<c:out value="${currentCurrencyCode}" />" selected="selected"><c:out value="${supportedCurrency.primaryValue.value}"/></option>
+					</c:when>
+					<c:otherwise>
+						<option value="<c:out value="${currentCurrencyCode}" />"><c:out value="${supportedCurrency.primaryValue.value}"/></option>
+					</c:otherwise>
+				</c:choose>
+			</c:forEach>
+		</select>
+	</div>
+	<br clear="all" />
+</flow:ifEnabled>
+<flow:ifDisabled feature="preferredCurrency">
+	<%-- The value is set to the previously entered preferredCurrency if available.  Otherwise, the value is set to the currency in the CommandContext. --%>
+	<input id="WC_UserRegistrationAddForm_inputs_2" type="hidden" name="preferredCurrency" value="<c:out value="${paramSource.preferredCurrency}" default="${CommandContext.currency}" />"/>
+</flow:ifDisabled>
+
+
+<flow:ifEnabled feature="Age">
+	<div class="column" id="WC_UserRegistrationAddForm_div_32">
+		<div id="WC_UserRegistrationAddForm_div_33">
+			<label for="WC_UserRegistrationAddForm_FormInput_age_In_Register_1"><fmt:message key="AGE" /></label>
+		</div>
+
+		<select onchange="javascript:LogonForm.checkAge(document.Register)" class="drop_down" name="age" id="WC_UserRegistrationAddForm_FormInput_age_In_Register_1" size="1">
+			<option value="0"><fmt:message key="SELECT_ONE" /></option>
+		   
+			<option <c:if test="${paramSource.age eq '1'}"> selected="selected" </c:if> value="1"><fmt:message key="REG_AGE_OPTION1" /></option>
+			<option <c:if test="${paramSource.age eq '2'}"> selected="selected" </c:if> value="2"><fmt:message key="REG_AGE_OPTION2" /></option>
+			<option <c:if test="${paramSource.age eq '3'}"> selected="selected" </c:if> value="3"><fmt:message key="REG_AGE_OPTION3" /></option>
+			<option <c:if test="${paramSource.age eq '4'}"> selected="selected" </c:if> value="4"><fmt:message key="REG_AGE_OPTION4" /></option>
+			<option <c:if test="${paramSource.age eq '5'}"> selected="selected" </c:if> value="5"><fmt:message key="REG_AGE_OPTION5" /></option>
+			<option <c:if test="${paramSource.age eq '6'}"> selected="selected" </c:if> value="6"><fmt:message key="REG_AGE_OPTION6" /></option>
+			<option <c:if test="${paramSource.age eq '7'}"> selected="selected" </c:if> value="7"><fmt:message key="REG_AGE_OPTION7" /></option>
+		</select>
+		<wcf:url var="PrivacyViewURL" patternName="PrivacyRegistrationURL" value="PrivacyPolicy">
+			<wcf:param name="langId" value="${langId}" />
+			<wcf:param name="storeId" value="${WCParam.storeId}" />
+			<wcf:param name="catalogId" value="${WCParam.catalogId}" />
+			<wcf:param name="fromPage" value="registration" />
+			<wcf:param name="urlLangId" value="${urlLangId}" />
+		</wcf:url>
+		<a href="javascript:popupWindow('<c:out value="${PrivacyViewURL}"/>');" class="myaccount_link" id="WC_UserRegistrationAddForm_PrivacyPolicy_Link_1"><fmt:message key="PRIVACY_TITLE" /></a>
+	</div>
+</flow:ifEnabled>
+
+<flow:ifEnabled feature="Gender">
+	<div class="column" id="WC_UserRegistrationAddForm_div_34">
+		<div id="WC_UserRegistrationAddForm_div_35">
+			<label for="WC_UserRegistrationAddForm_FormInput_gender_In_Register_1"><fmt:message key="GENDER" /></label>
+		</div>
+		<select class="drop_down" name="gender" id="WC_UserRegistrationAddForm_FormInput_gender_In_Register_1" size="1">
+			<c:choose> 
+				<c:when test="${b2bStore eq 'true'}">
+					<option <c:if test="${paramSource.gender eq 'N'}"> selected="selected" </c:if> value="N"><fmt:message key="SELECT_ONE" /></option>
+					<option <c:if test="${paramSource.gender eq 'M'}"> selected="selected" </c:if> value="M"><fmt:message key="MALE" /></option>
+					<option <c:if test="${paramSource.gender eq 'F'}"> selected="selected" </c:if> value="F"><fmt:message key="FEMALE" /></option>      		
+				</c:when>
+				<c:otherwise>
+					<option <c:if test="${paramSource.gender eq 'Unspecified'}"> selected="selected" </c:if> value="Unspecified"><fmt:message key="SELECT_ONE" /></option>
+					<option <c:if test="${paramSource.gender eq 'Male'}"> selected="selected" </c:if> value="Male"><fmt:message key="MALE" /></option>
+					<option <c:if test="${paramSource.gender eq 'Female'}"> selected="selected" </c:if> value="Female"><fmt:message key="FEMALE" /></option>
+				</c:otherwise>
+			</c:choose>
+
+
+	      </select>
+	</div>
+	<br clear="all" />
+</flow:ifEnabled>
+
+<%@ include file="PersonalInfoExtension.jspf"%>

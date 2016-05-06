@@ -1,0 +1,67 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+<!---
+		This class provides the base promotions template picker used when creating a new {@link proBasePromotionPrimaryObjectDefinition promotion}. It contains a 
+		list of {@link wcfFilter filters} to filter the different promotion types. The filters control which promotion types are visible. 
+		
+		<p>It is used to construct a {@link proPromotionTemplatePrimaryObjectDefinition template object} using 
+		the promotion template information from the {@link wcfObjectTemplate templates} instead of using a service.</p> 
+		
+		Sample usage:
+                        @START_CODE
+		<BasePromotionTypeTemplatePicker definitionName="proPromotionTypeTemplatePicker" package="pro">
+	
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_OrderLevelPromotions}" propertyName="promotionType" values="OrderLevelPercentDiscount, OrderLevelValueDiscount, OrderLevelFreeGift"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_ShippingPromotions}" propertyName="promotionType" values="OrderLevelFixedShippingDiscount, OrderLevelFixedAmountOffShippingDiscount, ProductLevelFixedShippingDiscount, CategoryLevelFixedShippingDiscount"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_ProductLevelPromotions}" propertyName="promotionType" values="ProductLevelPercentDiscount, ProductLevelPerItemPercentDiscount, ProductLevelSameItemPercentDiscount, ProductLevelPWPPercentDiscount, ProductLevelValueDiscount, ProductLevelPerItemValueDiscount, ProductLevelBuyXGetYFree, ProductLevelFixedShippingDiscount"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_CategoryLevelPromotions}" propertyName="promotionType" values="CategoryLevelPercentDiscount, CategoryLevelPerItemPercentDiscount, CategoryLevelSameItemPercentDiscount, CategoryLevelPerItemValueDiscount, CategoryLevelValueDiscount, CategoryLevelBuyXGetYFree, CategoryLevelFixedShippingDiscount"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_MultipleItemsPromotions}" propertyName="promotionType" values="MultipleItemsPercentDiscount"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_PercentageOffPromotions}" propertyName="promotionType" values="OrderLevelPercentDiscount, ProductLevelPercentDiscount, ProductLevelPerItemPercentDiscount, ProductLevelSameItemPercentDiscount, ProductLevelPWPPercentDiscount, CategoryLevelPercentDiscount, CategoryLevelPerItemPercentDiscount, CategoryLevelSameItemPercentDiscount, MultipleItemsPercentDiscount"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_AmountOffPromotions}" propertyName="promotionType" values="OrderLevelValueDiscount, ProductLevelValueDiscount, ProductLevelPerItemValueDiscount, CategoryLevelValueDiscount, CategoryLevelPerItemValueDiscount, OrderLevelFixedAmountOffShippingDiscount"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_FixedCostPromotions}" propertyName="promotionType" values="OrderLevelFixedShippingDiscount, ProductLevelFixedShippingDiscount, CategoryLevelFixedShippingDiscount"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_FreeGiftPromotions}" propertyName="promotionType" values="OrderLevelFreeGift, ProductLevelBuyXGetYFree, CategoryLevelBuyXGetYFree"/>
+			<PropertyValuesFilter displayName="${promotionResources.promotion_folder_All}" propertyName="promotionType" values=""/>
+	
+		</BasePromotionTypeTemplatePicker>
+                        @END_CODE
+-->	
+<class name="proBasePromotionTypeTemplatePicker" extends="wcfTemplatePickerWizard" htmlDescription="true" title="${promotionResources.promotion_templatePicker_title.string}" 
+	objectTypes="PromotionTypeTemplate" descriptionPropertyName="promotionTypeDescription">
+	
+	<!---	
+		@keywords private
+		Override openWindow method to retrieve all of the promotion template information directly from the {@link wcfObjectTemplate} instead
+		of using a service. 
+	--> 
+	<method name="openWindow">
+		<![CDATA[
+		super.openWindow();
+		var promotionObjectDefinition = this.model.getObjectDefinition(null, "Promotion");
+		var templateObjectDefinition = this.model.getObjectDefinition(null, "PromotionTypeTemplate");
+		var propertyValues = promotionObjectDefinition.propertyDefinitions["promotionType"][0].getPropertyValues();
+		for (var i = 0; i < propertyValues.length; i++) {
+			var o = this.model.loadObject(null, templateObjectDefinition, propertyValues[i].value);
+			o.getProperty("name").setAttribute("value", propertyValues[i].displayName);
+			o.getProperty("promotionType").setAttribute("value", propertyValues[i].value);
+			o.getProperty("promotionTypeDescription").setAttribute("value", propertyValues[i].description);
+			this.templateObjects.push(o);
+		}
+		this.updateTemplateObjects();
+		]]>
+	</method>
+			
+</class>
+
+</library>

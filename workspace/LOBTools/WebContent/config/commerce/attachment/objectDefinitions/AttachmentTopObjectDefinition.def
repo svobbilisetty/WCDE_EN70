@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--
+		Top object definition for the Attachment business object editor tool. This object creates instances of the following
+		organizational objects:<ul>
+			<li>{@link AttachmentResourceAttachmentType Attachment Organizational ObjectDefinition}</li>
+		</ul>
+	-->
+    <TopObjectDefinition definitionName="attAttachmentTopObjectDefinition">
+    
+        <Xml name="template">
+        	<object objectType="AttachmentResourceAttachmentType"/>
+		</Xml>
+		
+		  <!--- Retrieves the {@link ManagedDirectory ManagedDirectory} and 
+			{@link attInheritedManagedDirectory InheritedManagedDirectory} objects.  -->
+		   <GetChildrenService url="/cmc/GetRootManagedDirectory">
+			  <ServiceParam name="storeId"/>
+		   </GetChildrenService>
+	</TopObjectDefinition>
+	
+	<!--
+		Organizational object definition for the Attachment node in the navigation tree. To list attachments under the current store,
+		a {@link wcfGetChildrenService wcfGetChildrenService} is defined which calls the URL /cmc/GetAttachmentsForStore and is
+		displayed using an instance of {@link attAttachmentGrid attAttachmentGrid}.
+	-->
+	<OrganizationalObjectDefinition definitionName="AttachmentResourceAttachmentType" detailsViewHeaderText="${attachmentResources.attachment_headerText}" displayName="${attachmentResources.attachmentAttachmentType}" objectType="AttachmentResourceAttachmentType" organizedObjectTypes="Attachment">
+		   
+		   <!--- Retrieves the {@link Attachment Attachment} child objects under current store.  -->
+		   <GetChildrenService url="/cmc/GetAttachmentsForStore">
+			  <ServiceParam name="storeId"/>
+		   </GetChildrenService>
+		<!---  
+	This navigation list definition is used to display {@link Attachment Attachments} and {@link InheritedAttachment Inherited Attachments}.
+	-->		   
+		 <NavigationListDefinition displayName="${attachmentResources.attachmentChildList_ListTitle}" helpLink="tasks/tttviewattachments.htm" listDefinitionName="attAttachmentList" listTitle="${attachmentResources.attachmentChildList_ListTitle}" name="attAttachmentNavigationList"/> 
+	</OrganizationalObjectDefinition>
+		 
+	
+</Definitions>

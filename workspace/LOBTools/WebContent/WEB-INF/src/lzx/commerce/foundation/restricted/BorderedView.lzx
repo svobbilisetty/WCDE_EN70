@@ -1,0 +1,247 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<class name="wcfBorderedView">
+		<attribute name="marginTopSize" type="number" value="null"/>
+		<attribute name="marginRightSize" type="number" value="null"/>
+		<attribute name="marginBottomSize" type="number" value="null"/>
+		<attribute name="marginLeftSize" type="number" value="null"/>
+		
+		<attribute name="paddingTopSize" type="number" value="null"/>
+		<attribute name="paddingRightSize" type="number" value="null"/>
+		<attribute name="paddingBottomSize" type="number" value="null"/>
+		<attribute name="paddingLeftSize" type="number" value="null"/>
+		
+		<attribute name="borderTopSize" type="number" value="null"/>
+		<attribute name="borderRightSize" type="number" value="null"/>
+		<attribute name="borderBottomSize" type="number" value="null"/>
+		<attribute name="borderLeftSize" type="number" value="null"/>
+				
+		<attribute name="borderTopColor" type="color" value="${null}"/>
+		<attribute name="borderRightColor" type="color" value="${null}"/>
+		<attribute name="borderBottomColor" type="color" value="${null}"/>
+		<attribute name="borderLeftColor" type="color" value="${null}"/>
+		
+		<!-- 
+			If this value is set, the sizes of all margins will be this value. This
+			value does not overwrite the size of any individual border, unless it
+			is not set. For example, if marginTopSize is set to 1, then the size
+			of the top margin will be 1, even if the marginSize is set to 2.  
+		-->
+		<attribute name="marginSize" type="number" value="0"/>
+		<attribute name="paddingSize" type="number" value="0"/>
+		<attribute name="borderSize" type="number" value="0"/>
+		<attribute name="borderColor" type="color" value="0x000000"/>
+
+		<!--- @keywords private -->
+		<attribute name="defaultplacement" value="content" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.renderDel = new lz.Delegate(this, "render");
+			this.renderDel.register(this, "onborderTopColor");
+			this.renderDel.register(this, "onborderRightColor");
+			this.renderDel.register(this, "onborderBottomColor");
+			this.renderDel.register(this, "onborderLeftColor");
+			this.renderDel.register(this, "onborderColor");
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.renderDel.unregisterAll();
+			delete this.renderDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<method name="getDefaultPlacementView">
+			<![CDATA[
+			return content;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="render" args="e=null">
+			<![CDATA[
+			this.border.clear();
+			var topSize = this.borderTopSize != null ? this.borderTopSize : borderSize;
+			var rightSize = this.borderRightSize != null ? this.borderRightSize : borderSize;
+			var bottomSize = this.borderBottomSize != null ? this.borderBottomSize : borderSize;
+			var leftSize = this.borderLeftSize != null ? this.borderLeftSize : borderSize;
+
+			var topPos = this.marginTopSize != null ? this.marginTopSize : this.marginSize
+			var rightPos = this.width - (this.marginRightSize != null ? this.marginRightSize : this.marginSize) - rightSize;
+			var bottomPos = this.height - (this.marginBottomSize != null ? this.marginBottomSize : this.marginSize) - bottomSize;
+			var leftPos = this.marginLeftSize != null ? this.marginLeftSize : this.marginSize;
+			
+			if (topSize > 0) {
+				this.border.beginPath();
+				this.border.moveTo(leftPos, topPos);
+				this.border.lineTo(rightPos, topPos);
+				this.border.strokeStyle = this.borderTopColor != null ? this.borderTopColor : this.borderColor;
+				this.border.lineWidth = topSize;
+				this.border.stroke();
+			}
+			
+			if (rightSize > 0) {
+				this.border.beginPath();
+				this.border.moveTo(rightPos, topPos);
+				this.border.lineTo(rightPos, bottomPos);
+				this.border.strokeStyle = this.borderRightColor != null ? this.borderRightColor : this.borderColor;
+				this.border.lineWidth = rightSize;
+				this.border.stroke();
+			}
+			
+			if (bottomSize > 0) {
+				this.border.beginPath();
+				this.border.moveTo(leftPos, bottomPos);
+				this.border.lineTo(rightPos + rightSize, bottomPos);
+				this.border.strokeStyle = this.borderBottomColor != null ? this.borderBottomColor : this.borderColor;
+				this.border.lineWidth = bottomSize;
+				this.border.stroke();
+			}
+			
+			if (leftSize > 0) {
+				this.border.beginPath();
+				this.border.moveTo(leftPos, topPos);
+				this.border.lineTo(leftPos, bottomPos);
+				this.border.strokeStyle = this.borderLeftColor != null ? this.borderLeftColor : this.borderColor;
+				this.border.lineWidth = leftSize;
+				this.border.stroke();
+			}
+			]]>
+		</method>
+
+		<layout>
+			<!--- @keywords private -->
+			<method name="init">
+				<![CDATA[
+				this.useContentWidth = !classroot.hassetwidth;
+				this.useContentHeight = !classroot.hassetheight;
+				
+				if (this.useContentWidth) {
+					this.updateDelegate.register(classroot.content, "onwidth");
+				}
+				else {
+					this.updateDelegate.register(classroot, "onwidth");
+				}
+				if (this.useContentHeight) {
+					this.updateDelegate.register(classroot.content, "onheight");
+				}
+				else {
+					this.updateDelegate.register(classroot, "onheight");
+				}
+				
+				this.updateDelegate.register(classroot, "onmarginTopSize");
+				this.updateDelegate.register(classroot, "onmarginRightSize");
+				this.updateDelegate.register(classroot, "onmarginBottomSize");
+				this.updateDelegate.register(classroot, "onmarginLeftSize");
+				this.updateDelegate.register(classroot, "onmarginSize");
+				
+				this.updateDelegate.register(classroot, "onpaddingTopSize");
+				this.updateDelegate.register(classroot, "onpaddingRightSize");
+				this.updateDelegate.register(classroot, "onpaddingBottomSize");
+				this.updateDelegate.register(classroot, "onpaddingLeftSize");
+				this.updateDelegate.register(classroot, "onpaddingSize");
+				
+				this.updateDelegate.register(classroot, "onborderTopSize");
+				this.updateDelegate.register(classroot, "onborderRightSize");
+				this.updateDelegate.register(classroot, "onborderBottomSize");
+				this.updateDelegate.register(classroot, "onborderLeftSize");
+				this.updateDelegate.register(classroot, "onborderSize");
+				super.init();
+				]]>
+			</method>
+		
+			<!---
+				Update the bordered view layout.
+			-->
+			<method name="update" args="e=null">
+				<![CDATA[
+				if (!this.locked) {
+					this.lock();
+					var topMarginSize = classroot.marginTopSize != null ? classroot.marginTopSize : classroot.marginSize;
+					var rightMarginSize = classroot.marginRightSize != null ? classroot.marginRightSize : classroot.marginSize;
+					var bottomMarginSize = classroot.marginBottomSize != null ? classroot.marginBottomSize : classroot.marginSize;
+					var leftMarginSize = classroot.marginLeftSize != null ? classroot.marginLeftSize : classroot.marginSize;
+		
+					var topBorderSize = classroot.borderTopSize != null ? classroot.borderTopSize : classroot.borderSize;
+					var rightBorderSize = classroot.borderRightSize != null ? classroot.borderRightSize : classroot.borderSize;
+					var bottomBorderSize = classroot.borderBottomSize != null ? classroot.borderBottomSize : classroot.borderSize;
+					var leftBorderSize = classroot.borderLeftSize != null ? classroot.borderLeftSize : classroot.borderSize;
+					
+					var topPaddingSize = classroot.paddingTopSize != null ? classroot.paddingTopSize : classroot.paddingSize;
+					var rightPaddingSize = classroot.paddingRightSize != null ? classroot.paddingRightSize : classroot.paddingSize;
+					var bottomPaddingSize = classroot.paddingBottomSize != null ? classroot.paddingBottomSize : classroot.paddingSize;
+					var leftPaddingSize = classroot.paddingLeftSize != null ? classroot.paddingLeftSize : classroot.paddingSize;
+					
+					var pos = leftMarginSize + leftBorderSize + leftPaddingSize;
+					if (pos != classroot.content.x) {
+						classroot.content.setAttribute("x", pos);
+					}
+					
+					pos = topMarginSize + topBorderSize + topPaddingSize;
+					if (pos != classroot.content.y) {
+						classroot.content.setAttribute("y", pos);
+					}
+					
+					var size;
+					if (this.useContentWidth) {
+						size = leftMarginSize + leftBorderSize + leftPaddingSize + classroot.content.width + rightPaddingSize + rightBorderSize + rightMarginSize;
+						if (size != classroot.width) {
+							classroot.setAttribute("width", size);
+						}
+					}
+					else {
+						size = classroot.width - leftMarginSize - leftBorderSize - leftPaddingSize - rightPaddingSize - rightBorderSize - rightMarginSize;
+						if (size < 0) {
+							size = 0;
+						}
+						if (size != classroot.content.width) {
+							classroot.content.setAttribute("width", size);
+						}
+					}
+										
+					if (this.useContentHeight) {
+						size = topMarginSize + topBorderSize + topPaddingSize + classroot.content.height + bottomPaddingSize + bottomBorderSize + bottomMarginSize;
+						if (size != classroot.height) {
+							classroot.setAttribute("height", size);
+						}
+					}
+					else {
+						size = classroot.height - topMarginSize - topBorderSize - topPaddingSize - bottomPaddingSize - bottomBorderSize - bottomMarginSize;
+						if (size < 0) {
+							size = 0;
+						}
+						if (size != classroot.content.height) {
+							classroot.content.setAttribute("height", size);
+						}
+					}
+					
+			        this.locked = false;
+			        classroot.render();
+				}
+				]]>
+			</method>
+		</layout>
+		
+		<drawview name="border" width="${parent.width}" height="${parent.height}" />
+		<view name="content"/>
+	</class>
+</library>

@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglReturnPolicyPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.returnPolicyPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="ReturnPolicyPageReferenceDefaultReturnPolicyPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="ReturnPolicyPageReferenceDefaultReturnPolicyPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="ReturnPolicyPageReferenceDefaultReturnPolicyPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display Return Policy page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglReturnPolicyPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localReturnPolicyPageCondition" enablementValue="InheritedReturnPolicyPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglReturnPolicyPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited Return Policy page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedReturnPolicyPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedReturnPolicyPageCondition" enablementValue="InheritedReturnPolicyPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedReturnPolicyPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglReturnPolicyPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglReturnPolicyPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_returnPolicyPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="ReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts,ReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglReturnPolicyPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_returnPolicyPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="ReturnPolicyPageLayoutAssociationReferencedReturnPolicyPageLayouts,ReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedReturnPolicyPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_returnPolicyPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedReturnPolicyPageLayoutAssociationReferencedInheritedReturnPolicyPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

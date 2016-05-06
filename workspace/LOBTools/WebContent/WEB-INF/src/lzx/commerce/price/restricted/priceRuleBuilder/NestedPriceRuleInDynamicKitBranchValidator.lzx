@@ -1,0 +1,60 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for specifying price rule as nested rule in the path of dynamic kit branch. 
+		This validator ensures that user can only specify independent price rule as nested rule in the Non-Dynamic Kit Price Rule path
+		and specify dependent price rules as nested rule in Dynamic Kit Price Rule path.
+	-->
+	<class name="prcNestedPriceRuleInDynamicKitBranchValidator" extends="wcfValidator">
+
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(this.isEnabled(o)) {
+				var childObjects = o.getObjects("RefPriceRuleGroup");
+				if (o.parentObject != null 
+					&& o.parentObject.parentObject != null 
+					&& o.parentObject.parentObject.objectType == "dynamicKitBranch" 
+					&& childObjects != null 
+					&& childObjects[0] != null) {
+					
+					// paths
+					var pathObjs =  o.parentObject.parentObject.getObjects("path");
+					
+					if(pathObjs.length==2) {
+						// The first path is for non DK price rule, the second path is for DK price rule.
+						var dKPathObj = null;
+						if(Number(pathObjs[0].getPropertyValue("sequence")) < Number(pathObjs[1].getPropertyValue("sequence"))) {
+							dKPathObj = pathObjs[1];
+						} else {
+							dKPathObj = pathObjs[0];
+						}
+						
+						var isDKPath = dKPathObj==o.parentObject? true : false;
+						
+						var dependent = childObjects[0].getReferencedObject().getPropertyValue("dependent");
+		
+						if (!isDKPath && dependent == "true") {
+							o.addValidationError(this, prcPriceResources.errorMsg_dependentInNonDKPriceRulePath.string);
+							return;
+						}
+					}
+				}
+			}
+			o.clearValidationError(this);
+			]]>
+		</method>
+	</class>
+</library>

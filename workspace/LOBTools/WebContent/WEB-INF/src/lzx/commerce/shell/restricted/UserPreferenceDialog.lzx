@@ -1,0 +1,59 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+
+		This is the user preference dialog.  It is opened when the user selects User Preferences from the Management Center menu.  This class contains:
+		<ul>
+		<li>the user prference panel {@link wcfUserPreferencePanel}
+		<li>the OK button which will persist the preferences to the Commerce Server when clicked
+		<li>the Cancel button which will cancel the changed preferences and close the dialog
+	-->
+	<class name="wcfUserPreferenceDialog" extends="wcfDialog" title="${shellResourceBundle.userPreferenceDialogTitle.string}">
+		<!---
+			Set initial focus to the first user preference.
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+				var focusSet = false;
+				for (var i=0; i<this.userPreferencePanel.subnodes.length; i++) {
+					if (this.userPreferencePanel.subnodes[i] instanceof lz.wcfUserPreferenceObject) {
+						if (this.userPreferencePanel.subnodes[i].getDefaultFocusView() != null) {
+							lz.Focus.setFocus(this.userPreferencePanel.subnodes[i].getDefaultFocusView(), false);
+							focusSet = true;
+							break;
+						}
+					}
+				}
+				if (!focusSet) {
+					super.setInitialFocus();
+				}
+			]]>
+		</method>
+
+		<wcfUserPreferencePanel name="userPreferencePanel" />
+
+		<view name="buttonSection" placement="footer">
+			<wcfButton name="userPreferenceOkButton" text="${shellResourceBundle.okButton.string}" onclick="preferenceManager.savePreferenceValues();" isdefault="true" />
+			<wcfButton name="userPreferenceCancelButton" text="${shellResourceBundle.cancelButton.string}" onclick="classroot.closeWindow();" />
+			<simplelayout axis="x" spacing="5" />
+		</view>
+
+		<simplelayout axis="y" spacing="10" />
+	</class>
+
+</library>

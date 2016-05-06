@@ -1,0 +1,186 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktTimeElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktTimeElementObject} object:
+		<ul>
+			<li>daysOfTheWeekString</li>
+			<li>startTime</li>
+			<li>endTime</li>
+		</ul>
+	-->
+	<class name="mktTimeSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="daysOfTheWeekString" propertyName="daysOfTheWeekString"/>
+		<wcfFlowSummaryParam name="startTime" propertyName="startTime"/>
+		<wcfFlowSummaryParam name="endTime" propertyName="endTime"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.updateSummaryDel.register(mktMarketingResources.summaryEveryDay, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryOnDays, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summaryBetweenTimes, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktTimeElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = this.getDays();
+				var times = this.getTimes();
+				
+				if(times != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += times;
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				// update if the UI time display format changes
+				if(preference == "CMCTimeFormat" || preference == "CMCFirstDayOfWeek") {
+					this.updateSummary();
+				}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="getTimes">
+			<![CDATA[
+				var summary = "";
+				var startTime = "";
+				var endTime = "";
+
+				if((this.resolvedParams["startTime"] != null) && (this.resolvedParams["startTime"] != "")) {
+					startTime = wcfDateUtil.getFormattedTime(wcfDateUtil.parse(this.resolvedParams["startTime"], wcfDateUtil.TIME_FORMAT), false);
+				}
+				if((this.resolvedParams["endTime"] != null) && (this.resolvedParams["endTime"] != "")) {
+					endTime = wcfDateUtil.getFormattedTime(wcfDateUtil.parse(this.resolvedParams["endTime"], wcfDateUtil.TIME_FORMAT), false);
+				}
+
+				if((startTime != "") || (endTime != "")) {
+					if(startTime == "") {
+						startTime = wcfDateUtil.getFormattedTime(wcfDateUtil.parse("00:00", wcfDateUtil.TIME_FORMAT), false);
+					}
+					if(endTime == "") {
+						endTime = wcfDateUtil.getFormattedTime(wcfDateUtil.parse("23:59", wcfDateUtil.TIME_FORMAT), false);
+					}
+					summary = mktMarketingResources.replaceValues("summaryBetweenTimes", [startTime, endTime]);
+				}
+
+				return summary;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="getDays">
+			<![CDATA[
+				var daysArray = ["U", "M", "T", "W", "R", "F", "S"];
+				var firstDay = preferenceManager.getPreference("CMCFirstDayOfWeek");
+				if(firstDay != null && firstDay != "") {
+					switch(firstDay) {
+						case "SUN":
+							firstDay = "U";
+							break;
+						case "MON":
+							firstDay = "M";
+							break;
+						case "TUE":
+							firstDay = "T";
+							break;
+						case "WED":
+							firstDay = "W";
+							break;
+						case "THU":
+							firstDay = "R";
+							break;
+						case "FRI":
+							firstDay = "F";
+							break;
+						case "SAT":
+							firstDay = "S";
+							break;
+					}
+				
+					for(var i = 0; i < daysArray.length; i++) {
+						if(firstDay == daysArray[i]) {
+							var newDays = new Array();
+							var j = 0;
+							while(j < 7) {
+								newDays.push(daysArray[i]);
+								i = (i == 6) ? 0 : i + 1;
+								j++;
+							}
+							daysArray = newDays;
+							break;
+						}
+					}
+				}
+				
+				var summary = "";
+				var daysString = this.resolvedParams["daysOfTheWeekString"];
+				if((daysString == null) || (daysString == "") || (daysString == "MTWRFSU")) {
+					summary = mktMarketingResources.summaryEveryDay.string;
+				}
+				else {
+					for(var i = 0; i < daysArray.length; i++) {
+						if(daysString.indexOf(daysArray[i]) >= 0) {
+							if(summary != "") {
+								summary += ", ";
+							}
+							
+							switch(daysArray[i]) {
+								case "U":
+									summary += foundationResources.sunday.string;
+									break;		
+								case "M":
+									summary += foundationResources.monday.string;
+									break;
+								case "T":
+									summary += foundationResources.tuesday.string;
+									break;
+								case "W":
+									summary += foundationResources.wednesday.string;
+									break;
+								case "R":
+									summary += foundationResources.thursday.string;
+									break;
+								case "F":
+									summary += foundationResources.friday.string;
+									break;
+								case "S":
+									summary += foundationResources.saturday.string;
+									break;									
+							}
+						}
+					}
+					summary = mktMarketingResources.replaceValues("summaryOnDays", [summary]);
+				}
+
+				return summary;
+			]]>
+		</method>
+	</class>
+</library>

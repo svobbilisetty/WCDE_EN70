@@ -1,0 +1,313 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<testcase>
+
+	<!--
+		Unit Test for Category
+		======================
+		1.  Create a Category
+		2.  Create a version
+		3.  Verify based on version name
+		4.  Create another version
+		5.  Delete old version
+		6.  Make sure based on version name stays the same
+		7.  Modify the identifier
+		8.  Restore the version
+		9.  Verify the identifier is restored
+		10. Delete current version
+		11. Verify based on version name is empty
+		12. Delete the Category
+	 -->
+
+	<!-- Assign a value for category identifier -->
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="content_version_category_identifier"/>
+		<param name="value" value="content_version_category_identifier"/>
+	</action>
+
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="content_version_category_name_0"/>
+		<param name="value" value="content_version_category_name_0"/>
+	</action>
+
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="content_version_category_name_1"/>
+		<param name="value" value="content_version_category_name_1"/>
+	</action>
+	
+	<action name="wcfAutoSetValueAction">
+		<param name="valueKey" value="content_version_category_modified"/>
+		<param name="value" value="content_version_category_modified"/>
+	</action>
+
+	<!-- Create Category -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="CatalogGroup"/>
+		<param name="objectKey" value="category"/>
+	</action>
+
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="category"/>
+		<param name="propertyName" value="identifier"/>
+		<param name="valueKey" value="content_version_category_identifier"/>
+	</action>
+		
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="parentObject" value="category"/>
+		<param name="objectType" value="CatalogGroupDescription"/>
+		<param name="objectKey" value="categoryDescription"/>
+	</action>
+	
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="categoryDescription"/>
+		<param name="propertyName" value="name"/>
+		<param name="valueKey" value="content_version_category_name_0"/>
+	</action>
+	
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="objectPath" value="CatalogAlias"/>
+		<param name="objectKey" value="masterCatalog"/>
+	</action>
+	
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="parentObject" value="masterCatalog"/>
+		<param name="referencedObject" value="category"/>
+		<param name="objectType" value="ChildCatalogGroup"/>
+	</action>
+
+	<action name="wcfAutoSaveAllAction"/>
+	<action name="wcfAutoRefreshAllAction"/>
+
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="content_version_category_identifier"/>
+		<param name="objectKey" value="category"/>
+	</action>
+
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="category"/>
+	</action>
+	
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="category"/>
+		<param name="propertyName" value="identifier"/>
+		<param name="valueKey" value="content_version_category_identifier"/>
+	</action>
+	
+		<!-- Create Content Version -->
+		<action name="wcfAutoCreateVersionAction">
+			<param name="object" value="category"/>
+			<param name="versionName" value="content_version_category_name_0"/>
+			<param name="comment" value="content_version_category_comment"/>
+		</action>
+		
+		<action name="wcfAutoLoadChildrenAction">
+			<param name="object" value="category"/>
+			<param name="objectType" value="ContentVersion"/>
+		</action>
+	
+		<action name="wcfAutoGetChildObjectAction">
+			<param name="parentObject" value="category"/>
+			<param name="objectPath" value="ContentVersion"/>
+			<param name="objectKey" value="categoryVersion0"/>
+		</action>
+	
+		<action name="wcfAutoVerifyObjectAction">
+			<param name="object" value="categoryVersion0"/>
+		</action>
+	
+		<action name="wcfAutoVerifyPropertyAction">
+			<param name="object" value="categoryVersion0"/>
+			<param name="propertyName" value="versionName"/>
+			<param name="value" value="content_version_category_name_0"/>
+		</action>
+	
+		<action name="wcfAutoVerifyPropertyAction">
+			<param name="object" value="categoryVersion0"/>
+			<param name="propertyName" value="comment"/>
+			<param name="value" value="content_version_category_comment"/>
+		</action>
+ 
+ 	<!-- Verify based on version name -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="content_version_category_identifier"/>
+		<param name="objectKey" value="category"/>
+	</action>
+
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="category"/>
+	</action>
+
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="category"/>
+		<param name="propertyName" value="basedOnVersionName"/>
+		<param name="valueKey" value="content_version_category_name_0"/>
+	</action>
+
+	<!-- Create another version -->
+	<action name="wcfAutoCreateVersionAction">
+		<param name="object" value="category"/>
+		<param name="versionName" value="content_version_category_name_1"/>
+		<param name="comment" value="content_version_category_comment_1"/>
+	</action>
+
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="category"/>
+		<param name="objectType" value="ContentVersion"/>
+	</action>
+	
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="category"/>
+		<param name="objectPath" value="ContentVersion"/>
+		<param name="propertyName" value="versionName"/>
+		<param name="propertyValue" value="content_version_category_name_1"/>
+		<param name="objectKey" value="categoryVersion1"/>
+	</action>
+	
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="categoryVersion1"/>
+	</action>
+
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="categoryVersion1"/>
+		<param name="propertyName" value="comment"/>
+		<param name="value" value="content_version_category_comment_1"/>
+	</action>
+
+	<!-- Delete old version -->
+	<action name="wcfAutoDeleteObjectAction">
+		<param name="object" value="categoryVersion0"/>
+	</action>
+	
+	<action name="wcfAutoSaveAllAction"/>
+
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="category"/>
+		<param name="objectType" value="ContentVersion"/>
+	</action>
+	
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="category"/>
+		<param name="objectPath" value="ContentVersion"/>
+		<param name="propertyName" value="versionName"/>
+		<param name="propertyValueKey" value="content_version_category_name_0"/>
+		<param name="objectKey" value="categoryVersion0"/>
+	</action>
+	
+	<action name="wcfAutoVerifyNoObjectAction">
+		<param name="object" value="categoryVersion0"/>
+	</action>
+
+	<!-- Make sure based on version name does not change -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="category"/>
+		<param name="propertyName" value="basedOnVersionName"/>
+		<param name="valueKey" value="content_version_category_name_1"/>
+	</action>
+		
+ 	<!-- Modify Category  -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="category"/>
+		<param name="propertyName" value="identifier"/>
+		<param name="valueKey" value="content_version_category_modified"/>
+	</action>
+
+	<action name="wcfAutoSaveAllAction"/>
+
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="category"/>
+		<param name="objectType" value="ContentVersion"/>
+	</action>
+
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="category"/>
+		<param name="objectPath" value="ContentVersion"/>
+		<param name="objectKey" value="categoryVersion1"/>
+	</action>
+
+	<!-- Restore Category -->
+	<action name="wcfAutoRestoreVersionAction">
+		<param name="object" value="categoryVersion1"/>
+	</action>
+
+	<!-- Verify the Category is restored -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="content_version_category_identifier"/>
+		<param name="objectKey" value="category"/>
+	</action>
+
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="category"/>
+	</action>
+	
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="category"/>
+		<param name="propertyName" value="identifier"/>
+		<param name="valueKey" value="content_version_category_identifier"/>
+	</action>
+
+	<!-- Delete version -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="category"/>
+		<param name="objectPath" value="ContentVersion"/>
+		<param name="objectKey" value="categoryVersion"/>
+	</action>
+	
+	<action name="wcfAutoDeleteObjectAction">
+		<param name="object" value="categoryVersion"/>
+	</action>
+	
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="category"/>
+		<param name="objectPath" value="ContentVersion"/>
+		<param name="objectKey" value="categoryVersion"/>
+	</action>
+
+	<action name="wcfAutoVerifyNoObjectAction">
+		<param name="object" value="categoryVersion"/>
+	</action>
+
+	<!-- Verify based on version name is empty -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="category"/>
+		<param name="propertyName" value="basedOnVersionName"/>
+		<param name="valueKey" value=""/>
+	</action>
+	
+	<!-- Delete Category -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="content_version_category_identifier"/>
+		<param name="objectKey" value="category"/>
+	</action>
+	
+	<action name="wcfAutoDeleteObjectAction">
+		<param name="object" value="category"/>
+	</action>
+
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindCategories"/>
+		<param name="searchKey" value="content_version_category_identifier"/>
+		<param name="objectKey" value="category"/>
+	</action>
+	
+	<action name="wcfAutoVerifyNoObjectAction">
+		<param name="object" value="category"/>
+	</action>
+
+</testcase>

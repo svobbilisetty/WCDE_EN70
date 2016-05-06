@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="proProductLevelPerItemPercentDiscountProperties">
+		<EnablementCondition conditionId="promotionType" enablementValue="ProductLevelPerItemPercentDiscount" propertyName="promotionType"/>
+		
+		<PropertyGroup groupTitle="${promotionResources.promotion_purchaseConditionAndRewardTitle}" name="purchaseConditionAndRewardGroup" open="true"> 
+			<PropertyCombobox objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition/Identifier_PaymentType" promptText="${promotionResources.promotion_paymentType}" propertyName="PaymentType"/>
+
+			<PropertyCheckbox objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" propertyName="siteWide" promptText="${promotionResources.promotion_siteWide}"
+				helpText="${promotionResources.promotion_siteWideProduct_helpText}"/>
+				
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Product_Promotion_SKU_Search_helpText}" listDefinitionName="proProductElementTypeGrid" name="catalogEntry" objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" objectTypes="Identifier_CatalogEntry,Identifier_InheritedCatalogEntry" promptText="${promotionResources.promotion_Select_Catalog_Entry}"
+				validatorTypes="reqCatValidator,reqIncCatValidator,reqNoIncCatValidator"/>
+	
+			<PropertyChildListEditor helpText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule_helpText}" listDefinitionName="proCatalogEntryAttributeRuleGrid" name="AttributesRule" objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" objectTypes="CatalogEntryAttributeRule" promptText="${promotionResources.promotion_Targeting_Attribute_Filter_Rule}"/>
+			
+			<PropertyCombobox objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotionElement_Currency}" propertyName="Currency" required="true"/>
+
+			<PropertyRadioGroup objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotionMinimumPurchaseConditionType}" propertyName="MinimumPurchaseType" required="true"/>
+			
+			<PropertyGroup name="promotionMinimumPurchaseConditionType1" open="true" showHeader="false">
+				<EnablementCondition conditionId="promotionMinimumPurchaseConditionType1" enablementValue="Quantity" objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" propertyName="MinimumPurchaseType"/>
+				<PropertyChildListEditor helpText="${promotionResources.promotion_Percent_off_each_catentry_X_condition_helpText}" listDefinitionName="proProductLevelPerItemPercentDiscountRangeGrid" name="defaultDistributionRange" objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" objectTypes="ProductLevelPercentOffDiscountRange" promptText="${promotionResources.promotion_Minimum_purchase_condition}" required="true"/>
+			</PropertyGroup>
+
+			<PropertyGroup name="promotionMinimumPurchaseConditionType2" open="true" showHeader="false">
+				<EnablementCondition conditionId="promotionMinimumPurchaseConditionType2" enablementValue="Amount" objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" propertyName="MinimumPurchaseType"/>
+				<PropertyChildListEditor helpText="${promotionResources.promotion_Percent_off_each_catentry_X_by_amount_condition_helpText}" listDefinitionName="proProductLevelPerItemPercentDiscountRangeGrid2" name="defaultDistributionRange" objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" objectTypes="ProductLevelPercentOffDiscountRange" promptText="${promotionResources.promotion_Minimum_purchase_condition}" required="true"/>
+			</PropertyGroup>
+
+			<PropertyCombobox objectPath="ProductLevelPerItemPercentDiscountPurchaseCondition" promptText="${promotionResources.promotion_Select_PriceAdjustmentBase}" propertyName="PriceAdjustmentBase" required="true"
+				helpText="${promotionResources.promotion_priceAdjustmentBase_helpText}"/>
+		</PropertyGroup>
+
+	</PropertyGroup>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link proProductLevelPercentOffDiscountRangeObjectDefinition ProductLevelPercentOffDiscountRange promotion element sub type}
+		associated with the ProductLevelPerItemPercentDiscount promotion type.
+	-->
+	<ObjectGrid definitionName="proProductLevelPerItemPercentDiscountRangeGrid" preferenceKey="proProductLevelPerItemPercentDiscountRangeGrid">
+		<GridNumeric editable="true" name="lowerBound" propertyName="LowerBound" required="true" text="${promotionResources.promotion_Minimum_purchase_quantityTitle}" visible="true" width="200"/>
+		<GridNumeric editable="true" name="percentage" propertyName="Percentage" required="true" text="${promotionResources.promotionElement_Percentage}" visible="true" width="200"/>
+		<GridCurrency appendCurrencyCodeToHeader="false" cloneEnabled="false" editable="true" name="maxAmount" propertyName="MaxAmount" required="false" setPropertyNameToCurrencyCode="false" text="${promotionResources.promotion_Percent_Discount_on_each_catentry_with_max_amount}" visible="true" width="330"/>
+	</ObjectGrid>	
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link proProductLevelPercentOffDiscountRangeObjectDefinition ProductLevelPercentOffDiscountRange promotion element sub type}
+		associated with the ProductLevelPerItemPercentDiscount promotion type.
+	-->
+	<ObjectGrid definitionName="proProductLevelPerItemPercentDiscountRangeGrid2" preferenceKey="proProductLevelPerItemPercentDiscountRangeGrid2">
+		<GridCurrency appendCurrencyCodeToHeader="false" cloneEnabled="false" editable="true" setPropertyNameToCurrencyCode="false" name="lowerBound" propertyName="LowerBound" required="true" text="${promotionResources.promotion_Minimum_purchase_amountTitle}" visible="true" width="200"/>
+		<GridNumeric editable="true" name="percentage" propertyName="Percentage" required="true" text="${promotionResources.promotionElement_Percentage}" visible="true" width="200"/>
+		<GridCurrency appendCurrencyCodeToHeader="false" cloneEnabled="false" editable="true" name="maxAmount" propertyName="MaxAmount" required="false" setPropertyNameToCurrencyCode="false" text="${promotionResources.promotion_Percent_Discount_on_each_catentry_with_max_amount}" visible="true" width="330"/>
+	</ObjectGrid>	
+
+</Definitions>

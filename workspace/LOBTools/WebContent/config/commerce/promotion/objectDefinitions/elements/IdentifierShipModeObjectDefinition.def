@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the promotion element object definition for the Identifier_ShipMode element sub type. 
+		This is used in promotions to define a shipping mode that must be chosen to qualify for the promotion.		
+	-->
+	<PromotionElementObjectDefinition definitionName="proIdentifierShipModeObjectDefinition" displayName="${promotionResources.promotionElement_ShipMode}" objectType="Identifier_ShipMode" package="pro">
+		
+		<CreateService baseDefinitionName="proPromotionElementCreateService"/>	
+		<UpdateService baseDefinitionName="proPromotionElementUpdateService"/>
+				
+		<!--- 
+			The element type of this promotion element object which will be used by the XML transformation layer during promotion activation.
+			Possible values include "AnyShipMode" or "IncludeShipModeIdentifier".			
+		-->
+		<PropertyDefinition propertyName="elementType">
+			<PropertyValue value="AnyShipMode"/>
+			<PropertyValue value="IncludeShipModeIdentifier"/>
+		</PropertyDefinition>
+		
+		<!--- 
+			Property definition for the shipping mode ID which uses a {@link wcfPropertyValueService} that calls the 
+			URL <code>/cmc/GetShippingModes</code> to get the list of supported shipping modes for the store.			
+		-->
+		<PropertyDefinition displayName="${promotionResources.promotion_shipping_Mode_condition}" propertyName="Id">
+			<PropertyValueService url="/cmc/GetShippingModes">
+				<ServiceParam name="objectStoreId" parameterName="storeId" parentProperty="true" propertyName="objectStoreId">
+        	    	<EnablementCondition conditionId="newPromotion" enablementValue="" negate="true" parentProperty="true" propertyName="objectStoreId"/>
+				</ServiceParam>
+				<ServiceParam contextName="storeId" name="storeId" parameterName="storeId">
+        	    	<EnablementCondition conditionId="existingPromotion" enablementValue="" parentProperty="true" propertyName="objectStoreId"/>
+				</ServiceParam>
+			</PropertyValueService>
+		</PropertyDefinition>
+		
+		<!--- Used to perform validation on shipping methods. -->
+		<IdentifierShipModeObjectValidator package="pro"/>
+	</PromotionElementObjectDefinition>
+</Definitions>

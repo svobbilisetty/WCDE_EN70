@@ -1,0 +1,1144 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		A filter that will include only messages with the specified message type.
+	-->
+	<class name="wcfMessageTypeFilter" extends="wcfFilter">
+		<!---
+
+			The message type.
+		-->
+		<attribute name="messageType" type="string" value="${null}"/>
+
+		<!---
+			Check if the specified message matches this filter.
+			@param wcfMessageObject o: the object to test
+			@return boolean: true if the object matches this filter
+		-->
+		<method name="matchesFilter" args="o">
+			<![CDATA[
+			return o.messageType == this.messageType;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Base class for a message grid column.
+	-->
+	<class name="wcfMessageGridColumn" extends="basecomponent" focusable="false">
+		<!---
+			Indicates that this column can be sorted. The default is "true".
+		-->
+		<attribute name="sortable" type="boolean" value="true"/>
+		<!---
+			The class used to create cell viewer instances for cells in this column.
+		-->
+		<attribute name="cellViewerClass" type="string" value="${null}"/>
+		<!---
+			Indicates where the column should be attached to the parent grid.
+		-->
+		<attribute name="placement" value="columns"/>
+		<!---
+			Indicates that the current sort is ascending. The sort will be reversed
+			if sort is requested twice.
+		-->
+		<attribute name="sortAscending" value="false" type="boolean"/>
+		<!---
+			Minimum width for this column. The default is 40 pixels.
+		-->
+		<attribute name="minWidth" value="$once{40}" type="number"/>
+		<!---
+			Display text for this column.
+		-->
+		<attribute name="text" type="string" value=""/>
+		<!---
+			The truncation text
+		-->
+		<attribute name="truncationText" value="${foundationResources.gridTruncationText.string}" type="string"/>
+		<!---
+			Indicates that the text is truncated.
+		-->
+		<attribute name="truncated" value="${title.txtView.txt.getTextWidth() &gt; title.txtView.txt.width}" type="boolean"/>
+		<!---
+			The name of the message object property displayed by this column. This is a required attribute.
+		-->
+		<attribute name="propertyName" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			var columns = parent["columns"];
+			if (!columns) {
+				columns = [];
+				parent.columns = columns;
+			}
+			columns.push(this);
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			var columns = parent["columns"];
+			if (columns) {
+				for (var i=0; i < columns.length; i++) {
+					if (columns[i] == this) {
+						columns.splice(i, 1);
+						break;
+					}
+				}
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Create the cell viewer instance.
+			@param view parent: the parent view
+			@param wcfMessageObject o: the message object instance
+		-->
+		<method name="createViewer" args="parent, o">
+			<![CDATA[
+			var viewer = null;
+			if(this.cellViewerClass != null) {
+				viewer = new lz[this.cellViewerClass](parent, {
+					name: "viewer",
+					o: o
+				});
+			}
+			return viewer;
+			]]>
+		</method>
+
+		<!---
+			Handle change to the column width.
+		-->
+		<handler name="onwidth" args="newWidth">
+			<![CDATA[
+			if (!this.visible && newWidth > 0) {
+				this.setAttribute('width', 0);
+			}
+			]]>
+		</handler>
+		<!---
+			Sort the column.
+		-->
+		<method name="doSort">
+			<![CDATA[
+			if (this.sortable) {
+				var oList = wcfModelUtil.findObjectListForView(this);
+				oList.doSort(this);
+				this.setAttribute("sortAscending", oList.sortAscending);
+			}
+			]]>
+		</method>
+		
+		<!---
+			The sort compare value function for the given object.
+		-->
+		<method name="getCompareValue" args="o">
+			<![CDATA[
+			var value = o[this.propertyName];
+			if (value == null) {
+				value = "";
+			}
+			else {
+				value = value.toLowerCase();
+			}
+			return value;
+			]]>
+		</method>
+		
+		<!---
+			Sort compare function.
+		-->
+		<method name="compare" args="o1,o2, sortAscending">
+			<![CDATA[
+			var result = 0;
+
+			var v1 = null;
+			if (o1["_compareValue"] != null) {
+				v1 = o1["_compareValue"];
+			}
+			else {
+				v1 = this.getCompareValue(o1);
+				o1["_compareValue"] = v1;
+			}
+			
+			var v2 = null;
+			if (o2["_compareValue"] != null) {
+				v2 = o2["_compareValue"];
+			}
+			else {
+				v2 = this.getCompareValue(o2);
+				o2["_compareValue"] = v2;
+			}
+			
+			if (v1 > v2) {
+				result = sortAscending ? 1 : -1;
+			}
+			else if (v1 < v2) {
+				result = sortAscending ? -1 : 1;
+			}
+			return result;
+			]]>
+		</method>
+		
+		<view name="title"
+				clip="true"
+				focusable="${parent.visible}"
+				onclick="parent.doSort()"
+				width="${parent.width - parent.resizer.width - classroot.parent.listBorderSize}"
+				height="21">
+			
+			<view name="background" width="${parent.width}" height="${parent.height}" resource="listHeaderBackground" stretches="both"/>
+			<view width="${parent.width - 4}"
+			   height="${parent.height}" clip="true" name="txtView">			
+				<wcfCenterLayout/>
+				<simplelayout axis="x"/>
+				<view name="leftPadding" x="${parent.x}" height="${parent.height}" width="4" />
+				<text name="txt" width="${parent.width - (classroot.truncated ? parent.truncationText.width : parent.leftPadding.width)}" text="${classroot.text}" fgcolor="${classroot.style.gridheadertextcolor}" resize="true"/>
+				<text name="truncationText" text="${classroot.truncationText}" visible="${classroot.truncated}" x="${parent.x + parent.width - this.width}" width="${this.getTextWidth() + parent.leftPadding.width}" xoffset="3"/>
+			</view>			
+	
+			<handler name="onmouseover">
+				<![CDATA[
+				this.background.setAttribute('frame', 2);
+				]]>
+			</handler>
+
+			<handler name="onmouseout">
+				<![CDATA[
+				this.background.setAttribute('frame', 1);
+				]]>
+			</handler>
+				
+			<handler name="onkeydown" args="code">
+				<![CDATA[
+				// sort the column when space is pressed
+				if (code == 32) { // space
+					parent.doSort();
+				}
+				]]>
+			</handler>
+			
+			<handler name="onfocus">
+				<![CDATA[						
+			    if(!this["indicator"]){
+				    new lz.wcfFocusIndicator(this, {
+				    	name: "indicator",
+				    	focusableView: this,
+				    	indicatorView: this				    	
+				    });
+			    }
+				]]>		
+			</handler>
+		</view>
+
+		<view name="resizer"
+				x="${parent.title.width}"
+				y="${parent.title.y}"
+				clickable="true"
+				resource="listHeaderDivider"
+				stretches="both"
+				frame="1">
+			<!---
+				Indicates that the resizer is currently being dragged.
+			-->
+			<attribute name="resizing" type="boolean" value="false"/>
+			<!---
+				Indicates that the mouse is hovering over the resizer.
+			-->
+			<attribute name="hover" type="boolean" value="false"/>
+			<!---
+				The selected color for the resizer
+			-->
+			<attribute name="selectedColor" type="color" value="${classroot.parent.headerSelectedColor}"/>
+
+			<handler name="onmouseover">
+				<![CDATA[
+				this.hover = true;
+				lz.Cursor.setCursorGlobal("horizontalResizeCursor");
+				]]>
+			</handler>
+
+			<handler name="onmouseout">
+				<![CDATA[
+				this.hover = false;
+				lz.Cursor.restoreCursor();
+				]]>
+			</handler>
+
+			<handler name="onmousedown">
+				<![CDATA[
+				this.setAttribute("resizing", true);
+				lz.Cursor.lock();
+				parent.rs.setAttribute('applied', true);
+				]]>
+			</handler>
+
+			<handler name="onmouseup">
+				<![CDATA[
+				this.setAttribute("resizing", false);
+				lz.Cursor.unlock();
+				if (this.hover) {
+					lz.Cursor.setCursorGlobal("horizontalResizeCursor");
+				}
+				else {
+					lz.Cursor.restoreCursor();
+				}
+				parent.rs.setAttribute('applied', false);
+				]]>
+			</handler>
+		</view>
+
+		<state name="rs">
+			<attribute name="xroffset" value="$once{this.x - this.width + this.getMouse('x')}"/>
+			<attribute name="width" value="${Math.max(minWidth, this.immediateparent.getMouse('x')-xroffset)}"/>
+		</state>
+	</class>
+
+	<!---
+		@keywords private
+		Message grid cell.
+	-->
+	<class name="wcfMessageGridCell" clip="true">
+		<!---
+			The grid that owns this cell.
+		-->
+		<attribute name="grid"/>
+		<!---
+			The grid column for this cell.
+		-->
+		<attribute name="column"/>
+		<!---
+			The grid row for this cell.
+		-->
+		<attribute name="row"/>
+		<!---
+			The default placement for content added to this cell.
+		-->
+		<attribute name="defaultplacement" value="content"/>
+		<!---
+			x position. This is bound to the associated column's x position.
+		-->
+		<attribute name="x" value="${column.x}"/>
+		<!---
+			Cell width. This is bound to the column's width.
+		-->
+		<attribute name="width" value="${column.width}"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.column.createViewer(this, this.row.o);
+			super.init();
+			]]>
+		</method>
+		
+		<!---
+			Handle object changed event.
+		-->
+		<handler name="objectChanged" reference="row">
+			<![CDATA[
+			this.updateMessageObject();
+			]]>
+		</handler>
+
+		<!---
+			Update the object associated with this cell.
+		-->
+		<method name="updateMessageObject">
+			<![CDATA[
+			if (this["viewer"]) {
+				this.viewer.setAttribute("o", this.row.o);
+			}
+			]]>
+		</method>
+		
+		<simplelayout/>
+		<view name="content" x="4" y="4" width="${parent.width - 4}"/>
+		<view height="4"/>
+	</class>
+	
+	<!---
+		@keywords private
+		Message grid row.
+	-->
+	<class name="wcfMessageGridRow" extends="basecomponent" focusable="${parent.multiSelect}" doesenter="true">
+		<!---
+			By default, children of a grid row instance are added to the "content" view.
+		-->
+		<attribute name="defaultplacement" value="content"/>
+		<!---
+			Place grid rows under the "rowparent" view.
+		-->
+		<attribute name="placement" value="rowparent"/>
+		<!---
+			Indicates that this row is currently selected.
+		-->
+		<attribute name="selected" value="false"/>
+		<!---
+			Indicates the row will accept click events.
+		-->
+		<attribute name="clickable" value="true"/>
+		<!---
+			wcfMessageObject instance associated with this row instance.
+		-->
+		<attribute name="o" value="null" setter="this.setMessageObject(o)"/>
+		<!---
+			Array of cells.
+		-->
+		<attribute name="cells" value="${[]}"/>
+		<!---
+			Width of the row is constrained to the grid row columns width.
+		-->
+		<attribute name="width" value="${parent.header.columns.width}"/>
+		<!---
+			Background color changes based on whether this row is selected.
+		-->
+		<attribute name="bgcolor" value="${this.getBGColor(this.selected,this.mouseIn)}"/>		
+		<!---
+			Indicates the mouse is hovered over the row. Used to get hilite colour. 
+		-->
+		<attribute name="mouseIn" value="false" type="boolean"/>
+
+		<!---
+			This event is triggered when the associated object's instance is changed.
+		-->
+        <event name="objectChanged"/>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			wcfViewUtil.releaseLayouts(this);
+			if (this.o != null && this.parent.currentObject == this.o) {
+				this.parent.setAttribute("currentObject", null);
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Creates all the grid cells
+		-->
+		<method name="createGridCells">
+			<![CDATA[
+			var column = this.getNextCreateColumn();
+			while (column != null) {
+				var cell = new lz.wcfMessageGridCell(this, {
+					grid: parent,
+					row: this,
+					column: column
+				});
+				this.cells.push(cell);
+				column = this.getNextCreateColumn();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the next visible column for which no cell exists.
+		-->
+		<method name="getNextCreateColumn">
+			<![CDATA[
+			var columns = parent.columns;
+			var column = null;
+			for (var i = 0; i < columns.length && column == null; i++) {
+				column = columns[i];
+				var cells = this.cells;
+				for (var j = 0; j < cells.length; j++) {
+					if (cells[j].column == column) {
+						column = null;
+						break;
+					}
+				}
+			}
+			return column;
+			]]>
+		</method>
+		
+		<!---
+			Get the background color.
+		-->
+		<method name="getBGColor" args="s=null, mi=null">
+			<![CDATA[
+			var color = parent.bgcolor;
+			if (this.selected) {
+				color = this.style["selectedcolor"];
+			}
+			else if (this.mouseIn) {
+				color = this.style["hilitecolor"];
+			}
+			return color;
+			]]>
+		</method>
+		
+		<!---
+			Set the model object instance for this row.
+			@param wcfModelObject newObject: the new model object
+		-->
+		<method name="setMessageObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				this.o = newObject;
+				this.objectChanged.sendEvent(newObject);
+				if (this.o) {
+					this.createGridCells();
+				}
+				this.setSelected(parent.isSelectedRow(this));
+				if (lz.Focus.getFocus() == this) {
+					this.parent.setAttribute("currentObject", this.o);
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="select">
+			<![CDATA[
+		    parent.selectRow(this);
+			]]>
+		</method>
+		
+		<method name="setSelected" args="isSelected">
+			<![CDATA[
+			this.setAttribute("selected", isSelected);
+			]]>
+		</method>
+		
+		<!---
+			Handle mouse over.
+		-->
+		<handler name="onmouseover">
+			<![CDATA[
+			if (wcfViewUtil.getLastMouseMove() < 100) {
+				this.setAttribute("mouseIn", true);
+			}
+			]]>
+		</handler>
+		<!---
+			Handle mouse out.
+		-->
+		<handler name="onmouseout">
+			<![CDATA[
+			this.setAttribute("mouseIn", false);			
+			]]>
+		</handler>
+		
+
+		<!---
+			Handle mouse click.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			this.select();
+			]]>
+		</handler>
+		
+		<!---
+			Handle double click.
+		-->
+		<handler name="ondblclick">
+			<![CDATA[
+			parent.activateObject(this.o);
+			]]>
+		</handler>
+		
+		<!---
+			Handle onfocus event.
+		-->
+		<handler name="onfocus">
+			<![CDATA[
+			if (this.parent.currentObject != this.o) {
+				this.parent.setAttribute("currentObject", this.o);
+			}
+			if(!this["indicator"]){
+				new lz.wcfFocusIndicator(this, {
+					name: "indicator",
+					focusableView: this,
+					indicatorView: this,
+					offset: 1
+				});
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Handle onblur event.
+		-->
+		<handler name="onblur" args="newFocus">
+			<![CDATA[
+			if (this.o != null && this.parent.currentObject == this.o) {
+				this.parent.setAttribute("currentObject", null);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			Handle key down events.
+		-->
+		<handler name="onkeydown" args="code">
+			<![CDATA[
+			parent.keyDown(code);
+			]]>
+		</handler>
+		
+		
+		<method name="doEnterDown">
+			<![CDATA[
+			parent.activateObject(this.o);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle sapace down events.
+		-->
+		<method name="doSpaceDown">
+			<![CDATA[
+			this.select();
+			]]>
+		</method>
+		
+		<simplelayout/>
+		<view name="content">
+		</view>
+
+		<view name="bottomBorder"
+				bgcolor="${classroot.parent.borderColor}"
+				height="${classroot.parent.showhlines &amp;&amp; classroot.content.height > 0 ? 1 : 0}"
+				width="${parent.width}"/>
+	</class>
+	
+	<!---
+		@keywords private
+		A grid that displays a list of messages objects. Each row represents a message object
+		in the list. Each column displays an attribute or property of that message.
+	-->
+	<class name="wcfMessageGrid" extends="wcfGrid" objectClass="wcfMessageGridRow" filterTopPadding="8" filterLeftPadding="5">
+		
+		<!---
+			Set focus on the row with the specified message.
+			@param wcfMessageObject o: the message object.
+		-->
+		<method name="moveToMessage" args="o">
+			<![CDATA[
+			if (o != null) {
+				this.oList.showObjectInView(o);
+				if (this.content.rowparent.height > this.availableHeight) {
+					if (o == this.oList.getView(this.oList.getViewsLength()-1)["o"]) {
+						this.content.rowparent.setAttribute("y", this.availableHeight - this.content.rowparent.height);					
+					}
+					else if (o == this.oList.getView(0)["o"]) {
+						this.content.rowparent.setAttribute("y", 0);				
+					}
+				}
+				else {
+					this.content.rowparent.setAttribute("y", 0);
+				}
+				
+				var rows = this.getRows();
+				for (var i = 0; i < rows.length; i++) {
+					if (rows[i].o == o) {
+						if(this.multiSelect){
+							lz.Focus.setFocus(rows[i], false);
+						}else{
+							rows[i].select();
+						}
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private
+			Display the previous page of rows.
+		-->
+		<method name="pageUp" args="e=null">
+			<![CDATA[
+			if(this.currentObject != null){
+				var relativeIndex = this.endIndex - this.oList.filteredObjects.indexOf(this.currentObject); 
+				var start = this.startIndex;
+				this.setEndIndex(start - 1);
+				if(start == 0){ 
+					relativeIndex = 0;
+				}else{		
+					relativeIndex = Math.max(this.endIndex - relativeIndex,0);
+				}
+				this.moveToMessage(this.oList.filteredObjects[relativeIndex]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Display the next page of rows.
+		-->
+		<method name="pageDown" args="e=null">
+			<![CDATA[
+			if(this.currentObject != null){
+				var relativeIndex = this.oList.filteredObjects.indexOf(this.currentObject) - this.startIndex;
+				var end = this.endIndex;
+				this.setStartIndex(end + 1);
+				if(end == this.oList.filteredObjects.length - 1){ 
+					relativeIndex = this.endIndex;
+				}else{				
+					relativeIndex = Math.min(relativeIndex + this.startIndex, this.oList.filteredObjects.length - 1); 
+				}
+				this.moveToMessage(this.oList.filteredObjects[relativeIndex]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Display the end row.
+		-->
+		<method name="end" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this) && this.oList.filteredObjects.length > 0){
+				var o = this.oList.filteredObjects[oList.filteredObjects.length - 1];
+				this.moveToMessage(o);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Display the first row.
+		-->
+		<method name="home" args="e=null">
+			<![CDATA[
+			if(wcfViewUtil.containedInModalView(this) && this.oList.filteredObjects.length > 0){
+				var o = this.oList.filteredObjects[0];
+				this.moveToMessage(o);
+			}
+			]]>
+		</method>		
+		
+		<!---
+			Move up to the previous row.
+		-->
+		<method name="up">
+			<![CDATA[
+			var previousMessage = null;
+			if (this.currentObject != null) {
+				var o = this.currentObject;
+				var objects = this.oList.filteredObjects;
+				var index = objects.indexOf(o) - 1;
+				if (index >= 0) {
+					previousMessage = objects[index];
+				}
+			}
+			this.moveToMessage(previousMessage);
+			]]>
+		</method>
+
+		<!---
+			Move down to the next row.
+		-->
+		<method name="down">
+			<![CDATA[
+			var nextMessage = null;
+			if (this.currentObject != null) {
+				var o = this.currentObject;
+				var objects = this.oList.filteredObjects;
+				var index = objects.indexOf(o) + 1;
+				if (objects.length > index) {
+					nextMessage = objects[index];
+				}
+			}
+			this.moveToMessage(nextMessage);
+			]]>
+		</method>
+
+		<!---
+			Select previous row.
+		-->
+		<method name="selectUp">
+			<![CDATA[
+			if(this.currentObject != null){
+				var selector = this.content.rowparent.selector;
+				selector.setAttribute("rangeSelect", true);
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				this.up();
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				selector.setAttribute("rangeSelect", false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Select next row.
+		-->
+		<method name="selectDown">
+			<![CDATA[
+			if(this.currentObject != null){
+				var selector = this.content.rowparent.selector;
+				selector.setAttribute("rangeSelect", true);
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				this.down();
+				this.content.rowparent.selector.selectObject(this.currentObject);
+				selector.setAttribute("rangeSelect", false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Returns an array of the current selected message objects.
+			@return array: array of message objects
+		-->
+		<method name="getSelectedMessages">
+			<![CDATA[
+			return this.content.rowparent.selector.getSelectedObjects();
+			]]>
+		</method>
+
+		<!---
+			Clear the current selection.
+		-->		
+		<method name="clearSelection">
+			<![CDATA[
+			this.content.rowparent.selector.clearSelection();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="keyDown" args="code">
+			<![CDATA[
+			switch (code) {
+				case 33:
+					this.pageUp();
+					break;
+				case 34:
+					this.pageDown();
+					break;
+				case 35:
+					this.end();
+					break;
+				case 36:
+					this.home();
+					break;
+				case 38:
+					if (lz.Keys.isKeyDown("shift") && this.multiSelect) {
+						this.selectUp();
+					}else {
+						this.up();
+					}
+					break;
+				case 40:
+					if (lz.Keys.isKeyDown("shift") && this.multiSelect) {
+						this.selectDown();
+					}else {
+						this.down();
+					}
+					break;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handles ondblclick and doEnterDown action from the message. 
+			@param modelObject o: The object to activate.
+		-->
+		<method name="activateObject" args="o">
+			<![CDATA[
+			messageLogger.openMessagePropertiesView(o);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Message text viewer.
+	-->
+	<class name="wcfMessageGridTextViewer" extends="text" resize="true" multiline="true" width="${immediateparent.width}">
+		<!---
+			wcfMessageObject instance associated with this viewer.
+		-->
+		<attribute name="o" value="null" setter="setMessageObject(o)"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.updateFGColorDel = new lz.Delegate(this, "updateFGColor");
+			this.updateFGColorDel.register(parent.row, "onselected");			
+			this.updateFGColor();
+			super.init();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateFGColorDel.unregisterAll();
+			delete this.updateFGColorDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Update the foreground color.
+		-->
+		<method name="updateFGColor" args="e=null">
+			<![CDATA[
+			var c = parent.row.style["textcolor"];
+			if (parent.row.selected) {
+				c = parent.row.style["textselectedcolor"];
+			}
+			this.setAttribute("fgcolor", c);
+			]]>
+		</method>
+		
+		<!---
+			Set the message for this viewer.
+			@param wcfMessageObject newMessage: the new message object instance
+		-->
+		<method name="setMessageObject" args="newMessage">
+			<![CDATA[
+			if (typeof(this["o"]) == "undefined" || newMessage != this["o"]) {
+				this.o = newMessage;
+				if (this["o"]) {
+					this.updateValue();
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Update the text value.
+		-->
+		<method name="updateValue">
+			<![CDATA[
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Message text viewer.
+	-->
+	<class name="wcfMessageGridMessageViewer" extends="wcfMessageGridTextViewer">
+		<!---
+			Update the property value.
+		-->
+		<method name="updateValue">
+			<![CDATA[
+			var newText = this.o.messageText;
+			if (this.text != newText) {
+				this.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Message model object viewer.
+	-->
+	<class name="wcfMessageGridObjectViewer" extends="wcfMessageGridTextViewer">
+		<!---
+			Update the property value.
+		-->
+		<method name="updateValue">
+			<![CDATA[
+			var newText = shellResourceBundle.systemDisplayName.string;
+			if (this.o.modelObject != null) {
+				newText = this.o.modelObject.openGroupObject.objectDisplayName;
+				var storeConfig = wcfContextUtil.findStoreConfig(o.modelObject);
+				if (o.modelObject.objectDefinition.languageSensitive && (storeConfig != null)) {
+					var languageId = o.modelObject.getPropertyValue("languageId");
+					var language = storeConfig.getLanguageById(languageId);
+					if (language) {
+						newText += " ("+language.languageDescription+")";
+					}
+				}
+			}
+			if (this.text != newText) {
+				this.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Message type icon viewer for a message grid cell.
+	-->
+	<class name="wcfMessageGridTypeViewer">
+		<!---
+			wcfMessageObject instance associated with this viewer.
+		-->
+		<attribute name="o" value="null" setter="setMessageObject(o)"/>
+		<!---
+			Icon resource name.
+		-->
+		<attribute name="icon" type="string" value="${null}"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateIcon();
+			]]>
+		</method>
+		
+		<!---
+			Set the message for this viewer.
+			@param wcfMessageObject newMessage: the new message object instance
+		-->
+		<method name="setMessageObject" args="newMessage">
+			<![CDATA[
+			if (typeof(this["o"]) == "undefined" || newMessage != this["o"]) {
+				this.o = newMessage;
+				this.updateIcon();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Updates the icon image.
+		-->
+		<method name="updateIcon">
+			<![CDATA[
+			var newIcon = null;
+			if (this["o"]) {
+				if (this.o.messageType == "ERROR" || this.o.messageType == "EXCEPTION") {
+					newIcon = "errorIcon";
+				}
+			}
+			if (newIcon != this.icon) {
+				this.setAttribute("icon", newIcon);
+			}
+			]]>
+		</method>
+
+		<image name="display" visible="${classroot.icon ? true : false}" resource="${classroot.icon}"/>
+	</class>
+
+	<!---
+		@keywords private
+		Message date viewer.
+	-->
+	<class name="wcfMessageGridDateViewer" extends="wcfMessageGridTextViewer">
+		<!---
+			Update the property value.
+		-->
+		<method name="updateValue">
+			<![CDATA[
+			var newText = wcfDateUtil.formatUI(this.o.createDate, wcfDateUtil.UI_DATE_TIME_FORMAT_WITH_SECONDS);			
+			if (this.text != newText) {
+				this.setAttribute("text", newText);
+			}
+			]]>
+		</method>
+		<!---
+			@keywords private
+			This handler will update the date and time field if the user changes their date format preference
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCDateFormat preference
+				if ((preference == "CMCDateFormat" || preference == "CMCTimeFormat") && this.o && this.o["createDate"]) {
+					this.updateValue();
+				}
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		@keywords private
+		Message text grid column.
+	-->
+	<class name="wcfMessageGridMessage" extends="wcfMessageGridColumn" propertyName="messageText">
+		<!---
+			Use "wcfMessageGridMessageViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfMessageGridMessageViewer"/>
+	</class>
+	
+	<!---
+		@keywords private
+		Message model object grid column.
+	-->
+	<class name="wcfMessageGridObject" extends="wcfMessageGridColumn" propertyName="modelObject">
+		<!---
+			Use "wcfMessageGridObjectViewer" to create cell viewer instances.
+		-->
+		<attribute name="cellViewerClass" value="wcfMessageGridObjectViewer"/>
+		
+		<!---
+			The sort compare value function for the given object.
+		-->
+		<method name="getCompareValue" args="o">
+			<![CDATA[
+			var value = shellResourceBundle.systemDisplayName.string;
+			if (o.modelObject != null) {
+				value = o.modelObject.openGroupObject.objectDisplayName;
+				var storeConfig = wcfContextUtil.findStoreConfig(o.modelObject);
+				if (o.modelObject.objectDefinition.languageSensitive && (storeConfig != null)) {
+					var languageId = o.modelObject.getPropertyValue("languageId");
+					var language = storeConfig.getLanguageById(languageId);
+					if (language) {
+						value += " ("+language.languageDescription+")";
+					}
+				}
+			}
+			return value.toLowerCase();
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		Message type grid column.
+	-->	
+	<class name="wcfMessageGridType" extends="wcfMessageGridColumn" propertyName="messageType">
+		<!---
+			Use "wcfMessageGridTypeViewer" to create instances of this column's viewer.
+		-->
+		<attribute name="cellViewerClass" value="wcfMessageGridTypeViewer"/>
+	</class>
+
+	<!---
+		@keywords private
+		Message date grid column.
+	-->	
+	<class name="wcfMessageGridDate" extends="wcfMessageGridColumn" propertyName="createDate">
+		<!---
+			Use "wcfMessageGridDateViewer" to create instances of this column's viewer.
+		-->
+		<attribute name="cellViewerClass" value="wcfMessageGridDateViewer"/>
+		
+		<!---
+			The sort compare value function for the given object.
+		-->
+		<method name="getCompareValue" args="o">
+			<![CDATA[
+			return o.createDate;
+			]]>
+		</method>
+	</class>
+	
+</library>

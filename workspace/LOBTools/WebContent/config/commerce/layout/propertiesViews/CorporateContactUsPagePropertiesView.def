@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglCorporateContactUsPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.corporateContactUsPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="CorporateContactUsPageReferenceDefaultCorporateContactUsPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="CorporateContactUsPageReferenceDefaultCorporateContactUsPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="CorporateContactUsPageReferenceDefaultCorporateContactUsPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display Corporate Contact Us page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglCorporateContactUsPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localCorporateContactUsPageCondition" enablementValue="InheritedCorporateContactUsPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglCorporateContactUsPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited Corporate Contact Us page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedCorporateContactUsPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCorporateContactUsPageCondition" enablementValue="InheritedCorporateContactUsPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedCorporateContactUsPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglCorporateContactUsPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglCorporateContactUsPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_corporateContactUsPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="CorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts,CorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglCorporateContactUsPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_corporateContactUsPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="CorporateContactUsPageLayoutAssociationReferencedCorporateContactUsPageLayouts,CorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedCorporateContactUsPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_corporateContactUsPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedCorporateContactUsPageLayoutAssociationReferencedInheritedCorporateContactUsPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

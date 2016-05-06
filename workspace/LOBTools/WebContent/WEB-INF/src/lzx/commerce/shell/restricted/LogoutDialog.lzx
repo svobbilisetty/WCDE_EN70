@@ -1,0 +1,192 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!-- Logout service. -->
+	<wcfService id="logoutService" sendIdentity="false" sendWorkspaceContext="false" sendTimeZoneId="false" url="/cmc/Logout">
+		<!---
+			This method completes the logout process.
+			@param node requestParent: the parent node for this service request
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent, e, requestIdentifier">
+			<![CDATA[
+				requestParent.logoutComplete();
+			]]>
+		</method>
+
+		<!---
+			Handle service exception. The default implementation will log the exception.
+			@param wcfServiceDataset ds: dataset
+			@param message string: the exception message
+			@param code string: the exception code
+		-->
+		<method name="handleException" args="ds, message, code=null">
+			<![CDATA[
+				ds.requestParent.logoutFailed(message);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Checks if the recovery is needed on service request or not after a session related error occurred.
+			@param XML e: the data element
+			@return boolean: Always return false for logoutService.
+		-->
+		<method name="checkRequestRecovery" args="e=null">
+			<![CDATA[
+				return false;
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		
+		This class implements the dialog that is opened when the user clicks on the
+		log out link to start the log out process. When a tool contains unsaved changes,
+		the user can choose to disregard the changes and log out or cancel log out.
+	-->
+	<class name="wcfLogoutDialog" extends="wcfDialog">
+		<!---
+			The current state of the tools. It can be normal or with unsaved changes.
+			This is a required attribute.
+		-->
+		<attribute name="currentState" type="string" value="NORMAL" />
+
+		<simplelayout axis="y" />
+
+		<view name="logoutNormal" visible="${classroot.currentState == 'NORMAL'}">
+			<view name="infoIcon" resource="dialogWarningIcon" />
+			<text name="text" text="${shellResourceBundle.logoutDialogLogoutPrompt.string}" width="300" valign="middle" multiline="true" />
+			<simplelayout axis="x" spacing="10" />
+		</view>
+
+		<view name="logoutWithUnsavedChanges" visible="${classroot.currentState == 'UNSAVEDCHANGES'}">
+			<view name="infoIcon" resource="dialogWarningIcon" />
+			<text name="text" text="${shellResourceBundle.logoutDialogLogoutWithUnsavedChangesPrompt.string}" width="300" valign="middle" multiline="true" />
+			<simplelayout axis="x" spacing="10" />
+		</view>
+
+		<view name="buttonView" placement="footer" visible="${classroot.currentState == 'NORMAL' || classroot.currentState == 'UNSAVEDCHANGES'}">
+			<wcfButton name="yesButton" text="${shellResourceBundle.yesButton.string}" onclick="classroot.handleLogout();" isdefault="true" />
+			<wcfButton name="noButton" text="${shellResourceBundle.noButton.string}" onclick="classroot.handleCancel();" />
+			<simplelayout axis="x" />
+		</view>
+
+		<!--- @keywords private -->
+		<method name="handleLogout">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfLogoutDialog", "handleLogout");
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.start("logout");
+				
+				// close this logout dialog
+				this.closeWindow();
+
+				// open a new dialog showing the logout progress indicator
+				if (canvas["logoutProgressDialog"] == undefined) {
+					new lz.wcfLogoutProgressDialog(canvas, {name: "logoutProgressDialog"});
+				}
+				canvas["logoutProgressDialog"].openWindow();
+
+				// invoke the service that completes the current session
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "INFO", "wcfLogoutDialog", "handleLogout", "Starts log out process by invoking logoutService.");
+				}
+				
+				// clear identityId and identitySignature before sending to logoutService
+				var identityId = wcfContextUtil.findContextValue(null, "identityId").value;
+				var identitySignature = wcfContextUtil.findContextValue(null, "identitySignature").value;
+				wcfContextUtil.findContextValue(null, "identityId").setAttribute("value", null);
+				wcfContextUtil.findContextValue(null, "identitySignature").setAttribute("value", null);
+				wcfContextUtil.findContextValue(null, "logonIdDN").setAttribute("value", null);
+				wcfContextUtil.findContextValue(null, "timeZoneId").setAttribute("value", "");
+				
+				logoutService.doRequest(this, {
+					identityId: identityId,
+					identitySignature: identitySignature
+				});
+				
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfLogoutDialog", "handleLogout");
+				}
+				// Flush all log messages in the buffer.
+				wcfLogger.flush();	
+				// Close the log trace window.
+				wcfLogger.closeLogTraceWindow();	
+				if (wcfEventTimer.enabled) wcfEventTimer.end();			
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="handleCancel">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfLogoutDialog", "handleCancel");
+				}
+				this.closeWindow();
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfLogoutDialog", "handleCancel");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="logoutComplete">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "FINER", "wcfLogoutDialog", "logoutComplete", "Log out process completed successfully, start unloading the main application.");
+				}
+				logoutSuccessful();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="logoutFailed" args="message">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.shell", "WARNING", "wcfLogoutDialog", "logoutFailed(message)", "Log out process failed due to the following reason: " + message);
+				}
+				logoutSuccessful();
+			]]>
+		</method>
+
+		<!---
+			Set initial focus to the Yes button.
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+				lz.Focus.setFocus(this.buttonView.yesButton, false);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		This class implements the dialog that is opened when log out is in progress. A message
+		is displayed in the dialog along with progress animation.
+	-->
+	<class name="wcfLogoutProgressDialog" extends="wcfDialog" minHeight="0" closeable="false">
+		<view width="200">
+			<text name="progressText" text="${shellResourceBundle.logoutDialogLogoutProgressPrompt.string}" align="center" />
+			<view name="progressBar" width="65" height="54" align="center" stretches="both" resource="logoutProgressIcon" />
+			<simplelayout axis="y" spacing="10" />
+		</view>
+	</class>
+
+</library>

@@ -1,0 +1,43 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+    	@keywords private
+    	Catalog combo box to display the catalog name or blank if the 
+    	catalog no longer exists.
+    -->
+    <class extends="wcfGridComboBoxViewer" name="catCatalogGridComboBoxViewer">
+		<!---
+			Gets the display value from the properties value and sets it as the text to be displayed in the viewer.
+			@param lz.Delegate del An optional delegate to call when a change in property value is caused by the value service.
+			@returns string: display value
+		-->
+		<method args="del" name="getDisplayValue">
+			<![CDATA[
+			var value = this.property.value;
+			var displayValue = "";
+			if (this.property.propertyDefinition != null) {
+				var propertyValues = this.property.propertyDefinition.getPropertyValues(this.property.o, del);
+				for (var i = 0; i < propertyValues.length; i++) {
+					var propertyValue = propertyValues[i];
+					if (propertyValue.value == value) {
+						displayValue = propertyValue.displayName;
+					}
+				}
+			}
+			return displayValue;
+			]]>
+		</method>
+    </class>
+</library>

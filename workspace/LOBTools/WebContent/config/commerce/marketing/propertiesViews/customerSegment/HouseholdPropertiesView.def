@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyGroup collapsable="false" definitionName="mktHouseholdProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/Household" promptText="${mktMarketingResources.cspHousehold}" propertyName="template"/>
+        
+		<PropertyGroup collapsable="false" name="singleHouseholdGroup">
+			<EnablementOrCondition conditionId="singleInput">
+				<EnablementCondition conditionId="equal" enablementValue="equal" objectPath="TopAndList/Household" propertyName="template"/>
+				<EnablementCondition conditionId="greaterOrEqual" enablementValue="greaterOrEqual" objectPath="TopAndList/Household" propertyName="template"/>
+				<EnablementCondition conditionId="lessOrEqual" enablementValue="lessOrEqual" objectPath="TopAndList/Household" propertyName="template"/>
+			</EnablementOrCondition>
+			<PropertyStepper maximumValue="20" minimumValue="1" objectPath="TopAndList/Household/HouseholdAndOrList/HouseholdCondition" promptText="${mktMarketingResources.customerSegment_household}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="multiHouseholdGroup">
+			<EnablementCondition conditionId="withinRange" enablementValue="between" objectPath="TopAndList/Household" propertyName="template"/>
+			<PropertyStepper maximumValue="20" minimumValue="1" objectPath="TopAndList/Household/HouseholdAndOrList/HouseholdCondition[conditionOperator=&gt;=]" promptText="${mktMarketingResources.customerSegment_minimumHousehold}" propertyName="conditionValue" required="true"/>
+			<PropertyStepper maximumValue="20" minimumValue="1" objectPath="TopAndList/Household/HouseholdAndOrList/HouseholdCondition[conditionOperator=&lt;=]" promptText="${mktMarketingResources.customerSegment_maximumHousehold}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+	</PropertyGroup>
+	
+</Definitions>

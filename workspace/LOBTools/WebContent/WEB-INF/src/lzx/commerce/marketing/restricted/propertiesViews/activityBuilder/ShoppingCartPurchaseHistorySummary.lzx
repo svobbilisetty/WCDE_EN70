@@ -1,0 +1,687 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Provides the base text for the Shopping Cart and Purchase History customer filters used for their summary views.
+		All Shopping Cart and Purchase History customer filter summary classes should extend from this class as it supplies
+		the common function. This class looks at the following property names of the Shopping Cart and Purchase
+		History objects:
+		<ul>
+			<li>containsOperator</li>
+			<li>amountOperator1</li>
+			<li>amountOperator2</li>
+			<li>amountValue1</li>
+			<li>amountValue2</li>
+			<li>amountCurrency</li>
+			<li>quantityOperator1</li>
+			<li>quantityOperator2</li>
+			<li>quantityValue1</li>
+			<li>quantityValue2</li>
+			<li>daysOperator</li>
+			<li>days</li>
+			<li>date1</li>
+			<li>date2</li>
+			<li>beforeDate</li>
+			<li>beforeAfterOnDate</li>
+		</ul>
+	-->
+	<class name="mktShopCartPurchHistTotalsBaseSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="containsOperator" propertyName="containsOperator"/>
+		<wcfFlowSummaryParam name="amountOperator1" propertyName="amountOperator1"/>
+		<wcfFlowSummaryParam name="amountOperator2" propertyName="amountOperator2"/>
+		<wcfFlowSummaryParam name="amountValue1" propertyName="amountValue1"/>
+		<wcfFlowSummaryParam name="amountValue2" propertyName="amountValue2"/>
+		<wcfFlowSummaryParam name="amountCurrency" propertyName="amountCurrency"/>
+		<wcfFlowSummaryParam name="quantityOperator1" propertyName="quantityOperator1"/>
+		<wcfFlowSummaryParam name="quantityOperator2" propertyName="quantityOperator2"/>
+		<wcfFlowSummaryParam name="quantityValue1" propertyName="quantityValue1"/>
+		<wcfFlowSummaryParam name="quantityValue2" propertyName="quantityValue2"/>
+		<wcfFlowSummaryParam name="daysOperator" propertyName="daysOperator"/>
+		<wcfFlowSummaryParam name="days" propertyName="days"/>
+		<wcfFlowSummaryParam name="date1" propertyName="date1"/>
+		<wcfFlowSummaryParam name="date2" propertyName="date2"/>
+		<wcfFlowSummaryParam name="beforeDate" propertyName="beforeDate"/>
+		<wcfFlowSummaryParam name="beforeAfterOnDate" propertyName="beforeAfterOnDate"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryNone, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXOrders, "onstring");
+			
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsBetweenXAndY, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsAtLeastX, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsExactlyX, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsLessThanX, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsBetweenXAndYItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsAtLeastXItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsExactlyXItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsLessThanXItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsBetweenXAndYCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsAtLeastXCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsExactlyXCategories, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryTotalsLessThanXCategories, "onstring");
+
+			this.updateSummaryDel.register(mktMarketingResources.summaryWithinLastXDaysItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAtLeastXDaysAgoItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBeforeXDateItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAfterXDateItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBetweenXandYDatesItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryOnXDateItems, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPreviousXOrdersOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryWithinLastXDaysOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAtLeastXDaysAgoOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBeforeXDateOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryAfterXDateOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryBetweenXandYDatesOrders, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryOnXDateOrders, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for all Shopping Cart and Purchase History flow elements. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var totalsText = getTotalsSummary();
+				var valuesText = getValuesSummary();
+				var dateText = getDateSummary();
+
+				var summary = totalsText;
+
+				if(valuesText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += valuesText;
+				}
+
+				if(dateText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += dateText;
+				}
+
+				if((this.resolvedParams["containsOperator"] == "!=") && (summary != "")) {
+					summary = mktMarketingResources["summaryNone"].string + "\n" + summary;
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCDateFormat preference
+				if (preference == "CMCDateFormat" || preference == "CMCTimeFormat") {
+					this.updateSummary();
+				}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="getTotalsSummary" args="usage=null">
+			<![CDATA[
+				if(usage == null) {
+					usage = "Items";
+				}
+				var summary = "";
+				if (this.resolvedParams["quantityOperator1"] == ">=" && this.resolvedParams["quantityOperator2"] == "<=") {
+					if(this.resolvedParams["quantityValue1"] != "" && this.resolvedParams["quantityValue2"] != "") {
+						var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+						var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue2"]);
+						summary = mktMarketingResources.replaceValues("summaryContainsBetweenXAndY" + usage, [value1, value2]);
+					}
+				}
+				else if (this.resolvedParams["quantityOperator1"] == ">=") {
+					if(this.resolvedParams["quantityValue1"] != "") {
+						var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+						summary = mktMarketingResources.replaceValues("summaryContainsAtLeastX" + usage, [value1]);
+					}
+				}
+				else if (this.resolvedParams["quantityOperator1"] == "=") {
+					if(this.resolvedParams["quantityValue1"] != "") {
+						var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+						summary = mktMarketingResources.replaceValues("summaryContainsExactlyX" + usage, [value1]);
+					}
+				}
+				else if (this.resolvedParams["quantityOperator1"] == "<") {
+					if(this.resolvedParams["quantityValue1"] != "") {
+						var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+						summary = mktMarketingResources.replaceValues("summaryContainsLessThanX" + usage, [value1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="getValuesSummary" args="usage=null">
+			<![CDATA[
+				if(usage == null) {
+					usage = "";
+				}
+				var summary = "";
+
+				if(this.resolvedParams["amountValue1"] && this.resolvedParams["amountValue1"] != "" && this.resolvedParams["amountCurrency"] && this.resolvedParams["amountCurrency"] != "") {
+					var currency = this.resolvedParams["amountCurrency"];
+					var currencyDecimals = wcfGlobalizationUtil.getCurrencyDecimalPlaces(currency);
+					currencyDecimals = (currencyDecimals == null) ? 2 : currencyDecimals;
+					
+					var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["amountValue1"], currencyDecimals);
+
+					if (this.resolvedParams["amountOperator1"] == ">=" && this.resolvedParams["amountOperator2"] == "<=") {
+						if(this.resolvedParams["amountValue2"] != "") {
+							var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["amountValue2"], currencyDecimals);
+							summary = mktMarketingResources.replaceValues("summaryTotalsBetweenXAndY" + usage, [value1, value2, currency]);
+						}
+					}
+					else if (this.resolvedParams["amountOperator1"] == ">=") {
+						summary = mktMarketingResources.replaceValues("summaryTotalsAtLeastX" + usage, [value1, currency]);
+					}
+					else if (this.resolvedParams["amountOperator1"] == "=") {
+						summary = mktMarketingResources.replaceValues("summaryTotalsExactlyX" + usage, [value1, currency]);
+					}
+					else if (this.resolvedParams["amountOperator1"] == "<") {
+						summary = mktMarketingResources.replaceValues("summaryTotalsLessThanX" + usage, [value1, currency]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="getDateSummary" args="usage=null">
+			<![CDATA[
+				if(usage == null) {
+					usage = "Items";
+				}
+				var summary = "";
+
+				if (this.resolvedParams["daysOperator"] == "<=") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryWithinLastXDays" + usage, [days]);
+					}
+				}
+				else if (this.resolvedParams["daysOperator"] == ">") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryAtLeastXDaysAgo" + usage, [days]);
+					}
+				}
+				else if (this.resolvedParams["daysOperator"] == "previousOrders") {
+					if(this.resolvedParams["days"] != "") {
+						var days = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["days"]);
+						summary = mktMarketingResources.replaceValues("summaryPreviousXOrdersOrders", [days]);
+					}
+				}				
+				else if (this.resolvedParams["beforeAfterOnDate"] == "<") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"], wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryBeforeXDate" + usage, [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryAfterXDate" + usage, [date1]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == ">=" && this.resolvedParams["beforeDate"] == "<=") {
+					if(this.resolvedParams["date1"] != "" && this.resolvedParams["date2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryBetweenXandYDates" + usage, [date1, date2]);
+					}
+				}
+				else if (this.resolvedParams["beforeAfterOnDate"] == "=") {
+					if(this.resolvedParams["date1"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["date1"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryOnXDate" + usage, [date1]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This summary view provides brief information about the {@link mktPurchaseHistoryTotalsElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram.
+	-->
+	<class name="mktPurchHistTotalsSummary" extends="mktShopCartPurchHistTotalsBaseSummary">
+		<!---
+			Sets the summary text for the {@link mktPurchaseHistoryTotalsElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var totalsText = getTotalsSummary("Orders");
+				var valuesText = getValuesSummary();
+				var dateText = getDateSummary("Orders");
+
+				var summary = totalsText;
+
+				if(valuesText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += valuesText;
+				}
+
+				if(dateText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += dateText;
+				}
+
+				if((this.resolvedParams["containsOperator"] == "!=") && (summary != "")) {
+					summary = mktMarketingResources["summaryNone"].string + "\n" + summary;
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This summary view provides brief information about the {@link mktShoppingCartProductContentsElementObject} and
+		{@link mktPurchaseHistoryProductContentsElementObject} flow elements. It is shown beneath the element on the
+		Activity Builder flow diagram and to generate the text, it looks at the following property names of the objects:
+		<ul>
+			<li>anyOrAll</li>
+			<li>ChildCatentry/CatalogEntry[partnumber]</li>
+		</ul>
+	-->
+	<class name="mktShopCartPurchHistProductSummary" extends="mktShopCartPurchHistTotalsBaseSummary">
+		<wcfFlowSummaryParam name="anyOrAll" propertyName="anyOrAll"/>
+		<wcfFlowSummaryParam name="productNames" objectPath="ChildCatentry/CatalogEntry" propertyName="partnumber"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYItemsAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXItemsAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXItemsAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXItemsAll, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the flow element. Classes overriding this method must call <code>setSummaryText</code>
+			with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var totalsText = getTotalsSummary();
+				var valuesText = getValuesSummary("Items");
+				var dateText = getDateSummary();
+
+				var summary = totalsText;
+
+				if(valuesText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += valuesText;
+				}
+
+				if(dateText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += dateText;
+				}
+
+				if((this.resolvedParams["containsOperator"] == "!=") && (summary != "")) {
+					summary = mktMarketingResources["summaryNone"].string + "\n" + summary;
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getTotalsSummary" args="usage=null">
+			<![CDATA[
+				var summary = "";
+				var anyOrAll = this.resolvedParams["anyOrAll"];
+				var productText = this.getValuesList("productNames");
+				
+				if((anyOrAll != "") && (productText != "")) {
+					anyOrAll = (anyOrAll == "any") ? "Any" : "All";
+					if (this.resolvedParams["quantityOperator1"] == ">=" && this.resolvedParams["quantityOperator2"] == "<=") {
+						if(this.resolvedParams["quantityValue1"] != "" && this.resolvedParams["quantityValue2"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue2"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsBetweenXAndYItems" + anyOrAll, [value1, value2, productText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == ">=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsAtLeastXItems" + anyOrAll, [value1, productText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsExactlyXItems" + anyOrAll, [value1, productText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "<") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsLessThanXItems" + anyOrAll, [value1, productText]);
+						}
+					}
+				}
+				return summary;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This summary view provides brief information about the {@link mktShoppingCartCategoryContentsElementObject} and
+		{@link mktPurchaseHistoryCategoryContentsElementObject} flow elements. It is shown beneath the element on the
+		Activity Builder flow diagram and to generate the text, it looks at the following property names of the objects:
+		<ul>
+			<li>anyOrAll</li>
+			<li>ChildCatalogGroup/CatalogGroupAlias/CatalogGroupDescription[name]</li>
+		</ul>
+	-->
+	<class name="mktShopCartPurchHistCategorySummary" extends="mktShopCartPurchHistTotalsBaseSummary">
+		<wcfFlowSummaryParam name="anyOrAll" propertyName="anyOrAll"/>
+		<wcfFlowSummaryParam name="categoryNames" objectPath="ChildCatalogGroup/CatalogGroupAlias/CatalogGroupDescription" propertyName="name"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYCategoriesAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXCategoriesAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXCategoriesAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXCategoriesAll, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the flow element. Classes overriding this method must call <code>setSummaryText</code>
+			with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var totalsText = getTotalsSummary();
+				var valuesText = getValuesSummary("Categories");
+				var dateText = getDateSummary();
+
+				var summary = totalsText;
+
+				if(valuesText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += valuesText;
+				}
+
+				if(dateText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += dateText;
+				}
+
+				if((this.resolvedParams["containsOperator"] == "!=") && (summary != "")) {
+					summary = mktMarketingResources["summaryNone"].string + "\n" + summary;
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getTotalsSummary" args="usage=null">
+			<![CDATA[
+				var summary = "";
+				var anyOrAll = this.resolvedParams["anyOrAll"];
+				var categoryText = this.getValuesList("categoryNames");
+				
+				if((anyOrAll != "") && (categoryText != "")) {
+					anyOrAll = (anyOrAll == "any") ? "Any" : "All";
+					if (this.resolvedParams["quantityOperator1"] == ">=" && this.resolvedParams["quantityOperator2"] == "<=") {
+						if(this.resolvedParams["quantityValue1"] != "" && this.resolvedParams["quantityValue2"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue2"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsBetweenXAndYCategories" + anyOrAll, [value1, value2, categoryText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == ">=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsAtLeastXCategories" + anyOrAll, [value1, categoryText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsExactlyXCategories" + anyOrAll, [value1, categoryText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "<") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsLessThanXCategories" + anyOrAll, [value1, categoryText]);
+						}
+					}
+				}
+				return summary;
+			]]>
+		</method>
+	</class>
+	
+	<class name="mktShopCartPurchHistSummary" extends="mktShopCartPurchHistTotalsBaseSummary">
+		<wcfFlowSummaryParam name="elemTemplateName" propertyName="elemTemplateName"/>
+		<wcfFlowSummaryParam name="anyOrAll" propertyName="anyOrAll"/>
+		<wcfFlowSummaryParam name="categoryNames" objectPath="ChildCatalogGroup/CatalogGroupAlias/CatalogGroupDescription" propertyName="name"/>
+		<wcfFlowSummaryParam name="productNames" objectPath="ChildCatentry/CatalogEntry" propertyName="partnumber"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYItemsAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXItemsAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXItemsAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXItemsAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXItemsAll, "onstring");
+			
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsBetweenXAndYCategoriesAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsAtLeastXCategoriesAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsExactlyXCategoriesAll, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXCategoriesAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryContainsLessThanXCategoriesAll, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the flow element. Classes overriding this method must call <code>setSummaryText</code>
+			with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var totalsText = "";
+				var valuesText = "";
+				var dateText = "";
+				
+				if(this.resolvedParams["elemTemplateName"] == "shoppingCartTotals") {
+					totalsText = this.getTotalsSummary("Items");
+					valuesText = this.getValuesSummary();
+					dateText = this.getDateSummary("Items");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "purchaseHistoryTotals") {
+					totalsText = this.getTotalsSummary("Orders");
+					valuesText = this.getValuesSummary();
+					dateText = this.getDateSummary("Orders");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "shoppingCartProductContents") {
+					totalsText = this.getProductTotalsSummary();
+					valuesText = this.getValuesSummary("Items");
+					dateText = this.getDateSummary("Items");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "purchaseHistoryProductContents") {
+					totalsText = this.getProductTotalsSummary();
+					valuesText = this.getValuesSummary("Items");
+					dateText = this.getDateSummary("Orders");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "shoppingCartCategoryContents") {
+					totalsText = this.getCategoryTotalsSummary();
+					valuesText = this.getValuesSummary("Categories");
+					dateText = this.getDateSummary("Items");
+				}
+				else if(this.resolvedParams["elemTemplateName"] == "purchaseHistoryCategoryContents") {
+					totalsText = this.getCategoryTotalsSummary();
+					valuesText = this.getValuesSummary("Categories");
+					dateText = this.getDateSummary("Orders");
+				}
+				
+				var summary = totalsText;
+
+				if(valuesText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += valuesText;
+				}
+
+				if(dateText != "") {
+					if(summary != "") {
+						summary += "\n";
+					}
+					summary += dateText;
+				}
+
+				if((this.resolvedParams["containsOperator"] == "!=") && (summary != "")) {
+					summary = mktMarketingResources["summaryNone"].string + "\n" + summary;
+				}
+
+				this.setSummaryText(summary);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getProductTotalsSummary">
+			<![CDATA[
+				var summary = "";
+				var anyOrAll = this.resolvedParams["anyOrAll"];
+				var productText = this.getValuesList("productNames");
+				
+				if((anyOrAll != "") && (productText != "")) {
+					anyOrAll = (anyOrAll == "any") ? "Any" : "All";
+					if (this.resolvedParams["quantityOperator1"] == ">=" && this.resolvedParams["quantityOperator2"] == "<=") {
+						if(this.resolvedParams["quantityValue1"] != "" && this.resolvedParams["quantityValue2"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue2"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsBetweenXAndYItems" + anyOrAll, [value1, value2, productText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == ">=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsAtLeastXItems" + anyOrAll, [value1, productText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsExactlyXItems" + anyOrAll, [value1, productText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "<") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsLessThanXItems" + anyOrAll, [value1, productText]);
+						}
+					}
+				}
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getCategoryTotalsSummary">
+			<![CDATA[
+				var summary = "";
+				var anyOrAll = this.resolvedParams["anyOrAll"];
+				var categoryText = this.getValuesList("categoryNames");
+				
+				if((anyOrAll != "") && (categoryText != "")) {
+					anyOrAll = (anyOrAll == "any") ? "Any" : "All";
+					if (this.resolvedParams["quantityOperator1"] == ">=" && this.resolvedParams["quantityOperator2"] == "<=") {
+						if(this.resolvedParams["quantityValue1"] != "" && this.resolvedParams["quantityValue2"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							var value2 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue2"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsBetweenXAndYCategories" + anyOrAll, [value1, value2, categoryText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == ">=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsAtLeastXCategories" + anyOrAll, [value1, categoryText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "=") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsExactlyXCategories" + anyOrAll, [value1, categoryText]);
+						}
+					}
+					else if (this.resolvedParams["quantityOperator1"] == "<") {
+						if(this.resolvedParams["quantityValue1"] != "") {
+							var value1 = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["quantityValue1"]);
+							summary = mktMarketingResources.replaceValues("summaryContainsLessThanXCategories" + anyOrAll, [value1, categoryText]);
+						}
+					}
+				}
+				return summary;
+			]]>
+		</method>
+	</class>
+</library>

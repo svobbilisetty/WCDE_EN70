@@ -1,0 +1,56 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This class shows the summary information of a PromotionChecker Target.
+	-->
+	<class name="mktPromotionCheckerSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="promotionNames" objectPath="ChildPromotion/PromotionGroup" propertyName="adminName"/>
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.promotionCheckerSummary, "onstring");
+			]]>
+		</handler>
+
+		<!---
+			Sets the summary text for the {@link mktPromotionCheckerElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				var promotions = this.getValuesList("promotionNames");
+				if(promotions != "") {
+					if(typeof(promotions) == "object") {
+						var names = "";
+						for(var i = 0; i < promotions.length; i++) {
+							names += promotions[i];
+							if(i != promotions.length - 1) {
+								names += ", ";
+							}
+						}
+						summary = names;
+					}
+					else {
+						summary = promotions;
+					}
+					summary = mktMarketingResources.replaceValues("promotionCheckerSummary", [summary]);
+				}
+				this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>	
+</library>

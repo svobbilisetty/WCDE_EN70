@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		A floating pane is a shadowed panel that connects to other component. 
+	-->
+	<class name="wcfFloatingPane" extends="basecomponent" placement="canvas" visible="false" x="-1000" y="-1000">
+		<attribute name="shadowOffset" type="number" value="1"/>
+		<attribute name="defaultplacement" value="content"/>
+		<attribute name="attachTarget" value="null" setter="setAttachTarget(attachTarget)"/>
+		
+		<view x="0" y="${parent.shadowOffset}" name="leftShadow" resource="leftShadow" stretches="height" height="${parent.content.height-parent.shadowOffset}"/>
+		<view name="bottomLeftCornerShadow" resource="bottomLeftCornerShadow" x="0" y="${parent.leftShadow.y+parent.leftShadow.height}"/>
+		<view name="bottomShadow" resource="bottomShadow" x="${parent.bottomLeftCornerShadow.x+parent.bottomLeftCornerShadow.width}" y="${parent.content.y+parent.content.height}" stretches="width" width="${parent.content.width-parent.shadowOffset}"/>
+		
+		<wcfBorderedView borderSize="1" borderColor="${classroot.style.floatingpanelbordercolor}" bgcolor="white" name="content" x="${parent.leftShadow.x+parent.leftShadow.width}" y="0"/>
+		
+       <method name="setAttachTarget" args="target" >
+            this.attachTarget = target;
+            if(this.visible){
+            	this.updateLocation();
+            }
+        </method>
+        
+        <handler name="onvisible"><![CDATA[
+       		this.updateLocation();
+        	]]>
+        </handler>
+        <!--- @keywords private -->
+        <method name="construct" args="parent,args" >
+            // keep a reference to its lexical parent
+            this.owner = parent;
+
+            if ( typeof( args.name ) != 'undefined'  )  {
+                var flname = args.name; // save value of name arg
+                args.name = null;    // zero name field. doing 'delete args.name'
+                                     // doesn't work in this case.
+                this.wouldbename = flname;
+                this.owner[flname] = this; // have parent point to me via owner attribute
+            }
+
+            // construct this view on the canvas width a default name
+            super.construct(canvas,args);
+ 
+            // reset _parentcomponent
+            var p = this.owner;
+            while (p != canvas) {
+                if (p instanceof lz.basecomponent) {
+                    this._parentcomponent = p;
+                    break;
+                }
+                p = p.immediateparent;
+            }
+
+            // Since we are constructed on the canvas, we need to
+            // listen for out parent being destroyed and clean up after
+            // ourselves.
+            new lz.Delegate(this, 'destroyDelegateMethod', parent, 'ondestroy');
+        </method>
+        
+        <method name="init"><![CDATA[
+            super.init();
+            if (this.attachTarget == null) {
+                this.setAttachTarget(this.owner);
+            }
+            ]]>
+        </method>
+        
+		<method name="updateLocation"><![CDATA[
+			if(this.visible && this.attachTarget != null && this.attachTarget != canvas){
+				this.setAttribute('x', attachTarget.getAttributeRelative("x", immediateparent)); 
+				this.setAttribute('y', attachTarget.getAttributeRelative("y", immediateparent) + attachTarget.height);  
+				var right = this.x + this.width;
+				if (right > canvas.width) {
+					var newX = this.x - (right - canvas.width);
+					if (newX < 0) {
+						newX = 0;
+					}
+					this.setAttribute("x", newX);
+				}
+				this.bringToFront();
+			}
+			else {
+				this.setAttribute('x', -1000);
+				this.setAttribute('y', -1000);
+			}
+			]]>
+		</method>
+	</class>
+</library>

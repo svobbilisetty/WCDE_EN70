@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		@keywords private
+	-->
+	<OrganizationalObjectDefinition definitionName="ToDoTasksTop" displayName="${wspWorkspaceResources.todoTasks}" 
+			objectType="ToDoTasksTop" addNewActionsToExplorerContextMenu="false">
+		<!--- Retrieves the {@link wspTaskPrimaryObjectDefinition Task} child objects. -->
+		<GetChildrenService sendWorkspaceContext="false" url="/cmc/GetTasks">
+			<ServiceParam name="taskStatus" value="TODO" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="wspToDoTaskGridChildList" />
+	</OrganizationalObjectDefinition>
+
+	<!---
+		@keywords private
+	-->
+	<OrganizationalObjectDefinition definitionName="CompletedTasksTop" displayName="${wspWorkspaceResources.completedTasks}" 
+			objectType="CompletedTasksTop" addNewActionsToExplorerContextMenu="false">
+		<!--- Retrieves the {@link wspTaskPrimaryObjectDefinition Task} child objects. -->
+		<GetChildrenService sendWorkspaceContext="false" url="/cmc/GetTasks">
+			<ServiceParam name="taskStatus" value="COMPLETED" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="wspCompletedTaskGridChildList" />
+	</OrganizationalObjectDefinition>
+
+	<!---
+		@keywords private
+	-->
+	<OrganizationalObjectDefinition definitionName="ApprovedTasksTop" displayName="${wspWorkspaceResources.approvedTasks}" 
+			objectType="ApprovedTasksTop" addNewActionsToExplorerContextMenu="false">
+		<!--- Retrieves the {@link wspTaskPrimaryObjectDefinition Task} child objects. -->
+		<GetChildrenService sendWorkspaceContext="false" url="/cmc/GetTasks">
+			<ServiceParam name="taskStatus" value="APPROVED" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="wspApprovedTaskGridChildList" />
+	</OrganizationalObjectDefinition>
+
+	<!---
+		@keywords private
+	-->
+	<OrganizationalObjectDefinition definitionName="CanceledTasksTop" displayName="${wspWorkspaceResources.canceledTasks}" 
+			objectType="CanceledTasksTop" addNewActionsToExplorerContextMenu="false">
+		<!--- Retrieves the {@link wspTaskPrimaryObjectDefinition Task} child objects. -->
+		<GetChildrenService sendWorkspaceContext="false" url="/cmc/GetTasks">
+			<ServiceParam name="taskStatus" value="CANCELLED" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetChildrenService>
+		<NavigationListDefinition baseDefinitionName="wspCanceledTaskGridChildList" />
+	</OrganizationalObjectDefinition>
+
+	<!---
+		@keywords private
+	-->
+	<TopObjectDefinition definitionName="wspWorkspaceTopObjectDefinition" organizedObjectTypes="Workspace">
+		<!--- Retrieves the {@link wspWorkspacePrimaryObjectDefinition Workspace} objects. -->
+		<GetChildrenService objectTypes="Workspace" url="/cmc/GetWorkspaces">
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+			<ServiceParam contextName="workspaceContributor" name="workspaceContributor" />
+		</GetChildrenService>
+
+		<Xml name="template">
+			<object objectType="ToDoTasksTop" />
+			<object objectType="CompletedTasksTop" />
+			<object objectType="ApprovedTasksTop" />
+			<object objectType="CanceledTasksTop" />
+		</Xml>
+	</TopObjectDefinition>
+
+</Definitions>

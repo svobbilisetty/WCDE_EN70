@@ -1,0 +1,361 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		This class is used to save many to many merchandising associations via {@link wcfActionManager}.
+	-->
+	<class name="catMerchandingAssociationsSaveHandler" extends="wcfSaveHandler">
+		<method name="save" args="object">
+			<![CDATA[
+			var sourceObjects = object.getObjects("MerchandisingAssociationReferencedManytoManyCatalogSourceEntries");
+			var targetObjects = object.getObjects("MerchandisingAssociationReferencedManytoManyCatalogEntries");
+		
+			object.setOpen(false);
+			object.setAttribute("openGroupDirty", false);
+			this.commitObject(object);
+			
+			var removeExisting = object.getPropertyValue("removeExisting");
+			if (sourceObjects.length > 0) {
+				if (removeExisting == "true") {
+					for (var i = 0; i < sourceObjects.length; i++) {
+						catDeleteAssociationSourceService.doRequest(sourceObjects[i].getReferencedObject());
+					}
+					
+					wcfWaitForTransactionsHandler.triggerAction(object.model);
+				}
+				
+				var lastSourceIndex = -1;
+				for (var i = sourceObjects.length-1; i >= 0 && lastSourceIndex == -1; i--) {
+					var sourceObject = sourceObjects[i].getReferencedObject();
+					for (var j = 0; j < targetObjects.length; j++) {
+						if (targetObjects[j].getReferencedObject() != sourceObject) {
+							lastSourceIndex = i;
+							break;
+						}
+					}
+				}
+				
+				if (lastSourceIndex >= 0) {
+					var transactionEventId = wcfServiceTransactionUtil.createTransactionEvent(true);
+					for (var i = 0; i <= lastSourceIndex; i++) {
+						var sourceObject = sourceObjects[i].getReferencedObject();
+						var lastTargetIndex = -1;
+						for (var j=targetObjects.length-1; j>=0; j--) {
+							if (targetObjects[j].getReferencedObject() != sourceObject) {
+								lastTargetIndex = j;
+								break;
+							}
+						}
+						if (lastTargetIndex < 0) {
+							continue;
+						}
+						var transactionGroupId = wcfServiceTransactionUtil.createTransactionGroup(sourceObject, transactionEventId, true);
+						
+						for (var j = 0; j <= lastTargetIndex; j++) {
+							var targetObject = targetObjects[j];
+							
+							//disallow associating to myself
+							if (targetObject.getReferencedObject() == sourceObject) {
+								continue;
+							}
+						
+							var targetType = targetObject.getReferencedObject().objectType;
+							var objectDefinition = null;
+							if (targetType == "Product" ||
+								targetType == "Kit" ||
+								targetType == "Bundle" ||
+								targetType == "ProductSKU" ||
+								targetType == "CatalogGroupSKU") {
+								objectDefinition = sourceObject.model.getObjectDefinition(sourceObject, "MerchandisingAssociationReferencedCatalogEntries");
+							}
+							else if (targetType == "InheritedProduct" ||
+								targetType == "InheritedKit" ||
+								targetType == "InheritedBundle" ||
+								targetType == "InheritedProductSKU" ||
+								targetType == "InheritedCatalogGroupSKU"){
+								objectDefinition = sourceObject.model.getObjectDefinition(sourceObject, "MerchandisingAssociationReferencedInheritedCatalogEntries");
+							}
+	
+							if (objectDefinition != null) {
+								wcfCopyActionHandler.triggerAction(targetObject, sourceObject, objectDefinition, false, null, transactionEventId, transactionGroupId, true, j==lastTargetIndex, i == lastSourceIndex && (j == lastTargetIndex));
+							}
+						}
+					}
+				}
+			}
+			
+			wcfReleaseObjectHandler.triggerAction(object);
+			]]>
+		</method>
+		<method name="commitObject" args="o">
+			<![CDATA[
+			for (var key in o.propertyMap) {
+				o.propertyMap[key].reset();
+			}
+			o.newObject = false;
+			o.implicitNewObject = false;
+			for (var key in o.childObjectMap) {
+				var childObject = o.childObjectMap[key];
+				if (!childObject.getIsVersionObject() && childObject.parentObject == o && childObject.openGroupObject == o.openGroupObject) {
+					this.commitObject(childObject);
+				}
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		This client action is used to delete all the merchandising associations for the specified products.
+	-->
+	<class name="catDeleteAllAssociationsClientAction" extends="wcfClientAction" displayName="${catalogResources.deleteAllAssociations.string}">
+		<!---
+			@keywords private
+			@param wcfModelObject objects: The array of selected model objects.
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+				if (objects) {
+					catDeleteAllAssociationsTypeSelectionDialog.openDeleteAllAssociationsTypeSelectionDialog(objects);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if the following conditions are true.
+			This client action is enabled for the product by evaluating
+			the associated {@link wcfEnablementCondition} object.
+			The user has access to the product.
+			The workspace is not read only.
+			This method is only used to determine if this action is visible to the user.
+			It is not invoked from the {@link wcfClientAction#doClientAction} method.
+			
+			@param wcfModelObject o: the object on which you want to perform this client action
+			@return boolean: true if the client action is enabled
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var enabled = super.isEnabled(o);
+			
+			if (enabled && o.model.oEditor.respectWorkspaceContext) {
+				var readOnlyModeContextValue = wcfContextUtil.findContextValue(null, "readOnlyMode");				
+				enabled = (readOnlyModeContextValue.value != "true");
+			}
+			if (enabled && o.isContextReadOnly()) {
+				enabled = false;
+			}
+			return enabled;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		This service is used to delete all the merchandising associations whose source is the specified product.
+	-->
+	<wcfService id="catDeleteAssociationSourceService" url="/cmc/DeleteAllAssociationsForSource" transactionService="true">
+		<wcfServiceParam name="storeId" />
+		<wcfServiceParam name="catalogId" propertyName="catalogId" parentProperty="true" parentType="CatalogAlias" />
+		<wcfServiceParam name="catentryId" propertyName="catentryId" />
+
+		<!---
+			@keywords private
+			This method is called when this custom service completed successfully. Client objects will be released if
+			necessary to make sure the association reference objects are up to date to reflect the changes after the
+			delete action.
+
+			@param wcfModelObject requestParent: The object on which this custom service was performed.
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				// remove all the merchandising association reference objects with this model object as the source
+				var deleteObjects = [];
+				for (var key in requestParent.childObjectMap) {
+					var o = requestParent.childObjectMap[key];
+					if (!o.getIsVersionObject() && 
+						(o.objectType == "MerchandisingAssociationReferencedCatalogEntries" ||
+						o.objectType == "MerchandisingAssociationReferencedInheritedCatalogEntries")) {
+						deleteObjects.push(o);
+					}
+				}
+				while (deleteObjects.length > 0) {
+					var o = deleteObjects.shift();
+					wcfModelUtil.releaseModelObject(o);
+				}
+				super.handleServiceSuccess(requestParent);
+				var msg;
+				var messageType = "deleteOutboundMASuccessful";
+				var msgCount = 1 + wcfServiceTransactionUtil.getTransactionEventMessageCount(requestParent.transaction, messageType);
+				if (msgCount == 1) {
+					msg = catalogResources.replaceValues("deleteOutboundMASuccessful", [requestParent.openGroupObject.objectDisplayName]);
+				}else{
+					msg = catalogResources.replaceValues("deleteMultiOutboundMASuccessful", [msgCount]);
+				}
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg); 
+				
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		This service is used to delete all the merchandising associations whose target is the specified product.
+	-->
+	<wcfService id="catDeleteAssociationTargetService" url="/cmc/DeleteAllAssociationsForTarget" transactionService="true">
+		<wcfServiceParam name="storeId" />
+		<wcfServiceParam name="catalogId" propertyName="catalogId" parentProperty="true" parentType="CatalogAlias" />
+		<wcfServiceParam name="catentryId" propertyName="catentryId" />
+
+		<!---
+			@keywords private
+			This method is called when this custom service completed successfully. Client objects will be released if
+			necessary to make sure the association reference objects are up to date to reflect the changes after the
+			delete action.
+
+			@param wcfModelObject requestParent: The object on which this custom service was performed.
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				// remove all the merchandising association reference objects with this model object as the target
+				var deleteObjects = [];
+				for (var key in requestParent.referenceMap) {
+					var o = requestParent.referenceMap[key];
+					if (!o.getIsVersionObject() && 
+						(o.objectType == "MerchandisingAssociationReferencedCatalogEntries" ||
+						 o.objectType == "MerchandisingAssociationReferencedInheritedCatalogEntries")) {
+						deleteObjects.push(o);
+					}
+				}
+				while (deleteObjects.length > 0) {
+					var o = deleteObjects.shift();
+					wcfModelUtil.releaseModelObject(o);
+				}
+				super.handleServiceSuccess(requestParent);
+				var msg;
+				var messageType = "deleteInboundMASuccessful";
+				var msgCount = 1 + wcfServiceTransactionUtil.getTransactionEventMessageCount(requestParent.transaction, messageType);
+				if (msgCount == 1) {
+					msg = catalogResources.replaceValues("deleteInboundMASuccessful", [requestParent.openGroupObject.objectDisplayName]);
+				}else{
+					msg = catalogResources.replaceValues("deleteMultiInboundMASuccessful", [msgCount]);
+				}
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg); 
+				
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		The dialog for the user to select the type of deleting all merchandising associations for the specified products.
+		The user will be prompted to select whether to delete all merchandising associations for the specified products or
+		to delete all merchandising associations that reference the specified products, or both.
+	-->
+	<wcfAlertDialog id="catDeleteAllAssociationsTypeSelectionDialog" showCancel="true" promptText="${catalogResources.deleteAllAssociationsDialogPrompt.string}">
+		<!---
+			The array of products in which their merchandising associations are to be deleted.
+		-->
+		<attribute name="deleteObjects" value="null" />
+
+		<!---
+			Business Object Editor of the object to be removed.
+		-->
+		<attribute name="oEditor" value="null" />
+
+		<!---
+			Select the type of deleting all merchandising associations for the specified products.
+			@param array objects: The array of products in which their merchandising associations are to be deleted.
+		-->
+		<method name="openDeleteAllAssociationsTypeSelectionDialog" args="objects">
+			<![CDATA[
+				this.openWindow();
+				this.deleteObjects = objects;
+				this.oEditor = objects[0].model.oEditor;
+			]]>
+		</method>
+
+		<!---
+			Set the focus to OK button.
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+				lz.Focus.setFocus(this.viewButtons.okBtn);
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+				super.restoreFocus();
+				if (lz.Focus.getFocus() == null) {
+					this.oEditor.restoreFocus();
+				}
+			]]>
+		</method>
+
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+				super.closeWindow();
+				this.deleteObjects = null;
+				this.oEditor = null;
+				this.checkboxView.sourceCheckbox.setAttribute("value", false);
+				this.checkboxView.targetCheckbox.setAttribute("value", false);
+			]]>
+		</method>
+
+		<!---
+			Delete the merchandising associations.
+		-->
+		<method name="handleOK">
+			<![CDATA[
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.start("catDeleteAllAssociationsTypeSelectionDialog handleOK");
+				}
+				if (this.checkboxView.sourceCheckbox.value) {
+					for (var i = 0; i < deleteObjects.length; i++) {
+						catDeleteAssociationSourceService.doRequest(deleteObjects[i]);
+					}
+				}
+				if (this.checkboxView.targetCheckbox.value) {
+					for (var i = 0; i < deleteObjects.length; i++) {
+						catDeleteAssociationTargetService.doRequest(deleteObjects[i]);
+					}
+				}
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.end();
+				}
+			]]>
+		</method>
+
+		<view name="checkboxView" y="${parent.text.y + parent.text.height + 5}" x="${parent.text.x}" options="ignorelayout" clip="true">
+			<wcfBaseCheckbox name="sourceCheckbox">
+				<text name="sourceText" text="${catalogResources.deleteAllAssociationsForSource.string}" width="${parent.parent.parent.text.width}" multiline="true" x="${parent._title.x}" y="${parent.text_y}" />
+			</wcfBaseCheckbox>
+			<wcfBaseCheckbox name="targetCheckbox">
+				<text name="targetText" text="${catalogResources.deleteAllAssociationsForTarget.string}" width="${parent.parent.parent.text.width}" multiline="true" x="${parent._title.x}" y="${parent.text_y}" />
+			</wcfBaseCheckbox>
+			<simplelayout axis="y" spacing="3" />
+		</view>
+	</wcfAlertDialog>
+
+</library>

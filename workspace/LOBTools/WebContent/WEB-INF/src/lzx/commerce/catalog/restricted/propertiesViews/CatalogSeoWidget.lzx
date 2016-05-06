@@ -1,0 +1,121 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+	
+		catSeoUrlViewer is a text viewer that displays the full URL. 
+		This viewer takes the URL keyword and generates the full URL for display.
+	-->
+	<class name="catSeoUrlViewer" extends="wcfTextViewer" fgcolor="0x676767">
+		<!---
+			Generates and returns the full URL based on the properties value and sets it as the text
+			to be displayed in the viewer.
+			@param lz.Delegate del An optional delegate to call when a change in property value is caused by the value service.
+			@returns string: display value
+		-->
+		<method name="getDisplayValue" args="del">
+			<![CDATA[			
+			var displayValue = "";
+			
+			if (this.property != null) {
+				var prefixUrlProperty = this.property.o.getProperty("seo_prefixurl");
+				del.register(prefixUrlProperty, "onvalue");
+				
+				var urlKeywordValue = this.property.value;
+				var prefixUrlValue = prefixUrlProperty.value;
+				
+				if (prefixUrlValue != "" && prefixUrlValue.indexOf("$SEO:PRIMARYTOKEN$") != -1 && urlKeywordValue != "") {
+					var fullURL = wcfStringUtil.replace(prefixUrlValue,"$SEO:PRIMARYTOKEN$", urlKeywordValue);
+					displayValue = catalogResources.replaceValues("seoDesktopUrlPreviewPrompt", [fullURL]);
+				}
+			}
+			
+			return displayValue;
+			]]>
+		</method>
+	</class>
+	
+	<!---  
+		@keywords private
+	-->
+	<class name="catUrlPreview">	
+		
+		<simplelayout axis="y" spacing="3" inset="3"/>
+		<wcfTextEditor property="${classroot.property}" width="${classroot.width}"/>
+		<catSeoUrlViewer property="${classroot.property}" width="${classroot.width}"/>
+	</class>
+		
+	<!---  
+		@keywords private
+	-->
+	<class name="catPropertyUrlPreview" extends="wcfPropertyEditor" sizeToAvailableWidth="true">
+		<!---	
+			@keywords private
+			Create the editor box for the given {@link wcfModelProperty} component. This method overrides the createEditor
+			method in the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.catUrlPreview(parentComponent, {
+				name: "editor",
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				width: availableWidth,
+				enabled: parentComponent.enabled
+			});
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		This class defines a radio button descriptor that can be used with {@link wcfPropertyRadioGroup}. The radio
+		button will display a property input text field below the radio button title.
+	-->
+	<class name="catSeoUrlRadioButtonDescriptor" extends="wcfRadioButtonWithInputTextDescriptor" editorPropertyName="seo_urlkeyword">
+		<!--- @keywords private -->
+		<method name="updateProperty" args="content, property">
+			<![CDATA[
+			super.updateProperty(content, property);
+			var editorProperty = null;
+			if (property != null) {
+				editorProperty = property.o.getProperty(this.editorPropertyName);
+			}
+			if (typeof content["viewer"] == "undefined") {
+				new lz.catSeoUrlViewer(content, {
+					name: "viewer",
+					property: editorProperty,
+					width: content.editor.width
+				});
+			}
+			else {
+				content.viewer.setAttribute("property", editorProperty);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateContentWidth" args="content">
+			<![CDATA[
+			super.updateContentWidth(content);
+			if (this.sizeToAvailableWidth && content["viewer"]) {
+				content.viewer.setAttribute("width", content.editor.width);
+			}
+			]]>
+		</method>
+	</class>
+
+</library>

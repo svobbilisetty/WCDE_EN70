@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+    <ObjectProperties definitionName="cftCatalogFilterPropertiesView" componentObjectNames="selectedCategory,selectedAttributeSet">
+        <PropertyTabs name="tabs">
+            <PropertyTabPane name="tabPane" text="${cftCatalogFilterResources.catalogFilterProperties}">
+                <PropertyPane name="cftCatalogFilterBasePropertyPane">
+                	<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+                    <PropertyGroup name="group" groupTitle="${cftCatalogFilterResources.catalogFilterPropertiesGeneral}"
+                        open="true">
+                        <PropertyInputText propertyName="name" required="true"
+                            promptText="${cftCatalogFilterResources.catalogFilterPropertiesName}" />
+                        <PropertyInputMultiLineText propertyName="description"
+                            promptText="${cftCatalogFilterResources.catalogFilterPropertiesDescription}" />
+                    </PropertyGroup>
+                       
+                    
+                    <PropertyGroup name="group1"
+                            groupTitle="${cftCatalogFilterResources.catalogFilterPropertiesCategoryFilter}">
+                            <PropertyViewOption viewOptionGroup="categoryDisplayMode" promptText="${cftCatalogFilterResources.catalogFilterPropertiesViewMode}"/>
+                            <PropertyGroup name="treeView" collapsable="false">
+                                <EnablementCondition conditionId="TreeView" viewOptionType="treeView" enablementValue="true" />
+                                <PropertyTree name="filterTree" promptText="${cftCatalogFilterResources.catalogFilterPropertiesCategoryTree}"
+                                      helpText="${cftCatalogFilterResources.catalogFilterPropertiesCategoriesTree_helpText}" helpLinkURL="refs/rpncreatecatfilterscenario_2.htm">
+                                    <ObjectTypeFilter baseDefinitionName="catMasterCatalogGroupsExplorerFilter"/>
+                                    <FilterTreeNodeCustomizer package="cat" />
+                                    <FilterTreeIncludeAction package="cat" />
+                                    <FilterTreeExcludeAction package="cat" />
+                                    <FilterTreeClearAction package="cat" />
+				    				<FilterTreeSelectionHandler package="cat"/>
+                                </PropertyTree>
+                            </PropertyGroup>
+
+                            <PropertyGroup name="gridView" collapsable="false">
+                            	  <EnablementCondition conditionId="TreeView" viewOptionType="treeView" enablementValue="false" />
+                              
+                                  <PropertyChildListEditor objectTypes="CategoryElement,InheritedCategoryElement,CatalogElement,InheritedCatalogElement" name="cftCategoryElementEditor"
+                                    listDefinitionName="cftCategoryElementListGrid" helpText="${cftCatalogFilterResources.catalogFilterPropertiesCategories_helpText}" promptText="${cftCatalogFilterResources.catalogFilterPropertiesCategoryGrid}" selectedObjectName="selectedCategory" helpLinkURL="concepts/cpncatalogfiltertool.htm" helpLinkText="${foundationResources.helpDefaultLinkText}"/>
+                           </PropertyGroup>
+                           
+                           <PropertyChildListEditor helpText="${cftCatalogFilterResources.catalogFilterPropertiesConditionGroup_helpText}" listDefinitionName="cftAttributeSetGrid" name="cftAttributeSetEditor" objectTypes="CatalogFilterAttributeSet" promptText="${cftCatalogFilterResources.catalogFilterPropertiesAttributeSet}" componentObjectName="selectedCategory" selectedObjectName="selectedAttributeSet" helpLinkText="${foundationResources.helpDefaultLinkText}"/>
+                            
+                           <PropertyChildListEditor helpText="${cftCatalogFilterResources.catalogFilterPropertiesAttribute_helpText}" listDefinitionName="cftAttributeGrid" name="cftAttributeEditor" objectTypes="CatalogFilterCatentProperty,CatalogFilterAttributeWithAssignedValues,InheritedCatalogFilterAttributeWithAssignedValues,CatalogFilterAttributeWithAllowedValues,InheritedCatalogFilterAttributeWithAllowedValues" promptText="${cftCatalogFilterResources.catalogFilterPropertiesAttributePrompText}" hideEditColumnAction="true" componentObjectName="selectedAttributeSet" helpLinkURL="refs/rpncreatecatfilterscenario_3.htm" helpLinkText="${foundationResources.helpDefaultLinkText}"/>
+                           
+                        
+                        </PropertyGroup>
+                 
+                    <PropertyGroup name="targetProductsGroup" groupTitle="${cftCatalogFilterResources.catalogFilterPropertiesCatentryFilter}">
+                       <PropertyChildListEditor name="cftInclProdEditor"
+                            objectTypes="CatalogFilterIncludeCatalogEntry,CatalogFilterIncludeInheritedCatalogEntry" listClass="cftIncludeProductListGrid"
+                            promptText="${cftCatalogFilterResources.catalogFilterIncludeCatentryGrid}" 
+                            helpText="${cftCatalogFilterResources.catalogFilterPropertiesIncludeCatalogEntries_helpText}" 
+                            helpLinkURL="refs/rpncreatecatfilterscenario_1.htm"
+                            helpLinkText="${foundationResources.helpDefaultLinkText}" />
+                            
+                      <PropertyChildListEditor name="cftExclProdEditor"
+                            objectTypes="CatalogFilterExcludeCatalogEntry,CatalogFilterExcludeInheritedCatalogEntry" listClass="cftExcludeProductListGrid"
+                            promptText="${cftCatalogFilterResources.catalogFilterExcludeCatentryGrid}" 
+                            helpText="${cftCatalogFilterResources.catalogFilterPropertiesExcludeCatalogEntries_helpText}" 
+                            helpLinkURL="refs/rpncreatecatfilterscenario_1.htm"
+                            helpLinkText="${foundationResources.helpDefaultLinkText}" />     
+                    </PropertyGroup>
+                    
+                </PropertyPane>
+
+            </PropertyTabPane>
+
+        </PropertyTabs>
+    </ObjectProperties>
+
+
+</Definitions>

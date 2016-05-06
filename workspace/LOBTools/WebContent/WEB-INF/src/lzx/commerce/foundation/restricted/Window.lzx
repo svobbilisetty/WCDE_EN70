@@ -1,0 +1,419 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!--- @keywords private -->
+	<class name="wcfWindow" extends="basewindow">
+		<!--- The title of a window. It appears at the top of a window.-->
+		<attribute name="title" type="string" value=""/>
+		
+		<!--- A window is modal if this value is true. -->
+		<attribute name="modal" type="boolean" value="false"/>
+		
+		<!--- A window can be closed by hitting the esc key if this value is true. -->
+		<attribute name="closeable" type="boolean" value="true"/>
+		
+		<!--- A window will have a close control if it is closeable and this value is true. -->
+		<attribute name="hideCloseButton" type="boolean" value="false"/>		
+		
+		<!--  the left padding size of content -->
+		<attribute name="contentPaddingLeftSize" type="number" value="18"/>
+		
+		<!--  the right padding size of content -->
+		<attribute name="contentPaddingRightSize" type="number" value="18"/>
+		
+		<!--  the top padding size of content -->
+		<attribute name="contentPaddingTopSize" type="number" value="18"/>
+		
+		<!--  the bottom padding size of content -->
+		<attribute name="contentPaddingBottomSize" type="number" value="18"/>				
+				
+		<!-- The padding on top of the footer. That is, the padding between window content and the footer content -->
+		<attribute name="footerPaddingTopSize" type="number" value="7"/>
+		
+		<!-- The padding at the bottom of the footer. That is, the padding between footer content and the window bottom 
+			 border
+		-->
+		<attribute name="footerPaddingBottomSize" type="number" value="2"/>
+		
+		<!-- The size of the right padding on footer -->
+		<attribute name="footerPaddingRightSize" type="number" value="6"/>
+		
+		<!-- The size of the left padding on footer -->
+		<attribute name="footerPaddingLeftSize" type="number" value="6"/>
+		
+		<!-- Footer's background resource -->
+		<attribute name="footerBackgroundResource" type="string" value="${null}"/>
+		
+		<!-- @keywords private -->
+		<attribute name="defaultplacement" value="content" type="string"/>
+		<!-- @keywords private -->
+		<attribute name="useContentWidth" value="true" type="boolean"/>
+		<!-- @keyworkds private -->
+		<attribute name="useContentHeight" value="true" type="boolean"/>
+		<!--- @keywords private -->
+		<attribute name="restoreFocusView" value="null"/>
+		<!--  
+			minimum width of a window 
+		-->
+		<attribute name="minWidth" type="number" value="278"/>
+		
+		<!--  
+			minimum height of a window 
+		-->
+		<attribute name="minHeight" type="number" value="213"/>
+		
+		<!--- "true" if this window is open. -->
+		<attribute name="isOpen" type="boolean" value="false"/>
+
+		<method name="init"><![CDATA[
+			super.init();			
+			wcfCanvasMenu.addView(this);
+			]]>
+		</method>
+
+		<method name="openWindow"><![CDATA[
+			if (!this.isOpen) {
+				if (this.restoreFocusView == null) {
+					this.restoreFocusView = lz.Focus.getFocus();
+				}
+				this.open();
+				if(this.modal) {
+					canvas.modalContext = true;
+					lz.ModeManager.makeModal(this);
+				}		
+				if(this.closeable) {
+					if(this.modal) {
+						//for modal windows that are closeable, always close on esc
+			        	if(typeof(this.closeWhenModalDel) === "undefined") {
+							this.closeWhenModalDel = new lz.Delegate(this, "closeWhenModal");
+			        	}
+						lz.Keys.callOnKeyCombo(this.closeWhenModalDel, ['esc']);
+					}
+					else {
+						//for non-modal windows that are closeable, close on esc only when
+						//the focus is on one of its subviews
+			        	if(typeof(this.closeWhenFocusedDel) === "undefined") {
+							this.closeWhenFocusedDel = new lz.Delegate(this, "closeWhenFocused");
+			        	}	
+						lz.Keys.callOnKeyCombo(this.closeWhenFocusedDel, ['esc']);
+					}
+				}
+				this.setAttribute("isOpen", true);
+			}
+			if(typeof(this.setInitialFocusDel) == "undefined") {
+				this.setInitialFocusDel = new lz.Delegate(this, "setInitialFocus");
+			}
+			wcfCallbackUtil.addDeferredCallback(this.setInitialFocusDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			this.bringToFront();
+			]]>
+		</method>
+		
+		<!-- Override this method in subclass of this window to set focus on specific component -->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this, false);
+			]]>
+		</method>
+
+		<method name="closeWhenFocused" args="e=null"><![CDATA[
+			if(wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+				this.closeWindow();
+			}
+			]]>
+		</method>
+		
+		<method name="closeWhenModal" args="e=null">
+			<![CDATA[
+			if (lz.ModeManager.getModalView() == this) {
+				this.closeWindow();
+			}
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			if (this.modal || wcfViewUtil.containsView(this, lz.Focus.getFocus())) {
+				if (this.restoreFocusView != null && this.restoreFocusView.visible && wcfViewUtil.getInvisibleAncestor(this.restoreFocusView) == null) {
+					lz.Focus.setFocus(this.restoreFocusView, false);
+				}
+				else {
+					lz.Focus.clearFocus();
+				}
+			}
+			this.restoreFocusView = null;
+			]]>
+		</method>
+		
+		<method name="closeWindow"><![CDATA[
+			if (this.isOpen) {
+				if(this.closeable) {
+					if(this.modal) {
+						lz.Keys.removeKeyComboCall(this.closeWhenModalDel, ['esc']);
+					}
+					else {
+						lz.Keys.removeKeyComboCall(this.closeWhenFocusedDel, ['esc']);
+					}
+				}
+				if(modal) {
+					canvas.modalContext = false;
+					lz.ModeManager.release(this);
+				}
+				this.setAttribute("isOpen", false);
+				this.close();
+				this.restoreFocus();
+			}
+			]]>
+		</method>
+
+		<method name="destroy"><![CDATA[
+			if(this['borderDel']){
+				this.borderDel.unregisterAll(); 
+				delete this.borderDel; 
+			}
+			if(this['closeWhenModalDel']){
+				this.closeWhenModalDel.unregisterAll();
+				delete this.closeWhenModalDel;
+			}
+			if(this['setInitialFocusDel']){
+				this.setInitialFocusDel.unregisterAll();
+				delete this.setInitialFocusDel;
+			}
+			]]>
+		</method>
+		
+			
+		<layout name="layout">
+			<!--- @keywords private -->
+			<method name="init">
+				<![CDATA[
+
+				this.updateDelegate.register(classroot.content, "onwidth");				
+				this.updateDelegate.register(classroot.content, "onheight");
+				this.updateDelegate.register(classroot.footer, "onwidth"); 
+				this.updateDelegate.register(classroot.footer, "onheight"); 
+				
+				super.init();
+				]]>
+			</method>
+
+			<method name="destroy"><![CDATA[
+				if(this['borderDel']){
+					this.borderDel.unregisterAll();
+					delete this.borderDel; 
+				}
+				
+				super.destroy();
+				]]>
+			</method>
+			
+			<!-- 
+				Returns the width of content area. If content and footer have different width, the larger one will be returned. 
+			 -->
+	        <method name="getContentAreaWidth"><![CDATA[
+        		var contentAreaWidth = classroot.content.width+classroot.contentPaddingLeftSize + classroot.contentPaddingRightSize; 
+        		var footerAreaWidth = classroot.footer.width + classroot.footerPaddingLeftSize + classroot.footerPaddingRightSize; 
+        		
+        		var result = Math.max(contentAreaWidth, footerAreaWidth); 
+				var minimumWidth = classroot.minWidth - classroot.middle.leftview.width - classroot.middle.rightview.width; 
+	        	
+				return Math.max(result, minimumWidth); 
+	        	]]>
+	        </method>
+	        
+	        <!-- 
+	        	Returns the total height used for content and footer including horizontal borders.
+	         -->
+	        <method name="getContentAndFooterHeight"><![CDATA[
+        		var contentAreaHeight = classroot.contentPaddingTopSize + classroot.content.height + classroot.contentPaddingBottomSize; 
+        		var footerAreaHeight = classroot.footerPaddingTopSize + classroot.footer.height + classroot.footerPaddingBottomSize; 
+        		var minHeight = classroot.minHeight - classroot.top.height - classroot.bottom.height; 
+        		
+        		return Math.max(contentAreaHeight + footerAreaHeight, minHeight); 
+	        	]]>
+	        </method>
+	        
+	        <!-- 
+	        	Updates this window and its subviews' widths. It makes sure footer area and content area have the same width. 
+	         -->
+	        <method name="updateWindowWidth"><![CDATA[
+        		var contentAreaWidth = this.getContentAreaWidth(); 
+				classroot.windowContentBackground.setAttribute("width", contentAreaWidth); 
+
+				classroot.windowFooterBackground.setAttribute("width", contentAreaWidth); 
+				
+				classroot.setAttribute("width", contentAreaWidth + classroot.middle.leftview.width + classroot.middle.rightview.width);
+				
+				classroot.top.setAttribute("width", classroot.width); 
+				classroot.middle.setAttribute("width", classroot.width); 
+				classroot.bottom.setAttribute("width", classroot.width); 
+				
+				classroot.titleArea.setAttribute("width", classroot.width - classroot.middle.leftview.width - classroot.middle.rightview.width); 
+				
+				classroot.background.setAttribute("width", 	classroot.width - classroot.middle.leftview.width - classroot.middle.rightview.width); 
+	        	]]>
+	        </method>
+	        
+	        <!-- 
+	        	Updates the heights of window and its subviews. 
+	         -->
+	        <method name="updateWindowHeight"><![CDATA[
+	        	var totalHeight = this.getContentAndFooterHeight(); 
+	        	// Footer and border share a border, so footer doesn't have top border. 
+	        	classroot.windowFooterBackground.setAttribute("height", classroot.footerPaddingTopSize + classroot.footer.height + classroot.footerPaddingBottomSize); 
+	        	
+	        	classroot.windowContentBackground.setAttribute("height", totalHeight - classroot.windowFooterBackground.height); 
+	        
+
+				var height = classroot.top.height + classroot.titleArea.height + totalHeight + classroot.bottom.height;
+				if (height != classroot.height) {
+					classroot.setAttribute("height", height);
+				}
+				
+				
+				classroot.middle.setAttribute("height", classroot.height - classroot.top.height - classroot.bottom.height); 
+				classroot.background.setAttribute("height", classroot.height - classroot.top.height - classroot.bottom.height); 
+				
+	        	]]>
+	        </method>
+	        
+			<method name="update" args="e=null">
+				<![CDATA[
+				if(!this.locked){
+					this.lock();
+					
+					this.updateWindowWidth();
+					this.updateWindowHeight();
+					
+					classroot.top.setAttribute("x", 0); 
+					classroot.top.setAttribute("y", 0); 
+					
+					classroot.middle.setAttribute("x", 0); 
+					classroot.middle.setAttribute("y", classroot.top.height); 
+					
+					classroot.bottom.setAttribute("x", 0); 
+					classroot.bottom.setAttribute("y", classroot.height - classroot.bottom.height); 
+					
+					classroot.titleArea.setAttribute("x", classroot.middle.leftview.width); 
+					classroot.titleArea.setAttribute("y", classroot.top.height); 
+					
+					classroot.background.setAttribute("x", classroot.middle.leftview.width); 
+					classroot.background.setAttribute("y", classroot.top.height); 
+			
+					classroot.windowContentBackground.setAttribute("x", classroot.middle.leftview.width); 
+					classroot.windowContentBackground.setAttribute("y", classroot.top.height + classroot.titleArea.height); 
+					
+					classroot.content.setAttribute("x", classroot.windowContentBackground.x + classroot.contentPaddingLeftSize); 
+					classroot.content.setAttribute("y", classroot.windowContentBackground.y + classroot.contentPaddingTopSize); 
+					
+					classroot.windowFooterBackground.setAttribute("x", classroot.middle.leftview.width); 
+					classroot.windowFooterBackground.setAttribute("y", classroot.windowContentBackground.y + classroot.windowContentBackground.height); 
+					
+					//footer content is right-aligned. 
+					classroot.footer.setAttribute("x", classroot.windowFooterBackground.x + classroot.windowFooterBackground.width - classroot.footerPaddingRightSize - classroot.footer.width); 
+					classroot.footer.setAttribute("y", classroot.windowFooterBackground.y + classroot.footerPaddingTopSize); 					
+					
+		        	this.locked = false;
+				}
+				]]>
+			</method>
+		</layout>
+		
+		<!--
+			Top border and corners of window.  
+			We need to set width or height of a resizeview_x instance in attribute, otherwise the width of height of the instance's resource will be used. 
+		-->
+		<resizeview_x 
+			name="top" 
+			width="$once{classroot.minWidth}" 
+			left="windowTopLeft" 
+			middle="windowTopMiddle" 	
+			right="windowTopRight"/>
+
+		<!-- 
+			Middle area of window, including its left and right borders
+		 -->
+        <resizeview_x 
+        	name="middle" 
+        	width="$once{classroot.minWidth}" 
+        	height="$once{classroot.minHeight - classroot.top.height - classroot.bottom.height}" 
+        	left="windowMiddleLeft"  
+        	middle="${null}" 
+        	right="windowMiddleRight"/>
+
+		<!-- 
+			Bottom border and corners of window
+		 -->
+        <resizeview_x 
+        	name="bottom" 
+        	width="$once{classroot.minWidth}" 
+        	left="windowBottomLeft" 
+        	middle="windowBottomMiddle" 
+        	right="windowBottomRight"/>
+
+		<!-- 
+			The background of window.
+		 -->
+		<view name="background" resource="windowBackground" stretches="both"/>
+			
+		<!-- 
+			Title area contains window title, as well as close button
+		 -->
+        <view name="titleArea" clip="true">
+        	<state applied="${classroot.titleArea.text.text}">
+        		<attribute name="height" value="${this.text.height + classroot.style.windowtitlebottompadding}"/>
+        	</state>
+        	<state applied="${!classroot.titleArea.text.text &amp;&amp; classroot.closeable &amp;&amp; !classroot.hideCloseButton}">
+        		<attribute name="height" value="${this.controls.height + classroot.style.windowtitlebottompadding}"/>
+        	</state>
+        	<state applied="${!classroot.titleArea.text.text &amp;&amp; (!classroot.closeable || classroot.hideCloseButton)}">
+        		<attribute name="height" value="0"/>
+        	</state>
+        	<!-- Text starts 2 pixels off to the right, so we need to compensate it in order position the text to (0, 0) -->
+        	<text name="text" x="-2" width="${parent.width - parent.controls.width}" height="${this.getTextHeight()*1.3}" fontsize="${classroot.style.windowtitletextsize}" fgcolor="${classroot.style.windowtitletextcolor}" text="${classroot.title}"/>
+        	<view x="${parent.width - this.width}" y="0" name="controls">
+                <state name="closeable">
+                    <attribute name="applied" value="${classroot.closeable &amp;&amp; !classroot.hideCloseButton}" when="always"/>
+                    <basebutton name="closeButton" styleable="true"
+                        resource="windowCloseButton"
+                        onmouseover="this.setAttribute('frame', 2)"
+                        onmousedown="this.setAttribute('frame', 3)"
+                        onclick="classroot.closeWindow()" />
+                </state>
+            </view>
+        </view>
+		
+		<!-- 
+			The background for window content. 
+		 -->
+      	<view name="windowContentBackground" bgcolor="white"/>
+      	
+      	<!-- 
+      		The area that holds all the window content
+      	 -->
+      	<view name="content" clip="true"/>
+      	
+      	<!-- 
+      		The background of footer area
+      	 -->
+      	<view name="windowFooterBackground" visible="${classroot.footerBackgroundResource}" resource="${classroot.footerBackgroundResource}" stretches="both"/>
+      	
+      	<!-- 
+      		The footer area of the window. Use buttons such as close, cancel, and OK are placed here. 
+      	 -->
+        <view name="footer" clip="true"/>       
+	</class>
+</library>

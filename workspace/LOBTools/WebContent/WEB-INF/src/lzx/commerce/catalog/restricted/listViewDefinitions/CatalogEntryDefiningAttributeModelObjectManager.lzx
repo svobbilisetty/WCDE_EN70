@@ -1,0 +1,236 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<!-- 
+
+CatalogEntryDefiningAttributeModelObjectManager.lzx
+
+The classes defined in this library are:
+
+catCatalogEntryDefiningAttributeModelObjectManager
+
+-->
+<library>
+	
+	<!---
+		@keywords private final
+		
+		<p>
+		This class represents a memory manager for defining attributes. 
+		</p>
+	 -->
+	<node id="catCatalogEntryDefiningAttributeModelObjectManager">
+	
+		<!---
+			@keywords private
+			
+			<p>
+			An array of defining attribute objects.
+			</p>			
+			
+			{@link catCatalogEntryDefiningAttribute CatalogEntryDefiningAttribute}
+		 -->
+		<attribute name="attributeObjects" value="${{}}"/>
+
+		<!---
+			@keywords private
+			
+			<p>
+			An array of product objects.
+			</p>		
+			
+			{@link catProduct Product}	
+		 -->		
+		<attribute name="parentObjects" value="${{}}"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+			this.cleanupSKUDefiningAttributesDel = new lz.Delegate(this, "cleanupSKUDefiningAttributes");
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			
+			<p>
+			This method will unregister and remove delegates.
+			</p>	
+		-->
+		<method name="destroy">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "destroy");
+			}
+			
+			this.cleanupSKUDefiningAttributesDel.unregisterAll();
+			delete this.cleanupSKUDefiningAttributesDel;
+			
+			super.destroy();
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "destroy");
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			<p>
+			Registers the defining attribute object.
+			</p>
+			
+			@param wcfModelObject attributeObject: The defining attribute object to be registered.
+			
+			{@link catCatalogEntryDefiningAttribute CatalogEntryDefiningAttribute}
+		-->
+		<method name="registerAttributeObject" args="attributeObject">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "registerAttributeObject", [attributeObject]);
+				wcfLogger.log("com.ibm.commerce.lobtools.catalog", "INFO", "catCatalogEntryDefiningAttributeModelObjectManager", "registerAttributeObject", "Registering attribute objects " + attributeObject.logString());
+			}
+			
+			var attributeObjectId = attributeObject.getPropertyValue(attributeObject.objectDefinition.idProperty);
+			if (!this.attributeObjects[attributeObjectId]) {
+				this.attributeObjects[attributeObjectId] = attributeObject;
+				this.parentObjects[attributeObjectId] = attributeObject.parentObject;
+				this.cleanupSKUDefiningAttributesDel.register(attributeObject, "beingDestroyed");
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "registerAttributeObject");
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			<p>
+			Registers the delegate used to clean up defining attributes that have been deleted at the 
+			parent product.
+			</p>
+		-->
+		<method name="registerDelegate">
+			<![CDATA[
+
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "registerDelegate");
+			}
+
+			this.cleanupSKUDefiningAttributesDel.unregisterAll();
+			for (var attributeObjectId in this.attributeObjects) {
+				var attributeObject = this.attributeObjects[attributeObjectId];
+				if (attributeObject) {
+					this.cleanupSKUDefiningAttributesDel.register(attributeObject, "beingDestroyed");
+				}
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "registerDelegate");
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			<p>
+			Cleans up defining attributes that have been deleted at the parent product and being
+			used at the child SKU.
+			</p>
+			
+			@param wcfModelObject attributeObject: The defining attribute object to be registered.
+			
+			{@link catCatalogEntryDefiningAttribute CatalogEntryDefiningAttribute}
+			{@link catSKUDefiningAttribute}
+		-->		
+		<method name="cleanupSKUDefiningAttributes" args="attributeObject">
+			<![CDATA[
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "cleanupSKUDefiningAttributes");
+			}
+			
+			var deleting = attributeObject.deleting;
+			var attributeObjectId = attributeObject.getPropertyValue(attributeObject.objectDefinition.idProperty);
+			delete this.attributeObjects[attributeObjectId];
+			
+			var parentObject = this.parentObjects[attributeObjectId];
+			delete this.parentObjects[attributeObjectId];
+						
+			this.registerDelegate();
+
+			if(deleting)
+			{
+				var skuDefiningAttributes = [];
+				var skuProductADDefiningAttributes = [];
+				
+				var skuProductDefiningAttributes = parentObject.getObjects("ProductChildSKU/ProductSKU/SKUDefiningAttribute");
+				var skuInheritedProductDefiningAttributes = parentObject.getObjects("ProductChildInheritedSKU/InheritedProductSKU/SKUDefiningAttribute");
+				if(skuProductDefiningAttributes != null ) {
+					skuDefiningAttributes = skuDefiningAttributes.concat(skuProductDefiningAttributes);
+				}				
+				if(skuInheritedProductDefiningAttributes != null ) {
+					skuDefiningAttributes = skuDefiningAttributes.concat(skuInheritedProductDefiningAttributes);
+				}
+				
+				var skuProductADDefiningAttributes = parentObject.getObjects("ProductChildSKU/ProductSKU/ProductSKUReferenceDefiningAttributeDictionaryAttributeWithAllowedValues");
+				var skuInheritedProductADDefiningAttributes = parentObject.getObjects("ProductChildSKU/ProductSKU/ProductSKUReferenceDefiningAttributeDictionaryAttributeWithAllowedValues");
+				var skuProductInheritedADDefiningAttributes = parentObject.getObjects("ProductChildInheritedSKU/InheritedProductSKU/ProductSKUReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues");
+				var skuInheritedProductInheritedADDefiningAttributes = parentObject.getObjects("ProductChildInheritedSKU/InheritedProductSKU/ProductSKUReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues");
+				
+				// AD attributes
+				if(skuProductADDefiningAttributes != null ) {
+					skuProductADDefiningAttributes = skuProductADDefiningAttributes.concat(skuProductADDefiningAttributes);
+				}
+				if(skuInheritedProductADDefiningAttributes != null ) {
+					skuProductADDefiningAttributes = skuProductADDefiningAttributes.concat(skuInheritedProductADDefiningAttributes);
+				}
+				if(skuProductInheritedADDefiningAttributes != null ) {
+					skuProductADDefiningAttributes = skuProductADDefiningAttributes.concat(skuProductInheritedADDefiningAttributes);
+				}
+				if(skuInheritedProductInheritedADDefiningAttributes != null ) {
+					skuProductADDefiningAttributes = skuProductADDefiningAttributes.concat(skuInheritedProductInheritedADDefiningAttributes);
+				}
+	
+				for (var i = 0; i < skuDefiningAttributes.length; i++) {
+					var skuDefiningAttribute = skuDefiningAttributes[i];
+					if (skuDefiningAttribute.getPropertyValue("xdata_attrId") == attributeObjectId) {
+						wcfModelUtil.releaseModelObject(skuDefiningAttribute);
+					}
+				}
+				// AD attributes
+				for (var i = 0; i < skuProductADDefiningAttributes.length; i++) {
+					var skuProductADDefiningAttribute = skuProductADDefiningAttributes[i];
+					if (skuProductADDefiningAttribute.getPropertyValue("attrId") == attributeObjectId) {
+						wcfModelUtil.releaseModelObject(skuProductADDefiningAttribute);
+					}
+				}
+			}
+			
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.catalog", "catCatalogEntryDefiningAttributeModelObjectManager", "cleanupSKUDefiningAttributes");
+			}
+			]]>
+		</method>
+		
+	</node>
+	 
+</library>

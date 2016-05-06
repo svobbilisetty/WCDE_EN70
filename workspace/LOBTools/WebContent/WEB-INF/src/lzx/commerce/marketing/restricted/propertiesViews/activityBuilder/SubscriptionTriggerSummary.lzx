@@ -1,0 +1,217 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktSubscriptionTriggerElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktSubscriptionTriggerElementObject} object:
+		<ul>
+			<li>repeatSchedule</li>
+			<li>subscriptionTriggerType</li>
+			<li>numberOfDays</li>
+			<li>startsBetweenDateRange</li>
+			<li>startDate</li>
+			<li>startDate2</li>
+			<li>endsBetweenDateRange</li>
+			<li>endDate</li>
+			<li>endDate2</li>
+			<li>productNames</li>
+		</ul>
+	-->
+	<class name="mktSubscriptionTriggerSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="repeatSchedule" propertyName="repeatSchedule"/>
+		<wcfFlowSummaryParam name="subscriptionTriggerType" propertyName="subscriptionTriggerType"/>
+		<wcfFlowSummaryParam name="numberOfDays" propertyName="numberOfDays"/>
+		<wcfFlowSummaryParam name="startsBetweenDateRange" propertyName="startsBetweenDateRange"/>
+		<wcfFlowSummaryParam name="startDate" propertyName="startDate"/>
+		<wcfFlowSummaryParam name="startDate2" propertyName="startDate2"/>
+		<wcfFlowSummaryParam name="endsBetweenDateRange" propertyName="endsBetweenDateRange"/>
+		<wcfFlowSummaryParam name="endDate" propertyName="endDate"/>
+		<wcfFlowSummaryParam name="endDate2" propertyName="endDate2"/>
+		<wcfFlowSummaryParam name="productNames" objectPath="ChildCatentry/CatalogEntry/CatalogEntryDescription" propertyName="name"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionRepeatScheduleDaily, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionRepeatScheduleOnce, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionBeforeEnd, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionAfterStart, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionAfterEnd, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionAfterCancel, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionStartRange, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionEndRange, "onstring");
+				this.updateSummaryDel.register(mktMarketingResources.summarySubscriptionApplicableTo, "onstring");
+			]]>
+		</handler>
+		
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = "";
+				var scheduleText = "";
+				var triggerTypeText = "";
+				var startRangeText = "";
+				var endRangeText = "";
+				var subscriptionText = "";
+				
+				scheduleText = this.getScheduleSummary();
+				triggerTypeText = this.getTriggerTypeAndDaysSummary();
+				startRangeText = this.getStartRangeSummary();
+				endRangeText = this.getEndRangeSummary();
+				subscriptionText = this.getApplicableSubscriptionSummary();
+								
+				if((scheduleText != "")) {
+					summaryText += scheduleText;
+				}
+				if((triggerTypeText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}
+					summaryText += triggerTypeText;
+				}	
+				if((startRangeText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}
+					summaryText += startRangeText;
+				}
+				if((endRangeText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}				
+					summaryText += endRangeText;
+				}
+				if((subscriptionText != "")) {
+					if(summaryText != ""){
+						summaryText += "\n";
+					}				
+					summaryText += subscriptionText;
+				}				
+					
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getScheduleSummary">
+			<![CDATA[
+				var summary = "";
+				var repeatSchedule = this.resolvedParams["repeatSchedule"];
+						
+				if (repeatSchedule != null && repeatSchedule != "") {
+			  		var scheText = "";
+			  		switch(repeatSchedule) {
+						case "runDaily":
+							scheText = "summarySubscriptionRepeatScheduleDaily";
+							break;
+						case "runOnce":
+							scheText = "summarySubscriptionRepeatScheduleOnce";
+							break;
+			  		}
+				
+			  		if(scheText != null && scheText != "") {
+						summary = mktMarketingResources[scheText].string;
+			  		}
+			  	}
+			  
+				return summary;
+			]]>
+		</method>			
+		
+		<!--- @keywords private -->
+		<method name="getTriggerTypeAndDaysSummary">
+			<![CDATA[
+				var summary = "";
+				var triggerType = this.resolvedParams["subscriptionTriggerType"];				
+						
+				if (triggerType != null && triggerType != "" && this.resolvedParams["numberOfDays"] != null && this.resolvedParams["numberOfDays"] != "") {
+					var numberOfDays = wcfGlobalizationUtil.formatNumberToDisplayFormat(this.resolvedParams["numberOfDays"]);
+			  		var summaryText = "";
+			  		
+			  		switch(triggerType) {
+						case "beforeEnd":
+							summaryText = "summarySubscriptionBeforeEnd";
+							break;
+						case "afterStart":
+							summaryText = "summarySubscriptionAfterStart";
+							break;
+						case "afterEnd":
+							summaryText = "summarySubscriptionAfterEnd";
+							break;
+						case "afterCancel":
+							summaryText = "summarySubscriptionAfterCancel";
+							break;	
+			  		}
+				
+			  		if(summaryText != null && summaryText != "") {
+						summary = mktMarketingResources.replaceValues(summaryText, [numberOfDays]);	
+			  		}
+			  	}
+			  
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getStartRangeSummary">
+			<![CDATA[
+				var summary = "";
+				var checkStartRange = this.resolvedParams["startsBetweenDateRange"];
+
+				if (checkStartRange == "true"){
+					if(this.resolvedParams["startDate"] != null && this.resolvedParams["startDate2"] != null && this.resolvedParams["startDate"] != "" && this.resolvedParams["startDate2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["startDate"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["startDate2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryRecurringOrderStartRange", [date1, date2]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getEndRangeSummary">
+			<![CDATA[
+				var summary = "";
+				var checkEndRange = this.resolvedParams["endsBetweenDateRange"];
+
+				if (checkEndRange == "true") {
+					if(this.resolvedParams["endDate"] != null && this.resolvedParams["endDate2"] != null && this.resolvedParams["endDate"] != "" && this.resolvedParams["endDate2"] != "") {
+						var date1 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["endDate"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						var date2 = wcfDateUtil.formatUI(wcfDateUtil.parse(this.resolvedParams["endDate2"],wcfDateUtil.DATE_TIME_FORMAT), wcfDateUtil.UI_DATE_TIME_FORMAT);
+						summary = mktMarketingResources.replaceValues("summaryRecurringOrderEndRange", [date1, date2]);
+					}
+				}
+
+				return summary;
+			]]>
+		</method>	
+
+		<!--- @keywords private -->
+		<method name="getApplicableSubscriptionSummary">
+			<![CDATA[
+				var summary = "";
+				var productText = this.getValuesList("productNames");
+				
+				if(productText != "") {
+					summary = mktMarketingResources.replaceValues("summarySubscriptionApplicableTo", [productText]);
+				}
+
+				return summary;
+			]]>
+		</method>
+	</class>
+</library>

@@ -1,0 +1,1566 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		List item.
+	-->
+	<class name="wcfListItem" extends="listitem">
+		<!---
+			Icon.
+		-->
+		<attribute name="icon" type="string" value="${null}"/>
+		<!---
+			Display key.
+		-->
+		<attribute name="displayKey" value="${null}"/>
+		<!---
+			Display name.
+		-->
+		<attribute name="displayName" type="string" value="${this.displayKey.string}"/>
+		<!---
+			Declare whether to add a separator before this list item or not
+		-->
+		<attribute name="addSeparatorBefore" type="boolean" value="false"/>
+		<!---
+			Selected icon resource name.
+		-->
+		<attribute name="selectedIcon" type="string" value="${null}"/>
+		<!---
+			Indent.
+		-->
+		<attribute name="indent" type="number" value="0"/>
+		
+		<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (this['style'] != null) {
+				super._applystyle(s);
+				if (this._enabled) {
+					if (this.hilited) {
+						this.title.itemText.setAttribute("fgcolor", style.texthilitecolor);
+					}
+					else if (selected) {
+						this.title.itemText.setAttribute("fgcolor", style.textselectedcolor);
+					}
+					else {
+						// itemText is optional as it is controlled by state below, so we need to make sure it exists first
+						this.title['itemText'] && this.title.itemText.setAttribute("fgcolor", style.textcolor);
+					}
+				}
+				else {
+					if (this.hilited) {
+						this.setAttribute("bgcolor", style.hilitecolor);
+					}
+					this.title.itemText.setAttribute("fgcolor", style.textdisabledcolor );
+				}
+			}
+			]]>
+		</method>
+		
+		<view name="separator" visible="${parent.addSeparatorBefore}" height="1" width="${parent.width}" bgcolor="${classroot.style['bordercolor']}"/>
+		<view name="title" x="1" valign="middle">
+			<simplelayout axis="x" spacing="3" inset="${classroot.indent}" />
+			<view name="selectedIconHolder" width="16" height="16" visible="${classroot.selectedIcon ? true : false}">
+				<image name="selectedIconIndicator" valign="middle" resource="${classroot.selectedIcon}" visible="false"/>
+			</view>
+			<image name="itemIcon" valign="middle" resource="${classroot.icon}" visible="${classroot.icon ? true : false}"/>
+			<text name="itemText" valign="middle" text="${classroot.displayName}" resize="true" visible="${classroot.displayName ? true : false}"/>
+			<!-- Space to hold scroll bar -->
+			<view width="20"/>
+		</view>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Action list button.
+	-->
+	<class name="wcfActionListButton" extends="basecomponent" doesenter="true">
+		<!---
+			Button resource name.
+		-->
+		<attribute name="buttonResource" type="string" value="${null}"/>
+		<!---
+			Button resource name to be used when there is only one action in the list.
+		-->
+		<attribute name="buttonResourceForSingleAction" type="string" value=""/>
+		<!---
+			Button display name.
+		-->
+		<attribute name="buttonText" type="string" value=""/>
+		<!---
+			Resource name for the drop down image.
+		-->
+		<attribute name="dropdownResource" type="string" value="dropdownToolbarIcon"/>
+		<!---
+			Action definitions.
+		-->
+		<attribute name="actionDefinitions" value="null"/>
+		<!---
+			Current default definition.
+		-->
+		<attribute name="defaultActionDefinition" value="null"/>
+		<!---
+			Flag that saves the current state of the action list.
+		-->
+		<attribute name="actionListOpen" value="${actionList.visible}"/>
+		<!---
+			The list of items.
+		-->
+		<attribute name="items" value="${[]}"/>
+		<!--- @keywords private -->
+		<attribute name="availableItems" value="${[]}"/>
+		<!---
+			Drop down offset.
+		-->
+		<attribute name="dropdownOffset" type="number" value="0"/>
+		<!---
+			Resource name for the selected icon image.
+		-->
+		<attribute name="selectedIcon" type="string" value="checkmarkIcon"/>
+		<!---
+			Display selected icon when the item is selected by user.
+		-->
+		<attribute name="displaySelectedIndicator" type="boolean" value="false"/>		
+		<!--
+			Show drop down button even with only one item in list if this attribute is set to true.
+			Default value is set to false.
+		 -->
+		<attribute name="showSingle" type="boolean" value="false" />
+		
+		<basebutton name="defaultActionButton">
+			<state applied="${classroot.buttonText}">
+				<simplelayout axis="x"/>
+				<view name="left" resource="textLeftToolbarIcon"/>
+				<view name="text">
+					<view name="background" resource="textMiddleToolbarIcon" width="${parent.text.width}" stretches="width"/>
+					<text y="6" name="text" text="${classroot.buttonText}" fgcolor="${classroot.enabled ? classroot.style.activebuttontextcolor : classroot.style.inactivebuttontextcolor}" resize="true"/>
+				</view>
+				<view name="right" resource="textRightToolbarIcon"/>
+			</state>
+			<!---
+				Handler of onclick, replace the old "onclick" attribute
+			-->
+			<handler name="onclick">
+				<![CDATA[
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionListButton", "onclick", "Start " + parent.name + " default Action");
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfActionListButton onclick: " + parent.name);
+				parent.doAction(null);
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+				if (wcfLogger.perfTraceEnabled) {
+					wcfLogger.perfTrace("wcfActionListButton", "onclick", "End " + parent.name + " default Action");
+				}
+				]]>
+			</handler>
+			
+			<method name="_callShow">
+				<![CDATA[
+				if (!this["__callShowLock"]) {
+					this.__callShowLock = true;
+					var dd = parent.actionDropdown;
+					if (parent.actionListOpen || (parent.actionDropdown._msdown && parent.actionDropdown._msin) || (this._msdown && this._msin) ) {
+						this.showDown();
+					}
+					else if (this._msin || (dd._msin && !dd._msdown)) {
+						this.showOver();
+					}
+	           		else {
+	           			this.showUp();
+					}
+					dd._callShow();
+					this.__callShowLock = false;
+				}
+				]]>
+			</method>
+			
+			<method name="showDown" args="sd=null">
+				<![CDATA[
+				if (parent.buttonText != "" && this["left"]){
+					this.left.setAttribute('frame', 3);
+					this.text.background.setAttribute('frame', 3);
+					this.right.setAttribute('frame', 3);
+				} else {
+					super.showDown();
+				}
+				]]>
+			</method>
+			
+			<method name="showUp" args="sd=null">
+				<![CDATA[
+				if (parent.buttonText != "" && this["left"]){
+					if (this.enabled) {
+						this.left.setAttribute('frame', 1);
+						this.text.background.setAttribute('frame', 1);
+						this.right.setAttribute('frame', 1);
+					} else {
+						this.left.setAttribute('frame', 4);
+						this.text.background.setAttribute('frame', 4);
+						this.right.setAttribute('frame', 4);
+					}
+				} else {
+					super.showUp();
+				}
+				]]>
+			</method>
+			
+			<method name="showOver" args="sd=null">
+				<![CDATA[
+				if (parent.buttonText != "" && this["left"]){
+					this.left.setAttribute('frame', 2);
+					this.text.background.setAttribute('frame', 2);
+					this.right.setAttribute('frame', 2);
+				} else {
+					super.showOver();
+				}
+				]]>
+			</method>
+		</basebutton>
+		<basebutton name="actionDropdown"
+				resource="${classroot.dropdownResource}"
+				x="${classroot.defaultActionButton.width + classroot.dropdownOffset}"
+				onclick="parent.openActionList()" visible="false">
+
+			<method name="_callShow">
+				<![CDATA[
+				if (!this["__callShowLock"]) {
+					this.__callShowLock = true;
+					var nb = parent.defaultActionButton;
+					if (parent.actionListOpen) {
+						super.showDown();
+					}
+					else {
+						if (nb._msin) {
+							if (nb._msdown) {
+								this.showDown();
+							}
+							else {
+								this.showOver();
+							}
+						}
+						else {
+							super._callShow();
+						}
+					}
+					nb._callShow();
+					this.__callShowLock = false;
+				}
+				]]>
+			</method>
+		</basebutton>
+
+		<plainfloatinglist name="actionList" attach="bottom" visible="false" doesenter="true">
+			<method name="updateAttachLocation">
+				<![CDATA[
+				super.updateAttachLocation();
+				var right = this.x + this.width;
+				if (right > canvas.width) {
+					var newX = this.x - (right - canvas.width);
+					if (newX < 0) {
+						newX = 0;
+					}
+					this.setAttribute("x", newX);
+				}
+				]]>
+			</method>
+
+			<!--- @keywords private -->
+			<handler name="onkeydown" args="k">
+				<![CDATA[
+					if (k != 37 && k != 38 && k != 39 && k != 40) { // up, left, down and right arrows
+						var startIndex = 0;
+						for (var i = 0; i < this.owner.items.length; i++) {
+							var item = this.owner.items[i];
+							if (item.hilited == true && String.fromCharCode(k).toUpperCase().charCodeAt(0) == item.displayName.toUpperCase().charCodeAt(0)) {
+								startIndex = i + 1;
+								break;
+							}
+						}
+						for (var i = 0; i < this.owner.items.length; i++) {
+							if (startIndex >= this.owner.items.length) {
+								startIndex = 0;
+							}
+							var item = this.owner.items[startIndex];
+							if (String.fromCharCode(k).toUpperCase().charCodeAt(0) == item.displayName.toUpperCase().charCodeAt(0)) {
+								this.setHilite(item);
+								this.setAttribute('doesenter', true);
+								break;
+							}
+							startIndex++;
+						}
+					}
+				]]>
+			</handler>
+			
+			<!--- @keywords private -->
+			<method name="select" args="item">
+				<![CDATA[
+				super.select(item);
+				this.setAttribute("doesenter",true);
+				]]>
+			</method>
+			
+			<!--- @keywords private -->
+			<method name="getNextSelection" />
+			<!--- @keywords private -->
+	        <method name="getPrevSelection" />
+			
+		</plainfloatinglist>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus">
+			<![CDATA[
+			if(!this["indicator"]){
+		    	new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+		
+		<handler name="onblur" reference="actionList">
+	    	this.closeActionList();
+		</handler>
+		
+		<handler name="onactionListOpen">
+			this.defaultActionButton._callShow();
+			this.actionDropdown._callShow();
+		</handler>
+
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+			if (k == 32) { //space bar
+				this.defaultActionButton.onclick.sendEvent();
+			} else if (k == 40 && this.items.length > 1) { // key down
+		    	this.openActionList();
+			}
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="doEnterDown">
+			<![CDATA[
+			this.defaultActionButton.onclick.sendEvent();
+			]]>
+		</method>
+		
+		<handler name="onkeydown" reference="actionList" args="k">
+			if (k == 27) { // esc key
+		    	this.closeActionList();
+			}
+		</handler>
+		
+		<!---
+			Handler that gets executed when an item from the drop-down list is selected
+		-->
+		<handler name="onselect" reference="actionList" args="v">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfActionListButton", "onclick", "Start " + this.name + " " + v.value);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfActionListButton onselect: " + this.name);
+			if(v.enabled){
+				var action = v.value;
+				this.closeActionList();
+				this.doAction(action);
+				
+				// only set the visibility of the selected icon if the current item
+				// selected is not the special ones that cannot be defaulted
+				if ( (this.displaySelectedIndicator) && (typeof(action["selectableAsDefaultDefinition"]) == "undefined" || action["selectableAsDefaultDefinition"]) ) {
+					this.checkSelected(v);
+				}
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfActionListButton", "onclick", "End " + this.name + " " + v.value);
+			}
+			]]>
+		</handler>
+
+		<!---
+			Set the current default action definition and display the selected indicator.
+		-->
+		<handler name="ondefaultActionDefinition">
+			<![CDATA[
+			this.selectDefaultActionDefinition();
+			]]>
+		</handler>
+
+		<!---
+			Set the current default action definition and display the selected indicator.
+		-->
+		<method name="selectDefaultActionDefinition">
+			<![CDATA[
+			if (this.displaySelectedIndicator && this.defaultActionDefinition) {
+				var defaultItem = null;
+				for (var i=0; i<this.items.length; i++) {
+					if (defaultItem == null) {
+						defaultItem = this.items[i];
+					}
+					if (this.items[i].value == this.defaultActionDefinition) {
+						defaultItem = this.items[i];
+					}
+				}
+				this.checkSelected(defaultItem);
+			}
+			]]>
+		</method>
+
+		<!---
+			Display the selected indicator on the current default item from the list.
+			@param object v: the item selected from the list
+		-->
+		<method name="checkSelected" args="v">
+			<![CDATA[
+				for (var i=0; i<this.items.length; i++) {
+					if (v.value == this.items[i].value) {
+						this.items[i].title.selectedIconHolder.selectedIconIndicator.setAttribute("visible", true);
+					} else {
+						this.items[i].title.selectedIconHolder.selectedIconIndicator.setAttribute("visible", false);
+					}
+				}
+			]]>
+		</method>
+		
+		<handler name="onconstruct">
+			<![CDATA[
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			this.checkWidthDel = new lz.Delegate(this, "checkWidth");
+			this.updateDisplayNamesDel = new lz.Delegate(this, "updateDisplayNames");
+			]]>
+		</handler>
+		
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateActionDefinitions();
+			this.updateDropdownArrow();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateDropdownArrow">
+			<![CDATA[
+			if (this.buttonText) {
+				this.setAttribute("dropdownResource", "textDropdownToolbarIcon");
+			}
+			]]>
+		</method>
+		
+		<method name="destroy">
+			<![CDATA[
+			this.actionList.autoscrollbar = false;
+			this.checkMouseDel.unregisterAll();
+			delete this.checkMouseDel;
+			this.checkWidthDel.unregisterAll();
+			delete this.checkWidthDel;
+			this.updateDisplayNamesDel.unregisterAll();
+			delete this.updateDisplayNamesDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<handler name="onactionDefinitions">
+			<![CDATA[
+			if (this.inited) {
+				this.updateActionDefinitions();
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Update the list of action definitions.
+		-->
+		<method name="updateActionDefinitions">
+			<![CDATA[
+			this.checkWidthDel.unregisterAll();
+			this.updateDisplayNamesDel.unregisterAll();
+			var definitions = this.actionDefinitions;
+			if (definitions == null) {
+				definitions = [];
+			}
+			while (this.items.length > 0) {
+				var item = this.items.pop();
+				item.setAttribute("visible", false);
+				item.setAttribute("value", null);
+				this.availableItems.unshift(item);
+			}
+			if (this.defaultActionDefinition != null && definitions.indexOf(this.defaultActionDefinition) == -1) {
+				this.defaultActionDefinition = null;
+			}
+			for (var i = 0; i < definitions.length; ++i) {
+				this.addActionDefinition(definitions[i]);
+			}
+			this.selectDefaultActionDefinition();
+			this.updateDropDownVisibility();
+			]]>
+		</method>
+		
+		<!---
+			Append the specified action definition to action drop down.
+			@param object def: the action definition
+		-->
+		<method name="addActionDefinition" args="def">
+			<![CDATA[
+			var item;
+			if (this.availableItems.length > 0) {
+				item = this.availableItems.shift();
+				item.setAttribute("value", def);
+				item.setAttribute("icon", def["icon"] ? def.icon : null);
+				item.setAttribute("displayName", def.displayName);
+				item.setAttribute("addSeparatorBefore", def["addSeparatorBefore"] ? def.addSeparatorBefore : false);
+				item.setAttribute("selectedIcon", this.displaySelectedIndicator ? this.selectedIcon : null);
+				item.setAttribute("visible", true);
+			}
+			else {
+				var item = new lz.wcfListItem(this.actionList, {
+					value: def,
+					icon: def["icon"] ? def.icon : null,
+					displayName: def.displayName,
+					addSeparatorBefore: def["addSeparatorBefore"] ? def.addSeparatorBefore : false,
+					selectedIcon: this.displaySelectedIndicator ? this.selectedIcon : null
+				});
+			}
+			this.items.push(item);
+			this.checkWidthDel.register(item.title, "onwidth");
+			this.checkWidth();
+			if (def instanceof lz.Eventable) {
+				this.updateDisplayNamesDel.register(def, "ondisplayName");
+			}
+			this.updateDropDownVisibility();
+			]]>
+		</method>
+		
+		<!---
+			Enable the specified action definition.
+			@param object def: the action definition
+		-->
+		<method name="enableActionDefinition" args="def">
+			<![CDATA[
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				if (item.value == def) {
+					item.setAttribute("enabled", true);
+					break;
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Disable the specified action definition.
+			@param object def: the action definition
+		-->
+		<method name="disableActionDefinition" args="def">
+			<![CDATA[
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				if (item.value == def) {
+					item.setAttribute("enabled", false);
+					break;
+				}
+			}
+			]]>
+		</method>
+		
+		<method name="checkMouse" args="e=null">
+			if (!this.actionList.containsPt(this.actionList.getMouse("x"), this.actionList.getMouse("y"))) {
+				closeActionList();
+			}
+		</method>
+		
+		<method name="checkWidth" args="e=null">
+			<![CDATA[
+			var newWidth = 0;
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				var itemWidth = item.title.width;
+				if (itemWidth > newWidth) {
+					newWidth = itemWidth;
+				}
+			}
+			this.actionList.setAttribute('width', newWidth + 10);
+			]]>
+		</method>
+		
+		<method name="updateDisplayNames" args="e=null">
+			<![CDATA[
+			for (var i = 0; i < this.items.length; i++) {
+				this.items[i].setAttribute("displayName", this.items[i].value.displayName);
+			}
+			]]>
+		</method>
+		
+		<method name="openActionList">
+			<![CDATA[
+			this.actionList._hiliteview = null;
+			if (this.displaySelectedIndicator && this.defaultActionDefinition) {
+				for (var i=0; i<this.items.length; i++) {
+					if(this.items[i].title.selectedIconHolder.selectedIconIndicator.visible){
+						this.items[i].setHilite(true);
+						this.actionList._hiliteview = this.items[i];
+					}else{
+						this.items[i].setHilite(false);
+					}
+				}
+			}else{
+				for (var i = 1; i < this.items.length; i++) {
+					this.items[i].setHilite(false);
+				}
+				this.items[0].setHilite(true);
+				this.actionList._hiliteview = this.items[0];
+				this.actionList.setAttribute( 'doesenter', true );
+			}
+			this.actionList.clearSelection();
+			this.actionList.setAttribute("visible", true);
+			this.actionList.bringToFront();
+			lz.ModeManager.makeModal(this.actionList);
+			lz.Focus.setFocus(this.actionList, false);
+			this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+			this.setAttribute("actionListOpen", true);
+			]]>
+		</method>
+		
+		<method name="closeActionList">
+			if (this.actionListOpen) {
+				this.setAttribute("actionListOpen", false);
+				lz.ModeManager.release(this.actionList);
+				this.actionList.setAttribute("visible", false);
+				lz.Focus.setFocus(this, false);
+				this.checkMouseDel.unregisterAll();
+			}
+		</method>
+		
+		<method name="doAction" args="action">
+
+		</method>
+		
+		<!---
+			Check to see whether or not the action list should show the options drop down. If there is only one option
+			then the drop down icon is not shown. Also, swap the icon to use buttonResourceForSingleAction if provided.
+		-->
+		<method name="updateDropDownVisibility">
+			<![CDATA[
+			if (this.items) {
+				this.actionDropdown.setAttribute("visible", ((this.items.length > 1) || (showSingle && this.items.length == 1)) ? true : false);
+				if (this.buttonText != "" && this.actionDropdown.visible) {
+					this.defaultActionButton.right.setAttribute("visible", false);
+				}
+				if (this.buttonResource != null) {
+					var newButtonResource = this.buttonResource;
+					if (!this.actionDropdown.visible && this.buttonResourceForSingleAction != "") {
+						newButtonResource = this.buttonResourceForSingleAction;
+					}
+					this.defaultActionButton.setAttribute("resource", newButtonResource);
+					this.defaultActionButton.setAttribute('frame', this.enabled ? 1 : 4);
+				}
+			}			
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		Value selector drop down list. Only one drop down list is created for all value selectors.
+	-->
+	<plainfloatinglist id="wcfValueSelectorList" attach="bottom" visible="false" initstage="defer" scrollbarclassname="wcfVerticalScrollbar" doesenter="true">
+		<!--- @keywords private -->
+		<attribute name="items" value="${[]}"/>
+		<!--- @keywords private -->
+		<attribute name="availableItems" value="${[]}"/>
+		<!--- @keywords private -->
+		<attribute name="valueSelector" value="null"/>
+		<!---
+			@keywords private
+			Maximum number of items to show before displaying a scrollbar
+		-->
+		<attribute name="maxItemsToShow" type="number" value="15"/>
+		<!--- @keywords private -->
+		<attribute name="restoreFocusable" type="boolean" value="false"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["checkMouseDel"]) {
+				this.checkMouseDel.unregisterAll();
+				delete this.checkMouseDel;
+			}
+			if (this["closeListDel"]) {
+				this.closeListDel.unregisterAll();
+				delete this.closeListDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="checkMouse" args="e=null">
+			<![CDATA[
+			if (!this.containsPt(this.getMouse("x"), this.getMouse("y"))) {
+				this.closeList();
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Open the list and attach it to the specified value selector.
+		-->
+		<method name="openList" args="valueSelector">
+			<![CDATA[
+			this.completeInstantiation();
+			this.closeList();
+			this.clearSelection();
+			this.restoreFocusable = valueSelector.focusable;
+			if (this.restoreFocusable) {
+				valueSelector.setAttribute("focusable", false);
+			}
+			lz.ModeManager.makeModal(this);
+			this.setAttribute("visible", true);
+			this.bringToFront();
+			lz.Focus.setFocus(this);
+			this.valueSelector = valueSelector;
+			var newWidth = valueSelector.width - 10;
+			var selectedItem = null;
+			var displaySelectedIndicator = this.valueSelector["displaySelectedIndicator"] ? true : false;
+			
+			for (var i = 0; i < valueSelector.values.length; ++i) {
+				var value = valueSelector.values[i];
+				if (!value["hide"]) {
+					var displayKey = value["displayKey"] ? value.displayKey : null;
+					var displayName;
+					if (displayKey != null) {
+						displayName = displayKey.string;
+					}
+					else {
+						displayName = value.displayName;
+					}
+					
+					var item;
+					var indent = value["icon"] ? 3 : (value["indent"] ? value.indent: this.valueSelector.defaultItemIndent);
+					if (this.availableItems.length > 0) {
+						item = this.availableItems.shift();
+						item.setAttribute("value", value);
+						item.setAttribute("displayName", displayName);
+						item.setAttribute("displayKey", displayKey);
+						item.setAttribute("icon", value["icon"] ? value.icon : null);
+						item.setAttribute("indent", indent);
+						item.setAttribute("addSeparatorBefore", value["addSeparatorBefore"] ? value.addSeparatorBefore : false);
+						item.setAttribute("selectedIcon", displaySelectedIndicator ? this.valueSelector.selectedIcon : null);
+						item.setAttribute("visible", true);
+					}
+					else {
+						item = new lz.wcfListItem(this, {
+							value: value,
+							displayName: displayName,
+							displayKey: displayKey,
+							icon: value["icon"] ? value.icon : null,
+							indent: indent,
+							addSeparatorBefore: value["addSeparatorBefore"] ? value.addSeparatorBefore : false,
+							selectedIcon: displaySelectedIndicator ? this.valueSelector.selectedIcon : null
+						});
+					}
+					this.items.push(item);
+					var itemWidth = item.title.width;
+					if (itemWidth > newWidth) {
+						newWidth = itemWidth;
+					}
+				 	if (valueSelector.selectedValue != null && 
+				 		(("value" in value && "value" in valueSelector.selectedValue && value.value == valueSelector.selectedValue.value) ||
+				 		 (!("value" in value) && value["displayName"] == valueSelector.selectedValue["displayName"] && value.displayName != null)))
+				 	{
+						if (this._hiliteview) {
+							this._hiliteview.setHilite(false);
+						}
+						this._hiliteview = item;
+						item.setHilite(true);
+						selectedItem = item;
+						this.setAttribute( 'doesenter', true );
+						item.title.selectedIconHolder.selectedIconIndicator.setAttribute("visible", displaySelectedIndicator);
+					} else {
+						item.setHilite(false);
+						item.title.selectedIconHolder.selectedIconIndicator.setAttribute("visible", false);
+					}
+				}
+			}
+			if(!selectedItem && this.items[0]){
+				this.items[0].setHilite(true);
+				this._hiliteview = this.items[0];
+				selectedItem = this.items[0];
+			}
+			var numItems = (this.items.length > this.maxItemsToShow) ? this.maxItemsToShow : -1;
+			this.setAttribute("shownitems", numItems);
+			this.setAttribute('width', newWidth + 10);
+			this.setAttribute("attachtarget", valueSelector);
+			this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+			this.valueSelector.setAttribute("listOpen", true);
+			this.valueSelector.mouseIn = false;
+			if(typeof(this.closeListDel) === "undefined") {
+				this.closeListDel = new lz.Delegate(this, "closeList");
+			}
+			lz.Keys.callOnKeyCombo(this.closeListDel, ['esc']);
+			if (selectedItem != null) {
+				this.ensureItemInView(selectedItem);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Close the list.
+		-->
+		<method name="closeList" args="e=null">
+			<![CDATA[
+			if (this.valueSelector != null) {
+				while (this.items.length > 0) {
+					var item = this.items.pop();
+					item.setAttribute("visible", false);
+					item.setAttribute("value", null);
+					this.availableItems.unshift(item);
+				}
+				lz.Keys.removeKeyComboCall(this.closeListDel, ['esc']);
+				lz.ModeManager.release(this);
+				this.valueSelector.setAttribute("listOpen", false);
+				this.setAttribute("visible", false);
+				this.checkMouseDel.unregisterAll();
+				if (this.restoreFocusable) {
+					this.valueSelector.setAttribute("focusable", true);
+					this.restoreFocusable = false;
+				}
+				this.valueSelector.restoreFocus();
+				this.valueSelector = null;
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateAttachLocation">
+			<![CDATA[
+			super.updateAttachLocation();
+			// check if the left side of the list is outside the canvas, if it is, set it to align to the left
+			if (this.x < 0) {
+				this.setAttribute("x", 0);
+			}
+			
+			// check for the top and the height of the list, if the list sits outside of the canvas or the height is longer than
+			// the canvas, set it to align to the top
+			if ((this.y < 0) || (this.height > canvas.height)) {
+				this.setAttribute("y", 0);
+			}
+
+			]]>
+		</method>
+		
+		<method name="_setScroll"/>
+		
+		<!--- @keywords private -->
+		<method name="_dokeydown" args="kc">
+			<![CDATA[
+			if (this.items.length > 0) {
+				super._dokeydown(kc);
+				var startIndex = 0;
+				for (var i = 0; i < this.items.length; i++) {
+					var item = this.items[i];
+					if (item.hilited == true && String.fromCharCode(kc).toUpperCase().charCodeAt(0) == item.displayName.toUpperCase().charCodeAt(0)) {
+						startIndex = i+1;
+						break;
+					}
+				}
+				for (var i = 0; i < this.items.length; i++) {
+					if (startIndex >= this.items.length) {
+						startIndex = 0;
+					}
+	
+					var item = this.items[startIndex];
+					if (String.fromCharCode(kc).toUpperCase().charCodeAt(0) == item.displayName.toUpperCase().charCodeAt(0)) {						
+						if (this._hiliteview) {
+							this._hiliteview.setHilite(false);
+						}
+						this._hiliteview = item;
+						item.setHilite(true);
+						this.ensureItemInView(item);
+						this.setAttribute( 'doesenter', true );
+						break;
+					}
+					startIndex++;
+				}				
+				if (this.visible && this._hiliteview != null && !this._hiliteview.visible) {			
+					this._hiliteview.setHilite(false);					
+					this._hiliteview = this.items[this.items.length - 1];
+					this._hiliteview.setHilite(true);
+					this.ensureItemInView(this._hiliteview);													
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onselect" args="item">
+			<![CDATA[
+			var value = item.value;
+			var valueSelector = this.valueSelector;
+			this.closeList();
+			if (valueSelector != null) {
+				valueSelector.selectValue(value);
+			}
+			this.setAttribute("doesenter",true);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="getNextSelection" />
+		<!--- @keywords private -->
+        <method name="getPrevSelection" />
+		
+	</plainfloatinglist>
+		
+	<!---
+		This class is the base class for a generic value selector. You can use a value selector
+		to select a value from a drop-down list. You can set the list of values by calling addValue or setValues.
+		These methods accept value objects with the following properties:
+			<ul>
+			<li>value - the untranslated value
+			<li>displayName - the text that will be displayed in the list
+			<li>displayKey - optional {@link wcfResourceBundleKey resource bundle key} used to retrieve the translated display name
+			<li>icon - optional icon that will be displayed before the text
+			<li>addSeparator - optional boolean value that indicates that a separator is to be displayed before the value
+			</ul>
+	 -->
+	<class name="wcfBaseValueSelector" extends="basecomponent">
+		<!---
+			Reference to the selected object. If no item is selected, this value is <code>null</code>. It can be a simple
+			object or it can be an instance of an OpenLaszlo class, such as <code>wcfPropertyValue</code>.
+			The value must have a property named 'displayName'. If the display name is
+			language-sensitive, this object must also have a property named 'displayKey'
+			with a type of {@link wcfResourceBundleKey}.
+			@type object: with a property named 'displayName'
+		-->
+		<attribute name="selectedValue" value="null"/>
+		<!---
+			The {@link wcfResourceBundleKey} for the text that is displayed when an item is not selected from the drop-down list.
+			@type wcfResourceBundleKey
+		-->
+		<attribute name="defaultTextResourceBundleKey" value="null" when="once"/>
+		<!--- @keywords private -->
+		<attribute name="mouseIn" value="false" type="boolean"/>
+		<!--- @keywords private -->
+		<attribute name="listOpen" value="false" type="boolean"/>
+		<!--- @keywords private -->
+		<attribute name="padding" type="number" value="4"/>
+		<!--- @keywords private -->
+		<attribute name="defaultItemIndent" type="number" value="0"/>
+		<!---
+			@keywords private
+			Array of values.
+		-->
+		<attribute name="values" value="${[]}"/>
+		
+		<!---
+			@keywords private
+			Resource name for the selected icon image.
+		-->
+		<attribute name="selectedIcon" type="string" value="checkmarkIcon"/>
+		<!---
+			@keywords private
+			Display selected icon when the item is selected by user.
+		-->
+		<attribute name="displaySelectedIndicator" type="boolean" value="false"/>	
+		
+		<!-- This tooltip will display the full text of the selected item if it has been truncated. -->
+		<wcfTooltip name="untruncatedText" enabled="false"/>
+
+		<view name="background"/>
+		<view name="selectedValueText">
+			<text name="text" resize="true"/>
+			
+			<text name="dots" text="${foundationResources.gridTruncationText.string}"
+				x="${parent.text.x+parent.text.width}"
+				oninit="this.setAttribute('width', 0);"
+			>
+				<handler name="ontext"><![CDATA[
+					parent.updateTextWidth();
+					]]>
+				</handler>
+			</text>
+			<method name="updateDisplay" args="text"><![CDATA[
+				this.text.setAttribute("text", text);
+				classroot.untruncatedText.setAttribute("text", text);
+				this.updateTextWidth();
+				]]>
+			</method>
+			
+			<method name="updateTextWidth"><![CDATA[
+				if (this.classroot.visible) {
+					if(!classroot.hassetwidth){
+						this.dots.setAttribute('width', 0);
+						this.dots.setAttribute('visible', false);
+						classroot.untruncatedText.setAttribute("enabled", false);
+						// Nothing needs to be done if the selector scales with its content
+						return;
+					}
+					
+					var untruncatedWidth = classroot.getUntruncatedWidth();
+					
+					// Text will be truncated only if the untruncated text
+					// goes beyond the selector's width.
+					if(untruncatedWidth > classroot.width){
+						// Fully display the dots
+						var newDotWidth = this.dots.getTextWidth();
+						var availableWidth = Math.max(0, classroot.width - (untruncatedWidth - this.text.getTextWidth()));
+						if (newDotWidth > availableWidth) {
+							newDotWidth = availableWidth;
+						}
+						this.dots.setAttribute('width', newDotWidth);					
+						this.dots.setAttribute('visible', true);				
+						this.text.setAttribute('width', availableWidth - newDotWidth);
+						classroot.untruncatedText.setAttribute("enabled", true);
+					}else{
+						this.dots.setAttribute('width', 0);
+						this.dots.setAttribute('visible', false);
+						this.text.setAttribute('width', this.text.getTextWidth());
+						classroot.untruncatedText.setAttribute("enabled", false);
+					}
+				}
+				]]>
+			</method>
+			
+			<method name="getUntruncatedWidth"><![CDATA[
+				return this.text.getTextWidth();
+				]]>
+			</method>
+			
+			<handler name="onwidth" reference="classroot"><![CDATA[
+				this.updateTextWidth();
+				]]>
+			</handler>
+			
+			<handler name="onvisible" reference="classroot">
+				<![CDATA[
+				this.updateTextWidth();
+				]]>
+			</handler>
+			
+		</view>
+		
+		<!--- @keywords private -->
+		<method name="construct" args="parent, args">
+			<![CDATA[
+			//These delegates may be needed before full initialization
+			this.updateSelectedValueDel = new lz.Delegate(this, "updateSelectedValue");
+			
+			super.construct(parent, args);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateSelectedValue();
+			this.show();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateSelectedValueDel.unregisterAll();
+			delete this.updateSelectedValueDel;
+			
+			this.updateDisplayNamesDel.unregisterAll();
+			delete this.updateDisplayNamesDel;
+			
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Clears the selected value (if any) and sets {@link wcfBaseValueSelector#selectedValue selectedValue} to <code>null</code>.
+		-->
+		<method name="clearSelection">
+			<![CDATA[
+			this.selectValue(null);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="containsMouse">
+			<![CDATA[
+			if(this.containsPt(this.getMouse("x"), this.getMouse("y"))){
+				return true;
+			}
+			return this.listOpen && wcfValueSelectorList.containsPt(wcfValueSelectorList.getMouse("x"), wcfValueSelectorList.getMouse("y"));
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="openList">
+			<![CDATA[
+			if(this.enabled){
+				wcfValueSelectorList.openList(this);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Appends the specified value to the drop-down list.
+			@param Object value: The value to be added to the list. The object must have a <code>displayName</code>
+				attribute which is used as the display value for the entry.
+		-->
+		<method name="addValue" args="value">
+			<![CDATA[
+			this.values.push(value);
+			]]>
+		</method>
+		
+		<!---
+			Set the list of values that will be displayed in the drop-down list.
+			@param Object[] values: The array of values to be displayed to the list. Each value object in the array
+				must have a <code>displayName</code> attribute which is used as the display value for the entry.
+		-->
+		<method name="setValues" args="values">
+			<![CDATA[
+			this.values = [];
+			if (values != null) {
+				for (var i = 0; i < values.length; i++) {
+					this.values.push(values[i]);
+				}
+			}
+			if (this.selectedValue != null && this.values.indexOf(this.selectedValue) == -1) {
+				this.clearSelection();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onselectedValue">
+			<![CDATA[
+			this.updateSelectedValue();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="updateSelectedValue" args="e=null">
+			<![CDATA[
+			if (this.isinited) {
+				this.updateSelectedValueDel.unregisterAll();
+				if (this['selectedValue']) {
+					if (this.selectedValue instanceof lz.Eventable) {
+						this.updateSelectedValueDel.register(this.selectedValue, "ondisplayName");
+					}
+					if (this.selectedValue["displayKey"]) {
+						this.updateSelectedValueDel.register(this.selectedValue.displayKey, "onstring");
+						this.selectedValueText.updateDisplay(this.selectedValue.displayKey.string);
+					} else {
+						this.selectedValueText.updateDisplay(this.selectedValue.displayName);
+					}
+				}else if (this.defaultTextResourceBundleKey != null) {
+					this.updateSelectedValueDel.register(this.defaultTextResourceBundleKey, "onstring");
+					this.selectedValueText.updateDisplay(this.defaultTextResourceBundleKey.string);
+				}else {
+					this.selectedValueText.updateDisplay("");
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Calculates the width of this widget assuming the displayed text is not truncated. By default
+			the value is the width of the untruncated displayed text of this base selector. Override this
+			method if other visual display is introduced.
+			@keywords private
+		-->
+		<method name="getUntruncatedWidth"><![CDATA[
+			return this.selectedValueText.getUntruncatedWidth();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Method that is called when the mouse is hovering over an item in the list. By default, this method does nothing
+			and could be extended to provide a change to the visual treatment of the widget.
+		-->
+		<method name="showDown"/>
+		
+		<!---
+			@keywords private
+			Method that is called to show the default state of the widget. By default, this method does nothing
+			and could be extended to provide a change to the visual treatment of the widget.
+		-->
+		<method name="showUp"/>
+		
+		<!---
+			@keywords private
+			Method that is called when the mouse is hovering over the widget. By default, this method does nothing
+			and could be extended to provide a change to the visual treatment of the widget.
+		-->
+		<method name="showOver"/>
+		
+		<!--- @keywords private -->
+		<method name="show">
+ 			<![CDATA[
+ 			if (this.listOpen) {
+ 				this.showDown();
+ 			}
+ 			else if (this.mouseIn) {
+ 				this.showOver();
+ 			}
+ 			else {
+ 				this.showUp();
+ 			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this,
+			    	offset: 1
+			    });
+		    }
+		    ]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<handler name="onenabled">
+			this.show();
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onmouseover">
+			this.mouseIn = true;
+			this.show();
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onmouseout">
+			this.mouseIn = false;
+			this.show();
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onmousedown">
+			this.openList();
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onkeydown" args="k">
+			this.callOnKeyDown(k);
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="doSpaceDown">
+			<![CDATA[
+			this.openList();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="callOnKeyDown" args="k">		
+			if (k == 40) { // down key
+				this.openList();
+			}
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onlistOpen">
+			this.show();
+		</handler>
+		
+		<!---
+			Saves a new value as the selected value of this selector. A new value will
+			be set only if the new value is different from the currently selected value.
+			This method does not check if a new value is in one of the displayed items. It is
+			the caller's responsibility to make sure the new value stored in
+			{@link wcfBaseValueSelector#selectedValue selectedValue} is valid.
+			
+			@param Object newValue: The new value to be selected. Refer to {@link wcfBaseValueSelector#selectedValue} for more detail.
+			@event onselectedValue Fires if the <code>newValue</code> is different than the current
+				{@link wcfBaseValueSelector#selectedValue selectedValue}.
+		-->
+		<method name="selectValue" args="newValue">
+			<![CDATA[
+			if(newValue != this.selectedValue){
+				this.setAttribute("selectedValue", newValue);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="restoreFocus">
+			<![CDATA[
+			lz.Focus.setFocus(this);
+			]]>
+		</method>
+
+		<!---
+			Appends a value to the drop-down list.
+			@param String text: The display text for the new value.
+			@param Object value: The value object to be added to the list.
+			@param wcfResourceBundleKey: The key for the string value of the drop-down list.
+		-->
+		<method name="addItem" args="text, value, textKey=null">
+			<![CDATA[
+			this.addValue({
+				value: value,
+				displayName: text,
+				displayKey: textKey
+			});
+			]]>
+		</method>
+		
+		<!---
+			Gets the selected value of this selector widget.
+			@returns Object The object stored in {@link wcfBaseValueSelector#selectedValue selectedValue} is returned
+				if an item is selected. Otherwise <code>null</code> is returned.
+		-->
+		<method name="getValue">
+			<![CDATA[
+			if(this.selectedValue == null){
+				return null;
+			}
+			return this.selectedValue.value;
+			]]>
+		</method>
+		
+		<!---
+			Selects an entry item based on value.
+			@param Object value: The value of the entry to select. If the value is not found in the list, <code>null</code>
+				is selected.
+		-->
+		<method name="selectItem" args="value">
+			<![CDATA[
+			for(var i = 0; i < this.values.length; ++i){
+				var v = this.values[i];
+				if (wcfLangUtil.isIdentical(v.value, value)){
+					this.selectValue(v);
+					return;
+				}
+			}
+			this.selectValue(null);
+			]]>
+		</method>
+		
+		<!---
+			Selects an entry item based on index.
+			@param integer index: The zero-based index of the entry to select. If this value is invalid, <code>null</code>
+				is selected.
+		-->
+		<method name="selectItemAt" args="index">
+			<![CDATA[
+			if (index > this.values.length) {
+				this.selectValue(null);
+			}
+			else {
+				this.selectValue(this.values[index]);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (this['style'] != null) {
+				super._applystyle(s);
+				if (this.enabled) {
+					this.selectedValueText.text.setAttribute("fgcolor", style.textcolor);
+				}else{
+					this.selectedValueText.text.setAttribute("fgcolor", style.textdisabledcolor);
+				}
+				
+				// Setting text color will impact text width, so we need to set it again.
+				this.selectedValueText.updateTextWidth();
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfValueSelector" extends="wcfBaseValueSelector">
+		<attribute name="dropDownButtonAtLeft" type="boolean" value="false"/>
+		<attribute name="showDropDownButton" type="boolean" value="true"/>
+		<attribute name="dropDownResource" type="string" value="defaultDownArrow"/>
+		<!---
+			@keywords private
+			The default width used for value selectors
+		-->
+		<attribute name="width" value="175"/>
+		<!---
+			@keywords private
+			Indicates that the text should be centered in the value selector
+		-->
+		<attribute name="centerText" type="boolean" value="false"/>
+		
+		<!--
+			The text and button(if it is shown) will placed in the center of the background.
+			It assumes the text and button in this selector are not taller than background views.
+		 -->
+		<layout name="backgroundLayout">
+			<method name="init"><![CDATA[
+				super.init();
+				this.updateDelegate.register(classroot.selectedValueText, "onwidth");
+				this.updateDelegate.register(classroot, "onwidth");
+				]]>
+			</method>
+			
+			<!--
+				Returns the x of selected value text. If the text is to the right of
+				dropdown button, a padding as defined in classroot.padding will be added
+				to the returned result.
+			 -->
+			<method name="getTextX">
+				<![CDATA[
+				var textX = classroot.leftBackground.width;
+				var availableWidth = classroot.width - classroot.leftBackground.width - classroot.rightBackground.width;
+				if(classroot.showDropDownButton) {
+					availableWidth -= classroot.dropdown.width;
+					if (classroot.dropDownButtonAtLeft) {
+						textX = this.getDropDownX() + classroot.dropdown.width + classroot.padding;
+						availableWidth -= classroot.padding;
+					}
+				}
+				if (classroot.centerText && classroot.selectedValueText.width < availableWidth) {
+					textX += Math.floor((availableWidth - classroot.selectedValueText.width) / 2);
+				}
+				return textX;
+				]]>
+			</method>
+
+			
+			<!--
+				Returns the y of selected value text. The value ensures the text is placed in
+				the middle of its background.
+			 -->
+			<method name="getTextY"><![CDATA[
+				return (classroot.height - classroot.selectedValueText.height) / 2;
+				]]>
+			</method>
+			
+			<!--
+				Returns the x of drop down button if the button exists. Otherwise, the returned
+				value is undefined. If the drop down button is to the right of the selected
+				value text, a padding as defined in the classroot.padding will be added to
+				the returned result.
+			 -->
+			<method name="getDropDownX"><![CDATA[
+				if(!classroot.showDropDownButton){
+					return undefined;
+				}
+				if(classroot.dropDownButtonAtLeft){
+					return classroot.leftBackground.x + classroot.leftBackground.width;
+				}
+				return classroot.width - classroot.rightBackground.width - classroot.dropdown.width;
+				]]>
+			</method>
+			
+			<!--
+				Returns the y of drop down button if the button is displayed. Otherwise, the
+				returned value will be undefined. The value ensures the button is placed in
+				the middle of its background.
+			 -->
+			<method name="getDropDownY"><![CDATA[
+				if(classroot.showDropDownButton){
+					return (classroot.height - classroot.dropdown.height) / 2;
+				}
+				return undefined;
+				]]>
+			</method>
+			
+			<method name="update" args="e=null"><![CDATA[
+				if(!this.locked){
+					this.lock();
+					classroot.leftBackground.setAttribute('x', 0);
+					classroot.leftBackground.setAttribute('y', 0);
+					
+					classroot.selectedValueText.setAttribute('x', this.getTextX());
+					classroot.selectedValueText.setAttribute('y', this.getTextY());
+					
+					if(classroot.showDropDownButton){
+						classroot.dropdown.setAttribute('x', this.getDropDownX());
+						classroot.dropdown.setAttribute('y', this.getDropDownY());
+					}
+					
+					if(classroot.showDropDownButton && !classroot.dropDownButtonAtLeft){
+						classroot.rightBackground.setAttribute('x', classroot.dropdown.x + classroot.dropdown.width);
+					}else{
+						classroot.rightBackground.setAttribute('x', classroot.width - classroot.rightBackground.width);
+					}
+					classroot.rightBackground.setAttribute('y', 0);
+					classroot.centerBackground.setAttribute('x', classroot.leftBackground.width);
+					classroot.centerBackground.setAttribute('y', 0);
+					classroot.centerBackground.setAttribute('width', classroot.rightBackground.x - classroot.leftBackground.width);
+					this.locked = false;
+				}
+				]]>
+			</method>
+		</layout>
+			
+		<method name="getUntruncatedWidth"><![CDATA[
+			var result = this.leftBackground.width + this.selectedValueText.getUntruncatedWidth() + this.rightBackground.width + this.padding;
+			if(this.showDropDownButton){
+				result += this.dropdown.width;
+			}
+			return result;
+			]]>
+		</method>
+		
+		<method name="showDown">
+ 			<![CDATA[
+ 			this.leftBackground.setAttribute('frame', 3);
+  			this.centerBackground.setAttribute('frame', 3);
+   			this.rightBackground.setAttribute('frame', 3);
+			]]>
+		</method>
+		
+		<method name="showUp">
+ 			<![CDATA[
+ 			this.leftBackground.setAttribute('frame', 1);
+  			this.centerBackground.setAttribute('frame', 1);
+   			this.rightBackground.setAttribute('frame', 1);
+	   		
+			]]>
+		</method>
+		
+		<method name="showOver">
+ 			<![CDATA[
+ 			this.leftBackground.setAttribute('frame', 2);
+  			this.centerBackground.setAttribute('frame', 2);
+   			this.rightBackground.setAttribute('frame', 2);
+			]]>
+		</method>
+		
+		<view name="leftBackground" resource="valueSelectorLeftBackground" placement="background"/>
+		<view name="centerBackground" resource="valueSelectorCenterBackground" stretches="width" placement="background"/>
+		<view name="rightBackground" resource="valueSelectorRightBackground" placement="background"/>
+		<view name="dropdown" visible="${parent.showDropDownButton}" resource="${classroot.dropDownResource}"/>
+	</class>
+
+</library>

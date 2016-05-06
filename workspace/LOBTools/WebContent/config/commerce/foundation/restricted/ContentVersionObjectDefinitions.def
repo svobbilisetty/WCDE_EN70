@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ReferenceObjectDefinition
+		definitionName="wcfBaseContentVersion"
+		idProperty="versionId"
+		isBaseDefinition="true"
+		copyProtected="true"
+		deferLoad="true"
+		initializeObjectStoreId="true"
+		objectType="ContentVersion">
+		
+		<TrueEnablementCondition/>
+
+		<PropertyDefinition displayName="${foundationResources.versionName}" propertyName="versionName" type="string" required="true" maximumSize="254">
+			<SyncBasedOnVersionValidator/>
+		</PropertyDefinition>
+		<PropertyDefinition displayName="${foundationResources.versionCreateBy}" propertyName="user" type="string" />
+		<PropertyDefinition displayName="${foundationResources.versionCreateTime}" propertyName="time" type="string" />
+		<PropertyDefinition displayName="${foundationResources.versionComment}" propertyName="comment" type="string" maximumSize="4000" />
+
+		<UpdateService url="/cmc/UpdateContentVersion">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="versionId" parameterName="versionId" propertyName="versionId"/>
+		</UpdateService>
+
+		<ContentVersionNewHandler/>
+		<RestoreContentVersionClientAction />
+		<DeleteContentVersionService />
+		<OpenVersionWithCurrentObjectAction />
+		
+	</ReferenceObjectDefinition>
+</Definitions>

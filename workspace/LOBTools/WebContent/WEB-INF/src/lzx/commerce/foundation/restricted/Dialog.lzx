@@ -1,0 +1,2837 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		A dialog that is draggable and placed in the middle of the windows
+	-->
+	<class name="wcfDialog" extends="wcfWindow" 
+		x="${(immediateparent.width - this.width)/2}" 
+		y="${(immediateparent.height - this.height)/3}"
+		modal="true"
+		hideCloseButton="true"
+        	focustrap="true"
+        	visible="false"
+        	onmousedown="this.dragger.setAttribute('applied', true)"
+		onmouseup="this.dragger.setAttribute('applied', false)" 
+		placement="canvas"
+		initstage="defer"
+		minHeight="150"
+		contentPaddingBottomSize="15" 
+		footerBackgroundResource="confirmationDialogFooterBackground" 
+		footerPaddingTopSize="6" 
+		footerPaddingBottomSize="7">
+
+		<dragstate name="dragger"
+				drag_min_x="0"
+				drag_max_x="$once{parent.width - this.width}"
+				drag_min_y="0"
+				drag_max_y="$once{parent.height - this.height}"
+				drag_axis="both"/>
+
+        <method name="openWindow">
+			<![CDATA[
+			if (!this.isinited) {
+				this.completeInstantiation();
+				wcfDefinitionLoader.completeCreateDefinitionChildren(this);
+			}
+			super.openWindow();
+            ]]>
+        </method>
+        
+        <!---
+			@keywords private
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (!this["definitionNode"]) {
+				this.postCreateDefinitionChildren();
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="postCreateDefinitionChildren"/>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfAlertDialog" extends="wcfDialog">
+		
+		<attribute name="promptText" value="" type="string"/>
+		<attribute name="showOK" value="true" type="boolean"/>
+		<attribute name="showYes" value="false" type="boolean"/>
+		<attribute name="showNo" value="false" type="boolean"/>
+		<attribute name="showCancel" value="false" type="boolean"/>
+
+		<simplelayout spacing="10" axis="x"/>
+		<view name="infoIcon" resource="dialogWarningIcon"/>
+		<text name="text" text="${classroot.promptText}" multiline="true" width="300"/>
+
+		<view placement="footer" name="viewButtons">
+			<simplelayout axis="x"/>
+			<wcfButton name="okBtn" text="${foundationResources.simpleDialogOK.string}" onclick="classroot.handleOK(); classroot.closeWindow();" visible="${classroot.showOK}"/>
+			<wcfButton name="yesBtn" text="${foundationResources.simpleDialogYes.string}" onclick="classroot.handleYes(); classroot.closeWindow();"  visible="${classroot.showYes}" isdefault="true"/>
+			<wcfButton name="noBtn" text="${foundationResources.simpleDialogNo.string}" onclick="classroot.handleNo(); classroot.closeWindow();" visible="${classroot.showNo}"/>
+			<wcfButton name="cancelBtn" text="${foundationResources.simpleDialogCancel.string}" onclick="classroot.closeWindow();" visible="${classroot.showCancel}"/>
+		</view>
+
+        <method name="openAlertDialog" args="alertText, callBackMethod">
+			<![CDATA[			
+			this.openWindow();	
+			if (typeof(alertText) != "undefined") {
+				this.setAttribute("promptText", alertText);
+			}
+
+			if (typeof(callBackMethod) != "undefined") {
+				this.callBackMethod = callBackMethod;
+			}
+            ]]>
+        </method>
+
+        <method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			if (this["callBackMethod"] != undefined && this["callBackMethod"] != null) {
+				this.callBackMethod();
+			}
+            ]]>
+        </method>
+
+		<!---
+			This method is called when the user selects the OK option.
+		-->
+		<method name="handleOK">
+		</method>
+
+		<!---
+			This method is called when the user selects the Yes option.
+		-->
+		<method name="handleYes">
+		</method>
+		
+		<!---
+			This method is called when the user selects the No option.
+		-->
+		<method name="handleNo">
+		</method>
+		
+	</class>
+
+	<!---
+		The customer service error dialog, that will popup when the user try to fire a
+		custom service on an object that has unsaved changes.
+	-->	
+	<wcfAlertDialog id="wcfCustomServiceUnsavedDialog">
+	
+		<method name="openCustomServiceUnsavedDialog" args="customService">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("customServiceUnsavedDialogPrompt", [customService.displayName]));
+			]]>
+		</method>
+		
+	</wcfAlertDialog>	
+
+	<!---
+		The client action error dialog, that will popup when the user try to perform a
+		client action on an object that has unsaved changes.
+	-->	
+	<wcfAlertDialog id="wcfClientActionUnsavedDialog">
+	
+		<method name="openClientActionUnsavedDialog" args="clientAction">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("clientActionUnsavedDialogPrompt", [clientAction.displayName]));
+			]]>
+		</method>
+		
+	</wcfAlertDialog>	
+	
+	<!---
+		The close confirmation dialog. This dialog is used to prompt the user to save an object before closing it.
+	-->
+	<wcfAlertDialog id="wcfCloseConfirmationDialog" showOK="false" showCancel="true" showYes="true" showNo="true">
+		
+		<attribute name="closeObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be closed
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified object can be closed.
+			@param wcfModelObject o: the object to be closed
+		-->
+		<method name="openCloseConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("saveConfirmationDialogText", [o.objectDisplayName]));
+			this.closeObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.closeObject = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Save and close the object.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfCloseConfirmationDialog handleYes");
+			this.closeObject.saveObject(false);				
+			this.closeObject.setAttribute("open", false);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	    <!---
+	    	Close the object without saving changes.
+	    -->
+		<method name="handleNo">
+			<![CDATA[
+			this.closeObject.closeObject();
+			]]>
+		</method>
+		
+	</wcfAlertDialog>
+
+	<!---
+		The close confirmation dialog. This dialog is used to prompt the user to save an object before closing it even if the object has validation errors.
+	-->
+	<wcfAlertDialog id="wcfCloseWithErrorConfirmationDialog" showOK="false" showCancel="true" showYes="true" showNo="true">
+		
+		<attribute name="closeObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be closed
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified object can be closed.
+			@param wcfModelObject o: the object to be closed
+		-->
+		<method name="openCloseWithErrorConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("closeWithErrorConfirmationText", [o.objectDisplayName]));
+			this.closeObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.closeObject = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Save and close the object.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfCloseWithErrorConfirmationDialog handleYes");
+			this.closeObject.saveObject(false);				
+			this.closeObject.setAttribute("open", false);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	    <!---
+	    	Close the object without saving changes.
+	    -->
+		<method name="handleNo">
+			<![CDATA[
+			this.closeObject.closeObject();
+			]]>
+		</method>
+		
+	</wcfAlertDialog>
+
+	<!---
+		This dialog is used to prompt the user to save an object if there is a validation error before saving and closing
+		the object. Close operation must wait until save operation is done. 
+	-->                 
+	<wcfAlertDialog id="wcfSaveAndCloseConfirmationDialog" showOK="false" showYes="true" showNo="true">
+	
+		<attribute name="closeObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be saved and closed
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified object can be closed.
+			@param wcfModelObject o: the object to be closed
+		-->
+		<method name="openSaveAndCloseConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("saveWithErrorConfirmationText", [o.objectDisplayName]));
+			this.closeObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.closeObject = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Save and close the object.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSaveAndCloseConfirmationDialog handleYes");
+			this.closeObject.saveObject(false);			
+			this.closeObject.setAttribute("open", false);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>	  
+		
+	</wcfAlertDialog>
+
+	<!---
+		The delete confirmation dialog. This dialog is used to prompt the user to confirm before deleting an object.
+	-->
+	<wcfAlertDialog id="wcfDeleteConfirmationDialog" showOK="false" showYes="true" showNo="true">
+	
+		<!---
+			The object that is to be deleted.
+		-->
+		<attribute name="deleteObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be deleted
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified object can be deleted
+			@param wcfModelObject o: the object to be deleted
+		-->
+		<method name="openDeleteConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("deleteConfirmationDialogText", [o.objectDisplayName]));
+			this.deleteObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.deleteObject = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Delete the object.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfDeleteConfirmationDialog handleYes");
+			this.deleteObject.deleteObject();
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	</wcfAlertDialog>
+	
+	<!---
+		This dialog is used to prompt a user to confirm the user will save an object even if the object has validation errors
+	-->
+	<wcfAlertDialog id="wcfSaveWithErrorConfirmationDialog" showOK="false" showYes="true" showNo="true">
+		<!---
+			The object that is to be deleted.
+		-->
+		<attribute name="saveObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be saved
+		 -->
+		<attribute name="oEditor" value="null"/>
+	
+		<!---
+			Confirm that the specified object can be deleted
+			@param wcfModelObject o: the object to be deleted
+		-->
+		<method name="openSaveWithErrorConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("saveWithErrorConfirmationText", [o.objectDisplayName]));
+			this.saveObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.saveObject = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSaveWithErrorConfirmationDialog handleYes");
+			this.saveObject.saveObject(false);	
+			if (wcfEventTimer.enabled) wcfEventTimer.end();		
+			]]>
+		</method>
+	</wcfAlertDialog>
+
+	<!---
+		The refresh confirmation dialog. This dialog is used to prompt the user to confirm that changes can be discarded before a refresh.
+	-->
+	<wcfAlertDialog id="wcfRefreshConfirmationDialog" showOK="false" showYes="true" showNo="true">
+		<!---
+			The object that is to be refreshed.
+		-->
+		<attribute name="refreshObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be refreshed
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified object can be refreshed
+			@param wcfModelObject o: the object to be refreshed
+		-->
+		<method name="openRefreshConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.replaceValues("refreshConfirmationDialogText", [o.objectDisplayName]));
+			this.refreshObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.refreshObject = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Refresh the object.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfRefreshConfirmationDialog handleYes");
+			this.refreshObject.refreshObject();
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	</wcfAlertDialog>
+
+	<!---
+		The save open objects confirmation dialog. This dialog is used to prompt the user to save objects 
+	-->
+	<wcfDialog id="wcfSaveOpenObjectsDialog">
+		<!---
+			The model.
+		-->
+		<attribute name="model"/>
+		<!---
+			Array of objects that have unsaved changes.
+		-->
+		<attribute name="unsavedObjects" value="null"/>
+		<!---
+			Array of objects that have errors
+		-->
+		<attribute name="errorUnsavedObjects" value="null"/>
+		
+		<!---
+			Open the save open objects dialog.
+			@param wcfModel m: client side model
+		-->
+		<method name="openSaveOpenObjectsDialog" args="m">
+			<![CDATA[
+			this.openWindow();
+			this.model = m;
+			this.unsavedObjects = [];
+			this.closeObjects = [];
+
+			this.errorUnsavedObjects = [];
+			
+			for (var i = 0; i < this.model.openObjects.length; i++) {
+				var o = this.model.openObjects[i];
+				if (o.openGroupDirty) {
+
+					if (o.hasErrors(true)) {
+						//add to the error list
+						this.errorUnsavedObjects.push(o);
+					}
+					else {
+						//add to the unsaved list
+						this.unsavedObjects.push(o);
+					}
+				} else {
+					this.closeObjects.push(o);
+				}
+			}
+
+			//set visible on correct views
+			if (this.errorUnsavedObjects.length >0) {
+				this.contentArea.errorObjectAreaTitle.setAttribute("visible",true);
+				this.contentArea.errorObjectsArea.setAttribute("visible",true);
+				this.contentArea.errorPrompt.setAttribute("visible",true);
+				this.contentArea.errorObjectsArea.objectCheckboxes.setObjects(this.errorUnsavedObjects);
+			}
+			else {
+				this.contentArea.errorObjectAreaTitle.setAttribute("visible",false);
+				this.contentArea.errorObjectsArea.setAttribute("visible",false);
+				this.contentArea.errorPrompt.setAttribute("visible",false);
+			}
+			
+			if (this.unsavedObjects.length>0) {
+				this.contentArea.unsavedObjectAreaTitle.setAttribute("visible",true);
+				this.contentArea.objectsArea.setAttribute("visible",true);
+				this.contentArea.prompt.setAttribute("visible",true);
+				this.contentArea.objectsArea.objectCheckboxes.setObjects(this.unsavedObjects);
+			}
+			else {
+				this.contentArea.unsavedObjectAreaTitle.setAttribute("visible",false);
+				this.contentArea.objectsArea.setAttribute("visible",false);
+				this.contentArea.prompt.setAttribute("visible",false);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to OK button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.footerView.saveOkBtn);
+			]]>
+		</method>
+		
+		<!---
+			Close the save open objects dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			this.contentArea.objectsArea.objectCheckboxes.setObjects([]);
+			this.contentArea.errorObjectsArea.objectCheckboxes.setObjects([]);
+			this.unsavedObjects = null;
+			this.errorUnsavedObjects = null;
+			this.closeObjects = null;
+			
+			this.contentArea.errorObjectsArea.setAttribute("visible",false);
+			this.contentArea.errorPrompt.setAttribute("visible",false);
+			this.contentArea.objectsArea.setAttribute("visible",false);
+			this.contentArea.prompt.setAttribute("visible",false);
+			
+			super.closeWindow();
+			this.model = null;
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.model.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Save the selected objects and discard changes for the unselected objects.
+		-->
+		<method name="handleOk">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSaveOpenObjectsDialog handleOk");
+			this.model.lock();
+			// handle the unsaved but valid objects
+			var saveObjects = [];
+			if (this.unsavedObjects != null) {
+				for (var i = 0; i < this.unsavedObjects.length; i++) {
+					var o = this.unsavedObjects[i];
+					var save = this.contentArea.objectsArea.objectCheckboxes.isSelected(o);
+					if (save) {
+						saveObjects.push(o);				
+					}
+					else {
+						//the object was not selected, close it
+						o.closeObject();
+					}
+				}
+			}
+			
+			// handle unsaved objects with errors
+			if (this.errorUnsavedObjects != null) {
+				for (var i = 0; i < this.errorUnsavedObjects.length; i++) {
+					var o = this.errorUnsavedObjects[i];
+					var save = this.contentArea.errorObjectsArea.objectCheckboxes.isSelected(o);
+					if (save) {
+						saveObjects.push(o);
+					}
+					else {
+						//the object was not selected, close it
+						o.closeObject();
+					}
+				}
+			}
+
+			wcfModelUtil.sortObjectsBySaveOrder(saveObjects);
+			if (wcfEventTimer.enabled) wcfEventTimer.appendMsg("#objects=" + saveObjects.length);
+			
+			for (var i = 0; i < saveObjects.length; i++) {
+				var o = saveObjects[i];
+				//save the object without prompting
+				o.saveObject(false, false);					
+				o.setAttribute("open", false);
+			}
+
+			// close all other objects
+			if (this.closeObjects != null) {
+				for (var i = 0; i < this.closeObjects.length; i++) {
+					this.closeObjects[i].closeObject();
+				}
+			}
+			this.model.unlock();
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+
+		
+		<!---
+			Select all of the saved objects.
+		-->
+		<method name="selectAll" args="type">
+			<![CDATA[
+			if (type=="unsaved") {
+				this.contentArea.objectsArea.objectCheckboxes.selectAll();
+			}
+			if (type=="error") {
+				this.contentArea.errorObjectsArea.objectCheckboxes.selectAll();
+			}
+			
+			]]>
+		</method>
+		
+		<!---
+			Deselect all of the objects.
+		-->
+		<method name="deselectAll" args="type">
+			<![CDATA[
+			if (type=="unsaved") {
+				this.contentArea.objectsArea.objectCheckboxes.deselectAll();
+			}
+			if (type=="error") {
+				this.contentArea.errorObjectsArea.objectCheckboxes.deselectAll();
+			}
+			]]>
+		</method>
+
+		<simplelayout spacing="10" axis="x"/>
+		<view name="infoIcon" resource="dialogWarningIcon"/>		
+		<view name="contentArea">
+
+			<simplelayout axis="y" spacing="3"/>
+
+			<text name="unsavedObjectAreaTitle" text="${foundationResources.saveUnsavedObjectsTitle.string}" />
+			<text name="prompt" text="${foundationResources.saveUnsavedObjectsPrompt.string}" multiline="true" width="300" />
+			<view name="objectsArea">
+				<simplelayout axis="y" spacing="5"/>
+				<view>
+					<simplelayout axis="x" spacing="5"/>
+					<wcfButton text="${foundationResources.saveOpenObjectsDialogSelectAll.string}" onclick="parent.parent.parent.parent.selectAll(&quot;unsaved&quot;);"/>
+					<wcfButton text="${foundationResources.saveOpenObjectsDialogDeselectAll.string}" onclick="parent.parent.parent.parent.deselectAll(&quot;unsaved&quot;);"/>
+				</view>
+				<wcfObjectSelectionList name="objectCheckboxes" height="100" width="${parent.parent.prompt.width}"/>
+			</view>	
+
+			<text name="errorObjectAreaTitle" text="${foundationResources.saveObjectWithValidationErrorTitle.string}" />
+			<text name="errorPrompt" text="${foundationResources.saveObjectWithValidationErrorPrompt.string}" multiline="true" width="300"/>
+			<view name="errorObjectsArea">
+				<simplelayout axis="y" spacing="5"/>
+				<view>
+					<simplelayout axis="x" spacing="5"/>
+					<wcfButton text="${foundationResources.saveOpenObjectsDialogSelectAll.string}" onclick="parent.parent.parent.parent.selectAll(&quot;error&quot;);"/>
+					<wcfButton text="${foundationResources.saveOpenObjectsDialogDeselectAll.string}" onclick="parent.parent.parent.parent.deselectAll(&quot;error&quot;);"/>
+				</view>
+				<wcfObjectSelectionList name="objectCheckboxes" height="100" width="${parent.parent.prompt.width}"/>
+			</view>
+		</view>
+
+		<view name="footerView" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton name="saveOkBtn" text="${foundationResources.saveOpenObjectsDialogOk.string}" onclick="parent.parent.handleOk();parent.parent.closeWindow();" isdefault="true"/>
+			<wcfButton name="saveCancelBtn" text="${foundationResources.saveOpenObjectsDialogCancel.string}" onclick="parent.parent.closeWindow();"/>
+		</view>
+	</wcfDialog>
+
+	<!---
+		The save open objects confirmation dialog. This dialog is used to prompt the user to save objects 
+	-->
+	<wcfDialog id="wcfSaveOpenObjectsWithErrorDialog">
+		
+		<!--- The model -->
+		<attribute name="model"/>
+		<!---
+			Array of unsaved objects that have validation errors
+		-->
+		<attribute name="errorUnsavedObjects" value="null"/>
+		<!---
+			Array of unsaved objects that do not have validation errors
+		-->
+		<attribute name="unsavedObjects" value="null"/>
+		<!---
+			Open the save open objects dialog.
+			@param wcfModel m: client side model
+		-->
+		<method name="openSaveOpenObjectsWithErrorDialog" args="m">
+			<![CDATA[
+			this.openWindow();
+			this.model = m;
+			this.errorUnsavedObjects = [];
+			this.unsavedObjects = [];
+			for (var i = 0; i < this.model.openObjects.length; i++) {
+				var o = this.model.openObjects[i];
+				if (o.openGroupDirty) {
+					if (o.hasErrors(true)) {
+						this.errorUnsavedObjects.push(o);
+					}
+					else {
+						this.unsavedObjects.push(o);
+					}
+				}
+			}
+			this.contentArea.objectsArea.objectCheckboxes.setObjects(this.errorUnsavedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to OK button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.footerView.saveOkBtn);
+			]]>
+		</method>
+		
+		<!---
+			Close the save open objects dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			this.contentArea.objectsArea.objectCheckboxes.setObjects([]);
+			this.errorUnsavedObjects = null;
+			this.unsavedObjects = null;
+			super.closeWindow();
+			this.model = null;
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.model.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+
+		<!---
+			Save the selected objects and discard changes for the unselected objects.
+		-->
+		<method name="handleOk">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSaveOpenObjectsWithErrorDialog handleOk");
+			for (var i = 0; i < this.errorUnsavedObjects.length; i++) {
+				var o = this.errorUnsavedObjects[i];
+				var save = this.contentArea.objectsArea.objectCheckboxes.isSelected(o);
+				if (save) {
+					this.unsavedObjects.push(o);
+				}
+			}									
+			model.saveOpenObjects(this.unsavedObjects); 
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			Select all of the unsaved objects.
+		-->
+		<method name="selectAll">
+			<![CDATA[
+			this.contentArea.objectsArea.objectCheckboxes.selectAll();
+			]]>
+		</method>
+		
+		<!---
+			Deselect all of the objects.
+		-->
+		<method name="deselectAll">
+			<![CDATA[
+			this.contentArea.objectsArea.objectCheckboxes.deselectAll();
+			]]>
+		</method>
+
+		<simplelayout spacing="10" axis="x"/>
+		<view name="infoIcon" resource="dialogWarningIcon"/>		
+		<view name="contentArea">
+			<text name="prompt" text="${foundationResources.saveObjectWithValidationErrorPrompt.string}" multiline="true" width="300"/>
+			<view name="objectsArea" y="${parent.prompt.y + parent.prompt.height}">
+				<simplelayout axis="y" spacing="5"/>
+				<view>
+					<simplelayout axis="x" spacing="5"/>
+					<wcfButton text="${foundationResources.saveOpenObjectsDialogSelectAll.string}" onclick="parent.parent.parent.parent.selectAll();"/>
+					<wcfButton text="${foundationResources.saveOpenObjectsDialogDeselectAll.string}" onclick="parent.parent.parent.parent.deselectAll();"/>
+				</view>
+				<wcfObjectSelectionList name="objectCheckboxes" height="100" width="${parent.parent.prompt.width}"/>
+			</view>
+		</view>
+
+		<view name="footerView" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton name="saveOkBtn" text="${foundationResources.saveOpenObjectsDialogOk.string}" onclick="parent.parent.handleOk();parent.parent.closeWindow();" isdefault="true"/>
+			<wcfButton name="saveCancelBtn" text="${foundationResources.saveOpenObjectsDialogCancel.string}" onclick="parent.parent.closeWindow();"/>
+		</view>
+	</wcfDialog>
+	
+	
+	<!---
+		@keywords private
+		
+		Base class for the multiple discard confirmation dialog. The dialog is used to prompt the user for confirmation when
+		an action has been triggered that will cause the changes to multiple objects to be lost.
+	-->
+	<class name="wcfListAlert" extends="wcfAlertDialog">
+		<!---
+			Open the multiple discard confirmation dialog.
+			@param array unsavedObjects: array of unsaved objects
+		-->
+		<method name="openListAlertDialog" args="objects">
+			<![CDATA[
+			this.openWindow();
+			this.objectsArea.objectItems.setObjects(objects);
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Close multiple discard confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			this.objectsArea.objectItems.setObjects([]);
+			super.closeWindow();
+			]]>
+		</method>
+			
+		<view name="objectsArea" y="${parent.text.y + parent.text.height + 5}" x="${parent.text.x}" options="ignorelayout" clip="true">
+			
+			<!-- In case the number of objects to discard are too much for the dialog, create a container that can scroll so dialog doesn't get too long -->
+			<wcfObjectItemList name="objectItems" height="150" width="${parent.parent.text.width}"/>
+		</view>
+	</class>
+		
+	<!---
+		The multiple delete confirmation dialog. This dialog is used to prompt the user to confirm before deleting multiple objects.
+	-->
+	<wcfListAlert id="wcfMultipleDeleteConfirmationDialog" showOK="false" showYes="true" showNo="true"
+		promptText="${foundationResources.multipleDeleteConfirmationDialogText.string}">
+		
+		<!---
+			The array of objects that are to be deleted.
+		-->
+		<attribute name="deleteObjects" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the objects to be deleted
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified objects can be deleted
+			@param array objects: the objects to be deleted
+		-->
+		<method name="openMultipleDeleteConfirmationDialog" args="objects">
+			<![CDATA[
+			this.deleteObjects = objects;
+			this.oEditor = objects[0].model.oEditor;
+			this.openListAlertDialog(this.deleteObjects);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close multiple delete confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.deleteObjects = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Delete the objects.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfMultipleDeleteConfirmationDialog handleYes");
+			for (var i = 0; i < this.deleteObjects.length; i++) {
+				this.deleteObjects[i].deleteObject();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	</wcfListAlert>
+
+
+	<!---
+		Refresh all confirmation dialog. This dialog is used to prompt when there are unsaved objects and the "refresh all" action has been requested.
+	-->
+	<wcfListAlert id="wcfRefreshAllConfirmationDialog" showOK="false" showYes="true" showNo="true"
+		promptText="${foundationResources.multipleDiscardConfirmationDialogText.string}">
+	
+		<!---
+			The model.
+		-->
+		<attribute name="model"/>
+		<!---
+			Refresh object.
+		-->
+		<attribute name="refreshObject" value="null"/>
+		<!---
+			Child object definitions to be reloaded.
+		-->
+		<attribute name="oDefs" value="null"/>
+		<!---
+			Paging direction indicator.
+		-->
+		<attribute name="paging" value="null"/>
+		
+		<!---
+			Open the refresh all confirmation dialog.
+			@param wcfModel m: client side model
+			@param array unsavedObjects: array of unsaved objects
+			@param wcfModelObject ro: refresh object
+			@param [wcfObjectDefinition] defs: array of child object definitions to be reloaded
+			@param string p: Indicates that the "next" or "previous" page of child objects should be loaded.
+		-->
+		<method name="openRefreshAllConfirmationDialog" args="m, unsavedObjects, ro=null, defs=null, p=null">
+			<![CDATA[
+			this.model = m;
+			this.refreshObject = ro;
+			this.paging = p;
+			this.oDefs = defs;
+			this.openListAlertDialog(unsavedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.model.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close refresh all confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.model = null;
+			this.refreshObject = null;
+			this.paging = null;
+			this.oDefs = null;
+			]]>
+		</method>
+		
+		<!---
+			Trigger refresh all.
+		-->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfRefreshAllConfirmationDialog handleYes");
+			if (this.refreshObject != null) {
+				this.model.refreshDescendants(this.refreshObject, false, this.oDefs, this.paging);
+			}
+			else {
+				this.model.refreshAll();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	</wcfListAlert>
+	
+	<!---
+		Change store confirmation dialog. This dialog is used to prompt when there are unsaved objects and the "change store" action has been requested.
+	-->
+	<wcfListAlert id="wcfChangeStoreConfirmationDialog" showOK="false" showYes="true" showNo="true"
+		promptText="${foundationResources.multipleDiscardConfirmationDialogText.string}">
+
+		<!---
+			The store selection handler. This object must have a changeStore method.
+		-->
+		<attribute name="storeSelectionHandler"/>
+		<!---
+			The new store.
+		-->
+		<attribute name="newStore"/>
+		
+		<!---
+			The unsavedObjects within the current store
+		-->
+		<attribute name="unsavedObjects"/>
+		
+		<!---
+			Open the change store confirmation dialog.
+			@param Object handler: store selection handler
+			@param wcfStore store: the new store
+			@param array unsavedObjects: array of unsaved objects
+		-->
+		<method name="openChangeStoreConfirmationDialog" args="handler, store, unsavedObjects">
+			<![CDATA[
+			this.storeSelectionHandler = handler;
+			this.newStore = store;
+			this.unsavedObjects = unsavedObjects;
+			this.openListAlertDialog(unsavedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Close change store confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.storeSelectionHandler = null;
+			this.unsavedObjects = null;
+			this.newStore = false;
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null && this.unsavedObjects.length > 0) {
+				this.unsavedObjects[0].model.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+
+		<!---
+			Trigger change store.
+		-->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfChangeStoreConfirmationDialog handleYes");
+			this.storeSelectionHandler.changeStore(this.newStore, false);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<!---
+			Stop the change store action.
+		-->
+		<method name="handleNo">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfChangeStoreConfirmationDialog handleNo");
+			if (this.storeSelectionHandler["cancelChangeStore"]) {
+				this.storeSelectionHandler.cancelChangeStore();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+	</wcfListAlert>
+	
+	<!---
+		This dialog is used to prompt the user when the file they have selected using the {@link wcfPropertyFileUploader file upload widget} is too large 
+		to be uploaded. 
+	-->                 
+	<wcfAlertDialog id="wcfFileTooLargeDialog" showOK="true" showCancel="false" showYes="false" showNo="false">		
+		<!---
+			@keywords private 
+			This method opens an error dialog to notify the user that the selected file is too large to be uploaded.
+			@param string fileName The file that is too large for the widget. 
+			@param size maxSize The allowable maximum file size for files being uploaded in bytes. This is defined by {@link wcfObjectDefinition#maximumFileSize}.			
+		-->
+		<method name="openFileTooLargeDialog" args="fileName, maxSize">
+			<![CDATA[
+			this.openWindow();
+			var valInMB = Math.round(maxSize/1048576*10)/10;
+			this.setAttribute("promptText", foundationResources.replaceValues("fileUploaderExceedMaximumSize", [fileName, valInMB]));					
+			]]>
+		</method>	
+						
+	</wcfAlertDialog>
+	
+	<!---
+		This dialog is used to prompt the user when the file they have selected using the {@link wcfPropertyFileUploader file upload widget} is empty. 		
+	-->                 
+	<wcfAlertDialog id="wcfFileEmptyDialog" showOK="true" showCancel="false" showYes="false" showNo="false">		
+		
+		<!---
+			@keywords private 
+			This method opens an error dialog to notify the user that the selected file is empty.
+			@param string fileName The file that is too large for the widget. 			
+		-->
+		<method name="openFileEmptyDialog" args="fileName">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", foundationResources.fileEmpty.string);			
+			]]>
+		</method>		
+				
+	</wcfAlertDialog>
+
+	<!---
+		Store preview confirmation dialog. This dialog is used to prompt the user when there are unsaved objects and the 
+		user clicked on the store preview toolbar button.
+	-->
+	<wcfListAlert id="wcfStorePreviewConfirmationDialog" showOK="false" showYes="true" showNo="true"
+		promptText="${foundationResources.storePreviewIgnoreChangesConfirmationDialogText.string}">
+		
+		<!---
+			The business object editor.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			The name value pair of preview context parameters.
+		-->
+		<attribute name="previewContext"/>
+		<!---
+			Open the confirmation dialog with the list of unsaved objects.
+			@param wcfBusinessObjectEditor boe: business object editor
+			@param array unsavedObjects: array of unsaved objects
+			@param Object contextParam: a map of name value pair context parameters.
+		-->
+		<method name="openStorePreviewConfirmationDialog" args="boe, unsavedObjects, contextParams">
+			<![CDATA[
+			this.oEditor = boe;
+			this.previewContext = contextParams;
+			this.openListAlertDialog(unsavedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Close confirmation dialog with the list of all unsaved objects.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.oEditor = null;
+			this.previewContext = null;
+			]]>
+		</method>
+		
+		<!---
+			Opens the store preview dialog, using deferred callback to handle modal-stack properly
+		-->
+		<method name="handleYes">
+			<![CDATA[
+			if(typeof(this.openStorePreviewDialogDel) == "undefined") {
+				this.openStorePreviewDialogDel = new lz.Delegate(this, "openStorePreviewDialog");
+			}
+			wcfCallbackUtil.addDeferredCallback(this.openStorePreviewDialogDel, {boe:this.oEditor, contextParams:this.previewContext}, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			]]>
+		</method>
+		
+		<!---
+			Opens the store preview dialog.
+			@param object args: object parameter that contains the business object editor and context parameters.
+		-->
+		<method name="openStorePreviewDialog" args="args">
+			<![CDATA[
+			var boe = args.boe;
+			var contextParams = args.contextParams;
+			wcfStorePreviewDialog.openStorePreviewDialog(boe, contextParams);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if(this['openStorePreviewDialogDel']){
+				this.openStorePreviewDialogDel.unregisterAll(); 
+				delete this.openStorePreviewDialogDel; 
+			}
+			super.destroy();
+			]]>
+		</method>
+	</wcfListAlert>
+	
+	<!---
+		@keywords private
+		The save detected unsaved objects confirmation dialog. 
+		This dialog prompts the user to save objects on regular basis.
+	-->
+	<wcfDialog id="wcfSaveDetectedUnsavedObjectsDialog">
+		<!---
+			Array of objects that have unsaved changes.
+		-->
+		<attribute name="unsavedObjects" value="null"/>
+		
+		<!---
+			Open the save open objects dialog.
+			@param wcfModelObject objects: client side model objects
+		-->
+		<method name="openSaveDetectedUnsavedObjectsDialog" args="objects">
+			<![CDATA[
+			this.openWindow();
+			
+			this.unsavedObjects = [];
+			for (var i=0; i<objects.length; i++) {
+				var o = objects[i];
+				//add to the unsaved list
+				this.unsavedObjects.push(o);
+				
+			}
+			
+			this.contentArea.objectsArea.objectCheckboxes.setObjects(this.unsavedObjects);
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to OK button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.footerView.saveOkBtn);
+			]]>
+		</method>
+		
+		<!---
+			Close the save open objects dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			this.contentArea.objectsArea.objectCheckboxes.setObjects([]);
+			this.unsavedObjects = null;
+			super.closeWindow();
+			
+			// Schedule to check unsaved objects
+			lz.Timer.resetTimer(wcfModelUtil.detectUnsavedObjectsDel, wcfModelUtil.detectUnsavedObjectsInterval);
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.model", "FINER", "wcfSaveDetectedUnsavedObjectsDialog", "closeWindow", "Reset interval to " + wcfModelUtil.detectUnsavedObjectsInterval);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Save the selected objects.
+		-->
+		<method name="handleOk">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfSaveDetectedUnsavedObjectsDialog handleOk");
+			if(typeof(toolsController) != 'undefined'){
+				for (var i=0; i<toolsController.toolList.length; i++) {
+					var tool = toolPanesWidget.subviews[toolPanesWidget.findPane(toolsController.toolList[i])];
+					if (tool["model"]) {
+						tool.model.lock();
+					}
+				}
+			}
+			
+			// handle the unsaved objects
+			var saveObjects = [];
+			if (this.unsavedObjects != null) {
+				for (var i = 0; i < this.unsavedObjects.length; i++) {
+					var o = this.unsavedObjects[i];
+					var save = this.contentArea.objectsArea.objectCheckboxes.isSelected(o);
+					if (save) {
+						saveObjects.push(o);
+					}
+				}
+			}
+			
+			wcfModelUtil.sortObjectsBySaveOrder(saveObjects);
+			for (var i = 0; i < saveObjects.length; i++) {
+				var o = saveObjects[i];
+				//save the object without prompting				
+				o.saveObject(false, false);
+			}
+
+			if(typeof(toolsController) != 'undefined'){
+				for (var i=0; i<toolsController.toolList.length; i++) {
+					var tool = toolPanesWidget.subviews[toolPanesWidget.findPane(toolsController.toolList[i])];
+					if (tool["model"]) {
+						tool.model.unlock();
+					}
+				}
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<simplelayout spacing="10" axis="x"/>
+		<view name="infoIcon" resource="dialogWarningIcon"/>		
+		<view name="contentArea">
+
+			<simplelayout axis="y" spacing="3"/>
+
+			<text name="unsavedObjectAreaTitle" text="${foundationResources.saveUnsavedObjectsTitle.string}" />
+			<text name="prompt" text="${foundationResources.saveSystemDetectedUnsavedObjectsPrompt.string}" multiline="true" width="300" />
+			<view name="objectsArea">
+				<simplelayout axis="y" spacing="5"/>
+				<wcfObjectSelectionList name="objectCheckboxes" height="100" width="${parent.parent.prompt.width}"/>
+			</view>	
+		</view>
+
+		<view name="footerView" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton name="saveOkBtn" text="${foundationResources.saveOpenObjectsDialogOk.string}" onclick="parent.parent.handleOk();parent.parent.closeWindow();" isdefault="true"/>
+			<wcfButton name="saveCancelBtn" text="${foundationResources.saveOpenObjectsDialogCancel.string}" onclick="parent.parent.closeWindow();"/>
+		</view>
+	</wcfDialog>
+	
+	<!---
+		@keywords private
+		List of objects.
+	-->
+	<class name="wcfObjectItemList" extends="basecomponent">
+		<!---
+			List of objects.
+		-->
+		<attribute name="objectItems" value="${[]}"/>
+		<!---
+			The index of the current object.
+		-->
+		<attribute name="currentObjectIndex" type="number" value="-1"/>
+		<!---
+			Indicates that the list has focus.
+		-->
+		<attribute name="hasFocus" type="boolean" value="false"/>
+		
+		<!---
+			Set the array of objects.
+			@param [wcfModelObject] newObjects: array of model objects
+		-->
+		<method name="setObjects" args="newObjects">
+			<![CDATA[
+			for (var i = 0; i < this.objectItems.length; i++) {
+				this.objectItems[i].setAttribute("o", null);
+				this.objectItems[i].setAttribute("visible", false);
+			}
+			
+			for (var i = 0; i < newObjects.length; i++) {
+				if (i < this.objectItems.length) {
+					this.objectItems[i].setAttribute("o", newObjects[i]);
+					this.objectItems[i].setAttribute("visible", true);
+				} else {					
+					this.objectItems.push(new lz.wcfObjectTextItem(this.borderedView.clippedContent.content, {
+						o: newObjects[i],
+						focusable: false
+					}));
+				}	
+			}
+			if (newObjects.length > 0) {
+				this.currentObjectIndex = 0;
+			}
+			else {
+				this.currentObjectIndex = -1;
+			}
+			this.updateHilite();
+			this.updateScroll();
+			]]>
+		</method>
+		
+		<!---
+			Handle onfocus event.
+		-->
+		<handler name="onfocus">
+			<![CDATA[
+			this.hasFocus = true;
+			this.updateHilite();
+			]]>
+		</handler>
+		
+		<!---
+			Handle onblur event.
+		-->
+		<handler name="onblur">
+			<![CDATA[
+			this.hasFocus = false;
+			this.updateHilite();
+			]]>
+		</handler>
+		
+		<!---
+			Update the background color of the highlighted object.
+		-->
+		<method name="updateHilite">
+			<![CDATA[
+			for (var i = 0; i < this.objectItems.length; i++) {
+				var c = this.bgcolor;
+				if (this.hasFocus && this.currentObjectIndex == i) {
+					c = this.style["hilitecolor"];
+				}
+				this.objectItems[i].setAttribute("bgcolor", c);
+			}
+			]]>
+		</method>
+
+		<!---
+			Update the scroll to ensure that the highlighted object is visible.
+		-->
+		<method name="updateScroll">
+			<![CDATA[
+			var item = this.getObjectItem(this.currentObjectIndex);
+			if (item != null) {
+				var clipView = this.borderedView.clippedContent;
+				var itemTop = item.getAttributeRelative("y", clipView);
+				var itemBottom = itemTop + item.height;
+				if (itemTop < 0) { // if selected checkbox is still outside of the visible area
+					this.borderedView.vScroll.step(Math.floor(itemTop / this.borderedView.vScroll["stepsize"]));
+				}
+				else if (itemBottom > clipView.height) {
+					this.borderedView.vScroll.step(Math.ceil((itemBottom - clipView.height) / this.borderedView.vScroll["stepsize"]));
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Returns the object item at the specified index. If no such object exists, then this method returns
+			null.
+			@param integer index: the object index
+		-->
+		<method name="getObjectItem" args="index">
+			<![CDATA[
+			var item = null;
+			if (index >= 0 && index < this.objectItems.length && this.objectItems[index].visible) {
+				item = this.objectItems[index];
+			}
+			return item;
+			]]>
+		</method>
+
+		<!---
+			Sets the current item.
+			@param wcfObjectTextItem item: the object item
+		-->
+		<method name="setCurrentItem" args="item">
+			<![CDATA[
+			if (item.visible) {
+				for (var i = 0; i < this.objectItems.length; i++) {
+					if (this.objectItems[i] == item) {
+						this.currentObjectIndex = i;
+						this.updateHilite();
+						break;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Handle key down event.
+		-->
+		<handler name="onkeydown" args="k">
+			<![CDATA[
+			if (k == 38) { // key up
+				var item = this.getObjectItem(this.currentObjectIndex - 1);
+				if (item != null) {
+					this.currentObjectIndex--;
+					this.updateHilite();
+					this.updateScroll();
+				}
+			}
+			else if (k == 40) { // key down
+				var item = this.getObjectItem(this.currentObjectIndex + 1);
+				if (item != null) {
+					this.currentObjectIndex++;
+					this.updateHilite();
+					this.updateScroll();
+				}
+			}
+			else if (k == 37) { // left
+				this.borderedView.hScroll.step(-1);
+			}
+			else if (k == 39) { // right
+				this.borderedView.hScroll.step(1);
+			}
+			]]>
+		</handler>
+		
+		<wcfBorderedView name="borderedView" height="${parent.height}" width="${parent.width}" borderSize="1" borderColor="${classroot.style.bordercolumnlistcolor}">
+			<attribute name="hScrollHeight" type="number" value="${(this.hScroll.visible ? this.hScroll.height : 0)}"/>
+			<attribute name="vScrollWidth" type="number" value="${(this.vScroll.visible ? this.vScroll.width : 0)}"/>
+
+			<view name="clippedContent" clip="true"
+				x="3"
+				y="3"
+				width="${parent.width - parent.vScrollWidth - 6}"
+				height="${parent.height - parent.hScrollHeight - 6 }">
+				<view name="content">
+					<simplelayout axis="y"/>
+				</view>
+			</view>
+			<wcfHorizontalScrollbar name="hScroll" scrolltarget="parent.clippedContent.content"
+			    visible="${this.scrollable}"
+				x="-1"
+				y="${parent.clippedContent.y + parent.clippedContent.height + 2}"
+				width="${parent.width-parent.vScrollWidth}"/>
+			<wcfVerticalScrollbar name="vScroll" scrolltarget="parent.clippedContent.content"
+				visible="${this.scrollable}"
+				x="${parent.clippedContent.x + parent.clippedContent.width + 2}"
+				y="-1"
+				height="${parent.height-parent.hScrollHeight}"/>
+			<view name="vScrollBottom" 
+				bgcolor="0xE0EAEF"
+				x="${parent.vScroll.x}"
+				y="${parent.vScroll.y + parent.vScroll.height}"
+				height="${parent.hScrollHeight - 1}"
+				width="${parent.vScrollWidth - 1}"
+			  	visible="${parent.vScroll.visible &amp;&amp; parent.hScroll.visible}"/>
+		</wcfBorderedView>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		wcfObjectTextItem is for internal use by {@link wcfMultipleDeleteConfirmationDialog} 
+		to bind a {@link wcfModelObject} with this item. 
+		Both the icon and the display name of the object will be displayed beside the item.
+	-->
+	<class name="wcfObjectTextItem">
+		<!---
+			A reference to the instance of the {@link wcfModelObject} whose icon is being displayed. 
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			Object icon.
+		-->
+		<attribute name="icon" type="string" value="treeFolderResource"/>
+		<!---
+			Object display name.
+		-->
+		<attribute name="objectDisplayName" value="null"/>
+		<!---
+			Indicates that this object has an error.
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			Set the {@link wcfModelObject} to be associated with this check box. 
+			@param wcfModelObject newObject New object associated with this check box.
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				this.o = newObject;
+				
+				if (this.o == null) {
+					this.setAttribute("icon", null);
+					this.setAttribute("objectDisplayName", "");
+					this.setAttribute("hasError", false);
+				
+				} else {				
+					if (this.o.getIcon() != null) {
+						this.setAttribute("icon", this.o.getIcon());
+					}
+					
+					if (this.o.objectDisplayName != null) {
+						this.setAttribute("objectDisplayName", this.o.objectDisplayName);
+						if (wcfLogger.enabled) {
+							wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "FINER", "wcfObjectTextItem", "setModelObject(newObject)", "objectDisplayName: " + this.objectDisplayName);						
+						}
+					}
+					
+					var newHasError = this.o.openGroupObject != null && this.o.openGroupObject.errorInOpenGroup;
+					if (newHasError != this.hasError) {
+						this.setAttribute("hasError", newHasError);
+					}
+				}
+				
+				if (this["ono"]) {
+					this.ono.sendEvent(o);
+				}
+			}
+			]]>
+		</method>
+		
+		<view name="objectItem">
+			<view name="_icon" resource="${classroot.icon}"/>
+			<view name="_errorIcon"
+				x="${parent._icon.x + parent._icon.width - this.width - 1}"
+				y="${parent._icon.y + parent._icon.height - this.height}" 
+				resource="treeErrorResource" 
+				visible="${classroot.hasError}"/>
+			<text name="_displayName" 
+				x="${parent._errorIcon.x + parent._errorIcon.width + 1}"
+				text="${this.escapeText(classroot.objectDisplayName)}" 
+				resize="true"/>
+		</view>
+	</class>
+
+	<!---
+		@keywords private
+		The delete collection reference object confirmation dialog. This dialog is used to prompt the user
+		whether to delete the primary object or just remove the reference object.
+	-->
+	<wcfDialog id="wcfCollectionReferenceObjectDeleteConfirmationDialog">
+		<!---
+			The object that is to be deleted.
+		-->
+		<attribute name="deleteObject" value="null" />
+		
+		<!-- 
+			Business Object Editor of the object to be deleted
+		 -->
+		<attribute name="oEditor" value="null"/>
+
+		<!---
+			Confirm that the specified object should be deleted, or only have the reference removed.
+			@param wcfModelObject o: the object to be deleted or its reference removed
+		-->
+		<method name="openCollectionReferenceObjectDeleteConfirmationDialog" args="o">
+			<![CDATA[
+				this.openWindow();
+				this.contentArea.prompt.setAttribute("text", foundationResources.replaceValues("deleteCollectionReferenceObjectDialogPrompt", [o.getReferencedObject().objectDisplayName]));
+				this.contentArea.deletePrompt.setAttribute("text", foundationResources.replaceValues("deleteCollectionReferenceObjectDialogDeletePrompt", [o.getReferencedObject().objectDisplayName]));
+				this.contentArea.removePrompt.setAttribute("text", foundationResources.replaceValues("deleteCollectionReferenceObjectDialogRemovePrompt", [o.getReferencedObject().objectDisplayName, o.parentObject.objectDisplayName]));
+				this.deleteObject = o;
+				this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+
+		<!---
+			Close this delete confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+				super.closeWindow();
+				this.deleteObject = null;
+				this.oEditor = null;
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+				super.restoreFocus();
+				if (lz.Focus.getFocus() == null) {
+					this.oEditor.restoreFocus();
+				}
+			]]>
+		</method>
+
+		<!---
+			Remove the reference object.
+		-->
+		<method name="handleRemoveObject">
+			<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfCollectionReferenceObjectDeleteConfirmationDialog handleRemoveObject");
+				this.deleteObject.deleteObject(false, true);
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<!---
+			Delete the object.
+		-->
+		<method name="handleDeleteObject">
+			<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfCollectionReferenceObjectDeleteConfirmationDialog handleDeleteObject");
+				this.deleteObject.getReferencedObject().deleteObject();
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<simplelayout spacing="10" axis="x" />
+		<view name="infoIcon" resource="dialogWarningIcon" />
+		<view name="contentArea">
+			<text name="prompt" multiline="true" width="300" />
+			<text name="deletePrompt" multiline="true" width="300" />
+			<text name="removePrompt" multiline="true" width="300" />
+			<simplelayout axis="y" spacing="3" />
+		</view>
+		<view name="footerView" placement="footer">
+			<simplelayout axis="x" />
+			<wcfButton name="deleteDeleteBtn" text="${foundationResources.deleteCollectionReferenceObjectsDialogDelete.string}" onclick="parent.parent.handleDeleteObject();parent.parent.closeWindow();" isdefault="true" />
+			<wcfButton name="deleteRemoveBtn" text="${foundationResources.deleteCollectionReferenceObjectsDialogRemove.string}" onclick="parent.parent.handleRemoveObject();parent.parent.closeWindow();" />
+			<wcfButton name="deleteCancelBtn" text="${foundationResources.deleteCollectionReferenceObjectsDialogCancel.string}" onclick="parent.parent.closeWindow();" />
+		</view>
+	</wcfDialog>
+
+	<!---
+		@keywords private
+		The delete multiple collection reference objects confirmation dialog. This dialog is used to prompt
+		the user whether to delete the primary objects or just remove the reference objects.
+	-->
+	<wcfDialog id="wcfMultipleCollectionReferenceObjectDeleteConfirmationDialog">
+		<!---
+			The array of objects that are to be deleted.
+		-->
+		<attribute name="deleteObjects" value="null" />
+		
+		<!-- 
+			Business Object Editor of the objects to be deleted
+		 -->
+		<attribute name="oEditor" value="null"/>
+
+		<!---
+			Confirm that the specified objects should be deleted, or only have the reference removed.
+			@param array objects: the objects to be deleted or their reference removed
+		-->
+		<method name="openMultipleCollectionReferenceObjectDeleteConfirmationDialog" args="objects">
+			<![CDATA[
+				this.openWindow();
+				this.contentArea.removePrompt.setAttribute("text", foundationResources.replaceValues("deleteCollectionReferenceObjectsDialogRemovePrompt", [objects[0].parentObject.objectDisplayName]));
+				this.deleteObjects = objects;
+				this.oEditor = objects[0].model.oEditor;
+				this.objectsArea.objectItems.setObjects(this.deleteObjects);
+			]]>
+		</method>
+
+		<!---
+			Set the focus to Remove button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+				lz.Focus.setFocus(this.viewButtons.deleteRemoveBtn);
+			]]>
+		</method>
+
+		<!---
+			Close multiple discard confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+				this.objectsArea.objectItems.setObjects([]);
+				super.closeWindow();
+				this.deleteObjects = null;
+				this.oEditor = null;
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+				super.restoreFocus();
+				if (lz.Focus.getFocus() == null) {
+					this.oEditor.restoreFocus();
+				}
+			]]>
+		</method>
+
+		<!---
+			Remove the reference objects.
+		-->
+		<method name="handleRemoveObjects">
+			<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfMultipleCollectionReferenceObjectDeleteConfirmationDialog handleRemoveObjects");
+				for (var i = 0; i < this.deleteObjects.length; i++) {
+					this.deleteObjects[i].deleteObject(false, true);
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<!---
+			Delete the objects.
+		-->
+		<method name="handleDeleteObjects">
+			<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfMultipleCollectionReferenceObjectDeleteConfirmationDialog handleDeleteObjects");
+				for (var i = 0; i < this.deleteObjects.length; i++) {
+					this.deleteObjects[i].getReferencedObject().deleteObject();
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<simplelayout spacing="10" axis="x" />
+		<view name="infoIcon" resource="dialogWarningIcon" />
+		<view name="contentArea">
+			<text name="prompt" text="${foundationResources.deleteCollectionReferenceObjectsDialogPrompt.string}" multiline="true" width="300" />
+			<text name="deletePrompt" text="${foundationResources.deleteCollectionReferenceObjectsDialogDeletePrompt.string}" multiline="true" width="300" />
+			<text name="removePrompt" multiline="true" width="300" />
+			<simplelayout axis="y" spacing="3" />
+		</view>
+		<view name="objectsArea" y="${parent.contentArea.y + parent.contentArea.height + 5}" x="${parent.contentArea.x}" options="ignorelayout" clip="true">
+			<wcfObjectItemList name="objectItems" height="150" width="${parent.parent.contentArea.width}" />
+		</view>
+		<view placement="footer" name="viewButtons">
+			<simplelayout axis="x" />
+			<wcfButton name="deleteDeleteBtn" text="${foundationResources.deleteCollectionReferenceObjectsDialogDelete.string}" onclick="parent.parent.handleDeleteObjects();parent.parent.closeWindow();" isdefault="true" />
+			<wcfButton name="deleteRemoveBtn" text="${foundationResources.deleteCollectionReferenceObjectsDialogRemove.string}" onclick="parent.parent.handleRemoveObjects();parent.parent.closeWindow();" />
+			<wcfButton name="deleteCancelBtn" text="${foundationResources.deleteCollectionReferenceObjectsDialogCancel.string}" onclick="parent.parent.closeWindow();" />
+		</view>
+	</wcfDialog>
+	
+	<!--- 
+		The Edit Column Dialog. This dialog is used to prompt the user to select column of an active grid {@link wcfObjectGrid}
+		and edit the values of the cells being selected under the column.
+	 -->
+	<wcfDialog id="wcfEditColumnDialog" title="${foundationResources.editColumnDialogTitle.string}"
+		x="$once{(canvas.width - 500)/2}" 
+		y="$once{(canvas.height - 350)/3}"
+		minWidth="450"
+		minHeight="300">
+	    
+	    <!---
+			@keywords private
+			The active {link@ wcfObjectGrid}
+		-->
+		<attribute name="objectGrid"/>
+		
+		<!--- 
+			@keywords private 
+			Open Edit Column Dialog
+		-->
+		<method name="openEditColumnDialog" args="objGrid">
+			<![CDATA[
+			this.openWindow();
+			this.objectGrid = objGrid;
+			var firstColumn = null;
+			for (var i = 0; i < objGrid.columns.length; i++) {
+				var column = objGrid.columns[i];
+				if (column.visible && column.editable && column.columnEditorClass != null) {
+					this.editColumnArea.columnCombo.addItem(column.displayText, column);
+					if (firstColumn == null) firstColumn = column;
+				}
+			}
+			this.editColumnArea.columnCombo.selectItem(firstColumn);
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private 
+			Edit the values of the cells being selected under the column.
+		-->
+		<method name="doEditColumn">
+			<![CDATA[
+			var selectedColumn =this.editColumnArea.columnCombo.getValue();
+			var newValue = this.editColumnArea.newValueSection.inputArea.editor.getValue();
+			var selectedObjects = this.objectGrid.getSelectedObjects();
+			
+			if (selectedObjects && selectedObjects.length > 0) {
+				for (var i=0; i<selectedObjects.length; i++) {
+					if (selectedColumn.isEditable(selectedObjects[i])) {
+						var o = selectedColumn.getObject(selectedObjects[i], null)
+						var propertyName = selectedColumn.getPropertyName(selectedObjects[i]);
+						var property = o.getProperty(propertyName);
+						property.change(newValue);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Close Edit Column dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.objectGrid = null;
+			this.editColumnArea.columnCombo.setValues(null);
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private 
+			After tried to create editor, if error message is generated,
+			the editor was not created successfully and so display the error message
+			to user.
+		-->
+		<method name="checkErrorMessage" args="errMsg">
+			<![CDATA[
+			if (errMsg) {
+				this.footerView.editColumnOkBtn.setAttribute("enabled", false);
+				this.footerView.editColumnApplyBtn.setAttribute("enabled", false);
+				this.editColumnArea.newValueSection.errorMessageText.setAttribute("visible", true);
+				this.editColumnArea.newValueSection.errorMessageText.setAttribute("text", errMsg);
+			}
+			else {
+				this.footerView.editColumnOkBtn.setAttribute("enabled", true);
+				this.footerView.editColumnApplyBtn.setAttribute("enabled", true);
+				this.editColumnArea.newValueSection.errorMessageText.setAttribute("visible", false);
+				this.editColumnArea.newValueSection.errorMessageText.setAttribute("text", errMsg);
+			}
+			]]>
+		</method>
+		
+		<view name="editColumnArea" focusable="false">
+			<simplelayout spacing="10" axis="y" />
+			<text name="columnSelectionText" text="${foundationResources.columnSelectionTitle.string}"/>
+			
+			<!-- The combobox populated with editable columns -->
+			<wcfBaseComboBox name="columnCombo">
+				<handler name="onselectedValue">
+					<![CDATA[
+					parent.newValueSection.inputArea.setSelectedColumn(this.getValue());
+					]]>
+				</handler>
+			</wcfBaseComboBox>
+				
+			<view resource="dividerLine" stretches="width" width="${parent.parent.minWidth - 10}"/>
+			
+			<text name="setColumnText" text="${foundationResources.setColumnPrompt.string}"/>
+			
+			<view name="newValueSection">
+				<simplelayout spacing="10" axis="x"/>
+				<text name="columnText" text=""/>
+				
+				<view name="inputArea" visible="true">
+					<attribute name="availableWidth" value="420" type="number"/>
+					<attribute name="editor" value="${null}"/>
+					
+					<!-- Cache one editor instance for each type of editColumnClass {string, editor} -->
+					<attribute name="columnEditorMap" value="${{}}"/>
+					
+					<!--- @keywords private -->
+					<method name="setSelectedColumn" args="col">
+						<![CDATA[
+						parent.columnText.setAttribute("text", col != null ? col.displayText : "");
+						if (this.editor != null) {
+							this.editor.setAttribute("column", null);
+							this.editor.setAttribute("selectedObjects", null);
+							this.editor.setAttribute("visible", false);
+							this.editor = null;
+						}
+						var errorMessage = foundationResources.columnEditorDisabledCellsMsg.string;
+						if (col != null) {
+							var selectedObjects = col.parent.getSelectedObjects();
+							if (selectedObjects.length > 0 && col.isEditable(selectedObjects[0])) {
+								var o = col.getObject(selectedObjects[0]);
+								if (o != null) {
+									var showEditor = true;
+									var firstPropertyName = col.getPropertyName(selectedObjects[0]);
+									var firstPropertyDefinition = o.objectDefinition.getPropertyDefinition(o, firstPropertyName);
+									var firstValue = o.getPropertyValue(firstPropertyName);
+									for (var i = 1; i < selectedObjects.length; i++) {
+										if (!col.isEditable(selectedObjects[i])) {
+											showEditor = false;
+											break;
+										}
+										else {
+											o = col.getObject(selectedObjects[i]);
+											if (o == null) {
+												showEditor = false;
+												break;
+											}
+											else {
+												var propertyName = col.getPropertyName(selectedObjects[i]);
+												var propertyDefinition = o.objectDefinition.getPropertyDefinition(o, propertyName);
+												if (firstPropertyName != propertyName || firstPropertyDefinition != propertyDefinition) {
+													showEditor = false;
+													errorMessage = foundationResources.columnEditorDifferentTypeErrorMsg.string;
+													break;
+												}
+											}
+										}
+									}
+									if (showEditor) {
+										var colEditorClassName = col.getColumnEditorClass(selectedObjects);
+										if (colEditorClassName) {
+											this.editor = this.columnEditorMap[colEditorClassName];
+											if (this["editor"]) {
+												this.editor.setAttribute("column", this);
+												this.editor.setAttribute("selectedObjects", selectedObjects);
+												this.editor.setAttribute("visible", true);
+											}
+											else {
+												this.editor = new lz[colEditorClassName](this, {
+													column: col,
+													selectedObjects: selectedObjects
+												});
+											}
+											this.editor.resetValue(firstValue);
+											errorMessage = null;
+										}
+										else{
+											errorMessage = foundationResources.columnEditorDifferentTypeErrorMsg.string;
+										}
+									}
+								
+								}
+								
+							}
+						}
+						parent.parent.parent.checkErrorMessage(errorMessage);
+						]]>
+					</method>
+				</view>
+				<text name="errorMessageText" text="" multiline="true" width="300" visible="false"/>
+			</view>
+		</view>
+	
+		<view name="footerView" placement="footer">
+			<simplelayout axis="x" spacing="20"/>
+			<wcfButton name="editColumnOkBtn" text="${foundationResources.editColumnDialogOk.string}" onclick="parent.parent.doEditColumn(); parent.parent.closeWindow();"/>
+			<wcfButton name="editColumnApplyBtn" text="${foundationResources.editColumnDialogApply.string}" onclick="parent.parent.doEditColumn();" />
+			<wcfButton name="editColumnCalcelBtn" text="${foundationResources.editColumnDialogCancel.string}" onclick="parent.parent.closeWindow();" />
+		</view>
+		
+	</wcfDialog>
+
+	<!---
+		Dialog used by object properties to ask the user whether or not to launch the Information Center
+		for an introduction to the properties view. 
+		@keywords private
+	-->
+	<wcfDialog id="wcfIntroPrompt">
+		<!--- Text to ask the user whether or not to launch the Information Center. -->
+		<attribute name="promptText" value="" type="string"/>
+		<!---
+			The name of the preference key that the Preference Manager should check before launching the introduction dialog.
+			If the user selects the "Don't ask me this again" checkbox, a value of "true" will be stored to this preference key.
+		-->
+		<attribute name="preferenceKey" value="" type="string"/>
+		<!--- Relative URL in the Information Center to launch if the user selects "Yes" to the dialog. -->
+		<attribute name="url" value="" type="string"/>
+
+		<!---
+			Sets the provided properties and opens the dialog window.
+			@param string promptText Text to ask the user whether or not to launch the Information Center
+			@param string url URL to launch
+			@param string preferenceKey Name of the preference key that the Preference Manager should check before launching the introduction dialog
+		-->
+		<method name="openIntroPrompt" args="promptText, url, preferenceKey">
+			<![CDATA[
+				this.setAttribute("promptText", promptText);
+				this.setAttribute("url", url);
+				this.setAttribute("preferenceKey", preferenceKey);
+				this.openWindow();
+				this.rightColumn.dontAsk.setValue(false);
+			]]>
+		</method>
+
+		<simplelayout spacing="10" axis="x"/>
+		<view name="infoIcon" resource="showMeDialogIcon"/>
+		<view name="rightColumn">
+			<simplelayout spacing="20" axis="y"/>
+			<text name="text" text="${parent.parent.promptText}" multiline="true" width="300"/>
+			<wcfBaseCheckbox name="dontAsk" text="${foundationResources.dontAskAgain.string}">
+				<method name="_applystyle" args="s">
+					<![CDATA[
+						// force black text
+						_title.setAttribute('fgcolor', '0x000000');
+					]]>
+				</method>
+			</wcfBaseCheckbox>
+		</view>
+
+		<view placement="footer" name="viewButtons">
+			<simplelayout axis="x"/>
+			<wcfButton name="yesBtn" text="${foundationResources.simpleDialogYes.string}" onclick="parent.parent.handleYes(); parent.parent.closeWindow();" isdefault="true"/>
+			<wcfButton name="noBtn" text="${foundationResources.simpleDialogNo.string}" onclick="parent.parent.handleNo(); parent.parent.closeWindow();"/>
+			<wcfButton name="cancelBtn" text="${foundationResources.simpleDialogCancel.string}" onclick="parent.parent.closeWindow();"/>
+		</view>
+
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+
+		<!---
+			This method is called when the user clicks on the Yes button to launch the help URL link. If
+			the user selected the "Don't ask me this again" check box, the preference is saved.
+		-->
+		<method name="handleYes">
+			<![CDATA[
+				if(this.preferenceKey && this.preferenceKey != "" && this.rightColumn.dontAsk.value) {
+					preferenceManager.setPreference(this.preferenceKey, "true");
+				}
+				if(this.url && this.url != "") {
+					helpManager.openHelpLink(this.url);
+				}
+			]]>
+		</method>
+		
+		<!---
+			This method is called when the user clicks on the No button. If the user
+			selected the "Don't ask me this again" check box, the preference is saved.
+		-->
+		<method name="handleNo">
+			<![CDATA[
+				if(this.preferenceKey && this.preferenceKey != "" && this.rightColumn.dontAsk.value) {
+					preferenceManager.setPreference(this.preferenceKey, "true");
+				}
+			]]>
+		</method>
+	</wcfDialog>
+
+	<!---
+		@keywords private
+		The collection reference object remove confirmation dialog.
+		This dialog is used to prompt the user to confirm before removing a collection reference object.
+	-->
+	<wcfAlertDialog id="wcfCollectionReferenceObjectRemoveConfirmationDialog" showOK="false" showYes="true" showNo="true">
+		<!---
+			The object that is to be removed.
+		-->
+		<attribute name="removeObject" value="null" />
+
+		<!---
+			Business Object Editor of the object to be removed.
+		-->
+		<attribute name="oEditor" value="null" />
+
+		<!---
+			Confirm that the specified object can be removed.
+			@param wcfModelObject o: The object to be removed.
+		-->
+		<method name="openCollectionReferenceObjectRemoveConfirmationDialog" args="o">
+			<![CDATA[
+				this.openWindow();
+				this.setAttribute("promptText", foundationResources.replaceValues("collectionReferenceObjectRemoveConfirmationDialogText", [o.getReferencedObject().objectDisplayName, o.parentObject.objectDisplayName]));
+				this.removeObject = o;
+				this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+
+		<!---
+			Set the focus to Yes button.
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+				lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+				super.restoreFocus();
+				if (lz.Focus.getFocus() == null) {
+					this.oEditor.restoreFocus();
+				}
+			]]>
+		</method>
+
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+				super.closeWindow();
+				this.removeObject = null;
+				this.oEditor = null;
+			]]>
+		</method>
+
+		<!---
+			Remove the object.
+		-->
+		<method name="handleYes">
+			<![CDATA[
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.start("wcfCollectionReferenceObjectRemoveConfirmationDialog handleYes");
+				}
+				this.removeObject.deleteObject(false, true);
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.end();
+				}
+			]]>
+		</method>
+	</wcfAlertDialog>
+
+	<!---
+		@keywords private
+		The multiple collection reference objects remove confirmation dialog.
+		This dialog is used to prompt the user to confirm before removing multiple collection reference objects.
+	-->
+	<wcfListAlert id="wcfMultipleCollectionReferenceObjectRemoveConfirmationDialog" showOK="false" showYes="true" showNo="true">
+		<!---
+			The array of objects that are to be removed.
+		-->
+		<attribute name="removeObjects" value="null" />
+
+		<!---
+			Business Object Editor of the objects to be removed.
+		-->
+		<attribute name="oEditor" value="null" />
+
+		<!---
+			Confirm that the specified objects can be removed.
+			@param array objects: The objects to be removed.
+		-->
+		<method name="openMultipleCollectionReferenceObjectRemoveConfirmationDialog" args="objects">
+			<![CDATA[
+				this.setAttribute("promptText", foundationResources.replaceValues("multipleCollectionReferenceObjectRemoveConfirmationDialogText", [objects[0].parentObject.objectDisplayName]));
+				this.removeObjects = objects;
+				this.oEditor = objects[0].model.oEditor;
+				this.openListAlertDialog(this.removeObjects);
+			]]>
+		</method>
+
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+				super.restoreFocus();
+				if (lz.Focus.getFocus() == null) {
+					this.oEditor.restoreFocus();
+				}
+			]]>
+		</method>
+
+		<!---
+			Close multiple collection reference objects remove confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+				super.closeWindow();
+				this.removeObjects = null;
+				this.oEditor = null;
+			]]>
+		</method>
+
+		<!---
+			Remove the objects.
+		-->
+		<method name="handleYes">
+			<![CDATA[
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.start("wcfMultipleCollectionReferenceObjectRemoveConfirmationDialog handleYes");
+				}
+				for (var i = 0; i < this.removeObjects.length; i++) {
+					this.removeObjects[i].deleteObject(false, true);
+				}
+				if (wcfEventTimer.enabled) {
+					wcfEventTimer.end();
+				}
+			]]>
+		</method>
+	</wcfListAlert>
+
+	<!---
+		@keywords private
+		This confirmation dialog is used when the user wants to restore a new content version for a business object.
+	-->
+	<wcfAlertDialog id="wcfRestoreContentVersionConfirmationDialog" showOK="false" showCancel="false" showYes="true" showNo="true">
+		
+		<!-- 
+			Business Object Editor
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!-- 
+			The content version object to be restored
+		 -->		
+		<attribute name="restoreObject" value="null"/>
+		
+		<!---
+			Open and initialize the restore content version dialog
+			@param wcfModelObject o: the content version object to be restored
+		-->
+		<method name="openRestoreContentVersionConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.restoreObject = o;
+			this.setAttribute("promptText", foundationResources.replaceValues("restoreContentVersionConfirmation", [restoreObject.getPropertyValue("versionNumber")]));
+			this.oEditor = this.restoreObject.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.oEditor = null;
+			this.restoreObject = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Restore the object
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			wcfRestoreContentVersionService.doRequest(this.restoreObject, {
+				versionId: this.restoreObject.getPropertyValue("versionId")
+			});
+			]]>
+		</method>
+		
+	</wcfAlertDialog>
+
+	<!---
+		@keywords private
+		This dialog is used when the user wants to create a new content version for a business object.
+	-->
+	<wcfDialog id="wcfCreateContentVersionDialog" title="${foundationResources.ContentVersionCreateDialogTitle.string}"
+		minWidth="442"
+		minHeight="300">
+
+		<!--- The objects that will be versioned -->
+		<attribute name="objects" value="null"/>
+				
+		<!---
+			@keywords private
+			Open and initialize the create content version dialog
+		-->
+		<method name="openCreateContentVersionDialog" args="objects">
+			<![CDATA[
+			this.objects = objects;
+			this.openWindow();
+			if (this.objects.length == 1)
+			{
+				this.createContentVersionArea.descriptionVersionMessageView.descriptionMessage.setAttribute("text",foundationResources.replaceValues("ContentVersionCreateDialogDescriptionMessage", [this.objects[0].objectDisplayName]));
+			}
+			else
+			{
+				this.createContentVersionArea.descriptionVersionMessageView.descriptionMessage.setAttribute("text",foundationResources.replaceValues("ContentVersionCreateDialogMultipleVersionsDescriptionMessage", [this.objects.length]));	
+			}
+			this.createContentVersionArea.nameArea.versionName.setText("");
+			this.createContentVersionArea.commentArea.versionComments.setText("");
+			this.objectsValidation();
+			]]>
+		</method>
+	    	
+		<!---
+			@keywords private
+			Set the focus to versionName input box
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.createContentVersionArea.nameArea.versionName);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when the user selects the OK option.
+		-->
+		<method name="handleCreate">
+			<![CDATA[
+			var versionName = this.createContentVersionArea.nameArea.versionName.getText();
+			var comment = this.createContentVersionArea.commentArea.versionComments.getText();
+			for (var i = 0; i < this.objects.length; i++) {
+				var o = this.objects[i];
+				wcfCreateContentVersionService.doRequest(o, {
+					versionName: versionName,
+					comment: comment,
+					objectType: o.objectType,
+					objectId: o.objectId
+				});
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Validate the objects and test if any of them are Inherited objects, display warning if Inherited objects were selected.
+		-->
+		<method name="objectsValidation">
+			<![CDATA[
+			this.createContentVersionArea.createVersionWarningMessageView.setAttribute("visible", false);
+			for (var i = 0; i < this.objects.length; i++) {
+				var o = this.objects[i];
+				var storeConfig = wcfContextUtil.findStoreConfig(o);
+				if ((storeConfig != null) && (o.objectStoreId != storeConfig.storeId)) {
+					this.createContentVersionArea.createVersionWarningMessageView.warningMessage.setAttribute("text", foundationResources.ContentVersionCreateDialogInheritedObjectWarning.string);
+					this.createContentVersionArea.createVersionWarningMessageView.setAttribute("visible", true);
+					break;
+				}
+			}			
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Validate the input of the name and comment fields
+		-->
+		<method name="inputValidation">
+			<![CDATA[
+			var versionName = this.createContentVersionArea.nameArea.versionName.getText();
+			var comment = this.createContentVersionArea.commentArea.versionComments.getText();
+			var errorMessage = "";
+			
+			if (wcfLangUtil.getUTF8ByteCount(versionName) > 254) {
+				errorMessage = foundationResources.replaceValues("propertySizeTooLarge", [foundationResources.ContentVersionCreateDialogName.string]);
+				this.createContentVersionArea.createVersionErrorMessageView.errorMessage.setAttribute("text", errorMessage);
+				this.createContentVersionArea.createVersionErrorMessageView.setAttribute("visible", true);
+				this.footerView.createBtn.setAttribute("enabled", false);
+			} else if (wcfLangUtil.getUTF8ByteCount(comment) > 4000) {
+				errorMessage = foundationResources.replaceValues("propertySizeTooLarge", [foundationResources.ContentVersionCreateDialogComment.string]);
+				this.createContentVersionArea.createVersionErrorMessageView.errorMessage.setAttribute("text", errorMessage);
+				this.createContentVersionArea.createVersionErrorMessageView.setAttribute("visible", true);
+				this.footerView.createBtn.setAttribute("enabled", false);
+			} else {
+				this.footerView.createBtn.setAttribute("enabled", !wcfStringUtil.isBlankString(versionName));
+				this.createContentVersionArea.createVersionErrorMessageView.setAttribute("visible", false);
+			}
+			]]>
+		</method>
+				
+		<view name="createContentVersionArea" focusable="false">
+			<view name="descriptionVersionMessageView">
+				<text name="descriptionMessage" text="${foundationResources.ContentVersionCreateDialogDescriptionMessage.string}" multiline="true" width="355"/>
+				<simplelayout axis="y" spacing="2" />
+			</view>
+			<view name="createVersionWarningMessageView" visible="false">
+				<text name="warningMessage" width="335" multiline="true"/>
+			</view>
+			<view name="createVersionErrorMessageView" visible="false">
+				<view resource="errorIcon" y="2"/>
+				<text name="errorMessage" width="335" multiline="true"/>
+				<simplelayout axis="x" spacing="4" />
+			</view>
+			<view name="nameArea">
+				<text text="${foundationResources.ContentVersionCreateDialogName.string}"/>
+				<wcfInputText name="versionName" width="355">
+					<handler name="ontext">
+						<![CDATA[
+						this.parent.parent.parent.inputValidation();
+						]]>
+					</handler>
+				</wcfInputText>
+				<simplelayout axis="y" spacing="2" />
+			</view>
+
+			<view name="commentArea">
+				<text text="${foundationResources.ContentVersionCreateDialogComment.string}"/>
+				<wcfInputText name="versionComments" width="355" height="100" multiline="true" maximumHeight="100">
+					<handler name="ontext">
+						<![CDATA[
+						this.parent.parent.parent.inputValidation();
+						]]>
+					</handler>
+				</wcfInputText>
+				<simplelayout axis="y" spacing="2" />
+			</view>
+
+			<simplelayout axis="y" spacing="10"/>
+		</view>
+	
+		<view name="footerView" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton name="createBtn" text="${foundationResources.ContentVersionCreateDialogButton.string}" onclick="parent.parent.handleCreate(); parent.parent.closeWindow();" isdefault="true" />
+			<wcfButton name="cancelBtn" text="${foundationResources.simpleDialogCancel.string}" onclick="parent.parent.closeWindow();" />
+		</view>
+		
+	</wcfDialog>
+
+	<!---
+		This dialog is used to prompt a user to confirm the user will delete all Preconfigured Components.
+	-->
+	<wcfAlertDialog id="wcfDeletePreconfigConfirmationDialog" showOK="false" showYes="true" showNo="true">
+		<!---
+			The object that is to be deleted.
+		-->
+		<attribute name="deleteObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be deleted
+		 -->
+		<attribute name="oEditor" value="null"/>
+	
+		<!---
+			Confirm that the specified object can be deleted
+			@param wcfModelObject o: the object to be deleted
+		-->
+		<method name="openDeletePreconfigConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			this.setAttribute("promptText", catalogResources.kitDeletePreconfigConfirm.string);
+			this.deleteObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.deleteObject = null;
+			this.oEditor = null;
+			]]>
+		</method>	
+
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfDeletePreconfigConfirmationDialog handleYes");
+			catDeletePreconfigService.doRequest(deleteObject);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();		
+			]]>
+		</method>
+	</wcfAlertDialog>
+
+	<!---
+		@keywords private
+		This service is used to delete all Preconfigured Components for the specified dynamic kit.
+	-->
+	<wcfService id="catDeletePreconfigService" url="/cmc/UpdateCatalogEntryExtraProperties" transactionService="true">
+		<wcfServiceParam name="storeId" />
+		<wcfServiceParam name="catentryId" propertyName="catentryId" /> 
+		<wcfServiceParam name="xprop_dynamicKitDefaultConfiguration" value="" optional="true" />  
+	
+		<!---
+			@keywords private
+			This method is called when this custom service completed successfully. Client objects will be released if
+			necessary to make sure the Preconfiguration is up to date to reflect the changes after the
+			delete action.
+
+			@param wcfModelObject requestParent: The object on which this custom service was performed.
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				// remove all the Preconfigured Components for the specified dynamic kit.
+				var deleteObjects = [];
+				for (var key in requestParent.childObjectMap) {
+					var o = requestParent.childObjectMap[key];
+					if (!o.getIsVersionObject() && (o.objectType == "SterlingDynamicKitComponent" || o.objectType == "InheritedSterlingDynamicKitComponent")) {
+						deleteObjects.push(o);
+					}
+				}
+				while (deleteObjects.length > 0) {
+					var o = deleteObjects.shift();
+					wcfModelUtil.releaseModelObject(o);
+				}
+				super.handleServiceSuccess(requestParent);
+				var msg = catalogResources.kitDeletePreconfigSuccessful.string;
+				var messageType = "deletePreconfigSuccessful";
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg); 
+			]]>
+		</method>
+	</wcfService>
+
+	<!---
+		@keywords private
+		Select store dialog. Use this dialog to present the user with a list of stores.
+	-->
+	<wcfDialog id="wcfSelectStoreDialog" title="${foundationResources.selectStoreDialogTitle.string}" minWidth="325" minHeight="200">
+		<!---
+			The store selection handler. This object must have a changeStore method.
+		-->
+		<attribute name="storeSelectionHandler"/>
+
+		<!---
+			@keywords private
+			Open and initialize the select store dialog.
+		-->
+		<method name="openSelectStoreDialog" args="storeSelectionHandler, stores">
+			<![CDATA[
+			this.openWindow();
+			this.storeSelectionHandler = storeSelectionHandler;
+			this.selectStoreContentArea.storeCombo.setValues(stores);
+			if (stores.length > 0) {
+				this.selectStoreContentArea.storeCombo.setAttribute("selectedValue", stores[0]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.storeSelectionHandler = null;
+			this.selectStoreContentArea.storeCombo.setValues(null);
+			]]>
+		</method>
+		
+		<!---
+			Trigger change store.
+		-->
+		<method name="handleOK">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfChangeStoreConfirmationDialog handleOK");
+			this.storeSelectionHandler.changeStore(this.selectStoreContentArea.storeCombo.selectedValue, true);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+ 		<!---
+			Cancel the change store action.
+		-->
+		<method name="handleCancel">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfChangeStoreConfirmationDialog handleCancel");
+			if (this.storeSelectionHandler["cancelChangeStore"]) {
+				this.storeSelectionHandler.cancelChangeStore();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+		<view name="selectStoreContentArea">
+			<simplelayout spacing="10" axis="y"/>
+			<text name="text" text="${foundationResources.selectStoreDialogPrompt.string}" multiline="true" width="300"/>
+			<!-- The combobox populated with editable columns -->
+			<wcfBaseComboBox name="storeCombo"/>
+		</view>
+
+		<view name="footerView" placement="footer">
+			<simplelayout axis="x"/>
+			<wcfButton name="okBtn" text="${foundationResources.simpleDialogOK.string}" onclick="parent.parent.handleOK(); parent.parent.closeWindow();"/>
+			<wcfButton name="cancelBtn" text="${foundationResources.simpleDialogCancel.string}" onclick="parent.parent.handleCancel(); parent.parent.closeWindow();"/>
+		</view>
+	</wcfDialog>
+</library>

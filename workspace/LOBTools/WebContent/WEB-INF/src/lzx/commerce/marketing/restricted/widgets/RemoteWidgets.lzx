@@ -1,0 +1,85 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+	
+<library>
+
+	<!---
+		This class declares the Get Remote Widgets property widget for an e-Marketing Spot.
+	-->
+	<class name="mktPropertyGetRemoteWidget" extends="wcfPropertiesComponent">
+	
+		<!---
+			This attribute specifies the name of the {@link wcfModelProperty property} that will be used to derive the feed URL.
+		-->
+		<attribute name="propertyName" type="string"/>		
+		<!---
+			The {@link wcfModelProperty} instance that this property editor is editing.
+			@type wcfModelProperty
+		-->
+		<attribute name="property"/>
+		<!---
+			Name of the editor being created for the remote widgets integration
+		-->
+		<attribute name="editorClass" type="string" value="mktKickAppsButton"/>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if(this["updateEnablementDel"]) {
+				this.updateEnablementDel.unregisterAll();
+				delete this.updateEnablementDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			this.editor = new lz[this.editorClass](parentComponent, {
+				name: "editor",
+				parentComponent: this,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				property: parentComponent.property,
+				text: mktMarketingResources.getWidget.string,
+				parentComponent: this
+			});
+			]]>
+		</method>
+				
+		<!---
+			@keywords private
+			Set the model object for this property viewer to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			super.setModelObject(newObject);
+			var newProperty = null;
+			if (this.o != null) {
+				newProperty = this.o.getProperty(this.propertyName);
+			}
+			this.setAttribute("property", newProperty);
+			if (this["editor"]) {
+				this.editor.setAttribute("property", newProperty);
+			}
+			]]>
+		</method>
+		
+	</class>
+	
+</library>

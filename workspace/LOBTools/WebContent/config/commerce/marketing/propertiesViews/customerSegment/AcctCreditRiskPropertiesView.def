@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<PropertyGroup collapsable="false" definitionName="mktAcctCreditRiskProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/AcctCreditRisk" promptText="${mktMarketingResources.cspAcctCreditRisk}" propertyName="template"/>
+        
+		<PropertyGroup collapsable="false" name="singleAcctCreditRiskGroup">
+			<EnablementOrCondition conditionId="singleInput">
+				<EnablementCondition conditionId="greaterThan" enablementValue="greaterThan" objectPath="TopAndList/AcctCreditRisk" propertyName="template"/>
+				<EnablementCondition conditionId="lessThan" enablementValue="lessThan" objectPath="TopAndList/AcctCreditRisk" propertyName="template"/>
+			</EnablementOrCondition>
+			<PropertyNumericText objectPath="TopAndList/AcctCreditRisk/AcctCreditRiskAndOrList/AcctCreditRiskCondition" promptText="${mktMarketingResources.customerSegment_acctCreditRisk}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="multiAcctCreditRiskGroup">
+			<EnablementCondition conditionId="withinRange" enablementValue="between" objectPath="TopAndList/AcctCreditRisk" propertyName="template"/>
+			<PropertyNumericText objectPath="TopAndList/AcctCreditRisk/AcctCreditRiskAndOrList/AcctCreditRiskCondition[conditionOperator=&gt;=]" promptText="${mktMarketingResources.customerSegment_minimumAcctCreditRisk}" propertyName="conditionValue" required="true"/>
+			<PropertyNumericText objectPath="TopAndList/AcctCreditRisk/AcctCreditRiskAndOrList/AcctCreditRiskCondition[conditionOperator=&lt;=]" promptText="${mktMarketingResources.customerSegment_maximumAcctCreditRisk}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+	</PropertyGroup>
+</Definitions>

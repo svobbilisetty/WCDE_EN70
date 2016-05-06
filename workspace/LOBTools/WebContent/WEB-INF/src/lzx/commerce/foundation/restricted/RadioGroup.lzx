@@ -1,0 +1,729 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		The class wcfBaseRadioGroup applies WeSphere Commerce own visual design to the base OpenLaszlo radio group 
+		design. Radio groups are used to group a set of radio buttons and making sure that from that group or radio
+		buttons there is only one that can remain selected.
+		
+		<p>Use wcfBaseRadioGroup when implementing a basic radio group that has the WeSphere Commerce look and feel. 
+		Reference {@OLlink radiogroup} for more details of the radio group's capabilities.
+		
+		<p>The example below will help allow business users to select a value of one to three.
+		@START_CODE	
+		<BaseRadioGroup name="number">
+		   	<BaseRadioButton value="1" text="${resourceBundle.valueOne}"/>
+		   	<BaseRadioButton value="2" text="${resourceBundle.valueTwo}"/>
+	    	<BaseRadioButton value="3" text="${resourceBundle.valueThree}" selected="true"/>
+		</BaseRadioGroup>
+		@END_CODE	
+	-->
+	<class name="wcfBaseRadioGroup" extends="radiogroup" layout="class: simplelayout; axis: y; inset:3" defaultplacement="content">
+		<!---
+			@keywords private
+			Sets wcfBaseRadioGroup to use {@link wcfBaseRadioButton} for it's selectable options
+		-->
+		<attribute name="itemclassname" value="wcfPropertyValueRadioButton"/>
+		
+		<!--- @keywords private -->
+		<method name="_dokeydown" args="kc">
+	            <![CDATA[
+	            super._dokeydown(kc);
+	            
+	            /* do not select item on 'enter' key */
+	            this.setAttribute( 'doesenter', false );
+	            ]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Handle onselect event. 
+		-->
+		<handler name="onselect">	
+			<![CDATA[
+			if (this.isinited && lz.Focus.getFocus() == this) {					
+				this.setHilite(this.getSelection());
+			}
+			]]>
+		</handler>
+		<!---
+			@keywords private
+			Handle onfocus event. 
+		-->
+		<handler name="onfocus">
+			<![CDATA[				
+			if (this.getSelection() != null) {
+				this.setHilite(this.getSelection());				
+			} else {
+				this.setHilite(this.getItemAt(0));				
+			}
+			
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this, 
+			    	placement: "interior"
+			    });
+		    } 
+			]]>
+		</handler>
+		
+		<view name="content"/>
+	</class>
+
+	<!---
+		@keywords private
+		Used in {@OLlink wcfBaseRadioButton} when multiline is false
+	-->
+	<class name="wcfRadioButtonText" extends="text" multiline="false" x="17" y="-2" text="${parent.text}"/>
+	
+	<!---
+		@keywords private
+		Used in {@OLlink wcfBaseRadioButton} when multiline is true, width must also be set for multiline to work
+	-->
+	<class name="wcfRadioButtonMulitlineText" extends="text" multiline="true" x="17" y="-2" text="${parent.text}" width="${parent.width-17}"/>
+	
+	<!---
+		The class wcfBaseRadioButton applies WeSphere Commerce own visual design to the base OpenLaszlo radio button 
+		design. Radio button provides a very simple two-state button with a label. It is to be used in conjunction
+		with {@link wcfBaseRadioGroup}.
+		
+		<p>Use wcfBaseRadioButton when implementing a basic radio button that has the WeSphere Commerce look and feel. 
+		
+		<p>The example below will help allow business users to select a value of one to three.
+		@START_CODE	
+		<BaseRadioGroup name="number">
+		   	<BaseRadioButton value="1" text="${resourceBundle.valueOne}"/>
+		   	<BaseRadioButton value="2" text="${resourceBundle.valueTwo}"/>
+	    	<BaseRadioButton value="3" text="${resourceBundle.valueThree}" selected="true"/>
+		</BaseRadioGroup>
+		@END_CODE	
+	-->
+	<class name="wcfBaseRadioButton" extends="baselistitem" focusable="false" clickable="true" >
+		<!--- 
+			@keywords private 
+			Sets the text in the radio button to multiline
+		-->
+		<attribute name="multiline" type="boolean" value="false"/>
+		<!--- 
+			Sets the source for the buttons image
+		-->
+		<attribute name="imageSrc" type="string" value="" />
+		
+		<!---
+			@keywords private
+			Radio button descriptor.
+		-->
+		<attribute name="descriptor" value="null"/>
+		
+		<simplelayout axis="x" spacing="5" />
+        <multistatebutton name="rb" resource="radioButton" text=""
+            statenum="${parent.selected ? 1 : 0}"
+            statelength="4" maxstate="1"
+            reference="parent">
+        </multistatebutton>
+        <image name="buttonImage" src="${classroot.imageSrc}" />
+        
+        <!--- 
+			@keywords private 
+		-->
+		<method name="init">
+			<![CDATA[ 
+			if (this.descriptor != null) {
+				this._title = this.descriptor.createTitle(this);
+			}
+			else if (this.multiline) {
+				this._title = new lz.wcfRadioButtonMulitlineText(this);
+			}
+			else {
+				this._title = new lz.wcfRadioButtonText(this);
+			}
+			new lz.view(this, {width:10});
+			super.init();
+ 			]]>
+		</method>
+        <!--- 
+			@keywords private 
+			Updates the radio button label color to use for both enabled and disabled states. 
+		-->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (this.style != null) {
+				if(_enabled) {
+					this._title.setAttribute('fgcolor', this.style.radiolabeltextcolor);
+				}
+				else {
+					this._title.setAttribute('fgcolor', this.style.textdisabledcolor);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- 
+			@keywords private 
+			Apply the look and feel for the radio button when it is enabled.
+		-->
+		<method name="_showEnabled">
+			<![CDATA[
+			this._applystyle(null);
+			]]>
+		</method>
+
+		<!--- 
+			@keywords private 
+			Sets the hightlight cue to this radio button. This method will be called automatically by the parent
+			radio group. 
+			@param boolean doHilite true if the button will be highlighted. False if the button's highlight is to be removed. 
+		-->
+		<method name="setHilite" args="doHilite"><![CDATA[
+			if(doHilite){				
+				this.setAttribute("bgcolor", this.style.hilitecolor);
+				this._title.setAttribute("fgcolor", this.style.texthilitecolor); 
+			}else{
+				this.setAttribute("bgcolor", null);
+				this._title.setAttribute("fgcolor", this.style.radiolabeltextcolor); 
+			}
+			]]>
+		</method>
+    </class>
+		<!---
+		@keywords final
+		This class defines a widget that displays a radio group containing a list of radio buttons that the user can select. 
+		For more information on radio group see {@link wcfBaseRadioGroup}.
+
+		<p>The name of the property specified by the {@link wcfPropertyEditor#propertyName propertyName} attribute is resolved to 
+		the associated {@link wcfPropertyDefinition}. A radio button is created for each {@link wcfPropertyValue possible value}
+		of this associated {@link wcfPropertyDefinition} and put into the radio group.
+		
+		<p>Instances of this class may only be declared as immediate sub-nodes of {@link wcfPropertyPane} or {@link wcfPropertyGroup}.
+		
+		<p>The code snippet below demonstrates how this class is used:
+
+		@START_CODE
+			...
+			<PropertyDefinition propertyName="unitOfMeasure">
+				<PropertyValue displayName="Kilogram" value="KGM"/>
+				<PropertyValue displayName="milligram" value="LBR"/>
+				<PropertyValue displayName="1 Unit" value="C62"/>
+			</PropertyDefinition>
+			...
+			<PropertyGroup>
+				<PropertyRadioGroup propertyName="unitOfMeasure"	promptText="Select the Unit of Measure"/>
+			</PropertyGroup>
+		@END_CODE
+		
+		<p>In the above code, a radio group with three radio buttons will be created. The text and value
+		of each of the three radio buttons correspond to the displayName and value of the three <code>wcfPropertyValue</code>
+		pairs above.
+	-->
+	<class name="wcfPropertyRadioGroup" extends="wcfPropertyEditor">
+		
+		<!---
+			@keywords private
+			Array of radio button descriptors.
+		-->
+		<attribute name="radioButtonDescriptors" value="null"/>
+		<!---	
+			@keywords private
+			Create the radio group editor for the given property component. This method overrides the createEditor method in 
+			the {@link wcfPropertiesComponent} class.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			if (this.sizeToAvailableWidth) {
+				new lz.wcfRadioGroup(parentComponent, {
+					name: "editor",
+					x: parentComponent.promptWidth + parentComponent.xspacing,
+					property: parentComponent.property,
+					enabled: parentComponent.enabled,
+					width: parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing,
+					radioButtonDescriptors: radioButtonDescriptors
+				});
+			}
+			else {
+				new lz.wcfRadioGroup(parentComponent, {
+					name: "editor",
+					x: parentComponent.promptWidth + parentComponent.xspacing,
+					property: parentComponent.property,
+					enabled: parentComponent.enabled,
+					radioButtonDescriptors: radioButtonDescriptors
+				});
+			}
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		@keywords private
+		Base class for radio button content. This is used to display the title and any additional content for the radio button.
+	-->
+	<class name="wcfRadioButtonContent" x="17" y="-2">
+		<!--- Radio button descriptor -->
+		<attribute name="descriptor"/>
+		<simplelayout axis="y" spacing="2"/>
+		<text text="${this.parent.descriptor.text}"/>
+
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updatePropertyDel = new lz.Delegate(this, "updateProperty");
+			this.updatePropertyDel.register(this.parent.parent, "onproperty");
+			this.updateValueDel = new lz.Delegate(this, "updateValue");
+			this.updateProperty();
+			this.updateContentWidthDel = new lz.Delegate(this, "updateContentWidth");
+			this.updateContentWidthDel.register(this.parent.parent, "onwidth");
+			]]>
+		</method>
+
+		<method name="destroy">
+			<![CDATA[
+			this.updatePropertyDel.unregisterAll();
+			delete this.updatePropertyDel;
+			this.updateValueDel.unregisterAll();
+			delete this.updateValueDel;
+			this.updateContentWidthDel.unregisterAll();
+			delete this.updateContentWidthDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<method name="updateProperty" args="e=null">
+			<![CDATA[
+			this.descriptor.updateProperty(this, this.parent.parent.property);
+			this.updateValueDel.unregisterAll();
+			if (this.parent.parent.property != null) {
+				this.updateValueDel.register(this.parent.parent.property, "onvalue");
+				this.updateValue();
+			}
+			]]>
+		</method>
+
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			this.descriptor.updateValue(this, this.parent.parent.property);
+			]]>
+		</method>
+
+		<method name="updateContentWidth" args="e=null">
+			<![CDATA[
+			this.descriptor.updateContentWidth(this);
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This class defines a radio button descriptor that can be used with {@link wcfPropertyRadioGroup}. Radio groups
+		defined with instances of wcfRadioButtonDescriptor must define all of the available choices through the descriptors.
+		The property values of the property associated with the radio group will not be used to create radio buttons.
+
+		<p>The following example demonstrates the use of two radio button descriptors
+
+		@START_CODE
+			<PropertyRadioGroup propertyName="useDefault" promptText="useDefault">
+				<RadioButtonDescriptor value="true" text="Use default"/>
+				<RadioButtonDescriptor value="false" text="Override default"/>
+			</PropertyRadioGroup>
+		@END_CODE
+		
+		<p>In the above code, a radio group with two radio buttons will be created.
+	-->
+	<class name="wcfRadioButtonDescriptor" extends="node">
+		<!--- Radio button value -->
+		<attribute name="value" type="string"/>
+
+		<!--- Radio button text -->
+		<attribute name="text" type="string" value=""/>
+
+		<!--- @keywords private -->
+		<attribute name="sizeToAvailableWidth" type="boolean" value="false"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (this.parent["radioButtonDescriptors"] == null) {
+				this.parent.radioButtonDescriptors = [];
+			}
+			this.parent["radioButtonDescriptors"].push(this);
+			if (this.sizeToAvailableWidth && !this.parent.sizeToAvailableWidth) {
+				this.parent.setAttribute("sizeToAvailableWidth", true);
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="createTitle" args="radioButton">
+			<![CDATA[
+			return new lz.wcfRadioButtonContent(radioButton, {
+				name: "content",
+				descriptor: this
+			});
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateProperty" args="content, property">
+			<![CDATA[
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateValue" args="content, property">
+			<![CDATA[
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updateContentWidth" args="content">
+			<![CDATA[
+			if (this.sizeToAvailableWidth && content["editor"]) {
+				content.editor.setAttribute("width", content.parent.parent.width - 25);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		This class defines a radio button descriptor that can be used with {@link wcfPropertyRadioGroup}. The radio
+		button will display a property viewer below the radio button title.
+	-->
+	<class name="wcfRadioButtonWithPropertyViewerDescriptor" extends="wcfRadioButtonDescriptor" sizeToAvailableWidth="true">
+		<!--- The name of the property to be displayed in the property viewer. -->
+		<attribute name="viewerPropertyName" type="string"/>
+
+		<!--- @keywords private -->
+		<method name="updateProperty" args="content, property">
+			<![CDATA[
+			var viewerProperty = null;
+			if (property != null) {
+				viewerProperty = property.o.getProperty(this.viewerPropertyName);
+			}
+			if (typeof(content["editor"]) == "undefined") {
+				new lz.wcfTextViewer(content, {
+					name: "editor",
+					fgcolor: 0x676767,
+					property: viewerProperty,
+					width: content.parent.parent.width - 25
+				});
+			}
+			else {
+				content.editor.setAttribute("property", viewerProperty);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		This class defines the text editor that is used inside the radio button content defined by an instance of {@link wcfRadioButtonWithInputTextDescriptor}.
+	-->
+	<class name="wcfRadioButtonTextEditor" extends="wcfTextEditor">
+		<handler name="onmousedown">	
+			<![CDATA[
+			var radioButton = this.parent.parent;
+			if (radioButton.parent.enabled) {
+				radioButton.parent.selectItem(radioButton.value);
+			}
+			]]>
+		</handler>
+	</class>
+	
+	<!---
+		This class defines a radio button descriptor that can be used with {@link wcfPropertyRadioGroup}. The radio
+		button will display a property input text field below the radio button title.
+	-->
+	<class name="wcfRadioButtonWithInputTextDescriptor" extends="wcfRadioButtonDescriptor" sizeToAvailableWidth="true">
+		<!--- The name of the property to be edited by the property editor. -->
+		<attribute name="editorPropertyName" type="string"/>
+		<!--- Indicates that the editor is a multi-line input text field. -->
+		<attribute name="multiline" type="boolean" value="false"/>
+		
+		<!--- @keywords private -->
+		<method name="updateProperty" args="content, property">
+			<![CDATA[
+			var editorProperty = null;
+			if (property != null) {
+				editorProperty = property.o.getProperty(this.editorPropertyName);
+			}
+			if (typeof content["editor"] == "undefined") {
+				var editorArgs = {
+					name: "editor",
+					property: editorProperty,
+					width: content.parent.parent.width - 25,
+					enabled: property.value == this.value
+				};
+				if (this.multiline) {
+					editorArgs.multiline = true;
+					editorArgs.maximumHeight = 200;
+				}
+				new lz.wcfRadioButtonTextEditor(content, editorArgs);				
+			}
+			else {
+				content.editor.setAttribute("property", editorProperty);
+			}
+			
+			]]>
+		</method>	
+				
+		<!--- @keywords private -->
+		<method name="updateValue" args="content, property">
+			<![CDATA[
+			var editorEnabled = property.value == this.value;
+			content.editor.setAttribute("enabled", editorEnabled);
+			
+			if (!editorEnabled && property.dirty) {
+				var editorProperty = property.o.getProperty(this.editorPropertyName);
+				editorProperty.change("");
+			}
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		@keywords private
+		
+		This radio group implementation is for internal use by both {@link wcfPropertyRadioGroup} and {@link wcfGridRadioGroup} 
+		to bind a {@link wcfModelProperty} with the radio group. Given a {@link wcfPropertyDefinition} as an input,
+		this class generates a set of radio buttons which supports the object properties model.
+	-->
+	<class name="wcfRadioGroup" extends="wcfBaseRadioGroup">
+	
+		<!---
+			@keywords private
+			Array of radio button descriptors.
+		-->
+		<attribute name="radioButtonDescriptors" value="null"/>
+		<!--- Reference to {@link wcfModelProperty} object that is being edited. -->
+		<attribute name="property" value="null" setter="setProperty(property)" />
+
+		<!--- 
+			@keywords private
+			Cleanup delegates when this widget is destroyed  
+		-->
+		<method name="destroy">
+			<![CDATA[
+				if (this["updateValueDel"]) {
+					this.updateValueDel.unregisterAll();
+					delete this.updateValueDel;
+				}
+				if (this["propValueDel"]) {
+					this.propValueDel.unregisterAll();
+					delete this.propValueDel;
+				}
+				super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Set the {@link wcfModelProperty} to be associated with this radio group. Listeners are created to
+			watch the property value. If the property changes at anytime, the updateValue method will be called.
+			@param wcfModelProperty newProperty: New Property associated with this radio group.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					if(isinited) {
+						this.createRadioButtons();
+					}
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+				else {
+					this.clearSelection();
+					this.value = "";
+				}
+				
+				if (this["onproperty"]) {
+					this.onproperty.sendEvent();
+				}
+			}
+			]]>
+		</method>
+
+		<!--- 
+			@keywords private
+			Create the radio buttons once the widget is initialized.
+		-->
+		<handler name="oninit">
+			<![CDATA[
+			if (this["property"]) {
+				this.createRadioButtons();
+			}
+			]]>
+		</handler>
+
+		<!--- Create the actual radio group and child radio buttons -->
+		<method name="createRadioButtons" args="e=null">
+			<![CDATA[
+			if (this.radioButtonDescriptors != null && this.radioButtonDescriptors.length > 0) {
+				if (!this["_buttonsCreated"]) {
+					this._buttonsCreated = true;
+					for (var i = 0; i < this.radioButtonDescriptors.length; i++) {
+						var descriptor = this.radioButtonDescriptors[i];
+						new lz.wcfBaseRadioButton(this, {
+							value: descriptor.value,
+							descriptor: descriptor
+						});
+					}
+				}
+				if (this.property) {
+					this.updateValue();
+				}
+			}
+			else if (this.property && this.property.propertyDefinition != null) {
+				var propDef = this.property.propertyDefinition;
+				
+				if (!this["propValueDel"]) {
+					this.propValueDel = new lz.Delegate(this, "createRadioButtons");
+				}
+				else {
+					this.propValueDel.unregisterAll();
+				}
+
+				var propertyValues = this.property.propertyDefinition.getPropertyValues(this.property.o, this.propValueDel);
+				
+				var createItems = false;
+				if (!this["_propertyValues"]) {
+					createItems = true;
+				}
+				if (!createItems && this._propertyValues.length != propertyValues.length) {
+					createItems = true;
+				}
+				if (!createItems) {
+					for (var i = 0; i < this._propertyValues.length; i++) {
+						if (this._propertyValues[i].value != propertyValues[i].value || this._propertyValues[i].displayName != propertyValues[i].displayName) {
+							createItems = true;
+							break;
+						}
+					}
+				}
+
+				if (createItems) {
+					this._propertyValues = propertyValues;
+					for(var i = this.getNumItems() - 1; i >= 0; i--) {
+						this.removeItemAt(i);
+					}
+					for (var i = 0; i < propertyValues.length; i++) {
+						var propertyValue = propertyValues[i];
+						
+						this.addItem(propertyValue.displayName, propertyValue.value);
+						var newItem = this.getItem(propertyValue.value);
+						newItem.setAttribute("propertyValue", propertyValue);
+					}
+				}
+				this.updateValue();
+			}
+			]]>
+		</method>
+
+		<!--- Update the widget with a new property value. -->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			var value = this.property.value;
+			if (value != this.value) {
+				if (value != null && value != "") {
+					this.selectItem(value);
+				}
+				else {
+					this.clearSelection();
+					this.value = value;
+				}
+			}
+			]]>
+		</method>
+
+		<!--- 
+			Set the wcfModelProperty to represent the value of the selected radio button from this
+			radio group. This method is called when the radio button selection from this radio group 
+			has changed.
+		-->
+		<method name="storeValue">
+			<![CDATA[
+			if (this.property) {
+				this.property.change(this.getValue());
+				if(wcfLogger.enabled){
+					wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfRadioGroup", "storeValue", "updates the model property " + this.property.propertyName + " with new value " + this.getValue() + this.property.o.logString());
+				}
+			}
+			]]>
+		</method>
+
+		<!--- 
+			When the selection of the radio group is changed by the business user, storeValue method will be called.
+		-->
+		<handler name="onvalue">
+			<![CDATA[
+			if (this._initcomplete) {
+				this.storeValue();
+			}
+			]]>
+		</handler>
+
+	</class>
+	
+	<!---
+		@keywords private
+	 -->
+	<class name="wcfPropertyValueRadioButton" extends="wcfBaseRadioButton">
+        <attribute name="propertyValue"/>
+        
+		<setter name="propertyValue" args="v">
+			<![CDATA[
+			if (this["propertyValue"] != v) {
+				this.propertyValue = v;
+				if (this["updateTextDel"]) {
+					this.updateTextDel.unregisterAll();
+				} else {
+					this.updateTextDel = new lz.Delegate(this, "updateText");
+				}
+				if (this.propertyValue != null) {
+					this.updateTextDel.register(this.propertyValue, "ondisplayName");
+				}
+			}
+			]]>
+		</setter>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateTextDel"]) {
+				this.updateTextDel.unregisterAll();
+				delete this.updateTextDel;
+			}
+			
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateText" args="e=null">
+			<![CDATA[
+			this.setAttribute("text", this.propertyValue.displayName);
+			]]>
+		</method>
+    </class>
+</library>

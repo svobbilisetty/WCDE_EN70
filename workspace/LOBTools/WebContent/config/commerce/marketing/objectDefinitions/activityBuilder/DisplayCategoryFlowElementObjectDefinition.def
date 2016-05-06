@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the flow element object definition for the Display Category action. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_categoryIdList as a parameter</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_categoryIdList as a parameter</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildCatalogGroup type which references the
+				{@link CatalogGroup CatalogGroup} and {@link SalesCatalogGroup SalesCatalogGroup} object types</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedCatalogGroup type which references the
+				{@link InheritedCatalogGroup InheritedCatalogGroup} object type</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator wcfRequiredChildObjectValidator} to ensure at least one category is selected</li>
+		</ul>
+	-->
+	<FlowElementObjectDefinition definitionName="mktDisplayCategoryElementObject" displayName="${mktMarketingResources.displayCategoryName}" elemTemplateType="Action" flowIcon="displayCategoryIcon" headerIcon="displayCategoryHeaderIcon" helpLink="concepts/csbactdiscat.htm" objectType="displayCategory" package="mkt" paletteIcon="displayCategoryPaletteIcon" propertiesDefinitionName="mktDisplayCategoryProperties" summaryClass="mktDisplayCategorySummary">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_categoryIdList" objectPath="ChildCatalogGroup/CatalogGroupAlias" optional="true" propertyName="catgroupId"/>
+			<ServiceParam name="ASSOCIATEDPROPERTY_sequence_categoryIdList" objectPath="ChildCatalogGroup" optional="true" propertyName="sequence"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_categoryIdList" objectPath="ChildCatalogGroup/CatalogGroupAlias" optional="true" propertyName="catgroupId"/>
+			<ServiceParam name="ASSOCIATEDPROPERTY_sequence_categoryIdList" objectPath="ChildCatalogGroup" optional="true" propertyName="sequence"/>
+		</UpdateService>
+
+		<Xml name="template">
+			<elemTemplateName>displayCategory</elemTemplateName>
+		</Xml>
+		
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate" derivedId="true" idProperty="childCatalogGroupId" objectGroups="ChildCatalogGroup,ChildCatalogGroupGroup" objectType="ChildCatalogGroup" referencedTypes="CatalogGroup,SalesCatalogGroup"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCatalogGroupId" objectGroups="ChildCatalogGroup,ChildCatalogGroupGroup" objectType="ChildInheritedCatalogGroup" referencedTypes="InheritedCatalogGroup,InheritedSalesCatalogGroup"/>
+
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noCategoriesSelected}" objectPath="ChildCatalogGroup" validatorId="reqChildValidator" validatorType="noCategoriesSelected"/>
+	</FlowElementObjectDefinition>
+	
+</Definitions>

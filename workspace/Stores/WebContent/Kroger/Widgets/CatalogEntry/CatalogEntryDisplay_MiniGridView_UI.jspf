@@ -1,0 +1,90 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+
+<flow:ifEnabled feature="Analytics">
+<c:if test="${fn:contains(catEntryDisplayUrl, '?')}">
+   <c:set var="cmcrurl" value="${fn:replace(cmcrurl, '?', '&')}" />
+</c:if>
+</flow:ifEnabled>
+
+<c:set var="spacelessEmsName_miniGrid" value=""/>
+<c:if test="${!empty param.emsName && param.emsName != null}">
+	<c:set var="spacelessEmsName_miniGrid" value="${fn:replace(param.emsName, ' ', '')}"/>
+</c:if>
+
+<div id="MiniGridViewProdImg_${spacelessEmsName_miniGrid}${catEntryIdentifier}" class="product_image" onblur="hideSection('catalogEntry_img_div${spacelessEmsName_miniGrid}${catEntryIdentifier}');">
+	<c:remove var="catalogEntry_url"/>
+	<c:set var="catalogEntry_url" value='${catEntryDisplayUrl}${cmcrurl}' />
+	<a ${ShowProductInNewWindow} id="catalogEntry_img_${spacelessEmsName_miniGrid}<c:out value='${catEntryIdentifier}'/>"
+		href="javascript:void(0);"
+		onclick="if (!isAndroid() && !isIOS()) {document.location.href='<c:out value='${catEntryDisplayUrl}${cmcrurl}' escapeXml='false'/>'} else {void(0);}"
+		aria-label="${altImgText}"
+		onkeydown="shiftTabHideSection('catalogEntry_img_div${spacelessEmsName_miniGrid}${catEntryIdentifier}',event);"
+		onfocus="showSection('catalogEntry_img_div${spacelessEmsName_miniGrid}${catEntryIdentifier}');" 		
+		title="${altImgText}"
+		ontouchend="if (isAndroid() || isIOS()) {handlePopup('<c:out value='${catEntryDisplayUrl}${cmcrurl}' escapeXml='false'/>','catalogEntry_img_div${spacelessEmsName_miniGrid}${catEntryIdentifier}');}"
+		>
+		<img alt="" src="${imgSource}"/>
+		<c:forEach var="attribute" items="${attributes}" varStatus="status2">
+			<c:if test="${attribute.usage == 'Descriptive' && fn:startsWith(attribute.identifier,'ribbonad')}">
+				<c:forEach var="attrValue" items="${attribute.values}">
+					<c:remove var="ribbonadImage1"/>
+					<c:forEach var="extVal" items="${attrValue.extendedValue}">
+						<c:if test="${extVal.key == 'Image1Path'}">
+							<c:set var="ribbonadImage1" value="${env_imageContextPath}/${extVal.value}"/>																								
+						</c:if>									
+					</c:forEach>
+					<c:if test="${!empty ribbonadImage1}">
+						<div class="ribbonad_<c:out value='${attrValue.value}'/>">
+							<img src="<c:out value='${ribbonadImage1}'/>" id="ribbonad_${spacelessEmsName_miniGrid}_${catEntryIdentifier}_${attrValue.value}" alt="${attrValue.value}" border="0"/>
+						</div>
+					</c:if>		
+				</c:forEach>								
+			</c:if>
+		</c:forEach>		
+	</a>	
+	<div id="catalogEntry_img_div${spacelessEmsName_miniGrid}${catEntryIdentifier}" class="quick_info_toggle">
+		<a id="MiniGridQuickView_${spacelessEmsName_miniGrid}${catEntryIdentifier}" title="<fmt:message key='QUICK_VIEW_BUTTON_ACCE'/>" role="button" wairole="button" href="javascript:void(0);" onclick="setCurrentId('MiniGridQuickView_${spacelessEmsName_miniGrid}${catEntryIdentifier}');QuickInfoJS.showDetails('${catEntryIdentifier}');"
+			ontouchend="if (isAndroid() || isIOS()) {setCurrentId('MiniGridQuickView_${spacelessEmsName_miniGrid}${catEntryIdentifier}');QuickInfoJS.showDetails('${catEntryIdentifier}');}"
+			onblur="hideSection('catalogEntry_img_div${spacelessEmsName_miniGrid}${catEntryIdentifier}');">
+			<fmt:message key="QUICK_VIEW"/>
+		</a>
+	</div>
+</div>
+<div class="product_info">
+	<div class="product_name">
+		<a id="WC_CatalogEntryDBThumbnailDisplayJSPF_${spacelessEmsName_miniGrid}${catEntryIdentifier}_link_9b"
+					${ShowProductInNewWindow} href="<c:out value="${catEntryDisplayUrl}${cmcrurl}" escapeXml="false"/>" >
+			<c:out value="${highlightedName}" escapeXml="false"/>
+		</a>
+	</div>
+	<div class="product_price" id="product_price_${spacelessEmsName_miniGrid}${catEntryIdentifier}">
+
+			<%@include file = "../../Widgets/PriceDisplay/PriceDisplay.jsp" %> 
+			
+			<%-- 
+				* Uncomment below code to use c:import for priceDisplay. Import price display if this fragment is cached independently.
+				* Pass catEntryIdentifier while importing, so that priceDisplay fragment can be cached based on catEntryIdentifier request parameter. 
+			--%>
+
+			<%-- out.flush(); %>
+			<c:import url="${env_jspStoreDir}Widgets/PriceDisplay/PriceDisplay.jsp" >
+				<c:param name="catEntryIdentifier" value="${catEntryIdentifier}"/> 
+			</c:import>
+			<% out.flush(); --%>
+
+	</div>
+
+</div>		

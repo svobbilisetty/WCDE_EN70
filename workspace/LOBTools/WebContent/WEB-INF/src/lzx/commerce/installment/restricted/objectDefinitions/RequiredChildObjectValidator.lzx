@@ -1,0 +1,35 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<class name="istRequiredChildObjectValidator" extends="wcfRequiredChildObjectValidator">
+		<attribute name="enablementPropertyName" type="string" value=""/>
+		<attribute name="enablementValue" type="string" value=""/>
+
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(o && (this.enablementPropertyName != "")) {
+				var enablementPropertyValue = o.getPropertyValue(this.enablementPropertyName);
+				if(enablementPropertyValue == this.enablementValue) {
+					super.validate(o);
+				}
+				else {
+					o.clearValidationError(this);
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

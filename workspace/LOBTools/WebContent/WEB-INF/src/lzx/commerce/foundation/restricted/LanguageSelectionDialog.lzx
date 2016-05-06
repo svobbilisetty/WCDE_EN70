@@ -1,0 +1,181 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		Input Language Selection Dialog.
+	-->
+	<class name="wcfLanguageSelectionDialog" extends="wcfDialog" title="${foundationResources.languageSelectionDialog_title.string}">
+		<!---
+			Reference to the context that will be modified by this dialog.
+		-->
+		<attribute name="localContext"/>
+		<!---
+			Array of input language options. 
+		-->
+		<attribute name="languageOptions" value="${[]}"/>
+
+		<!---
+			Handle OK. 
+		-->
+		<method name="onOk">
+		<![CDATA[
+			var selectedToolInputLanguageId = mainView.languageOptionListView.borderedView.clippedContent.languageOptions.getSelection().getValue();
+			var selectedLanguageIds = [];
+			var preferredLanguageIds = [];
+			var languages = this.localContext.storeConfig.supportedLanguages;
+			for (var i = 0; i < languages.length ; i++){
+				var language = languages[i];
+				var isSelected = language.isDefault || language.languageId == selectedToolInputLanguageId;
+				if (language.isDefault || language.languageId == selectedToolInputLanguageId) {
+					selectedLanguageIds.push(language.languageId);
+				}
+				if (!language.isDefault && language.languageId == selectedToolInputLanguageId) {
+					preferredLanguageIds.push(language.languageId);
+				}
+			}
+			this.closeWindow();
+			if (wcfLogger.enabled) {
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfLanguageSelectionDialog", "onOk", "preferredLanguageIds="+preferredLanguageIds);
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfLanguageSelectionDialog", "onOk", "selectedLanguageIds="+selectedLanguageIds);
+			}
+			preferenceManager.setPreference("CMCInputLanguageIds", preferredLanguageIds.join());
+			preferenceManager.sendPreferenceChangedEvent("CMCInputLanguageIds");
+		]]>
+		</method>
+
+		<!---
+			Handle Cancel. 
+		-->
+		<method name="onCancel">
+			this.closeWindow();
+		</method>
+
+		<!---
+			Open the Input Language Selection Dialog.
+			@param wcfBaseContext context: context
+		 -->
+		<method name="openLanguageSelectionDialog" args="context">
+			<![CDATA[
+			this.openWindow();
+			this.localContext = context;
+			
+			var languageCount = 0;
+			var defaultLanguage = this.localContext.storeConfig.getDefaultLanguage();
+
+			var defaultOption = null;
+			if (languageCount < this.languageOptions.length) {
+				defaultOption = this.languageOptions[languageCount];
+				defaultOption.setAttribute("visible", true);
+			}	
+			else {
+				defaultOption = new lz.wcfBaseRadioButton(mainView.languageOptionListView.borderedView.clippedContent.languageOptions);
+				this.languageOptions.push(defaultOption);
+			}
+			languageCount++;
+			
+			defaultOption.setAttribute("text", foundationResources.languageSelectionDialog_default_language_text.string);
+			defaultOption.setAttribute("selected", true);
+			defaultOption.setAttribute("value", "");
+
+			var selectedLanguageIds = wcfContextUtil.findContextValue(this, "inputLanguageIds").value.split(",");
+			var storeLanguages = this.localContext.storeConfig.supportedLanguages;
+			for (var i = 0; i < storeLanguages.length; i++){
+				var language = storeLanguages[i];
+				if(!language.isDefault){
+					var languageOption = null;
+					if (languageCount < this.languageOptions.length) {
+						languageOption = this.languageOptions[languageCount];
+						languageOption.setAttribute("visible", true);
+					}	
+					else {
+						languageOption = new lz.wcfBaseRadioButton(mainView.languageOptionListView.borderedView.clippedContent.languageOptions);
+						this.languageOptions.push(languageOption);
+					}
+					languageCount++;
+					
+					languageOption.setAttribute("text", language.languageDescription);
+					languageOption.setAttribute("selected", selectedLanguageIds.indexOf(language.languageId) >= 0);
+					languageOption.setAttribute("value", language.languageId);
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			Close the Input Language Selection Dialog.
+		 -->
+		<method name="closeWindow">
+		<![CDATA[
+			super.closeWindow();
+			for (var i = 0; i < this.languageOptions.length; i++) {
+				this.languageOptions[i].setAttribute("visible", false);
+			}
+		]]>
+		</method>
+
+		<view name="mainView">
+
+			<view name="languageOptionListView">
+				<simplelayout axis="y" spacing="5" />
+				<text multiline="true" resize="true" width="350" placement="header" text="${foundationResources.languageSelectionDialog_label_1.string}"/>
+				<wcfBorderedView name="borderedView" width="${parent.width}" height="268" borderSize="1" borderColor="${parent.parent.parent.style.bordercolumnlistcolor}">
+					<attribute name="hScrollRequired" type="boolean" value="${this.clippedContent.languageOptions.width > this.clippedContent.width}"/>
+					<attribute name="vScrollRequired" type="boolean" value="${this.clippedContent.languageOptions.height > this.clippedContent.height}"/>
+					<attribute name="hScrollHeight" type="number" value="${(this.hScrollRequired ? this.hScroll.height : 0)}"/>
+					<attribute name="vScrollWidth" type="number" value="${(this.vScrollRequired ? this.vScroll.width : 0)}"/>
+					<view name="clippedContent" clip="true"
+							x="3"
+							y="3"
+							width="${parent.width - parent.vScrollWidth - 6}"
+							height="${parent.height - parent.hScrollHeight - 6 }">
+						<wcfBaseRadioGroup x="3" y="3" name="languageOptions"/>
+					</view>
+					<wcfHorizontalScrollbar name="hScroll" scrolltarget="parent.clippedContent.languageOptions"
+							x="-1"
+							y="${parent.clippedContent.y + parent.clippedContent.height + 2}"
+							width="${parent.width-parent.vScrollWidth}"
+							visible="${parent.hScrollRequired}"/>
+					
+					<wcfVerticalScrollbar name="vScroll" scrolltarget="parent.clippedContent.languageOptions"
+							x="${parent.clippedContent.x + parent.clippedContent.width + 2}"
+							y="-1"
+							height="${parent.height-parent.hScrollHeight}"
+							visible="${parent.vScrollRequired}"/>
+				</wcfBorderedView>
+			</view>	
+	
+			<simplelayout axis="y" spacing="20" />
+		</view>	
+		
+		<view name="buttonSection" placement="footer">
+			<wcfButton name="okButton" text="${foundationResources.languageSelectionDialog_okBtnName.string}" isdefault="true">
+				<handler name="onclick">
+					classroot.onOk();
+				</handler>
+			</wcfButton>
+			<wcfButton name="cancelButton" text="${foundationResources.languageSelectionDialog_cancelBtnName.string}">
+				<handler name="onclick">
+					classroot.onCancel();
+				</handler>
+			</wcfButton>
+			<simplelayout axis="x"/>
+		</view>
+
+	</class>
+
+	<wcfLanguageSelectionDialog id="languageSelectionDialog" />
+	
+</library>

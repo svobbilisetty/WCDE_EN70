@@ -1,0 +1,2302 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+    <!---
+    	Search results navigation tree node.
+		@keywords private
+    -->
+	<class name="wcfSearchResultsTree" extends="wcfTree" text="${foundationResources.searchResultsTree.string}" isTreeLeaf="true" icon="searchResultsTreeIcon">
+		<!---
+			Reference to the business object editor.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			Cache of search results views.
+		-->
+		<attribute name="searchResultsViewCache" value="${{}}"/>
+		<!---
+			The current search definition.
+		-->
+		<attribute name="searchDefinition" value="null" setter="this.setSearchDefinition(searchDefinition)"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "init");
+			}
+			super.init();
+			this.showDetailsViewDel = new lz.Delegate(this, "showDetailsView");
+			new lz.wcfSearchResultTreeMenu(this, {
+				name: "menu",
+				tree: this,
+				searchDefinitions: this.oEditor.searchWidget.searchDefinitions
+			});
+			this.menu.addView(this.item.contextMenuArea);
+			this.setAttribute("searchDefinition", this.oEditor.searchWidget.defaultDefinition);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "init");				
+			}			
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			delete this.showDetailsViewDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="onselected" args="isSelected">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "onselected(isSelected)", [isSelected]);
+			}
+			if (isSelected) {
+				wcfCallbackUtil.addDeferredCallback(this.showDetailsViewDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "onselected(isSelected)");
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Get the details view for this node. If "searchDefinition" is not "null",
+			then the corresponding search view will be returned.
+			@return view: the search view
+		-->
+		<method name="getDetailsView">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "getDetailsView");
+			}
+			var v = null;
+			if (this.searchDefinition != null) {
+				v = this.searchResultsViewCache[this.searchDefinition.searchType];
+				if (v == null) {
+					var s = this.oEditor.model.findSearchResults(this.searchDefinition.searchType);
+					
+					v = new lz.wcfSearchResultsList(this.oEditor.workAreaContainer, {
+						oEditor: this.oEditor,
+						searchResults: s,
+						rowMenuClass: "wcfSearchResultsMenu"
+					});
+					v.setAttribute("searchResults", s);
+					this.searchResultsViewCache[this.searchDefinition.searchType] = v;
+				}
+				this.oEditor.model.bindViewToSearchResults(v.list, this.searchDefinition.searchType);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "getDetailsView", v);
+			}
+			return v;
+			]]>
+		</method>
+
+		<!---
+			Show the details view for this node.
+		-->
+		<method name="showDetailsView" args="e=null">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfSearchResultsTree", "showDetailsView", "Start update UI");
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "showDetailsView");		
+			}
+			if (this.selected) {
+				var detailsView = this.getDetailsView();
+				if (detailsView != this.oEditor.workAreaContainer.activeView) {
+					this.oEditor.workAreaContainer.setActiveView(detailsView, true);
+					
+					//as we are re-using the same search view across the whole tool, we must reflect
+					//the search text as we switch search results
+					var s = this.oEditor.model.findSearchResults(this.searchDefinition.searchType);
+					if (this.oEditor.searchWidget != null && s.searchOptions != null && s.searchOptions["searchText"]) {
+						this.oEditor.searchWidget.searchTextArea.searchText.setAttribute("text", s.searchOptions.searchText);
+					} else if (this.oEditor.searchWidget != null) {
+						this.oEditor.searchWidget.searchTextArea.searchText.setAttribute("text", "");
+					}
+				}
+				if (detailsView != null) {
+					var currentHistoryEntry = this.oEditor.currentNavigationHistoryEntry;
+					if (currentHistoryEntry == null || !currentHistoryEntry.matchesTreeNode(this)) {
+						wcfModelUtil.createNavigationHistoryEntry({
+							oEditor: this.oEditor,
+							navigationTreeNode: this
+						});
+					}
+				}
+			}
+			if (wcfLogger.enabled) {
+				// wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "CONFIG","wcfSearchResultsTree", "showDetailsView");				
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "showDetailsView");
+			}
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfSearchResultsTree", "showDetailsView", "End update UI");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Set the current search definition.
+			@param wcfSearchDefinition def: the new search definition
+		-->
+		<method name="setSearchDefinition" args="def">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "setSearchDefinition(def)", [def]);
+			}
+			if (def !== this["searchDefinition"]) {
+				if (this["searchDefinition"] != null) {
+					var v = this.searchResultsViewCache[this.searchDefinition.searchType];
+					if (v) {
+						this.oEditor.model.findSearchResults(this.searchDefinition.searchType).releaseView(v.list);
+					}
+				}
+				this.searchDefinition = def;
+				if (this["selected"]) {
+					wcfCallbackUtil.addDeferredCallback(this.showDetailsViewDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfSearchResultsTree", "setSearchDefinition(def)");
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		Base class for tree nodes that represent model objects.
+		@keywords private
+	-->
+	<class name="wcfObjectTree" extends="wcfTree">
+		<!--- Business object editor instance. -->
+		<attribute name="oEditor" value="null"/>
+		<!--- Indicates that this table should not be loaded recursively. -->
+		<attribute name="recurse" value="false"/>
+		<!--- Indicates that this is a leaf node. -->
+		<attribute name="isTreeLeaf" type="boolean" value="true"/>
+		<!--- The instance of wcfModelObject associated with this object. -->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!--- The resolved referenced object. -->
+		<attribute name="referencedObject" value="null"/>
+		<!--- The current navigation list definition. -->
+		<attribute name="navigationListDefinition" value="null" setter="this.setNavigationListDefinition(navigationListDefinition)"/>
+		<!---
+			@keywords private
+			Array of client actions available for this tree node
+		-->
+		<attribute name="clientActions" value="${[]}"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			if (this.oEditor == null) {
+				this.oEditor = immediateparent.parent.oEditor;
+			}
+			this.updateDisplayNameDel = new lz.Delegate(this, "updateDisplayName");
+			this.updateDisplayNameStyleDel = new lz.Delegate(this, "updateDisplayNameStyle");
+			this.showDetailsViewDel = new lz.Delegate(this, "showDetailsView");
+			this.updateReferencedObjectDel = new lz.Delegate(this, "updateReferencedObject");
+			this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this.o) {
+				this.oList = null;
+				this.referencedObject = null;
+				this.o = null;
+			}
+			this.updateDisplayNameDel.unregisterAll();
+			delete this.updateDisplayNameDel;
+			this.updateDisplayNameStyleDel.unregisterAll();
+			delete this.updateDisplayNameStyleDel;
+			delete this.showDetailsViewDel;
+			this.updateReferencedObjectDel.unregisterAll();
+			delete this.updateReferencedObjectDel;
+			this.releaseModelObjectDel.unregisterAll();
+			delete this.releaseModelObjectDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Set the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "setModelObject(newObject)", [newObject]);
+			}
+			if (this["o"] != newObject) {
+				this.releaseModelObjectDel.unregisterAll();
+				this.updateDisplayNameDel.unregisterAll();
+				this.updateDisplayNameStyleDel.unregisterAll();
+				if (this["o"]) {
+					var viewState = null;
+					if (this["parentOList"] && this.parentOList.getViewState(this.o)) {
+						viewState = this.parentOList.getViewState(this.o);
+						this.parentOList.setViewState(this.o, null);
+					}
+					if (this.selected) {
+						this.setAttribute("selected", false);
+						if (viewState == null && this.getRoot().getSelectedObjectViewState(this) == null) {
+							this.oEditor.workAreaContainer.setActiveView(null);
+						}
+					}
+					if (this.open) {
+						this.setAttribute("open", false);
+					}
+					this.referencedObject = null;
+					if (this.navigationListDefinition != null) {
+						this.setAttribute("navigationListDefinition", null);
+					}
+					if (this["parentOList"] && viewState != null) {
+						this.parentOList.setViewState(this.o, viewState);
+						if (viewState.selected) {
+							this.getRoot().saveSelectedObjectViewState(this);
+						}
+					}
+					this.clientActions = [];
+				}
+				this.o = newObject;
+				if (this.o) {
+					this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+					if (this.o.getIcon() != null) {
+						this.setAttribute("icon", this.o.getIcon());
+					}
+					if (this.o.objectDisplayName != null) {
+						this.setAttribute("text", this.o.objectDisplayName);
+					}
+					this.updateDisplayNameDel.register(this.o, "onobjectDisplayName");
+					if(this.o.openGroupObject){
+						this.updateDisplayNameDel.register(this.o.openGroupObject, "onerrorInOpenGroup");
+						this.updateDisplayNameDel.register(this.o.openGroupObject, "onopenGroupDirty");
+					}
+					this.updateDisplayName();
+					this.referencedObject = this.o.getReferencedObject();
+					if (this.referencedObject == null) {
+						this.updateReferencedObjectDel.register(this.o, "onchildObjects");
+					}
+					else {
+						this.updateReferencedObject();
+					}
+					if (this["parentOList"]) {
+						var viewState = this.getRoot().getSelectedObjectViewState(this);
+						if (viewState != null) {
+							this.parentOList.setViewState(this.o, viewState);
+						}
+						else {
+							viewState = this.parentOList.getViewState(this.o);
+						}
+						if (viewState) {
+							if (this.navigationListDefinition != viewState.navigationListDefinition) {
+								this.setAttribute("navigationListDefinition", viewState.navigationListDefinition);
+							}
+							if (viewState.selected) {
+								if (this.getRoot().selectedObjectViewState == viewState) {
+									this.setAttribute("selected", true);
+									this.getRoot().clearSelectedObjectViewState();
+								}
+								else {
+									viewState.selected = false;
+								}
+							}
+						} else {
+							viewState = {
+								navigationListDefinition: this.navigationListDefinition,
+								selected: false,
+								open: this.getRoot().isAncestorOfSelectedObject(this)
+							};
+							this.parentOList.setViewState(this.o, viewState);
+						}
+						if (viewState.open) {
+							this.setAttribute("open", true);
+						}
+					}
+					this.updateDisplayNameStyleDel.register(this.o, "ondisplayNameStyle");
+					this.updateDisplayNameStyle();
+
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "setModelObject(newObject)");
+			}
+			]]>
+		</method>
+		
+		<!---
+			This method releases the {@link wcfModelObject model object} from this tree node.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+			this.setAttribute("o", null);
+			]]>
+		</method>
+		
+		<!---
+			Update the referenced object.
+		-->
+		<method name="updateReferencedObject" args="e=null">
+			<![CDATA[
+			if (this.o) {
+				this.referencedObject = this.o.getReferencedObject();
+
+				if (this.referencedObject != null) {
+					var clientActions = this.referencedObject.objectDefinition.clientActions;
+					for (var i = 0; i < clientActions.length; i++) {
+						if (clientActions[i].availableFromExplorerView) {
+							this.clientActions.push(clientActions[i]);
+						}
+					}
+				}
+			}
+			if (this.selected) {
+				wcfCallbackUtil.addDeferredCallback(this.showDetailsViewDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the tree node display name.
+		-->
+		<method name="updateDisplayName" args="e=null">
+			<![CDATA[
+			if (this.o.objectDisplayName != null && this.o.objectDisplayName != this.text) {
+				this.setAttribute("text", this.o.objectDisplayName);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Update the tree node display name style.
+		-->
+		<method name="updateDisplayNameStyle" args="e=null">
+			<![CDATA[
+			var newTextColor = this.style.textcolor;
+			var newTextStyle = "plain";
+			var style = this.o.displayNameStyle;
+			if (style != null) {
+				newTextColor = style.color;
+				if (style.bold && style.italic) {
+					newTextStyle = "bolditalic";
+				}
+				else if (style.bold) {
+					newTextStyle = "bold";
+				}
+				else if (style.italic) {
+					newTextStyle = "italic";
+				}
+			}
+			if (this.textColor != newTextColor) {
+				this.setAttribute("textColor", newTextColor);
+			}
+			if (this.textStyle != newTextStyle) {
+				this.setAttribute("textStyle", newTextStyle);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+		-->
+		<method name="_applystyle" args="s"/>
+		
+		<!---
+			Handle the "onselected" event.
+			@param boolean isSelected: indicates that this node is being selected
+		-->
+		<handler name="onselected" args="isSelected">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "onselected(isSelected)");				
+			}
+			if (this["o"] && this["parentOList"]) {
+				var viewState = this.parentOList.getViewState(this.o);
+				if (viewState && viewState.selected != this.selected) {
+					viewState.selected = this.selected;
+				}
+			}			
+			if (isSelected) {
+				wcfCallbackUtil.addDeferredCallback(this.showDetailsViewDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "onselected(isSelected)");				
+			}			
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->		
+		<handler name="onactivate">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "onactivate");
+			}
+			this.referencedObject.doOpen();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "onactivate");
+			}
+			]]>
+		</handler>
+
+		<!---
+			Show the details view for this node.
+		-->
+		<method name="showDetailsView" args="e=null">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectTree", "showDetailsView", "Start update UI");
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "showDetailsView");				
+			}
+			if (this.selected) {
+				var detailsView = getDetailsView();
+				if (detailsView == null && this.o.objectDefinition["helpPage"] != null) {
+					this.oEditor.workAreaContainer.setActiveView(this.oEditor.workAreaContainer.addHelpPage(this.o.objectDefinition.helpPage), true);
+				} else if (detailsView != this.oEditor.workAreaContainer.activeView) {
+					this.oEditor.workAreaContainer.setActiveView(detailsView);
+				}
+				if (detailsView != null) {
+					var currentHistoryEntry = this.oEditor.currentNavigationHistoryEntry;
+					if (currentHistoryEntry == null || !currentHistoryEntry.matchesTreeNode(this)) {
+						wcfModelUtil.createNavigationHistoryEntry({
+							oEditor: this.oEditor,
+							navigationTreeNode: this,
+							navigationListDefinition: this.navigationListDefinition
+						});
+					}
+					messageLogger.clearStatusMessage();
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "showDetailsView");				
+			}			
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectTree", "showDetailsView", "End update UI");
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the details view for this node. If "navigationListDefinition" is not "null",
+			then the corresponding navigation list view will be displayed.
+		-->
+		<method name="getDetailsView">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "getDetailsView");				
+			}			
+			var v = null;
+			if (this.navigationListDefinition != null && this.referencedObject != null) {
+				v = this.navigationListDefinition.getListView(this.referencedObject);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "getDetailsView", v);
+			}
+			return v;
+			]]>
+		</method>
+		
+		<!---
+			Set the current navigation list definition.
+			@param wcfNavigationListDefinition def: the new navigation list definition
+		-->
+		<method name="setNavigationListDefinition" args="def">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "setNavigationListDefinition(def)", [def]);				
+			}			
+			if (def !== this["navigationListDefinition"]) {
+				if (this["o"] && this["parentOList"]) {
+					var viewState = this.parentOList.getViewState(this.o);
+					if (viewState && viewState.navigationListDefinition != def) {
+						viewState.navigationListDefinition = def;
+					}
+				}		
+				this.navigationListDefinition = def;
+				if (this["onnavigationListDefinition"]) {
+					this.onnavigationListDefinition.sendEvent();
+				}
+				if (this["selected"]) {
+					wcfCallbackUtil.addDeferredCallback(this.showDetailsViewDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND);
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfObjectTree", "setNavigationListDefinition(def)");				
+			}			
+			]]>
+		</method>
+
+		<wcfDragSource targetKeys="${['element']}" dragAndDropManager="${wcfDndManager}" placement="dragtreeitem"/>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Browse object tree node. Instances of this class represent objects in the
+		navigation view that can be found by browsing from parent objects to child objects.
+	-->
+	<class name="wcfBrowseObjectTree" extends="wcfObjectTree" isTreeLeaf="false" maxObjectViews="20">
+		<!---
+			The class used to create child nodes.
+		-->
+		<attribute name="objectClass" type="string" value="wcfBrowseObjectTree"/>
+		<!---
+			An array of the filtered child object selectors for this node. Only
+			child object selectors that will be visible in the navigation view
+			will be included in this array.
+		-->
+		<attribute name="objectSelectors" value="null"/>
+		<!---
+			Indicates that the child tree nodes have been created.
+		-->
+		<attribute name="childrenCreated" type="boolean" value="false"/>
+		<!---
+			Indicates that this tree node can be used to navigate to the child objects.
+			Navigating to child objects is allowed for primary, organizational, parent reference,
+			and collection reference objects.
+		-->
+		<attribute name="navigationEnabled" type="boolean" value="true"/>
+		<!--- @keywords private
+		
+			  Indicates if reference object is moveable
+		-->
+		<attribute name="referenceMoveable" type="boolean" value="true"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "init");				
+			}			
+			super.init();
+			this.updateFilterDel = new lz.Delegate(this, "updateFilter");
+			if (this != this.getRoot()) {
+				this.updateFilterDel.register(this.getRoot(), "onfilter");
+			}
+			if (this.item) {
+				new lz.wcfBrowseObjectTreeMenu(this, {
+					name: "menu",
+					tree: this
+				});
+				this.menu.addView(this.item.contextMenuArea);
+			}
+			this.checkStatusMessageDel = new lz.Delegate(this, "checkStatusMessage");
+			this.checkLeafDel = new lz.Delegate(this, "checkLeaf");
+			this.updateExpandedTreesDel = new lz.Delegate(this, "updateExpandedTrees");
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfOBrowsebjectTree", "init");				
+			}			
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "destroy");				
+			}			
+			this.releaseChildObjectTree();
+			this.updateFilterDel.unregisterAll();
+			delete this.updateFilterDel;
+			this.checkStatusMessageDel.unregisterAll();
+			delete this.checkStatusMessageDel;
+			this.checkLeafDel.unregisterAll();
+			delete this.checkLeafDel;
+			this.updateExpandedTreesDel.unregisterAll();
+			delete this.updateExpandedTreesDel;
+			super.destroy();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "destroy");				
+			}			
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			When the oList is updated, we listen to the objectViewsUpdated event to trigger an update.
+		-->		
+		<handler name="onoList">
+			<![CDATA[
+			this.updateExpandedTreesDel.unregisterAll();
+			if (this["oList"]) {
+				this.updateExpandedTreesDel.register(this.oList, "objectViewsUpdated");
+			}
+			this.updateExpandedTrees();
+			]]>
+		</handler>
+		
+		<!---
+			Update the navigation list nodes to match the current filter.
+		-->
+		<method name="updateFilter" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "updateFilter");				
+			}			
+			if (this["oList"]) {
+				var newFilter = this.getRoot().filter;
+				if (this.oList.baseFilter != newFilter) {
+					if (this.oList.getViewsLength() > 0) {			
+						this.oList.setAttribute("baseFilter", newFilter);
+					}
+					else if (this.open) {
+						this.setAttribute("open", false);
+					}
+				}
+			}
+			this.updateObjectSelectors();
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "updateFilter");				
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Update the array of child object selectors that match
+			the current filter.
+		-->
+		<method name="updateObjectSelectors">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "updateObjectSelectors");				
+			}			
+			if (this.referencedObject != null) {
+				this.objectSelectors = [];
+				if (this.navigationEnabled) {
+					var filter = this.getRoot().filter;
+					if(filter != null){
+						var oDef = this.referencedObject.objectDefinition;
+						var defs = oDef.organizational ? oDef.organizedObjectDefinitions : oDef.getReferenceObjectDefinitions();
+						if (defs != null) {
+							for (var i = 0; i < defs.length; i++) {
+								var childDef = defs[i];
+								if (filter.objectTypeMatchesFilter(childDef.objectType)) {
+									this.objectSelectors.push({objectDefinition: childDef, selectors: []});
+								}
+							}
+						}
+					}
+				}
+				this.checkLeaf();
+			}
+			else {
+				this.objectSelectors = null;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "updateObjectSelectors");				
+			}			
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="checkLeaf" args="e=null">
+			<![CDATA[
+			this.checkLeafDel.unregisterAll();
+			var leaf = false;
+			if (this.navigationEnabled) {
+				this.checkLeafDel.register(this, "onstatusMessage");
+				if (this.statusMessage == "" && this.objectSelectors != null) {
+					var oDef = this.referencedObject.objectDefinition;
+					if (oDef.organizational) {
+						leaf = this.objectSelectors.length == 0 && oDef.organizedObjectDefinitions != null && oDef.organizedObjectDefinitions.length > 0;
+					}
+					else {
+						leaf = this.objectSelectors.length == 0;
+					}
+					if (!leaf && this.childrenCreated && this.children.height == 0) {
+						this.checkLeafDel.register(this.children, "onheight");
+						leaf = true;
+					}
+				}
+			}
+			else {
+				leaf = true;
+			}
+			if (leaf != this.isTreeLeaf) {
+				this.setAttribute("isTreeLeaf", leaf);
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="createChildObjectTree">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "createChildObjectTree");				
+			}
+			if (!this.childrenCreated && this.navigationEnabled) {
+				this.childrenCreated = true;
+				this.referencedObject.bindViewToChildren(this, this.getRoot().filter, null, this);
+				messageLogger.clearStatusMessage();
+				this.checkStatusMessage();
+				this.checkLeaf();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "createChildObjectTree");				
+			}
+			]]>			
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="releaseChildObjectTree">
+			<![CDATA[
+			if (this.childrenCreated) {
+				this.childrenCreated = false;
+				for (var i = 0; i < this.children.subviews.length; i++) {
+					var v = this.children.subviews[i];
+					if (v["releaseChildObjectTree"]) {
+						v.releaseChildObjectTree();
+					}
+				}
+				this.referencedObject.releaseViewFromChildren(this);
+				this.checkStatusMessage();
+				this.checkLeaf();
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="compare" args="o1,o2,sortAscending">
+			<![CDATA[
+			var currentFilter = this.getRoot().filter;
+			if(currentFilter != null){
+				return currentFilter.objectCompare(o1,o2);
+			}else{
+				return null;
+			}
+			]]>
+		</method>			
+		
+		<!---
+			Set a new model object for this tree node.
+			@param wcfModelObject newObject: the new model object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "setModelObject(newObject)" + [newObject]);				
+			}			
+			if (this["o"] != newObject) {
+				var selectionSaved = false;
+				if (!this.selected && this["o"] && this["parentOList"] && this.parentOList.getViewState(this.o) && this.getRoot().getSelection() != null) {
+					selectionSaved = this.getRoot().saveSelectedObjectViewState(this.getRoot().getSelection());
+				}
+				this.releaseChildObjectTree();
+				if (selectionSaved && this.getRoot().getSelection() != null) {
+					this.getRoot().clearSelectedObjectViewState();
+				}
+				if (newObject != null) {
+					var oDef = newObject.objectDefinition;
+					this.navigationEnabled = oDef.primary || oDef.organizational || oDef.parentReference || oDef.collectionReference;
+				}
+				super.setModelObject(newObject);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "setModelObject(newObject)");				
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Update the referenced object.
+		-->
+		<method name="updateReferencedObject" args="e=null">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "updateReferencedObject");				
+			}			
+			super.updateReferencedObject();
+			if (this.referencedObject != null) {
+				if (this.navigationEnabled) {
+					this.setAttribute("navigationListDefinition", this.referencedObject.objectDefinition.defaultNavigationList);
+					if (this.open) {
+						this.createChildObjectTree();
+					}
+				}
+				this.updateObjectSelectors();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "updateReferencedObject");				
+			}			
+			]]>
+		</method>
+		
+		<!---
+			Handle the expand event. If this is the first time the
+			object's children have been expanded, then the child nodes will
+			be created.
+		-->
+		<handler name="onopen">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "onopen");				
+			}		
+			if (this["o"] && this["parentOList"]) {
+				var viewState = this.parentOList.getViewState(this.o);
+				if (viewState && viewState.open != this.open) {
+					viewState.open = this.open;
+				}
+				if (this.open) {
+					this.createChildObjectTree();
+				}
+				else {
+					this.releaseChildObjectTree();
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "onopen");				
+			}			
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			When this tree is expanded, we store the time it was expanded with it and its parents.  We also close any other tree nodes
+			in the browse tree when we have more than the maximinum number of tree nodes expanded.
+		-->
+		<method name="updateExpandedTrees" args="e=null">
+			<![CDATA[
+			if (this.open && this["oList"] && this.oList.getViewsLength() > 0) {
+				if (!this["__expandedTime"]) {
+					var rootObjectTree = this.getRootObjectTree();
+					var expandedTime = (new Date()).getTime();
+					var tree = this;
+					tree.__expandedTime = expandedTime;
+					while (tree && !tree.isRoot() && tree != rootObjectTree) {
+						tree = tree.parent;
+						tree.__expandedTime = expandedTime;
+					}
+					if (rootObjectTree) {
+						rootObjectTree.closeChildrenTreesLeastRecent();
+					}
+				}
+			}
+			else {
+				this.__expandedTime = null;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the root object tree, the first tree under the "Top" tree node.
+		-->
+		<method name="getRootObjectTree">
+			<![CDATA[
+			var tree = null;
+			if (this["o"] && this.o.objectDefinition.objectType != "Top") {
+				tree = this;
+				while (tree && !tree.isRoot() && !tree.parent.o.objectDefinition.objectType != "Top") {
+					tree = tree.parent;
+				}
+			}
+			return tree;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Calculates the ordered expanded times and updates the given array.  Iterating through the children of this tree, this method checks
+			the expanded time for expanded child tree nodes and updates the given expandedTimes array by inserting each expanded time in the appropriate
+			ordered position in the array.  This method recurses to this tree's leaf nodes.
+			@param Array expandedTimes: An ordered array of expanded times. The array is ordered in ascending order and does not have duplicate entries.
+		-->
+		<method name="calculateOrderedExpandedTimes" args="expandedTimes">
+			<![CDATA[
+			for (var i = 0; i < this.children.subviews.length; i++) {
+				var child = this.children.subviews[i];
+				if (child instanceof lz.wcfBrowseObjectTree && child["__expandedTime"]) {
+					var insertIdx = expandedTimes.length;
+					for (var j = 0; j < expandedTimes.length; j++) {
+						if (child.__expandedTime == expandedTimes[j]) {
+							insertIdx = -1;
+							break;
+						}
+						if (child.__expandedTime < expandedTimes[j]) {
+							insertIdx = j;
+							break;
+						}
+					}
+					if (insertIdx > -1) {
+						expandedTimes.splice(insertIdx, 0, child.__expandedTime);
+					}
+					child.calculateOrderedExpandedTimes(expandedTimes);
+				}
+			}	
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method closes all the children trees least recently expanded.  Closing trees will occur when we have a number expanded greater than the maximum number
+			of browse tree nodes expanded, the maxBrowseTreesExpanded context value.
+		-->
+		<method name="closeChildrenTreesLeastRecent">
+			<![CDATA[
+			var contextValue = wcfContextUtil.findContextValue(null, "maxBrowseTreesExpanded");
+			if (contextValue) {
+				var maxBrowseTreesExpanded = contextValue.value;
+				if (maxBrowseTreesExpanded && maxBrowseTreesExpanded > 1) {
+					var time = null;
+					var expandedTimes = [];
+					this.calculateOrderedExpandedTimes(expandedTimes);
+					if (expandedTimes.length >= maxBrowseTreesExpanded) {
+						time = expandedTimes[expandedTimes.length - maxBrowseTreesExpanded];
+					}
+					if (time) {
+						this.closeChildrenTreesBeforeTime(time);
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method closes all the children trees that were expanded before the given time.
+			@param number time: The given time.
+		-->
+		<method name="closeChildrenTreesBeforeTime" args="time">
+			<![CDATA[
+			if (time) {
+				for (var i = 0; i < this.children.subviews.length; i++) {
+					var child = this.children.subviews[i];
+					if (child instanceof lz.wcfBrowseObjectTree && child["__expandedTime"]) {
+						child.closeChildrenTreesBeforeTime(time);
+						if (child.__expandedTime < time) {
+							child.setAttribute("open", false);
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+				
+		<!---
+			Update the over limit status message.
+		-->
+		<method name="checkStatusMessage" args="e=null">
+			<![CDATA[
+			this.checkStatusMessageDel.unregisterAll();
+			var newMessage = "";
+			if (this.open && this["oList"] && this.navigationEnabled) {
+				this.checkStatusMessageDel.register(this.oList, "onstatusObject");
+				this.checkStatusMessageDel.register(this, "onopen");
+				if (this.oList.statusObject != null) {
+					if (this.oList.statusObject['messageForTree']) { 
+						newMessage = this.oList.statusObject.messageForTree;
+					} else {
+						newMessage = this.oList.statusObject.message;
+					}
+				}
+			}
+			if (this.statusMessage != newMessage) {
+				this.setAttribute("statusMessage", newMessage);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check if drop is enabled.
+			@param array sources: array of drag sources
+		-->
+		<method name="isDropEnabled" args="sources">    		
+    		<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "isDropEnabled(sources)", [objects]);
+			}
+			var dropEnabled = false;
+			if (this.navigationEnabled && this.referencedObject != null && sources.length > 0) {
+    			var objects = [];
+				for (var i = 0; i < sources.length; i++) {
+					objects.push(wcfModelUtil.findObjectForView(sources[i]));
+				}
+				dropEnabled = this.getAddActions(objects).length > 0;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "isDropEnabled(sources)", dropEnabled);
+			}
+			return dropEnabled;
+			]]>
+		</method>
+		
+		<!---
+			Add the dragged objects as children of this node.
+			@param array sources: array of drag sources
+		-->
+		<method name="droppedInTarget" args="sources">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "droppedInTarget(sources)", [sources]);
+			}
+			var objects = [];
+			for (var i = 0; i < sources.length; i++) {
+				objects.push(wcfModelUtil.findObjectForView(sources[i]));
+			}
+			this.addObjects(objects);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "droppedInTarget(sources)");
+			}
+			]]>
+		</method>
+
+		<!---
+			Check if all of the objects currently in the clipboard can be added as children of the object
+			represented by this node.
+			@return boolean: true if the objects can be pasted
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "isPasteEnabled");
+				}
+				var pasteEnabled = false;
+				if (this.navigationEnabled && this.referencedObject != null) {
+					var objects = this.oEditor.model.clipboardObjects;
+					pasteEnabled = this.getAddActions(objects).length > 0;
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "isPasteEnabled(sources)", pasteEnabled);
+				}
+				return pasteEnabled;
+			]]>
+		</method>
+
+		<!---
+			Paste the objects in the clipboard into this list.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "doPaste");
+				}
+				var pasteObjects = this.oEditor.model.clipboardObjects;
+				this.addObjects(pasteObjects);
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "doPaste");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Get the list of add actions that are available for the specified list of source objects.
+			@param array objects: array of wcfModelObject instances to check
+			@return array: array of object definitions
+		-->
+		<method name="getAddActions" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "getAddActions", [objects]);
+				}
+				var actions = [];
+				if (this.navigationEnabled) {
+					if (wcfActionUtil.isMoveActionEnabled(objects, this.referencedObject, this.objectSelectors, this.referenceMoveable)) {
+						actions.push(wcfMoveAction);
+					}
+					if (wcfActionUtil.isCopyActionEnabled(objects, this.referencedObject, this.objectSelectors)) {
+						actions.push(wcfCopyAction);
+					}
+					if (wcfActionUtil.isAddToCollectionActionEnabled(objects, this.referencedObject, this.objectSelectors)) {
+						actions.push(wcfAddToCollectionAction);
+					}
+					for (var i = 0; i < this.objectSelectors.length; i++) {
+						var oDef = this.objectSelectors[i].objectDefinition;
+						if (!oDef.parentReference && !oDef.collectionReference && oDef.referencedDefinitions != null && wcfActionUtil.isAddReferenceActionEnabled(objects, this.referencedObject, this.objectSelectors, oDef)) {
+							actions.push({displayName: oDef["displayName"], targetDefinition: oDef, primaryDefinition: null, childDefinition: null});
+						}
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "getAddActions", actions);
+				}
+				return actions;
+			]]>
+		</method>
+
+		<!---
+			Perform the add action for the specified list of objects.
+			@param Object action: the action
+			@param array objects: array of objects
+		-->
+		<method name="doAddAction" args="action, objects">
+			<![CDATA[
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfBrowserObjectTree " + (action["displayName"] ? action.displayName : "doAddAction") + ": " + this.o.objectDisplayName + " #objects=" + objects.length);
+				if (!this.open) {
+					this.setAttribute("open", true);
+				}
+				if (action == wcfMoveAction) {
+					wcfActionUtil.triggerMove(objects, this.referencedObject, this.objectSelectors);
+				}
+				else if (action == wcfCopyAction) {
+					wcfActionUtil.triggerCopy(objects, this.referencedObject, this.objectSelectors);
+				}
+				else if (action == wcfAddToCollectionAction) {
+					wcfActionUtil.triggerAddToCollection(objects, this.referencedObject);
+				}
+				else {
+					wcfActionUtil.triggerAddReference(action, objects, this.referencedObject);
+				}
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+
+		<!---
+			Add the specified source objects to the list. If there are multiple ways that the objects may be
+			added to the list, then a pop-up dialog will be presented to the user with the list of options.
+			@param array objects: array of source objects
+		-->
+		<method name="addObjects" args="objects">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "addObjects(objects)", [objects]);
+				}
+				var actions = this.getAddActions(objects);
+				if (actions.length > 1 || (!this.o.objectDefinition.organizational && actions.length == 1 && actions[0] == wcfCopyAction)) {
+					if (actions.length > 4) {
+						wcfAddActionPopUp.open(this, actions, objects);
+					} else {
+						wcfAddActionDialog.openAddActionDialog(this, actions, objects);
+					}
+				}
+				else if (actions.length == 1) {
+					this.doAddAction(actions[0], objects);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "addObjects");
+				}
+			]]>
+		</method>
+
+		<!---
+			Update the visibility of the statusMessage.
+		-->
+		<method name="updateStatusMessageVisibility">
+			<![CDATA[
+				if (this["item"] && this["children"]) {
+					if (this.statusMessage.text != "") {
+						this.item.setAttribute("y", 0);
+						this.statusMessage.setAttribute("y", this.item.height + 1);
+						this.children.setAttribute("y", this.statusMessage.y + this.statusMessage.height + 1);
+					}
+					else {
+						this.item.setAttribute("y", 0);
+						this.children.setAttribute("y", this.item.height + 1);
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			Get the details view for this tree node. If "navigationListDefinition" is
+			not null, then the corresponding navigation list view will be displayed. Otherwise,
+			the properties view will be displayed.
+			@return view: the details view
+		-->
+		<method name="getDetailsView">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "getDetailsView");
+			}
+			var v = null;
+			if (this.navigationListDefinition == null && this.referencedObject != null && this.navigationEnabled) {
+				var oDef = this.referencedObject.objectDefinition;
+				v = oDef.getPropertiesView(this.oEditor.workAreaContainer, this.referencedObject, true);
+			}
+			else {
+				v = super.getDetailsView();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBrowseObjectTree", "getDetailsView", v);
+			}
+			return v;
+			]]>
+		</method>
+
+		<wcfDropTarget targetKey="${'browseElement'}" dragAndDropManager="${wcfDndManager}" placement="dragtreeitem">
+			<handler name="ondroppedintarget" args="sources">
+				<![CDATA[
+					classroot.droppedInTarget(sources);
+				]]>
+			</handler>
+
+			<method name="isEnabled" args="currentDragSource">
+				<![CDATA[
+					return classroot.isDropEnabled(currentDragSource);
+				]]>
+			</method>
+
+			<!---
+				A source object is dragged out of the drag object.
+			-->
+			<method name="sourceDraggedOut" args="e=null">
+				<![CDATA[
+					lz.Cursor.setCursorGlobal('cursorNoDrop');
+					classroot.updateBGColor();
+				]]>
+			</method>
+		</wcfDropTarget>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Open object tree node. Open object tree nodes represent open objects. They appear as children
+		of the "Active Work" tree node.
+	-->
+	<class name="wcfOpenObjectTree" extends="wcfObjectTree">
+	
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfOpenObjectTree", "init");				
+			}			
+			super.init();
+			new lz.wcfOpenObjectTreeMenu(this, {
+				name: "menu",
+				tree: this
+			});
+			this.menu.addView(this.item.contextMenuArea);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfOpenObjectTree", "init");				
+			}			
+			]]>
+		</method>
+
+		<!---
+			Get the details view for this tree node. If "navigationListDefinition" is
+			not null, then the corresponding navigation list view will be displayed. Otherwise,
+			the properties view will be displayed.
+			@return view: the details view
+		-->
+		<method name="getDetailsView">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfOpenObjectTree", "getDetailsView");
+			}
+			var v = null;
+			if (this.navigationListDefinition == null && this.referencedObject != null) {
+				var oDef = this.referencedObject.objectDefinition;
+				v = oDef.getPropertiesView(this.oEditor.workAreaContainer, this.referencedObject, false);
+			}
+			else {
+				v = super.getDetailsView();
+			}
+			if (this.referencedObject != null) {
+				this.referencedObject.viewed = true;
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfOpenObjectTree", "getDetailsView", v);
+			}
+			return v;
+			]]>
+		</method>
+		
+		<!---
+			Update the tree node display name.
+		-->
+		<method name="updateDisplayName" args="e=null">
+			<![CDATA[
+			var displayName = "";
+			if (this.o.objectDisplayName != null) {
+				displayName = this.o.objectDisplayName;
+			}
+			if (this.o.openGroupObject && this.o.openGroupObject.openGroupDirty) {
+				displayName = "*" + displayName;
+			}
+			if (displayName != this.text) {
+				this.setAttribute("text", displayName);
+			}
+			var newHasError = this.o.openGroupObject != null && this.o.openGroupObject.errorInOpenGroup;
+			if (newHasError != this.hasError) {
+				this.setAttribute("hasError", newHasError);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Handle the "onselected" event.
+			@param boolean isSelected: indicates that this node is being selected
+		-->
+		<handler name="onselected" args="isSelected">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfOpenObjectTree", "onselected(isSelected)", [isSelected]);				
+			}			
+			if (isSelected && this.o) {
+				this.o.lastViewedTime = (new Date()).getTime();
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfOpenObjectTree", "onselected(isSelected)");				
+			}			
+			]]>
+		</handler>
+		
+	</class>
+
+	<!---
+		@keywords private
+		
+		Active work tree node. The active work tree node is the parent for the
+		list of open objects.
+	-->
+	<class name="wcfActiveWorkTree" extends="wcfTree" icon="activeWorkTreeIcon" maxObjectViews="20">
+		<!--- Tree node text. -->
+		<attribute name="text" value="${foundationResources.activeWorkTree.string}"/>
+		<!--- Reference to the business object editor instance. -->
+		<attribute name="oEditor" value="null"/>
+		<!--- Child object class. -->
+		<attribute name="objectClass" type="string" value="wcfOpenObjectTree"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfActiveWorkTree", "init");				
+			}			
+			super.init();
+			this.oEditor.model.bindViewToOpenObjects(this);
+			new lz.wcfActiveWorkTreeMenu(this, {
+				name: "menu",
+				tree: this
+			});
+			this.menu.addView(this.item.contextMenuArea);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfActiveWorkTree", "init");				
+			}			
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onselected" args="isSelected">
+			<![CDATA[
+			if (isSelected) {
+				this.oEditor.workAreaContainer.setActiveView(null);
+				this.oEditor.checkNavigationHistory();
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Check if paste is enabled.
+			@return boolean: true if paste is allowed
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfActiveWorkTree", "isPasteEnabled");
+				}
+				var objects = this.oEditor.model.clipboardObjects;
+				var pasteEnabled = objects.length > 0;
+				for (var i = 0; i < objects.length; i++) {
+					if (!objects[i].isOpenEnabled()) {
+						pasteEnabled = false;
+						break;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfActiveWorkTree", "isPasteEnabled", pasteEnabled);
+				}
+				return pasteEnabled;
+			]]>
+		</method>
+
+		<!---
+			Open the objects in the clipboard.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			var objects = this.oEditor.model.clipboardObjects;
+			var o = null;
+			for (var i = 0; i < objects.length; i++) {
+				objects[i].doOpen(i == objects.length - 1);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check if drop is enabled.
+			@param array sources: array of source views
+			@return boolean: true if drop is allowed
+		-->
+		<method name="isDropEnabled" args="sources">
+			<![CDATA[
+			var dropEnabled = sources.length > 0;
+			for (var i = 0; i < sources.length; i++) {
+				var o = wcfModelUtil.findObjectForView(sources[i]).getReferencedObject();
+				if ((sources[i].parent && sources[i].parent.parent == this)
+					|| !o.isOpenEnabled()) {
+					dropEnabled = false;
+					break;
+				}
+	    	}
+	    	return dropEnabled;
+			]]>
+    	</method>
+		
+		<!---
+			Open the dropped objects.
+			@param array sources: array of source views
+		-->
+		<method name="droppedInTarget" args="sources">
+			<![CDATA[
+			var o = null;
+			for (var i = 0; i < sources.length; i++) {
+				var o = wcfModelUtil.findObjectForView(sources[i]);
+				o.doOpen(i == sources.length - 1);
+			}
+			]]>
+		</method>
+		
+		<wcfDropTarget targetKey="${'element'}" dragAndDropManager="${wcfDndManager}"  placement="dragtreegroup" >
+			
+			<handler name="ondroppedintarget" args="sources">
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfActiveWorkTree ondroppedintarget: " + this.parent.text + " #objects=" + sources.length);
+				classroot.droppedInTarget(sources);	
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			</handler>
+
+			<method name="isEnabled" args="currentDragSource">    		
+    			return classroot.isDropEnabled(currentDragSource);
+    		</method>
+		</wcfDropTarget>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Root navigation tree.
+	-->
+	<class name="wcfNavigationObjectTree" extends="wcfBrowseObjectTree" showroot="false" visible="true" maxObjectViews="${null}">
+		<!---
+			Currently selected filter.
+		-->
+		<attribute name="filter" value="null"/>
+		<!---
+			An array of objects that identify the object that is currently selected in the explorer view. The
+			first object is the selected object and the rest of the object's in the array are the ancestor
+			objects.
+			This is only set for the selected object if it is does not have an assigned object view.
+			This can happen if the selected object is scrolled out of the visible views.
+		-->
+		<attribute name="selectedObjectHierarchy" value="${null}"/>
+		<!---
+			The view state of the selected object.
+		-->
+		<attribute name="selectedObjectViewState" value="${null}"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationObjectTree", "init");				
+			}
+			super.init();
+			this.clearSelectedObjectViewStateDel = new lz.Delegate(this, "clearSelectedObjectViewState");
+			this.checkSelectedObjectDel = new lz.Delegate(this, "checkSelectedObject");
+			this.filter = this.parent.filterSelector.selectedValue;
+			this.updateFilterDel.register(this.parent.filterSelector, "onselectedValue");
+			if (this.oEditor.searchWidget != null) {
+				new lz.wcfSearchResultsTree(this, {
+					name: "searchResultsTree",
+					oEditor: this.oEditor
+				});
+			}
+			if (this.oEditor.showCompareView) {
+				new lz.wcfCompareViewTree(this, {
+					name: "compareViewTree",
+					oEditor: this.oEditor
+				});
+			}
+			new lz.wcfActiveWorkTree(this, {
+				name: "activeWorkTree",
+				oEditor: this.oEditor
+			});
+			this.oEditor.model.setAttribute("activeSelectionView", this);
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationObjectTree", "init");				
+			}			
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.clearSelectedObjectViewStateDel.unregisterAll();
+			delete this.clearSelectedObjectViewStateDel;
+			this.checkSelectedObjectDel.unregisterAll();
+			delete this.checkSelectedObjectDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Returns an array of the currently selected objects.
+		-->
+		<method name="getSelectedObjects">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationObjectTree", "getSelectedObjects");				
+			}			
+			var s = this.getSelection();
+			var selectedObjects = [];
+			if (s && s["o"]) {
+				selectedObjects.push(s.o);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationObjectTree", "getSelectedObjects", selectedObjects);				
+			}			
+			return selectedObjects;
+			]]>
+		</method>
+		
+		<!---
+			Check if the paste action is enabled.
+			@return boolean: true if paste is allowed
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+			var pasteEnabled = false;
+			var s = this.getSelection();
+			return s != null && s["isPasteEnabled"] != undefined && s.isPasteEnabled();
+			]]>
+		</method>
+		
+		<!---
+			Handle paste action.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			var s = this.getSelection();
+			if (s != null && s["doPaste"]) {
+				s.doPaste();
+			}
+			]]>
+		</method>
+
+		<!---
+			Check if delete is enabled.
+			@return boolean: true if delete is allowed
+		-->
+		<method name="isDeleteEnabled">
+			<![CDATA[
+				var deleteEnabled = false;
+				var s = this.getSelection();
+				if (s != null && s["o"] && !s.o.objectDefinition.organizational) {
+					var o = s.o;
+					if (o.objectDefinition.parentReference) {
+						deleteEnabled = o.getReferencedObject().isDeletable();
+					}
+					else if (o.objectDefinition.collectionReference) {
+						deleteEnabled = o.getReferencedObject().isDeletable() || o.isDeletable();
+					}
+					else {
+						deleteEnabled = o.isDeletable();
+					}
+				}
+				return deleteEnabled;
+			]]>
+		</method>
+
+		<!---
+			Handle delete action.
+		-->
+		<method name="doDelete">
+			<![CDATA[
+				var s = this.getSelection();
+				if (s != null && s["o"] && !s.o.objectDefinition.organizational) {
+					var o = s.o;
+					if (o.objectDefinition.parentReference) {
+						if (o.getReferencedObject().isDeletable()) {
+							o.getReferencedObject().deleteObject(true);
+						}
+					}
+					else if (o.objectDefinition.collectionReference) {
+						if (o.getReferencedObject().isDeletable() && o.isDeletable()) {
+							wcfCollectionReferenceObjectDeleteConfirmationDialog.openCollectionReferenceObjectDeleteConfirmationDialog(o);
+						}
+						else if (o.getReferencedObject().isDeletable()) {
+							o.getReferencedObject().deleteObject(true);
+						}
+						else if (o.isDeletable()) {
+							wcfCollectionReferenceObjectRemoveConfirmationDialog.openCollectionReferenceObjectRemoveConfirmationDialog(o);
+						}
+					}
+					else if (o.isDeletable()) {
+						o.deleteObject(true);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			Get the custom services available for the currently selected object.
+		-->
+		<method name="getCustomServices">
+			<![CDATA[
+			var customServices;
+			var s = this.getSelection();
+			if (s && s["o"]) {
+				customServices = s.o.getReferencedObject().objectDefinition.customServices;
+			}
+			else {
+				customServices = [];
+			}
+			return customServices;
+			]]>
+		</method>
+
+		<!---
+			Get the client actions available for the currently selected object.
+		-->
+		<method name="getClientActions">
+			<![CDATA[
+			var clientActions;
+			var s = this.getSelection();
+			if (s && s["clientActions"]) {
+				clientActions = s.clientActions;
+			}
+			else {
+				clientActions = [];
+			}
+			return clientActions;
+			]]>
+		</method>
+
+		<!---
+			Update the filter.
+		-->
+		<method name="updateFilter" args="e=null">
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationObjectTree", "updateFilter");				
+			}			
+			var newFilter = this.parent.filterSelector.selectedValue;
+			if (newFilter != this.filter) {
+				this.setAttribute("filter", newFilter);
+				if (this["oList"]) {
+					this.oList.setAttribute("baseFilter", newFilter);
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationObjectTree", "updateFilter");				
+			}			
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="restoreFocus">
+			<![CDATA[
+			this.oEditor.restoreFocus();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<handler name="onactiveSelectionView" reference="this.oEditor.model">
+			<![CDATA[
+			this.setAttribute("activated", this.oEditor.model.activeSelectionView == this);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onselect">
+			<![CDATA[
+			if (this.selectedObjectViewState != null && this.getSelection() != null) {
+				this.clearSelectedObjectViewState();
+			}
+			]]>
+		</handler>
+		
+		<!---
+			Save the selected object.
+			@param wcfObjectTree treeNode: the selected tree node
+			@return boolean true if the view state can be saved
+		-->
+		<method name="saveSelectedObjectViewState" args="treeNode">
+			<![CDATA[
+			if (this.selectedObjectViewState != null) {
+				this.clearSelectedObjectViewState();
+			}
+			if (treeNode != null && treeNode["o"] && treeNode["parentOList"]) {
+				var viewState = treeNode.parentOList.getViewState(treeNode.o);
+				if (viewState) {
+					this.clearSelectedObjectViewStateDel.unregisterAll();
+					this.clearSelectedObjectViewStateDel.register(this, "onfilter");
+					this.selectedObjectViewState = viewState;
+					this.selectedObjectHierarchy = [];
+					if (treeNode.parent == this.activeWorkTree) {
+						this.checkSelectedObjectDel.register(treeNode.o.model, "openObjectsUpdated");
+					}
+					for (var v = treeNode; v && v["o"]; v = v.parent) {
+						this.clearSelectedObjectViewStateDel.register(v.o, "beingDestroyed");
+						this.clearSelectedObjectViewStateDel.register(v.o, "onpendingDelete");
+						this.selectedObjectHierarchy.push(v.o);
+					}
+				}
+			}
+			return this.selectedObjectViewState != null;
+			]]>
+		</method>
+
+		<!---
+			Check the saved selected object to see if it is still open. If it is not open, then clear the saved selection.
+		-->
+		<method name="checkSelectedObject" args="e=null">
+			<![CDATA[
+			if (!this.selectedObjectHierarchy[0].open) {
+				this.clearSelectedObjectViewState();
+			}
+			]]>
+		</method>
+				
+		<!---
+			Clear the selected object.
+		-->
+		<method name="clearSelectedObjectViewState" args="e=null">
+			<![CDATA[
+			this.clearSelectedObjectViewStateDel.unregisterAll();
+			this.checkSelectedObjectDel.unregisterAll();
+			this.selectedObjectViewState = null;
+			this.selecteObjectHierarchy = null;
+			if (this.getSelection() == null) {
+				this.oEditor.workAreaContainer.setActiveView(null);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Get the saved view state for the selected object.
+			@param wcfObjectTree treeNode: the candidate tree node
+		-->
+		<method name="getSelectedObjectViewState" args="treeNode">
+			<![CDATA[
+			var viewState = null;
+			if (this.selectedObjectViewState != null) {
+				viewState = this.selectedObjectViewState;
+				var v = treeNode;
+				for (var i = 0; i < this.selectedObjectHierarchy.length; i++) {
+					if (v == null || v["o"] != this.selectedObjectHierarchy[i]) {
+						viewState = null;
+						break;
+					}
+					v = v.parent;
+				}
+			}
+			return viewState;
+			]]>
+		</method>
+		
+		<!---
+			Returns true if the specified tree node is an ancestor of the saved
+			selected object.
+			@param wcfObjectTree treeNode: the candidate tree node
+		-->
+		<method name="isAncestorOfSelectedObject" args="treeNode">
+			<![CDATA[
+			var isAncestor = false;
+			if (this.selectedObjectViewState != null) {
+				var v = treeNode;
+				for (var i = 1; i < this.selectedObjectHierarchy.length; i++) {
+					if (isAncestor) {
+						v = v.parent;
+						if (v == null || v["o"] != this.selectedObjectHierarchy[i]) {
+							isAncestor = false;
+							break;
+						}
+					} 
+					else if (this.selectedObjectHierarchy[i] == v["o"]) {
+						isAncestor = true;
+					}
+				}
+			}
+			return isAncestor;
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Navigation history entry.
+	-->
+	<class name="wcfNavigationHistoryEntry" extends="node">
+		<!---
+			Business object editor instance.
+		-->
+		<attribute name="oEditor" value="null"/>
+		<!---
+			The tree node associated with this navigation history entry. This attribute
+			is null if the tree node is managed by a model object list.
+		-->
+		<attribute name="treeNode" value="null"/>
+		<!---
+			The model object list instance that contains the navigation tree node.
+			This attribute is null if the tree node is not managed by a model object list.
+		-->
+		<attribute name="oList" value="null"/>
+		<!---
+			The model object associated with the navigation tree node.
+		-->
+		<attribute name="o" value="null"/>
+		<!---
+			The navigation list definition associated with this navigation history entry.
+		-->
+		<attribute name="navigationListDefinition" value="null"/>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationHistoryEntry", "init");				
+			}			
+			super.init();
+			this.checkEntryDel = new lz.Delegate(this, "checkEntry");
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationHistoryEntry", "init");				
+			}			
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.checkEntryDel.unregisterAll();
+			delete this.checkEntryDel;
+			super.destroy();			
+			]]>
+		</method>
+		
+		<!---
+			Initialize the navigation history entry with the specified arguments.
+		-->
+		<method name="initializeEntry" args="args">
+			<![CDATA[
+			this.oEditor = args.oEditor;
+			var treeNode = args.navigationTreeNode;
+			this.oList = treeNode["parentOList"] ? treeNode.parentOList : null;
+			this.treeNode = this.oList == null ? treeNode : null;
+			this.o = treeNode["o"] ? treeNode.o : null;
+			this.navigationListDefinition = treeNode["navigationListDefinition"] ? treeNode.navigationListDefinition : null;
+			if (this.oList != null) {
+				this.checkEntryDel.register(this.oList, "objectViewsUpdated");
+			}
+			for (var i = 0; i < this.oEditor.navigationHistoryEntries.length; i++) {
+				var entry = this.oEditor.navigationHistoryEntries[i];
+				if (this.treeNode == entry.treeNode && this.oList == entry.oList && this.o == entry.o && this.navigationListDefinition == entry.navigationListDefinition) {
+					this.oEditor.navigationHistoryEntries.splice(i,1);
+					entry.release();
+					break;
+				}
+			}
+			
+			this.oEditor.addNavigationHistoryEntry(this);
+			]]>
+		</method>
+		
+		<!---
+			Release this entry and make it available for re-use.
+		-->
+		<method name="release">
+			<![CDATA[
+			this.checkEntryDel.unregisterAll();
+			var index = this.oEditor.navigationHistoryEntries.indexOf(this);		
+			if (index != -1) {
+				this.oEditor.navigationHistoryEntries.splice(index, 1);
+			}
+			if (this.oEditor.currentNavigationHistoryEntry == this) {
+				this.oEditor.currentNavigationHistoryEntry = null;
+				this.oEditor.checkNavigationHistory();
+			}
+			this.oEditor = null;
+			this.oList = null;
+			this.treeNode = null;
+			this.o = null;
+			this.navigationListDefinition = null;
+			wcfModelUtil.releaseNavigationHistoryEntry(this);
+			]]>
+		</method>
+
+		<!---
+			Check if the navigation tree node has been released.
+		-->
+		<method name="checkEntry" args="e=null">
+			<![CDATA[
+			var viewState = this.oList.getViewState(this.o);
+			if (!viewState) {
+				var previousEntry = null;
+				if (this.oEditor.currentNavigationHistoryEntry == this &&
+					this.oList != null &&
+					this.oList.parent == this.oEditor.navigationTree.activeWorkTree &&
+					this.oEditor.navigationHistoryEntries.length > 1) {
+					previousEntry = this.oEditor.navigationHistoryEntries[this.oEditor.navigationHistoryEntries.length - 2];
+				}
+				this.release();
+				if (previousEntry != null) {
+					previousEntry.show();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Show the view associated with this navigation history entry.
+		-->
+		<method name="show">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationHistoryEntry", "show");				
+			}			
+			var treeNode = this.treeNode;
+			if (this.oList != null) {
+				this.oList.showObjectInView(this.o);
+				treeNode = this.oList.getObjectView(this.o);
+			}
+			if (treeNode != null) {
+				this.oEditor.currentNavigationHistoryEntry = this;
+				treeNode.setAttribute("navigationListDefinition", this.navigationListDefinition);
+				treeNode.setAttribute("selected", true);
+				this.oEditor.checkNavigationHistory();
+				treeNode.changeFocus(null);
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfNavigationHistoryEntry", "show");				
+			}			
+			]]>
+		</method>
+
+		<!---
+			Returns true if the specified tree node matches this navigation history entry.
+		-->
+		<method name="matchesTreeNode" args="treeNode">
+			<![CDATA[
+			return ((this.treeNode != null && treeNode == this.treeNode) || (this.oList != null && this.oList == treeNode["parentOList"])) &&
+				this.o == treeNode["o"] && this.navigationListDefinition == treeNode["navigationListDefinition"];
+			]]>
+		</method>
+	</class>
+	
+    <!---
+    	Compare view navigation tree node.
+		@keywords private
+    -->
+	<class name="wcfCompareViewTree" extends="wcfTree" text="${foundationResources.compareViewTree.string}" isTreeLeaf="true" icon="compareViewTreeIcon">
+		<!---
+			Reference to the business object editor.
+		-->
+		<attribute name="oEditor"/>
+		<!---
+			Cache of model object associated with the compare area 1.
+		-->
+		<attribute name="compareObject1Cache" value="null"/>
+		<!---
+			Cache of model object associated with the compare area 2.
+		-->
+		<attribute name="compareObject2Cache" value="null"/>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "init");
+			}
+			super.init();
+			
+			this.showDetailsViewDel = new lz.Delegate(this, "showDetailsView"); 
+			new lz.wcfCompareViewTreeMenu(this, {
+				name: "menu",
+				tree: this
+			});
+			this.menu.addView(this.item.contextMenuArea);
+
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "init");				
+			}			
+			]]>
+		</method>
+
+		 <!--- @keywords private --> 
+		 <method name="destroy"> 
+			<![CDATA[ 
+			delete this.showDetailsViewDel; 
+			super.destroy(); 
+			]]> 
+		</method> 
+                
+		<!--- @keywords private -->
+		<handler name="onselected" args="isSelected">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "onselected(isSelected)");
+			}
+			this.oEditor.setAttribute("compareViewVisible", this.selected);
+			if (isSelected) { 
+				wcfCallbackUtil.addDeferredCallback(this.showDetailsViewDel, null, wcfCallbackUtil.PRIORITY_FOREGROUND); 
+			} 
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "onselected(isSelected)");
+			}
+			]]>
+		</handler>
+
+		<!--
+			Show the details view for this node.
+		-->
+		<method name="showDetailsView" args="e=null"> 
+			<![CDATA[ 
+			if (wcfLogger.enabled) { 
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "showDetailsView");                 
+			} 
+			if (this.selected) { 
+				var detailsView = this.oEditor.workAreaContainer.compareAreaSplit; 
+				if (detailsView != this.oEditor.workAreaContainer.activeView) { 
+					this.oEditor.workAreaContainer.setActiveView(detailsView, true); 
+				} 
+				var currentHistoryEntry = this.oEditor.currentNavigationHistoryEntry; 
+				if (currentHistoryEntry == null || !currentHistoryEntry.matchesTreeNode(this)) { 
+					wcfModelUtil.createNavigationHistoryEntry({ 
+						oEditor: this.oEditor, 
+						navigationTreeNode: this 
+						}); 
+				} 
+			} 
+			if (wcfLogger.enabled) { 
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "showDetailsView"); 
+			} 
+			]]>
+		</method> 
+		
+		<!---
+			@keywords private
+			
+			Update the compare area 1.
+		-->
+		<handler name="oncompareObject1Cache" >
+			<![CDATA[
+			if (this["releaseCompareObject1Del"]) {
+				this.releaseCompareObject1Del.unregisterAll();
+			} else {
+				this.releaseCompareObject1Del = new lz.Delegate(this, "releaseCompareObject1");
+			}
+			var parentView = this.oEditor.compareArea1Container;
+			if (parentView.activeView != null && parentView.activeView["o"] && parentView.activeView.o != this.compareObject1Cache) { 
+				if (parentView.activeView.o.openGroupObject.open && !parentView.activeView.o.viewed) {
+					parentView.activeView.o.closeObject();
+				}
+				if (parentView.activeView.o != this.compareObject2Cache) {
+					parentView.activeView.o.setAttribute("isOpenInCompareView", false);
+				}
+			}
+			
+			if (this.compareObject1Cache != null) {
+				if (!this.compareObject1Cache.openGroupObject.open) {
+					this.compareObject1Cache.openGroupObject.setAttribute("open", true);	
+				}
+				var v = this.compareObject1Cache.objectDefinition.getPropertiesView(parentView, this.compareObject1Cache, false);
+				if (!this.compareObject1Cache.isOpenInCompareView) {
+					this.compareObject1Cache.setAttribute("isOpenInCompareView", true);
+				}
+				parentView.setActiveView(v);
+				this.releaseCompareObject1Del.register(this.compareObject1Cache, "onopen");
+			} else if (parentView.activeView != null) {
+				parentView.setActiveView(null, true);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			
+			Update the compare area 2.
+		-->
+		<handler name="oncompareObject2Cache" >
+			<![CDATA[
+			if (this["releaseCompareObject2Del"]) {
+				this.releaseCompareObject2Del.unregisterAll();
+			} else {
+				this.releaseCompareObject2Del = new lz.Delegate(this, "releaseCompareObject2");
+			}
+			var parentView = this.oEditor.compareArea2Container;
+			if (parentView.activeView != null && parentView.activeView["o"] && parentView.activeView.o != this.compareObject2Cache) { 
+				if (parentView.activeView.o.openGroupObject.open && !parentView.activeView.o.viewed) {
+					parentView.activeView.o.closeObject();
+				}
+				if (parentView.activeView.o != this.compareObject1Cache) {
+					parentView.activeView.o.setAttribute("isOpenInCompareView", false);
+				}
+			}
+			
+			if (this.compareObject2Cache != null) {
+				if (!this.compareObject2Cache.openGroupObject.open) {
+					this.compareObject2Cache.openGroupObject.setAttribute("open", true);	
+				}
+				var v = this.compareObject2Cache.objectDefinition.getPropertiesView(parentView, this.compareObject2Cache, false);
+				if (!this.compareObject2Cache.isOpenInCompareView) {
+					this.compareObject2Cache.setAttribute("isOpenInCompareView", true);
+				}
+				parentView.setActiveView(v);
+				this.releaseCompareObject2Del.register(this.compareObject2Cache, "onopen");
+			} else if (parentView.activeView != null) {
+				parentView.setActiveView(null, true);
+			}
+			]]>
+		</handler>
+		
+		<!---
+			@keywords private
+			This method releases the {@link wcfModelObject model object} for the compare area 1.
+		-->
+		<method name="releaseCompareObject1" args="e=null">
+			<![CDATA[
+			if (this.compareObject1Cache != null && !this.compareObject1Cache.openGroupObject.open) {
+				if (this["releaseCompareObject1Del"]) {
+					this.releaseCompareObject1Del.unregisterAll();
+				}
+				this.setAttribute("compareObject1Cache", null);
+				if (this.oEditor.compareArea1Container.activeView != null) {
+					this.oEditor.compareArea1Container.setActiveView(null, true);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method releases the {@link wcfModelObject model object} for the compare area 2.
+		-->
+		<method name="releaseCompareObject2" args="e=null">
+			<![CDATA[
+			if (this.compareObject2Cache != null && !this.compareObject2Cache.openGroupObject.open) {
+				if (this["releaseCompareObject2Del"]) {
+					this.releaseCompareObject2Del.unregisterAll();
+				}
+				this.setAttribute("compareObject2Cache", null);
+				if (this.oEditor.compareArea2Container.activeView != null) {
+					this.oEditor.compareArea2Container.setActiveView(null, true);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check if paste is enabled.
+			@return boolean: true if paste is allowed
+		-->
+		<method name="isPasteEnabled">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "isPasteEnabled");
+				}
+				var objects = this.oEditor.model.clipboardObjects;
+				var pasteEnabled = objects.length > 0 && objects.length < 3;
+				for (var i = 0; i < objects.length; i++) {
+					if (!objects[i].isOpenInCompareViewEnabled()) {
+						pasteEnabled = false;
+						break;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfCompareViewTree", "isPasteEnabled", pasteEnabled);
+				}
+				return pasteEnabled;
+			]]>
+		</method>
+
+		<!---
+			Open the objects in the compare view.
+		-->
+		<method name="doPaste">
+			<![CDATA[
+			var objects = this.oEditor.model.clipboardObjects;
+			if (objects.length == 1 || objects.length == 2) {
+				var o1 = objects[0];
+				o1 = o1.getReferencedObject();
+				var o2 = null;
+				if (objects.length == 2) {		
+					o2 = objects[1];
+					o2 = o2.getReferencedObject();
+				}
+				this.oEditor.openObjectsInCompareView(o1, o2);
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check if drop is enabled.
+			@param array sources: array of source views
+			@return boolean: true if drop is allowed
+		-->
+		<method name="isDropEnabled" args="sources">
+			<![CDATA[
+			var dropEnabled = sources.length > 0 && sources.length < 3;
+			for (var i = 0; i < sources.length; i++) {
+				var o = wcfModelUtil.findObjectForView(sources[i]); 
+				if (o) { 
+					if (!o.isOpenInCompareViewEnabled()) { 
+						dropEnabled = false; 
+						break; 
+					} 
+				} else { 
+					dropEnabled = false; 
+					break; 
+				}                   
+	    	}
+	    	return dropEnabled;
+			]]>
+    	</method>
+		
+		<!---
+			Open the dropped objects.
+			@param array sources: array of source views
+		-->
+		<method name="droppedInTarget" args="sources">
+			<![CDATA[
+			if (sources.length == 1 || sources.length == 2) {
+				var o1 = wcfModelUtil.findObjectForView(sources[0]);
+				o1 = o1.getReferencedObject();
+				var o2 = null;
+				if (sources.length == 2) {		
+					o2 = wcfModelUtil.findObjectForView(sources[1]);
+					o2 = o2.getReferencedObject();
+				}
+				this.oEditor.openObjectsInCompareView(o1, o2);
+			}
+			]]>
+		</method>
+		
+		<wcfDropTarget targetKey="${'element'}" dragAndDropManager="${wcfDndManager}"  placement="dragtreegroup" >
+			
+			<handler name="ondroppedintarget" args="sources">
+				if (wcfEventTimer.enabled) wcfEventTimer.start("wcfCompareViewTree ondroppedintarget: " + this.parent.text + " #objects=" + sources.length);
+				classroot.droppedInTarget(sources);	
+				if (wcfEventTimer.enabled) wcfEventTimer.end();
+			</handler>
+
+			<method name="isEnabled" args="currentDragSource">    		
+    			return classroot.isDropEnabled(currentDragSource);
+    		</method>
+		</wcfDropTarget>
+
+	</class>
+
+</library>
+

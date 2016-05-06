@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktCurrentPageElementObject Current Page target}.
+	-->
+	<FlowElementProperties definitionName="mktCurrentPageProperties">
+		<PropertyGroup collapsable="false" name="browsingContainerGroup">
+		
+			<PropertyCombobox helpText="${mktMarketingResources.help_customerbehavior_targetCondition_option}" promptText="${mktMarketingResources.customerBehavior}" propertyName="elemTemplateName"/>
+	
+			<PropertyGroup collapsable="false" name="groupProductBrowsing">
+				<EnablementCondition conditionId="productBrowsingElement" enablementValue="currentCustomerBehaviorProductBrowsing" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_products}" name="anyOrNotAnyProduct" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.viewingAnyProducts}" name="productBrowsingAny">
+						<Xml name="values">
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.viewingNotAnyProducts}" name="productBrowsingNotAny">
+						<Xml name="values">
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+				<PropertyChildListEditor listDefinitionName="mktProductGrid" name="prodEditor" objectTypes="ChildCatentry,ChildInheritedCatentry" promptText="${mktMarketingResources.products}" required="true" validatorTypes="currentPageValidator"/>
+			</PropertyGroup>
+
+			<PropertyGroup collapsable="false" name="groupCategoryBrowsing">
+				<EnablementCondition conditionId="categoryBrowsingElement" enablementValue="currentCustomerBehaviorCategoryBrowsing" propertyName="elemTemplateName"/>
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_categories}" name="anyOrNotAnyCategory" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.viewingAnyCategories}" name="categoryBrowsingAny">
+						<Xml name="values">
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.viewingNotAnyCategories}" name="categoryBrowsingNotAny">
+						<Xml name="values">
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyChildListEditor listDefinitionName="mktCategoryGrid" name="catEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.categories}" required="true" validatorTypes="currentPageValidator"/>
+
+				<PropertyCheckbox falseValue="NVP" promptText="${mktMarketingResources.includeSubCategories}" propertyName="type" trueValue="PARENTCATEGORY"/>
+			</PropertyGroup>
+
+			<PropertyGroup collapsable="false" name="groupProductInCategoryBrowsing">
+				<EnablementCondition conditionId="catProductElement" enablementValue="currentCustomerBehaviorProductInCategoryBrowsing" propertyName="elemTemplateName"/>
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_productsincategories}" name="anyOrNotAnyProductInCatgory" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.viewingAnyProductInCategories}" name="productInCatgoryBrowsingAny">
+						<Xml name="values">
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.viewingNotAnyProductInCategories}" name="productInCatgoryBrowsingNotAny">
+						<Xml name="values">
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyChildListEditor listDefinitionName="mktCategoryGrid" name="catEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" promptText="${mktMarketingResources.categories}" required="true" validatorTypes="currentPageValidator"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="groupSearch">
+				<EnablementCondition conditionId="searchElement" enablementValue="currentCustomerBehaviorSearching" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_searchTerms}" name="anyOrNotAnySearch" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.searchAnyTerms}" name="anySearch">
+						<Xml name="values">
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.searchNotAnyTerms}" name="notAnySearch">
+						<Xml name="values">
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<MultiValueSelector name="searchComparison" promptText="${mktMarketingResources.searchCondition}" required="true">		
+					<MultiValueSelection displayName="${mktMarketingResources.searchIsExactly}" name="isExactly">
+						<Xml name="values">
+							<comparison>=</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.searchStart}" name="startsWith">
+						<Xml name="values">
+							<comparison>start</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.searchContain}" name="contains">
+						<Xml name="values">
+							<comparison>contain</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.searchEnd}" name="endsWith">
+						<Xml name="values">
+							<comparison>end</comparison>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+				<PropertyChildListEditor helpText="${mktMarketingResources.help_searchTerms}" listDefinitionName="mktSearchTermValueGrid" name="searchTermEditor" objectTypes="searchTerm" promptText="${mktMarketingResources.searchTerms}" required="true" validatorTypes="currentPageValidator"/>
+				<PropertyGroup collapsable="false" name="synonymMatchGroup">
+					<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+					<PropertyCheckbox helpText="${mktMarketingResources.help_synonymMatch}" propertyName="synonymMatch" promptText="${mktMarketingResources.synonymMatch}" trueValue="true" falseValue="false" />
+				</PropertyGroup>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="groupURL">
+				<EnablementCondition conditionId="URLElement" enablementValue="currentCustomerBehaviorURLContents" propertyName="elemTemplateName"/>
+				
+				<MultiValueSelector helpText="${mktMarketingResources.help_customerbehavior_targetCondition_urlContents}" name="anyOrNotAnyNVP" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+					<MultiValueSelection displayName="${mktMarketingResources.anyNVPinURL}" name="select01">
+						<Xml name="values">
+							<containsOperator>=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.notAnyNVPinURL}" name="select03">
+						<Xml name="values">
+							<containsOperator>!=</containsOperator>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyInputText helpText="${mktMarketingResources.help_urlcontent_name}" promptText="${mktMarketingResources.urlName}" propertyName="urlName" required="true"/>
+	
+				<PropertyCombobox promptText="${mktMarketingResources.urlCondition}" propertyName="comparison"/>		
+	
+				<PropertyGroup collapsable="false" name="groupURLValue">
+					<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+					<PropertyChildListEditor helpText="${mktMarketingResources.help_urlcontent_values}" listDefinitionName="mktURLValueGrid" name="urlNVPEditor" objectTypes="urlValue" promptText="${mktMarketingResources.urlTerms}" required="true" validatorTypes="currentPageValidator"/>	
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

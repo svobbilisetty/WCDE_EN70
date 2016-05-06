@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--- This definition defines the base object from which DynamicKitPage and InheritedDynamicKitPage are derived.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseCatalogEntryPagePrimaryObjectDefinition"
+		definitionName="pglBaseDynamicKitPagePrimaryObjectDefinition" 
+		detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}" 
+		displayName="${pglPageLayoutResources.dynamickit_DisplayName}"
+	  	helpLink="tasks/tpl_wwkitpages.htm"
+	    isBaseDefinition="true" 
+	    propertiesDefinitionName="pglDynamicKitPageProperties">
+	    
+	    <!---  
+		    Reference object definition between the dynamic kit page and a dynamic kit page layout.
+		    A dynamic kit page can have multiple dynamic kit page layout associations.
+		-->
+	    <ReferenceObjectDefinition baseDefinitionName="pglDynamicKitPageLayoutAssociationReferencedDynamicKitPageLayouts"/>
+	    <!---  
+		    Reference object definition between the dynamic kit page and an inherited dynamic kit page layout.
+		    A dynamic kit page can have multiple inherited dynamic page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts"/>
+		<!---  
+		    Reference object definition between the inherited dynamic kit page and an inherited dynamic kit page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts"/>
+		<!---  
+		    Reference object definition between the dynamic kit page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglDynamicKitPageReferenceDefaultDynamicKitPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglDynamicKitPageLayoutAssociationReferencedDynamicKitPageLayouts} and
+			{@link pglDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts} references for this dynamic kit page.
+		-->
+		<GetChildrenService objectTypes="DynamicKitPageLayoutAssociationReferencedDynamicKitPageLayouts,DynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts,InheritedDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" 
+			url="/cmc/GetCatalogEntryPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="DynamicKitPage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this dynamic kit page.
+		-->
+		<GetChildrenService objectTypes="DynamicKitPageReferenceDefaultDynamicKitPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForCatalogPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="DynamicKitPage"/>
+		</GetChildrenService>
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing a Dynamic Kit Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseDynamicKitPagePrimaryObjectDefinition"
+     	definitionName="DynamicKitPage"
+     	headerIcon="kitPageHeaderIcon"
+		icon="kitPageIcon"
+     	objectType="DynamicKitPage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Dynamic Kit Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseDynamicKitPagePrimaryObjectDefinition"
+     	definitionName="InheritedDynamicKitPage"
+     	displayName="${pglPageLayoutResources.inheritedDynamicKit_DisplayName}"
+	    headerIcon="inheritedKitPageHeaderIcon" 
+	    icon="inheritedKitPageIcon" objectType="InheritedDynamicKitPage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglDynamicKitPageLayoutAssociationReferencedDynamicKitPageLayouts" objectType="DynamicKitPageLayoutAssociationReferencedDynamicKitPageLayouts" referencedTypes="DynamicKitPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" definitionName="pglDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" objectType="DynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" referencedTypes="InheritedDynamicKitPageLayout"/>
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="DynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" definitionName="pglInheritedDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" objectType="InheritedDynamicKitPageLayoutAssociationReferencedInheritedDynamicKitPageLayouts" referencedTypes="InheritedDynamicKitPageLayout"/>
+
+	<ReferenceObjectDefinition definitionName="pglDynamicKitPageReferenceDefaultDynamicKitPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="DynamicKitPageReferenceDefaultDynamicKitPageLayout" 
+		referencedTypes="DynamicKitPageLayout,InheritedDynamicKitPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

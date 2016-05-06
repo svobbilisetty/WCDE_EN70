@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<_config:BusinessObjectMediatorConfiguration
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.ibm.com/xmlns/prod/commerce/foundation/config ../xsd/wc-business-object-mediator.xsd" xmlns:_config="http://www.ibm.com/xmlns/prod/commerce/foundation/config">
+	
+         <_config:object logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.Catalog">
+    		<_config:mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectMediator"
+				className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogMediator">
+     		  <_config:part-mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectPartMediator">
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogDescriptionMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogAttachmentReferenceMediator" />
+              </_config:part-mediator>
+     		</_config:mediator>
+       		<_config:mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectMediator"
+				className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogMediator" updateAccessProfile="IBM_Admin_CatalogUpdate">
+     		  <_config:part-mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectPartMediator">
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogDescriptionMediator" updateAccessProfile="IBM_Admin_CatalogDescriptionUpdate"/>
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogIdentifierMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogBasePartMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogAttachmentReferenceMediator" />
+              </_config:part-mediator>
+     		</_config:mediator>
+     		
+     		<!--  CHANGE CONTROL MEDIATOR FOR CATALOG -->
+		<_config:mediator className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectMediatorImpl" 
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeControlBusinessObjectMediator">
+			<_config:mediator-properties>
+				<_config:mediator-property name="uniqueIDProperty" value="CatalogIdentifier/UniqueID" />
+				<_config:mediator-property name="resourceManagerIds" value="1" />
+				<_config:mediator-property name="resourceContainerId" value="3" />
+			</_config:mediator-properties>
+	      	</_config:mediator>
+     		
+		    <_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.Catalog">
+			    <_config:userDataProperty logicalPropertyName="description" physicalPropertyName="description" />
+			</_config:property-mapping>
+          </_config:object>
+   	      <_config:object logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogEntryType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogEntry">
+    		<_config:mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectMediator"
+				className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryMediator">
+				<_config:mediator-properties>
+						<_config:mediator-property name="Attributes/SupportMultipleValuesForADAttributes" value="true"/>
+				</_config:mediator-properties>
+			<_config:part-mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectPartMediator">
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryDescriptionMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryAssociationMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryListPriceMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryNavigationRelationshipMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryKitComponentMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryAttributesMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryFulfillmentPropertiesMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogEntryAttachmentReferenceMediator" />
+             </_config:part-mediator>
+     		</_config:mediator>
+       		<_config:mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectMediator"
+				className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryMediator" updateAccessProfile="IBM_Admin_CatalogEntryUpdate">
+				<_config:mediator-properties>
+						<_config:mediator-property name="Attributes/SupportMultipleValuesForADAttributes" value="true"/>
+				</_config:mediator-properties>
+				<_config:part-mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectPartMediator">
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryBasePartMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryIdentifierMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryParentCatalogEntryIdentifierMediator" updateAccessProfile="IBM_Admin_CatalogEntryRelationUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryParentCatalogGroupIdentifierMediator" updateAccessProfile="IBM_Admin_CatalogEntryGroupRelation" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryDescriptionMediator" updateAccessProfile="IBM_Admin_CatalogEntryDescriptionUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryAssociationMediator" updateAccessProfile="IBM_Admin_CatalogEntryAssociationUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryListPriceMediator" updateAccessProfile="IBM_Admin_CatalogEntryListPriceUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryNavigationRelationshipMediator" updateAccessProfile="IBM_Admin_CatalogEntryProductItemRelationUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryKitComponentMediator" updateAccessProfile="IBM_Admin_CatalogEntryKitComponentUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryAttributesMediator" updateAccessProfile="IBM_Admin_CatalogEntryAttributeUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryAttributesAllowedValueMediator" updateAccessProfile="IBM_Admin_CatalogEntryAttributeAllowedValueUpdate" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryFulfillmentPropertiesMediator" updateAccessProfile="IBM_Admin_CatalogEntryFulfillmentProperties_Update"/>
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogEntryAttachmentReferenceMediator" />
+         	 </_config:part-mediator>
+			</_config:mediator>
+     		
+		<!--  CHANGE CONTROL MEDIATOR FOR CATALOG ENTRY -->
+		<_config:mediator className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectMediatorImpl" 
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeControlBusinessObjectMediator">
+			<_config:mediator-properties>
+				<_config:mediator-property name="uniqueIDProperty" value="CatalogEntryIdentifier/UniqueID" />
+				<_config:mediator-property name="resourceManagerIds" value="8" />
+				<_config:mediator-property name="resourceContainerId" value="3" />
+			</_config:mediator-properties>
+			<_config:part-mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.BusinessObjectMediator">
+				<!--  Associations - Individually Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="Association" />
+						<_config:mediator-property name="uniqueIDProperty" value="uniqueID" />
+						<_config:mediator-property name="resourceManagerId" value="17" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+				<!--  Navigation Relationships - Individually Lockable -->
+				<!-- NavigationRelationship represents both catalog entry to parent catalog group relationship as well as catalog entry to child catalog entry relationship-->
+				<!-- In this case, resource manager id 10 represents both CATGRPENREL and CATENREL table-->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="NavigationRelationship" />
+						<_config:mediator-property name="resourceManagerId" value="10" />
+		      			 <_config:mediator-property name="bokey2.uniqueIDProperty" value="catalogEntryReference/catalogEntryIdentifier/uniqueID" />
+		      			 <_config:mediator-property name="bokey3.uniqueIDProperty" value="catalogGroupReference/catalogGroupIdentifier/uniqueID" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+				<!--  Parent Catalog Entry Relationships - Individually Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="ParentCatalogEntryIdentifier" />
+						<_config:mediator-property name="bokey2.uniqueIDProperty" value="uniqueID" />
+						<_config:mediator-property name="resourceManagerId" value="10" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+
+				<!--  Parent Catalog Group Relationships - Individually Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="ParentCatalogGroupIdentifier" />
+						<_config:mediator-property name="bokey3.uniqueIDProperty" value="uniqueID" />
+						<_config:mediator-property name="resourceManagerId" value="10" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+				<!--  Offer Price - Group Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.price.facade.server.mediator.ChangeControlPriceListOfferPriceMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="Price" />
+						<_config:mediator-property name="resourceManagerId" value="1" />
+						<_config:mediator-property name="resourceContainerId" value="9" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+				<!--  Fulfillment Properties - Group Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="FulfillmentProperties" />
+						<_config:mediator-property name="resourceManagerId" value="2" />
+						<_config:mediator-property name="resourceContainerId" value="10" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+			</_config:part-mediator>
+	      </_config:mediator>     		
+	      
+		    <_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogEntryType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogEntry">
+			    <_config:property logicalPropertyName="manufacturerPartNumber" physicalPropertyName="manufacturerPartNumber" />
+			    <_config:property logicalPropertyName="manufacturer" physicalPropertyName="manufacturerName" />
+			    <_config:property logicalPropertyName="buyable" physicalPropertyName="buyable" />
+			    <_config:property logicalPropertyName="field5" physicalPropertyName="field5" />
+			    <_config:property logicalPropertyName="field4" physicalPropertyName="field4" />
+			    <_config:property logicalPropertyName="onAuction" physicalPropertyName="onAuction" />
+			    <_config:property logicalPropertyName="onSpecial" physicalPropertyName="onSpecial" />
+			    <_config:property logicalPropertyName="field3" physicalPropertyName="field3" />
+			    <_config:property logicalPropertyName="field2" physicalPropertyName="field2" />
+			    <_config:property logicalPropertyName="field1" physicalPropertyName="field1" />
+			    <_config:property logicalPropertyName="state" physicalPropertyName="state" />
+			    <_config:property logicalPropertyName="startDate" physicalPropertyName="startDate" />
+			    <_config:property logicalPropertyName="endDate" physicalPropertyName="endDate" />
+			    <_config:property logicalPropertyName="rank" physicalPropertyName="rank" />
+			    <_config:property logicalPropertyName="availabilityDate" physicalPropertyName="availabilityDate" />
+			    <_config:property logicalPropertyName="lastOrderDate" physicalPropertyName="lastOrderDate" />
+			    <_config:property logicalPropertyName="endOfServiceDate" physicalPropertyName="endOfServiceDate" />
+			    <_config:property logicalPropertyName="discontinueDate" physicalPropertyName="discontinueDate" />
+			    <_config:property logicalPropertyName="itemSpecifiedId" physicalPropertyName="itemSpecifiedId" />
+			    <_config:property logicalPropertyName="url" physicalPropertyName="URL" />
+			    <_config:child-property-mapping relationshipName="catalogEntryShipmentData">
+				    <_config:property logicalPropertyName="weight" physicalPropertyName="weight" />
+				    <_config:property logicalPropertyName="weightMeasure" physicalPropertyName="weightMeasure" />
+				    <_config:property logicalPropertyName="length" physicalPropertyName="length" />
+				    <_config:property logicalPropertyName="width" physicalPropertyName="width" />
+				    <_config:property logicalPropertyName="height" physicalPropertyName="height" />
+				    <_config:property logicalPropertyName="sizeMeasure" physicalPropertyName="sizeMeasure" />
+				    <_config:property logicalPropertyName="nominalQuantity" physicalPropertyName="nominalQuantity" />
+				    <_config:property logicalPropertyName="quantityMultiple" physicalPropertyName="quantityMultiple" />
+				    <_config:property logicalPropertyName="quantityMeasure" physicalPropertyName="quantityMeasure" />
+	 			</_config:child-property-mapping>
+		    </_config:property-mapping>
+			<_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.AssociationType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.MerchandisingAssociationCatalogEntryRelation">
+				<_config:userDataProperty logicalPropertyName="rule" physicalPropertyName="rule"/>
+				<_config:userDataProperty logicalPropertyName="field1" physicalPropertyName="field1"/>
+				<_config:userDataProperty logicalPropertyName="field2" physicalPropertyName="field2"/>
+				<_config:userDataProperty logicalPropertyName="field3" physicalPropertyName="field3"/>
+				<_config:userDataProperty logicalPropertyName="groupName" physicalPropertyName="groupName"/>
+				<_config:userDataProperty logicalPropertyName="date1" physicalPropertyName="date1"/>
+				<_config:userDataProperty logicalPropertyName="storeID" physicalPropertyName="storeId"/>
+			</_config:property-mapping>
+			<_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogDescriptionType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogEntryDescription">
+				<_config:userDataProperty logicalPropertyName="published" physicalPropertyName="published" />
+				<_config:userDataProperty logicalPropertyName="available" physicalPropertyName="available" />
+				<_config:userDataProperty logicalPropertyName="auxDescription1" physicalPropertyName="auxDescription1" />
+				<_config:userDataProperty logicalPropertyName="auxDescription2" physicalPropertyName="auxDescription2" />
+				<_config:userDataProperty logicalPropertyName="xmlDetail" physicalPropertyName="xmlDetail" />
+				<_config:userDataProperty logicalPropertyName="availabilityDate" physicalPropertyName="availabilityDate" />
+			</_config:property-mapping>
+			<_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogEntryNavigationRelationshipType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogEntryRelation">
+				<_config:userDataProperty logicalPropertyName="field1" physicalPropertyName="field1"/>
+				<_config:userDataProperty logicalPropertyName="field2" physicalPropertyName="field2"/>
+				<_config:userDataProperty logicalPropertyName="field3" physicalPropertyName="field3"/>
+				<_config:userDataProperty logicalPropertyName="groupName" physicalPropertyName="groupName"/>
+			</_config:property-mapping>
+			<_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.KitComponentType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogEntryRelation">
+				<_config:userDataProperty logicalPropertyName="field1" physicalPropertyName="field1"/>
+				<_config:userDataProperty logicalPropertyName="field2" physicalPropertyName="field2"/>
+				<_config:userDataProperty logicalPropertyName="field3" physicalPropertyName="field3"/>
+				<_config:userDataProperty logicalPropertyName="groupName" physicalPropertyName="groupName"/>
+			</_config:property-mapping>
+   	</_config:object>
+	<_config:object logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogGroupType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogGroup">
+	  <_config:mediator
+		  interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectMediator"
+		  className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogGroupMediator">
+     		  <_config:part-mediator
+				  interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectPartMediator">
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogGroupDescriptionMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogGroupAssociationMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogGroupNavigationRelationshipMediator" />					
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogGroupTaxonomyAttributesMediator" />
+					<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadCatalogGroupAttachmentReferenceMediator" />
+              </_config:part-mediator>
+      </_config:mediator>
+	  <_config:mediator
+		  interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectMediator"
+		  className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupMediator" updateAccessProfile="IBM_Admin_CatalogGroupProfile">
+	   		  <_config:part-mediator
+			      interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectPartMediator">
+			      	<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupBasePartMediator" />
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupParentCatalogGroupIdentifierMediator" updateAccessProfile="IBM_Admin_CatalogGroupParentProfile" />
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupDescriptionMediator" updateAccessProfile="IBM_Admin_CatalogGroupDescriptions" />
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupNavigationRelationshipMediator" updateAccessProfile="IBM_Admin_CatalogGroupNavigationRelationshipProfile" />
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupIdentifierMediator" />
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupAssociationMediator" updateAccessProfile="IBM_Admin_CatalogGroupAssociation"/>
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupTaxonomyAttributeMediator" />
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupIdentifierMediator" />
+				    <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeCatalogGroupAttachmentReferenceMediator" />
+			  </_config:part-mediator>
+	  </_config:mediator>
+	  
+	<!--  CHANGE CONTROL MEDIATOR FOR CATALOG GROUP -->
+	  	  <_config:mediator className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectMediatorImpl" 
+	        				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeControlBusinessObjectMediator">
+			<_config:mediator-properties>
+				<_config:mediator-property name="uniqueIDProperty" value="CatalogGroupIdentifier/UniqueID" />
+				<_config:mediator-property name="resourceManagerIds" value="3" />
+				<_config:mediator-property name="resourceContainerId" value="3" />
+			</_config:mediator-properties>
+			<_config:part-mediator
+				interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.BusinessObjectMediator">
+				<!--  Associations - Individually Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="Association" />
+						<_config:mediator-property name="uniqueIDProperty" value="uniqueID" />
+						<_config:mediator-property name="resourceManagerId" value="18" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+				<!--  Navigation Relationships - Individually Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="NavigationRelationship" />
+						<_config:mediator-property name="resourceManagerId" value="5" />
+						<_config:mediator-property name="bokey2.uniqueIDProperty" value="catalogGroupReference/catalogGroupIdentifier/uniqueID" />
+						<_config:mediator-property name="bokey3.uniqueIDProperty" value="catalogEntryReference/catalogEntryIdentifier/uniqueID" />
+					 </_config:mediator-properties>
+				</_config:part-mediator-implementation>
+				<!--  Parent Catgroup Relationships - Individually Lockable -->
+				<_config:part-mediator-implementation className="com.ibm.commerce.context.content.locking.ChangeControlBusinessObjectPartMediatorImpl">
+					 <_config:mediator-properties>
+						<_config:mediator-property name="objectPath" value="ParentCatalogGroupIdentifier" />
+						<_config:mediator-property name="uniqueIDProperty" value="uniqueID" />
+						<_config:mediator-property name="resourceManagerId" value="5" />
+					</_config:mediator-properties>
+				</_config:part-mediator-implementation>
+			</_config:part-mediator>
+	      </_config:mediator>	  	  
+
+	  <_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogGroupType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogGroup">
+	      <_config:userDataProperty logicalPropertyName="field1" physicalPropertyName="field1" />
+	      <_config:userDataProperty logicalPropertyName="field2" physicalPropertyName="field2" />
+	  </_config:property-mapping>
+	  <_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.CatalogDescriptionType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogGroupDescription">
+		  <_config:userDataProperty logicalPropertyName="published" physicalPropertyName="published" />
+		  <_config:userDataProperty logicalPropertyName="display" physicalPropertyName="display" />
+		  <_config:userDataProperty logicalPropertyName="note" physicalPropertyName="note" />
+	  </_config:property-mapping>
+	  <_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.AssociationType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.MerchandisingAssociationCatalogGroupRelation">
+		  <_config:userDataProperty logicalPropertyName="rule" physicalPropertyName="rule"/>
+		  <_config:userDataProperty logicalPropertyName="field1" physicalPropertyName="field1"/>
+		  <_config:userDataProperty logicalPropertyName="field2" physicalPropertyName="field2"/>
+		  <_config:userDataProperty logicalPropertyName="field3" physicalPropertyName="field3"/>
+		  <_config:userDataProperty logicalPropertyName="groupName" physicalPropertyName="groupName"/>
+		  <_config:userDataProperty logicalPropertyName="date1" physicalPropertyName="date1"/>
+		  <_config:userDataProperty logicalPropertyName="semanticSpecifier" physicalPropertyName="massocId"/>
+	  </_config:property-mapping>
+	  <_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.NavigationRelationshipType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.CatalogGroupRelation">
+		  <_config:userDataProperty logicalPropertyName="rule" physicalPropertyName="rule"/>
+	  </_config:property-mapping>
+	</_config:object>
+	
+	<_config:object logicalType="com.ibm.commerce.catalog.facade.datatypes.AttributeDictionaryType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.AttributeDictionary">
+	  <_config:mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectMediator"
+		  className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadAttributeDictionaryMediator">
+ 		  <_config:part-mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectPartMediator">
+		  </_config:part-mediator>
+      </_config:mediator>
+	</_config:object>
+
+	<!--
+	<_config:object logicalType="com.ibm.commerce.catalog.facade.datatypes.AttributeDictionaryAttributeGroupType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.AttributeDictionaryAttributeGroup">
+	  <_config:mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectMediator"
+		  className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadAttributeDictionaryAttributeGroupMediator">
+ 		  <_config:part-mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectPartMediator">
+		  </_config:part-mediator>
+    </_config:mediator>
+    <_config:mediator
+		  interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectMediator"
+		  className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeAttributeDictionaryAttributeGroupMediator">
+   		<_config:part-mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectPartMediator">
+   			<_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeAttributeDictionaryAttributeGroupBasePartMediator" />
+		</_config:part-mediator>
+	  </_config:mediator>
+	</_config:object>
+
+	<_config:object logicalType="com.ibm.commerce.catalog.facade.datatypes.AttributeDictionaryAttributeType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.Attr">
+	  <_config:mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectMediator"
+		  className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ReadAttributeDictionaryAttributesMediator">
+ 		  <_config:part-mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ReadBusinessObjectPartMediator">
+		  </_config:part-mediator>
+    </_config:mediator>
+    <_config:mediator
+		  interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectMediator"
+		  className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeAttributeDictionaryAttributeMediator">
+   		<_config:part-mediator interfaceName="com.ibm.commerce.foundation.server.services.dataaccess.bom.mediator.ChangeBusinessObjectPartMediator">
+		     <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeAttributeDictionaryAttributeBasePartMediator" />
+		     <_config:part-mediator-implementation className="com.ibm.commerce.catalog.facade.server.services.dataaccess.bom.mediator.ChangeAttributeDictionaryAttributeAllowedValueMediator" />
+		  </_config:part-mediator>
+	  </_config:mediator>
+	  <_config:property-mapping logicalType="com.ibm.commerce.catalog.facade.datatypes.AttributeDictionaryAttributeType" physicalType="com.ibm.commerce.catalog.facade.server.entity.datatypes.Attribute">
+		<_config:userDataProperty logicalPropertyName="Footnote" physicalPropertyName="noteInfo" />
+		<_config:userDataProperty logicalPropertyName="Field1" physicalPropertyName="field1" />
+		<_config:userDataProperty logicalPropertyName="DisplayGroupName" physicalPropertyName="groupName" />
+		<_config:userDataProperty logicalPropertyName="SecondaryDescription" physicalPropertyName="description2" />
+	  </_config:property-mapping>
+	</_config:object>
+	-->
+</_config:BusinessObjectMediatorConfiguration>

@@ -1,0 +1,140 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<testcase>
+
+	<!-- Open Assets tool -->
+	<action name="wcfAutoOpenToolAction">
+		<param name="toolId" value="attachmentManagement"/>
+	</action>
+	
+	<!-- Select store -->
+	<action name="wcfAutoSelectStoreAction">
+		<param name="storeKey" value="storeIdentifier"/>
+	</action>
+	
+	<!-- Create a new attachment -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="objectType" value="Attachment"/>
+		<param name="objectKey" value="attachment"/>
+	</action>
+	
+	<!-- Set the attachment code property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="attachment"/>
+		<param name="propertyName" value="identifier"/>
+		<param name="valueKey" value="code"/>
+	</action>
+	
+	<!-- Create a URL asset for the new attachment -->
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="parentObject" value="attachment"/>
+		<param name="objectType" value="AttachmentAssetWithURLType"/>
+		<param name="objectKey" value="asset"/>
+	</action>
+	
+	<!-- Set the path property for the new URL asset -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="asset"/>
+		<param name="propertyName" value="path"/>
+		<param name="value" value="http://w3.ibm.com/jct03001pt/wps/myportal"/>
+	</action>	
+		
+	<!-- Create the attachment description object. -->	
+	<action name="wcfAutoCreateNewObjectAction">
+		<param name="parentObject" value="attachment"/>
+		<param name="objectType" value="AttachmentDescription"/>
+		<param name="objectKey" value="attachmentDescription"/>
+	</action>
+	
+	<!-- Set the name property -->
+	<action name="wcfAutoSetPropertyAction">
+		<param name="object" value="attachmentDescription"/>
+		<param name="propertyName" value="name"/>
+		<param name="valueKey" value="identifier"/>
+	</action>
+	
+	<!-- Save all -->
+	<action name="wcfAutoSaveAllAction"/>
+	
+	<!-- Refresh all -->
+	<action name="wcfAutoRefreshAllAction"/>
+	
+	<!-- Find the attachment -->
+	<action name="wcfAutoFindObjectAction">
+		<param name="searchType" value="FindAttachments"/>
+		<param name="searchKey" value="code"/>
+		<param name="objectKey" value="attachment"/>
+	</action>
+	
+	<!-- Verify that the attachment was found -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="attachment"/>
+	</action>
+	
+	<!-- Verify the identifier property of the attachment -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="attachment"/>
+		<param name="propertyName" value="identifier"/>
+		<param name="valueKey" value="code"/>
+	</action>
+	
+	<!-- Load the children of the attachment -->
+	<action name="wcfAutoLoadChildrenAction">
+		<param name="object" value="attachment"/>		
+	</action>
+
+	<!-- Get the child object -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="attachment"/>
+		<param name="objectPath" value="AttachmentAssetWithURLType"/>
+		<param name="objectKey" value="asset"/>
+	</action>
+	
+	<!-- Verify that the asset was found -->
+	<action name="wcfAutoVerifyObjectAction">
+		<param name="object" value="asset"/>
+	</action>
+	
+	<!-- Verify the path property of the asset -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="asset"/>
+		<param name="propertyName" value="path"/>
+		<param name="value" value="http://w3.ibm.com/jct03001pt/wps/myportal"/>
+	</action>	
+	
+	<!-- Get the attachment description object -->
+	<action name="wcfAutoGetChildObjectAction">
+		<param name="parentObject" value="attachment"/>
+		<param name="objectPath" value="AttachmentDescription"/>
+		<param name="objectKey" value="attachmentDescription"/>
+	</action>
+	
+	<!-- Verify the name property of the attachment description -->
+	<action name="wcfAutoVerifyPropertyAction">
+		<param name="object" value="attachmentDescription"/>
+		<param name="propertyName" value="name"/>
+		<param name="valueKey" value="identifier"/>
+	</action>
+	
+	<!-- Delete the attachment -->
+	<action name="wcfAutoDeleteObjectAction">
+		<param name="object" value="attachment"/>
+	</action>		
+	
+	<action name="wcfAutoVerifyNoObjectAction">
+		<param name="object" value="attachment"/>
+	</action>
+	
+</testcase>

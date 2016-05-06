@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		<p>This is the flow element object definition for an Experimentation element. This object defines the following child elements:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService}</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService}</li>
+		</ul>
+		</p>
+		<p>This object also has the following pre-defined properties and restrictions:
+		<ul>
+			<li><b>name</b>: required string field with a maximum of 254 characters</li>
+			<li><b>maxCustomers</b>: optional number field a minimum value of 0</li>
+			<li><b>sessionLength</b>: optional number field a minimum value of 0</li>
+			<li><b>branchType</b>: required string field with possible values of either "random" or "one"</li>
+			<li><b>scope</b>: required string field with possible values of "lifetime", "session" or "request"</li>
+			<li><b>state</b>: required string field with possible values of either "active" or "inactive"</li>
+		</ul>
+		</p>
+	-->
+	<FlowElementObjectDefinition definitionName="mktExperimentElementObject" displayName="${mktMarketingResources.experiment}" elemTemplateType="Branch" flowIcon="experimentIcon" headerIcon="experimentHeaderIcon" helpLink="concepts/csbexpoverview.htm" objectType="branch" package="mkt" paletteIcon="experimentPaletteIcon" propertiesDefinitionName="mktExperimentProperties" summaryClass="mktBranchSummary">
+			
+		<CreateService baseDefinitionName="mktFlowElementCreateService"/>
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService"/>
+		
+		<Xml name="template">
+			<elemTemplateName>branch</elemTemplateName>
+			<scope>lifetime</scope>
+			<branchtype>random</branchtype>
+			<state>active</state>
+		</Xml>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.objectName}" maximumSize="254" propertyName="name" required="true" trim="true"/>
+		<PropertyDefinition displayName="${mktMarketingResources.maxCustomers}" minValue="0" propertyName="maxCustomers" type="number"/>
+		<PropertyDefinition displayName="${mktMarketingResources.sessionLength}" minValue="0" propertyName="sessionLength" type="number"/>
+		<PropertyDefinition copyProtected="true" displayName="${mktMarketingResources.totalUniqueCustomerCount}" propertyName="uniqueCustomerCount" send="false" type="number"/>
+		
+		<PropertyDefinition propertyName="branchtype">
+			<PropertyValue displayName="${mktMarketingResources.branchRandom}" value="random"/>
+			<PropertyValue displayName="${mktMarketingResources.branchOne}" value="one"/>
+		</PropertyDefinition>
+		<PropertyDefinition propertyName="scope">
+			<PropertyValue displayName="${mktMarketingResources.lifetime}" value="lifetime"/>
+			<PropertyValue displayName="${mktMarketingResources.session}" value="session"/>
+			<PropertyValue displayName="${mktMarketingResources.request}" value="request"/>
+		</PropertyDefinition>
+		<PropertyDefinition propertyName="state">
+			<PropertyValue displayName="${mktMarketingResources.running}" value="active"/>
+			<PropertyValue displayName="${mktMarketingResources.suspended}" value="inactive"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.startDate}" propertyName="startDate" type="datetime"/>
+		<PropertyDefinition displayName="${mktMarketingResources.endDate}" propertyName="endDate" type="datetime"/>
+		
+		<StartDateEndDateValidator endDatePropertyName="endDate" startDatePropertyName="startDate" validatorId="dateValidator"/>
+		<ExperimentValidator package="mkt" validatorId="experimentValidator"/>
+		
+		<FlowElementObjectDefinition baseDefinitionName="mktFlowPathElementObject" package="mkt"/>
+		
+	</FlowElementObjectDefinition>
+	
+</Definitions>

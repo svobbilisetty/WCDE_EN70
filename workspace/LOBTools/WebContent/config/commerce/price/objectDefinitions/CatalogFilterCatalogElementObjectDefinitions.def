@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+    <!--
+        - This child object definition defines the catalog element under a catalog filter.
+    -->
+    <ReferenceObjectDefinition allowDuplicates="false"
+        definitionName="cftBaseCatalogFilterCatalogElementObjectDefinition" idProperty="uniqueId"
+        isBaseDefinition="true">
+        
+        <CreateService url="/cmc/CreateCatalogFilterCategoryElement">
+           <ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+            <ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+            <ServiceParam name="elementId" propertyName="elementId"/>
+            <ServiceParam name="selection" parameterName="selection" propertyName="xclude" />
+        </CreateService>
+
+        <UpdateService url="/cmc/UpdateCatalogFilterCategoryElement">
+            <ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+            <ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+            <ServiceParam name="elementId" propertyName="elementId"/>
+            <ServiceParam name="selection" parameterName="selection" propertyName="xclude" />
+        </UpdateService>
+
+        <DeleteService url="/cmc/DeleteCatalogFilterCategoryElement">
+        	 <ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="filterCondition" enablementValue="CatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedFilterCondition" enablementValue="InheritedCatalogFilter" parentProperty="true" propertyName="objectType"/>
+			</ServiceParam>
+            <ServiceParam name="filterId" propertyName="catalogFilterId" parentProperty="true" />
+            <ServiceParam name="elementId" propertyName="elementId"/>
+        </DeleteService>
+		
+		<PropertyDefinition propertyName="xclude">
+            <PropertyValue value="Include" displayName="${cftCatalogFilterResources.catalogFilterIncludeCategoryElement}" isDefault="true"/>
+            <PropertyValue value="Exclude" displayName="${cftCatalogFilterResources.catalogFilterExcludeCategoryElement}"/>
+        </PropertyDefinition>
+		
+		<PropertyDefinition propertyName="elementId"/>
+        
+        <ChildObjectDefinition baseDefinitionName="cftAttributeSetChildObjectDefinition"/>
+        
+        <Xml name="template">
+            <xclude>Include</xclude>
+            <elementId>0</elementId>
+        </Xml>
+    </ReferenceObjectDefinition>
+    
+    <ReferenceObjectDefinition baseDefinitionName="cftBaseCatalogFilterCatalogElementObjectDefinition"
+        definitionName="cftCatalogElementObjectDefinition"
+        objectType="CatalogElement" referencedTypes="Catalog" objectGroups="CategoryElementGroup">
+    </ReferenceObjectDefinition>
+
+    <ReferenceObjectDefinition baseDefinitionName="cftBaseCatalogFilterCatalogElementObjectDefinition"
+        definitionName="cftInheritedCatalogElementObjectDefinition"
+        objectType="InheritedCatalogElement" referencedTypes="InheritedCatalog" objectGroups="CategoryElementGroup">
+    </ReferenceObjectDefinition>
+    
+</Definitions>

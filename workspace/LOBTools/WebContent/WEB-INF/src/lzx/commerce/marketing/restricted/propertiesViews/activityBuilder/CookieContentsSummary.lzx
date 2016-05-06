@@ -1,0 +1,90 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktCookieContentsElementObject} flow element.
+	-->
+	<class name="mktCookieContentsSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="containsOperator" propertyName="containsOperator"/>
+		<wcfFlowSummaryParam name="comparison" propertyName="comparison"/>
+		<wcfFlowSummaryParam name="cookie" propertyName="cookie"/>
+		<wcfFlowSummaryParam name="cookieValue" objectPath="cookieValue" propertyName="cookieValue"/>
+
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.summaryCookieExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotCookieExactly, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCookieStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotCookieStartsWith, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCookieContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotCookieContains, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCookieEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotCookieEnds, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCookieAny, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryNotCookieAny, "onstring");
+			]]>
+		</handler>
+
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summaryText = this.getCookieSummary();
+				this.setSummaryText(summaryText);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="getCookieSummary">
+			<![CDATA[
+				var summary = "";
+				var valueText = this.getValuesList("cookieValue");
+				var cookie = this.resolvedParams["cookie"];
+				var comparison = this.resolvedParams["comparison"];
+				var containsOperator = this.resolvedParams["containsOperator"];
+				
+				if((cookie != null) && (cookie != "") && (comparison != null) && (comparison != "") &&
+						((containsOperator == "=") || (containsOperator == "!="))) {
+					
+					var notText = (containsOperator == "!=") ? "Not" : "";
+					var compText = "";
+					
+					switch(comparison) {
+						case "=":
+							compText = "Exactly";
+							break;
+						case "start":
+							compText = "StartsWith";
+							break;
+						case "contain":
+							compText = "Contains";
+							break;
+						case "end":
+							compText = "Ends";
+							break;
+						case "any":
+							compText = "Any";
+							break;
+					}
+					
+					if(((valueText != null) && (valueText != "")) || (compText == "Any")) {
+						summary = mktMarketingResources.replaceValues("summary" + notText + "Cookie" + compText, [cookie, valueText]);
+					}
+				}
+			
+				return summary;
+			]]>
+		</method>
+	</class>
+
+</library>

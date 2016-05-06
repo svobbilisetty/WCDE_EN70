@@ -1,0 +1,29 @@
+<%
+//********************************************************************
+//*-------------------------------------------------------------------
+//* Licensed Materials - Property of IBM
+//*
+//* WebSphere Commerce
+//*
+//* (c) Copyright IBM Corp. 2007
+//*
+//* US Government Users Restricted Rights - Use, duplication or
+//* disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+//*
+//*-------------------------------------------------------------------
+//*
+%>
+<c:forEach var="description" items="${catalogGroup.description}">
+	<object objectType="CatalogGroupDescription">
+		<languageId><wcf:cdata data="${description.language}"/></languageId>
+		<name><wcf:cdata data="${description.name}"/></name>
+		<sDesc><wcf:cdata data="${description.shortDescription}"/></sDesc>
+		<lDesc><wcf:cdata data="${description.longDescription}"/></lDesc>
+		<keyword><wcf:cdata data="${description.keyword}"/></keyword>
+		<fImage><wcf:cdata data="${description.fullImage}"/></fImage>
+		<tImage><wcf:cdata data="${description.thumbnail}"/></tImage>
+		<c:forEach var="userDataField" items="${description.attributes}">
+			<xdesc_${userDataField.typedKey}><wcf:cdata data="${userDataField.typedValue}"/></xdesc_${userDataField.typedKey}>
+		</c:forEach>
+	</object>
+</c:forEach>

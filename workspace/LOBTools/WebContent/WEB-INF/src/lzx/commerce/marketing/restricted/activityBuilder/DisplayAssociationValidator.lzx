@@ -1,0 +1,47 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2008 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Validator for an {@link mktDisplayAssociationElementObject Experiment} element. This ensures that if
+		catalog entries are to be used as the source of the merchandising association, that catalog entries
+		are actually specified by the user.
+	-->
+	<class name="mktDisplayAssociationValidator" extends="wcfRequiredChildObjectValidator">
+		<!---
+			The name of the property to check whether or not this validator should be enabled.
+			This property must be {@link wcfModelProperty#enabled enabled} itself in order
+			for this validator to be enabled.
+		-->
+		<attribute name="enablePropertyName" type="string"/>
+		<!--- The value that the given property must be in order to enable this validator. -->
+		<attribute name="enablePropertyValue" type="string" value=""/>
+
+		<!--- 
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			var enableProp = o.getProperty(this.enablePropertyName);
+			if(enableProp.enabled && (this.enablePropertyValue != "") && (enableProp.value == this.enablePropertyValue)) {
+				var childObjects = o.getObjects(this.objectPath);
+				if (childObjects == null || childObjects.length <= 0) {
+					o.addValidationError(this, this.errorMessage);
+					return;
+				}
+			}
+			o.clearValidationError(this);
+			]]>
+		</method>
+	</class>
+</library>

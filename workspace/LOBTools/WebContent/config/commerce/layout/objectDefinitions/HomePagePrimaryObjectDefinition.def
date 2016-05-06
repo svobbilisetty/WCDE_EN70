@@ -1,0 +1,103 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<PrimaryObjectDefinition definitionName="pglBaseHomePagePrimaryObjectDefinition" 
+		displayNameProperty="name" 
+		propertiesDefinitionName="pglHomePageProperties" 
+		idProperty="pageType"
+		isBaseDefinition="true"
+		searchType="FindStaticPages"
+		writeUsage="IBM_ManagePageLayoutTool">
+		
+		<!---
+			An instantiation of the reference object {@link pglHomePageLayoutAssociationReferencedHomePageLayouts}
+			representing the reference to the home page layout objects which hold a page layout association with this home page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglHomePageLayoutAssociationReferencedHomePageLayouts"/>
+		
+		<!---  
+			An instantiation of the reference object {@link pglHomePageLayoutAssociationReferencedInheritedHomePageLayouts}
+			representing the reference to the inherited home page layout objects which hold a page layout association with this home page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglHomePageLayoutAssociationReferencedInheritedHomePageLayouts"/>	
+		
+		<!---  
+		   	An instantiation of the reference object {@link pglInheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts}
+			representing the reference to the inherited home page layout objects which hold a page layout association with this inherited home page.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the home page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglHomePageReferenceDefaultHomePageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglHomePageLayoutAssociationReferencedHomePageLayouts},
+			{@link pglHomePageLayoutAssociationReferencedInheritedHomePageLayouts} and {@link pglInheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts}
+			references for this home page.
+		-->
+		<GetChildrenService objectTypes="HomePageLayoutAssociationReferencedHomePageLayouts,HomePageLayoutAssociationReferencedInheritedHomePageLayouts,InheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts" url="/cmc/GetStaticPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="HomePage"/>
+		</GetChildrenService>
+		
+		<!---
+			Retrieves the default page layout information for this home page.
+		-->
+		<GetChildrenService objectTypes="HomePageReferenceDefaultHomePageLayout" 
+			url="/cmc/GetDefaultPageLayoutForStaticPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="HomePage"/>
+		</GetChildrenService>
+		<!---  
+			Retrieves the SEO URL for home page.
+		-->				
+		<GetPreviewURLService url="/cmc/GetStaticPageSeoUrl">
+			<ServiceParam name="pageUsage" value="Home"/>
+		</GetPreviewURLService>		
+	</PrimaryObjectDefinition>
+	
+	<!---		
+		This definition represents the primary object definition describing a Home Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseHomePagePrimaryObjectDefinition"
+     	definitionName="HomePage"
+     	headerIcon="storePageHeaderIcon"
+		icon="storePageIcon"
+     	objectType="HomePage">
+	</PrimaryObjectDefinition>
+
+	<!---		
+		This definition represents the primary object definition describing an Inherited Home Page as a business object.
+	-->
+    <PrimaryObjectDefinition baseDefinitionName="pglBaseHomePagePrimaryObjectDefinition"
+     	definitionName="InheritedHomePage"
+	    headerIcon="inheritedStorePageHeaderIcon" 
+	    icon="inheritedStorePageIcon" objectType="InheritedHomePage">	
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglHomePageLayoutAssociationReferencedHomePageLayouts" objectType="HomePageLayoutAssociationReferencedHomePageLayouts" referencedTypes="HomePageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts" definitionName="pglHomePageLayoutAssociationReferencedInheritedHomePageLayouts" objectType="HomePageLayoutAssociationReferencedInheritedHomePageLayouts" referencedTypes="InheritedHomePageLayout"/>  
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="HomePageLayoutAssociationReferencedInheritedHomePageLayouts" definitionName="pglInheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts" objectType="InheritedHomePageLayoutAssociationReferencedInheritedHomePageLayouts" referencedTypes="InheritedHomePageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglHomePageReferenceDefaultHomePageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="HomePageReferenceDefaultHomePageLayout" 
+		referencedTypes="HomePageLayout,InheritedHomePageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

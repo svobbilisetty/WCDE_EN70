@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link mktCustomerSegmentElementObject Customer Segment target}.
+	-->
+	<FlowElementProperties definitionName="mktCustomerSegmentProperties">
+		<PropertyGroup collapsable="false" name="group">
+			<MultiValueSelector name="anyOrAll" promptText="${mktMarketingResources.targetCondition}" useRadioButtons="true">
+				<MultiValueSelection displayName="${mktMarketingResources.anyText}" name="select1">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.allText}" name="select2">
+					<Xml name="values">
+						<anyOrAll>all</anyOrAll>
+						<containsOperator>=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.notAnyText}" name="select3">
+					<Xml name="values">
+						<anyOrAll>any</anyOrAll>
+						<containsOperator>!=</containsOperator>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+			<PropertyChildListEditor listDefinitionName="mktCustomerSegmentGrid" name="segmentEditor" objectTypes="ChildCustomerSegment,ChildInheritedCustomerSegment" promptText="${mktMarketingResources.customerSegments}" required="true" validatorTypes="noCustomerSegmentsSelected"/>
+		</PropertyGroup>
+	</FlowElementProperties>
+</Definitions>

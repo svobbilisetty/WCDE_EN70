@@ -1,0 +1,1270 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<%-- 
+  *****
+  * This JSP file initializes the ESpot info popup
+  *****
+--%>
+<!-- BEGIN ESpotInfoPopupDisplay.jspf-->
+
+<%@ page import="java.net.URLDecoder"%>
+<%@ page import="com.ibm.commerce.catalog.facade.datatypes.PreviewReportType" %>
+
+<c:if test="${empty activityTableExpandId}">
+	<c:set var="activityTableExpandId" value="0" scope="request"/>
+	<script type="text/Javascript">
+		function toggleActivityTable(tableId) {
+			var arrowElement = document.getElementById("activityArrowId_" + tableId);
+			var rowElement = document.getElementById("activityTableExpandId_" + tableId);
+			if(arrowElement.className == "expand_arrow") {
+				arrowElement.className = "contract_arrow";
+				rowElement.style.display = "none";
+			}
+			else {
+				arrowElement.className = "expand_arrow";
+				rowElement.style.display = "block";
+			}
+		}
+	</script>
+</c:if>
+
+<!-- Start Popup -->
+<c:set var="indent" value="0"/>
+<c:set var="reportContents" value="${marketingSpotDatas.previewReport}"/>
+<c:set var="emsId" value="${marketingSpotDatas.marketingSpotIdentifier.uniqueID}"/>
+<jsp:useBean id="bottomMessagesMap" class="java.util.LinkedHashMap" scope="request" />
+<%-- 
+	As some of the web activity recommended items could not be returned to the storefront in run-time, 
+	i.e, web activity recommended catalog entries are not published, there are two different type of recommendation
+	report elements in preview report, DataReturnedFromElement and ReturnRecommendation
+	DataReturnedFromElement is used to carry the identified recommended items by web activity. See below JSP process.
+	Whereas,
+	ReturnRecommendation is used to carry the storefront run-time recommended items for a web activity.
+	
+	-------------------------------------------------------------------------------------------------------------
+	runtimeRecommendedItemListMap is introduced to carry the run-time recommended items interpreted by ReturnRecommendation.
+--%>
+<jsp:useBean id="runtimeRecommendedItemListMap" class="java.util.HashMap" scope="request" />
+
+<c:if test="${!empty globalreport && emsName == 'searchResultSpot'}">
+	<c:set var="reportContents" value="${globalreport.report}"/>
+	<c:set var="searchStatus" value="${globalreport.indexStatus}"/>
+	<%
+		PreviewReportType previewReport = (PreviewReportType) request.getAttribute("globalreport");
+		String finalReportString = previewReport.getFinalQuery();
+		if (finalReportString != null && finalReportString.length() > 0) {
+			pageContext.setAttribute("searchQuery", URLDecoder.decode(finalReportString)); 
+		}
+	%>	
+</c:if>
+<c:set var="emptyEspot" value="true" scope="request"/>
+<c:set var="espotFound" value="${fn:split(reportContents[0], '|')}"/>
+<c:set var="espotFound" value="${espotFound[0] eq 'SpotFound'}"/>
+
+<div id="ESpotInfo_popup_${espotName}" class="espot_dialog_popup" dojoType="dijit.Dialog" role="dialog" style="display: none" title="${emsName}">
+<c:if test="${empty previewText}">
+        <fmt:setBundle basename="com.ibm.commerce.stores.preview.properties.StorePreviewer" var="previewText"  scope="request"/>
+</c:if>
+	<%-- 
+		for debug usage
+		<div style="display:none">${reportContents}</div>
+	--%>
+	<div class="pageinfo_header_top">
+		<div class="header">
+			<c:choose>
+				<c:when test="${emsName == 'searchResultSpot'}">
+					<div class="header_title"><fmt:message key="searchRuleOverview" bundle='${previewText}' /></div>
+				</c:when>
+				<c:otherwise>
+					<div class="tooltip" title="<fmt:message key="eSpotDialogTooltip" bundle='${previewText}' />"></div>
+					<div class="header_title"><fmt:message key="eSpotOverview" bundle='${previewText}' /></div>
+				</c:otherwise>
+			</c:choose>
+			<a href="javascript:hideESpotInfoPopup('ESpotInfo_popup_<wcf:out escapeFormat="js" value="${espotName}"/>');"><div class="close"></div></a>
+		</div>
+		<div class="whitespace_background">
+			<div class="content_container">
+				<!-- Start Content -->
+				<div class="sub_header">
+					<c:choose>
+						<c:when test="${emsName == 'searchResultSpot'}">
+							<div class="search_rule"></div>
+							<div class="title_container">
+								<div class="title"><fmt:message key="spotTypeSearchRule" bundle='${previewText}' /></div>
+								<div class="clear_float"></div>
+								<div class="sub_title"></div>
+							</div>
+							<%-- If it's a search rule dialog, we put "Create" button here--%>
+							<c:url var="clickToCreateURL" value="/cmc/CreateBusinessObject" context="/">
+								<c:param name="toolId" value="marketingManagement"/>
+								<c:param name="storeId" value="${storeId}"/>
+								<c:param name="languageId" value="${langId}"/>
+								<c:param name="storeSelection" value="prompt"/>
+								<c:param name="objectType" value="SearchActivity"/>
+								<c:if test="${!empty(originalSearchTerm)}">
+									<c:param name="newObjectOption.searchKeyword" value="${originalSearchTerm}"/>
+								</c:if>
+							</c:url>
+							<div class="create">
+								<a id='click2create_SearchActivity' href="javascript:void(0)" title='<fmt:message key="Click2Create_searchrule" bundle='${previewText}'/>' class="click2create_button" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToCreateURL}"/>');">
+									<fmt:message key="Click2Edit_Create" bundle='${previewText}'/>
+								</a>
+							</div>
+						</c:when>
+						<c:otherwise>
+							<div class="emarketing_spot"></div>
+							<div class="title_container">
+								<div class="title"><c:out value="${espotName}" /></div>
+								<div class="clear_float"></div>
+								<div class="sub_title"><fmt:message key="spotTypeESpot" bundle='${previewText}' /></div>
+							</div>
+							<c:if test="${!espotFound}">
+								<c:url var="clickToCreateURL" value="/cmc/CreateBusinessObject" context="/">
+									<c:param name="toolId" value="marketingManagement"/>
+									<c:param name="storeId" value="${storeId}"/>
+									<c:param name="languageId" value="${langId}"/>
+									<c:param name="storeSelection" value="prompt"/>
+									<c:param name="objectType" value="EMarketingSpot"/>
+									<c:param name="newObjectOption.marketingSpotName" value="${emsName}"/>
+								</c:url>
+								<div class="create">
+									<a id='click2create_EMarketingSpot_<c:out value="${espotName}"/>' title='<fmt:message key="Click2Create_espot" bundle='${previewText}'/>' class="click2create_button" href="javascript:void(0)" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToCreateURL}"/>');">
+										<fmt:message key="Click2Edit_Create" bundle='${previewText}'/>
+									</a>
+								</div>
+							</c:if>
+							<c:if test="${espotFound}">
+								<c:url var="clickToEditURL" value="/cmc/EditBusinessObject" context="/">
+									<c:param name="toolId" value="marketingManagement"/>
+									<c:param name="storeId" value="${storeId}"/>
+									<c:param name="languageId" value="${langId}"/>
+									<c:param name="storeSelection" value="prompt"/>
+									<c:param name="searchType" value="FindEMarketingSpots"/>
+									<c:param name="searchOption.searchText" value="${emsName}"/>
+									<c:param name="searchOption.searchUniqueId" value="${emsId}"/>
+								</c:url>
+								<div class="edit">
+									<a id="click2edit_EMarketingSpot_${emsId}" href="javascript:void(0)" title='<fmt:message key="Click2Edit_espot" bundle='${previewText}'/>' class="click2edit_button" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToEditURL}"/>');">
+										<fmt:message key="Click2Edit_Edit" bundle='${previewText}'/>
+									</a>
+								</div>
+							</c:if>
+						</c:otherwise>
+					</c:choose>
+				</div>
+				<div class="summary">
+					<div class="description">
+						<div class="content_rec">
+							<c:choose>
+								<c:when test="${emsName == 'searchResultSpot'}">
+									<fmt:message key="searchRuleDescription" bundle='${previewText}'/>
+								</c:when>
+								<c:otherwise><c:out value="${espotTypeInfo}" /></c:otherwise>
+							</c:choose>
+						</div>
+						<c:if test="${!espotFound && emsName != 'searchResultSpot'}">
+							<div class="content_rec"><fmt:message key="SpotNotFound" bundle='${previewText}'/></div>
+						</c:if>
+					</div>
+					<div class="clear_float"></div>
+				</div>
+				
+				<c:if test="${espotFound}">
+					<div class="activities_container">
+						<c:if test="${emsName != 'searchResultSpot'}">
+							<div class="title_container">
+								<div class="tooltip" title="<fmt:message key="inactiveActivityNote" bundle='${previewText}'/>"></div>
+								<div class="title"><fmt:message key="activitiesTitle" bundle='${previewText}' /></div>
+								<c:url var="clickToCreateURL" value="/cmc/CreateBusinessObject" context="/">
+									<c:param name="toolId" value="marketingManagement"/>
+									<c:param name="storeId" value="${storeId}"/>
+									<c:param name="languageId" value="${langId}"/>
+									<c:param name="storeSelection" value="prompt"/>
+									<c:param name="objectType" value="WebActivity"/>
+									<c:param name="newObjectOption.marketingSpotId" value="${emsId}"/>
+								</c:url>
+								<div class="create">
+									<a id="click2create_WebActivity_${emsId}" href="javascript:void(0)" title='<fmt:message key="Click2Create_webactivity" bundle='${previewText}'/>' class="click2create_button" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToCreateURL}"/>');">
+										<fmt:message key="Click2Edit_Create" bundle='${previewText}'/>
+									</a>
+								</div>
+							</div>
+							<div class="clear_float"></div>
+						</c:if>
+				</c:if>
+					<c:forEach var="pr" items="${reportContents}">
+						<c:forTokens items="${pr}" delims="|" var="token" begin="0" end="0">
+							<c:set var="tokenKey" value="${token}" />
+						</c:forTokens>
+						
+						<c:choose>
+							<c:when test="${tokenKey == 'PathEnd'}">
+								<c:set var="indent" value="${indent-5}"/>
+							</c:when>
+
+							<c:when test="${tokenKey == 'ScheduledActivity'}">
+
+								<!-- Format: ScheduledActivity|activityId|storeId|priority|startDate|endDate|activityName -->
+								<!-- Ignore this -->
+							</c:when>
+							
+							<c:when test="${tokenKey == 'ReturnRecommendation'}">
+								<c:set var="emptyEspot" value="false"/>
+								<c:set var="tokens" value="${fn:split(pr, '|')}"/>
+								<c:choose>
+									<c:when test="${tokens[1] == 'MarketingContent' && tokens[3] == 0}">
+										<!-- Format sample: ReturnRecommendation|MarketingContent|10013|0|HeaderStoreLogo  -->
+										<c:set var="espotDefaultContentName" value="${tokens[4]}"/>
+										<c:set var="espotDefaultContentId" value="${tokens[2]}"/>
+									</c:when>
+									<c:when test="${tokens[1] != 'SearchQuery'}">
+										<!-- Format sample: ReturnRecommendation|CatalogEntryId|10005|10007|10005  -->
+										<!-- Format sample: ReturnRecommendation|MarketingContent|10066|10010|HeaderESpot15OffPurchaseAd  -->
+										
+										<%-- Avoid using jsp:useBean, we need to create a new instance each time. --%>
+										<% pageContext.setAttribute("aRuntimeRecommendedItem", new java.util.HashMap()); %>
+										<c:set target="${runtimeRecommendedItemListMap}" property="${pr}" value="${aRuntimeRecommendedItem}" />
+										<c:set var="tokens" value="${fn:split(pr, '|')}"/>
+										<c:set target="${aRuntimeRecommendedItem}" property="dataType" value="${tokens[1]}" />
+										<c:set target="${aRuntimeRecommendedItem}" property="id" value="${tokens[2]}" />
+										<c:set target="${aRuntimeRecommendedItem}" property="activityId" value="${tokens[3]}" />
+									</c:when>
+								</c:choose>
+								<c:remove var="tokens" scope="request" />
+							</c:when>
+							
+							<c:when test="${tokenKey == 'SpotFound'}">
+								<c:remove var="activityEvaluateSummary" scope="page"/>
+								<c:set var="tokens" value="${fn:split(pr, '|')}"/>
+								<c:set var="activityEvaluateSummary">
+									<c:choose>
+										<c:when test="${tokens[3] == 'SEARCH'}">
+											<c:choose>
+												<c:when test="${tokens[4] == 'dm_defaultspot'}">
+													<fmt:message key="SearchRuleSummaryForAnyKeyword" bundle='${previewText}'/>
+												</c:when>
+												<c:otherwise>
+													<fmt:message key="SearchRuleSummary" bundle='${previewText}'/>: <c:out value="${tokens[4]}"/>
+												</c:otherwise>
+											</c:choose>
+										</c:when>
+										<c:otherwise>
+											<fmt:message key="${tokenKey}" bundle='${previewText}'>
+												<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:forTokens>
+											</fmt:message>
+										</c:otherwise>
+									</c:choose>
+								</c:set>
+								<c:set var="spotId" value="${tokens[1]}" />
+								<c:set var="spotStoreId" value="${tokens[2]}" />
+								<c:remove var="tokens" scope="request" />
+							</c:when>
+							<c:when test="${tokenKey == 'SpotNotFound'}">
+							</c:when>
+							<c:when test="${tokenKey == 'EvaluateActivitiesBegin'}">
+								<c:set var="isEvaluatingActivities" value="true" />
+							</c:when>
+							<c:when test="${tokenKey == 'EvaluateActivitiesEnd'}">
+								<c:set var="isEvaluatingActivities" value="false" />
+							</c:when>
+							<c:when test="${tokenKey == 'EvaluateActivity'}">
+								<!-- Format: EvaluateActivity|activityId|storeId|priority|startDate|endDate|activityName -->
+								<c:set var="tokens" value="${fn:split(pr, '|')}"/>
+								<c:set var="isEvaluatingActivity" value="true" />
+								<c:set var="hasActivity" value="true" />
+								<c:set var="evaluatingActivityId" value="${tokens[1]}" />
+								<c:remove var="recommendationListMap" scope="request" />
+								<jsp:useBean id="recommendationListMap" class="java.util.HashMap" scope="request" />
+								
+								<c:remove var="param1" scope="page"/>
+								<c:remove var="param2" scope="page"/>
+								<c:remove var="param3" scope="page"/>
+								<c:remove var="param4" scope="page"/>
+								<c:remove var="param5" scope="page"/>
+
+								<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+									<c:choose>
+										<c:when test="${status.count == 1}">
+											<c:set var="param1" value="${token}"/>
+										</c:when>
+										<c:when test="${status.count == 2}">
+											<c:set var="param2" value="${token}"/>
+										</c:when>
+										<c:when test="${status.count == 3}">
+											<c:set var="param3" value="${token}"/>
+										</c:when>
+										<c:when test="${status.count == 4 || status.count == 5}">
+											<c:remove var="activityDate" scope="page"/>
+											<c:set var="finalDate" value="${token}"/>
+											<c:catch>
+												<fmt:parseDate parseLocale="${dateLocale}" var="activityDate" value="${token}" pattern="yyyy-MM-dd HH:mm:ss.SSS" />
+											</c:catch>
+											<c:if test="${empty activityDate}">
+												<c:catch>
+													<fmt:parseDate parseLocale="${dateLocale}" var="activityDate" value="${token}" pattern="yyyy-MM-dd HH:mm:ss" />
+												</c:catch>
+											</c:if>
+											<c:if test="${!empty activityDate}">
+												<fmt:formatDate var="finalDate" value="${activityDate}" type="both" dateStyle="long" timeStyle="short" />
+											</c:if>
+											<c:if test="${status.count == 4}">
+												<c:set var="param4" value="${finalDate}"/>
+											</c:if>
+											<c:if test="${status.count == 5}">
+												<c:set var="param5" value="${finalDate}"/>
+											</c:if>
+										</c:when>
+										<c:when test="${status.count == 6}">
+											<c:set var="param6" value="${token}"/>
+										</c:when>
+									</c:choose>
+								</c:forTokens>
+								<div class="expand_title">
+									<div id="activityArrowId_${activityTableExpandId}" class="expand_arrow" 
+										onclick="toggleActivityTable(<c:out value='${activityTableExpandId}'/>); return false;">
+									</div>
+									<div class="title" onclick="toggleActivityTable(<c:out value='${activityTableExpandId}'/>); return false;">${param6}</div>
+									<c:choose>
+										<c:when test="${emsName != 'searchResultSpot'}">
+											<c:url var="clickToEditURL" value="/cmc/EditBusinessObject" context="/">
+												<c:param name="toolId" value="marketingManagement"/>
+												<c:param name="storeId" value="${storeId}"/>
+												<c:param name="languageId" value="${langId}"/>
+												<c:param name="storeSelection" value="prompt"/>
+												<c:param name="searchType" value="FindActivities"/>
+												<c:param name="searchOption.searchText" value="${param6}"/>
+												<c:param name="searchOption.searchUniqueId" value="${param1}"/>
+											</c:url>
+											<div class="edit">
+												<a id="click2edit_WebActivity_${param1}" href="javascript:void(0)" title='<fmt:message key="Click2Edit_webactivity" bundle='${previewText}'/>' class="click2edit_button" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToEditURL}"/>');">
+													<fmt:message key="Click2Edit_Edit" bundle='${previewText}' />
+												</a>
+											</div>
+										</c:when>
+										<c:otherwise>
+											<c:url var="clickToEditURL" value="/cmc/EditBusinessObject" context="/">
+												<c:param name="toolId" value="marketingManagement"/>
+												<c:param name="storeId" value="${storeId}"/>
+												<c:param name="languageId" value="${langId}"/>
+												<c:param name="storeSelection" value="prompt"/>
+												<c:param name="searchType" value="FindSearchActivities"/>
+												<c:param name="searchOption.searchText" value="${param6}"/>
+												<c:param name="searchOption.searchUniqueId" value="${param1}"/>
+											</c:url>
+											<div class="edit">
+												<a id="click2edit_SearchActivity_${param1}" href="javascript:void(0)" title='<fmt:message key="Click2Edit_searchrule" bundle='${previewText}'/>'  class="click2edit_button" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToEditURL}"/>');">
+													<fmt:message key="Click2Edit_Edit" bundle='${previewText}'/>
+												</a>
+											</div>
+										</c:otherwise>
+									</c:choose>
+								</div>
+								<div class="clear_float"></div>
+								<div id="activityTableExpandId_${activityTableExpandId}" class="activities" >
+									<div class="clear_float"></div>
+									
+									<div class="data_table">
+										<div class="priority"><fmt:message key="PreviewReportPriority" bundle='${previewText}'/>:</div><div class="priority_data">${param3}</div>
+										<div class="start_date"><fmt:message key="PreviewReportStartDate" bundle='${previewText}'/>:</div><div class="start_date_data">${param4}</div>
+										<div class="end_date"><fmt:message key="PreviewReportEndData" bundle='${previewText}'/>:</div><div class="end_date_data">${param5}</div>
+										<div class="clear_float"></div>
+										<c:if test="${!empty activityEvaluateSummary && emsName == 'searchResultSpot'}">
+											<div class="evaluation_data bold">${activityEvaluateSummary}</div>
+										</c:if>
+										
+								<c:set var="activityTableExpandId" value="${activityTableExpandId + 1}" scope="request"/>
+							</c:when>
+							
+							<c:when test="${tokenKey == 'EvaluateActivityEnd'}">
+									</div>
+								</div>
+								<div class="clear_float"></div>
+								<c:set var="isEvaluatingActivity" value="false" />
+								
+								<c:if test="${! empty recommendationListMap && fn:length(recommendationListMap) > 0}">
+									<div class="recommended_items">
+										<c:forEach items="${recommendationListMap}" var="aRecommendedItem">
+											<c:set var="aRecommendedItemDataMap" value="${aRecommendedItem.value}" />
+											<div class="recommended_item">
+												<div class="treepole"></div>
+												<c:choose>
+													<c:when test="${aRecommendedItemDataMap.dataType =='CatalogEntry' || aRecommendedItemDataMap.dataType =='CatalogEntryId'}">
+														<fmt:message key="catalogEntryNotDisplayed" bundle='${previewText}' var="catEntryIconTitle" ><fmt:param>${aRecommendedItemDataMap.dataName}</fmt:param></fmt:message>														
+														<div class="icon_catentry" title="<c:out value='${catEntryIconTitle}'/>">
+															<%-- 
+																yes, we set all recommended items as deactivated initially, the items could be activated if
+																they're confirmed to be able to shown in run-time after parsing ReturnRecommendation report line.
+															 --%>
+															<div id="CatalogEntryId_${evaluatingActivityId}_${aRecommendedItemDataMap.id}_deactivated_div" class="deactivated"></div>
+														</div>
+														<div class="filename"><c:out value="${aRecommendedItemDataMap.dataName}"/></div>
+														<div class="content_type">(<fmt:message key="recommendedCatEntry" bundle='${previewText}' />)</div>
+													</c:when>
+													<c:when test="${aRecommendedItemDataMap.dataType =='CatalogGroup' || aRecommendedItemDataMap.dataType =='CatalogGroupId'}">
+														<fmt:message key="categoryNotDisplayed" bundle='${previewText}' var="catGroupIconTitle"><fmt:param>${aRecommendedItemDataMap.dataName}</fmt:param></fmt:message>
+														<div class="icon_catgroup" title="<c:out value='${catGroupIconTitle}'/>">
+															<div id="CatalogGroup_${evaluatingActivityId}_${aRecommendedItemDataMap.id}_deactivated_div" class="deactivated"></div>
+														</div>
+														<div class="filename"><c:out value="${aRecommendedItemDataMap.dataName}"/></div>
+														<div class="content_type">(<fmt:message key="recommendedCategory" bundle='${previewText}' />)</div>
+													</c:when>
+													<c:when test="${aRecommendedItemDataMap.dataType =='MarketingContent' || aRecommendedItemDataMap.dataType =='MarketingContentId'}">
+														<fmt:message key="contentNotDisplayed" bundle='${previewText}' var="contentIconTitle"><fmt:param>${aRecommendedItemDataMap.dataName}</fmt:param></fmt:message>
+														<div class="icon_content" title="<c:out value='${contentIconTitle}'/>">
+															<div id="MarketingContent_${evaluatingActivityId}_${aRecommendedItemDataMap.id}_deactivated_div" class="deactivated"></div>
+														</div>
+														<div class="filename"><c:out value="${aRecommendedItemDataMap.dataName}"/></div>
+														<div class="content_type">(<fmt:message key="recommendedContent" bundle='${previewText}' />)</div>
+														<div class="edit">
+															<c:url var="clickToEditURL" value="/cmc/EditBusinessObject" context="/">
+																<c:param name="toolId" value="marketingManagement"/>
+																<c:param name="storeId" value="${storeId}"/>
+																<c:param name="languageId" value="${langId}"/>
+																<c:param name="storeSelection" value="prompt"/>
+																<c:param name="searchType" value="FindMarketingContent"/>
+																<c:param name="searchOption.searchText" value="${aRecommendedItemDataMap.dataName}"/>
+																<c:param name="searchOption.searchUniqueId" value="${aRecommendedItemDataMap.id}"/>
+															</c:url>
+															<a id="click2edit_MarketingContent_${aRecommendedItemDataMap.id}" href="javascript:void(0)" title='<fmt:message key="Click2Edit_content" bundle='${previewText}'/>' class="click2edit_button" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToEditURL}"/>');">
+																<fmt:message key="Click2Edit_Edit" bundle='${previewText}'/>
+															</a>
+														</div>
+													</c:when>
+												</c:choose>
+											</div>
+											<div class="clear_float"></div>
+										</c:forEach>
+									</div>
+									<div class="clear_float"></div>
+								</c:if>
+							</c:when>
+							
+							<c:when test="${tokenKey == 'Branch'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format: Branch|elementId|branchType|experimentScope|elementName -->
+	
+									<c:remove var="branchScope" scope="page"/>
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 2}">
+													<fmt:param><fmt:message key="Branchtype${token}" bundle='${previewText}'/></fmt:param>
+												</c:when>
+												<c:when test="${status.count == 3}">
+													<c:set var="branchScope" value="${token}"/>
+													<fmt:param><c:out value="${token}" /></fmt:param>
+												</c:when>
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+									
+									<c:if test="${!empty branchScope && !(branchScope == ' ')}">
+										<fmt:message key="Experiment" bundle='${previewText}'>
+											<fmt:param><fmt:message key="Experimentscope${branchScope}" bundle='${previewText}'/></fmt:param>
+										</fmt:message>
+									</c:if>
+								</div>
+							</c:when>
+
+							<c:when test="${tokenKey == 'Action' || tokenKey == 'Target'}">
+								<!-- Format:Action|elementTemplateName|elementId|elementName-->
+								<!-- Format:Target|elementTemplateName|elementId|elementName -->
+
+								<div class="evaluation_data bold">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 1}">
+													<fmt:param><fmt:message key="${token}" bundle='${previewText}'/></fmt:param>														
+												</c:when>
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+								</div>
+							</c:when>						 
+							<c:when test="${tokenKey == 'TargetOrder'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format:TargetOrder|CatalogGroup|dataValue|result|quantity|currency|amount -->
+									<!-- Format:TargetOrder|CatalogEntry|dataValue|result|quantity|currency|amount -->
+									<!-- Format:TargetOrder| | |result|quantity|currency|amount -->
+	
+									<c:forTokens items="${pr}" delims="|" var="token" begin="1" end="1">
+										<c:set var="targetDataType" value="${token}"/>
+										<c:if test="${empty token || token == ' '}" >
+											<c:set var="targetDataType" value="" />
+										</c:if>						
+									</c:forTokens>
+									<c:set var="targetAmount" value="" />
+									<c:forTokens items="${pr}" delims="|" var="token" begin="5" end="5">
+										<c:if test="${!empty token && token != ' '}" >
+											<c:set var="targetAmount" value="Amount" />
+										</c:if>			
+									</c:forTokens>		
+									
+									<fmt:message key="${tokenKey}${targetDataType}${targetAmount}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 3}">
+													<c:set var="targetResult" value="${token}"/>
+													<fmt:param><c:out value="${token}" /></fmt:param>
+												</c:when>
+												<c:when test="${status.count == 2 && targetDataType == 'CatalogEntry' || targetDataType == 'CatalogEntryId'}">
+													<c:remove var="ceObject" scope="page"/>
+													<wcbase:useBean id="ceObject" classname="com.ibm.commerce.catalog.beans.CatalogEntryDataBean">
+														<c:set value="${token}" target="${ceObject}" property="catalogEntryID"/>
+													</wcbase:useBean>
+													<fmt:param><c:out value="${ceObject.description.name} (${ceObject.partNumber})" /></fmt:param>
+												</c:when>
+												<c:when test="${status.count == 2 && targetDataType == 'CatalogGroup' || targetDataType == 'CatalogGroupId'}">
+													<c:remove var="cgObject" scope="page"/>
+													<wcbase:useBean id="cgObject" classname="com.ibm.commerce.catalog.beans.CategoryDataBean">
+														<c:set value="${token}" target="${cgObject}" property="categoryId" />
+													</wcbase:useBean>
+													<fmt:param><c:out value="${cgObject.description.name}"/></fmt:param>
+												</c:when>			
+												<c:when test="${status.count == 5}">
+													<c:set var="targetCurrency" value="${token}"/>
+													<fmt:param><c:out value="${token}" /></fmt:param>
+												</c:when>							
+												<c:when test="${status.count == 6}">			
+													<c:if test="${empty targetCurrency || targetCurrency == ' '}" >
+														<c:set var="targetCurrency" value="${CommandContext.currency}" />
+													</c:if>					
+													<c:remove var="currencyFormatterDataBean" scope="page"/>				
+													<wcbase:useBean id="currencyFormatterDataBean" classname="com.ibm.commerce.common.beans.StoreCurrencyFormatDescriptionDataBean" >
+														<c:set property="storeId" value="${storeId}" target="${currencyFormatterDataBean}" />
+														<c:set property="langId" value="${langId}" target="${currencyFormatterDataBean}" />
+														<c:set property="currencyCode" value="${targetCurrency}" target="${currencyFormatterDataBean}" />				
+														<c:set property="numberUsage" value="-1" target="${currencyFormatterDataBean}" />
+													</wcbase:useBean>
+	
+													<%-- Set decimal places to use for currency --%>
+	
+													<c:set var="currencyDecimal" value="${currencyFormatterDataBean.decimalPlaces}"/>
+	
+													<c:if test="${targetCurrency == 'KRW'}">
+														<c:set property="currencySymbol" value='&#8361;' target="${currencyFormatterDataBean}"/>
+													</c:if>
+													<c:if test="${targetCurrency == 'PLN'}">
+														<c:set property="currencySymbol" value='z&#322;' target="${currencyFormatterDataBean}"/>
+													</c:if>
+	
+													<%-- These variables are used to hold the currency symbol --%>
+													<c:choose>
+														<c:when test="${CommandContext.locale == 'ar_EG' && targetCurrency == 'EGP'}">
+															<c:set var="CurrencySymbolToFormat" value=""/>
+															<c:set var="CurrencySymbol" value="${currencyFormatterDataBean.currencySymbol}"/>
+														</c:when>
+														<c:otherwise>
+															<c:set var="CurrencySymbolToFormat" value="${currencyFormatterDataBean.currencySymbol}"/>
+															<c:set var="CurrencySymbol" value=""/>
+														</c:otherwise>
+													</c:choose>
+														
+													<fmt:param>			
+														<fmt:formatNumber value="${token}" type="currency" currencySymbol="${CurrencySymbolToFormat}" 
+																							maxFractionDigits="${currencyDecimal}"/>
+														<c:out value="${CurrencySymbol}"/>
+													</fmt:param>							
+																														
+												</c:when>		
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+									<fmt:message key="TargetUserBehavior${targetResult}" bundle='${previewText}' />
+								</div>
+							</c:when>
+						      
+							<c:when test="${tokenKey == 'TargetCustomerSegment'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format:TargetCustomerSegment|segmentId|result|segmentName-->
+	
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+									<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+										<c:choose>
+											<c:when test="${status.count == 2}">
+												<c:set var="targetResult" value="${token}"/>
+												<fmt:param><c:out value="${token}" /></fmt:param>
+											</c:when>
+											<c:otherwise>
+												<fmt:param><c:out value="${token}"/></fmt:param>
+											</c:otherwise>
+										</c:choose>
+									</c:forTokens>
+									</fmt:message>
+									<fmt:message key="TargetUserBehavior${targetResult}" bundle='${previewText}'/>
+								</div>
+							</c:when>
+							
+							<c:when test="${tokenKey == 'TargetUserBehavior'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format:TargetUserBehavior|dataValue|currentCount|result-->
+	
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 3}">
+													<c:set var="targetResult" value="${token}"/>
+													<fmt:param><c:out value="${token}" /></fmt:param>
+												</c:when>
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+									<fmt:message key="TargetUserBehavior${targetResult}" bundle='${previewText}'/>
+								</div>
+							</c:when>
+
+							<c:when test="${tokenKey == 'TargetUserBehaviorReferral'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format:TargetUserBehaviorReferral|referralUrl|result -->
+	
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 2}">
+													<c:set var="targetResult" value="${token}"/>
+													<fmt:param><c:out value="${token}" /></fmt:param>
+												</c:when>
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+									<fmt:message key="TargetUserBehavior${targetResult}" bundle='${previewText}'/>
+								</div>
+							</c:when>
+							                   
+							<c:when test="${tokenKey == 'RequestedContent' || tokenKey == 'ReorderRecommendations' ||
+															tokenKey == 'ReduceRecommendations' || tokenKey == 'LimitRecommendations'}" >
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format:RequestedContent|dataType|requestedNumber|currentNumber -->
+	
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 1}">
+													<c:set var="dataType" value="${token}"/>
+													<fmt:param><fmt:message key="${token}DataType" bundle='${previewText}'/></fmt:param>
+												</c:when>
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+								</div>
+							</c:when>
+
+							<c:when test="${tokenKey == 'DataReturnedFromElement' || tokenKey == 'RemovedDuplicate' ||
+															tokenKey == 'RemovedCategoryNotInCurrentCatalog' || tokenKey =='RemovedCatalogEntryNotInCurrentCatalog' || tokenKey =='RemovedDataNotFound' ||
+															tokenKey == 'RemovedCatalogEntryNotPublished'|| tokenKey== 'RemovedCatalogEntryPastEndDate' || tokenKey== 'RemovedCatalogEntryBelowInventory' ||
+															tokenKey == 'RemovedCatalogEntryInCart'|| tokenKey== 'RemovedCatalogEntryInPurchaseHistory' ||
+															tokenKey == 'RemovedPromotionNeedsCoupon'|| tokenKey== 'RemovedPromotionNeedsCode' || tokenKey =='RemovedPromotionNotEntitled'||
+															tokenKey == 'RemovedPromotionInactive' || tokenKey =='RemovedPromotionNotAvailable' || tokenKey == 'RemovedPromotionBeforeStartDate' ||
+															tokenKey == 'RemovedPromotionNotInSegment'}">
+								
+								
+								<c:if test="${tokenKey == 'DataReturnedFromElement'}">
+									<%-- Avoid using jsp:useBean, we need to create a new instance each time. --%>
+									<% pageContext.setAttribute("aRecommendedItem", new java.util.HashMap()); %>
+									<c:set var="tokens" value="${fn:split(pr, '|')}"/>
+									<c:if test="${tokens[1] != 'DM_NVP'}">
+										 <c:set target="${recommendationListMap}" property="${pr}" value="${aRecommendedItem}" />
+									   <c:set target="${aRecommendedItem}" property="dataType" value="${tokens[1]}" />
+									   <c:set target="${aRecommendedItem}" property="id" value="${tokens[2]}" />
+									</c:if>
+								</c:if>
+								<c:set var="aMiscMessage">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<%-- Format:DataReturnedFromElement|dataType|dataValue--%>
+	
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 1}">
+													<c:set var="dataType" value="${token}"/>
+													<fmt:param><fmt:message key="${token}DataType" bundle='${previewText}'/></fmt:param>
+												</c:when>
+												<c:when test="${status.count == 2}">
+													<c:choose>
+														<c:when test="${tokenKey != 'RemovedDataNotFound' && (dataType =='CatalogEntry' || dataType =='CatalogEntryId')}" >
+															<c:remove var="ceObject" scope="page"/>
+															<wcbase:useBean id="ceObject" classname="com.ibm.commerce.catalog.beans.CatalogEntryDataBean">
+																<c:set value="${token}" target="${ceObject}" property="catalogEntryID"/>
+															</wcbase:useBean>
+															<fmt:param><c:out value="${ceObject.description.name} (${ceObject.partNumber})" /></fmt:param>
+															<c:if test="${tokenKey == 'DataReturnedFromElement'}">
+																<c:set target="${aRecommendedItem}" property="dataName" value="${ceObject.description.name}" />
+															</c:if>
+														</c:when>
+														<c:when test="${tokenKey != 'RemovedDataNotFound' && (dataType =='CatalogGroup' || dataType =='CatalogGroupId')}" >
+															<c:remove var="cgObject" scope="page"/>
+															<wcbase:useBean id="cgObject" classname="com.ibm.commerce.catalog.beans.CategoryDataBean">
+																<c:set value="${token}" target="${cgObject}" property="categoryId" />
+															</wcbase:useBean>
+															<fmt:param><c:out value="${cgObject.description.name}"/></fmt:param>
+															<c:if test="${tokenKey == 'DataReturnedFromElement'}" >
+																<c:set target="${aRecommendedItem}" property="dataName" value="${cgObject.description.name}" />
+															</c:if>
+														</c:when>
+														<c:when test="${tokenKey != 'RemovedDataNotFound' && (dataType =='MarketingContent' || dataType =='MarketingContentId')}" >
+															<c:remove var="mcObject" scope="page"/>
+															<wcbase:useBean id="mcObject" classname="com.ibm.commerce.marketing.beans.CollateralDataBean">
+																<c:set value="${token}" target="${mcObject}" property="collateralID" />
+															</wcbase:useBean>
+															<fmt:param><c:out value="${mcObject.name}"/></fmt:param>
+															<c:if test="${tokenKey == 'DataReturnedFromElement'}">
+																<c:set target="${aRecommendedItem}" property="dataName" value="${mcObject.name}" />
+															</c:if>
+														</c:when>
+														<c:when test="${tokenKey != 'RemovedDataNotFound' && dataType == 'DM_NVP'}" >
+														   <fmt:param><fmt:message key="${token}DataType" bundle='${previewText}'/></fmt:param>
+														</c:when>		
+														<c:otherwise>
+															<fmt:param><c:out value="${token}"/></fmt:param>
+														</c:otherwise>
+													</c:choose>
+												</c:when>
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+								</c:set>
+								
+								<c:choose>
+									<c:when test="${tokenKey == 'DataReturnedFromElement'}">
+										<div class="evaluation_data"><c:out value="${aMiscMessage}" /></div>
+									</c:when>
+									<c:otherwise>
+										<% pageContext.setAttribute("aBottomMessageDataMap", new java.util.HashMap()); %>
+										<c:set target="${bottomMessagesMap}" property="${pr}" value="${aBottomMessageDataMap}" />
+										<c:set target="${aBottomMessageDataMap}" property="messageName" value="${tokenKey}" />
+										<c:set target="${aBottomMessageDataMap}" property="message" value="${aMiscMessage}" />
+									</c:otherwise>
+								</c:choose>
+								<c:remove var="aMiscMessage" />
+							</c:when>
+							<c:when test="${tokenKey == 'TriggerCustomerSearches'}">
+								<c:if test="${indent > 0}">
+									<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+								</c:if>
+
+								<!-- Format:  TriggerCustomerSearches| true/false | SearchForAnyKeyword/SearchForExactlyOne/SearchForPhraseStarting/SearchForPhraseContaining/SearchForPhraseEnding | searchTerm -->
+
+								<c:remove var="param1" scope="page"/>
+								<c:remove var="param2" scope="page"/>
+								<c:remove var="param3" scope="page"/>
+								<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+									<c:choose>
+										<c:when test="${status.count == 1}">
+											<c:set var="param1" value="${token}"/>
+										</c:when>
+										<c:when test="${status.count == 2}">
+											<c:set var="param2" value="${token}"/>
+										</c:when>
+										<c:when test="${status.count == 3}">
+											<c:set var="param3" value="${token}"/>
+										</c:when>
+									</c:choose>
+								</c:forTokens>
+								
+								<c:choose>
+									<c:when test="${param2 eq 'SearchForAnyKeyword' && empty param3}">
+										<fmt:message key="${tokenKey}" bundle='${previewText}'/>
+									</c:when>
+									<c:otherwise>
+										<fmt:message key="${tokenKey}" bundle='${previewText}'/> - 
+										<fmt:message key="${param2}" bundle='${previewText}'/>: <span class="bold">"<c:out value="${param3}"/>"</span>
+									</c:otherwise>
+								</c:choose>
+								
+								<c:choose>
+									<c:when test="${param1 == true}">
+										<img alt="${param1}" src="<c:out value="${jspStoreImgDir}" />images/cmc/storepreview_datatable_check.png" />
+									</c:when>
+									<c:otherwise>
+										<img alt="${param1}" src="<c:out value="${jspStoreImgDir}" />images/cmc/storepreview_window_close_icon_press.png" />
+									</c:otherwise>
+								</c:choose>
+							</c:when>
+							<c:when test="${tokenKey == 'ActionSpecifyTopSearchResults'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format: ActionSpecifyTopSearchResults| query | PromotedFollowingProducts | topProduct1,topProduct2, ... -->
+	
+									<c:remove var="param1" scope="page"/>
+									<c:remove var="param2" scope="page"/>
+									<c:remove var="param3" scope="page"/>
+									<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+										<c:choose>
+											<c:when test="${status.count == 1}">
+												<c:set var="param1" value="${token}"/>
+											</c:when>
+											<c:when test="${status.count == 2}">
+												<c:set var="param2" value="${token}"/>
+											</c:when>
+											<c:when test="${status.count == 3}">
+												<c:set var="param3" value="${token}"/>
+											</c:when>
+										</c:choose>
+									</c:forTokens>
+									<fmt:message key="${tokenKey}" bundle='${previewText}'/> (<c:out value="${param1}"/>)
+								</div>
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+									<fmt:message key="${param2}" bundle='${previewText}'/>
+									<span class="bold">
+										<ul>
+											<c:forTokens items="${param3}" delims="," var="idtoken">
+												<c:remove var="ceObject" scope="page"/>
+												<wcbase:useBean id="ceObject" classname="com.ibm.commerce.catalog.beans.CatalogEntryDataBean">
+													<c:set value="${idtoken}" target="${ceObject}" property="catalogEntryID"/>
+												</wcbase:useBean>
+												<li><c:out value="${ceObject.description.name} (${ceObject.partNumber})" /></li>
+											</c:forTokens>
+										</ul>
+									</span>
+								</div>
+							</c:when>
+							<c:when test="${tokenKey == 'ActionOrderSearchResults' || tokenKey == 'ActionReplaceOrAddSearchCriteria'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format: ActionOrderSearchResults| query | SortCriteriaAre | sortDesc1 asc/desc,sortDesc2 asc/desc, ... -->
+									<!-- Format: ActionOrderSearchResults| query | PromotedProductsMeetCriteria | filter1,param1,param2; filter2,param1,param2; ... -->
+	
+									<!-- Format: ActionReplaceOrAddSearchCriteria | query | ReplacedSearchKeywordWith | searchTerm1,searchTerm2, ... -->
+									<!-- Format: ActionReplaceOrAddSearchCriteria | query | AddedFollowingFilters | filter1,param1,param2; filter2,param1,param2; ... -->
+	
+									<c:remove var="param1" scope="page"/>
+									<c:remove var="param2" scope="page"/>
+									<c:remove var="param3" scope="page"/>
+									<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+										<c:choose>
+											<c:when test="${status.count == 1}">
+												<c:set var="param1" value="${token}"/>
+											</c:when>
+											<c:when test="${status.count == 2}">
+												<c:set var="param2" value="${token}"/>
+											</c:when>
+											<c:when test="${status.count == 3}">
+												<c:set var="param3" value="${token}"/>
+											</c:when>
+										</c:choose>
+									</c:forTokens>
+									<fmt:message key="${tokenKey}" bundle='${previewText}'/> (<c:out value="${param1}"/>)
+								</div>
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+									<c:choose>
+										<c:when test="${param2 == 'ReplacedSearchKeywordWith'}">
+											<fmt:message key="${param2}" bundle='${previewText}'>
+												<fmt:param><c:out value="${param3}"/></fmt:param>
+											</fmt:message>
+										</c:when>
+										<c:otherwise>
+											<fmt:message key="${param2}" bundle='${previewText}'/>
+											<span class="bold">
+												<ul>
+													<c:choose>
+														<c:when test="${param2 == 'SortCriteriaAre'}">
+															<c:forTokens items="${param3}" delims="," var="paramToken">
+																<c:set var="sortDesc" value="${fn:split(paramToken, ' ')}"/>
+																<li><fmt:message key="${sortDesc[0]}" bundle='${previewText}'/> <c:out value="${sortDesc[1]}"/></li>
+															</c:forTokens>
+														</c:when>
+														<c:otherwise>
+															<c:remove var="filter1" scope="page"/>
+															<c:remove var="filter2" scope="page"/>
+															<c:remove var="filter3" scope="page"/>
+															<c:forTokens items="${param3}" delims=";" var="filterToken">
+																<c:forTokens items="${filterToken}" delims="," var="paramToken" begin="0" varStatus="status">
+																	<c:choose>
+																		<c:when test="${status.count == 1}">
+																			<c:set var="filter1" value="${paramToken}"/>
+																		</c:when>
+																		<c:when test="${status.count == 2}">
+																			<c:set var="filter2" value="${paramToken}"/>
+																		</c:when>
+																		<c:when test="${status.count == 3}">
+																			<c:set var="filter3" value="${paramToken}"/>
+																		</c:when>
+																	</c:choose>
+																</c:forTokens>
+																<li>
+																	<fmt:message key="${filter1}" bundle='${previewText}'>
+																		<fmt:param><fmt:message key="${filter2}" bundle='${previewText}'/></fmt:param>
+																		<fmt:param><c:out value="${filter3}"/></fmt:param>
+																	</fmt:message>
+																</li>
+															</c:forTokens>
+														</c:otherwise>
+													</c:choose>
+												</ul>
+											</span>
+										</c:otherwise>
+									</c:choose>
+								</div>
+							</c:when>
+							<c:when test="${tokenKey == 'TargetSearchCriteriaAndResult'}">
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+	
+									<!-- Format: TargetSearchCriteriaAndResult | true/false | SearchCriteria[Not]Used | filter1,param1,param2; filter2,param1,param2; ... -->
+									<!-- Format: TargetSearchCriteriaAndResult | true/false | SearchResult[Not]Contains | product1,product2, ... -->
+	
+									<c:remove var="param1" scope="page"/>
+									<c:remove var="param2" scope="page"/>
+									<c:remove var="param3" scope="page"/>
+									<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+										<c:choose>
+											<c:when test="${status.count == 1}">
+												<c:set var="param1" value="${token}"/>
+											</c:when>
+											<c:when test="${status.count == 2}">
+												<c:set var="param2" value="${token}"/>
+											</c:when>
+											<c:when test="${status.count == 3}">
+												<c:set var="param3" value="${token}"/>
+											</c:when>
+										</c:choose>
+									</c:forTokens>
+									<fmt:message key="${tokenKey}" bundle='${previewText}'/>
+								</div>
+								<div class="evaluation_data">
+									<c:if test="${indent > 0}">
+										<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+									</c:if>
+									<fmt:message key="${param2}" bundle='${previewText}'/>
+									<span class="bold">
+										<ul>
+											<c:choose>
+												<c:when test="${param2 == 'SearchResultContains' || param2 == 'SearchResultNotContains'}">
+													<c:forTokens items="${param3}" delims="," var="idtoken">
+														<c:remove var="ceObject" scope="page"/>
+														<wcbase:useBean id="ceObject" classname="com.ibm.commerce.catalog.beans.CatalogEntryDataBean">
+															<c:set value="${idtoken}" target="${ceObject}" property="catalogEntryID"/>
+														</wcbase:useBean>
+														<li><c:out value="${ceObject.description.name} (${ceObject.partNumber})" /></li>
+													</c:forTokens>
+												</c:when>
+												<c:otherwise>
+													<c:forTokens items="${param3}" delims=";" var="filterToken">
+	
+														<c:remove var="filter1" scope="page"/>
+														<c:remove var="filter2" scope="page"/>
+														<c:remove var="filter3" scope="page"/>
+														<c:forTokens items="${filterToken}" delims="," var="paramToken" begin="0" varStatus="status">
+															<c:choose>
+																<c:when test="${status.count == 1}">
+																	<c:set var="filter1" value="${paramToken}"/>
+																</c:when>
+																<c:when test="${status.count == 2}">
+																	<c:set var="filter2" value="${paramToken}"/>
+																</c:when>
+																<c:when test="${status.count == 3}">
+																	<c:set var="filter3" value="${paramToken}"/>
+																	<c:if test="${filter2 == 'catalogId_categoryId'}">
+																		<c:set var="catId" value="${fn:split(paramToken,'_')}"/>
+																		<c:remove var="cgObject" scope="page"/>
+																		<wcbase:useBean id="cgObject" classname="com.ibm.commerce.catalog.beans.CategoryDataBean">																
+																			<c:set value="${catId[1]}" target="${cgObject}" property="categoryId" />
+																		</wcbase:useBean>
+																		<c:set var="filter3" value="${cgObject.description.name}"/>
+																	</c:if>
+																</c:when>
+															</c:choose>
+														</c:forTokens>
+														<li>
+															<fmt:message key="${filter1}" bundle='${previewText}'>
+																<fmt:param><fmt:message key="${filter2}" bundle='${previewText}'/></fmt:param>
+																<fmt:param><c:out value="${filter3}"/></fmt:param>
+															</fmt:message>
+														</li>
+													</c:forTokens>
+												</c:otherwise>
+											</c:choose>
+										</ul>
+									</span>
+	
+									<c:choose>
+										<c:when test="${param1 == true}">
+											<img alt="${param1}" src="<c:out value="${jspStoreImgDir}" />images/cmc/storepreview_datatable_check.png" />
+										</c:when>
+										<c:otherwise>
+											<img alt="${param1}" src="<c:out value="${jspStoreImgDir}" />images/cmc/storepreview_window_close_icon_press.png" />
+										</c:otherwise>
+									</c:choose>
+								</div>
+							</c:when>
+							<c:when test="${tokenKey == 'NextScheduledActivityTransition'}">
+								<% pageContext.setAttribute("aBottomMessageDataMap", new java.util.HashMap()); %>
+								<c:set target="${bottomMessagesMap}" property="${pr}" value="${aBottomMessageDataMap}" />
+								<c:set target="${aBottomMessageDataMap}" property="messageName" value="${tokenKey}" />
+								<c:set target="${aBottomMessageDataMap}" property="message">
+									<fmt:message key="${tokenKey}" bundle='${previewText}'>
+										<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+											<c:choose>
+												<c:when test="${status.count == 1}">
+													<c:remove var="activityDate" scope="page"/>
+													<c:set var="finalDate" value="${token}"/>
+													<c:catch>
+														<fmt:parseDate parseLocale="${dateLocale}" var="activityDate" value="${token}" pattern="yyyy-MM-dd HH:mm:ss.SSS" />
+													</c:catch>
+													<c:if test="${empty activityDate}">
+														<c:catch>
+															<fmt:parseDate parseLocale="${dateLocale}" var="activityDate" value="${token}" pattern="yyyy-MM-dd HH:mm:ss" />
+														</c:catch>
+													</c:if>
+													<c:if test="${!empty activityDate}">
+														<fmt:formatDate var="finalDate" value="${activityDate}" type="both" dateStyle="long" timeStyle="short" />
+													</c:if>
+													<c:set var="param1" value="${finalDate}"/>
+													<fmt:param><c:out value="${param1}"/></fmt:param>
+												</c:when>
+												<c:otherwise>
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:otherwise>
+											</c:choose>
+										</c:forTokens>
+									</fmt:message>
+								</c:set>
+							</c:when>
+
+							<c:otherwise>
+								<c:choose>
+									<c:when test="${!empty isEvaluatingActivity && isEvaluatingActivity}">
+										<div class="evaluation_data">
+											<c:if test="${indent > 0}">
+												<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+											</c:if>
+			
+											<fmt:message key="${tokenKey}" bundle='${previewText}'>
+												<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:forTokens>
+											</fmt:message>
+			
+											<c:if test="${tokenKey == 'PathBegin'}">
+												<c:set var="indent" value="${indent + 5}"/>
+											</c:if>
+										</div>
+									</c:when> 
+									<c:otherwise>
+										<% pageContext.setAttribute("aBottomMessageDataMap", new java.util.HashMap()); %>
+										<c:set target="${bottomMessagesMap}" property="${pr}" value="${aBottomMessageDataMap}" />
+										<c:set target="${aBottomMessageDataMap}" property="messageName" value="${tokenKey}" />
+										<c:set target="${aBottomMessageDataMap}" property="message">
+											<c:if test="${indent > 0}">
+												<c:forEach var="z" begin="0" end="${indent}">&nbsp;</c:forEach>
+											</c:if>
+											
+											<fmt:message key="${tokenKey}" bundle='${previewText}'>
+												<c:forTokens items="${pr}" delims="|" var="token" begin="1" varStatus="status">
+													<fmt:param><c:out value="${token}"/></fmt:param>
+												</c:forTokens>
+											</fmt:message>
+			
+											<c:if test="${tokenKey == 'PathBegin'}">
+												<c:set var="indent" value="${indent + 5}"/>
+											</c:if>
+										</c:set>
+									</c:otherwise>
+								</c:choose>
+									
+							</c:otherwise>						
+						</c:choose>
+					</c:forEach>
+				<c:if test="${espotFound}">
+					<c:if test="${empty hasActivity}">
+						<c:choose>
+							<c:when test="${emsName == 'searchResultSpot'}">
+								<div class="no_activity_notice"><fmt:message key="noSearchRule" bundle='${previewText}'/></div>
+							</c:when>
+							<c:otherwise>
+								<div class="no_activity_notice"><fmt:message key="noWebActivity" bundle='${previewText}'/></div>
+							</c:otherwise>
+						</c:choose>
+					</c:if>
+					</div>
+				</c:if>
+				
+				<%-- Show default content --%>
+				<c:if test="${!empty espotDefaultContentName && !empty espotDefaultContentId}" >
+					<div class="default_contents_container">
+						<div class="title_container">
+							<div class="title"><fmt:message key="defaultContentTitle" bundle='${previewText}'/></div>
+						</div>
+						<div class="clear_float"></div>
+						<div class="default_contents">
+							<div class="content_path">
+								<div class="treepole"></div>
+								<div class="icon_content"></div>
+								<div class="filename"><c:out value="${espotDefaultContentName}"/></div>
+								<div class="edit">
+								<c:url var="clickToEditURL" value="/cmc/EditBusinessObject" context="/">
+									<c:param name="toolId" value="marketingManagement"/>
+									<c:param name="storeId" value="${storeId}"/>
+									<c:param name="languageId" value="${langId}"/>
+									<c:param name="storeSelection" value="prompt"/>
+									<c:param name="searchType" value="FindMarketingContent"/>
+									<c:param name="searchOption.searchText" value="${espotDefaultContentName}"/>
+									<c:param name="searchOption.searchUniqueId" value="${espotDefaultContentId}"/>
+								</c:url>
+								<a id="click2edit_MarketingContent_${espotDefaultContentId}" href="javascript:void(0)" title='<fmt:message key="Click2Edit_content" bundle='${previewText}'/>' class="click2edit_button" onclick="window.parent.callManagementCenter('<wcf:out escapeFormat="js" value="${clickToEditURL}"/>');">
+									<fmt:message key="Click2Edit_Edit" bundle='${previewText}'/>
+								</a>
+								</div>
+							</div>
+							<div class="clear_float"></div>
+						</div>
+					</div>
+				</c:if>
+				
+				<div class="bottom_messages_container">
+					<c:forEach items="${bottomMessagesMap}" var="aBottomMessage">
+						<c:set var="aBottomMessageDataMap" value="${aBottomMessage.value}" />
+						
+						<c:choose>
+							<c:when test="${aBottomMessageDataMap.messageName == 'NoScheduledActivities'}">
+								<%-- ignore it --%>
+							</c:when>
+							
+							<%-- Do not show eSpot behavior message in search rule dialog --%>
+							<c:when test="${emsName == 'searchResultSpot'}">
+								<c:if test="${aBottomMessageDataMap.messageName != 'StaticMarketingSpotBehavior' &&
+												aBottomMessageDataMap.messageName != 'DynamicMarketingSpotBehavior'}">
+									<div class="bottom_message">${aBottomMessageDataMap.message}</div>
+									<div class="clear_float"></div>
+								</c:if>
+							</c:when>
+							
+							<c:otherwise>
+								<%-- For now, we only display tooltip for e-spot behavior --%>
+								<c:if test="${aBottomMessageDataMap.messageName == 'StaticMarketingSpotBehavior' ||
+												aBottomMessageDataMap.messageName == 'DynamicMarketingSpotBehavior'}">
+									<div class="bottom_message_tooltip" title="<fmt:message key="eSpotBehaviorTooltip" bundle='${previewText}'/>"></div>
+								</c:if>
+								<div class="bottom_message">${aBottomMessageDataMap.message}</div>
+								<div class="clear_float"></div>
+							</c:otherwise>
+						</c:choose>
+					</c:forEach>
+					<c:remove var="bottomMessagesMap" scope="request" />
+					
+					<c:if test="${!empty searchStatus}">
+						<div class="bottom_message"><c:out value="${searchStatus}"/></div>
+						<div class="clear_float"></div>
+					</c:if>
+					
+					<c:if test="${!empty searchQuery}">
+						<div class="search_query_title bold"><fmt:message key="SearchQueryExpression" bundle='${previewText}'/></div>
+						<div class="search_query"><c:out value="${searchQuery}"/></div>
+						<div class="clear_float"></div>
+					</c:if>
+				</div>
+				<!-- End Content -->
+			</div>
+			<div class="pagination_container"></div>
+			<div class="clear_float"></div>
+		</div>
+		<div class="clear_float"></div>
+	</div>
+</div>
+<!-- End Popup -->
+<script type="text/javascript" id="script_<c:out value="${espotName}" />">
+	dojo.addOnLoad(function(){
+		var activitiedItem;
+		<%-- activiate the run-time recommended items --%>
+		<c:if test="${fn:length(runtimeRecommendedItemListMap) > 0}">
+			<c:forEach items="${runtimeRecommendedItemListMap}" var="aRecommendedItem">
+				<c:set var="aRecommendedItemDataMap" value="${aRecommendedItem.value}" />
+				activitiedItem = dojo.byId(
+					"${aRecommendedItemDataMap.dataType}_${aRecommendedItemDataMap.activityId}_${aRecommendedItemDataMap.id}_deactivated_div");
+				if (activitiedItem) {
+					activitiedItem.parentNode.removeAttribute("title");
+					activitiedItem.parentNode.removeChild(activitiedItem);
+				}
+			</c:forEach>
+		</c:if>
+		
+		<c:if test="${emptyEspot||!espotFound||eSpotHasNoSupportedDataToDisplay}">
+			var espot = dojo.query('.genericESpot',dojo.byId("script_<wcf:out escapeFormat="js" value="${espotName}"/>").parentNode)[0];
+			if (espot != null) {
+				dojo.addClass(espot,'emptyESpot');
+			}
+		</c:if>
+		parseWidget("ESpotInfo_popup_<c:out value="${espotName}"/>");		
+	});
+</script>
+					
+<!-- END ESpotInfoPopupDisplay.jspf-->

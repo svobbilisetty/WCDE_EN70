@@ -1,0 +1,67 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<%--
+***** 
+Given a CatalogEntryView object, this snippet formats and sets a priceString variable.
+
+params: 
+
+Parameters required:
+        catalogIdEntry:		A CatalogNavigationViewType.catalogEntryView object representing a catalog entry object
+
+Output:
+	priceString: 		Containing the formatted price of the dynamic kit
+*****
+--%>
+<c:remove var="priceString" />
+<c:remove var="indexedPrice" />
+<c:remove var="listPrice" />
+<c:remove var="calculatedPrice" />
+<c:forEach var="price" items="${catalogIdEntry.price}" >
+	<c:choose>
+		<c:when test="${price.description == 'I'}">
+			<c:set var="indexedPrice" value="${price}" />
+		</c:when>
+		<c:when test="${price.description == 'L'}">
+			<c:set var="listPrice" value="${price}" />
+		</c:when>
+		<c:when test="${price.description == 'O'}">
+			<c:set var="calculatedPrice" value="${price}" />
+		</c:when>
+	</c:choose>
+</c:forEach>
+
+<c:if test="${not empty indexedPrice}" >
+	<c:if test="${not empty listPrice && listPrice.value.value gt indexedPrice.value.value}" >
+		<c:set var="strikedPriceString" value="${listPrice.value.value}"/>
+	</c:if>
+	<c:set var="priceString" value="${indexedPrice.value.value}"/>
+</c:if>
+<c:if test="${not empty calculatedPrice}" >
+	<c:remove var="strikedPriceString"/>
+	<c:set var="minimumPriceString" value="${calculatedPrice.minimumValue.value}"  />
+	<c:set var="maximumPriceString" value="${calculatedPrice.maximumValue.value}"  />
+	<c:choose>
+		<c:when test="${not empty minimumPriceString && not empty maximumPriceString}">
+			<c:set var="priceString" value="${minimumPriceString} - ${maximumPriceString}"/>
+		</c:when>
+		<c:otherwise>
+			<c:if test="${not empty listPrice && listPrice.value.value gt calculatedPrice.value.value}" >
+				<c:set var="strikedPriceString" value="${listPrice.value.value}"/>
+			</c:if>
+			<c:set var="priceString" value="${calculatedPrice.value.value}"/>
+		</c:otherwise>
+	</c:choose>
+</c:if>

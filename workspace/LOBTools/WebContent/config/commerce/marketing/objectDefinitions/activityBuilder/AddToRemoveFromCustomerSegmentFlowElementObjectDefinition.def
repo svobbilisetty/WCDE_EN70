@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This is the flow element object definition for the Add To or Remove From Customer Segment action. Defined as part of this
+		object is the following:
+		<ul>
+			<li>{@link mktFlowElementCreateService mktFlowElementCreateService} with PROPERTY_segmentIdList as a parameter</li>
+			<li>{@link mktFlowElementUpdateService mktFlowElementUpdateService} with PROPERTY_segmentIdList as a parameter</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildCustomerSegment type which references the CustomerSegment object type</li>
+			<li>{@link wcfReferenceObjectDefinition wcfReferenceObjectDefinition} that defines a new ChildInheritedCustomerSegment type which references the InheritedCustomerSegment object type</li>
+			<li>instance of {@link wcfRequiredChildObjectValidator wcfRequiredChildObjectValidator} to ensure at least one customer segment is selected</li>
+		</ul>
+		</p>
+
+		<p>
+		This object also has the following pre-defined property and restrictions:
+		<ul>
+			<li><b>action</b>: Required field with a possible value of "add" or "remove". Default value is "add".</li>
+		</ul>
+		</p>
+	-->		
+	<FlowElementObjectDefinition definitionName="mktAddToRemoveFromCustomerSegmentElementObject" displayName="${mktMarketingResources.addToRemoveFromCustomerSegmentName}" elemTemplateType="Action" flowIcon="addToRemoveFromCustomerSegmentIcon" headerIcon="addToRemoveFromCustomerSegmentHeaderIcon" helpLink="concepts/csbactseg.htm" objectType="addToRemoveFromCustomerSegment" package="mkt" paletteIcon="addToRemoveFromCustomerSegmentPaletteIcon" propertiesDefinitionName="mktAddToRemoveFromCustomerSegmentProperties" summaryClass="mktAddToRemoveFromCustomerSegmentSummary">
+		
+		<CreateService baseDefinitionName="mktFlowElementCreateService">
+			<ServiceParam name="PROPERTY_segmentIdList" objectPath="ChildSegment/CustomerSegmentGroup" optional="true" propertyName="uniqueId"/>
+		</CreateService>
+		
+		<UpdateService baseDefinitionName="mktFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_segmentIdList" objectPath="ChildSegment/CustomerSegmentGroup" optional="true" propertyName="uniqueId"/>
+		</UpdateService>
+		
+		<Xml name="template">
+			<elemTemplateName>addToRemoveFromCustomerSegment</elemTemplateName>
+			<action>add</action>
+		</Xml>
+		
+		<PropertyDefinition displayName="${mktMarketingResources.actionCondition}" propertyName="action" required="true">
+			<PropertyValue displayName="${mktMarketingResources.actionAddText}" value="add"/>
+			<PropertyValue displayName="${mktMarketingResources.actionRemoveText}" value="remove"/>
+		</PropertyDefinition>
+		
+		<ReferenceObjectDefinition allowDuplicates="false" allowedParentTypes="WebActivity,WebActivityTemplate,DialogActivity,DialogActivityTemplate,SearchActivity,SearchActivityTemplate" derivedId="true" idProperty="childCustomerSegmentId" objectGroups="ChildSegment" objectType="ChildCustomerSegment" referencedTypes="CustomerSegment"/>
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="childCustomerSegmentId" objectGroups="ChildSegment" objectType="ChildInheritedCustomerSegment" referencedTypes="InheritedCustomerSegment"/>
+		
+		<RequiredChildObjectValidator errorMessage="${mktMarketingResources.noCustomerSegmentSelected}" objectPath="ChildSegment" validatorId="reqChildValidator" validatorType="noCustomerSegmentSelected"/>
+	</FlowElementObjectDefinition>
+	
+</Definitions>

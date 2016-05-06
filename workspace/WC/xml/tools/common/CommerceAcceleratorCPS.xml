@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE menu SYSTEM "Menu.dtd">
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2003
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+
+<!-- Commerce Accelerator menus for Master Catalog Profile Store
+Note: user roles are defeined in Roles.xml
+-->
+
+<menu resourceBundle="common.mccNLS"
+      frameset="common.MerchantCenterFrameset"
+      helpMap="common.MerchantCenterHelpMap"
+      arrowGif="$wcs_accelerator$images/tools/mcc/arrow.gif"
+      startPos="20"
+      space="20"
+      homepage="$webapp_accelerator$tools/common/AcceleratorHomeCPS.jsp"
+      bannerTitle=""
+      logoutPage="$webapp_accelerator$Logoff?URL=$wcs_accelerator$tools/common/blank.html&amp;storeId=0"
+      storeGif="$wcs_accelerator$images/tools/mcc/store_icon.jpg"
+      storeSelectionPage="$webapp_accelerator$StoreLanguageSelection?mcurl=MerchantCenterView?XMLFile=common.merchantCenter">
+
+<!--   <menuitem name="store"
+             enabled="true"
+             users="seller">
+
+      <node  name="createStore"
+             url="$webapp_accelerator$SCWLogonView?storetype=XXX&amp;fromAccelerator=true&amp;includeEmptyCatalog=false"
+             users="seller" />
+             
+   </menuitem>
+-->             
+   <menuitem name="products"
+             enabled="true"
+             taskUsages="all"
+             users="catMgr">
+
+      <!-- <node  name="productManagement"
+             url="$webapp_accelerator$ProductUpdateDialog"
+             users="catMgr"/> -->
+             
+      <node  name="catalogManagement"
+             url="$webapp_accelerator$CategoryTreeView?sku=false"
+             taskUsages="all"
+             users="catMgr"/>
+             
+      <node  name="findCatalogEntries"
+             url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;actionEP=PLU&amp;redirectXML=catalog.KitContentsDialog"
+             taskUsages="all"
+             users="catMgr"/>
+
+      <node  name="findCategories"
+             url="$webapp_accelerator$DialogView?XMLFile=catalog.categoryFindDialog"
+             taskUsages="all"
+             users="catMgr"/>
+
+      <node  name="packagesBundles"
+	     	 url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;searchType=package&amp;redirectURL=DialogView&amp;redirectXML=catalog.KitContentsDialog&amp;actionEP=PB"
+             taskUsages="all"
+             users="catMgr"/>
+
+      <node  name="merchandiseAssoc"
+	     	 url="$webapp_accelerator$DialogView?XMLFile=catalog.catEntrySearchDialog&amp;searchType=catentry&amp;redirectURL=DialogView&amp;redirectXML=catalog.MAssociationDialog&amp;actionEP=MA"
+             taskUsages="all"
+             users="catMgr"/>
+
+<!--
+      <node  name="CatalogDesign"
+      		 component="CatalogDesign"	
+	     	 url="$webapp_accelerator$NavCatCatalogListDialog?displayNumberOfProducts=true&amp;extendedFunction=(categoryTemplate=false, masterCatalog=false, sku=false)"	
+             taskUsages="all"
+             users="catMgr"/>
+-->
+
+      <node  name="catalogImport"
+	     	 url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=catalogimport.catalogImportList&amp;cmd=CatalogImportListView"
+             users="catMgr"/>
+             
+   </menuitem>
+
+   <menuitem name="tasks"
+             component="WorkspaceTaskList"
+             taskUsages="all"
+             enabled="true"
+             users="wsMgr wsTGApprover wsCtntContributor podMgr makMgr catMgr">
+
+      <node  name="viewTasks"
+             component="WorkspaceTaskList"
+             taskUsages="all"
+             url="$webapp_accelerator$NewDynamicListView?ActionXMLFile=workspaceadmin.TaskListActions&amp;cmd=TaskListView"
+             users="wsMgr wsTGApprover wsCtntContributor podMgr makMgr catMgr"/>
+             
+   </menuitem>
+
+   <menuitem name="help"
+             enabled="true"
+             type="help"
+             taskUsages="all"
+             users="all"/>
+
+</menu>

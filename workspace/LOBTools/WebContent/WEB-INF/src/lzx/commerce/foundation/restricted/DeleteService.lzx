@@ -1,0 +1,186 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This service deletes an object on the WebSphere Commerce
+		server by invoking the URL specified in the <code>url</code> 
+		attribute. Required parameters can be
+		defined by declaring {@link wcfServiceParam} instances
+		as children of the wcfDeleteService instance.
+	
+		<p>A delete service may only be declared as the child
+		of an instance of {@link wcfObjectDefinition}. 
+		
+		<p>If the object is deleted successfully, a status message will be displayed 
+		in the message logger. If the deletion fails, the 
+		error message returned by the URL displays in the message logger.
+
+		<p>The following example demonstrates the declaration of a delete service.
+		The service includes an explicity declared service parameter that sends
+		the object ID. The object ID value is resolved from an object property named
+		"objectId".
+				
+		@START_CODE
+		<DeleteService url="/cmc/DeleteMyObject">
+			<ServiceParam name="objectId" propertyName="objectId"/>
+		</DeleteService>
+		@END_CODE
+		
+		<p>The successful response from a delete service must be an XML document
+		that has "object" as the name of the root element. Additional properties
+		may be included but will be ignored. Once the client receives a successful
+		response from a delete service, the client side copy of the business object
+		will be cleared from the client side cache.
+
+		@START_CODE
+		<object/>
+		@END_CODE
+		
+		<p>If the request is not successful, then the response must be an XML document
+		that has "errors" as the name of the root element. The XML document must include
+		a child element named "exception". The following sample demostrates an error response
+		from a delete service.
+		
+		@START_CODE
+		<errors>
+			<exception>You do not have the correct access rights to complete this operation.</exception>
+		</errors>
+		@END_CODE
+	-->
+	<class name="wcfDeleteService" extends="wcfService" transactionService="true" abortEmptyTransactions="true">
+	
+		<!---
+			@keywords private
+			Initialize the service and set the parent.deleteService to this
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			parent.deleteService = this;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Initialize the service transaction object for this request.
+			@param Object transaction: the transaction object
+		-->
+		<method name="initializeTransaction" args="transaction">
+			<![CDATA[
+			var o = transaction.o;
+			var addObject = !o.isDeleting();
+			if (addObject && o.objectDefinition.parentReference) {
+				var referencedObject = o.getReferencedObject();
+				for (var key in referencedObject.referenceMap) {
+					var ro = referencedObject.referenceMap[key];
+					if (ro != o && ro.objectDefinition.parentReference && !ro.pendingDelete && ro.newObject && !ro.getIsVersionObject()) {
+						addObject = false;
+						break;
+					}
+				}
+			}
+			if (addObject) {
+				wcfServiceTransactionUtil.addDeleteObject(transaction, transaction.o);
+				if (o.objectDefinition.primary) {
+					var defs = o.objectDefinition.getReferenceObjectDefinitions();
+					var checkCascadeDelete = false;
+					for (var i = 0; i < defs.length; i++) {
+						if (defs[i].cascadeDelete) {
+							var childObjects = o.getObjects(defs[i].objectType);
+							for (var j = 0; j < childObjects.length; j++) {
+								var childObject = childObjects[j].getReferencedObject();
+								if (!childObject.isDeleting()) {
+									wcfServiceTransactionUtil.addDeleteObject(transaction, childObject);
+								}
+							}
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method is called when this delete service completed successfully.
+			
+			@param wcfModelObject requestParent: the object on which this delete service was performed
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+			super.handleServiceSuccess(requestParent);
+
+			if (wcfServiceTransactionUtil.isLastTransactionInGroup(requestParent.transaction) &&
+				!wcfServiceTransactionUtil.transactionGroupHasError(requestParent.transaction)) {
+				var objectDisplayName = requestParent.openGroupObject.objectDisplayName;
+				var objectDefinitionDisplayName = requestParent.openGroupObject.objectDefinition.displayName;
+				var msg;
+				var messageType;
+				if (!requestParent.isOpenGroupObject()) {
+					messageType = "saveServiceForOpenGroupObjectSuccessful" + "_" + objectDefinitionDisplayName;
+					if (objectDisplayName == objectDefinitionDisplayName || typeof(objectDefinitionDisplayName) == 'undefined' || objectDefinitionDisplayName == null) {
+						msg = foundationResources.replaceValues("saveServiceForSingletonObjectSuccessful", [objectDisplayName]);
+					}
+					else {
+						var msgCount = 1 + wcfServiceTransactionUtil.getTransactionEventMessageCount(requestParent.transaction, messageType);
+						if (msgCount == 1) {
+							msg = foundationResources.replaceValues("saveServiceForOpenGroupObjectSuccessful", [objectDefinitionDisplayName, objectDisplayName]);
+						}else{
+							msg = foundationResources.replaceValues("saveServiceForMultiOpenGroupObjectSuccessful", [msgCount, objectDefinitionDisplayName]);
+						}
+					}
+				}
+				else {
+					messageType = "deleteServiceForOpenGroupObjectSuccessful" + "_" + objectDefinitionDisplayName;
+					var msgCount = 1 + wcfServiceTransactionUtil.getTransactionEventMessageCount(requestParent.transaction, messageType);
+					if (msgCount == 1) {
+						msg = foundationResources.replaceValues("deleteServiceForOpenGroupObjectSuccessful", [objectDefinitionDisplayName, objectDisplayName]);
+					}else{
+						msg = foundationResources.replaceValues("deleteServiceForMultiOpenGroupObjectSuccessful", [msgCount, objectDefinitionDisplayName]);
+					}
+				}
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg);
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		<p>This service deletes a content version object</p>
+	-->
+ 	<class name="wcfDeleteContentVersionService" extends="wcfDeleteService" url="/cmc/DeleteContentVersion">
+
+		<wcfServiceParam name="storeId" />
+		<wcfServiceParam name="versionId" propertyName="versionId" />
+		
+		<!---
+			@keywords private
+			This method is called when this delete service completed successfully, it will update the active version information if the deleted version is 
+			the current active version.
+			
+			@param wcfModelObject requestParent: the object on which this delete service was performed
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+			super.handleServiceSuccess(requestParent);
+			if (requestParent.getPropertyValue("versionNumber") == requestParent.parentObject.getPropertyValue("basedOnVersionNumber")) {
+				requestParent.parentObject.getProperty("basedOnVersionNumber").setAttribute("value", "");
+				requestParent.parentObject.getProperty("basedOnVersionName").setAttribute("value", "");
+			}
+			]]>
+		</method>
+	</class>
+	
+</library>

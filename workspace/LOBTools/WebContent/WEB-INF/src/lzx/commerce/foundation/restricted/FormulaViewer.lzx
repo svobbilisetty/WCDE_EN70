@@ -1,0 +1,250 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private 
+
+		Formula viewer is a widget that you can use to display a formula. It consists of a list of {@link wcfFormulaElement} presented in
+		graphical form, and in the order defined by sequence-related parameters in this class.
+
+		The class needs to provide the {@link wcfObjectDefinition#objectType object types} of the child or reference objects to be displayed,
+		as well as the start element properties in the formula.
+
+		Instances of this type should not be created, nor should this class be extended. Instead, use {@link wcfPropertyFormulaViewer} as needed.
+	-->
+	<class name="wcfBaseFormulaViewer" visible="true" extends="basecomponent" focusable="false">
+		<!---
+			A comma separated list of {@link wcfObjectDefinition#objectType object types} to be displayed in this formula viewer.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string" />
+
+		<!---
+			@keywords private
+			Model object instance.
+		-->
+		<attribute name="o" setter="this.setModelObject(o)" />
+
+		<!---
+			When a value for sequencePropertyName is specified, the sequence of elements in the viewer is controlled by the property
+			with this name. The property must be a number.
+		-->
+		<attribute name="sequencePropertyName" type="string" value="${null}" />
+
+		<!---
+			When a value for {@link wcfBaseFormulaViewer#sequencePropertyName sequencePropertyName} is specified, the
+			value of this property will be used to help resolve the property value.
+		-->
+		<attribute name="sequencePropertyPath" type="string" value="${null}" />
+
+		<!---
+			This attribute contains the name of the resource to be used as an icon in the formula viewer for the start element.
+		-->
+		<attribute name="startElementIcon" type="string" value="${null}" />
+
+		<!---
+			This attribute specifies the text to be used as the label text for formula icon in the formula viewer for the start element.
+		-->
+		<attribute name="startElementText" type="string" value="${null}" />
+
+		<!---
+			@keywords private
+			A reference to the sorter for the formula. This will be defined when {@link wcfBaseFormulaViewer#sequencePropertyName sequencePropertyName}
+			is not null.
+		-->
+		<attribute name="formulaViewerSorter" value="${null}" />
+
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+				this.releaseModelObjectDel = new lz.Delegate(this, "releaseModelObject");
+				this.o = null;
+				super.construct(args, parent);
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+				if (this.sequencePropertyName != null) {
+					if (!this["formulaViewerSorter"]) {
+						this.formulaViewerSorter = new lz.wcfSequenceSortComparator(this);
+					}
+					this.formulaViewerSorter.setAttribute("sequencePropertyName", this.sequencePropertyName);
+					this.formulaViewerSorter.setAttribute("sequencePropertyPath", this.sequencePropertyPath);
+				}
+
+				if (this["o"]) {
+					this.o.bindViewToChildren(this.borderView.elements, null, this.objectTypes, this.formulaViewerSorter);
+				}
+
+				super.init();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+				if (this["o"]) {
+					this.o.releaseViewFromChildren(this.borderView.elements);
+				}
+				this.releaseModelObjectDel.unregisterAll();
+				delete this.releaseModelObjectDel;
+				super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets the model object for this tree node to the specified object.
+			@param wcfModelObject newObject: the new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.view", "wcfBaseFormulaViewer", "setModelObject(newObject)", [newObject]);
+				}
+				if (this["o"] !== newObject) {
+					this.releaseModelObjectDel.unregisterAll();
+					if (this["o"]) {
+						this.o.releaseViewFromChildren(this.borderView.elements);
+					}
+					this.o = newObject;
+					if (this.o) {
+						this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+						if (this["borderView"] && this.borderView["elements"]) {
+							this.o.bindViewToChildren(this.borderView.elements, null, this.objectTypes, this.formulaViewerSorter);
+						}
+					}
+					if (this["ono"]) {
+						this.ono.sendEvent(o);
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.view", "wcfBaseFormulaViewer", "setModelObject(newObject)");
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method releases the {@link wcfModelObject model object} from this formula viewer.
+		-->
+		<method name="releaseModelObject" args="e=null">
+			<![CDATA[
+				this.setAttribute("o", null);
+			]]>
+		</method>
+
+		<wcfBorderedView name="borderView" borderSize="1" borderColor="${classroot.style.bordercolumnlistcolor}">
+			<view name="startElement" width="${startElementIcon.width > startElementText.width ? startElementIcon.width + 10 : startElementText.width + 10}">
+				<view name="startElementIcon" align="center" resource="${classroot.startElementIcon}" />
+				<text name="startElementText" align="center" text="${classroot.startElementText}" />
+				<simplelayout axis="y" />
+			</view>
+			<text name="startElementOperator" text="=" fontsize="30" />
+			<view name="elements">
+				<attribute name="objectClass" type="string" value="wcfFormulaElement" />
+				<attribute name="activeSort" type="boolean" value="true" />
+				<simplelayout axis="x" spacing="5" />
+			</view>
+			<simplelayout axis="x" spacing="5" />
+		</wcfBorderedView>
+	</class>
+
+	<!---
+		@keywords final
+
+		This class defines a formula viewer for use within a properties view. The widget will display a list of formula elements which
+		constructs the formula, presented in graphical form, and in the order defined by sequence-related parameters in this class.
+	-->
+	<class name="wcfPropertyFormulaViewer" extends="wcfPropertiesComponent">
+		<!---
+			Comma separated list of object types to be displayed in this formula viewer.
+			This is a required attribute.
+		-->
+		<attribute name="objectTypes" type="string" />
+
+		<!---
+			Defines a property to use to sequence the elements in the viewer. When this value is provided, the elements will be
+			sequenced by the value of this property.
+		-->
+		<attribute name="sequencePropertyName" type="string" value="${null}" />
+
+		<!---
+			This property is used in conjunction with {@link wcfPropertyFormulaViewer#sequencePropertyName} to resolve the value of
+			the sequence property.
+		-->
+		<attribute name="sequencePropertyPath" type="string" value="${null}" />
+
+		<!---
+			This attribute contains the name of the resource to be used as an icon in the formula viewer for the start element.
+		-->
+		<attribute name="startElementIcon" type="string" value="${null}" />
+
+		<!---
+			This attribute specifies the text to be used as the label text for formula icon in the formula viewer for the start element.
+		-->
+		<attribute name="startElementText" type="string" value="${null}" />
+
+		<!---
+			@keywords private
+			This method creates the prompt for this properties component. This is a helper method that can be called by {@link wcfPropertiesComponent#createViews}.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the prompt.
+		-->
+		<method name="createPrompt" args="parentComponent">
+			<![CDATA[
+				super.createPrompt(parentComponent);
+				if (parentComponent["editor"]) {
+					if (parentComponent["prompt"]) {
+						parentComponent.prompt.setAttribute('y', parentComponent.editor.borderView.elements.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+					}
+					if (parentComponent["extendedHelpIcon"]) {
+						parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.borderView.elements.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method creates the editor for the given property component.
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor.
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+				new lz.wcfBaseFormulaViewer(parentComponent, {
+					name: "editor",
+					model: parentComponent.model,
+					x: parentComponent.promptWidth + parentComponent.xspacing,
+					o: parentComponent.o,
+					objectTypes: this.objectTypes,
+					sequencePropertyName: this.sequencePropertyName,
+					sequencePropertyPath: this.sequencePropertyPath,
+					startElementIcon: this.startElementIcon,
+					startElementText: this.startElementText
+				});
+				if (parentComponent["prompt"]) {
+					parentComponent.prompt.setAttribute('y', parentComponent.editor.borderView.elements.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+				if (parentComponent["extendedHelpIcon"]) {
+					parentComponent.extendedHelpIcon.setAttribute('y', parentComponent.editor.borderView.elements.getAttributeRelative("y", parentComponent.editor) + parentComponent.style.forminputbordersize + 1);
+				}
+			]]>
+		</method>
+	</class>
+
+</library>

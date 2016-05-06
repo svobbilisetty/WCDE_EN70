@@ -1,0 +1,418 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		
+		This controller class controls the behavior of the tools in Management Center. It allows
+		a tool to be opened, focused and closed. It also checks for the state of each tool.
+	-->
+	<class name="wcfToolsController" extends="node">
+		<!--- @keywords private -->
+		<attribute name="toolList" value="[]" />
+		
+		<!---
+			This method will check to see if a specified tool is open in the work area in Management Center.
+			@param string objectId: ID of the tool
+			@returns boolean: True if tool is open in the work area.
+		-->
+		<method name="isToolOpen" args="objectId">
+			<![CDATA[
+			if (wcfLogger.enabled) {
+				wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "isToolOpen(objectId)", [objectId]);
+			}	
+			var isToolOpen = false;
+			for (var i=0; i<this.toolList.length; i++) {
+				if (this.toolList[i] == objectId) {
+					isToolOpen = true;
+					break;
+				}
+			}
+			if (wcfLogger.enabled) {
+				wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "isToolOpen(objectId)", isToolOpen);
+			}
+			return isToolOpen;
+			]]>
+		</method>
+
+		<!---
+			This method opens the specified tool in the work area in Management Center.
+			@param string objectId: ID of the tool
+			@param string objectClass: class that implements the tool
+			@param string usage: usage of the tool for access control purpose
+			@param string activeIconSrc: icon image to be shown when the tool is active
+			@param string inactiveIconSrc: icon image to be shown when the tool is inactive
+			@param boolean availableToWorkspaceTasks Flag that indicates whether the tool is available or not when working on a workspace task
+			@param boolean userAction indicates that this request was initiated by a user action
+			@param wcfStore store: the store
+		-->
+		<method name="openTool" args="objectId, objectClass, usage, activeIconSrc, inactiveIconSrc, availableToWorkspaceTasks, userAction=true, store=null">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "openTool(objectId,objectClass,usage,activeIconSrc,inactiveIconSrc,availableToWorkspaceTasks,userAction)", [objectId, objectClass, usage, activeIconSrc, inactiveIconSrc, availableToWorkspaceTasks, userAction]);
+				}
+				
+				if (this.isToolOpen(objectId)) {
+					this.focusTool(objectId);
+				}
+				else {
+					addToolToList(objectId);
+					toolPanesWidget.openPane(objectId, objectClass, usage, availableToWorkspaceTasks, store);
+					toolTabsWidget.openTab(objectId, toolPanesWidget[objectId], activeIconSrc, inactiveIconSrc);
+					
+					var tool = toolPanesWidget.getPane(objectId);
+					if (userAction && tool["handleUserOpen"]) {
+						tool.handleUserOpen();
+					}
+
+					// check if Management Center is in read-only mode or not, and if so, open the alert dialog
+					if (wcfContextUtil.findContextValue(null, "readOnlyMode").value == "true" && tool["respectWorkspaceContext"] &&
+					    workspaceIndicator.currentState != 'BASE') {
+						if (configProperties.readOnlyOnApprovedContent) {
+							wcfApplicationInReadOnlyModeInApprovedContentDialog.openWindow();
+						} else {
+							wcfApplicationInReadOnlyModeDialog.openWindow();
+						}
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "openTool(objectId,objectClass,usage,activeIconSrc,inactiveIconSrc,availableToWorkspaceTasks,userAction)");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method opens the specified tool in the work area in Management Center by the ID of the tool.
+			@param string objectId: ID of the tool
+			@param wcfStore store: the store
+		-->
+		<method name="openToolById" args="objectId, store=null">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "openToolById(objectId)", [objectId]);
+				}
+				if (typeof(global[objectId]) != "undefined") {
+					this.openTool(objectId, global[objectId].objectClass, global[objectId].usage, global[objectId].activeIconSrc, global[objectId].inactiveIconSrc, global[objectId].availableToWorkspaceTasks, false, store);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "openToolById(objectId)");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method brings the specified tool into focus.
+			@param string objectId: ID of the tool
+		-->
+		<method name="focusTool" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "focusTool(objectId)", [objectId]);
+				}
+
+				addToolToList(objectId);
+				toolTabsWidget.focusTab(objectId);
+				toolPanesWidget.focusPane(objectId);
+
+				// check if Management Center is in read-only mode or not, and if so, open the alert dialog
+				if (wcfContextUtil.findContextValue(null, "readOnlyMode").value == "true" && toolPanesWidget.getPane(objectId)["respectWorkspaceContext"] &&
+				    workspaceIndicator.currentState != 'BASE') {
+				    if (configProperties.readOnlyOnApprovedContent) {
+						wcfApplicationInReadOnlyModeInApprovedContentDialog.openWindow();
+					} else {
+						wcfApplicationInReadOnlyModeDialog.openWindow();
+					}
+				}
+
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "focusTool(objectId)");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method resets the specified tool.
+			@param string objectId: ID of the tool
+		-->
+		<method name="resetTool" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "resetTool(objectId)", [objectId]);
+				}
+				toolPanesWidget.resetPane(objectId);
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "resetTool(objectId)");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method closes the specified tool in the work area in Management Center. It opens
+			wcfToolOnCloseWithChangesDialog when the tool has unsaved changes.
+			@param string objectId: ID of the tool
+		-->
+		<method name="closeTool" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "closeTool(objectId)", [objectId]);
+				}
+				var tool = toolPanesWidget.getPane(objectId);
+				
+				// check if there are any outstanding transactions
+				if (tool["model"] && wcfServiceTransactionUtil.hasOutstandingTransactions()) {
+					wcfTransactionProgressDialog.openWindow();
+				} else {
+					// check if there are any unsaved changes
+					if (hasUnsavedChangesByTool(objectId)) {
+						wcfToolOnCloseWithChangesDialog.openToolOnCloseWithChangesDialog(objectId);
+					}
+					else {
+						destroyTool(objectId);
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "closeTool(objectId)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroyTool" args="objectId, userAction=true">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "destroyTool(objectId,userAction)", [objectId, userAction]);
+				}
+				removeToolFromList(objectId);
+				if (this.toolList.length > 0 && toolTabsWidget.getCurrentTab() == objectId) {
+					var lastFocusedTool = this.toolList[this.toolList.length-1];
+					toolTabsWidget.focusTab(lastFocusedTool);
+					toolPanesWidget.focusPane(lastFocusedTool);
+				}
+				else if (this.toolList.length == 0) {
+					toolPanesWidget.focusPane("defaultToolPane");
+					lz.Focus.setFocus(applicationMenu, false);
+				}
+				if (userAction) {
+					var tool = toolPanesWidget.getPane(objectId);
+					if (tool["handleUserClose"]) {
+						tool.handleUserClose();
+					}
+				}
+				toolTabsWidget.closeTab(objectId);
+				toolPanesWidget.closePane(objectId);
+				messageLogger.clearToolMessages(objectId);
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "destroyTool(objectId,userAction)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="addToolToList" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "addToolToList(objectId)", [objectId]);
+				}
+				if(this.toolList.indexOf(objectId) == -1){
+					this.toolList.push(objectId);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "addToolToList(objectId)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="removeToolFromList" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "removeToolFromList(objectId)", [objectId]);
+				}
+				for (var i=0; i<this.toolList.length; i++) {
+					if (this.toolList[i] == objectId) {
+						this.toolList.splice(i, 1);
+						break;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "removeToolFromList(objectId)");
+				}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="hasUnsavedChangesByTool" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "hasUnsavedChangesByTool(objectId)", [objectId]);
+				}
+				var result = false;
+				var thisTool = toolPanesWidget.subviews[toolPanesWidget.findPane(objectId)];
+				if (thisTool != undefined) {
+					var thisToolModel = thisTool["model"];
+					if (thisToolModel != undefined && thisToolModel != null) {
+						for (var i=0; i<thisToolModel.openObjects.length; i++) {
+							if (thisToolModel.openObjects[i].hasUnsavedChanges()) {
+								result = true;
+								break;
+							}
+						}
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "hasUnsavedChangesByTool(objectId)", result);
+				}
+				return result;
+			]]>
+		</method>
+
+		<!---
+			This method checks whether there are unsaved changes in one of the tool in the work area
+			in Management Center.
+			@returns boolean: True if one or more tools contains unsaved changes; false otherwise.
+		-->
+		<method name="hasUnsavedChangesAllTools">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "hasUnsavedChangesAllTools");
+				}
+				var result = false;
+				for (var i=0; i<this.toolList.length; i++) {
+					if (this.hasUnsavedChangesByTool(this.toolList[i])) {
+						result = true;
+						break;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "hasUnsavedChangesAllTools", result);
+				}
+				return result;
+			]]>
+		</method>
+		
+		<!---
+			This method checks whether there are unsaved changes in one of the tool that respects
+			workspace context and are currently opened in the work area in Management Center.
+			@returns boolean: True if one or more tools contains unsaved changes; false otherwise.
+		-->
+		<method name="hasUnsavedChangesAllWorkspaceContextTools">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "hasUnsavedChangesAllWorkspaceContextTools");
+				}
+				var result = false;
+				for (var i=0; i<this.toolList.length; i++) {
+					if (toolPanesWidget.getPane(this.toolList[i])["respectWorkspaceContext"]
+					    && this.hasUnsavedChangesByTool(this.toolList[i])) {
+						result = true;
+						break;
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "hasUnsavedChangesAllWorkspaceContextTools", result);
+				}
+				return result;
+			]]>
+		</method>
+
+		<!---
+			This method resets the tools that are respecting workspace context and are currently
+			opened in the work area in Management Center.
+		-->
+		<method name="resetWorkspaceContextTools">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "resetWorkspaceContextTools");
+				}
+				for (var i=0; i<this.toolList.length; i++) {
+					if (toolPanesWidget.getPane(this.toolList[i])["respectWorkspaceContext"]) {
+						if (toolPanesWidget.getPane(this.toolList[i])["availableToWorkspaceTasks"] ||  wcfContextUtil.findContextValue(null, "workspaceTask").value == "") {
+							toolPanesWidget.resetPane(this.toolList[i]);
+						}
+						else {
+							this.closeTool(this.toolList[i]);
+						}
+						messageLogger.clearToolMessages(this.toolList[i]);
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "resetWorkspaceContextTools");
+				}
+			]]>
+		</method>
+
+		<!---
+			This method closes all the tools that are currently opened in the work area in
+			Management Center.
+		-->
+		<method name="closeAllTools">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "closeAllTools");
+				}
+				if (this.toolList.length > 0) {
+					for (var i=this.toolList.length-1; i>=0; i--) {
+						this.destroyTool(this.toolList[i], false);
+					}
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "closeAllTools");
+				}
+			]]>
+		</method>
+		
+		<!---
+			This method resets the tools that are currently opened in Management Center.
+		-->
+		<method name="resetAllTools">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "resetAllTools");
+				}
+				for (var i=0; i<this.toolList.length; i++) {
+					toolPanesWidget.resetPane(this.toolList[i]);
+					messageLogger.clearToolMessages(this.toolList[i]);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "resetAllTools");
+				}
+			]]>
+		</method>
+		
+		<!---
+			This method returns the tool instance with the specified ID. If the tool is not open,
+			then this method returns null.
+			@param string objectId: ID of the tool
+		-->
+		<method name="getTool" args="objectId">
+			<![CDATA[
+				if (wcfLogger.enabled) {
+					wcfLogger.entering("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "getTool(objectId)", [objectId]);
+				}
+				var tool = null;
+				if (isToolOpen(objectId)) {
+					tool = toolPanesWidget.getPane(objectId);
+				}
+				if (wcfLogger.enabled) {
+					wcfLogger.exiting("com.ibm.commerce.lobtools.foundation.shell", "wcfToolsController", "getTool(objectId)" + tool);
+				}
+				return tool;
+			]]>
+		</method>
+	</class>
+
+</library>

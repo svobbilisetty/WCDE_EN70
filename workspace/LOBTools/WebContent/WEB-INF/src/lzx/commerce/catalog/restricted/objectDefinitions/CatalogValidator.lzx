@@ -1,0 +1,1131 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Parent object level validator
+		@keywords private   
+	-->
+	<class name="catParentObjectValidator" extends="wcfValidator">
+
+		<attribute name="errorMessage" value="" type="string"/>
+		
+		<method name="validate" args="o, property=null"><![CDATA[
+			if(!this.isEnabled(o) || this.hasReferencedParent(o)){
+				o.clearValidationError(this); 
+			}else{
+				o.addValidationError(this, this.errorMessage); 
+			}
+			]]>
+		</method>
+		
+		<!-- 
+			Returns true if the given model object has a parent object. False otherwise. 
+			@param ModelObject o the model object instance to be checked. 
+		 -->
+		<method name="hasReferencedParent" args="o"><![CDATA[
+			if(!o.referenceMap){
+				return false; 
+			}
+			
+			for(var key in o.referenceMap){
+				var ref = o.referenceMap[key];
+				if(ref.parentObject && !ref.pendingDelete && (!ref.getIsVersionObject() || o.getIsVersionObject())){
+					return true; 
+				}
+			}
+			
+			return false;
+			]]>
+		</method>
+
+	</class>
+		
+	<!---
+		This is an Object level validator. 
+		This validator performs the following actions:
+		<ul>
+			<li>It checks that the total number of new merchandising associations to be created does not exceed the specified maximum.</li>
+			<li>It checks that there is at least one catalog entry specified.</li>
+			<li>If the user is not removing existing merchandising associations, then it checks that there is at least one merchandising association specified.</li>
+			<li>It checks that any replacement associations are valid. Replacement associations are only valid when the associated catalog entries are
+			of the same type (product, sku, bundle, or kit).</li>
+		</ul>
+	-->
+	<class name="catMTMMerchandisingAssociationValidator" extends="wcfValidator">
+		<!---
+			The maximum number of merchandising associations that can be created at one time.
+			The default is 2000.
+		-->
+		<attribute name="maximumAssociations" value ="2000" type="number"/>
+		
+		<!--- @keywords private -->
+		<method name="validate" args="o, property=null"><![CDATA[
+			if(this.isEnabled(o)) {
+				var sourceCount = 0;
+				var targetCount = 0;
+				var sourceTypes = [];
+				
+				for (var i = 0; i < o.childObjects.length; i++) {
+					var objectType = o.childObjects[i].objectType;
+					var childObject = o.childObjects[i];
+					if (objectType == "MerchandisingAssociationReferencedManytoManyCatalogSourceEntries") {
+						sourceCount++;
+						if (sourceTypes.length < 2) {
+							var sourceType = catCatalogUtilities.getNormalizedCatalogEntryType(childObject.getReferencedObject().objectType);
+							if (sourceTypes.length ==0 || sourceTypes[0] != sourceType) {
+								sourceTypes.push(sourceType);
+							}
+						}
+					}
+					else if (objectType == "MerchandisingAssociationReferencedManytoManyCatalogEntries") {
+						targetCount++;
+					}
+				}
+				
+				var numOfAssociations = sourceCount * targetCount;
+				var removeExist = o.getPropertyValue("removeExisting");
+				var errorMsg = null;
+				if(numOfAssociations > this.maximumAssociations){
+					errorMsg = catalogResources.replaceValues("errorMessageMTMExceedsLimit", [this.maximumAssociations]);
+				}
+				else if(sourceCount == 0) {
+					errorMsg = catalogResources.errorMessageMTMAtLeastOneCatalogEntry.string;
+				}
+				else if(removeExist != "true" && targetCount ==0) {
+					errorMsg = catalogResources.errorMessageMTMAtLeastOneAssociation.string;
+				}
+				
+				if (targetCount > 0) {
+					for (var i = 0; i < o.childObjects.length; i++) {
+						var childObject = o.childObjects[i];
+						if (sourceTypes.length > 0 && childObject.getPropertyValue("name") == "REPLACEMENT" &&
+							(sourceTypes.length > 1 || catCatalogUtilities.getNormalizedCatalogEntryType(childObject.getReferencedObject().objectType) != sourceTypes[0])) {
+							childObject.getProperty("name").addValidationError(this, catalogResources.errorMessageReplacementMAMismatch.string);
+						}
+						else {
+							childObject.getProperty("name").clearValidationError(this);
+						}
+					}
+				}
+				
+				if (errorMsg != null) {
+					o.addValidationError(this, errorMsg);
+				}
+				else{
+					o.clearValidationError(this);
+				}
+			}
+			else {
+				o.clearValidationError(this);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		This is a property level validator. 
+		It checks that a replacement merchandising association is valid. Replacement associations are only valid
+		when the associated catalog entries are of the same type (product, sku, bundle, or kit).
+	-->
+	<class name="catMerchandisingAssociationReplacementTypeValidator" extends="wcfValidator">
+		<!--- @keywords private -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(this.isEnabled(o)) {
+				var parentObjectType = catCatalogUtilities.getNormalizedCatalogEntryType(o.parentObject.objectType);
+				var associationObjectType = catCatalogUtilities.getNormalizedCatalogEntryType(o.getReferencedObject().objectType);
+				if (property.value == "REPLACEMENT" && parentObjectType != associationObjectType) {
+					property.addValidationError(this, catalogResources.errorMessageReplacementMAMismatch.string);
+				}
+				else {
+					property.clearValidationError(this);
+				}
+			}
+			else {
+				property.clearValidationError(this);
+			}
+			]]>
+		</method>
+	</class>	
+	
+	<!---  
+		This validator checks that the format of the "attrValueValue" property matches the current value of the "attrDataType" 
+		property. A message will be added to the "attrValueValue" property if the "attrDataType" property's value is 
+		"Float" or "Integer" and the "attrValueValue" property's value does not match the specified type.
+		@keywords deprecated
+	 -->
+	<class name="catAttributeValueValueValidator" extends="wcfValidator">
+		<!--- @keywords private -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+			if(this.isEnabled(o)) {
+				var type = o.parentObject.getPropertyValue("attrDataType");
+				var message = null;
+				switch (type) {
+					case "Float":
+						if (!wcfStringUtil.isNumber(changedProperty.value)) {
+							message = this.getErrorMessage("invalidNumber",[changedProperty.propertyDefinition.getDisplayName()]);
+						}
+						break;
+						
+					case "Integer":
+						if (!wcfStringUtil.isInteger(changedProperty.value)) {
+							message = this.getErrorMessage("invalidInteger",[changedProperty.propertyDefinition.getDisplayName()]);
+						}
+						break;													
+				}
+				
+				if (message == null) {
+					changedProperty.clearValidationError(this);
+				}
+				else {
+					changedProperty.addValidationError(this, message);
+				}
+			}
+			else {
+				changedProperty.clearValidationError(this);
+			}
+			]]>
+		</method>		
+				
+	</class>
+	<!---
+		This validator triggers a validation of the "attrValValue" properties on the child "DescriptiveAttributeLanguageSensitiveObject"
+		objects.
+	-->
+	<class name="catChildAttributeValueValueValidator" extends="wcfValidator">				
+		<!--- 
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(this.isEnabled(o)) {
+				var childObjects = o.getObjects("DescriptiveAttributeLanguageSensitiveObject");	
+				for (var i = 0; i < childObjects.length; i++) {
+					childObjects[i].getProperty("attrValValue").validate(false);				
+				}
+			}
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		This validation class checks that a specified character does not appear in the property value of the object definition.
+		If the character appears then a validation error appears.
+		By default, the excluded character is the backslash (\).  
+		If you change the value of <code>excludedCharacter</code>, then you should also change the value of <code>errorMessage</code>.
+	-->
+	<class name="catPathValidator" extends="wcfValidator">
+		<!--- 
+			The error message associated with the validation error generated by this validation class.
+			The default value is errorMessagePathValidator.
+		 -->
+		<attribute name="errorMessage" type="string" value="${catalogResources.errorMessagePathValidator.string}"/>
+		<!--- 
+			The name of the property to which we want to apply this validation class.
+			This value is required and needs to be specify
+		 -->
+		<attribute name="propertyName" type="string" value="" />
+		<!--- 
+			The character which needs to be excluded.  If this character appears in the property
+			of the object then the error message will appear.
+			By default, the excluded character  is backslash (\).
+		 -->
+		<attribute name="excludedCharacter"  type="string" value="\" />
+		
+		<!--- 
+			@keywords private
+		 -->
+		<method name="validate" args="o, property=null"><![CDATA[
+			var path = o.getPropertyValue(this.propertyName);
+			if(this.isEnabled(o) && this.containsExcludedCharacter(path)){
+				o.addValidationError(this, this.errorMessage); 
+			}
+			else {
+				o.clearValidationError(this); 
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="containsExcludedCharacter" args="s"><![CDATA[
+			return (s.indexOf(this.excludedCharacter) != -1);
+			]]>
+		</method>				
+	</class>
+
+	<!---  
+		This validator checks that the type of the "attrValueValue" property matches the current value of the "attrDataType" 
+		property.
+		@keywords private
+	 -->
+	<class name="catAttributeValueTypeValidator" extends="wcfValidator">
+		<attribute name="validatorId" type="string" value="catAttributeValueTypeValidator"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+			if(!o || !changedProperty || !changedProperty.value)
+			{
+				return; // nothing to validate
+			}
+			
+			if(this.isEnabled(o))
+			{
+				var type = o.parentObject.getPropertyValue("attrDataType");
+				var message = null;
+				switch (type)
+				{
+					case "Float":
+						if (!catCatalogUtilities.isFloat(changedProperty.value))
+						{
+							message = this.getErrorMessage("invalidNumber",[changedProperty.propertyDefinition.getDisplayName()]);
+						}
+						break;
+						
+					case "Integer":
+						if (!catCatalogUtilities.isWholeNumber(changedProperty.value))
+						{
+							message = this.getErrorMessage("invalidInteger",[changedProperty.propertyDefinition.getDisplayName()]);
+						}
+						break;													
+				}				
+				if (message == null)
+				{
+					changedProperty.clearValidationError(this);
+				}
+				else
+				{
+					changedProperty.addValidationError(this, message);
+				}
+			}
+			else
+			{
+				changedProperty.clearValidationError(this);
+			}	
+			]]>
+		</method>
+	</class>
+
+	<!---  
+		This validator checks that the type of the "value" property is valid based on attribute type.
+		@keywords private
+	 -->
+	<class name="catAttributeDictionaryValueTypeValidator" extends="wcfPropertyValueTypeValidator">
+		
+		<!---
+			@keywords private
+			Validator id.
+		 -->
+		<attribute name="validatorId" type="string" value="catAttributeDictionaryValueTypeValidator"/>
+		
+		<!---
+			@keywords private
+			Override to set the type.
+		-->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+				if(!o || !changedProperty){
+					return; // nothing to validate
+				}
+				
+				if(this.isEnabled(o))
+				{
+					var dataType = catCatalogUtilities.getAttributeDataType(o);
+					switch (dataType)
+					{
+						case "Integer":
+							this.verifyPropertyType(changedProperty, "integer");
+							break;
+						case "Float":
+							this.verifyPropertyType(changedProperty, "number");
+							break;
+						default:
+							this.verifyPropertyType(changedProperty, "string");
+					}
+				}
+				else
+				{
+					changedProperty.clearValidationError(this);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return true if the specified value is valid.
+			We can't check type so this is a non operation.
+		-->
+		<method name="checkPropertyValue" args="propertyDefinition, value">
+			<![CDATA[
+				return true;
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---  
+		This validator checks that the decimal range of the "value" property is valid based on attribute type.
+		@keywords private
+	 -->
+	<class name="catAttributeDictionaryValueDecimalPlacesValidator" extends="wcfDecimalPlacesValidator">
+		
+		<!---
+			@keywords private
+			Validator id.
+		 -->
+		<attribute name="validatorId" type="string" value="catAttributeDictionaryValueDecimalPlacesValidator"/>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+				if(!o || !changedProperty){
+					return; // nothing to validate
+				}
+				
+				if(this.isEnabled(o))
+				{
+					var type = catCatalogUtilities.getAttributeDataType(o);
+					if(type == "Float")
+					{
+						super.validate(o,changedProperty);							
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return true if the specified value is valid.
+			We can't check type so this is a non operation.
+		-->
+		<method name="checkPropertyValue" args="propertyDefinition, value">
+			<![CDATA[
+				return true;
+			]]>
+		</method>
+		
+	</class>
+
+	<!---  
+		This validator checks that the range of the "attrValueValue" property is valid based on type.
+		@keywords private
+	 -->
+	<class name="catAttributeValueRangeValidator" extends="wcfValidator">
+		<attribute name="validatorId" type="string" value="catAttributeValueRangeValidator"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+			if(!o || !changedProperty || !changedProperty.value)
+			{
+				return; // nothing to validate
+			}
+			
+			if(this.isEnabled(o))
+			{
+				var type = o.parentObject.getPropertyValue("attrDataType");
+				var message = null;
+				var maxFloat = 9999999;
+				var minFloat = -9999999;
+				var maxWhole = 2147483647;
+				var minWhole = -2147483648;
+				switch (type)
+				{
+					case "Float":
+						switch (catCatalogUtilities.checkNumberRange(changedProperty.value, maxFloat, minFloat))
+						{
+							case 1:
+								message = foundationResources.replaceValues("propertyValueTooSmall", [changedProperty.propertyDefinition.getDisplayName(), minFloat]);
+								break;
+							case 2:
+								message = foundationResources.replaceValues("propertyValueTooLarge", [changedProperty.propertyDefinition.getDisplayName(), maxFloat]);
+								break;				
+						}
+						break;
+						
+					case "Integer":
+						switch (catCatalogUtilities.checkNumberRange(changedProperty.value, maxWhole, minWhole))
+						{
+							case 1:
+								message = foundationResources.replaceValues("propertyValueTooSmall", [changedProperty.propertyDefinition.getDisplayName(), minWhole]);
+								break;
+							case 2:
+								message = foundationResources.replaceValues("propertyValueTooLarge", [changedProperty.propertyDefinition.getDisplayName(), maxWhole]);
+								break;			
+						}
+						break;													
+				}
+				
+				if (message == null)
+				{
+					changedProperty.clearValidationError(this);
+				}
+				else
+				{
+					changedProperty.addValidationError(this, message);
+				}
+			}
+			else
+			{
+				changedProperty.clearValidationError(this);
+			}	
+			]]>
+		</method>
+	</class>
+	
+	<!---  
+		This validator checks that the range of the "value" property is valid based on attribute type.
+		@keywords private
+	 -->
+	<class name="catAttributeDictionaryValueRangeValidator" extends="wcfPropertyRangeValidator">
+	
+		<!---
+			@keywords private
+			Validator id.
+		 -->
+		<attribute name="validatorId" type="string" value="catAttributeDictionaryValueRangeValidator"/>
+		
+		<!---
+			The minimum allowed integer value. This attribute is optional.
+		-->
+		<attribute name="minIntegerValue" type="number" value="null"/>
+		<!---
+			The minimum allowed float value. This attribute is optional.
+		-->
+		<attribute name="minFloatValue" type="number" value="null"/>		
+		<!---
+			The maximum allowed integer value. This attribute is optional.
+		-->
+		<attribute name="maxIntegerValue" type="number" value="null"/>
+		<!---
+			The maximum allowed float value. This attribute is optional.
+		-->
+		<attribute name="maxFloatValue" type="number" value="null"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+				if(!o || !changedProperty){
+					return; // nothing to validate
+				}
+				
+				if(this.isEnabled(o))
+				{
+					var type = catCatalogUtilities.getAttributeDataType(o);
+					switch (type)
+					{
+						case "Float":
+							minValue = this.minFloatValue;
+							maxValue = this.maxFloatValue;
+							super.validate(o,changedProperty);
+							break;
+							
+						case "Integer":
+							minValue = this.minIntegerValue;
+							maxValue = this.maxIntegerValue;
+							super.validate(o,changedProperty);
+							break;													
+					}
+				}	
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return true if the specified value is valid.
+			We can't check type so this is a non operation.
+		-->
+		<method name="checkPropertyValue" args="propertyDefinition, value">
+			<![CDATA[
+				return true;
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---  
+		This validator checks that the size of the "attrValueValue" property is correct based on type.
+		@keywords private
+	 -->
+	<class name="catAttributeValueSizeValidator" extends="wcfValidator">
+		<attribute name="validatorId" type="string" value="catAttributeValueSizeValidator"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+			if(!o || !changedProperty || !changedProperty.value)
+			{
+				return; // nothing to validate
+			}
+			
+			if(this.isEnabled(o))
+			{
+				var type = o.parentObject.getPropertyValue("attrDataType");
+				var message = null;
+				switch (type)
+				{
+					case "String":
+						if (!catCatalogUtilities.isValidSizeString(changedProperty.value))
+						{
+							message = this.getErrorMessage("propertySizeTooLarge",[changedProperty.propertyDefinition.getDisplayName()]);
+						}
+						break;
+					case "Float":
+						var decimals = catCatalogUtilities.checkSignificantDigits(changedProperty.value);
+						if (decimals != -1)
+						{
+							message = foundationResources.replaceValues("invalidNumberDecimalPlaces", [changedProperty.propertyDefinition.getDisplayName(), decimals]);
+						}
+						break;
+				}				
+				if (message == null)
+				{
+					changedProperty.clearValidationError(this);
+				}
+				else
+				{
+					changedProperty.addValidationError(this, message);
+				}
+			}
+			else
+			{
+				changedProperty.clearValidationError(this);
+			}	
+			]]>
+		</method>
+	</class>
+	
+	<!---  
+		This validator checks that "allowedAttrValFloatValue" is a valid supported float value.
+		@keywords private
+	 -->
+	<class name="catFloatAttributeValueSizeValidator" extends="wcfValidator">
+		<attribute name="validatorId" type="string" value="catFloatAttributeValueSizeValidator"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+			if(!o || !changedProperty || !changedProperty.value)
+			{
+				return; // nothing to validate
+			}
+			
+			if(this.isEnabled(o))
+			{
+				var message = null;
+				var decimals = catCatalogUtilities.checkSignificantDigits(changedProperty.value);
+				if (decimals != -1)
+				{
+					message = foundationResources.replaceValues("invalidNumberDecimalPlaces", [changedProperty.propertyDefinition.getDisplayName(), decimals]);
+				}				
+				if (message == null)
+				{
+					changedProperty.clearValidationError(this);
+				}
+				else
+				{
+					changedProperty.addValidationError(this, message);
+				}
+			}
+			else
+			{
+				changedProperty.clearValidationError(this);
+			}	
+			]]>
+		</method>
+	</class>
+	
+	<!---  
+		This validator checks that the size of the "value" property is valid based on attribute type.
+		@keywords private
+	 -->
+	<class name="catAttributeDictionaryValueSizeValidator" extends="wcfPropertySizeValidator">
+		
+		<!---
+			@keywords private
+			Validator id.
+		 -->
+		<attribute name="validatorId" type="string" value="catAttributeDictionaryValueSizeValidator"/>
+		
+		<!---
+			@keywords private
+		 -->
+		<method name="validate" args="o, changedProperty=null">
+			<![CDATA[
+				if(!o || !changedProperty){
+					return; // nothing to validate
+				}
+				
+				if(this.isEnabled(o))
+				{
+					var type = catCatalogUtilities.getAttributeDataType(o);
+					if(type == "String")
+					{
+						super.validate(o,changedProperty);
+					}
+				}	
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Return true if the specified value is valid.
+			We can't check type so this is a non operation.
+		-->
+		<method name="checkPropertyValue" args="propertyDefinition, value">
+			<![CDATA[
+				return true;
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		<p>
+		This validator checks that new sales categories have a valid collection of parent categories. A new
+		sales category must have at least one parent, all of the parents must belong to the same sales catalog and
+		the category must not have itself as a parent.
+		</p>	
+		
+		@keywords private
+	-->
+	<class name="catSalesCatalogGroupParentValidator" extends="wcfValidator">
+		<attribute name="errorMessage" type="string" value="${catalogResources.missingRequiredCategoryParent.string}"/>
+		<!--- 
+			<p>
+			This method performs validation on the <code>catBaseSalesCatalogGroupPrimaryObjectDefinition</code>.
+			</p>
+			@param wcfModelObject o the model object that is to be validated.
+		-->
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(this.isEnabled(o)) {
+				var parents = o.getCollectionPrimaryObjects();
+				if (parents.length == 0) {
+					o.addValidationError(this, this.errorMessage);
+				}
+				else {
+					var catalogIds = [];
+					var newCatalogs = [];
+					catCatalogUtilities.resolveSalesCatalogs(o, catalogIds, newCatalogs, []);
+					if ((newCatalogs.length == 1 && catalogIds.length == 0) //both catalog and category are new
+						|| (catalogIds.length == 1 && newCatalogs.length == 0)) {//all parents under one single existing catalog
+						// now check categories
+						if ( catCatalogUtilities.validParentCategories(o) ) {
+							o.clearValidationError(this);
+						} else {
+							o.addValidationError(this, catalogResources.categoryNotAllowedWarning.string);
+						}
+					}
+					else{
+						o.addValidationError(this, catalogResources.catalogIdNotConsistentWarning.string);
+					}
+				}
+			}
+			else {
+				o.clearValidationError(this);
+			}
+			]]>
+		</method>
+	</class>
+	
+	<node id="catCatalogUtilities">
+		<!---
+			Check number is in the valid range.
+			
+			@param String s The value that is to be verified whether it is in range. It should
+			not contain separator for thousand.
+			@param int max The maximum allowed value.
+			@param int min The minimum allowed value.
+			@returns int: 0 is in valid range, 1 is exceeds min, 2 is exceeds max.
+		-->
+		<method name="checkNumberRange" args="s, max, min"><![CDATA[
+			// Check if the number is in range
+			var number = Number(s);
+			if( number < min )
+			{
+				return 1;
+			}
+			if( number > max )
+			{
+				return 2;
+			}
+			return 0;
+			]]>
+		</method>
+		
+	<!---
+			Check Float number has valid maximum number of significant digits and decimal places.
+			No more than 7 significant digits or decimal places allowed.
+			
+			@param String s: string that is to be verified whether it is valid. It should be
+			normalized. That is, it uses dot as the decimal point, and it doesn't contain separator for thousand.
+			@returns int: Value of -1 indicates valid, otherwise returns the actual number of allowed decimal places.
+		-->
+		<method name="checkSignificantDigits" args="s"><![CDATA[
+			// If this number has no decimal component it will be check by the range validator
+			if (s.indexOf('.') == -1 || s.length == 0)
+			{
+				return -1;
+			}
+			s = wcfStringUtil.trim(s);
+			// Check if the number has valid number of significant digits
+			//  eg 0.001 or 00.001 or 0010.001
+			var allowedDecimals = 0;
+			var start = 0;
+			// ignore sign
+			if (s.charAt(0) == '-' || s.charAt(0) == '+')
+			{
+				start = 1;
+			} 
+			var sigDigitCount = 0;
+			var startCount = false;
+			for (var i = start; i < s.length; i++)
+			{
+				// Skip leading zeros
+				if(!startCount && s.charAt(i) != '0')
+				{
+					startCount = true;
+				}
+				if(startCount)
+				{
+					if(s.charAt(i) != '.')
+					{
+						sigDigitCount++;
+					}
+					
+				}
+			}
+			var startCount = true;
+			var trailingZeroCount = 0;
+			for (var i = s.length-1; i >= start; i--)
+			{
+				// Trailing zeros
+				if(startCount && (s.charAt(i) != '0' || s.charAt(i) == '.') )
+				{
+					startCount = false;
+				}
+				if(startCount)
+				{
+					trailingZeroCount++;
+
+				}
+			}
+			sigDigitCount -= trailingZeroCount;
+			var decimalPlaces = s.length - s.indexOf('.') - 1 - trailingZeroCount;			
+			if (sigDigitCount > 7 || decimalPlaces > 7)
+			{
+				// number of digits after decimal - excess significant digits = max decimals digits allowed
+				allowedDecimals = s.length - s.indexOf('.') - 1 - (sigDigitCount - 7);
+				return allowedDecimals;
+
+			}
+			return -1;
+			]]>
+		</method>
+				
+		<!---
+			Check if a string is a valid Float number.  A number should
+			match the regular expression (+|-)?(.\d+ | \d+(.\d+)?)
+
+			@param String s: string that is to be verified whether it is float format. It should be
+			normalized. That is, it uses dot as the decimal point, and it doesn't contain separator for thousand.
+			@returns boolean: true if the given string is a valid decimal number. False otherwise.
+		-->
+		<method name="isFloat" args="s"><![CDATA[
+			if(typeof(s) == 'undefined' || s == null)
+			{
+				return false;
+			}
+			s = wcfStringUtil.trim(s);
+			// Check if it a valid float number
+			if (s == '' || s.charAt(s.length - 1) == '.' || s.indexOf('e') != -1 || s.indexOf('E') != -1 || isNaN(s))
+			{
+				return false;
+			}
+			
+			return true;
+			]]>
+		</method>
+		
+		<!---
+			Verify if a string is a valid whole number.  A whole number string matches the following pattern: \s*(+|-)?\d+\s*.
+
+			@param String s The string that is to be verified whether it is a whole number. It should
+			not contain separator for thousand.
+			@returns boolean: true if the given string is a valid whole number. False otherwise.
+		 -->
+		<method name="isWholeNumber" args="s"><![CDATA[
+			if(typeof(s) == 'undefined' || s == null){
+				return false;
+			}
+			s = wcfStringUtil.trim(s);
+			// Check if it a valid whole number 
+			if (s == '' || s.indexOf('.') != -1 || s.indexOf('e') != -1 || s.indexOf('E') != -1 || isNaN(s))
+			{
+				return false;
+			}
+			return true;
+			]]>
+		</method>
+		
+		<!---
+			Verify that a string value does not exceed the maximum length of 254 characters.
+
+			@param String s The string that is to be verified.
+			@returns boolean: true if the given string is valid. False otherwise.
+		 -->
+		<method name="isValidSizeString" args="s"><![CDATA[
+			if(typeof(s) == 'undefined' || s == null)
+			{
+				return false;
+			} 
+			if (s.length > 254)
+			{
+				return false;
+			}
+			return true;
+			]]>
+		</method>
+		
+				
+		<!--- @keywords private -->
+		<method name="resolveSalesCatalogs" args="o, catalogIds, newCatalogs, checkedObjects">
+			<![CDATA[
+			checkedObjects.push(o);
+			var collectionList = o.getCollectionPrimaryObjects();
+			for (var i = 0; i < collectionList.length; i++) {
+				var po = collectionList[i];
+				if (checkedObjects.indexOf(po) == -1) {
+					if (po.objectType == "SalesCatalog" || po.objectType == "InheritedSalesCatalog") {
+						var catalogId = po.getPropertyValue("catalogId");
+						if (catalogId == "") {
+							if (newCatalogs.indexOf(po) == -1) {
+								newCatalogs.push(po);
+							}
+						}
+						else {
+							if (catalogIds.indexOf(catalogId) == -1) {
+								catalogIds.push(catalogId);
+							}
+						}
+					}
+					else {
+						var catalogId = po.getPropertyValue("owningCatalog");
+						if (catalogId == "") {
+							this.resolveSalesCatalogs(po, catalogIds, newCatalogs, checkedObjects);
+						}
+						else {
+							if (catalogIds.indexOf(catalogId) == -1) {
+								catalogIds.push(catalogId);
+							}
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Check that the category does not have itself as the parent.
+			
+			@keywords private
+
+			@param wcfModelObject o the model object that is to be validated.
+			@returns boolean: true if the parent categories are ok. False otherwise.
+		 -->
+		<method name="validParentCategories" args="o">
+			<![CDATA[
+			var categoryId = o.getPropertyValue("identifier");
+			var collectionList = o.getCollectionPrimaryObjects();
+			for (var i = 0; i < collectionList.length; i++) {
+				var po = collectionList[i];
+				if (po.objectType == "SalesCatalogGroup" || po.objectType == "InheritedSalesCatalogGroup") {
+					var identifier = po.getPropertyValue("identifier");
+					if (identifier == "" && categoryId == "") {
+						return false;
+					}
+					else {
+						return identifier != categoryId;
+					}
+				}
+			}
+			return true;
+			]]>
+		</method>
+				
+		<!--- @keywords private -->
+		<method name="resolveCatalogStoreIds" args="o, storeIds, newCatalogs, checkedObjects">
+			<![CDATA[
+			checkedObjects.push(o);
+			var collectionList = o.getCollectionPrimaryObjects();
+			for (var i = 0; i < collectionList.length; i++) {
+				var po = collectionList[i];
+				if (checkedObjects.indexOf(po) == -1) {
+					if (po.objectType == "SalesCatalog" || po.objectType == "InheritedSalesCatalog") {
+						var storeId = po.getPropertyValue("objectStoreId");
+						if (storeId == "") {
+							if (newCatalogs.indexOf(po) == -1) {
+								newCatalogs.push(po);
+							}
+						}
+						else {
+							if (storeIds.indexOf(storeId) == -1) {
+								storeIds.push(storeId);
+							}
+						}
+					}
+					else {
+						var storeId = po.getPropertyValue("owningCatalogStoreId");
+						if (storeId == "") {
+							this.resolveCatalogStoreIds(po, storeIds, newCatalogs, checkedObjects);
+						}
+						else {
+							if (storeIds.indexOf(storeId) == -1) {
+								storeIds.push(storeId);
+							}
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="resolveCatalogIdentifiers" args="o, catIdentifiers, newCatalogs, checkedObjects">
+			<![CDATA[
+			checkedObjects.push(o);
+			var collectionList = o.getCollectionPrimaryObjects();
+			for (var i = 0; i < collectionList.length; i++) {
+				var po = collectionList[i];
+				if (checkedObjects.indexOf(po) == -1) {
+					if (po.objectType == "SalesCatalog" || po.objectType == "InheritedSalesCatalog") {
+						var catIdentifier = po.getPropertyValue("identifier");
+						if (catIdentifier == "") {
+							if (newCatalogs.indexOf(po) == -1) {
+								newCatalogs.push(po);
+							}
+						}
+						else {
+							if (catIdentifiers.indexOf(catIdentifier) == -1) {
+								catIdentifiers.push(catIdentifier);
+							}
+						}
+					}
+					else {
+						var catIdentifier = po.getPropertyValue("owningCatalogIdentifier");
+						if (catIdentifier == "") {
+							this.resolveCatalogIdentifiers(po, catIdentifiers, newCatalogs, checkedObjects);
+						}
+						else {
+							if (catIdentifiers.indexOf(catIdentifier) == -1) {
+								catIdentifiers.push(catIdentifier);
+							}
+						}
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="getNormalizedCatalogEntryType" args="type">
+			<![CDATA[
+			if (!this["normalizedTypes"]) {
+				this.normalizedTypes = {
+					Product: "Product",
+					InheritedProduct: "Product",
+					Kit: "Kit",
+					InheritedKit: "Kit",
+					Bundle: "Bundle",
+					InheritedBundle: "Bundle",
+					ProductSKU: "SKU",
+					InheritedProductSKU: "SKU",
+					CatalogGroupSKU: "SKU",
+					InheritedCatalogGroupSKU: "SKU"
+				};
+			}
+			return this.normalizedTypes[type];
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns the data type of the row. Depending on where the attribute dictionary
+			attribute value is used (allowed or assigned) the path is different.
+		-->	
+		<method name="getAttributeDataType" args="o">
+			<![CDATA[
+			
+			
+				var dataType = null;
+				
+				// Parent is either attribute or reference
+				var object = o.getParentPrimaryObject("AttributeDictionaryAttributes");
+				if(object)
+				{
+					dataType = object.getPropertyValue("attrDataType");
+				} else 
+				{
+					// Allowed value attribute reference
+					object = o.parentObject.parentObject;
+					if(object)
+					{
+						dataType = object.getPropertyValue("attrDataType","AttributeDictionaryAttributes");
+					}
+					// Assigned value attribute reference
+					if (dataType == null || dataType == "")
+					{
+						object = o.parentObject;
+						if (object)
+						{
+							dataType = object.getPropertyValue("attrDataType");
+							// data type in Assigned value attribute reference is not populated. Need to get from referened attribute.  
+							if (dataType == null || dataType == "") 
+							{
+								var attr = object.getReferencedObject();
+								if (attr) 
+								{
+									dataType = attr.getPropertyValue("attrDataType");
+								}
+								
+							}
+						}						
+					}
+					
+				}
+				return dataType;
+			]]>
+		</method>
+		
+	</node>
+</library>

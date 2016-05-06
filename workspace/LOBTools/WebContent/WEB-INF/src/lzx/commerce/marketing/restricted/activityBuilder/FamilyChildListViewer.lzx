@@ -1,0 +1,86 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		@keywords private
+		A filter that will exclude the activities that have set activity id
+	-->
+	<class name="mktFamilyChildListViewerFilter" extends="wcfFilter">
+		<!---
+			The activity id
+		-->
+		<attribute name="activityId" type="string" value=""/>
+
+		<!---
+			Check if the specified message matches this filter.
+			@param wcfMessageObject o: the object to test
+			@return boolean: true if the object matches this filter
+		-->
+		<method name="matchesFilter" args="o">
+			<![CDATA[
+			return o.objectId != this.activityId;
+			]]>
+		</method>
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="mktFamilyChildListViewer" extends="wcfChildListViewer" listClass="mktChildActivityGrid"
+		objectTypes="RelatedWebActivity,RelatedInheritedWebActivity,RelatedSearchActivity,RelatedInheritedSearchActivity,RelatedDialogActivity,RelatedInheritedDialogActivity">
+		<!---
+			@keywords private
+		-->
+		<mktFamilyChildListViewerFilter name="baseFilter"/>
+		
+		<!---
+			@keywords private
+			This method sets the model object for this view to the specified object.
+			@param wcfModelObject newObject The new object
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			var familyObject = newObject;
+			if (newObject) {
+				this.baseFilter.activityId = newObject.objectId;
+				for (var i = 0; i < newObject.references.length; i++) {
+					var ref = newObject.references[i];
+					if (ref.objectDefinition.objectType == "RelatedWebActivity" || ref.objectDefinition.objectType == "RelatedInheritedWebActivity" ||
+						ref.objectDefinition.objectType == "RelatedSearchActivity" || ref.objectDefinition.objectType == "RelatedInheritedSearchActivity" ||
+						ref.objectDefinition.objectType == "RelatedDialogActivity" || ref.objectDefinition.objectType == "RelatedInheritedDialogActivity") {
+						familyObject = ref.parentObject;
+						break;
+					}
+				}
+				this.updateModelObjectDel.register(newObject, "onreferences");
+				newObject.loadReferences();
+			}
+			super.setModelObject(familyObject);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			super.createEditor(parentComponent);
+			this.editor.setAttribute("baseFilter", this.baseFilter);
+			]]>
+		</method>
+		
+	</class>
+
+</library>

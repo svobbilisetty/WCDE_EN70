@@ -1,0 +1,114 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2008 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+		<!---
+			<p>
+			Class definition for the advanced search class for Attachments.
+			This class extends from the wcfAdvancedSearchContent class and is in charge of building the 
+			user interface for gathering the input from the user to perform the advanced search.
+			</p>
+			
+			<p>
+			As required by extending the wcfAdvancedSearchContent, a setSearchOptions method is
+			implemented to set the searchOptions attribute of the super class. The searchOptions is an
+			object that contains the name/value pairs that will be sent to the search service.
+			</p>
+			
+			<p>
+			This search is used to find the following:
+			{@link attAttachmentPrimaryObjectDefinition Attachments}
+			</p>
+			
+			<p>			
+			Search parameters incuded in this class : 
+				<ul>
+					<li>attachmentIdentifier - Represents unique identifier of the attachment
+        			<li>attachmentName - Represents name of the attachment
+        			<li>path - Reprsents path of one file/URL that is assigned to the attachment.
+				</ul>
+			</p>									  
+			
+			<p>
+			If this class is extended to append some extra search parameters, you must also write the
+			setSearchOptions method that calls the super.setSearchOptions() and then appends the new
+			extra search parameters to the searchOptions attribute.
+			</p>
+		-->
+		<class name="attAttachmentsAdvancedSearchContent" extends="wcfAdvancedSearchContent">
+	
+			<simplelayout axis="y"/>
+				
+				<view name="instruction" width="100%" height="50">
+						<simplelayout axis="y"/>
+						<view name="filler1" height="15"/>
+						<!-- Instructional text to the user -->
+						<text text="${attachmentResources.searchInstructionalText.string}" width="100%" fontstyle="italic" multiline="true"/>
+						<view name="filler2" height="20"/>
+				</view>
+				
+				<view name="inputCodeAndName" width="410" height="50">
+				    <simplelayout axis="x"/>
+					<view name="attachmentIdentifier" width="56%" height="100%">
+						<simplelayout axis="y"/>
+						<view name="filler1" height="5"/>
+						<view name="section2_1_1" width="100%" height="30%">
+							<text text="${attachmentResources.attachment_identifier.string}" width="177"/>
+						</view>
+						<view name="section2_1_2" width="100%" height="70%">
+							<wcfInputText name="attachmentIdentifier" width="177"/>
+						</view>				
+					</view>
+					<view name="attachmentName" width="44%" height="100%">
+						<simplelayout axis="y"/>
+						<view name="filler1" height="5"/>
+						<view name="section2_2_1" width="100%" height="30%">
+							<text text="${attachmentResources.attachment_Name.string}" width="177"/>
+						</view>
+						<view name="section2_2_2" width="100%" height="70%">
+							<wcfInputText name="attachmentName" width="177" />
+						</view>				
+					</view>
+				</view>
+				
+				
+				<view name="inputPath" width="100%" height="50">
+					<simplelayout axis="y"/>
+					<view name="filler1" height="5"/>
+					<view name="section3_1" width="100%" height="30%">
+						<text text="${attachmentResources.searchInputPath.string}" width="177"/>
+					</view>
+					<view name="section3_2" width="100%" height="70%">
+						<wcfInputText name="path" width="177"/>
+					</view>
+								
+				</view>			
+			
+			<!---
+				Construct the search options for the all catalog entries advanced search.
+			-->
+			<method name="setSearchOptions">
+				<![CDATA[
+					super.setSearchOptions();
+					var newSearchOptions = {};
+					newSearchOptions.attachmentIdentifier  = this.inputCodeAndName.attachmentIdentifier.section2_1_2.attachmentIdentifier.getText();
+					newSearchOptions.attachmentName = this.inputCodeAndName.attachmentName.section2_2_2.attachmentName.getText();
+					newSearchOptions.path = this.inputPath.section3_2.path.getText();
+					this.searchOptions = newSearchOptions;
+				]]>
+			</method>
+		</class>		
+		
+
+</library>

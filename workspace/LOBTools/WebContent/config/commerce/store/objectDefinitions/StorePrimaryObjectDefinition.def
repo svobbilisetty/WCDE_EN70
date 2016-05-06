@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<StorePrimaryObjectDefinition 
+			isBaseDefinition="true"
+			package="sto" 
+			creatable="false" 
+			copyProtected="true"
+			definitionName="StoreFrontStore" 
+			displayNameProperty="storeIdentifier" 
+			headerIcon="directStoreHeaderIcon" icon="directStoreIcon" 
+			objectType="StoreFrontStore" 
+			idProperty="storeId" 
+			searchType="FindStoreEntries"
+			propertiesDefinitionName="stoStoreProperties"
+			helpLink="tasks/tstupdatestoreprofile.htm" >
+		
+		<!---
+  			Property Definition for the isCatalogOverrideEnabled property.
+  		-->
+		<PropertyDefinition propertyName="x_isCatalogOverrideEnabled" send="false"/>
+		
+		<RefreshService url="/cmc/RefreshStoreById">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</RefreshService>
+		
+		<UpdateService package="sto" url="/cmc/UpdateStore" sendMultiValues="true" sendAll="true">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+			<ServiceParam name="supportedCurrencies" objectPath="StoreCurrency" propertyName="currency" optional="true"/>
+			<ServiceParam name="supportedLanguages" objectPath="StoreLanguage" propertyName="language" optional="true"/>
+		</UpdateService>
+		
+		<GetChildrenService objectTypes="StoreDescription" url="/cmc/GetStoreChildren-LanguageDescriptions">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreContactInformation" url="/cmc/GetStoreChildren-ContactInfo">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreLocationInformation" url="/cmc/GetStoreChildren-LocationInfo">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreFlow" url="/cmc/GetStoreChildren-Flow">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreFileRef" url="/cmc/GetStoreChildren-FileRefs">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreCurrency" url="/cmc/GetStoreChildren-Currencies">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreLanguage" url="/cmc/GetStoreChildren-Languages">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreStaticPages" url="/cmc/GetStoreChildren-StaticPages">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<GetChildrenService objectTypes="StoreSEO" url="/cmc/GetStoreChildren-SEO">
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</GetChildrenService>
+		
+		<!--- Opens the store -->
+		<CustomService url="/cmc/OpenStore" displayName="${stoStoreResources.stateOpenAction}" toolbarIcon="openStoreButton">
+			<EnablementAndCondition conditionId="openCondition">
+				<EnablementCondition conditionId="closedState" enablementValue="closed" propertyName="state"/>
+				<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore"/>
+			</EnablementAndCondition>
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</CustomService>
+		
+		<!--- Closes the store -->
+		<CustomService url="/cmc/CloseStore" displayName="${stoStoreResources.stateClosedAction}" toolbarIcon="closeStoreButton">
+			<EnablementAndCondition conditionId="closeCondition">
+				<EnablementCondition conditionId="openState" enablementValue="open" propertyName="state"/>
+				<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore"/>
+			</EnablementAndCondition>
+			<ServiceParam name="storeId" propertyName="storeId"/>
+		</CustomService>
+		
+		<PropertyDefinition propertyName="state" displayName="${stoStoreResources.stateLabel}">
+			<PropertyValue value="open" displayName="${stoStoreResources.stateOpen}" icon="storeOpenIcon"/>
+			<PropertyValue value="closed" displayName="${stoStoreResources.stateClosed}" icon="storeClosedIcon"/>
+			<PropertyValue value="suspended" displayName="${stoStoreResources.stateSuspended}" icon="storeSuspendedIcon"/>
+		</PropertyDefinition>
+		
+		<ChildObjectDefinition objectType="StoreDescription" idProperty="languageId" languageSensitive="true" releaseWhenClosed="false">
+			<UpdateService url="/cmc/UpdateStoreChildren-LanguageDescription">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			</UpdateService>
+			<CreateService url="/cmc/CreateStoreChildren-LanguageDescription">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			</CreateService>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition objectType="StoreContactInformation" idProperty="languageId" languageSensitive="true" releaseWhenClosed="false">
+			<CountriesPropertyDefinition propertyName="country" displayName="${stoStoreResources.countryLabel}"/>
+			<StateProvincesPropertyDefinition propertyName="stateOrProvinceName" displayName="${stoStoreResources.stateLabel}">
+				<PropertyValue displayName="${stoStoreResources.noStateProvince}" value="" isDefault="true"/>
+			</StateProvincesPropertyDefinition>
+			<UpdateService url="/cmc/UpdateStoreChildren-ContactInfo" sendMultiValues="true">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+				<ServiceParam name="uniqueId" propertyName="contactInfoId"/>
+			</UpdateService>
+			<CreateService url="/cmc/CreateStoreChildren-ContactInfo" sendMultiValues="true">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			</CreateService>
+			<DeleteService url="/cmc/DeleteStoreChildren-ContactInfo">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			</DeleteService>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition objectType="StoreLocationInformation" idProperty="languageId" languageSensitive="true" releaseWhenClosed="false">
+			<CountriesPropertyDefinition propertyName="country" displayName="${stoStoreResources.countryLabel}"/>
+			<StateProvincesPropertyDefinition propertyName="stateOrProvinceName" displayName="${stoStoreResources.stateLabel}">
+				<PropertyValue displayName="${stoStoreResources.noStateProvince}" value="" isDefault="true"/>
+			</StateProvincesPropertyDefinition>
+			<UpdateService url="/cmc/UpdateStoreChildren-LocationInfo" sendMultiValues="true">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+				<ServiceParam name="uniqueId" propertyName="contactInfoId"/>
+			</UpdateService>
+			<CreateService url="/cmc/CreateStoreChildren-LocationInfo" sendMultiValues="true">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			</CreateService>
+			<DeleteService url="/cmc/DeleteStoreChildren-LocationInfo">
+				<ServiceParam name="languageId" propertyName="languageId"/>
+				<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			</DeleteService>
+		</ChildObjectDefinition>
+		
+		<!-- Store Currency object definitions and validators -->
+		<UniqueValueForChildObjectPropertyValidator validatorId="stoUniqueValidator" objectPath="StoreCurrency" propertyName="currency" errorMessage="${stoStoreResources.duplicateCurrencies}"/>
+		<RequiredSpecificValueForChildObjectPropertyValidator validatorId="stoSpecificValueForCurrencyValidator" errorMessage="${stoStoreResources.defaultCurrency}"
+			objectPath="StoreCurrency" propertyName="default" propertyValues="true">
+			<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore"/>
+		</RequiredSpecificValueForChildObjectPropertyValidator>
+		<RequiredChildObjectValidator validatorId="stoCurrencyExistsValidator" errorMessage="${stoStoreResources.defaultCurrency}" objectPath="StoreCurrency">
+			<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore"/>
+		</RequiredChildObjectValidator>
+		<StoreDefaultPropertyValidator package="sto" validatorId="stoDefaultValueForCurrencyValidator"  
+			objectPath="StoreCurrency" propertyName="default" propertyValues="true" updatedPropertyName="defaultCurrency"/>
+		
+		<ChildObjectDefinition objectType="StoreCurrency" idProperty="currency">
+			<CurrencyPropertyDefinition propertyName="currency" forceParentValidation="true"/>
+			<PropertyDefinition propertyName="default" forceParentValidation="true" send="false"/>
+			<StorePropertiesValidator package="sto" validatorId="stoPropertiesCurrencyValidator" 
+				objectPath="StoreCurrency" defaultPropertyName="default" updatedPropertyName="defaultCurrency" valuePropertyName="currency"/>
+			<EnablementOrCondition>
+				<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore"/>
+				<EnablementCondition conditionId="catAssetStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="CatAssetStore"/>
+			</EnablementOrCondition>
+		</ChildObjectDefinition>
+		
+		<!-- Store Language object definitions and validators -->
+		<UniqueValueForChildObjectPropertyValidator validatorId="stoUniqueValidator" objectPath="StoreLanguage" propertyName="language" errorMessage="${stoStoreResources.duplicateLanguages}"/>
+		<RequiredSpecificValueForChildObjectPropertyValidator validatorId="stoSpecificValueForLanguageValidator" errorMessage="${stoStoreResources.defaultLanguage}" 
+			objectPath="StoreLanguage" propertyName="default" propertyValues="true">
+			<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore"/>
+		</RequiredSpecificValueForChildObjectPropertyValidator>
+		<RequiredChildObjectValidator validatorId="stoLanguageExistsValidator" errorMessage="${stoStoreResources.defaultLanguage}" objectPath="StoreLanguage">
+			<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore">
+				<EnablementCondition conditionId="assetStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="AssetStore"/>
+			</EnablementOrCondition>
+		</RequiredChildObjectValidator>
+		<StoreDefaultPropertyValidator package="sto" validatorId="stoDefaultValueForLanguageValidator"  
+			objectPath="StoreLanguage" propertyName="default" propertyValues="true" updatedPropertyName="defaultLanguage"/>
+
+		<ChildObjectDefinition objectType="StoreLanguage" idProperty="language">
+			<LanguagePropertyDefinition package="sto" propertyName="language" useLanguageId="true" forceParentValidation="true"/>
+			<PropertyDefinition propertyName="default" forceParentValidation="true" send="false"/>
+			<StorePropertiesValidator package="sto" validatorId="stoPropertiesLanguageValidator" 
+				objectPath="StoreLanguage" defaultPropertyName="default" updatedPropertyName="defaultLanguage" valuePropertyName="language"/>
+			<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore">
+				<EnablementCondition conditionId="assetStore" checkObjectDefinition="true" propertyName="objectType" enablementValue="AssetStore"/>
+			</EnablementOrCondition>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition objectType="StoreFlow" objectGroups="ChildStoreFlowGroup" idProperty="uniqueId">
+			<UpdateService url="/cmc/SaveChangeFlow">
+				<ServiceParam name="storeId" parentProperty="true" propertyName="storeId"/>
+				<ServiceParam name="emarketingSpotId" propertyName="emarketingSpotId"/>
+				<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+				<ServiceParam name="contentId" propertyName="enabled" optional="true"/>
+			</UpdateService>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition objectType="StoreFileRef" objectGroups="ChildStoreFlowGroup" idProperty="uniqueId">
+			<UpdateService url="/cmc/SaveChangeFlow">
+				<ServiceParam name="storeId" parentProperty="true" propertyName="storeId"/>
+				<ServiceParam name="emarketingSpotId" propertyName="emarketingSpotId"/>
+				<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+				<ServiceParam name="contentId" propertyName="url" optional="true"/>
+			</UpdateService>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition baseDefinitionName="stoStoreStaticPages"/>
+		<ChildObjectDefinition objectType="StoreSEO" singleInstance="true"/>
+		
+		<LaunchStoreCustomService package="sto">
+			 <EnablementAndCondition conditionId="launchStoreCondition">
+					<EnablementOrCondition baseDefinitionName="stoStorefrontStoreEnablementCondition" conditionId="storefrontStore"/>
+					<!--
+						The following enablement condition ensures that the Launch Store action does not appear Extended Sites Hub (HCP) stores,
+						because by default, these stores do not have a storefront associated with them. Remove the enablement
+						condition if your extended site hub does have a storefront to allow your business users to launch the store.
+					-->
+					<EnablementCondition conditionId="eSitesHubCondition" propertyName="storeCategory" enablementValue="HCP" negate="true"/>
+				</EnablementAndCondition>
+		 </LaunchStoreCustomService>
+	</StorePrimaryObjectDefinition>
+	
+	<ChildObjectDefinition definitionName="stoStoreStaticPages" objectType="StoreStaticPages" headerIcon="webpageHeaderIcon" icon="webpageGridIcon" idProperty="staticPageUsage">
+		<ChildObjectDefinition baseDefinitionName="stoStoreStaticPageDetails"/>
+		<ChildObjectDefinition baseDefinitionName="stoInheritedStoreStaticPageDetails"/>
+	</ChildObjectDefinition>
+		
+	<ChildObjectDefinition baseDefinitionName="stoBaseStoreStaticPageDetails" definitionName="stoStoreStaticPageDetails" objectType="StoreStaticPageDetails">
+		<TrueEnablementCondition/>
+	</ChildObjectDefinition>
+	
+	<ChildObjectDefinition baseDefinitionName="stoBaseStoreStaticPageDetails" definitionName="stoInheritedStoreStaticPageDetails" objectType="InheritedStoreStaticPageDetails">
+		<EnablementCondition checkHasAccessRight="true" conditionId="accessRightCondition" enablementValue="true"/>
+	</ChildObjectDefinition>
+	
+	<ChildObjectDefinition definitionName="stoBaseStoreStaticPageDetails" isBaseDefinition="true" idProperty="languageId" languageSensitive="true" releaseWhenClosed="false">
+		<CreateService url="/cmc/CreateStoreChildren-StaticPages">
+			<ServiceParam name="objectStoreId" parameterName="objectStoreId" propertyName="storeId" parentProperty="true">
+				<EnablementCondition checkObjectDefinition="true" conditionId="createStaticPageCondition" enablementValue="StoreStaticPageDetails" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="objectStoreIdForInherited" parameterName="objectStoreId" propertyName="objectStoreId" parentProperty="true" resolvePrimaryParent="false">
+				<EnablementCondition checkObjectDefinition="true" conditionId="createInheritedStaticPageCondition" enablementValue="InheritedStoreStaticPageDetails" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="languageId" propertyName="languageId"/>
+			<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			<ServiceParam name="staticPageUsage" objectPath="StoreStaticPages" propertyName="staticPageUsage" parentProperty="true"/>
+		</CreateService>
+		
+		<UpdateService url="/cmc/UpdateStoreChildren-StaticPages">
+			<ServiceParam name="objectStoreId" parameterName="objectStoreId" propertyName="objectStoreId"/>
+			<ServiceParam name="languageId" propertyName="languageId"/>
+			<ServiceParam name="storeId" propertyName="storeId" parentProperty="true"/>
+			<ServiceParam name="staticPageUsage" objectPath="StoreStaticPages" propertyName="staticPageUsage" parentProperty="true"/>
+		</UpdateService>
+		
+        <!--- This property definition represents the URL keyword for the static page. -->
+        <PropertyDefinition displayName="${stoStoreResources.seoStaticPageUrlLabel}" maximumSize="254" propertyName="staticPageUrlkeyword" type="string">
+         	<PropertyStringValidator validatorId="seoStaticPageUrlStringValidator" invalidCharacters="&amp;?=#/_ "/>
+        </PropertyDefinition>
+	</ChildObjectDefinition>
+		
+	<StorePrimaryObjectDefinition definitionName="DirectStore" 
+		package="sto" 
+		baseType="StoreFrontStore" 
+		objectType="DirectStore" 
+		displayName="${stoStoreResources.directStore}" 
+		headerIcon="directStoreHeaderIcon" 
+		icon="directStoreIcon"/>
+		
+	<StorePrimaryObjectDefinition definitionName="AssetStore"
+		package="sto"  
+		baseType="StoreFrontStore"	
+		objectType="AssetStore" 
+		displayName="${stoStoreResources.assetStore}" 
+		headerIcon="assetStoreHeaderIcon" 
+		icon="assetStoreIcon"/>
+		
+	<StorePrimaryObjectDefinition definitionName="EsiteStore"
+		package="sto"  
+		baseType="StoreFrontStore" 
+		objectType="EsiteStore" 
+		displayName="${stoStoreResources.eSiteStore}" 
+		headerIcon="eSiteStoreHeaderIcon" 
+		icon="eSiteStoreIcon"/>
+		
+	<StorePrimaryObjectDefinition definitionName="HubStore"
+		package="sto"  
+		baseType="StoreFrontStore" 
+		objectType="HubStore" 
+		displayName="${stoStoreResources.hubStore}" 
+		headerIcon="hubStoreHeaderIcon" 
+		icon="hubStoreIcon"/>
+		
+	<StorePrimaryObjectDefinition definitionName="CatAssetStore" 
+		package="sto" 
+		baseType="StoreFrontStore" 
+		objectType="CatAssetStore" 
+		displayName="${stoStoreResources.catAssetStore}" 
+		headerIcon="catAssetStoreHeaderIcon" 
+		icon="catAssetStoreIcon"/>
+		
+	<StorePrimaryObjectDefinition definitionName="AuxiliaryStore" 
+		package="sto" 
+		baseType="StoreFrontStore" 
+		objectType="AuxiliaryStore" 
+		displayName="${stoStoreResources.auxiliaryStore}" 
+		headerIcon="auxStoreHeaderIcon" 
+		icon="auxStoreIcon"/>
+	
+</Definitions>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://struts.apache.org/dtds/struts-config_1_2.dtd">
+<struts-config>
+
+	<action-mappings>
+		
+		<!-- Content Versioning -->
+		<!-- ========= -->
+		<action path="/GetVersionedCatalogGroup" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogGroup.jsp" />
+		<action path="/GetVersionedSalesCatalogGroup" include="/jsp/commerce/catalog/restricted/GetVersionedSalesCatalogGroup.jsp" />		
+		<action path="/GetVersionedSalesCatalog" include="/jsp/commerce/catalog/restricted/GetVersionedSalesCatalog.jsp" />
+		<action path="/GetVersionedProduct" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedProductSKU" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedCatalogGroupSKU" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedKit" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedBundle" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+
+		<action path="/GetVersionedInheritedProduct" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedInheritedProductSKU" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedInheritedCatalogGroupSKU" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedInheritedKit" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />
+		<action path="/GetVersionedInheritedBundle" include="/jsp/commerce/catalog/restricted/GetVersionedCatalogEntry.jsp" />		
+
+		
+		<action path="/GetContentVersions" forward="/jsp/commerce/foundation/restricted/GetContentVersionList.jsp" />
+
+		<action path="/CreateContentVersion" parameter="ContentVersion"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters"
+				value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory"
+				value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary"
+				value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod"
+				value="processContentVersion" />
+			<set-property property="actionCode" value="Create"/>
+			<set-property property="var" value="contentVersions" />
+			<forward name="success" path="/jsp/commerce/foundation/restricted/RespondCreateContentVersion.jsp" />
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp" />
+		</action>
+		
+		<action path="/RestoreContentVersion" parameter="ContentVersion"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processContentVersion" />
+			<set-property property="actionCode" value="Restore"/>
+			<set-property property="var" value="contentVersions" />
+			<forward name="success" path="/jsp/commerce/foundation/restricted/RespondRestoreContentVersion.jsp" />
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp" />
+		</action>
+
+		<action path="/DeleteContentVersion" parameter="ContentVersion"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Process" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="processContentVersion" />
+			<set-property property="actionCode" value="Delete"/>
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp" />
+		</action>
+	
+		<action path="/UpdateContentVersion" parameter="ContentVersion"
+			type="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentAction"
+			className="com.ibm.commerce.foundation.client.facade.bod.servlet.struts.BusinessObjectDocumentActionMapping">
+			<set-property property="contextParameters" value="storeId" />
+			<set-property property="verb" value="Change" />
+			<set-property property="documentRootFactory" value="com.ibm.commerce.content.facade.datatypes.ContentFactory" />
+			<set-property property="clientLibrary" value="com.ibm.commerce.content.facade.client.ContentFacadeClient" />
+			<set-property property="clientLibraryMethod" value="changeContentVersion" />
+			<set-property property="actionCode" value="Change"/>
+			<forward name="failure" path="/jsp/commerce/foundation/restricted/Errors.jsp" />
+		</action>
+
+	</action-mappings> 
+
+</struts-config>

@@ -1,0 +1,66 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Client-side action that copies the selected objects into new objects converting the types
+		into the specified {@link mktCreateNewObjectTypeFromObjectClientAction#targetObjectType target object type}.
+	-->
+	<class name="mktCreateNewObjectTypeFromObjectClientAction" extends="wcfClientAction">
+		<!---
+			The target object type to copy and convert the selected objects into. The target object definition of the given
+			type must be listed as in the {@link wcfObjectDefinition#compatibleObjectTypes} field of the selected objects' definition.
+		-->
+		<attribute name="targetObjectType" type="string" value=""/>
+		
+		<!---
+			@keywords private
+			Returns true if the context is not read only.
+			
+			@param wcfModelObject o: the object on which you want to perform this client action
+			@return boolean: true if the client action is enabled
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var enabled = super.isEnabled(o);
+			if (enabled && o.model.oEditor.respectWorkspaceContext) {
+				var readOnlyModeContextValue = wcfContextUtil.findContextValue(null, "readOnlyMode");				
+				enabled = (readOnlyModeContextValue.value != "true");
+			}
+			if (enabled && o.isContextReadOnly()) {
+				enabled = false;
+			}
+			return enabled;
+			]]>
+		</method>
+		
+		<!---
+			Create new objects in the target object type using the selected objects.
+			
+			@param wcfModelObject[] objects The array of selected model objects.
+		-->				
+		<method name="performAction" args="objects">
+			<![CDATA[
+			if(this.targetObjectType != "" && objects) {
+				var targetObjDef = null;
+				for (var i = 0; i < objects.length; i++) {
+					if(i == 0) {
+						targetObjDef = objects[i].model.getObjectDefinition(null, this.targetObjectType);
+					}
+					wcfCopyActionHandler.triggerAction(objects[i], null, targetObjDef, i == 0);
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

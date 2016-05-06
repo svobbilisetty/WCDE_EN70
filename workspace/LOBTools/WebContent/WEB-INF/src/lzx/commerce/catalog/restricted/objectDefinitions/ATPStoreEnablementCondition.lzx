@@ -1,0 +1,78 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+
+	<!---
+		<P>
+		This class is an enablement condition will returns "true" if the store currently being worked on
+		is using an ATP inventory system. It will return false otherwise.
+	    </P>
+	    
+	    <P>
+	    If the attribute "negate" is set to "true", the result will be negated.
+		</P>	
+	-->
+	<class name="catIsATPStoreEnablementCondition" extends="wcfEnablementCondition">
+	
+		<!---  An unique identifier string for this condition within a node. -->
+		<attribute name="conditionId" type="string" value="catIsATPStoreEnablementCondition"/>
+			
+		<!---
+			If this is set to "true", the result will be negated.
+		-->
+		<attribute name="negate" type="boolean" value="false"/>
+			
+		<!--- 
+			<P>
+			This method will returns "true" if the store currently being worked on
+			is using an ATP inventory system. It will return false otherwise.
+		    </P>
+		 
+		 	<P>
+		    If the attribute "negate" is set to "true", the result will be negated.
+			</P>	
+        	
+			@param wcfModelObject o the model object that is to be enabled/disabled.
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			
+			var storeConfig = wcfContextUtil.findStoreConfig(o != null ? o : this);
+			var inventorySystem = null;
+			
+			if(storeConfig && storeConfig.inventorySystem) {
+				if(storeConfig.inventorySystem.inventorySystem) {
+					inventorySystem = storeConfig.inventorySystem.inventorySystem;
+				}
+			}
+			
+			var result = false;
+
+			if(inventorySystem && inventorySystem=="ATP") {
+				result = true;
+			} 
+			
+			// negate support
+			if(this.negate) {
+				result = !result;
+			}
+			
+			return result;
+			
+			]]>
+		</method>
+	</class>
+	
+
+</library>

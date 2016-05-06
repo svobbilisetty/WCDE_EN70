@@ -1,0 +1,144 @@
+<!--
+ *===================================================================
+ * Licensed Materials - Property of IBM
+ *
+ * WebSphere Commerce
+ *
+ * (c) Copyright International Business Machines Corporation. 2007
+ *     All rights reserved.
+ *
+ * US Government Users Restricted Rights - Use, duplication or
+ * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+ *===================================================================
+-->
+<library>
+	<!---
+		@keywords private
+		
+		A multimap data structure that allows a key to be mapped to more than one value. Each key in this
+		multimap is a string. If a given key is not of type string, it will be converted to string by 
+		JavaScript function String(). 
+	 -->
+	<class name="wcfMultiMap" extends="node">
+		<!--
+			@keywords private 
+			The internal store of all the key-value pairs. 
+		-->
+		<attribute name="map" value="${{}}"/>
+		
+		<!-- 
+			Puts the key-value pair into this map. If the value exists in the multimap for the given key, it will not 
+			be added again. 
+			
+			@param String key the key to the value that is to be stored. 
+			@param Object value the value to which this key is mapped to. Only one copy of the value will be stored. 
+			@return this multimap. This allows fluent function chains. 
+		 -->
+		<method name="put" args="key, value"><![CDATA[
+			var values =  this.getOrCreateValues(key); 
+			for(var i = 0; i < values.length; ++i){
+				if(values[i] === value){
+					return this; 
+				}
+			}
+			
+			values.push(value); 
+			this.map[key] = values; 
+			
+			return this; 
+			]]>
+		</method>
+		
+		<!-- 
+			@keywords private
+			
+			Returns an array of values that are mapped to the given key. If there is no such array, 
+			an empty one will be returned. 
+		 -->
+		<method name="getOrCreateValues" args="key"><![CDATA[
+			var values = this.map[key]; 
+			if(values){
+				return values; 
+			}
+			
+			return []; 
+			]]>
+		</method>
+		
+		<!--  
+			Deletes the key and the given value. The value is optional. If it is not given, all values 
+			corresponding to the given key will be deleted. 
+			
+			@param String key A key in the map
+			@param Object value A value that is mapped to the key
+			@return wcfMultiMap This map itself will be returned. This allows fluent function chaining
+			
+		 -->
+		<method name="remove" args="key, value"><![CDATA[
+			if(typeof(value) == 'undefined' || value == null){
+				delete this.map[key]; 
+			}else{
+				this.map[key] = wcfLangUtil.filter(this.getOrCreateValues(key), function(v){
+								return v !== value; 
+							}, this); 
+			}
+			
+			return this; 
+			]]>
+		</method>
+		
+		<!-- 
+			Returns all the values of a given key. 
+			@param String key the key used to get its values
+			@return the values mapped to the given key. 
+		 -->
+		 <method name="get" args="key"><![CDATA[
+		 	if(typeof(key) == 'undefined' || key == null){
+		 		return []; 
+		 	}
+		 	var result = this.map[key]; 
+		 	if(typeof(result) == 'undefined' || result == null){
+		 		return []; 
+		 	}
+		 	
+		 	return result; 
+		 	]]>
+		 </method>
+		 
+		 <!-- 
+		 	Returns a list of key-value pairs of a given key. Each pair is a two-element array, where
+		 	the first element is key, and the second is a value. 
+		 -->
+		 <method name="getEntries" args="key"><![CDATA[
+		 	return  wcfLangUtil.map(this.get(key), function(v){
+		 				return [key, v]; 
+		 			}, this); 
+		 	]]>
+		 </method>
+		 
+		 <!-- 
+		 	Returns true if a given key is in the map. False otherwise. 
+		 	@param String key The key to be looked up in the map
+		  -->
+		 <method name="hasKey" args="key"><![CDATA[
+		 	if(key == null || typeof(key) == 'undefined'){
+		 		return false; 
+		 	}
+		 	var values = this.get(key); 
+		 	return values && values.length > 0; 
+		 	]]>
+		 </method>
+		 
+		 <!-- 
+		 	Returns true if the map contains nothing. False otherwise. 
+		  -->
+		 <method name="isEmpty"><![CDATA[
+		 	for(var key in this.map){
+		 		return false; 
+		 	}
+		 	
+		 	return true; 
+		 	]]>
+		 </method>
+	</class>
+</library>

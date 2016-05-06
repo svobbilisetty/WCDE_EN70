@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Create Sales Order BOD Mapping for Websphere Commerce Telesales -->
+        <TemplateDocument>
+                <DocumentType version="8.1">CreateSalesOrder</DocumentType>
+                <StartElement>CreateSalesOrder</StartElement>
+                <TemplateTagName>CreateSalesOrder81</TemplateTagName>
+                <CommandMapping>                                                     
+                        <Command CommandName="com.ibm.commerce.tools.optools.order.commands.CSRGuestOrderCreateCmd"
+					                Condition='fromObject="GuestOrder"'>
+            				<Constant Field="URL">NoURL</Constant>
+            				<Constant Field="ReURL">NoReURL</Constant>
+            				<Constant Field="disableExtendedChecking">true</Constant>
+				            <Constant Field="createGuestOrder">true</Constant>
+                            <Constant Field="outOrderName">OutOrderId</Constant>
+			            </Command>
+                        <Command CommandName="com.ibm.commerce.quote.commands.QuoteGenerateOrderCmd" Condition='fromObject="Quote"'>
+				<Constant Field="sensitiveInfoCopy">Y</Constant>
+                                <Constant Field="URL">NoURL</Constant>
+                                <Constant Field="outOrderName">OutOrderId</Constant>
+                        </Command>
+                         <Command CommandName="com.ibm.commerce.order.commands.OrderCreateCmd" Condition='fromObject=""'>
+                                <Constant Field="URL">NoURL</Constant>
+                                <Constant Field="ReURL">NoReURL</Constant>
+                                <Constant Field="outOrderName">OutOrderId</Constant>
+                        </Command> 
+                                  
+                </CommandMapping>
+        </TemplateDocument>
+        <TemplateTag name="CreateSalesOrder81">
+                <!-- Command Parameters -->
+                <Tag XPath="DataArea/Create/CreateCriteria/CreateExpression@fromObject" Field="fromObject" FieldInfo="COMMAND"/>
+                <Tag XPath="DataArea/Create/CreateCriteria/CreateExpression" Field="orderId"/>
+                <Tag XPath="DataArea/SalesOrder/Header/Parties/CustomerParty/PartyId/Id" Field="customerId"/>
+                <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/LanguageId" Field="langId"/>
+                <Tag XPath="DataArea/SalesOrder/Header/CommerceArea/StoreId" Field="storeId"/>
+                <Tag XPath="DataArea/SalesOrder/Header/Description" Field="orderDesc"/>
+                <Tag XPath="DataArea/SalesOrder/Header/oa:DocumentIds/DocumentId/Id" Field="orderId"/>
+                <Tag XPath="DataArea/SalesOrder/Header/Note" Field="orderComment"/>
+                <Tag XPath="DataArea/SalesOrder/UserData/UserDataField" XPathType="USERDATA"/>
+                <Tag XPath="DataArea/SalesOrder/Header/BusinessChannel/BusinessChannelId" Field="businessChannelId"/>
+                
+                <Tag XPath="DataArea/SalesOrder/Header/GuestOrder@createGuestUser" Field='createGuestUser' />
+        </TemplateTag>
+

@@ -1,0 +1,162 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+ 
+	<!---
+		@keywords private
+		
+		This class is the lower properties pane of Flow Builder that displays the properties views of
+		flow elements.
+	-->
+	<class name="wcfPropertiesPane" extends="wcfActiveViewContainer" maximizable="false" closable="false">
+		<!--- @keywords private -->
+		<attribute name="o" value="null" setter="this.setModelObject(o);"/>
+		<!--- @keywords private -->
+		<attribute name="propertiesView" value="null" />
+		<!--- @keywords private -->
+		<attribute name="generalPropertiesView" value="${null}"/>
+		
+		<handler name="oninit">
+			<![CDATA[
+				this.setAttribute("bordersize", 0);
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateViewTitleDel.unregisterAll();
+			delete this.updateViewTitleDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Setter for the {@link wcfPropertiesPane#o model object}. This registers the listener on
+			the new object to hide the properties view if the object is destroyed by the model.
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				if (this["releaseModelObjectDel"]) {
+					this.releaseModelObjectDel.unregisterAll();
+				}
+				else {
+					this.releaseModelObjectDel = new lz.Delegate(this, "hideProperties");
+				}
+				
+				this.o = newObject;
+				
+				if(this.o) {
+					this.releaseModelObjectDel.register(this.o, "beingDestroyed");
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			
+			Gets the properties view for the {@link wcfPropertiesPane#o current object}.
+			@param string generalPropertiesClass Name of the properties class to use. If <code>null</code> or missing,
+				{@link wcfObjectDefinition#getPropertiesView} is called to resolve the appropriate properties class.
+			@returns wcfFlowElementProperties The instantiated properties view class with {@link wcfFlowElementProperties#headerIconResource}
+				and {@link wcfFlowElementProperties#title} attributes set based on the current object.
+		-->
+		<method name="getPropertiesView" args="generalPropertiesClass">
+			<![CDATA[
+			var v = null;
+			if (this.o) {
+				if (generalPropertiesClass) {
+					if (this.generalPropertiesView == null) {
+						if (lz[generalPropertiesClass]) {
+							this.generalPropertiesView = new lz[generalPropertiesClass](this, {
+								o: this.o,
+								inDetails: false
+							});
+						}
+						else {
+							this.generalPropertiesView = wcfDefinitionLoader.getDefinition(generalPropertiesClass, this, {
+								o: this.o,
+								inDetails: false
+							});
+						}
+					}
+					
+					v = this.generalPropertiesView;
+					v.setAttribute("o", this.o);
+					v.setAttribute("headerIconResource", "wcfFlowBuilderStartHeader");
+				}
+				else {
+					v = this.o.objectDefinition.getPropertiesView(this, this.o, false);
+					v.setAttribute("headerIconResource", this.o.objectDefinition.headerIcon);
+				}
+				v.setAttribute("title", this.o.objectDefinition.displayName);
+				// make sure we update ourselves when the language changes
+				if (this["updateViewTitleDel"]) {
+					this.updateViewTitleDel.unregisterAll();
+				}
+				else {
+					this.updateViewTitleDel = new lz.Delegate(this, "updateViewTitle");
+				}
+  				this.updateViewTitleDel.register(this.o.objectDefinition, "ondisplayName");
+			}
+			return v;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateViewTitle" args="e=null">
+			<![CDATA[
+  			if (this.o && this.o["objectDefinition"]) {
+  				this.propertiesView.setAttribute("title", this.o.objectDefinition.displayName);
+  			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Hides the properties view and sets {@link wcfPropertiesPane#o} to <code>null</code>.
+		-->
+		<method name="hideProperties" args="e=null">
+			<![CDATA[
+				if (this.propertiesView) {
+					this.setAttribute("visible", false);
+					this.setAttribute("o", null);
+					this.propertiesView.setAttribute("o", this.o);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Shows the properties view for the given object.
+			@param pO wcfModelObject The model object to load
+			@param generalPropertiesClass wcfFlowElementProperties Name of the properties class to load. If <code>null</code> or missing,
+				{@link wcfPropertiesPane#getPropertiesView} is used to locate the right class.
+		-->
+		<method name="loadProperties" args="pO, generalPropertiesClass">
+			if (pO == null) {
+				return;
+			}
+
+			this.hideProperties();
+			this.setAttribute("o", pO);
+			this.propertiesView = this.getPropertiesView(generalPropertiesClass);
+			this.setActiveView(this.propertiesView);
+			this.setAttribute("visible", true);
+		</method>
+	</class>
+</library>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<FlowElementObjectDefinition definitionName="prcCatalogConditionElementObject" displayName="${prcPriceResources.catalogCondition_DisplayName}" elemTemplateType="Condition" flowIcon="catalogConditionElementIcon" headerIcon="catalogConditionElementHeaderIcon" helpLink="concepts/cpiconcat.htm" objectType="catalogCondition" package="prc" paletteIcon="catalogConditionPaletteIcon" propertiesDefinitionName="prcCatalogConditionElementProperties" summaryClass="prcCatalogConditionElementSummary">
+		
+		<CreateService baseDefinitionName="prcFlowElementCreateService">
+			<ServiceParam name="PROPERTY_catalogEntryIdList" objectPath="ChildCatentry/CatalogEntry" propertyName="catentryId" optional="true">
+				<EnablementCondition conditionId="scopeIsCatalogEntries" enablementValue="catalogEntries" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_categoryIdList" objectPath="ChildCatalogGroup/CatalogGroupAlias" propertyName="catgroupId" optional="true">
+				<EnablementCondition conditionId="scopeIsCategories" enablementValue="categories" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_catalogFilterId" objectPath="ChildCatalogFilter/CatalogFilterGroup" propertyName="catalogFilterId" optional="true">
+				<EnablementCondition conditionId="scopeIsIncludedInCatalogFilters" enablementValue="catalogFilter" propertyName="scope"/>
+			</ServiceParam>
+		</CreateService>
+		<UpdateService baseDefinitionName="prcFlowElementUpdateService">
+			<ServiceParam name="PROPERTY_catalogEntryIdList" objectPath="ChildCatentry/CatalogEntry" propertyName="catentryId" optional="true">
+				<EnablementCondition conditionId="scopeIsCatalogEntries" enablementValue="catalogEntries" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_categoryIdList" objectPath="ChildCatalogGroup/CatalogGroupAlias" propertyName="catgroupId" optional="true">
+				<EnablementCondition conditionId="scopeIsCategories" enablementValue="categories" propertyName="scope"/>
+			</ServiceParam>
+			<ServiceParam name="PROPERTY_catalogFilterId" objectPath="ChildCatalogFilter/CatalogFilterGroup" propertyName="catalogFilterId" optional="true">
+				<EnablementCondition conditionId="scopeIsIncludedInCatalogFilters" enablementValue="catalogFilter" propertyName="scope"/>
+			</ServiceParam>
+		</UpdateService>
+	
+		<PropertyDefinition propertyName="scope" required="true">
+			<PropertyValue displayName="${prcPriceResources.scopeCatalogEntries}" value="catalogEntries"/>
+			<PropertyValue displayName="${prcPriceResources.scopeCategories}" value="categories"/>
+			<PropertyValue displayName="${prcPriceResources.scopeCatalogFilter}" value="catalogFilter">
+				<EnablementCondition contextName="searchEnabled" enablementValue="true" conditionId="searchEnabledContextValueCondition"/>
+			</PropertyValue>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="specifiedInTable">
+			<EnablementCondition conditionId="scopeIsCatalogEntries" enablementValue="catalogEntries" propertyName="scope"/>
+			<PropertyValue displayName="${prcPriceResources.specifiedInTable}" value="yes"/>
+			<PropertyValue displayName="${prcPriceResources.notSpecifiedInTable}" value="no"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="inCategories">
+			<EnablementCondition conditionId="scopeIsCategories" enablementValue="categories" propertyName="scope"/>
+			<PropertyValue displayName="${prcPriceResources.inCategories}" value="yes"/>
+			<PropertyValue displayName="${prcPriceResources.notInCategories}" value="no"/>
+		</PropertyDefinition>
+		
+		<PropertyDefinition propertyName="includedInCatalogFilters">
+			<EnablementCondition conditionId="scopeIsIncludedInCatalogFilters" enablementValue="catalogFilter" propertyName="scope"/>
+			<PropertyValue displayName="${prcPriceResources.includedInCatalogFilters}" value="yes"/>
+			<PropertyValue displayName="${prcPriceResources.notIncludedInCatalogFilters}" value="no"/>
+		</PropertyDefinition>
+		
+		<Xml name="template">
+			<elemTemplateName>catalogCondition</elemTemplateName>
+			<scope>catalogEntries</scope>
+			<specifiedInTable>yes</specifiedInTable>
+			<inCategories>yes</inCategories>
+			<includedInCatalogFilters>yes</includedInCatalogFilters>
+		</Xml>
+	
+		<ReferenceObjectDefinition objectGroups="ChildCatalogGroup" objectType="ChildCatalogGroup" referencedTypes="CatalogGroup,SalesCatalogGroup" idProperty="childCatalogGroupId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectGroups="ChildCatalogGroup" objectType="ChildInheritedCatalogGroup" referencedTypes="InheritedCatalogGroup,InheritedSalesCatalogGroup" idProperty="childCatalogGroupId" allowDuplicates="false" derivedId="true"/>
+		<ReferenceObjectDefinition objectType="ChildCatentry" objectGroups="ChildCatentry" referencedTypes="Product,Bundle,CatalogGroupSKU,ProductSKU,Kit" idProperty="childCatentryId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectType="ChildInheritedCatentry" objectGroups="ChildCatentry" referencedTypes="InheritedProduct,InheritedBundle,InheritedCatalogGroupSKU,InheritedProductSKU,InheritedKit" idProperty="childCatentryId" allowDuplicates="false" derivedId="true"/>
+		<ReferenceObjectDefinition objectType="ChildCatalogFilter" objectGroups="ChildCatalogFilter" referencedTypes="CatalogFilter" idProperty="childCatalogFilterId" allowDuplicates="false" derivedId="true" allowedParentTypes="PriceRule"/>
+		<ReferenceObjectDefinition objectType="ChildInheritedCatalogFilter" objectGroups="ChildCatalogFilter" referencedTypes="InheritedCatalogFilter" idProperty="childCatalogFilterId" allowDuplicates="false" derivedId="true"/>
+	
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingCategories}" objectPath="ChildCatalogGroup" validatorId="reqChildCategoryValidator" validatorType="noChildCategoryProvided">
+			<EnablementCondition conditionId="scopeIsCategories" enablementValue="categories" propertyName="scope"/>
+		</RequiredChildObjectValidator>
+	
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingCatalogEntries}" objectPath="ChildCatentry" validatorId="reqChildCatentryValidator" validatorType="noChildCatentryProvided">
+			<EnablementCondition conditionId="scopeIsCatalogEntries" enablementValue="catalogEntries" propertyName="scope"/>
+		</RequiredChildObjectValidator>
+		
+		<RequiredChildObjectValidator errorMessage="${prcPriceResources.errorMessage_missingCatalogFilter}" objectPath="ChildCatalogFilter" validatorId="reqChildCatalogFilterValidator" validatorType="noChildCatalogFilterProvided">
+			<EnablementCondition conditionId="scopeIsIncludedInCatalogFilters" enablementValue="catalogFilter" propertyName="scope"/>
+		</RequiredChildObjectValidator>
+	</FlowElementObjectDefinition>
+
+</Definitions>

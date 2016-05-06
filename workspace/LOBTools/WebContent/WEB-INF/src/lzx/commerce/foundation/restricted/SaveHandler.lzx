@@ -1,0 +1,247 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	<!---
+		@keywords abstract
+	
+		This class provides custom save logic for business objects.
+		The custom save logic is written in the <code>save</code> method.
+		Instances of wcfSaveHandler can only be declared as children of an instance
+		of {@link wcfObjectDefinition}. When the framework detects that the business
+		user is attempting to save an object that has an associated save handler,
+		then the save handler will be invoked instead of the standard save logic.
+		
+		<p>The following example demonstrates the declaration of a save handler.
+
+		@START_CODE
+		<class name="catMerchandingAssociationsSaveHandler" extends="wcfSaveHandler">
+			<method name="save" args="object">
+				<![CDATA[
+				//Implementation goes here...
+				]]>
+			</method>
+		</class>
+
+		<OrganizationalObjectDefinition definitionName="ManyToManyMerchandisingAssociation"
+			objectType="ManyToManyMerchandisingAssociation"
+			creatable="true"
+			propertiesDefinitionName="catMerchandisingAssociationMapping">
+			<MerchandingAssociationsSaveHandler package="cat"/>
+		</OrganizationalObjectDefinition>
+		@END_CODE
+
+		<p>When an instance of the many to many merchandising association organizational object is
+		saved, the save method on the save handler will be invoked.
+	-->
+	<class name="wcfSaveHandler" extends="node">
+		<!---
+			@keywords private
+			Initialize this class and add this to parent.saveHandler.
+		-->
+		<method name="init">
+			<![CDATA[
+				super.init();
+				this.parent["saveHandler"] = this;
+			]]>
+		</method>
+
+		<!---
+			@keywords abstract
+			Perform the logic required to save the object.
+			@param wcfModelObject object: the object to be saved
+		-->
+		<method name="save" args="object"/>
+	</class>
+
+	<!---
+		@keywords private
+	
+		This class provides custom logic for creating new business objects.
+		The custom new logic is written in the <code>createNewObject</code> 
+		method.  Instances of wcfNewHandler can only be declared as children of an instance
+		of {@link wcfObjectDefinition}. When the framework detects that the business
+		user is attempting to create an instance of an object that has an associated new handler,
+		then the new handler will be invoked instead of the standard create new object logic.
+
+		<p>The following example demonstrates the declaration of a new handler.
+
+		@START_CODE
+		<class name="ContentVersionNewHandler" extends="wcfNewHandler">
+			<method name="createNewObject" args="objectDefinition, parentObject">
+				<![CDATA[
+				//Implementation goes here...
+				]]>
+			</method>
+		</class>
+
+		<ReferenceObjectDefinition
+			definitionName="wcfBaseContentVersion"
+			idProperty="versionId"
+			isBaseDefinition="true"
+			copyProtected="true"
+			deferLoad="true"
+			objectType="ContentVersion">
+			<ContentVersionNewHandler/>
+		</ReferenceObjectDefinition>
+		@END_CODE
+	-->
+	<class name="wcfNewHandler" extends="node">
+	
+		<!---
+			@keywords private
+			Initialize this class and add this to parent.newHandler.
+		-->
+		<method name="init">
+			<![CDATA[
+				super.init();
+				this.parent["newHandler"] = this;
+			]]>
+		</method>
+		
+		<!---
+			@keywords abstract
+			Perform the logic required for the create new object action.
+			@param wcfObjectDefinition objectDefinition the object definition of the object to be created
+			@param wcfModelObject the parent object of the object to be created
+			@return wcfModelObject the new object, or null if the handler creates the object asynchronously
+		-->
+		<method name="createNewObject" args="objectDefinition, parentObject"/>
+		
+		<!---
+			@keywords private
+			Returns true if this new handler is enabled.
+			
+			@param wcfModelObject the parent object of the object to be created
+			@return boolean: true if the client action is enabled
+		-->
+		<method name="isEnabled" args="parentObject">
+			<![CDATA[
+			return true;
+			]]>
+		</method>
+		
+		<!---
+			@keywords abstract
+			Register a delegate to be executed when enablement condition changes
+			for the specified model object.
+			@param wcfModelObject the parent object of the object to be created
+			@param lz.Delegate del: the delegate
+		-->
+		<method name="registerEnablementDelegate" args="parentObject, del"/>
+		
+	</class>
+
+	<!---
+		@keywords private
+	
+		This class provides custom logic for opening business objects.
+		The custom new logic is written in the <code>open</code> 
+		method.  Instances of wcfOpenHandler can only be declared as children of an instance
+		of {@link wcfObjectDefinition}. When the framework detects that the business
+		user is attempting to open an instance of an object that has an associated open handler,
+		then the open handler will be invoked instead of the standard open object logic.
+
+		<p>The following example demonstrates the declaration of an open handler.
+
+		@START_CODE
+		<class name="TaskGroupHistoryOpenHandler" extends="wcfOpenHandler">
+			<method name="open" args="o">
+				<![CDATA[
+				//Implementation goes here...
+				]]>
+			</method>
+		</class>
+
+		<ChildObjectDefinition definitionName="wspTaskGroupHistory"
+			displayName="${wspWorkspaceResources.history}" objectType="TaskGroupHistory" idProperty="taskGroupHistoryId" 
+			copyProtected="true">
+			<TaskGroupHistoryOpenHandler/>
+		</ChildObjectDefinition>
+		@END_CODE
+	-->
+	<class name="wcfOpenHandler" extends="node">
+	
+		<!---
+			@keywords private
+			Initialize this class and add this to parent.newHandler.
+		-->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.parent["openHandler"] = this;
+			]]>
+		</method>
+		
+		<!---
+			@keywords abstract
+			Perform the logic required for the open object action.
+			@param wcfModelObject o: the object to be opened
+			@param boolean select: indicates that the opened object is to be selected
+		-->
+		<method name="open" args="o,select=true"/>
+		
+		<!---
+			@keywords private
+			Returns true if this open handler is enabled for the specified
+			model object by evaluating the associated {@link wcfEnablementCondition} object.
+			
+			@param wcfModelObject o: the object to be opened
+			@param lz.Delegate del: optional delegate
+			@return boolean: true if the open action is enabled
+		-->
+		<method name="isEnabled" args="o,del=null">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				if (del) {
+					this.enablementCondition.registerDelegate(o, del);
+				}
+				return this.enablementCondition.isEnabled(o);
+			}
+			else {
+				return true;
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords abstract
+			Perform the logic required for the open object in compare view action.
+			@param wcfModelObject o: the object to be opened
+		-->
+		<method name="openInCompareView" args="o"/>
+		
+		<!---
+			@keywords private
+			Returns true if this open handler is enabled for opening objects in the compare view.
+			
+			@param wcfModelObject o: the object to be opened
+			@param lz.Delegate del: optional delegate
+			@return boolean: true if the open action is enabled for open objects in the compare view
+		-->
+		<method name="isOpenInCompareViewEnabled" args="o,del=null">
+			<![CDATA[
+			if (this["enablementCondition"]) {
+				if (del) {
+					this.enablementCondition.registerDelegate(o, del);
+				}
+				return this.enablementCondition.isEnabled(o);
+			}
+			else {
+				return true;
+			}
+			]]>
+		</method>
+	</class>
+</library>

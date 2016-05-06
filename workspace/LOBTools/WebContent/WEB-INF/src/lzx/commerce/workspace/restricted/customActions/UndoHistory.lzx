@@ -1,0 +1,434 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<!-- 
+
+This library contains classes used to implement undo of a task group history record.
+
+This code is not customizable.
+
+-->
+<library>
+
+	<!---
+		@keywords private
+		
+		Client action to handle the undo of a history record.
+	-->
+	<class name="wspUndoHistoryClientAction" extends="wcfClientAction"
+			childListEditorIcon="undoHistoryIcon"
+			displayName="${wspWorkspaceResources.undo.string}"
+			menuDisplayName="${wspWorkspaceResources.undoMenu.string}">
+			
+		<method name="performAction" args="objects">
+			<![CDATA[
+				if(objects && objects.length>0)
+				{
+					// prompt for OK to undo
+					if(objects.length == 1)
+					{
+						wspUndoConfirmationDialog.openUndoConfirmationDialog(objects[0]);
+					} else
+					{
+						wspMultipleUndoConfirmationDialog.openMultipleUndoConfirmationDialog(objects);
+					}
+				}
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		@keywords private
+		
+		The undo confirmation dialog.
+		This dialog is used to prompt the user to confirm undo for a single history record.
+	-->
+	<wcfAlertDialog id="wspUndoConfirmationDialog" showOK="false" showYes="true" showNo="true">
+	
+		<!---
+			The object that is to be undone.
+		-->
+		<attribute name="undoObject" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the object to be undone
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified object can be undone
+			@param wcfModelObject o: the object to be undone
+		-->
+		<method name="openUndoConfirmationDialog" args="o">
+			<![CDATA[
+			this.openWindow();
+			var name = o.getPropertyValue("objectCode");
+			this.setAttribute("promptText", wspWorkspaceResources.replaceValues("undoConfirmationDialogText", [name != null ? name : "" ]));
+			this.undoObject = o;
+			this.oEditor = o.model.oEditor;
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close the dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.undoObject = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Undo the object.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wspUndoConfirmationDialog handleYes");
+			wspUndoHistoryService.doRequest(this.undoObject);
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	</wcfAlertDialog>
+	
+	<!---
+		@keywords private
+		
+		The multiple undo confirmation dialog.
+		This dialog is used to prompt the user to confirm undo for multiple history records.
+	-->
+	<wspHistoryObjectListDialog id="wspMultipleUndoConfirmationDialog" showOK="false" showYes="true" showNo="true"
+		promptText="${wspWorkspaceResources.multipleUndoConfirmationDialogText.string}">
+		
+		<!---
+			The array of objects that are to be undone.
+		-->
+		<attribute name="undoObjects" value="null"/>
+		
+		<!-- 
+			Business Object Editor of the objects to be undone
+		 -->
+		<attribute name="oEditor" value="null"/>
+		
+		<!---
+			Confirm that the specified objects can be undone
+			@param array objects: the objects to be undone
+		-->
+		<method name="openMultipleUndoConfirmationDialog" args="objects">
+			<![CDATA[
+			this.undoObjects = objects;
+			this.oEditor = objects[0].model.oEditor;
+			this.openListAlertDialog(this.undoObjects);
+			]]>
+		</method>
+		
+		<!---
+			Restore focus after close.
+		-->
+		<method name="restoreFocus">
+			<![CDATA[
+			super.restoreFocus();
+			if (lz.Focus.getFocus() == null) {
+				this.oEditor.restoreFocus();
+			}
+			]]>
+		</method>
+		
+		<!---
+			Close dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			super.closeWindow();
+			this.undoObjects = null;
+			this.oEditor = null;
+			]]>
+		</method>
+		
+	    <!---
+	    	Undo the objects.
+	    -->
+		<method name="handleYes">
+			<![CDATA[
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wspMultipleUndoConfirmationDialog handleYes");
+			for (var i = 0; i < this.undoObjects.length; i++) {
+				wspUndoHistoryService.doRequest(this.undoObjects[i]);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			]]>
+		</method>
+		
+	</wspHistoryObjectListDialog>
+	
+	<!---
+		@keywords private
+		
+		Base class for the multiple discard confirmation dialog. The dialog is used to prompt the user for confirmation when
+		an action has been triggered that will cause the changes to multiple objects to be undone.
+	-->
+	<class name="wspHistoryObjectListDialog" extends="wcfAlertDialog">
+		<!---
+			Open the multiple discard confirmation dialog.
+			@param array unsavedObjects: array of unsaved objects
+		-->
+		<method name="openListAlertDialog" args="objects">
+			<![CDATA[
+			this.openWindow();
+			this.objectsArea.objectItems.setObjects(objects);
+			]]>
+		</method>
+		
+		<!---
+			Set the focus to Yes button
+		-->
+		<method name="setInitialFocus" args="e=null">
+			<![CDATA[
+			lz.Focus.setFocus(this.viewButtons.yesBtn);
+			]]>
+		</method>
+		
+		<!---
+			Close multiple discard confirmation dialog.
+		-->
+		<method name="closeWindow">
+			<![CDATA[
+			this.objectsArea.objectItems.setObjects([]);
+			super.closeWindow();
+			]]>
+		</method>
+			
+		<view name="objectsArea" y="${parent.text.y + parent.text.height + 5}" x="${parent.text.x}" options="ignorelayout" clip="true">
+			
+			<!-- In case the number of objects to discard are too much for the dialog, create a container that can scroll so dialog doesn't get too long -->
+			<wspHistoryItemList name="objectItems" height="150" width="${parent.parent.text.width}"/>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Represents the list of history objects to be undone.
+	-->
+	<class name="wspHistoryItemList" extends="wcfObjectItemList">
+		<!---
+			Set the array of objects.
+			
+			@param [wcfModelObject] newObjects: array of model objects
+		-->
+		<method name="setObjects" args="newObjects">
+			<![CDATA[
+			for (var i = 0; i < this.objectItems.length; i++) {
+				this.objectItems[i].setAttribute("o", null);
+				this.objectItems[i].setAttribute("visible", false);
+			}
+			
+			for (var i = 0; i < newObjects.length; i++) {
+				if (i < this.objectItems.length) {
+					this.objectItems[i].setAttribute("o", newObjects[i]);
+					this.objectItems[i].setAttribute("visible", true);
+				} else {					
+					this.objectItems.push(new lz.wspHistoryItem(this.borderedView.clippedContent.content, {
+						o: newObjects[i],
+						focusable: false
+					}));
+				}	
+			}
+			if (newObjects.length > 0) {
+				this.currentObjectIndex = 0;
+			}
+			else {
+				this.currentObjectIndex = -1;
+			}
+			this.updateHilite();
+			this.updateScroll();
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Represents a history object in the list of objects.
+		Both the icon and the display name of the object will be taken from the history objects.
+	-->
+	<class name="wspHistoryItem">
+		<!---
+			A reference to the instance of the {@link wcfModelObject} whose icon is being displayed. 
+		-->
+		<attribute name="o" value="null" setter="this.setModelObject(o)"/>
+		<!---
+			Object icon.
+		-->
+		<attribute name="icon" type="string" value="unknownObjectIcon"/>
+		<!---
+			Object display name.
+		-->
+		<attribute name="objectDisplayName" value="null"/>
+		<!---
+			Indicates that this object has an error.
+		-->
+		<attribute name="hasError" type="boolean" value="false"/>
+		
+		<!---
+			@keywords private
+			Set the {@link wcfModelObject} to be associated with this item. 
+			@param wcfModelObject newObject New object associated with this item.
+		-->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			if (this["o"] != newObject) {
+				this.o = newObject;
+				
+				if (this.o == null) {
+					this.setAttribute("icon", null);
+					this.setAttribute("objectDisplayName", "");
+					this.setAttribute("hasError", false);
+				
+				} else {
+					var property = this.o.getProperty("objectType");			
+					if (property != null) {
+						var propValue = property.propertyDefinition.getPropertyValue(property,null);
+						if (propValue) {
+							this.setAttribute("icon", propValue.icon);
+						}
+					}
+					var name = this.o.getPropertyValue("objectCode");
+					if (name != null) {
+						this.setAttribute("objectDisplayName", name);
+					}
+					var newHasError = this.o.openGroupObject != null && this.o.openGroupObject.errorInOpenGroup;
+					if (newHasError != this.hasError) {
+						this.setAttribute("hasError", newHasError);
+					}
+				}
+				
+				if (this["ono"]) {
+					this.ono.sendEvent(this.o);
+				}
+			}
+			]]>
+		</method>
+		
+		<view name="objectItem">
+			<view name="_icon" resource="${classroot.icon}"/>
+			<view name="_errorIcon"
+				x="${parent._icon.x + parent._icon.width - this.width - 1}"
+				y="${parent._icon.y + parent._icon.height - this.height}" 
+				resource="treeErrorResource" 
+				visible="${classroot.hasError}"/>
+			<text name="_displayName" 
+				x="${parent._errorIcon.x + parent._errorIcon.width + 1}"
+				text="${this.escapeText(classroot.objectDisplayName)}" 
+				resize="true"/>
+		</view>
+	</class>
+	
+	<!---
+		@keywords private
+		
+		This service is used to undo a history record.
+	-->
+	<wcfService id="wspUndoHistoryService" url="/cmc/DeleteTaskGroupHistory" transactionService="true" refreshChildren="true">
+	
+		<wcfServiceParam name="taskGroupId" parentProperty="true" parentType="TaskGroup" propertyName="taskGroupId" />
+		<wcfServiceParam name="taskGroupHistoryId" propertyName="taskGroupHistoryId" />
+		
+		<!---
+			@keywords private
+			Initialize the service transaction object for this request.
+			@param Object transaction: the transaction object
+		-->
+		<method name="initializeTransaction" args="transaction">
+			<![CDATA[
+			if (!transaction.o.isDeleting()) {
+				wcfServiceTransactionUtil.addDeleteObject(transaction, transaction.o);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when this custom service completed successfully. Client objects will be released if
+			necessary to make sure the association reference objects are up to date to reflect the changes after the
+			action.
+
+			@param wcfModelObject requestParent: The object on which this custom service was performed.
+		-->
+		<method name="handleServiceSuccess" args="requestParent">
+			<![CDATA[
+				super.handleServiceSuccess(requestParent);
+				var msg;
+				var messageType = "undoHistorySuccessful";
+				var msgCount = 1 + wcfServiceTransactionUtil.getTransactionEventMessageCount(requestParent.transaction, messageType);
+				if (msgCount == 1) {
+					var name = requestParent.getPropertyValue("objectCode"); 
+					msg = wspWorkspaceResources.replaceValues("undoHistorySuccessful", [name != null ? name : ""]);
+				}else{
+					msg = wspWorkspaceResources.replaceValues("undoMultipleHistorySuccessful", [msgCount]);
+				}
+				wcfServiceTransactionUtil.setTransactionEventMessage(requestParent.transaction, messageType, msg);
+
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when a service response is successfully returned from the server. This does
+			not necessarily mean that the service completed successfully, it just means that there were no
+			communication errors. The specified dataset contains the response XML.
+			@param wcfServiceDataset ds: dataset
+		-->
+		<method name="serviceComplete" args="ds">
+			<![CDATA[
+			var parentTaskGroup = ds.requestParent.parentObject;
+			var historyDef = parentTaskGroup.objectDefinition.getChildDefinition("TaskGroupHistory");
+			var historyObjDefs = [historyDef];
+			var refresh = false;
+			if(wcfServiceTransactionUtil.isLastTransactionInGroup(ds.requestParent.transaction)){
+				refresh = true;
+			}
+			super.serviceComplete(ds);
+			if(refresh){
+				parentTaskGroup.refreshChildren(historyObjDefs);
+			}
+			]]>
+		</method>
+	</wcfService>
+	
+</library>

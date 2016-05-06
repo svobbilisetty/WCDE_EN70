@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for a {@link DialogActivityTemplate Marketing Dialog Activity Template}.
+	-->
+	<FlowElementProperties definitionName="mktGeneralDialogActivityTemplateProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${mktMarketingResources.dialogActivityTemplateProperties}" hideHeaderWhenOnlyGroup="true" name="group" open="true">
+				<PropertyInputText helpText="${mktMarketingResources.help_activity_name}" promptText="${mktMarketingResources.objectName}" propertyName="name"/>
+				<PropertyInputMultiLineText promptText="${mktMarketingResources.description}" propertyName="description"/>
+				<PropertyDateTimePicker promptText="${mktMarketingResources.startDate}" propertyName="startdate"/>
+				<PropertyDateTimePicker endOfDay="true" promptText="${mktMarketingResources.endDate}" propertyName="enddate"/>
+				<PropertyCheckbox falseValue="0" helpText="${mktMarketingResources.help_activityDialog_repeatable}" promptText="${mktMarketingResources.repeatable}" propertyName="repeatable" trueValue="1"/>
+			</PropertyGroup>
+		</PropertyPane>
+	</FlowElementProperties>
+
+	<!---
+		For Dialog activity templates, this definition defines a palette in the Activity Builder containing the following elements:
+		<ul>
+			<li>Triggers:
+				<ul>
+					<li>Wait</li>
+					<li>Customer Registers</li>
+					<li>Customer Places Order</li>
+					<li>Customer Participates In Social Commerce</li>
+					<li>Customer Abandons Shopping Cart</li>
+					<li>Customer Celebrates Birthday</li>
+					<li>Customer Is In Segment</li>
+					<li>Wait for Event</li>
+					<li>Customer Searches</li>
+					<li>Recurring Order Trigger</li>
+					<li>Subscription Trigger</li>
+					<li>Customer Uses Promotion</li>
+					<li>Customer Check In Store</li> 
+				</ul>
+			</li>
+			<li>Targets:
+				<ul>
+					<li>Customer Segment</li>
+					<li>Shopping Cart</li>
+					<li>Purchase History</li>
+					<li>Catalog Browsing Behavior</li>
+					<li>Online Behavior</li>
+					<li>Social Commerce Participation</li>
+					<li>Day and Time</li>
+				</ul>
+			</li>
+			<li>Actions:
+				<ul>
+					<li>Send Message</li>
+					<li>Issue Coupon</li>
+					<li>Add To or Remove From Customer Segment</li>
+				</ul>
+			</li>
+			<li>Branch</li>
+		</ul>
+	-->
+	<ActivityBuilder definitionName="mktDialogActivityTemplateBuilder" flowConnectorClass="mktDialogActivityFlowConnector" generalPropertiesDefinitionName="mktGeneralDialogActivityTemplateProperties" hideIntroPreferenceKey="introDialogActivity" introDialogPromptText="${mktMarketingResources.introDialogActivityTemplate}" introUrl="demo/DialogIntro/DialogIntro.html?noframes=true" package="mkt">
+		<Xml name="palette">
+			<Group helpLink="concepts/csbtriggers.htm" helpText="help_palette_triggers" name="triggers" resourceBundle="mktMarketingResources">
+				<Element objectType="wait"/>
+				<Element objectType="registers"/>
+				<Element objectType="purchases"/>
+				<Element objectType="customerParticipatesInSocialCommerce"/>
+				<Element objectType="customerAbandonsShoppingCart"/>
+				<Element objectType="birthdayTrigger"/>
+				<Element objectType="customerIsInSegment"/>
+				<Element objectType="eventAndParametersTrigger"/>
+				<Element objectType="CustomerSearchesTrigger"/>
+				<Element objectType="RecurringOrderTrigger"/>
+				<Element objectType="SubscriptionTrigger"/>
+				<Element objectType="CustomerUsesPromotionTrigger"/>
+				<Element objectType="customerCheckInStoreTrigger"/>
+			</Group>
+			<Group helpLink="concepts/csbtargets.htm" helpText="help_palette_targets" name="targets" resourceBundle="mktMarketingResources">
+				<Element objectType="customerSegmentIdList"/>
+				<Element objectType="shoppingCart"/>
+				<Element objectType="purchaseHistory"/>
+				<Element objectType="catalogBrowsingBehavior"/>
+				<Element objectType="onlineBehavior"/>
+				<Element objectType="socialCommerceParticipation"/>
+				<Element objectType="time"/>
+			</Group>
+			<Group helpLink="concepts/csbactions.htm" helpText="help_palette_actions" name="actions" resourceBundle="mktMarketingResources">
+				<Element objectType="sendMessage"/>
+				<Element objectType="issueCoupon"/>
+				<Element objectType="addToRemoveFromCustomerSegment"/>
+			</Group>
+			<Group helpLink="concepts/csbbranchvsexp.htm" helpText="help_palette_branching" name="branching" resourceBundle="mktMarketingResources">
+				<Element objectType="simpleBranch"/>
+			</Group>
+		</Xml>
+	</ActivityBuilder>
+</Definitions>

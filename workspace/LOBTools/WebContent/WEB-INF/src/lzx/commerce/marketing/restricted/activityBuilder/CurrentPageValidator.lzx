@@ -1,0 +1,86 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2009 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		<p>Validator for {@link mktCurrentPageElementObject Current Page target}. Based on the selected option,
+		this validator ensures that catalog entries, categories, search keywords and URL parameter values are provided.</p>
+		
+		<p>There should only be one instance of this class defined for each {@link mktFlowElementObjectDefinition}.</p>
+	-->
+	<class name="mktCurrentPageValidator" extends="wcfValidator" validatorType="currentPageValidator">
+		<!--- Warning message to show when no catalog entries are provided -->
+		<attribute name="noProductsSelectedErrorMessage" value="${mktMarketingResources.noProductsSelected.string}" type="string"/>
+		<!--- Warning message to show when no categories are provided -->
+		<attribute name="noCategoriesSelectedErrorMessage" value="${mktMarketingResources.noCategoriesSelected.string}" type="string"/>
+		<!--- Warning message to show when no search terms are provided -->
+		<attribute name="noKeywordsSelectedErrorMessage" value="${mktMarketingResources.noKeywordProvided.string}" type="string"/>
+		<!--- Warning message to show when no URL values are provided -->
+		<attribute name="noValuesSelectedErrorMessage" value="${mktMarketingResources.noParameterValueProvided.string}" type="string"/>
+		
+		<!--- The object path for catalog entry objects -->
+		<attribute name="catalogEntryObjectPath" value="ChildCatentry" type="string"/>
+		<!--- The object path for category objects -->
+		<attribute name="categoryEntryObjectPath" value="ChildCatalogGroup" type="string"/>
+		<!--- The object path for search term objects -->
+		<attribute name="searchTermObjectPath" value="searchTerm" type="string"/>
+		<!--- The object path for URL value objects -->
+		<attribute name="urlValueObjectPath" value="urlValue" type="string"/>
+				
+		<!--- @keywords private -->		
+		<method name="validate" args="o, property=null">
+			<![CDATA[
+			if(!o) {
+				return; // nothing to validate
+			}
+			var elementTemplate = o.getProperty("elemTemplateName");
+			var typeProp = o.getProperty("type");
+			
+			o.clearValidationError(this);
+			
+			if(elementTemplate.value == "currentCustomerBehaviorProductBrowsing") {
+				var childObjects = o.getObjects(this.catalogEntryObjectPath);
+				
+				if(childObjects.length <= 0) {
+					o.addValidationError(this, this.noProductsSelectedErrorMessage);
+				}
+				typeProp.change("NVP");
+			}
+			else if((elementTemplate.value == "currentCustomerBehaviorCategoryBrowsing") || (elementTemplate.value == "currentCustomerBehaviorProductInCategoryBrowsing")) {
+				var childObjects = o.getObjects(this.categoryEntryObjectPath);
+				if(childObjects.length <= 0) {
+					o.addValidationError(this, this.noCategoriesSelectedErrorMessage);
+				}
+				
+				if(elementTemplate.value == "currentCustomerBehaviorProductInCategoryBrowsing") {
+					typeProp.change("PARENTCATEGORY");
+				}
+			}
+			else if(elementTemplate.value == "currentCustomerBehaviorSearching") {
+				var childObjects = o.getObjects(this.searchTermObjectPath);
+				if(childObjects.length <= 0) {
+					o.addValidationError(this, this.noKeywordsSelectedErrorMessage);
+				}
+			}
+			else if(elementTemplate.value == "currentCustomerBehaviorURLContents") {
+				var childObjects = o.getObjects(this.urlValueObjectPath);
+				var comparisonProp = o.getProperty("comparison"); 
+				
+				if((childObjects.length <= 0) && (comparisonProp.value != "any")) {
+					o.addValidationError(this, this.noValuesSelectedErrorMessage);
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

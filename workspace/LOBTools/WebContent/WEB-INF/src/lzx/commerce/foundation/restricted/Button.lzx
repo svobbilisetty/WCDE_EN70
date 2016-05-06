@@ -1,0 +1,381 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords private
+
+        A button that will show differnet image on pressed and normal state
+
+        Sample usage:
+        @START_CODE
+        <canvas>
+			<wcfToolBarButton name="toolbarButton" showSelected="${buttonSelected}" buttonResource="buttonIcons" onclick="buttonPressed()" enabled="${buttonEnabled}"/>
+            ...
+        </canvas>
+        @END_CODE
+    -->
+	<class name="wcfToolBarButton" extends="basebutton" focusable="true" pixellock="true" doesenter="true" resourceviewcount="1" >
+		<!---
+			Indicates that toolbar button should be displayed in its "selected" state.
+		-->
+		<attribute name="showSelected" type="boolean" value="false"/>
+		<attribute name="buttonResource" type="string" value="${null}"/>
+
+		<!---
+			Update button frame based on the state of showSelected.
+		-->
+		<method name="updateShowSelected" args="e=null">
+			<![CDATA[
+			this.setAttribute("normalResourceNumber", this.showSelected ? 3 : 1);
+			this.showUp();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			this.updateShowSelectedDel = new lz.Delegate(this, "updateShowSelected");
+			this.updateShowSelectedDel.register(this, "onshowSelected");
+			this.setAttribute("normalResourceNumber", this.showSelected ? 3 : 1);			
+			super.init();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateShowSelectedDel.unregisterAll();
+			delete this.updateShowSelectedDel;
+			super.destroy();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[				
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		    }
+			]]>
+		</handler>
+		
+		<view resource="${classroot.buttonResource}" />
+	</class>
+	
+	<!--- 
+		@keywords private
+		This class adds focus indicator on basebutton
+	 -->
+	<class name="wcfFocusableBaseButton" extends="basebutton" focusable="true">
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			wcfCanvasMenu.addView(this);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		      <![CDATA[				
+		      this.createFocusIndicator();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<method name="createFocusIndicator">
+			<![CDATA[
+			 if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this
+			    });
+		       }
+			]]>
+		</method>
+		
+	</class>
+	
+	<!--- @keywords private -->
+	<class name="wcfButton" extends="wcfFocusableBaseButton"
+	    clickable="true" pixellock="true" styleable="true">
+
+		<attribute name="minWidth" value="74" type="number"/>
+
+		<attribute name="textPaddingSizeX" type="number" value="4"/>
+
+	    <attribute name="textPaddingSizeY" value="4" type="number"/>
+
+	    <attribute name="width" value="74"/>
+	    <attribute name="maxframes" value="4" type="number"/>
+		<attribute name="iconResource" type="text" />
+
+	    <!--
+	    	@keywords private
+	    	It turns out OpenLaszlo text is placed a little lower than (_, 0). Therefore,
+	    	use this value to compensate this shift.
+	     -->
+	    <attribute name="textBottomPaddingShift" value="2" type="number"/>
+	    <state applied="${parent.title.width + parent.iconView.width &lt;= parent.minWidth - 2 * parent.textPaddingSizeX}">
+	    	<attribute name="width" value="${this.minWidth}"/>
+	    </state>
+
+		<state applied="${parent.title.width + parent.iconView.width > parent.minWidth - 2 * parent.textPaddingSizeX}">
+			<attribute name="width" value="${this.iconView.width + this.title.width + 2 * this.textPaddingSizeX + this.leftBorder.width + this.rightBorder.width}"/>
+	    </state>
+
+	    <!--- @keywords private -->
+	    <attribute name="height" value="${title.height + 2* textPaddingSizeY + textBottomPaddingShift}"/>
+
+	    <!--- @keywords private -->
+	    <attribute name="doesenter" value="true"/>
+
+		<handler name="onclick">
+			<![CDATA[
+			if ((!this["actionDefinition"]) && (wcfLogger.perfTraceEnabled)) {
+				wcfLogger.perfTrace("wcfButton", "onclick", "Button " + this.text);
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+        <setter name="frame" args="r"><![CDATA[
+        	this.leftBorder.setAttribute('frame', r);
+        	this.centerBackground.setAttribute('frame', r);
+        	this.rightBorder.setAttribute('frame', r);
+        	
+        	if(this.enabled){
+        		title.setAttribute("fgcolor", this.style.activebuttontextcolor);
+	 		}else{
+	 			title.setAttribute("fgcolor", this.style.inactivebuttontextcolor);
+	 		}            
+       		]]> 
+       	</setter>
+
+	    <!--- @keywords private -->
+	    <method name="_applystyle" args="s">
+			if (this.style != null) {
+	            this.textcolor = s.activebuttontextcolor;
+	            this.textdisabledcolor = s.inactivebuttontextcolor;
+	            if (this.enabled) {
+	                title.setAttribute("fgcolor", this.textcolor);
+	            } else {
+	                title.setAttribute("fgcolor", this.style.inactivebuttontextcolor);
+	            }
+			}
+	    </method>
+
+	    <view name="leftBorder" resource="buttonLeftBorder" height="${parent.height}" stretches="height"/>
+
+	    <view name="centerBackground" resource="buttonCenterBackground"
+	        x="${parent.leftBorder.width}" width="${parent.width - parent.leftBorder.width - parent.rightBorder.width}" height="${parent.height}" stretches="both"/>
+
+	    <view name="rightBorder" resource="buttonRightBorder" x="${parent.width - this.width}" height="${parent.height}" stretches="height"/>
+
+		<view name="iconView" valign="middle" x="10">
+			<state applied="${classroot['iconResource']}">
+				<view resource="${classroot['iconResource']}" />
+				<view width="4" />
+				<simplelayout axis="x" spacing="0" />
+			</state>
+		</view>
+
+	    <text name="title"
+	            x="${((parent.width - (this.width + parent.iconView.width)) / 2) + parent.iconView.width}"
+	            y="${parent.textPaddingSizeY}"
+	            text="${parent.text}"
+	            resize="true"/>
+
+	</class>
+
+	<!---
+		@keywords private
+
+		A button that closes a given model object. If the object is modified but not saved,
+		the user will be prompted for confirmation.
+	-->
+	<class name="wcfObjectCloseButton" extends="wcfButton">
+		<!---
+			Button text.
+		-->
+		<attribute name="text" type="string" value="${foundationResources.closeButtonText.string}"/>
+		<!---
+			Action definition instance.
+		-->
+		<attribute name="actionDefinition"/>
+
+		<!---
+			Handle button click.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectCloseButton", "onclick", "Close Start");
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfObjectCloseButton onclick: " + this.text);
+			var o = this.actionDefinition.parent.o;
+			if (o != null) {
+				o.closeObject(true);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectCloseButton", "onclick", "Close End");
+			}
+			]]>
+		</handler>
+	</class>
+
+	<!---
+		@keywords private
+
+		A button that saves and then closes the specified model object.
+	-->
+	<class name="wcfObjectSaveAndCloseButton" extends="wcfButton">
+		<!---
+			Button text.
+		-->
+		<attribute name="text" type="string" value="${foundationResources.saveAndCloseButtonText.string}"/>
+		<!---
+			Action definition instance.
+		-->
+		<attribute name="actionDefinition"/>
+
+		<!---
+			Handle button click.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectSaveAndCloseButton", "onclick", "SaveAndClose Start");
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfObjectSaveAndCloseButton onclick: " + this.text);
+			var o = this.actionDefinition.parent.o;
+			if (o != null) {
+				o.saveAndCloseObject(true);
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectSaveAndCloseButton", "onclick", "SaveAndClose End");
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateEnablementDel = new lz.Delegate(this, "updateEnablement");
+			this.updateEnablement();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			delete this.updateEnablementDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Enables/Disabled the button based upon the openGroupReadOnly value of the model object.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			var o = this.actionDefinition.parent.o;
+			this.setAttribute("enabled", o != null && o.openGroupObject != null && !o.openGroupObject.openGroupReadOnly);
+			this.updateEnablementDel.register(this.actionDefinition.parent, "ono");
+			if (o != null && o.openGroupObject != null) {
+				this.updateEnablementDel.register(o.openGroupObject, "onopenGroupReadOnly");
+			}
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+
+		A button that saves a given model object
+	-->
+	<class name="wcfObjectSaveButton" extends="wcfButton">
+		<!---
+			Button text.
+		-->
+		<attribute name="text" type="string" value="${foundationResources.saveButtonText.string}"/>
+		<!---
+			Action definition instance.
+		-->
+		<attribute name="actionDefinition"/>
+
+		<!---
+			Handle button click.
+		-->
+		<handler name="onclick">
+			<![CDATA[
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectSaveButton", "onclick", "Save Start");
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.start("wcfObjectSaveButton onclick: " + this.text);
+			var o = this.actionDefinition.parent.o;
+			if (o != null) {
+				o.saveObject();
+			}
+			if (wcfEventTimer.enabled) wcfEventTimer.end();
+			if (wcfLogger.perfTraceEnabled) {
+				wcfLogger.perfTrace("wcfObjectSaveButton", "onclick", "Save End");
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this.updateEnablementDel = new lz.Delegate(this, "updateEnablement");
+			this.updateEnablement();
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			delete this.updateEnablementDel;
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Enables/Disabled the button based upon the openGroupReadOnly value of the model object.
+		-->
+		<method name="updateEnablement" args="e=null">
+			<![CDATA[
+			this.updateEnablementDel.unregisterAll();
+			var o = this.actionDefinition.parent.o;
+			this.setAttribute("enabled", o != null && o.openGroupObject != null && !o.openGroupObject.openGroupReadOnly);
+			this.updateEnablementDel.register(this.actionDefinition.parent, "ono");
+			if (o != null && o.openGroupObject != null) {
+				this.updateEnablementDel.register(o.openGroupObject, "onopenGroupReadOnly");
+			}
+			]]>
+		</method>
+	</class>
+</library>

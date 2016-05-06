@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		Properties view for the {@link prcCatalogConditionElementObject}.
+	-->
+	<FlowElementProperties definitionName="prcCatalogConditionElementProperties">
+
+		<PropertyGroup collapsable="false" name="catalogCondition">
+			<PropertyCombobox promptText="${prcPriceResources.catalogScope}" propertyName="scope" helpText="${prcPriceResources.helpText_catalogScope}" helpLinkURL="concepts/cpiconcat.htm"/>
+		
+			<PropertyGroup collapsable="false" name="catalogEntriesPropertyGroup">
+				<EnablementCondition conditionId="scopeIsCatalogEntries" enablementValue="catalogEntries" propertyName="scope"/>
+				<PropertyRadioGroup promptText="${prcPriceResources.targetCatalogEntries}" propertyName="specifiedInTable"/>
+				<PropertyChildListEditor listDefinitionName="prcProductGrid" name="productEditor" objectTypes="ChildCatentry,ChildInheritedCatentry" validatorTypes="noChildCatentryProvided" promptText="${prcPriceResources.catalogEntries}" required="true" helpText="${prcPriceResources.helpText_catalogEntries}"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="categoriesPropertyGroup">
+				<EnablementCondition conditionId="scopeIsCategories" enablementValue="categories" propertyName="scope"/>
+				<PropertyRadioGroup promptText="${prcPriceResources.targetCatalogEntries}" propertyName="inCategories"/>
+				<PropertyChildListEditor listDefinitionName="prcCategoryGrid" name="categoryEditor" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" validatorTypes="noChildCategoryProvided" promptText="${prcPriceResources.categories}" required="true" helpText="${prcPriceResources.helpText_categories}"/>
+			</PropertyGroup>
+			
+			<PropertyGroup collapsable="false" name="catalogFilterPropertyGroup">
+				<EnablementCondition conditionId="scopeIsIncludedInCatalogFilters" enablementValue="catalogFilter" propertyName="scope"/>
+				<PropertyRadioGroup promptText="${prcPriceResources.targetCatalogEntries}" propertyName="includedInCatalogFilters"/>
+				<PropertyChildListEditor listDefinitionName="prcCatalogFilterGrid" name="catalogFilterEditor" objectTypes="ChildCatalogFilter,ChildInheritedCatalogFilter" validatorTypes="noChildCatalogFilterProvided" promptText="${prcPriceResources.catalogFilterText}" singleChild="true" required="true" helpText="${prcPriceResources.helpText_categories}"/>
+			</PropertyGroup>
+					
+		</PropertyGroup>			
+	</FlowElementProperties>
+	
+	<ObjectGrid definitionName="prcProductGrid" preferenceKey="prcProductGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogEntry" propertyName="catentryId" text="${prcPriceResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogEntry" propertyName="" required="true" text="${prcPriceResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogEntry" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+		<GridText editable="false" name="partNumber" objectPath="CatalogEntry" propertyName="partnumber" required="true" text="${prcPriceResources.code}" visible="true" width="90"/>
+		<GridText editable="false" name="productName" objectPath="CatalogEntry/CatalogEntryDescription" propertyName="name" text="${prcPriceResources.nameString}" width="170"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="prcCategoryGrid" preferenceKey="prcCategoryGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogGroupAlias" propertyName="catgroupId" text="${prcPriceResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" objectPath="CatalogGroupAlias" propertyName="" required="true" text="${prcPriceResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogGroupAlias" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+		<GridText editable="false" name="categoryName" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="name" required="true" text="${prcPriceResources.nameString}" visible="true" width="175"/>
+		<GridText editable="false" name="shortDescription" objectPath="CatalogGroupAlias/CatalogGroupDescription" propertyName="sDesc" text="${prcPriceResources.description}" width="250"/>
+	</ObjectGrid>
+	
+	<ObjectGrid definitionName="prcCatalogFilterGrid" preferenceKey="prcCatalogFilterGrid">
+		<GridIconTypeImage name="type" objectPath="CatalogFilterGroup" propertyName="" required="true" text="${prcPriceResources.type}" width="60"/>
+		<GridStoreName name="store" objectPath="CatalogFilterGroup" propertyName="objectStoreId" text="${prcPriceResources.store}" width="125"/>
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" objectPath="CatalogFilterGroup" propertyName="catalogFilterId" text="${prcPriceResources.uniqueId}" visible="false" width="90"/>
+		<GridText editable="false" name="categoryName" objectPath="CatalogFilterGroup" propertyName="name" required="true" text="${prcPriceResources.nameString}" visible="true" width="175"/>
+		<GridText editable="false" name="shortDescription" objectPath="CatalogFilterGroup" propertyName="description" text="${prcPriceResources.description}" width="250"/>
+	</ObjectGrid>
+	
+</Definitions>

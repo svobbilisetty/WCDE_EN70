@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="pglProductPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.productPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="ProductPageReferenceDefaultProductPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="ProductPageReferenceDefaultProductPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="ProductPageReferenceDefaultProductPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display product page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglProductPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localProductPageCondition" enablementValue="InheritedProductPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglProductPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited product page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedProductPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedProductPageCondition" enablementValue="InheritedProductPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedProductPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglProductPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>	
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglProductPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_productPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="ProductPageLayoutAssociationReferencedProductPageLayouts,ProductPageLayoutAssociationReferencedInheritedProductPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>				
+	<PropertyChildListEditor definitionName="pglProductPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_productPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="ProductPageLayoutAssociationReferencedProductPageLayouts,ProductPageLayoutAssociationReferencedInheritedProductPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedProductPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_productPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedProductPageLayoutAssociationReferencedInheritedProductPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

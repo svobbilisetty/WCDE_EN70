@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglCorporateInfoPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.corporateInfoPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="CorporateInfoPageReferenceDefaultCorporateInfoPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="CorporateInfoPageReferenceDefaultCorporateInfoPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="CorporateInfoPageReferenceDefaultCorporateInfoPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display Corporate Info page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglCorporateInfoPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localCorporateInfoPageCondition" enablementValue="InheritedCorporateInfoPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglCorporateInfoPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited Corporate Info page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedCorporateInfoPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedCorporateInfoPageCondition" enablementValue="InheritedCorporateInfoPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedCorporateInfoPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglCorporateInfoPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglCorporateInfoPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_corporateInfoPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="CorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts,CorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglCorporateInfoPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_corporateInfoPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="CorporateInfoPageLayoutAssociationReferencedCorporateInfoPageLayouts,CorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedCorporateInfoPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_corporateInfoPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedCorporateInfoPageLayoutAssociationReferencedInheritedCorporateInfoPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

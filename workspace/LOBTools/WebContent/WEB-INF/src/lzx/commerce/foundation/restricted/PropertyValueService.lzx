@@ -1,0 +1,132 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This class is used to define a service that will retrieve the possible {@link wcfPropertyValue values} for a 
+		{@link wcfPropertyDefinition} from the server. 
+		The example in {@link wcfPropertyRadioGroup} shows the use of {@link wcfPropertyValue} 
+		for static values. However, if you need to dynamically construct the {@link wcfPropertyValue}
+		instances by retrieving data from the server, you must declare a {@link wcfPropertyValueService}
+		under {@link wcfPropertyDefinition}. This service is invoked when the {@link wcfPropertyDefinition}
+		is initialized and each time that the Management Center model is reinitialized.
+				
+		<p>There can be only one instance of {@link wcfPropertyValueService} defined under {@link wcfPropertyDefinition}.
+		
+		<p>The following code snippet shows how this class is used. Although property values are hardcoded 
+		in the example in {@link wcfPropertyRadioGroup}, in this example, a <code>wcfPropertyValueService</code> 
+		is defined within the {@link wcfPropertyDefinition} node to retrieve the possible property values from the server.
+				
+		@START_CODE
+			...
+			Let the following xml be the response from GetUnitOfMeasureService:
+			
+			<values>
+				<value displayName="Kilogram">KGM</value>
+				<value displayName="milligram">LBR</value>
+				<value displayName="1 Unit">C62</value>
+			</values>
+			...
+			<PropertyDefinition propertyName="unitOfMeasure">
+				<PropertyValueService url="/GetUnitOfMeasureService">
+			</PropertyDefinition>
+			...
+		@END_CODE
+		
+		<p>In this example, GetUnitOfMeasureService is invoked when the {@link wcfPropertyDefinition} is initialized. 
+		The service response will be parsed by the {@link wcfPropertyValueService#parseValues} method, and three instances
+		of {@link wcfPropertyValue} that correspond to the three name-value pairs in the service response will be created. 
+		These {@link wcfPropertyValue} instances will be added to the parent {@link wcfPropertyDefinition} instance.
+		
+		@see wcfPropertyValue
+	-->
+	<class name="wcfPropertyValueService" extends="wcfService" retryOnError="true">
+
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			parent.valueService = this;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns the values key for a particular model object.
+			
+			@param wcfModelObject o: the given model object 
+			@param lz.Delegate del: An optional parameter, to register a delegate if the property 
+									values change
+		-->
+		<method name="getValuesKey" args="o, del=null">
+			<![CDATA[
+			var valuesKey = null;
+			var enabledParams = wcfServiceUtil.getEnabledParameters(this.serviceParams, o);
+			if (del) {
+				for (var i = 0; i < enabledParams.length; i++) {
+					enabledParams[i].registerDelegate(o, del);
+				}
+			}
+			var rpds = {requestParent: o, args: {}};
+			wcfServiceUtil.resolveParameters(enabledParams, rpds);
+			if (rpds.loadingParameters.length == 0) {
+				valuesKey = "vk";
+				for (var key in rpds.args) {
+					valuesKey = valuesKey + key + "_" + rpds.args[key];
+				}
+			}
+			return valuesKey;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method is called when an element named "values" is found in the service response XML.
+			It is assumed that there are child "value" tags with a displayName attribute. These will
+			be used to generate wcfPropertyValue objects.
+			
+			Any existing previous service-requested wcfPropertyValue objects for the parent wcfPropertyDefinition
+			will be cleared for each data request.
+			
+			@param node requestParent: the parent node for this service request
+			@param XML e: "values" data element
+			@param number requestIdentifier: unique request identifier
+		-->
+		<method name="parseValues" args="requestParent,e,requestIdentifier">
+			<![CDATA[
+			var valuesKey = this.getValuesKey(requestParent);
+			if (valuesKey != null) {	
+				this.parent.releasePropertyValues(valuesKey);
+				var nodes = e.childNodes;
+				for (var i = 0; i < nodes.length; i++) {
+					var node = nodes[i];
+					if(node.nodeName == "value") {
+						var displayName = "";
+						var isDefault = (node.attributes["isDefault"] == "true") ? true : false;
+						var value = wcfXMLUtil.getNodeValue(node);
+
+						displayName = node.attributes["displayName"];
+					
+						if((value != "") && (displayName != "")) {
+							this.parent.createPropertyValue({value: value, displayName: displayName, fromService: true, valuesKey: valuesKey, isDefault: isDefault});
+						}
+					}
+				}
+				if (this.parent["onvalueServiceComplete"]) {
+					this.parent.onvalueServiceComplete.sendEvent();
+				}
+			}
+			]]>
+		</method>
+	</class>
+</library>

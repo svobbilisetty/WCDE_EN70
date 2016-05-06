@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="mktEMarketingSpotProperties">
+		<PropertyTabs name="tabs">	
+			<PropertyTabPane name="general" text="${mktMarketingResources.generalProperties}">
+				<PropertyPane name="pane">
+					<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+					<PropertyGroup groupTitle="${mktMarketingResources.emarketingSpotProperties}" hideHeaderWhenOnlyGroup="true" name="group1" open="true">
+						<PropertyInputText helpText="${mktMarketingResources.help_espot_name}" promptText="${mktMarketingResources.objectName}" propertyName="name" required="true"/>
+						<PropertyInputMultiLineText promptText="${mktMarketingResources.description}" propertyName="description"/>		
+						
+						<PropertyCheckbox falseValue="0" helpText="${mktMarketingResources.help_espot_displayContent}" promptText="${mktMarketingResources.supportsMarketingContent}" propertyName="supportsMarketingContent" trueValue="1"/>
+						<PropertyCheckbox falseValue="0" helpText="${mktMarketingResources.help_espot_displayCategories}" promptText="${mktMarketingResources.supportsCatalogGroup}" propertyName="supportsCatalogGroup" trueValue="1"/>
+						<PropertyCheckbox falseValue="0" helpText="${mktMarketingResources.help_espot_displayCatalogEntries}" promptText="${mktMarketingResources.supportsCatalogEntry}" propertyName="supportsCatalogEntry" trueValue="1"/>
+						<PropertyCheckbox falseValue="0" helpText="${mktMarketingResources.help_espot_widget}" promptText="${mktMarketingResources.supportsWidget}" propertyName="supportsWidget" trueValue="1"/>
+						
+						<PropertyGroup collapsable="false" name="mktEMarketingSpotDefaultTitleContentGridPropertyGroup1">
+							<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="EMarketingSpot" propertyName="objectType"/>
+							<PropertyChildListEditor allowCreateReferencedPrimary="true" sequencePropertyName="sequence" helpText="${mktMarketingResources.help_espot_defaultTitleContent}" listDefinitionName="mktEMarketingSpotDefaultContentGrid" name="DefaultEMarketingSpotTitleContent1" objectTypes="DefaultEMarketingSpotTitleContentReference,InheritedDefaultEMarketingSpotTitleContentReference" promptText="${mktMarketingResources.defaultTitleContent}" required="false"/>
+						</PropertyGroup>
+						<PropertyGroup collapsable="false" name="mktEMarketingSpotDefaultTitleContentGridPropertyGroup2">
+							<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition" enablementValue="InheritedEMarketingSpot" propertyName="objectType"/>
+							<PropertyChildListEditor sequencePropertyName="sequence" displayObjectStoreName="true" helpText="${mktMarketingResources.help_espot_defaultTitleContent}" listDefinitionName="mktEMarketingSpotDefaultContentGrid" name="DefaultEMarketingSpotTitleContent2" objectTypes="InheritedDefaultEMarketingSpotInheritedTitleContentReference" promptText="${mktMarketingResources.defaultTitleContent}" required="false"/>
+							<PropertyChildListEditor allowCreateReferencedPrimary="true" sequencePropertyName="sequence" displayStoreName="true" helpText="${mktMarketingResources.help_espot_defaultTitleContentOverride}" listDefinitionName="mktEMarketingSpotDefaultContentGrid" name="DefaultEMarketingSpotTitleContent3" objectTypes="DefaultEMarketingSpotTitleContentReference,InheritedDefaultEMarketingSpotTitleContentReference" promptText="${mktMarketingResources.defaultTitleContent}" required="false"/>
+						</PropertyGroup>
+						
+						<PropertyGroup collapsable="false" name="mktEMarketingSpotDefaultContentGridPropertyGroup1">
+							<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="EMarketingSpot" propertyName="objectType"/>
+							<PropertyChildListEditor helpText="${mktMarketingResources.help_espot_defaultContent}" listDefinitionName="mktEMarketingSpotDefaultContentGrid" name="DefaultEMarketingSpotContent1" objectTypes="DefaultEMarketingSpotContentReference,InheritedDefaultEMarketingSpotContentReference" promptText="${mktMarketingResources.defaultContent}" required="false"/>
+						</PropertyGroup>
+						<PropertyGroup collapsable="false" name="mktEMarketingSpotDefaultContentGridPropertyGroup2">
+							<EnablementCondition checkObjectDefinition="true" conditionId="emarketingSpotCondition2" enablementValue="InheritedEMarketingSpot" propertyName="objectType"/>
+							<PropertyChildListEditor displayObjectStoreName="true" helpText="${mktMarketingResources.help_espot_defaultContent}" listDefinitionName="mktEMarketingSpotDefaultContentGrid" name="DefaultEMarketingSpotContent2" objectTypes="InheritedDefaultEMarketingSpotInheritedContentReference" promptText="${mktMarketingResources.defaultContent}" required="false"/>
+							<PropertyChildListEditor displayStoreName="true" helpText="${mktMarketingResources.help_espot_defaultContentOverride}" listDefinitionName="mktEMarketingSpotDefaultContentGrid" name="DefaultEMarketingSpotContent3" objectTypes="DefaultEMarketingSpotContentReference,InheritedDefaultEMarketingSpotContentReference" promptText="${mktMarketingResources.defaultContent}" required="false"/>						
+						</PropertyGroup>
+						<PropertyGroup collapsable="false" name="mktEMarketingSpotRemoteWidgetPropertyGroup1">
+							<PropertyGroup collapsable="false" name="mktEMarketingSpotRemoteWidgetPropertyGroup2">
+								<PropertyGetRemoteWidget helpLinkURL="tasks/tsbwidgetesct.htm" helpText="${mktMarketingResources.help_espot_remote_widget}" package="mkt" promptText="${mktMarketingResources.remoteWidgets}" propertyName="name"/>
+			           			<EnablementCondition contextName="remoteWidgetsEnabled" enablementValue="true"/>
+							</PropertyGroup> 
+							<PropertyEMarketingFeedURL helpText="${mktMarketingResources.help_espot_feed}" package="mkt" promptText="${mktMarketingResources.feedURL}" propertyName="name"/>
+							<EnablementOrCondition conditionId="storeTypeCondition" negate="true">
+			                          <EnablementCondition conditionId="demandHubCondition" contextName="storeType" enablementValue="CHS"/>
+			                          <EnablementCondition conditionId="supplierHubCondition" contextName="storeType" enablementValue="SCP"/>
+			                          <EnablementCondition conditionId="consumerDirectResellerStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="RPS"/>
+			                          <EnablementCondition conditionId="b2bResellerStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="BRP"/>
+			                          <EnablementCondition conditionId="consumerDirectHostedStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="MPS"/>
+			                          <EnablementCondition conditionId="b2bHostedStoreFrontAssetStoreCondition" contextName="storeType" enablementValue="BMP"/>
+			                   </EnablementOrCondition>   
+						</PropertyGroup>
+					</PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+			<!--  This property tab pane displays the references of an E-Markting Spot -->
+			<PropertyTabPane name="mktEMarketingSpotReferencesTabPane" text="${mktMarketingResources.references}">
+				<PropertyPane name="mktEMarketingSpotReferencesPane">
+					<PropertyGroup collapsable="false" name="mktEMarketingSpotFoldersGroup">
+						<!--- The reference list editor for a list of {@link EMarketingSpotFolder E-Marketing Spot folder} which are associated with a {@link EMarketingSpot E-Marketing Spot}. -->
+			         	<PropertyReferenceList listDefinitionName="mktEMarketingSpotFolderReferenceGrid" name="mktEMarketingSpotFolderReferenceList" promptText="${mktMarketingResources.EMarketingSpotFolderReferences}" referenceObjectPaths="*/EMarketingSpotFolderItemReference,*/EMarketingSpotFolderInheritedItemReference,*/InheritedEMarketingSpotFolderInheritedItemReference"/>
+					 </PropertyGroup>
+				</PropertyPane>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+	
+	<!--- 
+		This grid displays the contents and characteristics of a list of {@link EMarketingSpotFolder E-Marketing Spot folder}. This grid is used in the 
+		{@link mktEMarketingSpotReferencesTabPane References Tab} to list the E-Marketing Spot folders that have references to a E-Marketing Spot.	
+	-->
+	<ObjectGrid definitionName="mktEMarketingSpotFolderReferenceGrid" preferenceKey="mktEMarketingSpotFolderReferenceGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.EMarketingSpotFolderType}" width="60"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.EMarketingSpotFolderStore}" width="125"/>
+		<GridText datatype="number" editable="false" name="uniqueID" propertyName="folderId" text="${mktMarketingResources.EMarketingSpotFolderList_uniqueID}" visible="false" width="100"/>
+		<GridText editable="false" name="folderName" propertyName="identifier" required="true" text="${mktMarketingResources.EMarketingSpotFolderList_identifier}" visible="true" width="150"/>
+		<GridText editable="false" name="description" propertyName="description" text="${mktMarketingResources.EMarketingSpotFolderList_description}" visible="false" width="250"/>
+		<GridText editable="false" name="path" propertyName="path" text="${mktMarketingResources.EMarketingSpotFolderList_path}" visible="true" width="250"/>
+ 	</ObjectGrid>
+	
+	
+</Definitions>

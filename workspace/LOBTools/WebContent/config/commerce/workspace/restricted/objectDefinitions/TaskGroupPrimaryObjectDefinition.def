@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		@keywords private
+	-->
+	<PrimaryObjectDefinition creatable="true" initializeObjectStoreId="false" definitionName="TaskGroup" displayName="${wspWorkspaceResources.taskGroup}"
+		displayNameProperty="taskGroupName" helpLink="tasks/twocreatetg.htm" idProperty="taskGroupId" objectType="TaskGroup" refreshInterval="7"
+		propertiesDefinitionName="wspTaskGroupProperties" searchType="FindTaskGroups" headerIcon="taskGroupHeaderIcon" icon="taskGroupIcon"
+		browseFilterType="CURRENT" newObjectMenuItemText="${wspWorkspaceResources.newTaskGroup}">
+		
+		<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+		
+		<!--- Refresh the object when its status is 'Commit in progress' or 'Publish in progress'. -->
+		<EnablementOrCondition conditionId="statusToRefresh" conditionType="refreshCondition">
+			<EnablementCondition conditionId="status1" conditionType="refreshCondition" enablementValue="8" propertyName="status"/>
+			<EnablementCondition conditionId="status2" conditionType="refreshCondition" enablementValue="12" propertyName="status"/>
+		</EnablementOrCondition>
+		
+		<ParentReferenceObjectDefinition baseDefinitionName="wspChildTaskObjectDefinition" >
+			<EnablementOrCondition>
+				<EnablementCondition propertyName="status" enablementValue="0" />
+				<EnablementCondition propertyName="status" enablementValue="1" />
+				<EnablementCondition propertyName="taskGroupId" enablementValue="" />
+			</EnablementOrCondition>
+		</ParentReferenceObjectDefinition>
+
+		<ChildObjectDefinition baseDefinitionName="wspTaskGroupComments">
+			<EnablementAndCondition>
+				<EnablementOrCondition>
+					<EnablementCondition propertyName="status" enablementValue="1" />
+					<EnablementCondition propertyName="status" enablementValue="2" />
+					<EnablementCondition propertyName="status" enablementValue="3" />
+				</EnablementOrCondition>
+				<EnablementOrCondition>
+					<EnablementCondition contextName="workspaceManager" enablementValue="true"/>
+					<EnablementCondition contextName="workspaceContributor" enablementValue="true"/>
+					<EnablementAndCondition>
+						<EnablementCondition contextName="workspaceApprover" enablementValue="true"/>
+						<EnablementOrCondition>
+							<LogonIdEnablementCondition package="wsp" parentProperty="true" parentType="TaskGroup" objectPath="ApproverAssociation/Approver" propertyName="logonId" conditionId="approverIdCondition1"/>
+							<LogonIdEnablementCondition package="wsp" objectPath="ApproverAssociation/Approver" propertyName="logonId" conditionId="approverIdCondition2"/>
+						</EnablementOrCondition>
+					</EnablementAndCondition>
+				</EnablementOrCondition>
+			</EnablementAndCondition>
+		</ChildObjectDefinition>
+		
+		<ChildObjectDefinition baseDefinitionName="wspTaskGroupHistory"/>
+
+		<ReferenceObjectDefinition allowDuplicates="false" derivedId="true" idProperty="associationId" objectType="ApproverAssociation" referencedTypes="Approver" />
+
+		<NavigationListDefinition baseDefinitionName="wspTaskGridChildList" helpLink="tasks/twocreatetg.htm" />
+
+		<!--- Retrieves the {@link wspWorkspacePrimaryObjectDefinition Workspace} object that refers to this object. -->
+		<GetReferencesService sendWorkspaceContext="false" url="/cmc/GetWorkspaceByTaskGroupId">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+		</GetReferencesService>
+
+		<!--- Retrieves the {@link wspTaskPrimaryObjectDefinition Task} objects that are children of this task group. -->
+		<GetChildrenService sendWorkspaceContext="false" objectTypes="ChildTask" url="/cmc/GetTasksByTaskGroupId">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</GetChildrenService>
+
+		<!--- Retrieves the {@link wspTaskGroupComments TaskGroupComment} child objects. -->
+		<GetChildrenService objectTypes="TaskGroupComment" sendWorkspaceContext="false" url="/cmc/GetTaskGroupComments">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+		</GetChildrenService>
+		
+		<!--- Retrieves the Approvers for this task group. -->
+		<GetChildrenService sendWorkspaceContext="false" objectTypes="ApproverAssociation" url="/cmc/GetTaskGroupApprovers">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+		</GetChildrenService>
+
+		<RefreshService url="/cmc/GetTaskGroup">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+			<ServiceParam contextName="workspaceManager" name="workspaceManager" />
+			<ServiceParam contextName="workspaceApprover" name="workspaceApprover" />
+		</RefreshService>
+
+		<CreateService url="/cmc/CreateTaskGroup" sendMultiValues="true" refreshChildren="true">
+			<ServiceParam name="workspaceId" optional="false" parentProperty="true" parentType="Workspace" propertyName="workspaceId" />
+			<ServiceParam name="approverId" objectPath="ApproverAssociation/Approver" propertyName="memberId" optional="true" />
+		</CreateService>
+
+		<UpdateService url="/cmc/UpdateTaskGroup" sendMultiValues="true">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+			<ServiceParam name="approverId" objectPath="ApproverAssociation/Approver" propertyName="memberId" optional="true" />
+		</UpdateService>
+
+		<DeleteService url="/cmc/DeleteTaskGroup">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+		</DeleteService>
+
+		<!--- Custom service defined to activate task group. -->
+		<CustomService displayName="${wspWorkspaceResources.activate}" refreshChildren="true" sendWorkspaceContext="false" url="/cmc/ActivateTaskGroup" >
+			<EnablementAndCondition>
+				<EnablementCondition enablementValue="0" propertyName="status" />
+				<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+				<EnablementCondition propertyName="workspaceStatus" enablementValue="Active" parentType="Workspace" parentProperty="true" resolvePrimaryParent="true"/>
+			</EnablementAndCondition>
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+		</CustomService>
+
+		<!--- Custom service defined to return task group to active. -->
+		<CustomService displayName="${wspWorkspaceResources.returnToActive}" refreshChildren="true" url="/cmc/ReturnToActiveTaskGroup">
+			<EnablementAndCondition>
+				<EnablementOrCondition>
+					<EnablementCondition enablementValue="2" propertyName="status" />
+					<EnablementCondition enablementValue="3" propertyName="status" />
+					<EnablementCondition enablementValue="4" propertyName="status" />
+					<EnablementCondition enablementValue="7" propertyName="status" />
+				</EnablementOrCondition>
+				<EnablementCondition contextName="workspaceManager" enablementValue="true" />
+			</EnablementAndCondition>
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId" />
+		</CustomService>
+
+		<!--- Retrieves the {@link wspTaskGroupHistory TaskGroupHistory} child objects. -->
+		<GetChildrenService objectTypes="TaskGroupHistory" sendWorkspaceContext="false" url="/cmc/GetTaskGroupHistory">
+			<ServiceParam name="taskGroupId" propertyName="taskGroupId"/>
+		</GetChildrenService>
+
+		<TaskGroupApproveClientAction package="wsp" />
+		<TaskGroupRejectClientAction package="wsp" />
+		<TaskGroupCancelClientAction package="wsp" />
+
+		<PropertyDefinition displayName="${wspWorkspaceResources.taskGroupName}" maximumSize="254" propertyName="taskGroupName" required="true" trim="true" />
+		<PropertyDefinition displayName="${wspWorkspaceResources.taskGroupDueDate}" propertyName="dueDate" type="datetime" />
+		<PropertyDefinition displayName="${wspWorkspaceResources.taskGroupCommitDate}" propertyName="promotionDate" type="datetime" />
+
+		<PropertyDefinition propertyName="isPromotionDateSet">
+			<PropertyValue value="false" isDefault="true" />
+			<PropertyValue value="true" />
+		</PropertyDefinition>
+
+		<RequiredParentValidator errorMessage="${wspWorkspaceResources.missingWorkspaceParent}" validatorId="parentExistsCheck" validatorType="requiredParentWorkspaceValidator">
+		</RequiredParentValidator>
+
+		<Xml name="template">
+			<status>0</status>
+		</Xml>
+		
+		<PropertyDefinition propertyName="status" displayName="${wspWorkspaceResources.status}" copyProtected="true" send="false">
+			<PropertyValue icon="taskGroupInactiveIcon" displayName="${wspWorkspaceResources.taskGroupStatusInactive}" value="0" />
+ 			<PropertyValue icon="taskGroupWorkingIcon" displayName="${wspWorkspaceResources.taskGroupStatusWorking}" value="1" />
+ 			<PropertyValue icon="taskGroupReadyForApprovalIcon" displayName="${wspWorkspaceResources.taskGroupStatusReadyForApproval}" value="2" />
+ 			<PropertyValue icon="taskGroupApprovedIcon" displayName="${wspWorkspaceResources.taskGroupStatusApproved}" value="3" />
+ 			<PropertyValue icon="taskGroupReadyToCommitIcon" displayName="${wspWorkspaceResources.taskGroupStatusReadyToCommit}" value="4" />
+ 			<PropertyValue icon="taskGroupCompletedIcon" displayName="${wspWorkspaceResources.taskGroupStatusCompleted}" value="5" />
+ 			<PropertyValue icon="taskGroupCanceledIcon" displayName="${wspWorkspaceResources.taskGroupStatusCanceled}" value="6" />
+ 			<PropertyValue icon="taskGroupCommitFailedIcon" displayName="${wspWorkspaceResources.taskGroupStatusCommitFailed}" value="7" />
+ 			<PropertyValue icon="taskGroupCommitInProgressIcon" displayName="${wspWorkspaceResources.taskGroupStatusCommitInProgress}" value="8" />
+ 			<PropertyValue icon="taskGroupCommittedIcon" displayName="${wspWorkspaceResources.taskGroupStatusCommitted}" value="9" />
+ 			<PropertyValue icon="taskGroupReadyToPublishIcon" displayName="${wspWorkspaceResources.taskGroupStatusReadyToPublish}" value="10" />
+ 			<PropertyValue icon="taskGroupPublishedIcon" displayName="${wspWorkspaceResources.taskGroupStatusPublished}" value="11" />
+ 			<PropertyValue icon="taskGroupPublishInProgressIcon" displayName="${wspWorkspaceResources.taskGroupStatusPublishInProgress}" value="12" />
+ 			<PropertyValue icon="taskGroupPublishFailedIcon" displayName="${wspWorkspaceResources.taskGroupStatusPublishFailed}" value="13" />
+		</PropertyDefinition>
+
+	</PrimaryObjectDefinition>
+
+</Definitions>

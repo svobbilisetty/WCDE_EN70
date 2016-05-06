@@ -1,0 +1,856 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2009, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+
+	<!---
+		@keywords private
+		This class is used to generate SKUs for a product.
+		The number of SKUs created is based on all possible combinations of the
+		product's defining attributes up to a customizable maximum.
+		If the product has no defining attributes, a single SKU is created with no defining attributes.
+		All properties from the product are copied to the SKU with the exception
+		of merchandising associations.
+		A code for each SKU is created based on the product code and the ordinal of the generated SKU. 
+	-->
+	<class name="catGenerateProductSKUClientAction" extends="wcfClientAction"
+			addToEditMenu="false"
+			toolbarIcon="generateSKUsToolbarIcon"
+			displayName="${catalogResources.generateSKUs.string}"
+			allowMultipleSelection="false">
+
+		<!---
+			@keywords private
+			This method is invoked by the framework when the client action to generate SKUs
+			is selected from the edit menu, utilities menu or tool bar.
+			@param wcfModelObject objects: The array of selected model objects. Always one in this case.
+		-->
+		<method name="performAction" args="objects">
+			<![CDATA[
+				if(objects)
+				{
+					catGenerateSKUsActionHandler.triggerAction(objects[0]);
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Returns true if the following conditions are true.
+			This client action is enabled for the product by evaluating
+			the associated {@link wcfEnablementCondition} object.
+			The user has access to the product.
+			The workspace is not read only.
+			This method is only used to determine if this action is visible to the user.
+			It is not invoked from the {@link wcfClientAction#doClientAction} method.
+			
+			@param wcfModelObject o: the object on which you want to perform this client action
+			@return boolean: true if the client action is enabled
+		-->
+		<method name="isEnabled" args="o">
+			<![CDATA[
+			var enabled = super.isEnabled(o);
+			
+			if (enabled && o.model.oEditor.respectWorkspaceContext) {
+				var readOnlyModeContextValue = wcfContextUtil.findContextValue(null, "readOnlyMode");				
+				enabled = (readOnlyModeContextValue.value != "true");
+			}
+			if (enabled && o.isContextReadOnly()) {
+				enabled = false;
+			}
+			return enabled;
+			]]>
+		</method>
+	</class>
+	
+	<!---
+		@keywords private
+		This action handler is used to generate the SKUs for a product.
+		The handler will first load all the product children. Then all SKU combination
+		will be calculated and then the new SKUs will be generated.
+	-->
+	<node id="catGenerateSKUsActionHandler">
+		<!---
+			Current generate action. A generate action must be deferred until the product children have loaded.
+		-->
+		<attribute name="currentAction" value="null" />
+
+		<!---
+			@keywords private
+			Setup call backs.
+		-->
+		<handler name="oninit">
+			<![CDATA[
+				this.checkChildrenLoadedDel = new lz.Delegate(this, "checkChildrenLoaded");
+				this.checkChildrenErrorDel = new lz.Delegate(this, "checkChildrenError");
+				this.checkAttributeChildrenLoadedDel = new lz.Delegate(this, "checkAttributeChildrenLoaded");
+				this.checkAttributeChildrenErrorDel = new lz.Delegate(this, "checkAttributeChildrenError");
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			Cleanup objects.
+		-->
+		<method name="destroy">
+			<![CDATA[
+			if (this["checkChildrenLoadedDel"])
+			{
+				this.checkChildrenLoadedDel.unregisterAll();
+				delete this.checkChildrenLoadedDel;
+			}
+			if (this["checkChildrenErrorDel"])
+			{
+				this.checkChildrenErrorDel.unregisterAll();
+				delete this.checkChildrenErrorDel;
+			}
+			if (this["checkAttributeChildrenLoadedDel"])
+			{
+				this.checkAttributeChildrenLoadedDel.unregisterAll();
+				delete this.checkAttributeChildrenLoadedDel;
+			}
+			if (this["checkAttributeChildrenErrorDel"])
+			{
+				this.checkAttributeChildrenErrorDel.unregisterAll();
+				delete this.checkAttributeChildrenErrorDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method sets up the action to prepare to generate the SKUs.
+			@param wcfModelObject object: The product object for which the SKUs will be generated.
+		-->
+		<method name="triggerAction" args="object">
+			<![CDATA[
+				object.incrementReferenceCount();
+				var action = {
+					actionHandler: this,
+					object: object,
+					attributes: null,
+					model: object.model
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Release the specified action.
+			@param Object action: The action instance.
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+				if(action.object!=null)
+				{
+					action.object.decrementReferenceCount();
+				}
+				if (action.attributes != null) {
+					for (var i = 0; i < action.attributes.length; i++) {
+						action.attributes[i].decrementReferenceCount();
+					}
+				}
+				if (action == this.currentAction) {
+					this.checkChildrenLoadedDel.unregisterAll();
+					this.checkChildrenErrorDel.unregisterAll();
+					this.checkAttributeChildrenLoadedDel.unregisterAll();
+					this.checkAttributeChildrenErrorDel.unregisterAll();
+					this.currentAction = null;
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Handle the call back and perform the action to create the new SKUs.
+			@param Object action: The action instance.
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+				var oDefLocal = action.object.objectDefinition.getChildDefinition("CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues");
+				var oDefInherited = action.object.objectDefinition.getChildDefinition("CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues");
+				var defArray = [];
+				defArray.push(oDefLocal);
+				defArray.push(oDefInherited);
+				
+				this.currentAction = action;
+				this.checkChildrenLoadedDel.register(action.object, "onGetChildrenServiceCompleted");
+				this.checkChildrenErrorDel.register(action.object, "onGetChildrenServiceError");
+				action.object.checkParsedData();
+				action.object.forceParseData = true;
+				action.object.setHasReleasableChildren();
+				
+				action.object.setGetChildrenServicesStale(oDefLocal, false);
+				action.object.setGetChildrenServicesStale(oDefInherited, false);
+				action.object.loadChildren(catGenerateSKUsUtil.getProductChildObjectDefinitions(action.object.objectDefinition), true);
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method returns an array of all the attribute values for all the attributes of a product which are from the attribute dictionary.
+			@param object attributes: The attribute to find the values of.
+			@param boolean isInherited: True if the attributes are inherited, false otherwise. The default value is false.
+		-->
+		<method name="getADAttributeValues" args="attributes, isInherited=false">
+			<![CDATA[
+				// Check if product has unsaved attribute dictionary attributes
+				for (var i = 0; i < attributes.length; i++) {
+					if (attributes[i].getPropertyValue("attrId") == "" ) {
+						messageLogger.logException(null, catalogResources.productIsNotSaved.string);
+						return;
+					}
+				}
+				
+				var prefix = "";
+				
+				if (isInherited)
+				{
+					prefix = "Inherited";
+				}
+				
+				var total = 1;
+				var allValues = new Array(attributes.length);
+				var attributeCount = 0; 
+				
+				for (var i = 0; i < attributes.length; i++) {
+					var attribute = attributes[i];
+					
+					var attributeId = attribute.getPropertyValue("attrId");
+					var attributeDataType = attribute.getPropertyValue("attrDataType", prefix + "AttributeDictionaryAttributeWithAllowedValues");
+					var definingAttributeAllowedValues = attribute.getObjects(prefix + "AttributeDictionaryAttributeWithAllowedValues/" + prefix + "AttributeDictionaryAttribute" + attributeDataType + "Value");
+					var	inheritedDefiningAttributeLocalAllowedValues;
+					var tempValueCount = 0;
+					
+					var attributeAllowedValuePropertyName = "value";
+					tempValueCount = definingAttributeAllowedValues.length;
+					
+					if (isInherited)
+					{
+						inheritedDefiningAttributeLocalAllowedValues = attribute.getObjects(prefix + "AttributeDictionaryAttributeWithAllowedValues/AttributeDictionaryAttribute" + attributeDataType + "Value");
+						tempValueCount += inheritedDefiningAttributeLocalAllowedValues.length;
+					}
+
+					var allowedValues = new Array(tempValueCount);
+					var valueCount = 0;
+					for (var j = 0; j < definingAttributeAllowedValues.length; j++) {
+						var allowedValue = definingAttributeAllowedValues[j];
+						var value = allowedValue.getPropertyValue(attributeAllowedValuePropertyName, "AttributeDictionaryAttributeValueDescription");
+						
+						var valueId = allowedValue.getPropertyValue("attrValId");
+						if(value != null && value != "") {
+							allowedValues[valueCount++] = {attributeId: attributeId, value: value, valueId: valueId, isInherited: isInherited};
+						}
+					}
+					
+					if (isInherited)
+					{
+						for (var j = 0; j < inheritedDefiningAttributeLocalAllowedValues.length; j++) {
+							var allowedValue = inheritedDefiningAttributeLocalAllowedValues[j];
+							var value = allowedValue.getPropertyValue(attributeAllowedValuePropertyName, "AttributeDictionaryAttributeValueDescription");
+							var valueId = allowedValue.getPropertyValue("attrValId");
+							if(value != null && value != "") {
+								allowedValues[valueCount++] = {attributeId: attributeId, value: value, valueId: valueId, isInherited: true};
+							}
+						}
+					}
+					if (valueCount > 0) {
+						total = total * valueCount;
+						allowedValues.length = valueCount;
+						allValues[attributeCount++] = allowedValues;
+					}
+				}
+				allValues.length = attributeCount;
+				
+				return allValues;
+			]]>
+		</method>
+		
+		
+			<!---
+			@keywords private
+			This method returns an array of all the attribute values for all the classic attributes for a product.
+			@param object attributes: The attribute to find the values of.
+			@param boolean isInherited: True if the attributes are inherited, false otherwise. The default value is false.
+		-->
+		<method name="getAttributeValues" args="attributes">
+			<![CDATA[
+				// Check if product has unsaved attributes
+				for (var i = 0; i < attributes.length; i++) {
+					if (attributes[i].getPropertyValue("xdata_attrId") == "" ) {
+						messageLogger.logException(null, catalogResources.productIsNotSaved.string);
+						return;
+					}
+				}
+				
+				var allValues = new Array(attributes.length);
+				var attributeCount = 0;
+				for (var i = 0; i < attributes.length; i++) {
+					var attribute = attributes[i];
+					var attributeId = attribute.getPropertyValue("xdata_attrId");
+					var attributeDataType = attribute.getPropertyValue("attrDataType");
+					var definingAttributeAllowedValues = attribute.getObjects("CatalogEntry" + attributeDataType + "DefiningAttributeAllowedValue");
+					var attributeAllowedValuePropertyName = "allowedAttrVal" + attributeDataType + "Value"; 
+					
+					var allowedValues = new Array(definingAttributeAllowedValues.length);
+					var valueCount = 0;
+					for (var j = 0; j < definingAttributeAllowedValues.length; j++) {
+						var allowedValue = definingAttributeAllowedValues[j];
+						var value = allowedValue.getPropertyValue(attributeAllowedValuePropertyName, "AttributeAllowedValueLanguageSensitiveObject");
+						if(value != null && value != "") {
+							allowedValues[valueCount++] = {attributeId: attributeId, value: value};
+						}
+					}
+					if (valueCount > 0) {
+						allowedValues.length = valueCount;
+						allValues[attributeCount++] = allowedValues;
+					}
+				}
+				allValues.length = attributeCount;
+				
+				return allValues;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method returns a count of the number of skus that can be created given an array of attribute values. You must pass in an array of attributes which in turn has an array of values for each of those attributes.
+			@param array allValues: The array of attributes which in turn is an array of attribute values for each of those attributes. 
+		-->
+		<method name="getSKUCount" args="allValues">
+			<![CDATA[
+				var total = 0;
+				if (allValues.length > 0)
+				{
+					for (var i = 0; i < allValues.length; i++)
+					{
+						if(total == 0)
+						{
+							total = allValues[i].length;
+						} else {
+							total = total * allValues[i].length;
+						}
+					}	
+				}
+				
+				return total;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method generates the SKUs for the product.
+			@param object action: The action instance.
+		-->
+		<method name="generateSKUsAction" args="action">
+			<![CDATA[
+				var product = action.object;
+				var productCode = product.getPropertyValue("partnumber");
+				var definingAttributes = product.getObjects("CatalogEntryDefiningAttribute");
+				var attrDictDefiningAttributes = product.getObjects("CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues");
+				var attrDictInheritedDefiningAttributes = product.getObjects("CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues");
+				
+				var isAttributeDictionary = false;
+				var attributeCount = 0;
+				var allValues;
+				var allInheritedValues;
+				var total;				
+				
+				//Determine if the attribute dictionary is being used
+				if ((attrDictDefiningAttributes != null && attrDictDefiningAttributes.length > 0) || (attrDictInheritedDefiningAttributes != null && attrDictInheritedDefiningAttributes.length > 0))
+				{
+					isAttributeDictionary = true;
+				}
+				
+				if (isAttributeDictionary)
+				{
+					//Find all the attribute values for each attribute
+					allValues = getADAttributeValues(attrDictDefiningAttributes);
+					
+					//Find all the inherited attributes and their local and inherited values
+					allInheritedValues = getADAttributeValues(attrDictInheritedDefiningAttributes, true);
+					allValues = allValues.concat(allInheritedValues);
+				}
+				else
+				{
+					allValues = getAttributeValues(definingAttributes);
+				}	
+				total = getSKUCount(allValues);
+				attributeCount = allValues.length;
+				
+				var maxSKUs = 500;
+				if (total > maxSKUs) {
+					messageLogger.logStatus(catalogResources.replaceValues("limitExceeded", [maxSKUs,wcfGlobalizationUtil.formatNumberToDisplayFormat(total, 0),productCode]));
+					total = maxSKUs;
+				} else
+				{
+					if ( total == 0) {
+						messageLogger.logStatus(catalogResources.replaceValues("generatingSKU", [total,productCode]));
+					} else
+					{
+						messageLogger.logStatus(catalogResources.replaceValues("generatingSKUs", [total,productCode]));
+					}
+				}
+
+				var skuValues = null;
+				if(attributeCount != 0)
+				{
+					skuValues = new Array(total); 
+					for (var i = 0; i < total; i++) {
+						skuValues[i] = new Array(attributeCount);
+					}
+					
+					var repeatTotal = 1;
+					for (var i = 0; i < attributeCount; i++) {
+						var skuIndex = 0;
+						var allowedValues = allValues[i];
+						var allowedValueTotal = allowedValues.length;
+						var allowedValueIndex = 0;
+						var value = allowedValues[0];
+						var repeatCount = 0;
+						for (var j = 0; j < total; j++) {
+							if (repeatCount == repeatTotal) {
+								allowedValueIndex++;
+								if (allowedValueIndex == allowedValueTotal) {
+									allowedValueIndex = 0;
+								}
+								value = allowedValues[allowedValueIndex];
+								repeatCount = 0;
+							}
+							skuValues[j][i] = value;
+							repeatCount++;
+						}
+						repeatTotal *= allowedValueTotal;
+					}
+				}
+				if (skuValues == null || skuValues.length == 1) {
+					if (isAttributeDictionary)
+					{
+						catGenerateSKUsUtil.createADSKUObject(product, null, skuValues != null ? skuValues[0] : null, true);
+					}
+					else
+					{
+						catGenerateSKUsUtil.createSKUObject(product, null, skuValues != null ? skuValues[0] : null, true);
+					}
+				}
+				else {
+					for (var i = 0; i < skuValues.length; i++) {
+					
+						if (isAttributeDictionary)
+						{
+							catCreateSKUActionHandler.triggerAction(product, action.attributes, i + 1, skuValues[i], i == (skuValues.length-1), true );
+						}
+						else
+						{
+							catCreateSKUActionHandler.triggerAction(product, null, i + 1, skuValues[i], i == (skuValues.length-1), false );
+						}
+						
+					}
+				}
+				// Display SKU grid for product
+				for (var i = 0; i < product.objectDefinition.navigationListDefinitions.length; i++) {
+					if (product.objectDefinition.navigationListDefinitions[i].name == "ProductChildSKUList") {
+						product.setAttribute("open", true);
+						product.model.oEditor.selectOpenObject(product, product.objectDefinition.navigationListDefinitions[i]);
+						break;
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Check to see if the product's children have been loaded.
+			After loading, check if AD defining attributes are used and load values,
+			otherwise do the SKU generation.
+		-->
+		<method name="checkChildrenLoaded" args="e=null">
+			<![CDATA[
+				var action = this.currentAction;
+				
+				if (action.object.isGetChildrenServicesLoaded(catGenerateSKUsUtil.getProductChildObjectDefinitions(action.object.objectDefinition), true))
+				{
+					var attrDictDefiningAttributes = action.object.getObjects("CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues/AttributeDictionaryAttributeWithAllowedValues");
+					var attrDictInheritedDefiningAttributes = action.object.getObjects("CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues/InheritedAttributeDictionaryAttributeWithAllowedValues");
+					action.attributes = attrDictDefiningAttributes.concat(attrDictInheritedDefiningAttributes);				
+					// Check if AD values need to be loaded
+					if (action.attributes.length > 0)
+					{
+						// Clean up loading product children
+						action.object.forceParseData = false;
+						this.checkChildrenLoadedDel.unregisterAll();
+						this.checkChildrenErrorDel.unregisterAll();
+				
+						// Load attribute values
+						for (var i=0; i<action.attributes.length; i++){
+							action.attributes[i].incrementReferenceCount();
+							this.checkAttributeChildrenLoadedDel.register(action.attributes[i], "onGetChildrenServiceCompleted");
+							this.checkAttributeChildrenErrorDel.register(action.attributes[i], "onGetChildrenServiceError");
+							action.attributes[i].loadChildren(null, true);
+						}
+					} else {
+						this.generateSKUsAction(action);
+						this.loadComplete();
+					}
+				}
+				else if (!action.object.isGetChildrenServicesLoading()) {
+					this.loadComplete();
+				}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Check to see if the Attibute's children have been loaded.
+			When loaded, do the SKU generation.
+		-->
+		<method name="checkAttributeChildrenLoaded" args="e=null">
+			<![CDATA[
+				var action = this.currentAction;
+				var allDone = true;
+				for (var i=0; i<action.attributes.length; i++){
+					if (!action.attributes[i].isGetChildrenServicesLoaded(null, true)) {
+						if (!action.attributes[i].isGetChildrenServicesLoading()) {
+							this.loadAttributesComplete();
+						}
+						allDone = false;
+						break;
+					} 
+				}
+				if (allDone) {
+					this.generateSKUsAction(action);
+					this.loadAttributesComplete();
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private		
+			Check current action to see if the object's get children requests have an error.
+			If there was an error loading the children, then the action will be aborted.
+		-->
+		<method name="checkChildrenError" args="service">
+			<![CDATA[
+				var action = this.currentAction;
+				if (service.matchesObjectDefinitions(action.object.objectDefinition, catGenerateSKUsUtil.getProductChildObjectDefinitions(action.object.objectDefinition)) || !action.object.isGetChildrenServicesLoading()) {
+					this.loadComplete();
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private		
+			Check current action to see if the Attribute's get children requests have an error.
+			If there was an error loading the children, then the action will be aborted.
+		-->
+		<method name="checkAttributeChildrenError" args="service">
+			<![CDATA[
+				var action = this.currentAction;
+				for (var i=0; i<action.attributes.length; i++){
+					if( !action.attributes[i].isGetChildrenServicesLoading() ) {
+						this.loadAttributesComplete();
+						break;
+					} 
+				}
+				
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Called when the load is complete to clean up the action handler. This is called in both the
+			success and error case.
+		-->
+		<method name="loadComplete">
+			<![CDATA[
+				var action = this.currentAction;
+				action.object.forceParseData = false;
+				this.checkChildrenLoadedDel.unregisterAll();
+				this.checkChildrenErrorDel.unregisterAll();
+				this.currentAction = null;
+				wcfActionManager.removeAction(action);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Called when the attribute load is complete to clean up the action handler. This is called in both the
+			success and error case.
+		-->
+		<method name="loadAttributesComplete">
+			<![CDATA[
+				var action = this.currentAction;
+				this.checkAttributeChildrenLoadedDel.unregisterAll();
+				this.checkAttributeChildrenErrorDel.unregisterAll();
+				this.currentAction = null;
+				wcfActionManager.removeAction(action);
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		This action handler is used to generate one SKU for the product.
+	-->
+	<node id="catCreateSKUActionHandler">
+		<!---
+			Trigger the action.
+			@param wcfModelObject product: The product object.
+			@param wcfModelObject attributes[]: Array of AD defining attribute objects. May be null.
+			@param Integer indexSKU: The i'th SKU to be created.
+			@param Array attributeValues: An array of attribute values for this SKU.
+			@param boolean last: If true, indicates this is the last SKU generated.
+		-->
+		<method name="triggerAction" args="product,attributes,indexSKU,attributeValues,last,isAttributeDictionary=false">
+			<![CDATA[
+				product.incrementReferenceCount();				
+				if (attributes != null) {
+					for (var i = 0; i < attributes.length; i++) {
+						attributes[i].incrementReferenceCount();
+					}
+				}
+				
+				var action = {
+					actionHandler: this,
+					product: product,
+					attributes: attributes,
+					indexSKU: indexSKU,
+					attributeValues: attributeValues,
+					model: product.model,
+					last: last,
+					isAttributeDictionary: isAttributeDictionary
+				};
+				wcfActionManager.addAction(action);
+			]]>
+		</method>
+
+		<!---
+			Release the action.
+			@param Object action: The action instance.
+		-->
+		<method name="releaseAction" args="action">
+			<![CDATA[
+				action.product.decrementReferenceCount();
+				if (action.attributes != null) {
+					for (var i = 0; i < action.attributes.length; i++) {
+						action.attributes[i].decrementReferenceCount();
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			Perform the create action.
+			@param Object action: the action instance
+		-->
+		<method name="performAction" args="action">
+			<![CDATA[
+				if (action.isAttributeDictionary)
+				{
+					catGenerateSKUsUtil.createADSKUObject(action.product, action.indexSKU, action.attributeValues, action.last);
+				}
+				else
+				{
+					catGenerateSKUsUtil.createSKUObject(action.product, action.indexSKU, action.attributeValues, action.last);
+				}
+				
+				wcfActionManager.removeAction(action);
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private
+		Utility methods used for SKU creation.
+	-->
+	<node id="catGenerateSKUsUtil">
+		<!---
+			@keywords private
+			This method creates a SKU for a product based on the selected combination where the attributes are from the attribute dictionary.
+			of defining attributes. 
+			@param wcfModelObject product: The product object.
+			@param Integer indexSKU: The i'th SKU to be created.
+			@param Array attributeValues: Array of attribute values for this SKU.
+			@param boolean last: If true, indicates this is the last SKU generated.
+		-->
+		<method name="createADSKUObject" args="product,indexSKU=null,attributeValues=null,last=false">
+			<![CDATA[
+				var oDef = product.model.getObjectDefinition(null, "ProductSKU");
+				var sku = product.model.createNewObject(oDef, null, true, product);
+				var extraObjects = product.getObjects("CatalogEntryOffer");
+				oDef = product.model.getObjectDefinition(sku, "CatalogEntryOffer");
+				for (var i = 0; i < extraObjects.length; i++) {
+					product.model.createNewObject(oDef, sku, true, extraObjects[i]);
+				}
+				
+				if(attributeValues != null)
+				{
+					for (var i = 0; i < attributeValues.length; i++) {
+						var newObject;
+						if (attributeValues[i].isInherited)
+						{
+							newObject = sku.getObject("ProductSKUReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues[attrId=" + attributeValues[i].attributeId +"]", true);
+						}
+						else
+						{
+							newObject = sku.getObject("ProductSKUReferenceDefiningAttributeDictionaryAttributeWithAllowedValues[attrId=" + attributeValues[i].attributeId +"]", true);
+							
+						}
+						newObject.setPropertyValue("attrValId", null, attributeValues[i].valueId);
+					}
+				}
+
+				// Create reference
+				oDef = product.objectDefinition.getChildDefinition("ProductChildSKU");
+				var ro = product.model.createNewObject(oDef, product);
+				ro.addChild(sku);
+
+				// Set SKU code
+				var skuCode = catGenerateSKUsUtil.createSKUCode(product.getPropertyValue("partnumber"), indexSKU);
+				sku.setPropertyValue("partnumber", null, skuCode);
+				if( last ) {
+					if(indexSKU == null) {
+						messageLogger.logStatus(catalogResources.replaceValues("generatingSKUDone", [product.getPropertyValue("partnumber")]));
+					} else {
+						messageLogger.logStatus(catalogResources.replaceValues("generatingSKUsDone", [indexSKU, product.getPropertyValue("partnumber")]));
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates a SKU for a product based on the selected combination
+			of defining attributes. 
+			@param wcfModelObject product: The product object.
+			@param Integer indexSKU: The i'th SKU to be created.
+			@param Array attributeValues: Array of attribute values for this SKU.
+			@param boolean last: If true, indicates this is the last SKU generated.
+		-->
+		<method name="createSKUObject" args="product,indexSKU=null,attributeValues=null,last=false">
+			<![CDATA[
+			
+				var oDef = product.model.getObjectDefinition(null, "ProductSKU");
+				var sku = product.model.createNewObject(oDef, null, true, product);
+				var extraObjects = product.getObjects("CatalogEntryOffer");
+				oDef = product.model.getObjectDefinition(sku, "CatalogEntryOffer");
+				for (var i = 0; i < extraObjects.length; i++) {
+					product.model.createNewObject(oDef, sku, true, extraObjects[i]);
+				}
+				
+				if(attributeValues != null)
+				{
+					for (var i = 0; i < attributeValues.length; i++) {
+						var newObject = sku.getObject("SKUDefiningAttribute[xdata_attrId=" + attributeValues[i].attributeId +"]", true);
+						newObject.setPropertyValue("attrValValue", null, attributeValues[i].value);
+					}
+				}
+
+				// Create reference
+				oDef = product.objectDefinition.getChildDefinition("ProductChildSKU");
+				var ro = product.model.createNewObject(oDef, product);
+				ro.addChild(sku);
+
+				// Set SKU code
+				var skuCode = catGenerateSKUsUtil.createSKUCode(product.getPropertyValue("partnumber"), indexSKU);
+				sku.setPropertyValue("partnumber", null, skuCode);
+				if( last ) {
+					if(indexSKU == null) {
+						messageLogger.logStatus(catalogResources.replaceValues("generatingSKUDone", [product.getPropertyValue("partnumber")]));
+					} else {
+						messageLogger.logStatus(catalogResources.replaceValues("generatingSKUsDone", [indexSKU, product.getPropertyValue("partnumber")]));
+					}
+				}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Get the product child object definitions necessary to generate SKUs.
+			@param wcfObjectDefinition objectDefinition: The product object definition.
+		-->
+		<method name="getProductChildObjectDefinitions" args="objectDefinition">
+			<![CDATA[
+				var definitions = objectDefinition.getCopyObjectDefinitions();
+				definitions.push(objectDefinition.getChildDefinition("CatalogEntryOffer"));
+				definitions.push(objectDefinition.getChildDefinition("CatalogEntryDefiningAttribute"));
+				return definitions;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method creates the SKU code based on the product code.
+			If the product code has not been set, the SKU code will be an empty string.
+			@param String productCode: The product code.
+			@param int index: The index of the SKU being created. Index starts at 1 if not null.
+			@return String The new display name/code for the SKU object.
+		-->
+		<method name="createSKUCode" args="productCode,index=null">
+			<![CDATA[
+				var trimmedCode = wcfStringUtil.trim(productCode);
+				if(trimmedCode.length == 0)
+				{
+					return "";
+				}
+				
+				var indexPart = "_SKU";
+				
+				if(index!=null)
+				{
+					indexPart = "_SKU_" + index;
+				}
+				var code = productCode + indexPart;
+				
+				if( code.length > 64 )
+				{
+					code = productCode.slice(0, 64-indexPart.length) + indexPart;
+				}
+				
+				return code;
+			]]>
+		</method>
+	</node>
+	
+	<!---
+		@keywords private 
+		This action performs the SKU generation client action on the specified object.
+		This action accepts the following parameter:
+		<ul>
+		<li>object - The name of the object. This name must match the <code>objectKey</code>
+		parameter of a previous action that created or located the object. 
+		This parameter is required.</li>
+		</ul>
+	-->
+	<node id="catAutoRunClientAction">
+		<method name="execute" args="action">
+			<![CDATA[
+			var params = wcfAutomationUtil.parseParameters(action);
+			
+			if (params["object"]) {
+				var o = wcfAutomationUtil.getObject(params.object);
+				catGenerateSKUsActionHandler.triggerAction(o);
+			}
+			else{
+				wcfLogger.log("com.ibm.commerce.lobtools.foundation.auto", "SEVERE", "catAutoRunClientAction", "execute", "Missing 'object' parameter.");
+				wcfAutomationUtil.abort();
+			}
+			
+			]]>
+		</method>
+	</node>
+	
+</library>

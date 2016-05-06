@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!---
+		Properties view for the {@link mktExternalSiteReferralElementObject External Site Referral target}.
+	-->
+	<FlowElementProperties definitionName="mktExternalSiteReferralProperties">
+		<PropertyGroup collapsable="false" name="mainGroup">
+			<PropertyRadioGroup helpText="${mktMarketingResources.help_customerbehavior_targetCondition_urlContentsFromDomain}" name="containsOperator" promptText="${mktMarketingResources.targetCondition}" propertyName="containsOperator"/>
+
+			<MultiValueSelector name="referralDomainOption" promptText="${mktMarketingResources.referralDomain}">		
+				<MultiValueSelection displayName="${mktMarketingResources.PredefinedReferralURLGoogle}" name="PredefinedReferralURLGoogle">
+					<Xml name="values">
+						<referralURLValue>.google.</referralURLValue>
+						<urlName>q</urlName>
+						<domainOption>predefined</domainOption>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.PredefinedReferralURLYahoo}" name="PredefinedReferralURLYahoo">
+					<Xml name="values">
+						<referralURLValue>.yahoo.</referralURLValue>
+						<urlName>p</urlName>
+						<domainOption>predefined</domainOption>
+					</Xml>
+				</MultiValueSelection>
+				<MultiValueSelection displayName="${mktMarketingResources.OtherReferralURL}" name="OtherReferralURL">
+					<Xml name="values">
+						<referralURLValue significant="false"/>
+						<urlName significant="false"/>
+						<domainOption>other</domainOption>
+					</Xml>
+				</MultiValueSelection>
+			</MultiValueSelector>
+
+			<PropertyGroup collapsable="false" name="predefinedGroup">
+				<EnablementCondition conditionId="predefinedCondition" enablementValue="predefined" propertyName="domainOption"/>
+				
+				<PropertyCombobox name="urlComparison" promptText="${mktMarketingResources.searchCondition}" propertyName="comparison"/>
+	
+				<PropertyGroup collapsable="false" name="keywordsGroup">
+					<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+					<PropertyChildListEditor helpText="${mktMarketingResources.help_urlcontentFromDomain_searchKeywords}" listDefinitionName="mktURLValueGrid" name="urlNVPEditor" objectTypes="urlValue" promptText="${mktMarketingResources.searchTerms}" required="true" validatorTypes="externalSiteReferralValidator"/>
+				</PropertyGroup>
+			</PropertyGroup>
+ 
+			<PropertyGroup collapsable="false" name="otherGroup">
+				<EnablementCondition conditionId="otherCondition" enablementValue="other" propertyName="domainOption"/>
+
+				<PropertyCombobox name="equalsOrEndsWith" promptText="${mktMarketingResources.referralCondition}" propertyName="equalsOrEndsWith"/>
+
+				<PropertyInputText helpText="${mktMarketingResources.help_urlcontentFromDomain_domain}" promptText="${mktMarketingResources.referralDomainName}" propertyName="referralURLValue" required="true"/>
+				<PropertyInputText helpText="${mktMarketingResources.help_urlcontentFromDomain_name}" promptText="${mktMarketingResources.urlName}" propertyName="urlName"/>
+				
+				<MultiValueSelector name="urlComparison" promptText="${mktMarketingResources.urlCondition}">		
+					<MultiValueSelection displayName="${mktMarketingResources.isExactly}" name="isExactly">
+						<Xml name="values">
+							<comparison>=</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.start}" name="startsWith">
+						<Xml name="values">
+							<comparison>start</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.contain}" name="contains">
+						<Xml name="values">
+							<comparison>contain</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.end}" name="endsWith">
+						<Xml name="values">
+							<comparison>end</comparison>
+						</Xml>
+					</MultiValueSelection>
+					<MultiValueSelection displayName="${mktMarketingResources.any}" name="anyValue">
+						<Xml name="values">
+							<comparison>any</comparison>
+						</Xml>
+					</MultiValueSelection>
+				</MultiValueSelector>
+	
+				<PropertyGroup collapsable="false" name="valuesGroup">
+					<EnablementCondition conditionId="notAny" enablementValue="any" negate="true" propertyName="comparison"/>
+					<PropertyChildListEditor helpText="${mktMarketingResources.help_urlcontentFromDomain_values}" listDefinitionName="mktURLValueGrid" name="urlNVPEditor" objectTypes="urlValue" promptText="${mktMarketingResources.urlTerms}" validatorTypes="externalSiteReferralValidator"/>	
+				</PropertyGroup>
+			</PropertyGroup>
+
+		</PropertyGroup>
+	</FlowElementProperties>
+
+</Definitions>

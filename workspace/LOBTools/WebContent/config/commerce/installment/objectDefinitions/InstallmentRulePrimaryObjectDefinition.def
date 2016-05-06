@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PrimaryObjectDefinition creatable="false" definitionName="istBaseInstallmentRulePrimaryObjectDefinition" displayName="${istInstallmentResources.displayName}" displayNameProperty="name" headerIcon="installmentRuleHeaderIcon" icon="installmentRuleIcon" idProperty="uniqueId" isBaseDefinition="true" newDisplayName="${istInstallmentResources.newDisplayName}" newObjectMenuItemText="${istInstallmentResources.contextMenuNewInstallmentRule}" objectGroups="InstallmentGroup" propertiesDefinitionName="istInstallmentRuleProperties" searchType="FindInstallmentRules" writeUsage="IBM_ManageMarketingTool">
+		
+		<!--- Refresh service to return an updated version of the object from the server. -->
+		<RefreshService url="/cmc/GetInstallmentRule">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</RefreshService>
+		
+		<!--- This service retrieves all the installment child elements. -->
+		<GetChildrenService url="/cmc/GetInstallmentRuleChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</GetChildrenService>
+		
+		<!--- Update service to update the changed properties of the installment rule object.  -->
+		<UpdateService url="/cmc/SaveInstallmentRule">
+			<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="ruleCondition" enablementValue="InstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedRuleCondition" enablementValue="InheritedInstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</UpdateService>
+		
+		<!--- Delete service to delete the installment rule object on the server.  -->
+		<DeleteService url="/cmc/DeleteInstallmentRule">
+			<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="ruleCondition" enablementValue="InstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedRuleCondition" enablementValue="InheritedInstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</DeleteService>
+
+		<!--- Activate service to activate this Installment Rule. -->
+		<CustomService displayName="${istInstallmentResources.activate}" toolbarIcon="activateToolbarIcon" url="/cmc/ActivateInstallmentRule">
+			<EnablementCondition conditionId="inactiveCondition" enablementValue="Inactive" propertyName="status"/>
+			<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="ruleCondition" enablementValue="InstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedRuleCondition" enablementValue="InheritedInstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</CustomService>
+		
+		<!--- Deactivate service to deactivate this Installment Rule. -->
+		<CustomService displayName="${istInstallmentResources.deactivate}" toolbarIcon="deactivateToolbarIcon" url="/cmc/DeactivateInstallmentRule">
+			<EnablementCondition conditionId="activeCondition" enablementValue="Active" propertyName="status"/>
+			<ServiceParam contextName="storeId" name="baseStoreId" parameterName="storeId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="ruleCondition" enablementValue="InstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="inheritedStoreId" parameterName="storeId" propertyName="objectStoreId">
+				<EnablementCondition checkObjectDefinition="true" conditionId="inheritedRuleCondition" enablementValue="InheritedInstallmentRule" propertyName="objectType"/>
+			</ServiceParam>
+			<ServiceParam name="uniqueId" propertyName="uniqueId"/>
+		</CustomService>
+
+		<Xml name="template">
+			<priority>0</priority>
+			<status>Inactive</status>
+			<includeAllCatEntries>true</includeAllCatEntries>
+			<includeAllPayMethods>true</includeAllPayMethods>
+			<includeAllManufacturers>true</includeAllManufacturers>
+		</Xml>
+		
+		<!---The name of this installment rule. -->
+		<PropertyDefinition displayName="${istInstallmentResources.ruleName}" maximumSize="128" propertyName="name" required="true" trim="true"/>
+		
+		<!--- The description of this installment rule. -->
+		<PropertyDefinition displayName="${istInstallmentResources.description}" maximumSize="254" propertyName="description" type="string"/>
+		
+		<!--- The priority is used to distinguish between multiple installment rules that may be qualified. -->
+		<PropertyDefinition displayName="${istInstallmentResources.priority}" maxValue="1000000" minValue="0" propertyName="priority" required="true" type="number"/>
+		
+		<!--- Property to define the start date of the installment rule. -->
+		<PropertyDefinition displayName="${istInstallmentResources.startDateLabel}" propertyName="startDate" type="datetime"/>
+		
+		<!--- Property to define the start date of the installment rule. -->
+		<PropertyDefinition displayName="${istInstallmentResources.endDateLabel}" propertyName="endDate" type="datetime"/>
+		
+		<!--- The status of this installment rule. This can be either active or inactive. -->
+		<PropertyDefinition copyProtected="true" displayName="${istInstallmentResources.status}" propertyName="status" send="false">
+			<PropertyValue displayName="${istInstallmentResources.active}" icon="activeIcon" value="Active"/>
+			<PropertyValue displayName="${istInstallmentResources.inactive}" icon="inactiveIcon" value="Inactive"/>
+		</PropertyDefinition>
+		
+		<!--- The property to define whether all the catalog entries are included in this installment rule. -->
+		<PropertyDefinition propertyName="includeAllCatEntries" send="false"/>
+		
+		<!--- The property to define whether all the payment methods are included in this installment rule. -->
+		<PropertyDefinition propertyName="includeAllPayMethods" send="false"/>
+		
+		<!--- The property to define whether all the manufacturers are included in this installment rule. -->
+		<PropertyDefinition propertyName="includeAllManufacturers" send="false"/>
+		
+		<!--- The currency used in this installment rule. -->
+		<CurrencyPropertyDefinition displayName="${istInstallmentResources.currency}" propertyName="currency" send="false"/>
+
+		<ChildObjectDefinition baseDefinitionName="istAllCatalogEntryReferenceObjectDefinition"/>
+		<ReferenceObjectDefinition baseDefinitionName="istInclusionInheritedCatalogEntryReferenceObjectDefinition"/>
+		<ReferenceObjectDefinition baseDefinitionName="istExclusionInheritedCatalogEntryReferenceObjectDefinition"/>
+		<ReferenceObjectDefinition baseDefinitionName="istInclusionInheritedCatalogGroupReferenceObjectDefinition"/>
+		<ReferenceObjectDefinition baseDefinitionName="istExclusionInheritedCatalogGroupReferenceObjectDefinition"/>
+
+		<ChildObjectDefinition baseDefinitionName="istInstallmentOptionChildObjectDefinition"/>
+
+		<ChildObjectDefinition baseDefinitionName="istPaymentMethodChildObjectDefinition"/>
+		<ChildObjectDefinition baseDefinitionName="istAllPaymentMethodChildObjectDefinition"/>
+
+		<ChildObjectDefinition baseDefinitionName="istManufacturerChildObjectDefinition"/>
+
+		<RequiredChildObjectValidator enablementPropertyName="includeAllPayMethods" enablementValue="false" errorMessage="${istInstallmentResources.noPaymentMethodSelected}" objectPath="PaymentMethod" package="ist" validatorId="reqPayMethodValidator" validatorType="reqPayMethodValidator"/>
+		<RequiredChildObjectValidator enablementPropertyName="includeAllCatEntries" enablementValue="false" errorMessage="${istInstallmentResources.noTargetCatalogSelected}" objectPath="InclusionCatalogGroup" package="ist" validatorId="reqCatalogValidator" validatorType="reqCatalogValidator"/>
+		<RequiredChildObjectValidator errorMessage="${istInstallmentResources.noOptionsEntered}" objectPath="InstallmentOption" validatorId="reqOptionValidator" validatorType="reqOptionValidator"/>
+		<StartDateEndDateValidator endDatePropertyName="endDate" startDatePropertyName="startDate" validatorId="dateValidator"/>
+		<InstallmentRuleValidator package="ist"/>
+		<UniqueValueForChildObjectPropertyValidator objectPath="InstallmentOption" propertyName="numInstallments"/>
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="istBaseInstallmentRulePrimaryObjectDefinition" creatable="true" definitionName="InstallmentRule" objectType="InstallmentRule">
+		
+		<!--- Create service to create the installment rule object.  -->
+		<CreateService url="/cmc/CreateInstallmentRule">
+			<ServiceParam name="storeId"/>
+		</CreateService>
+
+		<ReferenceObjectDefinition baseDefinitionName="istInclusionCatalogEntryReferenceObjectDefinition"/>
+		<ReferenceObjectDefinition baseDefinitionName="istExclusionCatalogEntryReferenceObjectDefinition"/>
+
+		<ReferenceObjectDefinition baseDefinitionName="istInclusionCatalogGroupReferenceObjectDefinition"/>
+		<ReferenceObjectDefinition baseDefinitionName="istExclusionCatalogGroupReferenceObjectDefinition"/>
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="istBaseInstallmentRulePrimaryObjectDefinition" compatibleObjectTypes="InstallmentRule" creatable="false" definitionName="InheritedInstallmentRule" headerIcon="installmentRuleInheritedHeaderIcon" icon="installmentRuleInheritedIcon" objectType="InheritedInstallmentRule">
+	</PrimaryObjectDefinition>
+
+</Definitions>

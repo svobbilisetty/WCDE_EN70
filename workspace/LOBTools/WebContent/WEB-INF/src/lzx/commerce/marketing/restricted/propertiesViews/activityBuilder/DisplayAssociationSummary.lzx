@@ -1,0 +1,82 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		This summary view provides brief information about the {@link mktDisplayAssociationElementObject} flow element.
+		It is shown beneath the element on the Activity Builder flow diagram and to generate the text, it looks at the
+		following property names of the {@link mktDisplayAssociationElementObject} object:
+		<ul>
+			<li>location</li>
+			<li>associationTypeList</li>
+			<li>ChildCatentry/CatalogEntry/CatalogEntryDescription[name]</li>
+		</ul>
+	-->
+	<class name="mktDisplayAssociationSummary" extends="wcfFlowElementSummary">
+		<wcfFlowSummaryParam name="location" propertyName="location" />
+		<wcfFlowSummaryParam name="associationTypeList" propertyName="associationTypeList" />
+		<wcfFlowSummaryParam name="catalogEntryIdList" objectPath="ChildCatentry/CatalogEntry/CatalogEntryDescription" propertyName="name" />
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+			this.updateSummaryDel.register(mktMarketingResources.xsell, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.upsell, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.accessory, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.replacement, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryShoppingCartCatalogEntry, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryPurchaseHistoryCatalogEntry, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCurrentPageCatalogEntry, "onstring");
+			this.updateSummaryDel.register(mktMarketingResources.summaryCatalogEntry, "onstring");
+			]]>
+		</handler>
+		
+		<!---
+			Sets the summary text for the {@link mktDisplayAssociationElementObject} flow element. Classes overriding
+			this method must call <code>setSummaryText</code> with the desired summary text.
+		-->
+		<method name="updateSummary" args="e=null">
+			<![CDATA[
+				var summary = "";
+				var assocList = this.resolvedParams["associationTypeList"];
+				
+				if((this.resolvedParams["location"] != "") && (assocList != "") && (assocList != undefined)) {
+					assocList = wcfStringUtil.replace(assocList, ",", ", ");
+					assocList = wcfStringUtil.replace(assocList, "X-SELL", mktMarketingResources["xsell"].string);
+					assocList = wcfStringUtil.replace(assocList, "UPSELL", mktMarketingResources["upsell"].string);
+					assocList = wcfStringUtil.replace(assocList, "ACCESSORY", mktMarketingResources["accessory"].string);
+					assocList = wcfStringUtil.replace(assocList, "REPLACEMENT", mktMarketingResources["replacement"].string);
+
+					var location = this.resolvedParams["location"];
+					if(location == "shoppingCart") {
+						summary = mktMarketingResources.replaceValues("summaryShoppingCartCatalogEntry", [assocList]);
+					}
+					else if(location == "purchaseHistory") {
+						summary = mktMarketingResources.replaceValues("summaryPurchaseHistoryCatalogEntry", [assocList]);
+					}
+					else if(location == "currentPage") {
+						summary = mktMarketingResources.replaceValues("summaryCurrentPageCatalogEntry", [assocList]);
+					}
+					else if(location == "templateArgumentIdList") {
+						var products = this.getValuesList("catalogEntryIdList");
+						if(products != "") {
+							summary = mktMarketingResources.replaceValues("summaryCatalogEntry", [assocList, products]);
+						}
+					}
+				}
+				
+				this.setSummaryText(summary);
+			]]>
+		</method>
+	</class>
+</library>

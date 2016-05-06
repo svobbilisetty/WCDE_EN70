@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>    
+
+	<PrimaryObjectDefinition definitionName="pglBaseLayoutSalesCatalogPrimaryObjectDefinition"
+		detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}"
+		displayName="${catalogResources.salesCatalog_DisplayName}"
+		displayNameProperty="identifier"
+		helpLink="tasks/tpnsaleschng.htm"
+		idProperty="catalogId" 
+		isBaseDefinition="true"
+		newDisplayName="${catalogResources.salesCatalog_NewDisplayName}"
+		objectGroups="LayoutSalesCatalogAlias"
+		utilitiesListDefinitionName="pglUtilitiesBrowseGrid"
+		writeUsage="IBM_ManagePageLayoutTool"
+		searchType="FindLayoutCatalogs">
+
+		<!--- 
+			Retrieves the {@link pglChildSalesCatalogGroupPage}, 
+			{@link pglSharedSalesCatalogGroupPage}, {@link pglSharedInheritedSalesCatalogGroupPage},
+			{@link pglSharedCatalogGroupPage} and {@link pglSharedInheritedCatalogGroupPage} child objects.
+		-->			
+		<GetChildrenService objectTypes="ChildSalesCatalogGroupPage,SharedSalesCatalogGroupPage,SharedInheritedSalesCatalogGroupPage,SharedCatalogGroupPage,SharedInheritedCatalogGroupPage"
+			url="/cmc/GetLayoutSalesCatalogChildren">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+			<ServiceParam name="defaultLanguageId"/>
+			<ServiceParam name="identifier" propertyName="identifier"/>
+			<ServiceParam name="catalogStoreId" propertyName="objectStoreId"/>
+			<ServiceParam checkObjectDefinition="true" name="catalogType" propertyName="objectType"/>
+		</GetChildrenService>
+		
+		<!---  
+		    Reference definition for a child Sales category page.
+		-->			
+		<CollectionReferenceObjectDefinition baseDefinitionName="pglChildSalesCatalogGroupPage"/>
+		
+		<!---  
+		    Reference definition for a shared child category page
+		-->	
+		<ReferenceObjectDefinition baseDefinitionName="pglSharedCatalogGroupPage"/>
+
+		<!---  
+		    Reference definition for a shared child Sales category page
+		-->		
+		<ReferenceObjectDefinition baseDefinitionName="pglSharedSalesCatalogGroupPage"/>
+
+		<!---
+			Reference definition for a shared child inherited category page
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSharedInheritedCatalogGroupPage"/>
+
+		<!---
+			Reference definition for a shared child inherited Sales category page
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglSharedInheritedSalesCatalogGroupPage"/>
+
+		<!--- This navigation list definition is used to display
+			{@link pglChildSalesCatalogGroupPage}, 
+			{@link pglSharedSalesCatalogGroupPage}, {@link pglSharedInheritedSalesCatalogGroupPage},
+			{@link pglSharedCatalogGroupPage} and {@link pglSharedInheritedCatalogGroupPage}.
+		-->
+		<NavigationListDefinition displayName="${pglPageLayoutResources.salesCategoryPagesList}"
+			isDefault="true"
+			listDefinitionName="pglSalesCategoryPageChildList"
+			listTitle="${pglPageLayoutResources.salesCategoryPagesList}"
+			name="SalesCatatalogPageChildList"
+			helpLink="tasks/tpn_topsalescatalog.htm"/>
+	</PrimaryObjectDefinition>
+
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseLayoutSalesCatalogPrimaryObjectDefinition"
+		definitionName="LayoutSalesCatalog"
+		objectType="LayoutSalesCatalog">
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseLayoutSalesCatalogPrimaryObjectDefinition"
+		definitionName="InheritedLayoutSalesCatalog"
+		displayName="${catalogResources.inheritedSalesCatalog_DisplayName}"
+	objectType="InheritedLayoutSalesCatalog">
+        	
+ 	</PrimaryObjectDefinition>
+</Definitions>

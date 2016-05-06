@@ -1,0 +1,275 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<!-- 
+
+This library contains classes for combo box used for selecting an attribute value
+for a sku defining attribute.
+
+This code is not customizable.
+
+Classes contained in this library are:
+
+catSKUAttributeComboBox
+
+-->
+<library>
+
+	<!---
+		This class represents a combo box used for selecting an attribute value
+		for a sku defining attribute.
+
+		This code is not customizable.
+		
+		@keywords private
+	-->
+	<class name="catSKUAttributeComboBox" extends="wcfComboBox">
+	
+		<!---
+			This method overrides the 'createComboBox', 'updateValue' and 'openList' methods of the parent class 
+			'wcfComboBox' to display a dynamic list of defining attribute allowed values.
+			
+			The attribute allowed values are obtained from the parent product's defining attributes
+			and their allowed values.
+						 
+			The comboBox will use the property 'attrValValue' to store the user's selected 
+			attribute value from the list of possible attribute values.
+			
+			@keywords private
+		-->
+		<method name="createComboBox" args="e=null">
+			<![CDATA[
+			
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="updatePropertyValues">
+			<![CDATA[
+			this._initializingComboBox = true;
+			this.values = [];
+			if (this.parent.column.attributeObject) {
+				
+				// Type of attributes
+				var classic = false;
+				var AD = false;
+				
+				// Get the attribute data type.
+				var attributeDataType = null;
+				
+				// The attribute allowed value type to fetch.
+				var attributeAllowedValueType = null;
+				
+				// The attribute allowed value property type to retrieve, to display the value for selection.
+				var attributeAllowedValuePropertyName = null;
+				
+				if(this.parent.column.attributeObject.objectType=="CatalogEntryDefiningAttribute") {
+					classic = true;
+				}
+				else if(this.parent.column.attributeObject.objectType == "CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues" ||
+				   this.parent.column.attributeObject.objectType == "CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues") {
+				   AD = true;
+				}
+				// Classic attributes
+				if(classic) {
+					attributeDataType = this.parent.column.attributeObject.getPropertyValue("attrDataType");
+					// Get the attribute allowed values from the registered attribute object
+					if (attributeDataType == "String") {	
+						attributeAllowedValueType = "CatalogEntryStringDefiningAttributeAllowedValue";
+						attributeAllowedValuePropertyName = "allowedAttrValStringValue";
+					}
+					else if (attributeDataType == "Integer") {
+						attributeAllowedValueType = "CatalogEntryIntegerDefiningAttributeAllowedValue";
+						attributeAllowedValuePropertyName = "allowedAttrValIntegerValue";
+					}
+					else if (attributeDataType == "Float") {
+						attributeAllowedValueType = "CatalogEntryFloatDefiningAttributeAllowedValue";
+						attributeAllowedValuePropertyName = "allowedAttrValFloatValue";
+					}
+				}
+				
+				// Attribute dictionary attributes
+				if(AD) {
+					attributeDataType = this.parent.column.attributeObject.getPropertyValue("attrDataType","AttributeDictionaryAttributes");			
+					// Get the attribute allowed values from the registered attribute object
+					if (attributeDataType == "String") {	
+						attributeAllowedValueType = "AttributeDictionaryAttributeStringValueAlias";			
+					}
+					else if (attributeDataType == "Integer") {
+						attributeAllowedValueType = "AttributeDictionaryAttributeIntegerValueAlias";
+					}
+					else if (attributeDataType == "Float") {
+						attributeAllowedValueType = "AttributeDictionaryAttributeFloatValueAlias";
+					}
+				}
+
+				// Add the allowed values to the combo box
+				if(attributeDataType != null) {
+					var definingAttributeAllowedValues = null;
+					if(classic) {
+						definingAttributeAllowedValues = this.parent.column.attributeObject.getObjects(attributeAllowedValueType);
+					}
+					if(AD) {
+						definingAttributeAllowedValues = this.parent.column.attributeObject.getObjects("AttributeDictionaryAttributeWithAllowedValuesAlias/" + attributeAllowedValueType);
+					}
+					for (var i = 0; i < definingAttributeAllowedValues.length; i++) {
+						var allowedValue = definingAttributeAllowedValues[i];
+						var itemValue = null;
+						var displayName = null;
+						if(AD) {
+							itemValue = allowedValue.getPropertyValue("attrValId");
+							displayName = allowedValue.getPropertyValue("value", "AttributeDictionaryAttributeValueDescription");
+						} 
+						if(classic) {
+							itemValue = allowedValue.getPropertyValue(attributeAllowedValuePropertyName, "AttributeAllowedValueLanguageSensitiveObject");
+							displayName = itemValue;
+						}
+						if(itemValue && itemValue.length > 0) {
+							if (attributeDataType == "Float") {
+								displayName = wcfGlobalizationUtil.formatNumberToDisplayFormat(displayName, 1); 
+							}
+							displayName = wcfStringUtil.escapeText(displayName);
+							this.addItem(displayName, itemValue);
+						}
+					}
+					if(attributeDataType == "String")
+					{
+						wcfSortUtil.sort(this.values, catStringValuesComparator);
+					} else
+					{
+						wcfSortUtil.sort(this.values, catNumericValuesComparator);
+					}
+				}
+			}
+			if (this.property != null)
+			{
+				this.selectItem(this.property.value);
+			}
+			this._initializingComboBox = false;
+			]]>
+		</method>
+		
+		<!---
+			Update and refresh the combo box value with a new wcfModelProperty value.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			var value = this.property.value;
+			if (this.selectedValue == null || value != this.selectedValue.value) {
+				var displayName = value;
+				if (this.parent.column.attributeObject && value != null) {
+					
+					var classic = false;
+					var AD = false;
+					var attributeDataType = null;
+					
+					if(this.parent.column.attributeObject.objectType=="CatalogEntryDefiningAttribute") {
+						classic = true;
+					} else if(this.parent.column.attributeObject.objectType == "CatalogEntryReferenceDefiningAttributeDictionaryAttributeWithAllowedValues" ||
+						this.parent.column.attributeObject.objectType == "CatalogEntryReferenceDefiningInheritedAttributeDictionaryAttributeWithAllowedValues") {
+						AD = true;
+					}
+					if(classic) {
+						attributeDataType = this.parent.column.attributeObject.getPropertyValue("attrDataType");
+						if (attributeDataType == "Float") {
+							displayName = wcfGlobalizationUtil.formatNumberToDisplayFormat(value, 1); 
+						}
+					}
+					if(AD) {
+						// get attribute value
+						var attributeObject = this.parent.column.attributeObject.getObject("AttributeDictionaryAttributes");
+						if(attributeObject!=null) {
+							var attributeValueDefs = attributeObject.objectDefinition.getChildDefinitions("AttributeDictionaryAttributeValueAlias");
+							attributeObject.loadChildren(attributeValueDefs);
+							
+							attributeDataType = this.parent.column.attributeObject.getPropertyValue("attrDataType","AttributeDictionaryAttributes");
+							var definingAttributeAllowedValue = this.parent.column.attributeObject.getObject("AttributeDictionaryAttributeWithAllowedValuesAlias/AttributeDictionaryAttribute"+attributeDataType+"ValueAlias[attrValId=" + value + "]");
+							if (definingAttributeAllowedValue != null) {
+								displayName = definingAttributeAllowedValue.getPropertyValue("value", "AttributeDictionaryAttributeValueDescription");
+								if (displayName != null) {
+									if (attributeDataType == "Float") {
+										displayName = wcfGlobalizationUtil.formatNumberToDisplayFormat(displayName, 1); 
+									}
+								}
+								else {
+									displayName = value;
+								}
+							}
+						}
+					}
+				}
+				if (value != null && value != "") {
+					displayName = wcfStringUtil.escapeText(displayName);
+					this.selectValue({value:value,displayName:displayName});
+				}
+				else {
+					this.clearSelection();
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Override openList to update list with latest values.
+			@keywords private
+		-->
+		<method name="openList">
+			<![CDATA[
+			if(this.enabled)
+			{
+				// Refresh list to get latest values
+				this.updatePropertyValues();
+				super.openList();
+			}
+			]]>
+		</method>
+	 </class>
+	 
+	<!--- @keywords private -->
+	<node id="catStringValuesComparator">		
+		<!---
+			@keywords private
+		-->	
+		<method name="compare" args="o1, o2">
+			<![CDATA[
+				var result = 0;
+				var displayName1 = o1.displayName.toLowerCase();
+				var displayName2 = o2.displayName.toLowerCase();
+				if(displayName1 > displayName2)
+				{
+					result = 1;
+				} else if(displayName1 < displayName2)
+				{
+					result = -1;
+				}
+				return result;
+			]]>
+		</method>
+	</node>
+	
+	<!--- @keywords private -->
+	<node id="catNumericValuesComparator">		
+		<!---
+			@keywords private
+		-->	
+		<method name="compare" args="o1, o2">
+			<![CDATA[
+				var displayName1 = o1.displayName;
+				var displayName2 = o2.displayName;
+				
+				return displayName1-displayName2;
+			]]>
+		</method>
+	</node>
+</library>

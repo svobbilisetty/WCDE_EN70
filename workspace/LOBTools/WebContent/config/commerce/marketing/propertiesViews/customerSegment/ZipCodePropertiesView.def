@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktZipCodeProperties" displayGrouping="true">
+		<PropertyCombobox objectPath="TopAndList/ZipCode" promptText="${mktMarketingResources.cspAddrPostalCode}" propertyName="template"/>
+
+		<PropertyGroup collapsable="false" name="anyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="any" objectPath="TopAndList/ZipCode" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyAddrPostalCode}" listDefinitionName="mktCSZipCodeGrid" name="zipcodeGrid" objectPath="TopAndList/ZipCode/ZipCodeList" objectTypes="ZipCodeStartsWithOption" promptText="${mktMarketingResources.customerSegment_addrPostalCode_SpecifyAddrPostalCode}"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="notAnyTargetGroup">
+			<EnablementCondition conditionId="anyCondition" enablementValue="notAny" objectPath="TopAndList/ZipCode" propertyName="template"/>
+			<PropertyChildListEditor helpText="${mktMarketingResources.help_customerSegment_SpecifyAddrPostalCode}" listDefinitionName="mktCSZipCodeGrid" name="zipcodeGrid" objectPath="TopAndList/ZipCode/ZipCodeList" objectTypes="ZipCodeDoesNotStartWithOption" promptText="${mktMarketingResources.customerSegment_addrPostalCode_SpecifyAddrPostalCode}"/>
+		</PropertyGroup>
+	</PropertyGroup>
+
+	<ObjectGrid definitionName="mktCSZipCodeGrid" preferenceKey="mktCSZipCodeGrid">		
+		<GridText editable="true" name="zipcodeName" propertyName="conditionValue" required="true" text="${mktMarketingResources.customerSegment_addrPostalCode_Specified}" visible="true" width="250"/>
+	</ObjectGrid>
+</Definitions>

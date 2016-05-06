@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+	<filter>
+		<filter-name>SolrRequestFilter</filter-name>
+		<filter-class>org.apache.solr.servlet.SolrDispatchFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>SolrRequestFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<description>Solr Server</description>
+		<display-name>Solr</display-name>
+		<servlet-name>SolrServer</servlet-name>
+		<servlet-class>org.apache.solr.servlet.SolrServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>SolrServer</servlet-name>
+		<url-pattern>/*</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<description>Crawler Servlet</description>
+		<display-name>Crawler</display-name>
+		<servlet-name>CrawlerServlet</servlet-name>
+		<servlet-class>com.ibm.commerce.search.crawler.CrawlerServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>CrawlerServlet</servlet-name>
+		<url-pattern>/crawler</url-pattern>
+	</servlet-mapping>
+	
+	<mime-mapping>
+		<extension>.xsl</extension>
+		<mime-type>application/xslt+xml</mime-type>
+	</mime-mapping>
+	<display-name>Solr</display-name>
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+
+ 	<security-constraint>
+		<display-name>WCSolrSearchAdministratorConstraint</display-name>
+		<web-resource-collection>
+			<web-resource-name>WCSolrSearchAdministratorCollection</web-resource-name>
+			<url-pattern>/*</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<description>
+			Auto generated Authorization Constraint</description>
+			<role-name>WCSolrSearchAdministrator</role-name>
+		</auth-constraint>
+	</security-constraint>
+	<login-config>
+		<auth-method>BASIC</auth-method>
+	</login-config>
+	<security-role>
+		<description>
+		</description>
+		<role-name>WCSolrSearchAdministrator</role-name>
+	</security-role>
+
+</web-app>

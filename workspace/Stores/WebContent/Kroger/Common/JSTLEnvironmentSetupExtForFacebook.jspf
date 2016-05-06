@@ -1,0 +1,46 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<%-- Social Integration for Facebook. The store will get an Application Id from eSpot. For now, default to the one below.
+	- Application Id ( AppId ) is the id that you received when you registered your Application with Facebook
+	- When customer's create their own App on Facebook, they will configure an eSpot to get the appId and will be used throughout
+	  Madison's store, as a global variable
+--%>
+<%@ taglib uri="http://commerce.ibm.com/foundation" prefix="wcf" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
+
+<c:if test = "${empty facebookAppId}">
+	<wcf:getData type="com.ibm.commerce.infrastructure.facade.datatypes.OnlineStoreType" var="onlineStore" expressionBuilder="findByUniqueID">
+		<wcf:param name="storeId" value="${storeId}" />
+		<wcf:param name="accessProfile" value="IBM_Details" />
+	</wcf:getData>	
+	  		
+	<c:choose>			
+		<c:when test="${env_inPreview == 'true'}">	
+			<c:set var="facebookAppId" value="${onlineStore.userData.userDataField['wc.facebook.preview_application_id']}" scope="request"/>
+			<c:if test = "${empty facebookAppId}">
+				<c:set var="facebookAppId" value="0" scope="request"/>
+			</c:if>						    				
+		</c:when>			
+		<c:otherwise>		
+			<c:set var="facebookAppId" value="${onlineStore.userData.userDataField['wc.facebook.application_id']}" scope="request"/>
+			<c:if test = "${empty facebookAppId}">
+				<c:set var="facebookAppId" value="0" scope="request"/>
+			</c:if>				  
+		</c:otherwise>			
+	</c:choose>
+</c:if>
+
+<c:set var="facebookURL" value="http://www.facebook.com" scope="request"/>
+

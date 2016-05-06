@@ -1,0 +1,44 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+	<ObjectProperties definitionName="pglPrivacyPolicyPageProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.privacyPolicyPageDefaultPageLayoutInformationSection}" name="group" open="true">
+				<PropertyViewLongText enabled="false" objectPath="PrivacyPolicyPageReferenceDefaultPrivacyPolicyPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.defaultLayoutPrompt}" propertyName="name"/>
+				<PropertyViewLongText enabled="false" objectPath="PrivacyPolicyPageReferenceDefaultPrivacyPolicyPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.descriptionPrompt}" propertyName="description"/>
+				<ImageEditor enabled="false" objectPath="PrivacyPolicyPageReferenceDefaultPrivacyPolicyPageLayout/PageLayoutAlias" promptText="${pglPageLayoutResources.fullImagePrompt}" propertyName="fImage" showText="false"/>
+			</PropertyGroup>
+			<PropertyGroup groupTitle="${pglPageLayoutResources.pageLayoutAssignmentSection}" name="pageLayoutAssignmentGroup">
+				<!-- An instantiation of a definition which will display Privacy Policy page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglPrivacyPolicyPageLayoutAssociationPropertyGroupListNoStoreName">
+					<EnablementCondition checkObjectDefinition="true" conditionId="localPrivacyPolicyPageCondition" enablementValue="InheritedPrivacyPolicyPage" propertyName="objectType" negate="true"/>
+					<PropertyChildListEditor baseDefinitionName="pglPrivacyPolicyPageLayoutAssociationListNoStoreName"/>
+				</PropertyGroup>
+				<!-- An instantiation of a definition which will display inherited Privacy Policy page layout associations in a grid. -->
+				<PropertyGroup collapsable="false" name="pglInheritedPrivacyPolicyPageLayoutAssociationPropertyGroupList">
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedPrivacyPolicyPageCondition" enablementValue="InheritedPrivacyPolicyPage" propertyName="objectType"/>
+					<PropertyChildListEditor baseDefinitionName="pglInheritedPrivacyPolicyPageLayoutAssociationList"/>
+					<PropertyChildListEditor baseDefinitionName="pglPrivacyPolicyPageLayoutAssociationListStoreName"/>
+				</PropertyGroup>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+	
+	<PropertyChildListEditor definitionName="pglPrivacyPolicyPageLayoutAssociationListNoStoreName" extendedHelpText="${pglPageLayoutResources.extendedHelpText_privacyPolicyPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="PrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts,PrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>			
+	<PropertyChildListEditor definitionName="pglPrivacyPolicyPageLayoutAssociationListStoreName" displayStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_privacyPolicyPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="PrivacyPolicyPageLayoutAssociationReferencedPrivacyPolicyPageLayouts,PrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	<PropertyChildListEditor definitionName="pglInheritedPrivacyPolicyPageLayoutAssociationList" displayObjectStoreName="true" extendedHelpText="${pglPageLayoutResources.extendedHelpText_privacyPolicyPageLayoutAssignment}" listDefinitionName="pglPageLayoutAssociationGrid" objectTypes="InheritedPrivacyPolicyPageLayoutAssociationReferencedInheritedPrivacyPolicyPageLayouts" promptText="${pglPageLayoutResources.pageLayoutAssignmentList}"/>
+	
+</Definitions>

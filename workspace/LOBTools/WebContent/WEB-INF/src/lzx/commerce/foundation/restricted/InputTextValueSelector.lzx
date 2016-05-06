@@ -1,0 +1,534 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<library>
+	
+	<!---
+		@keywords private
+		Value selector with an Input Text field
+	-->
+	<class name="wcfInputTextValueSelector" extends="basecomponent">
+		<!---
+			@keywords private
+			The list of items.
+		-->
+		<attribute name="items" value="${[]}"/>
+		<!---
+			@keywords private
+		-->
+		<attribute name="availableItems" value="${[]}"/>		
+		<!---
+			@keywords private
+			The list is being displayed or not
+		-->
+		<attribute name="listOpen" type="boolean" value="false"/>
+		<!---
+			@keywords private
+			The text value currently in the inputText.
+		-->
+		<attribute name="text" type="string" value=""/>
+		
+		<simplelayout axis="x" spacing="1"/>
+		<wcfCenterLayout axis="y"/>
+		<view name="inputTextArea">
+			<wcfInputText name="inputText" bgcolor="white" y="1" x="0" width="${classroot.width-classroot.dropDown.width}">
+				<handler name="ontext">
+			    	<![CDATA[
+			    	classroot.setAttribute('text',this.getText());
+			    	classroot.checkSelected();
+					]]>
+				</handler>
+				<!--- @keywords private -->
+				<handler name="onkeydown" args="k">
+					if (k == 40) { // down key
+						classroot.openList();
+					}
+				</handler>
+			</wcfInputText>
+			<plainfloatinglist name="dropdownList" attach="bottom" visible="false" width="${owner.parent.width}">
+				<handler name="onvisible">
+			    	<![CDATA[
+			    	if(this.visible){
+						this.bringToFront();
+						lz.ModeManager.makeModal(this);
+						if(typeof(this.closeListDel) === "undefined") {
+							this.closeListDel = new lz.Delegate(this.owner.classroot, "closeList");
+        				}
+						lz.Keys.callOnKeyCombo(this.closeListDel, ['esc']);
+					}else{
+						if(typeof(this.closeListDel) !== "undefined") {
+							lz.Keys.removeKeyComboCall(this.closeListDel, ['esc']);
+						}
+						lz.ModeManager.release(this);
+					}
+					]]>
+				</handler>
+				
+				<!--- @keywords private -->
+				<method name="getNextSelection" />
+				<!--- @keywords private -->
+		        <method name="getPrevSelection" />
+		        
+			</plainfloatinglist>
+		</view> 
+		
+		<basebutton name="dropDown"
+				resource="comboxBoxButton"
+				xoffset="1"
+				onclick="classroot.openList()" visible="true">
+				 
+			<handler name="on_msin" >
+				this._callShow();
+			</handler>
+			
+			<handler name="on_msdown">
+				this._callShow();
+			</handler>
+			
+			<method name="_callShow">
+				<![CDATA[
+				if (classroot.listOpen || (this._msdown && this._msin)) {
+					this.showDown();
+				}
+				else if (this._msin) {
+					this.showOver();
+				}
+           		else {
+           			this.showUp();
+				}
+				
+				]]>
+			</method>
+		</basebutton>
+		
+		<!--- @keywords private -->
+		<handler name="onconstruct">
+			<![CDATA[
+			this.updateTextDel = new lz.Delegate(this, "updateText");
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onblur" reference="inputTextArea.dropdownList">
+	    	this.closeList();
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onlistOpen">
+			this.dropDown._callShow();
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onkeydown" args="k">
+			if (k == 40) { // down key
+				this.openList();
+			}
+		</handler>
+		
+		<!---
+			@keywords private
+			Handler that gets executed when an item from the drop down list is selected
+		-->
+		<handler name="onselect" reference="inputTextArea.dropdownList" args="item">
+			<![CDATA[
+			this.closeList();
+			this.handleSelect(item.value);
+			this.checkSelected();
+			]]>
+		</handler>
+		
+		<!--- @keywords private -->
+		<handler name="onfocus" >
+		    <![CDATA[
+		    if(!this["indicator"]){
+			    new lz.wcfFocusIndicator(this, {
+			    	name: "indicator",
+			    	focusableView: this,
+			    	indicatorView: this,
+			    	offset: 1
+			    });
+		    }
+		    ]]>
+		</handler>
+		
+		<!---
+			This method is called when a value is selected from the list. This implementation sets the input field's 
+			text to match the value's text.
+			@param Object v: the selected value object
+		-->
+		<method name="handleSelect" args="v">
+			<![CDATA[
+			this.inputTextArea.inputText.setText(v.text);
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method updates the list to display a checkmark next to the item that matches the text currently in the input field.
+		-->
+		<method name="checkSelected">
+			<![CDATA[
+			for (var i=0; i<this.items.length; i++) {
+				if (this.items[i].selectable && this.text == this.items[i].value.text) {
+					this.items[i].title.selectedIconHolder.selectedIconIndicator.setAttribute("visible", true);
+				} else {
+					this.items[i].title.selectedIconHolder.selectedIconIndicator.setAttribute("visible", false);
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private	-->
+		<handler name="oninit">
+			<![CDATA[
+			this.checkMouseDel = new lz.Delegate(this, "checkMouse");
+			]]>
+		</handler>
+		
+		<!--- @keywords private	-->
+		<method name="destroy">
+			<![CDATA[
+			this.inputTextArea.dropdownList.autoscrollbar = false;
+			if (this["checkMouseDel"]) {
+				this.checkMouseDel.unregisterAll();
+				delete this.checkMouseDel;
+			}
+			if (this["updateTextDel"]) {
+				this.updateTextDel.unregisterAll();
+				delete this.updateTextDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			This method will append the specified value to the drop down.  Inside the newValue object, text is the string that is displayed
+			in the dropdown, icon is the icon resource that can be displayed beside the text, alias is the value that can be displayed in the dropdown
+			after the text as a short form of the text, addSeperatorBefore is a line that will be displayed directly above the text, and selectable
+			will allow the item to have the selected checkmark show up when it is the currently selected item.
+			@param object newValue: value to add to list
+		-->
+		<method name="addListValue" args="newValue">
+			<![CDATA[
+			var foundItem = false;
+			for (var i=0; i<this.items.length; i++) {
+				if (newValue.text == this.items[i].value.text) {
+					foundItem = true;
+					break;
+				}
+			}
+			if(!foundItem){
+				var textKey = newValue["textKey"] ? newValue.textKey : null;
+				var text;
+				if (textKey != null) {
+					text = textKey.string;
+				} else {
+					text = newValue.text;
+				}
+				
+				var aliasQualifierKey = newValue["aliasQualifierKey"] ? newValue.aliasQualifierKey : null;
+				var aliasQualifier = "";
+				if (aliasQualifierKey != null) {
+					aliasQualifier = aliasQualifierKey.string;
+				}
+				else if (newValue["aliasQualifier"]) {
+					aliasQualifier = newValue.aliasQualifier;
+				}			
+				var item;
+				if (this.availableItems.length > 0) {
+					item = this.availableItems.shift();
+					item.setAttribute("value", newValue);
+					item.setAttribute("icon", newValue["icon"] ? newValue.icon : null);
+					item.setAttribute("text", text);
+					item.setAttribute("alias", newValue["alias"] ? newValue.alias : "");
+					item.setAttribute("aliasQualifier", aliasQualifier);
+					item.setAttribute("addSeparatorBefore", newValue["addSeparatorBefore"] ? newValue.addSeparatorBefore : false);
+					item.setAttribute("selectable", typeof(newValue["selectable"]) == "undefined" ? true : newValue.selectable);
+					item.setAttribute("visible", true);
+				}
+				else {
+					item = new lz.wcfLongListItem(this.inputTextArea.dropdownList, {
+						value: newValue,
+						icon: newValue["icon"] ? newValue.icon : null,
+						text: text,
+						alias: newValue["alias"] ? newValue.alias : "",
+						aliasQualifier: aliasQualifier,
+						addSeparatorBefore: newValue["addSeparatorBefore"] ? newValue.addSeparatorBefore : false,
+						selectable: typeof(newValue["selectable"]) == "undefined" ? true : newValue.selectable
+					});
+				}
+				
+				if (textKey != null) {
+					this.updateTextDel.register(textKey, "onstring");
+				}
+				if (aliasQualifierKey != null) {
+					this.updateTextDel.register(aliasQualifierKey, "onstring");
+				}
+								
+				this.items.push(item);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Sets a list of values to the drop-down list.
+			@param wcfLongListItem[] values: The array of values to be added to the list. 
+		-->
+		<method name="setListValues" args="values">
+			<![CDATA[
+			this.updateTextDel.unregisterAll();
+			if (values == null) {
+				values = [];
+			}
+			while (this.items.length > 0) {
+				var item = this.items.pop();
+				item.setAttribute("visible", false);
+				item.setAttribute("value", null);
+				this.availableItems.unshift(item);
+			}
+			this.inputTextArea.dropdownList.clearSelection();
+			for (var i = 0; i < values.length; ++i) {
+				this.addListValue(values[i]);
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			checks mouse location, if its outside the dropdown area, close the action list
+		-->		
+		<method name="checkMouse" args="e=null">
+			if (!this.inputTextArea.dropdownList.containsPt(this.inputTextArea.dropdownList.getMouse("x"), this.inputTextArea.dropdownList.getMouse("y"))) {
+				closeList();
+			}
+		</method>
+		
+		<!---
+			@keywords private
+			open action list
+		-->		
+		<method name="openList">
+			<![CDATA[
+			var item = null;
+			for (var i=0; i<this.items.length; i++) {
+				this.items[i].setHilite(false);
+				if(this.items[i].title.selectedIconHolder.selectedIconIndicator.visible){
+					item = this.items[i]
+				}
+			}
+			if (!item && this.items.length > 0) {
+				item = this.items[0];
+			}
+			if (item) {
+				item.setHilite(true);
+				this.inputTextArea.dropdownList._hiliteview = item;
+			}
+			
+			this.inputTextArea.dropdownList.clearSelection();
+			this.inputTextArea.dropdownList.setAttribute("visible", true);
+			lz.Focus.setFocus(this.inputTextArea.dropdownList);
+			this.checkMouseDel.register(lz.GlobalMouse, "onmousedown");
+			this.setAttribute("listOpen", true);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="updateText" args="e=null">
+			<![CDATA[
+			for (var i = 0; i < this.items.length; i++) {
+				var item = this.items[i];
+				if (item.value["textKey"]) {
+					item.setAttribute("text", item.value.textKey.string);
+				}
+				if (item.value["aliasQualifierKey"]) {
+					item.setAttribute("aliasQualifier", item.value.aliasQualifierKey.string);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			close action list
+		-->		
+		<method name="closeList" args="e=null">
+			<![CDATA[
+			this.setAttribute("listOpen", false);
+			this.inputTextArea.dropdownList.setAttribute("visible", false);
+			this.checkMouseDel.unregisterAll();
+			lz.Focus.setFocus(this, false);
+			]]>
+		</method>
+		
+	</class>
+	
+	<!---
+		@keywords private
+		
+		Long list item.  Allows for an alias that maps to the text
+	-->
+	<class name="wcfLongListItem" extends="listitem">
+		<!---
+			Icon.
+		-->
+		<attribute name="icon" type="string"/>
+		<!---
+			The text that will be displayed in the drop down.
+		-->
+		<attribute name="text" type="string" value=""/>
+		<!---
+			Alias name.
+		-->
+		<attribute name="alias" type="string" value=""/>
+		<!---
+			Alias qualifier.
+		-->
+		<attribute name="aliasQualifier" type="string" value=""/>
+		<!---
+			Declare whether to add a separator before this list item or not
+		-->
+		<attribute name="addSeparatorBefore" type="boolean" value="false"/>
+		<!---
+			If true, this item will display the selected icon.
+		-->
+		<attribute name="selectable" type="boolean" value="true"/>
+		<!---
+			Available width for the value text. If the value is too long the text will be truncated.
+		-->
+		<attribute name="valueWidth" type="number" value="${this.width * (this.aliasWidth > 0 ? .6 : .85)}"/>
+		<!---
+			Available width for the alias text. If the alias is too long, the text will be truncated.
+		-->
+		<attribute name="aliasWidth" type="number" value="${this.alias != '' ? this.width * .25 : 0}" />
+		
+		<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (this['style'] != null) {
+				super._applystyle(s);
+				if (this._enabled) {
+					if (this.hilited) {
+						this.title.textArea.valueText.setAttribute("fgcolor", style.texthilitecolor);
+						this.title.textArea.valueDots.setAttribute("fgcolor", style.texthilitecolor);
+						this.title.textArea.aliasText.setAttribute("fgcolor", style.texthilitecolor);
+						this.title.textArea.aliasDots.setAttribute("fgcolor", style.texthilitecolor);
+					}
+					else if (selected) {
+						this.title.textArea.valueText.setAttribute("fgcolor", style.textselectedcolor);
+						this.title.textArea.valueDots.setAttribute("fgcolor", style.textselectedcolor);
+						this.title.textArea.aliasText.setAttribute("fgcolor", style.textselectedcolor);
+						this.title.textArea.aliasDots.setAttribute("fgcolor", style.textselectedcolor);
+					}
+					else {
+						this.title.textArea.valueText && this.title.textArea.valueText.setAttribute("fgcolor", style.textcolor);
+						this.title.textArea.valueDots && this.title.textArea.valueDots.setAttribute("fgcolor", style.textcolor);
+						this.title.textArea.aliasText && this.title.textArea.aliasText.setAttribute("fgcolor", style.textcolor);
+						this.title.textArea.aliasDots && this.title.textArea.aliasDots.setAttribute("fgcolor", style.textcolor);
+					}
+				}
+				else {
+					this.title.textArea.valueText.setAttribute("fgcolor", style.textdisabledcolor );
+					this.title.textArea.valueDots.setAttribute("fgcolor", style.textdisabledcolor );
+					this.title.textArea.aliasText.setAttribute("fgcolor", style.textdisabledcolor );
+					this.title.textArea.aliasDots.setAttribute("fgcolor", style.textdisabledcolor );
+				}
+			}
+			]]>
+		</method>
+
+		<view name="separator" visible="${parent.addSeparatorBefore}" height="1" width="${parent.width}" bgcolor="${classroot.style['bordercolor']}"/>
+		<view name="title" x="1" valign="middle">
+			<simplelayout axis="x" spacing="4" />
+			<view name="selectedIconHolder" width="16" height="16" visible="true">
+				<image name="selectedIconIndicator" valign="middle" resource="checkmarkIcon" visible="false"/>
+			</view>
+			<view name="textArea">
+				<text name="valueText" valign="middle" text="${classroot.text}" resize="false" x="0">
+					<!--- @keywords private -->
+					<handler name="oninit">
+						<![CDATA[
+						this.refreshWidthDel = new lz.Delegate(this, "refreshWidth");
+						this.refreshWidthDel.register(this, "ontext");
+						this.refreshWidthDel.register(classroot, "onvalueWidth");
+						this.refreshWidth();
+						]]>
+					</handler>
+					<!--- @keywords private -->
+					<method name="destroy">
+						<![CDATA[
+						this.refreshWidthDel.unregisterAll();
+						delete this.refreshWidthDel;
+						super.destroy();
+						]]>
+					</method>
+					<!--- 
+						@keywords private 
+						updates the width and sets the truncation dots to visible
+						Note: we can't use "updateWidth" as a method name, as it is already used internally by OpenLaszlo.
+					-->
+					<method name="refreshWidth" args="e=null">
+						<![CDATA[
+						if( this.getTextWidth() > classroot.valueWidth){
+							this.setAttribute("width", classroot.valueWidth);
+							parent.valueDots.setAttribute("visible",true);
+						}else {
+							parent.valueDots.setAttribute("visible",false);
+						}
+						]]>
+					</method>
+					<wcfTooltip text="${this.parent.text}" enabled="${this.parent.parent.valueDots.visible}"/>
+				</text>
+				<text name="valueDots" text="${foundationResources.gridTruncationText.string}" x="${classroot.valueWidth}"/>
+				<text name="aliasText" valign="middle" text="${ classroot.alias + (classroot.aliasQualifier != '' ? (' - ' + classroot.aliasQualifier) : '')}" resize="false" x="${classroot.valueWidth + (parent.valueDots.width + 15)}">
+					<!--- @keywords private -->
+					<handler name="oninit">
+						<![CDATA[
+						this.refreshWidthDel = new lz.Delegate(this, "refreshWidth");
+						this.refreshWidthDel.register(this, "ontext");
+						this.refreshWidthDel.register(classroot, "onaliasWidth");
+						this.refreshWidth();
+						]]>
+					</handler>
+					<!--- @keywords private -->
+					<method name="destroy">
+						<![CDATA[
+						this.refreshWidthDel.unregisterAll();
+						delete this.refreshWidthDel;
+						super.destroy();
+						]]>
+					</method>
+					<!--- 
+						@keywords private 
+						updates the width and sets the truncation dots to visible
+						Note: we can't use "updateWidth" as a method name, as it is already used internally by OpenLaszlo.
+					-->
+					<method name="refreshWidth" args="e=null">
+						<![CDATA[
+						if( this.getTextWidth() > classroot.aliasWidth ){
+							this.setAttribute("width", classroot.aliasWidth);
+							parent.aliasDots.setAttribute("visible",true);
+						} else {
+							parent.aliasDots.setAttribute("visible",false);
+						}
+						]]>
+					</method>
+					<wcfTooltip text="${this.parent.text}" enabled="${this.parent.parent.aliasDots.visible}"/>
+				</text>
+				<text name="aliasDots" text="${foundationResources.gridTruncationText.string}" x="${parent.aliasText.x + parent.aliasText.width}" visible="false"/>
+			</view>
+		</view>
+	</class>
+</library>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!--- This grid displays the contents and characteristics of a list of {@link EMarketingSpot e-Marketing Spots}. -->
+	<ObjectGrid definitionName="mktEMarketingSpotGrid" preferenceKey="mktEMarketingSpotGrid">
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="uniqueId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="true" name="eMarketingSpotName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="250"/>
+		<GridText editable="true" name="description" propertyName="description" text="${mktMarketingResources.description}" width="450"/>
+	</ObjectGrid>
+
+	<!--- This grid displays the contents and characteristics of a list of {@link WebActivity Web Activities}. -->
+	<ObjectGrid definitionName="mktEMarketingSpotActivityGrid" preferenceKey="mktEMarketingSpotActivityGrid">
+		<GridIconTypeImage name="type" propertyName="" required="true" text="${mktMarketingResources.type}" width="60"/>
+		<GridPropertyImage editable="false" enableFilter="true" name="state" propertyName="state" text="${mktMarketingResources.state}" width="80"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" width="125"/>
+		<GridText editable="true" name="activityName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="1000" minimumValue="0" name="priority" propertyName="priority" text="${mktMarketingResources.priority}" width="65"/>
+		<GridCheckbox alignment="center" editable="false" name="experiment" propertyName="experimentType" text="${mktMarketingResources.experiment}" trueValue="Experiment" visible="false" width="100"/>
+		<GridText editable="true" name="description" propertyName="description" text="${mktMarketingResources.description}" width="250"/>
+		<GridDateTime editable="true" name="startdate" propertyName="startdate" text="${mktMarketingResources.startDateHeading}"/>
+		<GridDateTime editable="true" endOfDay="true" name="enddate" propertyName="enddate" text="${mktMarketingResources.endDateHeading}"/>
+		<GridDisplayName name="campaign" parentObject="true" propertyName="" text="${mktMarketingResources.campaign}" width="150"/>
+		<GridDateTime editable="false" name="created" propertyName="created" text="${mktMarketingResources.created}" visible="false"/>
+		<GridDateTime editable="false" name="lastUpdated" propertyName="lastupdate" text="${mktMarketingResources.lastUpdated}" visible="false"/>
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="activityId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+	</ObjectGrid>
+
+	<!--- This Gantt grid displays the contents and characteristics of a {@link WebActivity Web Activities} calendar view. -->
+	<GanttGrid definitionName="mktEMarketingSpotActivityGanttGrid" endDatePropertyName="enddate" preferenceKey="mktEMarketingSpotActivityGanttGrid" startDatePropertyName="startdate">
+		<GridIconTypeImage name="type" propertyName="" text="${mktMarketingResources.type}" width="50"/>
+		<GridPropertyImage editable="false" enableFilter="true" name="state" propertyName="state" text="${mktMarketingResources.state}" visible="true" width="80"/>
+		<GridStoreName name="store" propertyName="objectStoreId" text="${mktMarketingResources.store}" visible="false" width="125"/>
+		<GridText editable="true" name="activityName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="200"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="1000" minimumValue="0" name="priority" propertyName="priority" text="${mktMarketingResources.priority}" visible="true" width="65"/>
+		<GridCheckbox alignment="center" editable="false" name="experiment" propertyName="experimentType" text="${mktMarketingResources.experiment}" trueValue="Experiment" visible="false" width="100"/>
+		<GridText editable="true" name="description" propertyName="description" text="${mktMarketingResources.description}" visible="false" width="250"/>
+		<GridDateTime editable="true" name="startdate" propertyName="startdate" text="${mktMarketingResources.startDateHeading}" visible="false"/>
+		<GridDateTime editable="true" endOfDay="true" name="enddate" propertyName="enddate" text="${mktMarketingResources.endDateHeading}" visible="false"/>
+		<GridDisplayName name="campaign" parentObject="true" propertyName="" text="${mktMarketingResources.campaign}" visible="false" width="150"/>
+		<GridDateTime editable="false" name="created" propertyName="created" text="${mktMarketingResources.created}" visible="false"/>
+		<GridDateTime editable="false" name="lastUpdated" propertyName="lastupdate" text="${mktMarketingResources.lastUpdated}" visible="false"/>
+		<GridText alignment="right" datatype="number" editable="false" name="uniqueID" propertyName="activityId" text="${mktMarketingResources.uniqueId}" visible="false" width="90"/>
+	</GanttGrid>
+
+	<ChildListEditor definitionName="mktEMarketingSpotGridEditor" listDefinitionName="mktEMarketingSpotGrid" objectTypes="EMarketingSpot,InheritedEMarketingSpot"/>
+
+	<!---
+		This reference list is used to show a list of {@link WebActivity Web Activities} which are
+		associated with {@link EMarketingSpot e-Marketing Spots}.
+	-->
+	<ReferenceList definitionName="mktEMarketingSpotActivityGridEditor" listDefinitionName="mktEMarketingSpotActivityGrid" referenceObjectPaths="WebActivity/path/viewEMarketingSpot/ChildEMarketingSpot,WebActivity/path/branch/path/viewEMarketingSpot/ChildEMarketingSpot,InheritedWebActivity/path/viewEMarketingSpot/ChildInheritedEMarketingSpot,InheritedWebActivity/path/branch/path/viewEMarketingSpot/ChildInheritedEMarketingSpot,WebActivity/path/viewEMarketingSpot/ChildInheritedEMarketingSpot,WebActivity/path/branch/path/viewEMarketingSpot/ChildInheritedEMarketingSpot"/>
+
+	<!---
+		This reference list is used to show a list of {@link WebActivity Web Activities} which are
+		associated with {@link EMarketingSpot e-Marketing Spots} in a calendar view.
+	-->
+	<ReferenceList definitionName="mktEMarketingSpotActivityGanttChartEditor" listDefinitionName="mktEMarketingSpotActivityGanttGrid" referenceObjectPaths="WebActivity/path/viewEMarketingSpot/ChildEMarketingSpot,WebActivity/path/branch/path/viewEMarketingSpot/ChildEMarketingSpot,InheritedWebActivity/path/viewEMarketingSpot/ChildInheritedEMarketingSpot,InheritedWebActivity/path/branch/path/viewEMarketingSpot/ChildInheritedEMarketingSpot,WebActivity/path/viewEMarketingSpot/ChildInheritedEMarketingSpot,WebActivity/path/branch/path/viewEMarketingSpot/ChildInheritedEMarketingSpot"/>
+
+	<!--- This navigation list definition is used to display {@link EMarketingSpot e-Marketing Spots}. -->
+	<NavigationListDefinition definitionName="mktEMarketingSpotGridChildList" displayName="${mktMarketingResources.emarketingSpotList}" helpLink="tasks/tsbemssupert.htm" isDefault="true" listDefinitionName="mktEMarketingSpotGridEditor" listTitle="${mktMarketingResources.list}" toolbarIcon="listToolbarIcon"/>
+
+	<!--- This navigation list definition is used to display {@link WebActivity Web Activities}. -->
+	<NavigationListDefinition definitionName="mktEMarketingSpotActivityGridList" displayName="${mktMarketingResources.activityList}" isDefault="true" listDefinitionName="mktEMarketingSpotActivityGridEditor" listTitle="${mktMarketingResources.activityList}" toolbarIcon="listToolbarIcon"/>
+
+	<!--- This navigation list definition is used to display {@link WebActivity Web Activities} as a calendar view. -->
+	<NavigationListDefinition definitionName="mktEMarketingSpotActivityGanttChartList" displayName="${mktMarketingResources.activityCalendar}" listDefinitionName="mktEMarketingSpotActivityGanttChartEditor" listTitle="${mktMarketingResources.activityCalendar}" toolbarIcon="ganttChartToolbarIcon"/>
+
+</Definitions>

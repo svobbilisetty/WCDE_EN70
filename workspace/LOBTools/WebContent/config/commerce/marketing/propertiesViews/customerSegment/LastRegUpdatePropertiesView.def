@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<PropertyGroup collapsable="false" definitionName="mktLastRegUpdateProperties" displayGrouping="true">
+
+		<PropertyCombobox objectPath="TopAndList/LastRegistrationUpdate" promptText="${mktMarketingResources.cspLastRegistrationUpdate}" propertyName="template"/>
+        
+		<PropertyGroup collapsable="false" name="singleChildrenGroup1">
+			<EnablementOrCondition conditionId="singleInput">
+				<EnablementCondition conditionId="withinDays" enablementValue="withinDays" objectPath="TopAndList/LastRegistrationUpdate" propertyName="template"/>
+				<EnablementCondition conditionId="priorDays" enablementValue="priorDays" objectPath="TopAndList/LastRegistrationUpdate" propertyName="template"/>
+			</EnablementOrCondition>
+			<PropertyStepper minimumValue="0" objectPath="TopAndList/LastRegistrationUpdate/LastRegistrationUpdateAndOrList/LastRegUpdateDaysCondition" promptText="${mktMarketingResources.customerSegment_numOfDays}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+
+		<PropertyGroup collapsable="false" name="singleChildrenGroup2">
+			<EnablementOrCondition conditionId="singleInput">
+				<EnablementCondition conditionId="beforeDate" enablementValue="beforeDate" objectPath="TopAndList/LastRegistrationUpdate" propertyName="template"/>
+				<EnablementCondition conditionId="afterDate" enablementValue="afterDate" objectPath="TopAndList/LastRegistrationUpdate" propertyName="template"/>
+			</EnablementOrCondition>
+			<PropertyDatePicker dateOnly="true" objectPath="TopAndList/LastRegistrationUpdate/LastRegistrationUpdateAndOrList/LastRegUpdateDatesCondition" promptText="${mktMarketingResources.customerSegment_Date}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+		
+		<PropertyGroup collapsable="false" name="multiChildrenGroup">
+			<EnablementCondition conditionId="betweenDates" enablementValue="betweenDates" objectPath="TopAndList/LastRegistrationUpdate" propertyName="template"/>
+			<PropertyDatePicker dateOnly="true" objectPath="TopAndList/LastRegistrationUpdate/LastRegistrationUpdateAndOrList/LastRegUpdateDatesCondition[conditionOperator=&gt;=]" promptText="${mktMarketingResources.customerSegment_StartDate}" propertyName="conditionValue" required="true"/>
+			<PropertyDatePicker dateOnly="true" objectPath="TopAndList/LastRegistrationUpdate/LastRegistrationUpdateAndOrList/LastRegUpdateDatesCondition[conditionOperator=&lt;=]" promptText="${mktMarketingResources.customerSegment_EndDate}" propertyName="conditionValue" required="true"/>
+		</PropertyGroup>
+		
+	</PropertyGroup>
+</Definitions>

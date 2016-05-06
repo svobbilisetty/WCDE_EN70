@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<ObjectProperties definitionName="mktEmailTemplateProperties">
+		<PropertyPane name="pane">
+			<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup" name="assetGroup"/>
+			<PropertyGroup groupTitle="${mktMarketingResources.emailTemplateProperties}" hideHeaderWhenOnlyGroup="true" name="group" open="true">
+				<PropertyInputText helpText="${mktMarketingResources.help_email_name}" promptText="${mktMarketingResources.objectName}" propertyName="name" required="true"/>
+				<PropertyInputMultiLineText promptText="${mktMarketingResources.description}" propertyName="description"/>
+				
+				<PropertyCheckbox falseValue="0" helpText="${mktMarketingResources.help_email_recordOpens}" promptText="${mktMarketingResources.recordOpens}" propertyName="recordOpens" trueValue="1"/>
+	
+				<PropertyGroup collapsable="false" name="coremetricsGroup" showHeader="false">
+					<CoremetricsEnablementCondition/>
+					<PropertyCheckboxNVP falseValue="" helpText="${mktMarketingResources.help_email_recordAnalyticsProvider}" name="coremetricsSelect" package="mkt" pairName="cmTrack" promptText="${mktMarketingResources.useAnalyticsProvider}" propertyName="propertyFile" trueValue="true"/>
+				</PropertyGroup>
+				<PropertyInputLongText promptText="${mktMarketingResources.emailSubjectLabel}" propertyName="subject" required="true"/>
+								
+				<PropertyEmailTemplateRichTextEditor analyticsPropertyNVPName="cmTrack" analyticsPropertyNVPTrueValue="true" analyticsPropertyName="propertyFile" analyticsProvider="coremetrics" package="mkt" promptText="${mktMarketingResources.emailContent}" propertyName="body" replacementArray="['e-mail:Link', 'e-mail:CMLink', 'e-mail:EMSpot', 'e-mail:EMSpot cmaction=&quot;1&quot;', 'e-mail:Content', 'e-mail:Content cmaction=&quot;1&quot;']" required="true"/>
+			</PropertyGroup>
+		</PropertyPane>
+	</ObjectProperties>
+</Definitions>

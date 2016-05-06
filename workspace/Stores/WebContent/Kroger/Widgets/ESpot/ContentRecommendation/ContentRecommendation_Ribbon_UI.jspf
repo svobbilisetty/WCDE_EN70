@@ -1,0 +1,81 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+	<%@ include file="../include/ESpotTitle_UI.jspf"%>
+	
+	<div class="widget_height ibm-landing-page">
+		<script type="text/javascript">
+			dojo.require('wc.widget.WCRibbonBase');
+		
+			/*
+			 * Ribbon code
+			 */
+			dojo.addOnLoad(function() {
+				var ribbons = dojo.query('.ibm-ribbon .ibm-container-body'); 
+				if(ribbons.length > 0) {
+					dojo['require']("wc.widget.WCRibbon");
+					dojo.addOnLoad(function() {
+						dojo.forEach(ribbons, function(item) {
+									
+							// make sure this ain't leadspace ribbon
+							if(dojo.hasAttr(item, 'id')){
+								if(item.id == 'ibm-leadspace-body' ){
+									// there can always be only 1 such ribbon per page
+									// therefore it makes no sense to bust memory with widgets,
+									// insteadl, we will make it a simple function call
+									wc.widget.WCRibbonLeadspace.init({width:${ribbonWidth}, height:${ribbonHeight}, imageMap: <wcf:json object="${contentImageMap}"/>, bidi: ${isBiDiLocale} });
+								}
+								else {
+									var s = new wc.widget.WCRibbon({ id: dojo.attr(item, 'id'),srcNodeRef: item, bidi: ${isBiDiLocale} });
+									s.startup();
+								}
+							} else {
+								var s = new wc.widget.WCRibbon({ srcNodeRef: item, bidi: ${isBiDiLocale} });
+								s.startup();
+							}
+						});
+					});
+				}
+			});
+		</script>
+	
+		<style type="text/css">
+			<c:forEach items="${contentImageMap}" varStatus="aStatus">
+				<c:out value="#ibm-lead-${aStatus.current.key} { background: url(${contentImageMap[aStatus.current.key]}) no-repeat 0px;}"/>
+			</c:forEach>
+		</style>
+		<c:forEach items="${contentLongDescriptionMap}" varStatus="aStatus">
+			<span class="spanacce" id="<c:out value='thumbNailButton-${aStatus.current.key}'/>" style="display:none">
+				<fmt:message key='ACCE_ES_RIBBON_THUMBNAIL'>
+					<fmt:param value="${contentDescriptionMap[aStatus.current.key]}"/>
+				</fmt:message>
+			</span>
+		</c:forEach>
+		<%-- remove ibm-no-tabs to use navigation dots instead --%>
+		<div id="ibm-leadspace-head" class="ibm-container ibm-no-tabs ibm-ribbon">
+		    <div id="ibm-leadspace-body" class="ibm-container-body">
+			    <c:forEach items="${contentImageMap}" varStatus="aStatus">
+					<div class="ibm-columns" id="ibm-lead-<c:out value='${aStatus.current.key}'/>">
+						<div class="ibm-col-1-1">
+							<h1><a id="<c:out value='slideLink-${aStatus.current.key}'/>" href="<c:out value='${contentUrlMap[aStatus.current.key]}'/>">
+								<c:out value='${contentDescriptionMap[aStatus.current.key]}'/>
+								<p><em><c:out value='${contentLongDescriptionMap[aStatus.current.key]}'/></em></p>
+							</a>
+							</h1>
+						</div>
+					</div>
+				</c:forEach>
+			</div>
+		</div>
+	</div>

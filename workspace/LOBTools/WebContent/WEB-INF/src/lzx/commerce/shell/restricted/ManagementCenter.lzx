@@ -1,0 +1,311 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<canvas title="${shellResourceBundle.applicationTitle.string}" mediaerrortimeout="120000" medialoadtimeout="120000" dataloadtimeout="180000" scriptlimits="timeout: 60">
+	<script>
+		<![CDATA[
+			if ($debug && Debug["backtraceStack"]) {
+				Debug.backtraceStack.maxDepth = 256;
+			}
+		]]>
+	</script>
+	
+	<!--- Common widgets, resources and functions used in the shell. -->
+	<include href="../../foundation/restricted/library.lzx" />
+	<include href="ShellLibrary.lzx" />
+
+	<!--- True if modal dialog is opened. -->
+	<attribute name="modalContext" type="boolean" value="false" />
+
+	<!--- Generic string attribute used for communicating data between the browser and Management Center. -->
+	<attribute name="externalCallbackValue" type="string" value="${null}" />
+	
+	<!--- 
+		@keywords private
+		This will disable the default OL focus indicator 
+	-->
+	<attribute name="focusclass" value="${null}" />
+
+	<!--- Event used to complete initialization on showing tools in getting started page. -->
+	<event name="completeMenuItems" />
+
+	<!--- Global instance of the config properties class. -->
+	<wcfConfigProperties id="configProperties" />
+
+	<script>
+		<![CDATA[
+			global.testdata = lz.Browser.getInitArg("testdata");
+			if (typeof(global["testdata"]) == "undefined") {
+				global.testdata = null;
+			}
+			global.languageId = lz.Browser.getInitArg("languageId");
+			if (typeof(global["languageId"]) == "undefined" || global.languageId == null) {
+				global.languageId = -1;
+			}
+			global.locale = lz.Browser.getInitArg("locale");
+			if (typeof(global["locale"]) == "undefined" || global.locale == null) {
+				global.locale = configProperties.defaultPreferredLanguage;
+			}
+			global.serviceContextRoot = lz.Browser.getInitArg("serviceContextRoot");
+			if (typeof(global["serviceContextRoot"]) == "undefined") {
+				global.serviceContextRoot = null;
+			}
+			global.helpServerHostName = lz.Browser.getInitArg("helpServerHostName");
+			if (typeof(global["helpServerHostName"]) == "undefined") {
+				global.helpServerHostName = null;
+			}
+			global.helpServerPort = lz.Browser.getInitArg("helpServerPort");
+			if (typeof(global["helpServerPort"]) == "undefined") {
+				global.helpServerPort = null;
+			}
+			global.helpServerContextPath = lz.Browser.getInitArg("helpServerContextPath");
+			if (typeof(global["helpServerContextPath"]) == "undefined") {
+				global.helpServerContextPath = null;
+			}
+			global.previewProtocol = lz.Browser.getInitArg("previewProtocol");
+			if (typeof(global["previewProtocol"]) == "undefined") {
+				global.previewProtocol = null;
+			}
+			global.previewPort = lz.Browser.getInitArg("previewPort");
+			if (typeof(global["previewPort"]) == "undefined") {
+				global.previewPort = null;
+			}
+			global.previewWebPath = lz.Browser.getInitArg("previewWebPath");
+			if (typeof(global["previewWebPath"]) == "undefined") {
+				global.previewWebPath = null;
+			}
+			global.previewWebAlias = lz.Browser.getInitArg("previewWebAlias");
+			if (typeof(global["previewWebAlias"]) == "undefined") {
+				global.previewWebAlias = null;
+			}
+
+			new lz[configProperties.defaultPreferredStyle](canvas, {name: "_" + configProperties.defaultPreferredStyle, isdefault: true});
+			
+			global.isIE = lz.Browser.getInitArg("isIE");
+		]]>
+	</script>
+
+	<!--- Global instance of the shell resource bundle for NL enablement. -->
+	<wcfShellResourceBundle id="shellResourceBundle" />
+
+	<!--- Global instance of the tools controller class. -->
+	<wcfToolsController id="toolsController" />
+
+	<!--- Global instance of the help manager class. -->
+	<wcfHelpManager id="helpManager" />
+
+	<!--- Global instance of the preference manager class. -->
+	<wcfPreferenceManager id="preferenceManager" userPreferenceDialogClass="wcfUserPreferenceDialog" />
+
+	<!--- Global instance of the message logger class. -->
+	<wcfMessageLogger id="messageLogger" />
+
+	<!--- Global instance of the logout dialog class. -->
+	<wcfLogoutDialog id="logoutDialog" />
+
+	<script>
+		<![CDATA[
+			if ($as3) {
+				#passthrough (toplevel:true) {
+					import flash.external.ExternalInterface;
+				}#
+			}
+		
+			var relogon = false;
+			var isWorkbenchActive = false;
+			var mainWorkbench;
+			var logonDialog;
+			var relogonAlertDialog;
+			if ($as3) {
+				flash.external.ExternalInterface.addCallback("setCallbackValue", setCallbackValue);
+				flash.external.ExternalInterface.addCallback("resetKeys", resetKeys);
+				flash.external.ExternalInterface.addCallback("doSessionTimeout", doSessionTimeout);
+				flash.external.ExternalInterface.addCallback("doSessionTerminated", doSessionTerminated);
+				flash.external.ExternalInterface.addCallback("doSessionCorrupted", doSessionCorrupted);
+				flash.external.ExternalInterface.addCallback("triggerAction", triggerAction);
+			} else {
+				flash.external.ExternalInterface.addCallback("setCallbackValue", null, setCallbackValue);
+				flash.external.ExternalInterface.addCallback("resetKeys", null, resetKeys);
+				flash.external.ExternalInterface.addCallback("doSessionTimeout", null, doSessionTimeout);
+				flash.external.ExternalInterface.addCallback("doSessionTerminated", null, doSessionTerminated);
+				flash.external.ExternalInterface.addCallback("doSessionCorrupted", null, doSessionCorrupted);
+				flash.external.ExternalInterface.addCallback("triggerAction", null, triggerAction);
+			}
+
+			function setCallbackValue (val, isEmptyStr) {
+				canvas.setAttribute("externalCallbackValue", isEmptyStr ? "" : val);
+				if (canvas["oncallbackvalue"]) {
+					canvas.oncallbackvalue.sendEvent(canvas.externalCallbackValue);
+				}
+			}
+			
+			function callJSFunction (functionName, arg) {
+				flash.external.ExternalInterface.call(functionName, arg);
+			}
+
+			function resetKeys () {
+				lz.Keys.__allKeysUp();
+			}
+
+			function startApp () {
+				resolveIdentityService.doRequest(this, {
+						channelId: wcfContextUtil.findContextValue(null, "channelId").value
+					});
+				mainWorkbench = new lz.wcfMainWorkbench(canvas);
+				wcfCanvasMenu.addView(mainWorkbench);
+			}
+
+			function logonSuccessful () {
+				callJSFunction("setUserLogonId", wcfContextUtil.findContextValue(null, "logonId").value);
+				if (relogon) {
+					logonDialog.closeWindow();
+					relogon = false;
+				}
+				else {
+					if (canvas["onnewIdentity"]) {
+						canvas.onnewIdentity.sendEvent(wcfContextUtil.findContextValue(null, "logonId").value);
+					}
+					if (global["logonPanel"]) {
+						global.logonPanel.setAttribute("visible", false);
+					}
+					mainWorkbench.setAttribute("visible", true);
+					preferenceManager.load();
+					if (wcfContextUtil.findContextValue(null, "workspacesEnabled").value == "true") {
+						wcfContextUtil.findContextValue(null, "readOnlyMode").setAttribute("value", "true");
+					}
+					if ($debug && Debug["console"]) {
+						if (Debug.console["window"] && Debug.console.window["bringToFront"]) {
+							Debug.console.window.bringToFront();
+						} else if (Debug.console["bringToFront"]) {
+							Debug.console.bringToFront();
+						}
+					}
+					var focusView = lz.Focus.getFocus();
+					if (focusView == null || !focusView.visible || wcfViewUtil.getInvisibleAncestor(focusView) != null) {
+						lz.Focus.setFocus(applicationMenu, false);
+					}
+					if (global["testdata"]) {
+						wcfAutomationUtil.run(global.testdata);
+					}
+				}
+				isWorkbenchActive = true;
+			}
+
+			function logoutSuccessful () {
+				isWorkbenchActive = false;
+				resetMainWorkbench();
+				mainWorkbench.setAttribute("visible", false);
+				wcfModelUtil.clearObjectStoreMap();
+				canvas["logoutProgressDialog"].closeWindow();
+				if (!global["logonPanel"]) {
+					global.logonPanel = new lz.wcfLogonPanel(canvas);
+				}
+				else if (!global.logonPanel.visible) {
+					global.logonPanel.setAttribute("visible", true);
+					global.logonPanel.resetForm();
+				}
+				if ($debug && Debug["console"]) {
+					if (Debug.console["window"] && Debug.console.window["bringToFront"]) {
+						Debug.console.window.bringToFront();
+					} else if (Debug.console["bringToFront"]) {
+						Debug.console.bringToFront();
+					}
+				}
+				callJSFunction("setUserLogonId");
+			}
+
+			function resetMainWorkbench () {
+				callJSFunction("setLoggedInUserLocale", global.locale);
+				wcfContextUtil.findContextValue(null, "locale").setAttribute("value", global.locale);
+				wcfContextUtil.findContextValue(null, "accessibleTools").setAttribute("value", "");
+				messageLogger.clearAll();
+				
+
+				toolsController.closeAllTools();
+				preferenceManager.resetPreferenceValues();
+				if (wcfContextUtil.findContextValue(null, "workspacesEnabled").value == "true") {
+					wcfWorkspaceUtil.clearContext();
+				}
+			}
+
+			function startReLogon (alertMessage) {
+				var callBackMethod = function(e) {
+					wcfContextUtil.findContextValue(null, "identityId").setAttribute("value", null);
+					wcfContextUtil.findContextValue(null, "identitySignature").setAttribute("value", null);
+					
+					if (typeof(logonDialog) == "undefined") {
+						logonDialog = new lz.wcfLogonDialog(canvas);
+					}
+					else {
+						logonDialog.logonInputWidget.resetForm();
+					}
+					logonDialog.openWindow();
+					callJSFunction("setUserLogonId");
+					relogon = true;
+				}
+				if (isWorkbenchActive) {
+					isWorkbenchActive = false;
+					if (typeof(relogonAlertDialog) == "undefined") {
+						relogonAlertDialog = new lz.wcfAlertDialog(canvas, null);
+					}
+					relogonAlertDialog.openAlertDialog(alertMessage, callBackMethod);
+				}
+			}
+
+			function doSessionTimeout () {
+				startReLogon(shellResourceBundle.errorSessionExpired.string);
+			}
+
+			function doSessionTerminated () {
+				startReLogon(shellResourceBundle.errorSessionTerminated.string);
+			}
+
+			function doSessionCorrupted () {
+				startReLogon(shellResourceBundle.errorSessionCorrupted.string);
+			}
+			
+			function triggerAction(actionHandler, params) {
+				var action = {
+					actionHandler: global[actionHandler]
+				};
+				for (var i in params) {
+					action[i] = params[i];
+				}
+				wcfActionManager.addAction(action);
+			}
+		]]>
+	</script>
+
+	<!--- @keywords private -->
+	<handler name="oninit" >
+		<![CDATA[
+			startApp();
+			callJSFunction("cmcApplicationInitialized");
+		]]>
+	</handler>
+	
+	<!--- @keywords private -->
+	<handler name="onload" reference="preferenceManager">
+		<![CDATA[
+			var gettingStartedPreference = preferenceManager.getPreference("CMCGettingStartedPage");
+			if (typeof(gettingStartedPreference) == "undefined" || gettingStartedPreference == "true") {
+				toolsController.openToolById("gettingStarted");
+			}
+			if (typeof(gettingStartedPreference) == "undefined" || gettingStartedPreference == "true") {
+				toolsController.focusTool("gettingStarted");
+			}
+		]]>
+	</handler>
+
+</canvas>

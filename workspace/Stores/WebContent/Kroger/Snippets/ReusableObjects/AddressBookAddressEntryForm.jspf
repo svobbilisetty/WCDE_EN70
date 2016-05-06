@@ -1,0 +1,222 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2006, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+<%--
+  *****
+  * This JSP segment displays the address section of the addressbook forms
+  * for all countries/regions unless otherwise specified.
+  * The display order is as follows (* means mandatory):
+  *  - firstname
+  *  - lastname*
+  *  - address*
+  *  - city*
+  *  - country/region*
+  *  - state/province*
+  *  - zip/postal/CEP code*
+  *  - phone
+  *  - email*
+  *****
+--%>
+<!-- BEGIN AddressBookAddressEntryForm.jspf-->
+
+<%@ include file="AddressHelperCountrySelection.jspf" %>
+
+<%-- First name --%>	
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_1">
+	<div id="WC_AddressBookAddressEntryFormf_div_2">
+	<span class="spanacce">
+	<label for="firstName${suffix}">
+	<fmt:message key="FIRST_NAME"/>
+	</label>
+	</span>
+	<fmt:message key="FIRST_NAME"/></div>
+	<input type="text" maxlength="40" size="35" id="firstName${suffix}" name="firstName" value="<c:out value='${param.firstName}'/>"/>
+</div>
+
+<%-- Last name --%>
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_3">
+	 <div id="WC_AddressBookAddressEntryFormf_div_4">
+		<span class="spanacce">
+		<label for="lastName${suffix}">
+		<fmt:message key="LAST_NAME"/>
+		</label>
+		</span>
+		<span class="required-field" id="WC_AddressBookAddressEntryFormf_div_5"> *</span>
+		<fmt:message key="LAST_NAME"/></div>
+		 <input type="text" maxlength="40" size="35" aria-required="true" id="lastName${suffix}" name="lastName" value="<c:out value='${param.lastName}'/>"/>
+</div>
+<br clear="all" />
+
+
+<%-- address --%>
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_6">
+	<div id="WC_AddressBookAddressEntryFormf_div_7">
+	<span class="spanacce">
+	<label for="address1${suffix}">
+	<fmt:message key="STREET_ADDRESS_LINE_1"/>
+	</label>
+	</span>
+	<span class="required-field" id="WC_AddressBookAddressEntryFormf_div_8"> *</span>
+	<fmt:message key="STREET_ADDRESS"/></div>
+	<input type="text" maxlength="99" size="35" aria-required="true" id="address1${suffix}" name="address1" value="<c:out value ='${param.address1}'/>"/>
+	<span class="spanacce">
+	<label for="address2${suffix}"><fmt:message key="STREET_ADDRESS_LINE_2"/></label>
+	</span>
+	<input type="text" maxlength="49" size="35" id="address2${suffix}" name="address2" value="<c:out value ='${param.address2}'/>"/>
+</div>
+
+<%-- city --%>
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_9">
+	 <div id="WC_AddressBookAddressEntryFormf_div_10">
+	 <span class="spanacce">
+	 <label for="city${suffix}">
+	 <fmt:message key="CITY2"/>
+	 </label>
+	 </span>
+	 <span class="required-field" id="WC_AddressBookAddressEntryFormf_div_11"> *</span>
+	 <fmt:message key="CITY2"/></div>
+	 <input type="text" maxlength="40" size="35" aria-required="true" id="city${suffix}" name="city" value="<c:out value ='${param.city}'/>"/>
+ </div>
+<br clear="all" />
+
+
+<%-- country/region --%>									
+<c:set var="countryreg" value="${param.countryReg}"/>
+<c:if test="${empty param.countryReg}">
+	<c:set var="countryreg" value="${WCParam.country}"/>
+</c:if>
+
+<c:set var="lang" value="${locale}" />
+<c:set var="country_language_select" value="${fn:split(lang, '_')}" />
+
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_12">
+	<div id="WC_AddressBookAddressEntryFormf_div_13">
+		<span class="spanacce">
+		<label for="country${suffix}">
+		<fmt:message key="COUNTRY2_ACCE"/>
+		</label>
+		</span>
+		<span class="required-field" id="WC_AddressBookAddressEntryFormf_div_14"> *</span>
+		<fmt:message key="COUNTRY2"/></div>
+
+		<select class="drop_down_country" aria-required="true" id="country${suffix}" name="country" onkeydown="saveTabPress(event)" onblur="setFocus('state${suffix}')" onchange="javascript:AddressHelper.loadStatesUI('<c:out value='AddressForm${suffix}'/>','','<c:out value='stateDiv${suffix}'/>','<c:out value='state${suffix}'/>')" >
+			<c:forEach var="country" items="${countryBean.countries}">
+				<option value="${country.code}"
+					<c:choose>
+						<c:when test="${!empty countryreg}">
+							<c:if test="${country.code eq countryreg || country.displayName eq countryreg}">
+								stateDiv${suffix}
+								selected="selected"
+							</c:if>
+						</c:when>
+						<c:otherwise>						
+							<c:if test="${country.code eq country_language_select[1]}">
+								stateDiv${suffix}
+								selected="selected"
+								<c:set var="countryreg" value="${country.code}"/>
+							</c:if>
+						</c:otherwise>
+					</c:choose>
+					><c:out value="${country.displayName}"/>
+				</option>
+			</c:forEach>
+		</select>
+</div>
+
+<%-- state/province --%>
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_15">
+	<div id="WC_AddressBookAddressEntryFormf_div_16">
+		<span class="spanacce">
+		<label for="state${suffix}">
+		<fmt:message key="REG_STATE"/>
+		</label>
+		</span>
+		<span class="required-field" id="WC_AddressBookAddressEntryFormf_div_17"> *</span>
+		<fmt:message key="REG_STATE"/></div>
+		<wcbase:useBean id="countryBean" classname="com.ibm.commerce.user.beans.CountryStateListDataBean">
+			<c:set target="${countryBean}" property="countryCode" value="${countryreg}"/>
+		</wcbase:useBean>
+		<jsp:setProperty name="countryBean" property="countryCode" value="${countryreg}" />
+		<c:choose>
+				<c:when test="${!empty countryBean.countryCodeStates}">
+				<div id="stateDiv${suffix}">
+					<select aria-required="true" id="state${suffix}" name="state" class="drop_down_country">
+					<c:forEach var="state" items="${countryBean.countryCodeStates}">
+					<option value="<c:out value='${state.code}'/>"
+						<c:if test="${state.code eq param.state || state.displayName eq param.state}">
+							selected="selected"
+						</c:if>
+						>
+						<c:out value="${state.displayName}"/>
+					</option>
+					</c:forEach>
+					</select>
+				</div>
+			</c:when>
+			<c:otherwise>
+			<div id="stateDiv${suffix}">
+				<input type="text" maxlength="40" size="35" aria-required="true" id="state${suffix}" name="state" value="<c:out value='${param.state}'/>"/>
+			</div>
+			</c:otherwise>
+			</c:choose>
+	</div>
+<br clear="all" />
+
+
+<%-- zipcode --%>
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_18">
+	<div id="WC_AddressBookAddressEntryFormf_div_19">
+		<span class="spanacce">
+		<label for="zipCode${suffix}">
+		<fmt:message key="ZIP_CODE"/>
+		</label>
+		</span>
+		<span class="required-field" id="WC_AddressBookAddressEntryFormf_div_20"> *</span>
+	 	<c:choose>
+		  <c:when test="${isBrazilStore eq 'true'}"><!-- Brazil CEP# ( similar to zipcode ) -->
+			<fmt:message key="CEP_CODE3"/>
+		  </c:when>
+		  <c:otherwise> <!-- Madisons zipcode -->
+			<fmt:message key="ZIP_CODE"/>
+		  </c:otherwise>
+	 	</c:choose>
+	</div>
+	<input type="text" maxlength="30" size="35" aria-required="true" id="zipCode${suffix}" name="zipCode" value="<c:out value='${param.zipCode}'/>"/>
+</div>
+<%-- phone --%>
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_21">
+	<div id="WC_AddressBookAddressEntryFormf_div_22">
+	<span class="spanacce">
+	<label for="phone1${suffix}">
+	<fmt:message key="PHONE_NUMBER2"/>
+	</label>
+	</span>
+	<fmt:message key="PHONE_NUMBER2"/></div>
+	<input type="tel" maxlength="32" size="35" id="phone1${suffix}" name="phone1" value="<c:out value='${param.phone}'/>"/>
+</div>
+<br clear="all" />
+
+
+<%-- email --%>
+<div class="column" id="WC_AddressBookAddressEntryFormf_div_23">
+	<div id="WC_AddressBookAddressEntryFormf_div_24">
+	<span class="spanacce">
+	<label for="email1${suffix}">
+	<fmt:message key="EMAIL"/>
+	</label>
+	</span>
+	<span class="required-field" id="WC_AddressBookAddressEntryFormf_div_25"> *</span> 
+	<fmt:message key="EMAIL"/></div>
+	<input type="text" maxlength="32" size="35" aria-required="true" id="email1${suffix}" name="email1" value="<c:out value='${param.email1}'/>"/>
+</div>
+<!-- END AddressBookAddressEntryForm.jspf-->

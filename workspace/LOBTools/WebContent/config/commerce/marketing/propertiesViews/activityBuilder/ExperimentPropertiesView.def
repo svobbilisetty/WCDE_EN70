@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+	<!---
+		This grid displays the contents and characteristics of a list of {@link mktFlowPathElementObject branch paths} for use in
+		the properties view of a {@link mktExperimentElementObject} or {@link mktBranchElementObject}.
+	-->
+	<ObjectGrid definitionName="mktExperimentPathGrid" preferenceKey="mktExperimentPathGrid">
+		<GridText editable="false" name="uniqueId" propertyName="elementName" text="${mktMarketingResources.uniqueId}" visible="false" width="150"/>
+		<GridNumeric alignment="right" datatype="number" editable="true" name="sequence" propertyName="sequence" text="${mktMarketingResources.sequence}" visible="false" width="100"/>
+		<GridText editable="true" name="pathName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="100" minimumValue="0" name="percentage" propertyName="pctg" text="${mktMarketingResources.percentage}" width="150">
+			<EnablementCondition conditionId="randomCondition" enablementValue="random" propertyName="branchtype"/>
+		</GridStepper>
+	</ObjectGrid>
+
+	<!---
+		This grid displays a list of {@link mktFlowPathElementObject experiment paths} and its associated statistics for use in
+		the {@link mktExperimentProperties properties view} of a {@link mktExperimentElementObject}.
+	-->
+	<ObjectGrid definitionName="mktExperimentPathStatisticsGrid" preferenceKey="mktExperimentPathStatisticsGrid">
+		<GridText editable="true" name="pathName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridCheckbox alignment="center" editable="true" name="winner" propertyName="winner" required="true" text="${mktMarketingResources.winner}" width="75"/>
+		<GridText alignment="right" datatype="number" editable="false" name="customerCount" propertyName="customerCount" text="${mktMarketingResources.uniqueCustomerCount}" width="100"/>
+		<GridText alignment="right" datatype="number" editable="false" name="views" objectPath="ExperimentStatistics" propertyName="views" text="${mktMarketingResources.views}" width="100"/>
+		<GridText alignment="right" datatype="number" editable="false" name="viewOrders" objectPath="ExperimentStatistics" propertyName="viewOrders" text="${mktMarketingResources.viewOrders}" width="100"/>
+		<GridSingleCurrency alignment="right" currencyPropertyName="currency" datatype="number" editable="false" name="viewRevenue" objectPath="ExperimentStatistics" propertyName="viewRevenue" text="${mktMarketingResources.viewRevenue}" width="100"/>
+		<GridText alignment="right" datatype="number" editable="false" name="clicks" objectPath="ExperimentStatistics" propertyName="clicks" text="${mktMarketingResources.clicks}" width="100"/>
+		<GridText alignment="right" datatype="number" editable="false" name="clickOrders" objectPath="ExperimentStatistics" propertyName="clickOrders" text="${mktMarketingResources.clickOrders}" width="100"/>
+		<GridSingleCurrency alignment="right" currencyPropertyName="currency" datatype="number" editable="false" name="clickRevenue" objectPath="ExperimentStatistics" propertyName="clickRevenue" text="${mktMarketingResources.clickRevenue}" width="100"/>
+		<GridText editable="false" name="currrency" objectPath="ExperimentStatistics" propertyName="currency" text="${mktMarketingResources.currency}" width="100"/>
+	</ObjectGrid>
+
+	<!---
+		This grid displays the contents and characteristics of a list of {@link mktFlowPathElementObject branch paths} for use in
+		the properties view of a {@link mktExperimentElementObject} or {@link mktBranchElementObject}.
+	-->
+	<ObjectGrid definitionName="mktSearchExperimentPathGrid" preferenceKey="mktSearchExperimentPathGrid">
+		<GridText editable="false" name="uniqueId" propertyName="elementName" text="${mktMarketingResources.uniqueId}" visible="false" width="150"/>
+		<GridNumeric alignment="right" datatype="number" editable="true" name="sequence" propertyName="sequence" text="${mktMarketingResources.sequence}" visible="false" width="100"/>
+		<GridText editable="true" name="pathName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridStepper alignment="right" datatype="number" editable="true" maximumValue="100" minimumValue="0" name="percentage" propertyName="pctg" text="${mktMarketingResources.percentage}" width="150">
+			<EnablementCondition conditionId="randomCondition" enablementValue="random" propertyName="branchtype"/>
+		</GridStepper>
+	</ObjectGrid>
+		
+	<!---
+		This grid displays a list of {@link mktFlowPathElementObject experiment paths} and its associated statistics for use in
+		the {@link mktExperimentProperties properties view} of a {@link mktExperimentElementObject} in a search activity.
+	-->
+	<ObjectGrid definitionName="mktSearchExperimentPathStatisticsGrid" preferenceKey="mktSearchExperimentPathStatisticsGrid">
+		<GridText editable="true" name="pathName" propertyName="name" required="true" text="${mktMarketingResources.objectName}" visible="true" width="150"/>
+		<GridCheckbox alignment="center" editable="true" name="winner" propertyName="winner" required="true" text="${mktMarketingResources.winner}" width="75"/>
+		<GridText alignment="right" datatype="number" editable="false" name="customerCount" propertyName="customerCount" text="${mktMarketingResources.uniqueCustomerCount}" width="100"/>
+		<GridText alignment="right" datatype="number" editable="false" name="clicks" objectPath="ExperimentStatistics" propertyName="clicks" text="${mktMarketingResources.clicks}" width="100"/>
+		<GridText alignment="right" datatype="number" editable="false" name="clickOrders" objectPath="ExperimentStatistics" propertyName="clickOrders" text="${mktMarketingResources.clickOrders}" width="100"/>
+		<GridSingleCurrency alignment="right" currencyPropertyName="currency" datatype="number" editable="false" name="clickRevenue" objectPath="ExperimentStatistics" propertyName="clickRevenue" text="${mktMarketingResources.clickRevenue}" width="100"/>
+		<GridText editable="false" name="currrency" objectPath="ExperimentStatistics" propertyName="currency" text="${mktMarketingResources.currency}" width="100"/>
+	</ObjectGrid>
+	
+	<!---
+		Properties view for the {@link mktExperimentElementObject Experiment element}.
+	-->
+	<FlowElementProperties definitionName="mktExperimentProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="general" text="${mktMarketingResources.generalProperties}">
+				<EnablementOrCondition conditionId="orCondition">
+					<EnablementCondition checkObjectDefinition="true" conditionId="webActivityCondition" enablementValue="WebActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedWebActivityCondition" enablementValue="InheritedWebActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="dialogActivityCondition" enablementValue="DialogActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedDialogActivityCondition" enablementValue="InheritedDialogActivity" parentProperty="true" propertyName="objectType"/>
+				</EnablementOrCondition>	
+				<PropertyGroup collapsable="false" name="group">
+					<PropertyInputText helpText="${mktMarketingResources.help_experiment_name}" name="expName" promptText="${mktMarketingResources.objectName}" propertyName="name"/>
+					<PropertyCombobox helpLinkURL="tasks/tsbexcreate.htm" helpText="${mktMarketingResources.help_experiment_branchType}" name="branchtype" promptText="${mktMarketingResources.branchType}" propertyName="branchtype"/>
+					<PropertyCombobox helpLinkURL="tasks/tsbexcreate.htm" helpText="${mktMarketingResources.help_experiment_scope}" name="scope" promptText="${mktMarketingResources.scope}" propertyName="scope"/>
+					<PropertyStepper helpLinkURL="tasks/tsbexcreate.htm" helpText="${mktMarketingResources.help_experiment_maxCustomers}" minimumValue="0" name="maxCustomers" promptText="${mktMarketingResources.maxCustomers}" propertyName="maxCustomers"/>
+					<PropertyDateTimePicker helpLinkURL="tasks/tsbexcreate.htm" helpText="${mktMarketingResources.help_experiment_startDate}" name="startDate" promptText="${mktMarketingResources.startDate}" propertyName="startDate"/>
+					<PropertyDateTimePicker endOfDay="true" helpLinkURL="tasks/tsbexcreate.htm" helpText="${mktMarketingResources.help_experiment_endDate}" name="endDate" promptText="${mktMarketingResources.endDate}" propertyName="endDate"/>
+					<PropertyStepper helpLinkURL="tasks/tsbexcreate.htm" helpText="${mktMarketingResources.help_experiment_sessionLength}" minimumValue="0" name="sessionLength" promptText="${mktMarketingResources.sessionLength}" propertyName="sessionLength"/>
+					<PropertyRadioGroup helpLinkURL="tasks/tsbexcreate.htm" helpText="${mktMarketingResources.help_experiment_status}" name="state" promptText="${mktMarketingResources.state}" propertyName="state"/>
+				</PropertyGroup>
+			</PropertyTabPane>
+			<PropertyTabPane name="paths" text="${mktMarketingResources.paths}">
+				<EnablementOrCondition conditionId="orCondition">
+					<EnablementCondition checkObjectDefinition="true" conditionId="webActivityCondition" enablementValue="WebActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedWebActivityCondition" enablementValue="InheritedWebActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="dialogActivityCondition" enablementValue="DialogActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedDialogActivityCondition" enablementValue="InheritedDialogActivity" parentProperty="true" propertyName="objectType"/>
+				</EnablementOrCondition>	
+				<PropertyGroup collapsable="false" name="group">
+					<PropertyPathListEditor package="mkt" helpText="${mktMarketingResources.help_experiment_paths}" listDefinitionName="mktExperimentPathGrid" name="pathEditor" objectTypes="path" promptText="${mktMarketingResources.paths}"/>
+				</PropertyGroup>
+			</PropertyTabPane>
+			<PropertyTabPane name="status" text="${mktMarketingResources.statistics}">
+				<EnablementAndCondition conditionId="andCondition">
+					<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+					<EnablementOrCondition conditionId="orCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="webActivityCondition" enablementValue="WebActivity" parentProperty="true" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedWebActivityCondition" enablementValue="InheritedWebActivity" parentProperty="true" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="dialogActivityCondition" enablementValue="DialogActivity" parentProperty="true" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedDialogActivityCondition" enablementValue="InheritedDialogActivity" parentProperty="true" propertyName="objectType"/>
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+				<PropertyGroup collapsable="false" name="group">
+					<PropertyNumericText helpText="${mktMarketingResources.help_experiment_totalUniqueCustomers}" name="uniqueCustomers" promptText="${mktMarketingResources.totalUniqueCustomerCount}" propertyName="uniqueCustomerCount"/>
+					<ChildListViewer listDefinitionName="mktExperimentPathStatisticsGrid" name="pathEditor" objectTypes="path" promptText="${mktMarketingResources.paths}"/>
+				</PropertyGroup>
+			</PropertyTabPane>
+			<PropertyTabPane name="searchGeneral" text="${mktMarketingResources.generalProperties}">
+				<EnablementOrCondition conditionId="orCondition">
+					<EnablementCondition checkObjectDefinition="true" conditionId="searchActivityCondition" enablementValue="SearchActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSearchActivityCondition" enablementValue="InheritedSearchActivity" parentProperty="true" propertyName="objectType"/>
+				</EnablementOrCondition>
+				<PropertyGroup collapsable="false" name="group">
+					<PropertyInputText helpText="${mktMarketingResources.help_search_experiment_name}" name="expName" promptText="${mktMarketingResources.objectName}" propertyName="name"/>
+					<PropertyCombobox helpLinkURL="tasks/tsbsearchexct.htm" helpText="${mktMarketingResources.help_search_experiment_branchType}" name="branchtype" promptText="${mktMarketingResources.branchType}" propertyName="branchtype"/>
+					<PropertyCombobox helpLinkURL="tasks/tsbsearchexct.htm" helpText="${mktMarketingResources.help_search_experiment_scope}" name="scope" promptText="${mktMarketingResources.scope}" propertyName="scope"/>
+					<PropertyStepper helpLinkURL="tasks/tsbsearchexct.htm" helpText="${mktMarketingResources.help_search_experiment_maxCustomers}" minimumValue="0" name="maxCustomers" promptText="${mktMarketingResources.maxCustomers}" propertyName="maxCustomers"/>
+					<PropertyDateTimePicker helpLinkURL="tasks/tsbsearchexct.htm" helpText="${mktMarketingResources.help_search_experiment_startDate}" name="startDate" promptText="${mktMarketingResources.startDate}" propertyName="startDate"/>
+					<PropertyDateTimePicker endOfDay="true" helpLinkURL="tasks/tsbsearchexct.htm" helpText="${mktMarketingResources.help_search_experiment_endDate}" name="endDate" promptText="${mktMarketingResources.endDate}" propertyName="endDate"/>
+					<PropertyStepper helpLinkURL="tasks/tsbsearchexct.htm" helpText="${mktMarketingResources.help_search_experiment_sessionLength}" minimumValue="0" name="sessionLength" promptText="${mktMarketingResources.sessionLength}" propertyName="sessionLength"/>
+					<PropertyRadioGroup helpLinkURL="tasks/tsbsearchexct.htm" helpText="${mktMarketingResources.help_search_experiment_status}" name="state" promptText="${mktMarketingResources.state}" propertyName="state"/>
+				</PropertyGroup>
+			</PropertyTabPane>
+			<PropertyTabPane name="searchPaths" text="${mktMarketingResources.paths}">
+				<EnablementOrCondition conditionId="orCondition">
+					<EnablementCondition checkObjectDefinition="true" conditionId="searchActivityCondition" enablementValue="SearchActivity" parentProperty="true" propertyName="objectType"/>
+					<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSearchActivityCondition" enablementValue="InheritedSearchActivity" parentProperty="true" propertyName="objectType"/>
+				</EnablementOrCondition>
+				<PropertyGroup collapsable="false" name="group">
+					<PropertyPathListEditor package="mkt" helpText="${mktMarketingResources.help_search_experiment_paths}" listDefinitionName="mktSearchExperimentPathGrid" name="pathEditor" objectTypes="path" promptText="${mktMarketingResources.paths}"/>
+				</PropertyGroup>
+			</PropertyTabPane>
+			<PropertyTabPane name="searchStatistics" text="${mktMarketingResources.statistics}">
+				<EnablementAndCondition conditionId="andCondition">
+					<EnablementCondition checkNewObject="true" conditionId="notNewObjectCondition" enablementValue="false"/>
+					<EnablementOrCondition conditionId="orCondition">
+						<EnablementCondition checkObjectDefinition="true" conditionId="searchActivityCondition" enablementValue="SearchActivity" parentProperty="true" propertyName="objectType"/>
+						<EnablementCondition checkObjectDefinition="true" conditionId="inheritedSearchActivityCondition" enablementValue="InheritedSearchActivity" parentProperty="true" propertyName="objectType"/>
+					</EnablementOrCondition>
+				</EnablementAndCondition>
+				<PropertyGroup collapsable="false" name="group">
+					<PropertyNumericText helpText="${mktMarketingResources.help_search_experiment_totalUniqueCustomers}" name="uniqueCustomers" promptText="${mktMarketingResources.totalUniqueCustomerCount}" propertyName="uniqueCustomerCount"/>
+					<ChildListViewer listDefinitionName="mktSearchExperimentPathStatisticsGrid" name="pathEditor" objectTypes="path" promptText="${mktMarketingResources.paths}"/>
+				</PropertyGroup>
+			</PropertyTabPane>			
+		</PropertyTabs>
+	</FlowElementProperties>
+</Definitions>

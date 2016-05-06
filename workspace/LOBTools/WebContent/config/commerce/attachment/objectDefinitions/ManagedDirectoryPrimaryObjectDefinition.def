@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2011 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions> 
+  
+	<PrimaryObjectDefinition browseFilterType="ManagedContentsFilter" copyProtected="true" creatable="false" definitionName="attBaseManagedDirectoryPrimaryObjectDefinition" displayName="${attachmentResources.managedDirectoryObjectName}" displayNameProperty="displayName" helpLink="tasks/tttcreatemd.htm" idProperty="directoryId" isBaseDefinition="true" longDisplayNameProperty="fullPath" newDisplayName="${attachmentResources.attachment_newManagedDirectoryDisplayName}" newObjectMenuItemText="${attachmentResources.contextMenuNewDirectory}" objectGroups="ManagedDirectoryGroup" propertiesDefinitionName="attManagedDiretoryProperties" writeUsage="IBM_ManageAttachmentTool">
+			
+			<!---Retrieves the {@link attChildManagedDirectory ChildManagedDirectory} and 
+			{@link attChildInheritedManagedDirectory ChildInheritedManagedDirectory} child objects.  -->
+			<GetChildrenService objectTypes="ChildManagedDirectory,ChildInheritedManagedDirectory" url="/cmc/GetManagedDirectoryChildren">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="displayName" propertyName="displayName"/>
+				<ServiceParam name="parentPath" optional="true" propertyName="parentPath"/>
+			</GetChildrenService>
+			
+	    	<!--- Retrieves the {@link attChildManagedFile ChildManagedFile} and 
+			{@link attChildInheritedManagedFile ChildInheritedManagedFile} child objects.  -->
+			<GetChildrenService objectTypes="ChildManagedFile,ChildInheritedManagedFile" url="/cmc/GetManagedDirectoryChildren-ManagedFile">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="directoryId" propertyName="directoryId"/>
+			</GetChildrenService>
+			
+			<!-- Delete service to delete a managed directory -->
+			<DeleteService url="/cmc/DeleteManagedDirectory">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="directoryId" propertyName="directoryId"/>
+			</DeleteService>
+			<!-- Create service to create a managed directory -->
+			<CreateService url="/cmc/CreateManagedDirectory">
+				<ServiceParam name="storeId"/>
+			    <ServiceParam name="parentPath" optional="true" parentProperty="true"/>
+			    <ServiceParam name="parentName" optional="true" parentProperty="true" propertyName="displayName"/>
+			</CreateService>
+	
+			<!--- Custom service to upload a compressed file and create files of supported attachment types in the compressed file as managed file.  -->
+			<!--  Attribute isFileUploadService is set to true so that a file browse window will be popped up first. -->
+			<!--  Attribute maximumFileSize sets the maximum file size can be uploaded through this custom service -->
+			<CustomService displayName="${attachmentResources.customService_createFilesFromCompressFileDisplayName}" isFileUploadService="true" maximumFileSize="10485760" menuDisplayName="${attachmentResources.customService_createFilesFromCompressFileMenuDisplayName}" refreshChildren="true" toolbarIcon="createFilesFromCompressFileToolbarIcon" url="/cmc/AttachmentFileUpload">
+				<!-- The current store id -->
+				<ServiceParam name="storeId"/>
+				<!-- The Path of the parent managed directory  -->
+				<ServiceParam name="parentDirectoryParentPath" optional="true" propertyName="parentPath"/>
+				<!-- The name of the parent managed directory  -->
+				<ServiceParam name="parentDirectoryName" propertyName="displayName"/>
+				<!-- This parameter indicates the compressed file should be extracted -->
+				<ServiceParam name="unzip" value="true"/>
+				<!--  Indicate this action is for creating new managed files -->
+				<ServiceParam name="operationType" value="Create"/>
+				<!-- Define the file filters in the file browse window -->
+                <FileTypes description="${attachmentResources.fileTypesDescription_zip}" extension="*.zip" name="zipFileTypesFilter"/>
+				<FileTypes description="${attachmentResources.fileTypesDescription_all}" extension="*.*" name="allFileTypesFilter"/>				
+			</CustomService>
+	
+	    <!--- The path of parent directory of this directory. -->
+		<PropertyDefinition displayName="${attachmentResources.managedDirectory_parentPath}" maximumSize="254" propertyName="parentPath" type="string"/>
+		<!--- The name of this directory. -->
+		<PropertyDefinition displayName="${attachmentResources.managedDirectory_displayName}" maximumSize="100" propertyName="displayName" required="true" type="string"/>
+				
+		<!-- Navigation list definition which allows to navigate from the directory to its child files. -->	
+		<NavigationListDefinition displayName="${attachmentResources.attachmentManagedFileChildListTitle}" helpLink="tasks/tttbrowsemanaged.htm" isDefault="true" listDefinitionName="attManagedFileList" listTitle="${attachmentResources.attachmentManagedFileChildListTitle}" name="attManagedFileNavigationList" toolbarIcon="listToolbarIcon"/>
+			    
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="attBaseManagedDirectoryPrimaryObjectDefinition" compatibleObjectTypes="ManagedDirectory" creatable="false" definitionName="InheritedManagedDirectory" headerIcon="InheritedManagedDirectoryHeaderIcon" icon="InheritedManagedDirectoryIcon" objectType="InheritedManagedDirectory">
+		
+			<ParentReferenceObjectDefinition derivedId="true" idProperty="childDirectoryId" name="attChildInheritedManagedDirectory" objectType="ChildInheritedManagedDirectory" referencedType="InheritedManagedDirectory"/>
+			<!--  
+		    Parent Reference object definition between the inherited directory and a child inherited file.
+		    This indicates that an inherited directory can be a parent of an inherited file.
+			--> 	
+			<ParentReferenceObjectDefinition idProperty="childManagedFileId" name="attChildInheritedManagedFile" objectType="ChildInheritedManagedFile" referencedType="InheritedManagedFile"/>
+			
+			<FalseEnablementCondition conditionId="inheritedManagedDirectoryCondition"/>
+	</PrimaryObjectDefinition>
+	<PrimaryObjectDefinition baseDefinitionName="attBaseManagedDirectoryPrimaryObjectDefinition" creatable="true" definitionName="ManagedDirectory" headerIcon="ManagedDirectoryHeaderIcon" icon="ManagedDirectoryIcon" objectType="ManagedDirectory">
+			
+			<ParentReferenceObjectDefinition derivedId="true" idProperty="childDirectoryId" name="attChildManagedDirectory" objectType="ChildManagedDirectory" referencedType="ManagedDirectory"/>
+			
+			<!-- 
+		    Parent Reference object definition between the directory and a child file.
+		    This indicates that a directory can be a parent of a file.
+			--> 
+			<ParentReferenceObjectDefinition idProperty="childManagedFileId" name="attChildManagedFile" objectType="ChildManagedFile" referencedType="ManagedFile"/>
+			
+	</PrimaryObjectDefinition>		
+	
+</Definitions>

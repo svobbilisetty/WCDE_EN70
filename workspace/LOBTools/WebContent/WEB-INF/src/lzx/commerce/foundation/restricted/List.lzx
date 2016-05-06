@@ -1,0 +1,446 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		@keywords final 
+		This class defines a widget that displays a list of values for the user to select from. The wcfPropertyList
+		widget is for use in a properties view. 
+		
+		The name of the property specified by the {@link wcfPropertyEditor#propertyName propertyName} attribute is resolved to 
+		the associated {@link wcfPropertyDefinition}. An entry in the list is then created for each {@link wcfPropertyValue possible value}
+		of the associated {@link wcfPropertyDefinition}.
+		
+		The wcfPropertyList widget allows a single item to be selected by default, but can be configured to allow multiple selections using
+		the {@link wcfPropertyList#multiselect multiselect} attribute.
+		
+		The code snippet below demonstrates how this class is used:
+
+		@START_CODE
+			...
+			<PropertyDefinition propertyName="currencies">
+				<PropertyValue displayName="US Dollar" value="USD"/>
+				<PropertyValue displayName="Canadian Dollar" value="CAD"/>
+				<PropertyValue displayName="Chinese Yen" value="CNY"/>
+			</PropertyDefinition>
+			...
+			<PropertyGroup>
+				<PropertyList propertyName="currencies" promptText="Select the Currencies you want to use" multiselect="true" />
+			</PropertyGroup>
+		@END_CODE
+		
+		The code above creates a list with three possible values. These three list items will correspond to the three 
+		{@link wcfPropertyValue property values} defined for <CODE>currencies</CODE>.
+	-->
+	<class name="wcfPropertyList" extends="wcfPropertyEditor">
+		<!--- 
+			Indicates whether multiple list items can be selected. When the shift key is down, a range of items is selected. 
+			When the control key is down, any item may be added to the selection. The default value is set to false.
+		-->
+		<attribute name="multiselect" type="boolean" value="false"/>
+
+		<!---
+			@keywords private
+			Maximum number of items to show before displaying a scrollbar.
+		-->
+		<attribute name="maxItemsToShow" type="number" value="15" />
+
+		<!---
+			@keywords private
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			new lz.wcfList(parentComponent, {
+				name: "editor",
+				property: parentComponent.property,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				enabled: parentComponent.enabled,
+				width: 235,
+				multiselect: this.multiselect,
+				maxItemsToShow: this.maxItemsToShow
+			});
+			]]>
+		</method>
+	</class>
+
+	<!---
+		@keywords private
+		
+		Skinned list item class for use with wcfList.
+	-->
+	<class name="wcfTextListItem" extends="textlistitem">
+	 	<!--- @keywords private -->
+		<method name="_applystyle" args="s">
+			<![CDATA[
+			if (this.style != null) {
+				if (_enabled) {
+					if(selected && hilited){
+						this.setAttribute('bgcolor', style.selectedhilitecolor);
+						this._title.setAttribute('fgcolor', style.texthilitecolor);
+					}
+					else if(selected) {
+						this.setAttribute('bgcolor', style.selectedcolor);
+						this._title.setAttribute('fgcolor', style.textselectedcolor);
+					}
+					else if(hilited) {
+						this.setAttribute('bgcolor', style.hilitecolor);
+						this._title.setAttribute('fgcolor', style.texthilitecolor);
+					}
+					else {
+						this.setAttribute('bgcolor', style.textfieldcolor);
+						this._title.setAttribute('fgcolor', style.textcolor);
+					}
+				}
+				else {
+					if(selected) {
+						this.setAttribute('bgcolor', style.inactiveselectedcolor);
+					}
+					else {
+						this.setAttribute('bgcolor', style.textfieldcolor);
+					}
+					this._title.setAttribute('fgcolor', style.textdisabledcolor);
+				}
+			}
+			]]>
+		</method>
+	</class>
+	 
+	<!---
+		@keywords private
+		
+		Foundation list implementation. Given a wcfPropertyDefinition as an input,
+		this class generates a list which supports the object properties model.
+		
+		Values are stored in the property as a comma-separated list of values.
+	-->
+	<class name="wcfList" extends="list" toggleselected="true" itemclassname="wcfPropertyValueTextListItem" scrollbarclassname="wcfVerticalScrollbar">
+		<!--- Reference to wcfModelProperty object that is being edited. -->
+		<attribute name="property" value="null" setter="setProperty(property)"/>
+
+		<!--- @keywords private  -->
+		<handler name="oninit">
+			<![CDATA[
+			this.itemSelectDel = new lz.Delegate(this, "storeValue");
+			this.itemSelectDel.register(this, "onselect");
+			
+			this.isInitialized = true;
+			if(this["property"]) {
+				this.createList();
+				this.updateValue();
+			}
+			]]>
+		</handler>
+
+		<!--- @keywords private -->
+		<method name="_doFocus" args="ignore">
+			<![CDATA[
+				var keyDown = false;
+				for (var i = 0; i < lz.Keys.downKeysArray.length; i++) {
+					if (lz.Keys.downKeysArray[i] != 16 && lz.Keys.downKeysArray[i] != 17) {
+						keyDown = true;
+						break;
+					}
+				}
+				if (keyDown) {
+					super._doFocus(ignore);
+				}
+				if (!this["indicator"]) {
+					new lz.wcfFocusIndicator(this, {
+						name: "indicator",
+						focusableView: this,
+						indicatorView: this,
+						offset: 1,
+						placement: "list"
+					});
+				}
+			]]>
+		</method>
+
+		<!--- Cleanup delegates when destroyed  -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			if (this["itemSelectDel"]) {
+				this.itemSelectDel.unregisterAll();
+				delete this.itemSelectDel;
+			}
+			if (this["propValueDel"]) {
+				this.propValueDel.unregisterAll();
+				delete this.propValueDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			Handle key down event for end and home.
+		-->
+		<handler name="onkeydown" args="keyCode">
+            <![CDATA[
+            var visibleItems = this.getVisibleItems();
+            if((keyCode == 35 || keyCode == 36) && visibleItems.length > 0){
+            	if (this._hiliteview) {
+					this._hiliteview.setHilite(false);
+				}
+				var item = null;					
+                if (keyCode == 35) {
+                	item = visibleItems[visibleItems.length-1];
+                	
+                } else {
+                	item = visibleItems[0];
+                }
+                this._hiliteview = item;
+                item.setHilite(true);
+				this.ensureItemInView(item);
+				this.setAttribute( 'doesenter', true );
+			}
+            ]]>
+        </handler>
+        
+        <!--- 
+			@keywords private 
+			returns array of visible items in list
+		-->
+		<method name="getVisibleItems">
+			<![CDATA[
+			var visibleItems = [];
+            var items = this._selector.immediateparent.subviews;
+            for(var i = 0; i < items.length; i++){
+            	var item = items[i];
+            	if(item.visible) visibleItems.push(item);
+            }
+            return visibleItems;
+			]]>
+		</method>
+
+		<!---
+			Set the property.
+			@param wcfModelProperty newProperty: the new property
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (newProperty != this["property"]) {
+				if (typeof(this.updateValueDel) == "undefined") {
+					this.updateValueDel = new lz.Delegate(this, "updateValue");
+				}
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					if(isinited) {
+						this.createList();
+					}
+					
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+				else {
+					if (this["isInitialized"]) {
+						this.clearSelection();
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- Create the list and all the available options -->
+		<method name="createList" args="e=null">
+			<![CDATA[
+			if (this["property"] && this.property.propertyDefinition != null) {
+				var propDef = this.property.propertyDefinition;
+				
+				if (!this["propValueDel"]) {
+					this.propValueDel = new lz.Delegate(this, "createList");
+				}
+				else {
+					this.propValueDel.unregisterAll();
+				}
+				
+				var propertyValues = this.property.propertyDefinition.getPropertyValues(this.property.o, this.propValueDel);
+				
+				var createItems = false;
+				if (!this["_propertyValues"]) {
+					createItems = true;
+				}
+				if (!createItems && this._propertyValues.length != propertyValues.length) {
+					createItems = true;
+				}
+				if (!createItems) {
+					for (var i = 0; i < this._propertyValues.length; i++) {
+						if (this._propertyValues[i].value != propertyValues[i].value || this._propertyValues[i].displayName != propertyValues[i].displayName) {
+							createItems = true;
+							break;
+						}
+					}
+				}
+				
+				if (createItems) {
+					this._propertyValues = propertyValues;
+					for(var i = this.getNumItems() - 1; i >= 0; i--) {
+						this.removeItemAt(i);
+					}
+					var maxItemWidth = 0;
+					for (var i = 0; i < propertyValues.length; i++) {
+						var propertyValue = propertyValues[i];
+						this.addItem(propertyValue.displayName, propertyValue.value);
+						var newItem = this.getItem(propertyValue.value);
+						newItem.setAttribute("propertyValue", propertyValue);
+						
+						if(this.getItemAt(i)._title.getTextWidth() > maxItemWidth) {
+							maxItemWidth = this.getItemAt(i)._title.getTextWidth();
+						}
+					}
+					if (this.width < maxItemWidth + 10) {
+						this.setAttribute('width', maxItemWidth + 10);
+					}
+				}
+
+				if (typeof(this.maxItemsToShow) != "undefined") {
+					var numItems = (propertyValues.length > this.maxItemsToShow) ? this.maxItemsToShow : -1;
+					this.setAttribute("shownitems", numItems);
+				}
+
+				this.updateValue();
+			}
+			]]>
+		</method>	
+		
+		<!--- Update the widget with a new property value. -->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			if (this["isInitialized"]) {
+				if(parseValue() != this.property.value) {
+					this._skipStoringValue = true;
+					var value = this.property.value;
+					if(this.multiselect) {
+						var values = value == null ? [] : value.split(",");
+
+						var valuesMap = {};
+						for(var i = 0; i < values.length; i++) {
+							var val = wcfStringUtil.trim(values[i])
+							valuesMap[val] = true;
+						}
+						
+						var itemList = new Array();
+						for(var i = 0; i < getNumItems(); i++) {
+							var item = getItemAt(i);
+							if(valuesMap[item.value]) {
+								itemList.push(item);
+							}
+						}
+						this.clearSelection();
+						if (itemList.length > 0) {
+							select(itemList);
+						}
+					}
+					else {
+						if (value != null && value != "") {
+							this.selectItem(value);
+						}
+						else {
+							this.clearSelection();
+						}
+					}
+					this._skipStoringValue = false;
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- Store the property value. -->
+		<method name="storeValue" args="e=null">
+			<![CDATA[
+			if(this["property"] && this["isInitialized"] && !this["_skipStoringValue"]) {
+				var value = parseValue();
+				
+				if(value != this.property.value) {
+					this.property.change(value);
+					if(wcfLogger.enabled){
+						wcfLogger.log("com.ibm.commerce.lobtools.foundation.view", "INFO", "wcfList", "storeValue", "updates the model property " + this.property.propertyName + " with new value " + value + this.property.o.logString());
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!--- @keywords private  -->
+		<method name="parseValue">
+			<![CDATA[
+			var value = "";
+			if(this.multiselect) {
+				var values = getValue();
+				if(values != null) {
+					for(var i = 0; i < values.length; i++) {
+						value += values[i];
+						if(i != values.length - 1) {
+							value += ",";
+						}
+					}
+				}
+			}
+			else {
+				value = (getValue() == null) ? "" : getValue();
+			}
+			return value;
+			]]>
+		</method>
+	 </class>
+	 
+	 <!---
+		@keywords private
+	 -->
+	<class name="wcfPropertyValueTextListItem" extends="wcfTextListItem">
+        <attribute name="propertyValue"/>
+        
+        <setter name="propertyValue" args="v">
+			<![CDATA[
+			if (this["propertyValue"] != v) {
+				this.propertyValue = v;
+				if (this["updateTextDel"]) {
+					this.updateTextDel.unregisterAll();
+				} else {
+					this.updateTextDel = new lz.Delegate(this, "updateText");
+				}
+				if (this.propertyValue != null) {
+					this.updateTextDel.register(this.propertyValue, "ondisplayName");
+				}
+			}
+			]]>
+		</setter>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateTextDel"]) {
+				this.updateTextDel.unregisterAll();
+				delete this.updateTextDel;
+			}
+			
+			super.destroy();
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+		-->
+		<method name="updateText" args="e=null">
+			<![CDATA[
+			this.setAttribute("text", this.propertyValue.displayName);
+			]]>
+		</method>
+    </class>
+</library>

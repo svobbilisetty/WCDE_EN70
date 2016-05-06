@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE data-deploy SYSTEM "ibm-wc-load.dtd">
+<data-deploy base-dir="." default-target="all">
+    <asset id="modelorg" location="model/modelorg.xml"/>
+    <asset id="storeorg" location="storeorg.xml"/>
+    <asset id="master" location="store-data-assets.xml"/>
+    <asset id="foreignKeys" location="ForeignKeys.dtd" type="dtd"/>
+    <asset id="memberRoles" location="model/memberRoles"/>
+    <asset id="contract" location="contract.xml"/>
+    <asset id="." location=""/>
+    <asset id="strutsConfigUpdate.template" location="struts-config-update-common.tpl.xml"/>
+    <asset id="strutsConfigUpdate" location="struts-config-update-common.xml"/>
+    <asset id="b2c-strutsConfigUpdate.template" location="struts-config-update-b2c.tpl.xml"/>
+    <asset id="b2c-strutsConfigUpdate" location="struts-config-update-b2c.xml"/>
+    <asset id="strutsTileConfigUpdate.template" location="tiles-defs-update.tpl.xml"/>
+    <asset id="strutsTileConfigUpdate" location="tiles-defs-update.xml"/>
+    <asset id="storeFunctionDefFile.template" location="../../../../config/commerce/store/propertiesViews/${asset:foreignKeys#STORE_DIR}/StoreFlexFlowPropertiesView.tpl.def"/>
+    <asset id="storeFunctionDefFile" location="../../../../config/commerce/store/propertiesViews/${asset:foreignKeys#STORE_DIR}/StoreFlexFlowPropertiesView.def"/>
+    <asset id="pageLayoutAssociations" location="pageLayoutAssociations.xml"/>
+
+	<deploy-task-cmd name="dataload" class="com.ibm.commerce.tools.devtools.publish.tasks.DataLoadTaskCmd"/>
+    <deploy-task-cmd name="contractImport" class="com.ibm.commerce.tools.devtools.publish.tasks.trading.ContractImportTaskCmd"/>
+    <deploy-task-cmd name="commandInvoker" class="com.ibm.commerce.tools.devtools.publish.tasks.CommandInvokerTaskCmd"/>
+    <deploy-task-cmd name="generateParams" class="com.ibm.commerce.tools.devtools.publish.tasks.GenerateParametersTaskCmd"/>
+    <deploy-task-cmd name="copy" class="com.ibm.commerce.tools.devtools.publish.tasks.unpack.CopyTaskCmd"/>
+    <deploy-task-cmd name="reconcileStoreLanguages" class="com.ibm.commerce.tools.devtools.publish.tasks.languages.ReconcileLanguagesTaskCmd"/>
+    <deploy-task-cmd name="copyLocaleFile" class="com.ibm.commerce.tools.devtools.publish.tasks.unpack.CopyLocaleFileTaskCmd"/>
+    <deploy-task-cmd name="catalogDataDeploy" class="com.ibm.commerce.tools.devtools.publish.tasks.catalog.CatalogDataDeployTaskCmd"/>
+    <deploy-task-cmd name="findStore" class="com.ibm.commerce.tools.devtools.publish.tasks.StoreIdBaseDeployTaskCmd"/>
+    <deploy-task-cmd name="fileFilter" class="com.ibm.commerce.tools.devtools.publish.tasks.unpack.FileFilterTaskCmd"/>
+    <deploy-task-cmd name="setupContentDirectory" class="com.ibm.commerce.tools.devtools.publish.tasks.catalog.SetupContentManagedDirectoryTaskCmd"/>
+    <deploy-task-cmd name="UpdateStoreLevel" class="com.ibm.commerce.tools.devtools.publish.tasks.UpdateStoreLevelTaskCmd"/>
+    <deploy-task-cmd name="flexFlowUpdate" class="com.ibm.commerce.tools.devtools.publish.tasks.flexflow.UpdateFlexFlowTaskCmd" />
+    <deploy-task-cmd name="populateStoreToken" class="com.ibm.commerce.tools.devtools.publish.tasks.PopulateStoreTokenTaskCmd"/>
+    <deploy-task-cmd name="enableSolrSearch" class="com.ibm.commerce.tools.devtools.publish.tasks.SetupSolrIndexForCatalogTaskCmd" />
+    <deploy-task-cmd name="loadPageLayouts" class="com.ibm.commerce.tools.devtools.publish.tasks.PopulateLayoutAssociationsCmd" />
+
+    <target id="all">
+    	<task name="copyLocaleFile">
+            <param name="basename" value="${asset:modelorg}" />
+    	</task>
+    	<task name="copyLocaleFile">
+            <param name="basename" value="${asset:storeorg}" />
+    	</task>
+	<task name="copy">
+		<param name="toDir" value="${wc:StoresDataPath}/${asset:foreignKeys#STORE_DIR}/data" />
+		<param name="fromDir" value="${wc:StoresDataPath}/${asset:foreignKeys#STORE_DIR}/data/${asset:foreignKeys#INV_CHOICE}/data/" />
+	</task>
+	<task name="copy">
+		<param name="toDir" value="${wc:StoresDataPath}/../xml/tools/stores/${asset:foreignKeys#STORE_DIR}/devtools" />
+		<param name="fromDir" value="${wc:StoresDataPath}/${asset:foreignKeys#STORE_DIR}/data/${asset:foreignKeys#INV_CHOICE}/devtools/" />
+	</task>
+    	<task name="dataload">
+				<param name="infile" value="${asset:master}" />
+				<param name="storePublish" value="true" />
+			</task>
+        <task name="reconcileStoreLanguages">
+            <param name="storeIdentifier" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+            <param name="organizationDN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+    	</task>
+	<task name="findStore">
+		<param name="storeIdentifier" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+		<param name="organizationDN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+		<export name="storeEntityId" value="storeEntityId"/>
+	</task>
+	<task name="fileFilter">
+		<param name="input-filename" value="${asset:b2c-strutsConfigUpdate.template}"/>
+		<param name="output-filename" value="${asset:b2c-strutsConfigUpdate}"/>
+		<param name="storeId" value="${context:storeEntityId}"/>
+	</task>
+	<task name="fileFilter">
+		<param name="input-filename" value="${asset:strutsConfigUpdate.template}"/>
+	        <param name="output-filename" value="${asset:strutsConfigUpdate}"/>
+		<param name="storeId" value="${context:storeEntityId}"/>
+	</task>
+	<task name="fileFilter">
+		<param name="input-filename" value="${asset:strutsTileConfigUpdate.template}"/>
+	        <param name="output-filename" value="${asset:strutsTileConfigUpdate}"/>
+		<param name="storeId" value="${context:storeEntityId}"/>
+	</task>
+	<task name="fileFilter">
+		<param name="input-filename" value="${asset:storeFunctionDefFile.template}"/>
+		<param name="output-filename" value="${asset:storeFunctionDefFile}"/>
+		<param name="storeId" value="${context:storeEntityId}"/>
+		<param name="storeDir" value="${asset:foreignKeys#STORE_DIR}"/>
+	</task>
+	<task name="copy">
+			<param name="destFile" value="${wc:StoresDataPath}/../../../LOBTools.war/config/commerce/store/propertiesViews/${asset:foreignKeys#STORE_DIR}/StoreFlexFlowPropertiesView.def" />
+			<param name="srcFile" value="${wc:StoresDataPath}/../../config/commerce/store/propertiesViews/${asset:foreignKeys#STORE_DIR}/StoreFlexFlowPropertiesView.def" />
+	</task>
+	<task name="copy">
+		<param name="toDir" value="${wc:StoresDataPath}/../../../LOBTools.war/images/stores/${asset:foreignKeys#STORE_DIR}" />
+		<param name="fromDir" value="${wc:StoresDataPath}/../../tools/stores/${asset:foreignKeys#STORE_DIR}/" />
+	</task>
+	<task name="UpdateStoreLevel">
+        <param name="storeEntityId" value="${context:storeEntityId}"/>
+        <param name="StoreLevelValue" value="MC"/>
+	</task>
+	<task name="populateStoreToken">
+        <param name="urlKeyword" value="privacy-policy"/>
+       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+       	<param name="isStatic" value="true"/>
+       	<param name="staticToken" value="PrivacyToken"/>
+	</task>	
+	<task name="populateStoreToken">
+        <param name="urlKeyword" value="contact-us"/>
+       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+       	<param name="isStatic" value="true"/>
+       	<param name="staticToken" value="ContactToken"/>
+	</task>	
+	<task name="populateStoreToken">
+        <param name="urlKeyword" value="help"/>
+       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+       	<param name="isStatic" value="true"/>
+       	<param name="staticToken" value="HelpToken"/>
+	</task>	
+	<task name="populateStoreToken">
+        <param name="urlKeyword" value="return-policy"/>
+       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+       	<param name="isStatic" value="true"/>
+       	<param name="staticToken" value="ReturnPolicyToken"/>
+	</task>	
+	<task name="populateStoreToken">
+        <param name="urlKeyword" value="corporate-info"/>
+       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+       	<param name="isStatic" value="true"/>
+       	<param name="staticToken" value="CorporateInfoToken"/>
+	</task>	
+	<task name="populateStoreToken">
+        <param name="urlKeyword" value="corporate-contact-us"/>
+       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+       	<param name="isStatic" value="true"/>
+       	<param name="staticToken" value="CorporateContactUsToken"/>
+	</task>	
+	<task name="populateStoreToken">
+        <param name="urlKeyword" value="sitemap"/>
+       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+       	<param name="isStatic" value="true"/>
+       	<param name="staticToken" value="SitemapToken"/>
+	</task>
+		<task name="populateStoreToken">
+			<param name="urlKeyword" value="mini-mocha-ganache-cakes-recipe"/>
+			<param name="storeEntityId" value="${context:storeEntityId}"/>
+			<param name="isStatic" value="true"/>
+			<param name="staticToken" value="StaticContentToken"/>
+			<param name="staticTokenValue" value="Recipe.html"/>
+		</task>	
+
+		<task name="populateStoreToken">
+			<param name="urlKeyword" value="how-to-brew-coffee-video"/>
+			<param name="storeEntityId" value="${context:storeEntityId}"/>
+			<param name="isStatic" value="true"/>
+			<param name="staticToken" value="StaticContentToken"/>
+			<param name="staticTokenValue" value="Video.html"/>
+		</task>	
+
+		<task name="populateStoreToken">
+			<param name="urlKeyword" value="enzi-ei-03-tower-user-manual"/>
+			<param name="storeEntityId" value="${context:storeEntityId}"/>
+			<param name="isStatic" value="true"/>
+			<param name="staticToken" value="StaticContentToken"/>
+			<param name="staticTokenValue" value="Manual.html"/>
+		</task>
+		
+		<task name="populateStoreToken">
+			<param name="urlKeyword" value="apparel-style-guide"/>
+			<param name="storeEntityId" value="${context:storeEntityId}"/>
+			<param name="isStatic" value="true"/>
+			<param name="staticToken" value="StaticContentToken"/>
+			<param name="staticTokenValue" value="Apparel_Attachments.html"/>
+		</task>	
+
+		<task name="populateStoreToken">
+			<param name="urlKeyword" value="apparel-designer"/>
+			<param name="storeEntityId" value="${context:storeEntityId}"/>
+			<param name="isStatic" value="true"/>
+			<param name="staticToken" value="StaticContentToken"/>
+			<param name="staticTokenValue" value="Apparel_Designer.html"/>
+		</task>	
+
+		<task name="populateStoreToken">
+			<param name="urlKeyword" value="evening-dress-video"/>
+			<param name="storeEntityId" value="${context:storeEntityId}"/>
+			<param name="isStatic" value="true"/>
+			<param name="staticToken" value="StaticContentToken"/>
+			<param name="staticTokenValue" value="Apparel_Video.html"/>
+		</task>
+	<task name="commandInvoker">
+           <param name="invoked_commandClassName" value="com.ibm.commerce.struts.commands.UpdateStrutsConfigFileCmd"/>
+           <param name="webAppName" value="Stores" />
+	   <param name="updateFileName" value="${asset:strutsConfigUpdate}"/>
+	   <param name="updateTileFileName" value="${asset:strutsTileConfigUpdate}"/>
+	</task>
+	<task name="commandInvoker">
+		<param name="invoked_commandClassName" value="com.ibm.commerce.struts.commands.UpdateStrutsConfigFileCmd"/>
+		<param name="webAppName" value="Stores" />
+		<param name="updateFileName" value="${asset:b2c-strutsConfigUpdate}"/>
+		<param name="updateTileFileName" value="${asset:strutsTileConfigUpdate}"/>
+	</task>
+        <task name="setupContentDirectory">
+            <param name="storeDir" value="${asset:foreignKeys#STORE_DIR}" />
+        </task>
+        <task name="contractImport">
+            <param name="tradingXMLFileName" value="${asset:contract}" />
+            <param name="XMLEntityPath" value="${config:Trading/DTDPath};${asset:.}" />
+            <param name="storeIdentifier" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+            <param name="organizationDN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+    	</task>
+		<task name="flexFlowUpdate">
+			<param name="enableFeatures" value="SOAWishlist,RemoteWidget,RecurringOrders,Subscription,SearchBasedNavigation,AdvancedSearch,CouponWallet,ShipAsComplete,UsePageLayouts" />
+			<param name="disableFeatures" value="IntelligentOffer,Tealeaf,sterlingConfigurator,FacebookIntegration,RatingReviewIntegration,SideBySideIntegration,ExpandedCategoryNavigation,AccountActivation,ProductionServer" />
+			<param name="storeEntityId" value="${context:storeEntityId}" />
+			<param name="useMarketing" value="true"/>
+		</task>
+        <task name="generateParams">
+            <param name="storeIdentifier" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+            <param name="organizationDN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+            <param name="targetFilename" value="parameters.jspf" />
+        </task>
+        <task name="catalogDataDeploy">
+        		<param name="STORE_DIR" value="${asset:foreignKeys#STORE_DIR}" />
+            <param name="CAT_STORE_DIR" value="${asset:foreignKeys#STORE_DIR}" />
+            <param name="CAT_STORE_IDENTIFIER" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+            <param name="CAT_ORGANIZATION_DN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+            <param name="MAR_STORE_DIR" value="${asset:foreignKeys#STORE_DIR}" />
+            <param name="MAR_STORE_IDENTIFIER" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+            <param name="MAR_ORGANIZATION_DN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+            <param name="HOS_STORE_DIR" value="${asset:foreignKeys#STORE_DIR}" />
+            <param name="HOS_STORE_IDENTIFIER" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+            <param name="HOS_ORGANIZATION_DN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+            <param name="storeArchiveFilename" value="${wc:SampleSarPath}/${asset:foreignKeys#SAMPLE_CHOICE}"/>
+            <param name="INV_CHOICE" value="${asset:foreignKeys#INV_CHOICE}" />
+            <param name="ATTR_CHOICE" value="${asset:foreignKeys#ATTR_CHOICE}" />            
+        </task>
+		<task name="populateStoreToken">
+	        <param name="urlKeyword" value="${asset:foreignKeys#STORE_IDENTIFIER}"/>
+	       	<param name="storeEntityId" value="${context:storeEntityId}"/>
+		</task>        
+        <task name="commandInvoker">
+            <param name="invoked_commandClassName" value="com.ibm.commerce.scheduler.commands.RefreshRegistryCmd" />
+            <param name="URL" value="/ignore" />
+    	</task>
+		<task name="loadPageLayouts">
+			<param name="storeEntityId" value="${context:storeEntityId}" />
+			<param name="organization_DN" value="${asset:foreignKeys#ORGANIZATION_DN}" />
+			<param name="input-filename" value="${asset:pageLayoutAssociations}" />
+		</task>
+		<task name="enableSolrSearch">
+			<param name="storeEntityId" value="${context:storeEntityId}" />
+			<param name="indextypes" value="CatalogEntry,CatalogGroup" />
+			<param name="timeInterval" value="10000" />
+		</task>
+   </target>
+   <target id="launch-store">
+       <task name="DummyTaskWorkaroundToLaunchStore">
+            <param name="storeIdentifier" value="${asset:foreignKeys#STORE_IDENTIFIER}" />
+            <param name="organizationDN" value="ou=${asset:foreignKeys#STORE_IDENTIFIER_LOWERCASE},${asset:foreignKeys#ORGANIZATION_DN}" />
+       </task>
+   </target>
+</data-deploy>

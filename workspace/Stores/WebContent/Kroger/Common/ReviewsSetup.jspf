@@ -1,0 +1,59 @@
+<%--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+--%>
+
+<flow:ifEnabled feature="RatingReviewIntegration">
+	
+	<%-- use a hashmap to store rating and reviews related parameters from providers. --%>
+	<jsp:useBean id="reviewParameters" class="java.util.HashMap" scope="request" />
+
+	<%-- extract the bv API url from the data base STORECONF. Customers should define either
+		 api URL template or the actual api URL:
+		 
+		 URL template:  //bvp-ibm.ugc.bazaarvoice.com/bvstaging/static/2490-$locale$/bvapi.js
+		 Actual URL:    //bvp-ibm.ugc.bazaarvoice.com/bvstaging/static/2490-en_us/bvapi.js
+		 
+		 If customers use URL template, the code bellow will automatically map store langId to
+		 BV locale string and replace the $locale$ in the template. This way, we could support
+		 multi-lingual reviews for a store.
+		 
+		 If customer use the actual BV Api URL, then only one locale is supported.
+		 
+		 Note: bvstaging string should be removed before putting store into production.
+	--%>
+	
+	<c:choose>			
+		<c:when test="${env_inPreview == 'true'}">	
+			<wcst:storeconf var="tempUrl" name="wc.bazaarvoice.preview_url" />
+		</c:when>			
+		<c:otherwise>		
+			<wcst:storeconf var="tempUrl" name="wc.bazaarvoice.runtime_url" />
+		</c:otherwise>			
+	</c:choose>
+	<c:set target="${reviewParameters}" property="bvApiUrl" value="${tempUrl}" />
+
+	<c:if test = "${reviewParameters.bvApiUrl != null}">
+		<%-- Set reviewParameters.provider to BV. --%>
+		<c:set target="${reviewParameters}" property="provider" value="BV" />
+
+		<%-- Following code will map langId onto BV local string used in the api URL. --%>
+		<c:set var="bvLanguage" value="en_us" scope="request"/>
+		<c:if test = "${CommandContext.locale != null}" >
+			<c:set var="bvLanguage" value="${fn:toLowerCase(CommandContext.locale)}" scope="request"/>
+		</c:if>
+		<c:set target="${reviewParameters}" property="bvApiUrl" value="${fn:replace(reviewParameters.bvApiUrl, '$locale$', bvLanguage)}" />
+	</c:if>
+	
+	<%-- Submission URL is NOT calculated here. It needs store specific info and calculated in ReviewHead.jspf. --%>
+	
+</flow:ifEnabled>

@@ -1,0 +1,890 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	<!---
+		Input text widget that is similar to {@link wcfPropertyInputText} but does not understand the object model.
+		@keywords private
+	-->
+	<class name="mktInputText" extends="basecomponent" width="302" focusable="false">
+		<!---
+			This attribute indicates that this properties view component is required. The default value for this attribute is "false".
+		-->
+		<attribute name="required" value="false" type="boolean" />
+		<!---
+			This attribute holds a string to use as the prompt text for this properties view component. The default value of this
+			attribute is null.
+		-->
+		<attribute name="promptText" value="${null}" type="string"/>
+		<!---
+			This attribute provides the help text for this properties view component. The helpText will be used for creating tooltips.
+			The default value of this attribute is the empty string.
+			
+			@see wcfExtendedHelpIcon#helpText.
+		-->
+		<attribute name="helpText" value="${null}" type="string"/>
+		<!--- input text value -->
+		<attribute name="value" type="string" value=""/>
+
+		<!---
+			@keywords private
+			The colour of the background behind the input indicating a validator error. This matches @{link wcfStyle#errorreminderbordercolor}.
+		-->
+		<attribute name="errorColour" type="color" value="0xFF0000"/>
+		<!---
+			@keywords private
+			The colour of the background behind the input when there is no validation error. Default is white.
+		-->
+		<attribute name="defaultColour" type="color" value="0xFFFFFF"/>
+
+		<!--- @keywords private -->
+		<event name="onfocus"/>
+		
+		<!--- @keywords private -->
+		<handler name="oninit">
+			<![CDATA[
+				this.createPrompt();
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			This handler will recreate the prompt if the user changes their tooltip preference
+		-->
+		<handler name="preferenceChanged" reference="preferenceManager" args="preference">
+			<![CDATA[
+				//if this event is for the CMCEnableExtendedHelp preference
+				if (preference == "CMCEnableExtendedHelp") {
+					//destroy the extendedHelpIcon
+					if (this.prompt["extendedHelpIcon"]) {
+						this.prompt.extendedHelpIcon.destroy();
+					}
+
+					//destroy the prompt
+					this.prompt.prompt.destroy();
+
+					//re-create the prompt
+					this.createPrompt();
+				}
+			]]>
+		</handler>
+
+		<!---
+			@keywords private
+			Creates the prompt.
+		-->
+		<method name="createPrompt">
+		<![CDATA[
+			var indent = 0;
+			var promptWidth = 177;
+			var totalWidth = 0;
+			new lz.mktPropertiesComponentPrompt(this.prompt, {
+				name: "prompt",
+				width: 100,
+				multiline: true,
+				fgcolor: this.style.texthilitecolor,
+				resize: true,
+				x: indent,
+				y: this.style.forminputbordersize,
+				required: this.required
+			});
+			if ((preferenceManager.getPreference("CMCEnableExtendedHelp") == "true") && (this.helpText != null && this.helpText != "")) {
+				new lz.wcfPropertiesComponentExtendedHelpIcon(this.prompt, {
+					propertiesComponent: this,
+					name: "extendedHelpIcon",
+					x: indent + this.prompt.prompt.width,
+					y: this.style.forminputbordersize
+				});
+				totalWidth += this.prompt.extendedHelpIcon.width;
+			}
+			this.prompt.prompt.setAttribute('width', promptWidth-totalWidth);
+			if(this.prompt["extendedHelpIcon"]){
+				this.prompt.extendedHelpIcon.setAttribute('x',(this.prompt.prompt.x+this.prompt.prompt.width));
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Toggles the validation background colour on the input
+			@param boolean show Whether or not to set the error colour on the input widget.
+		-->
+		<method name="showError" args="show">
+			<![CDATA[
+			if(show) {
+				this.wrapper.setAttribute('bgcolor', this.errorColour);
+			}
+			else {
+				this.wrapper.setAttribute('bgcolor', this.defaultColour);
+			}
+			]]>
+		</method>
+
+		<!---
+			Returns the string value of this input field
+			@return string The text currently stored and shown to the user
+		-->
+		<method name="getValue">
+			<![CDATA[
+			return this.value;
+			]]>
+		</method>
+
+		<!---
+			Sets the string value of this input field
+			@param string v The text to stored and show to the user
+		-->
+		<method name="setValue" args="v">
+			<![CDATA[
+			if(this.value != v) {
+				this.wrapper.input.setText(v);
+			}
+			]]>
+		</method>
+
+		<simplelayout axis="x" spacing="5"/>
+		<view name="prompt"/>
+
+		<view name="wrapper" bgcolor="0x000000" width="${parent.width}" height="${input.height + 2}">
+			<wcfInputText x="1" y="1" name="input" enabled="${classroot.enabled}" width="${parent.width - 2}" onfocus="classroot.onfocus.sendEvent()">
+				<handler name="ontext">
+					<![CDATA[
+					classroot.setAttribute("value", this.getText());
+					]]>
+				</handler>
+			</wcfInputText>
+		</view>
+	</class>
+
+	<!---
+		mktPropertyURLGenerator is a property editor and is used to create a {@link mktURLGenerator URL generator} widget that binds to a 
+		{@link wcfModelProperty property value}.  Use mktPropertyURLGenerator when an URL is needed within a {@link wcfPropertyPane} or
+		{@link wcfPropertyGroup}.
+		
+		@keywords final
+	-->
+	<class name="mktPropertyURLGenerator" extends="wcfPropertyEditor" sizeToAvailableWidth="true">
+		<!--- The store front command name to display a product. The default value is 'ProductDisplay'. -->
+		<attribute name="productURL" type="string" value="ProductDisplay"/>
+		<!--- The store front command name to display a category. The default value is 'CategoryDisplay'. -->
+		<attribute name="categoryURL" type="string" value="CategoryDisplay"/>
+		<!--- The store front command name to add an item to the shopping cart. The default value is 'OrderItemAdd'. -->
+		<attribute name="shopcartURL" type="string" value="OrderItemAdd"/>
+		<!--- The store front command name to add an item to the wish list. The default value is 'InterestItemAdd'. -->
+		<attribute name="wishlistURL" type="string" value="InterestItemAdd"/>
+		<!--- The store front command name to recommend a promotion. The default value is 'DiscountDetailsDisplayView'. -->
+		<attribute name="promotionURL" type="string" value="DiscountDetailsDisplayView"/>
+		<!--- The store front command name to issue a coupon. The default value is 'CouponsIssue'. -->
+		<attribute name="couponURL" type="string" value="CouponsIssue"/>
+		<!--- The store front command name to add the item to the shopping cart with promotion or coupon. The default value is 'AddOrderItemWithPromotionCodeOrCoupon'. -->
+		<attribute name="addItemURL" type="string" value="AddOrderItemWithPromotionCodeOrCoupon"/>
+		<!-- This parameter control whether or not display the Predefined click action for a promotion in Click action type drop down list-->
+		<attribute name="enablePromotionURL" type="boolean" value="true"/>
+
+		<!---
+			Create the editor for the given property component
+			@param wcfPropertiesComponent parentComponent The parent properties component from which to create the editor
+			@keywords private
+		-->
+		<method name="createEditor" args="parentComponent">
+			<![CDATA[
+			var availableWidth = parentComponent.width - parentComponent.promptWidth - parentComponent.xspacing;
+			new lz.mktURLGenerator(parentComponent, {
+				name: "editor",
+				o: parentComponent.o,
+				property: parentComponent.property,
+				x: parentComponent.promptWidth + parentComponent.xspacing,
+				width: availableWidth,
+				enabled: parentComponent.enabled,
+				productURL: this.productURL,
+				categoryURL: this.categoryURL,
+				shopcartURL: this.shopcartURL,
+				wishlistURL: this.wishlistURL,
+				promotionURL: this.promotionURL,
+				couponURL: this.couponURL,
+				addItemURL: this.addItemURL,
+				enablePromotionURL: this.enablePromotionURL
+			});
+			]]>
+		</method>
+
+	</class>
+	
+	<!---
+		Marketing URL generator widget allows the user to set a pre-defined or custom URL. Several pre-defined URL's are supported: Display product;
+		Display category; Add to shopping cart; Add to wish list; Display promotion; Add to coupon wallet and Add item to cart with promotion.
+		For these URL's, {@link wcfPropertyChildListEditor} widgets are used to select the corresponding
+		business object and the methods {@link mktURLGenerator#getProductURL}, {@link mktURLGenerator#getCategoryURL}, {@link mktURLGenerator#getShopCartURL},
+		{@link mktURLGenerator#getWishListURL}, {@link mktURLGenerator#getPromotionURL}, {@link mktURLGenerator#getCouponURL} and {@link mktURLGenerator#getAddItemURL}
+		are used to generate the actual URL value.
+		@keywords final
+	-->
+	<class name="mktURLGenerator">
+		<!--- @keywords private -->
+		<attribute name="o" setter="this.setModelObject(o)"/>
+		<!---
+			Reference to wcfModelProperty object that is being edited.
+			@keywords private
+		-->
+		<attribute name="property" value="null" setter="this.setProperty(property)"/>
+		
+		<!--- The store front command name to display a product. The default value is 'ProductDisplay'. -->
+		<attribute name="productURL" type="string" value="ProductDisplay"/>
+		<!--- The store front command name to display a category. The default value is 'CategoryDisplay'. -->
+		<attribute name="categoryURL" type="string" value="CategoryDisplay"/>
+		<!--- The store front command name to add an item to the shopping cart. The default value is 'OrderItemAdd'. -->
+		<attribute name="shopcartURL" type="string" value="OrderItemAdd"/>
+		<!--- The store front command name to add an item to the wish list. The default value is 'InterestItemAdd'. -->
+		<attribute name="wishlistURL" type="string" value="InterestItemAdd"/>
+		<!--- The store front command name to recommend a promotion. The default value is 'DiscountDetailsDisplayView'. -->
+		<attribute name="promotionURL" type="string" value="DiscountDetailsDisplayView"/>
+		<!--- The store front command name to issue a coupon. The default value is 'issueCoupon'. -->
+		<attribute name="couponURL" type="string" value="CouponsIssue"/>
+		<!--- The store front command name to add the item to the shopping cart with promotion or coupon. The default value is 'AddOrderItemWithPromotionCodeOrCoupon'. -->
+		<attribute name="addItemURL" type="string" value="AddOrderItemWithPromotionCodeOrCoupon"/>
+		<!-- This parameter control whether or not display the Predefined click action for a promotion in Click action type drop down list-->
+		<attribute name="enablePromotionURL" type="boolean" value="true"/>
+		
+		<!---
+			Whether or not the Add to Wish List option should be shown. This flag is set by
+			@{link mktURLGenerator#updateShowWishList} and should not be changed directly.
+		-->
+		<attribute name="showWishListOption" type="boolean" value="true"/>
+		<!--- Whether or not this widget is enabled. -->
+		<attribute name="enabled" type="boolean" value="true"/>
+		<!---
+			Number of child object associated to the current object.
+			@keywords private
+		-->
+		<attribute name="childObjectsLength" value="0" type="number"/>
+		
+		<!--- @keywords private -->
+		<method name="construct" args="args, parent">
+			<![CDATA[
+			this.updateValueDel = new lz.Delegate(this, "updateValue");
+			this.storeValueDel = new lz.Delegate(this, "storeValue");
+			this.showWishListDel = new lz.Delegate(this, "updateShowWishList");
+			this.o = null;
+			super.construct(args, parent);
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="init">
+			<![CDATA[
+			super.init();
+			this._initcomplete = true;
+			
+			if(this["o"]) {
+				this.storeValueDel.unregisterAll();
+				this.storeValueDel.register(this.o, "onchildObjects");
+			}
+			
+			this.updateValue();
+			this.updateShowWishList();
+			this.updateChildListEditors();
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="destroy">
+			<![CDATA[
+			if (this["updateValueDel"]) {
+				this.updateValueDel.unregisterAll();
+				delete this.updateValueDel;
+			}
+			if (this["storeValueDel"]) {
+				this.storeValueDel.unregisterAll();
+				delete this.storeValueDel;
+			}
+			if (this["showWishListDel"]) {
+				this.showWishListDel.unregisterAll();
+				delete this.showWishListDel;
+			}
+			if (this["updateActiveForErrorDel"]){
+				this.updateActiveForErrorDel.unregisterAll();
+				delete this.updateActiveForErrorDel;
+			}
+			super.destroy();
+			]]>
+		</method>
+
+		<!---
+			Updates the @{link mktURLGenerator#showWishListOption} flag which controls whether or not the "Add to Wish List" item
+			is available. Wish lists are not supported on stores that are not direct to the consumer. These store types include "B2B", "BBB",
+			"BRH", "BRP", "BMH", "BMP", "CHS", "CPS", "SCS", "DPS", "DPX", "SCP", "SPS", "SHS", "HCP", and "PBS".
+			See the documentation for the STORE table in the WebSphere Commerce Information Center for more information about store types.
+		-->
+		<method name="updateShowWishList" args="e=null">
+			<![CDATA[
+			this.showWishListDel.unregisterAll();
+			if(this["o"]) {
+				var storeTypeContextValue = wcfContextUtil.findContextValue(this.o, "storeType", this.showWishListDel);
+				if(storeTypeContextValue != null) {
+					var b2bStores = ["B2B", "BBB", "BRH", "BRP", "BMH", "BMP", "CHS", "CPS", "SCS", "DPS", "DPX", "SCP", "SPS", "SHS", "HCP", "PBS"];
+					
+					var showWishList = true;
+					for(var i = 0; i < b2bStores.length; i++) {
+						if(storeTypeContextValue.value == b2bStores[i]) {
+							showWishList = false;
+							break;
+						}
+					}
+					this.setAttribute("showWishListOption", showWishList);
+
+					if(this["predefinedView"]) {
+						var predefineSelector = this.predefinedView.combobox.actionSelect;
+						predefineSelector.wishList.hide = !this.showWishListOption;
+					}
+				}
+			}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="setModelObject" args="newObject">
+			<![CDATA[
+			this["_modelObjectLock"] = true;
+			if (newObject !== this.o) {
+				this.storeValueDel.unregisterAll();
+
+				this.o = newObject;
+
+				if (this.o != null) {
+					this.storeValueDel.register(this.o, "onchildObjects");
+					this.updateValue();
+					this.updateShowWishList();
+				}
+			}
+			this.updateChildListEditors();
+			this["_modelObjectLock"] = false;
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Updates child list editors with the current object
+		-->
+		<method name="updateChildListEditors">
+			<![CDATA[
+			if(this["predefinedView"]) {
+				this.predefinedViewEditor1.productView.product.setModelObject(this.o);
+				this.predefinedViewEditor1.categoryView.category.setModelObject(this.o);
+				this.predefinedViewEditor2.skuView.item.setModelObject(this.o);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			Set the {@link wcfModelProperty} to be associated with this widget. Listeners are created to
+			watch the property value. If the property changes at anytime, the value of this checkbox will be 
+			refreshed. 
+			@param wcfModelProperty newProperty: New Property associated with this check box.
+		-->
+		<method name="setProperty" args="newProperty">
+			<![CDATA[
+			if (typeof(this["property"]) == "undefined" || newProperty != this["property"]) {
+				this.updateValueDel.unregisterAll();
+				this.property = newProperty;
+				if (this.property) {
+					this.updateValueDel.register(this.property, "onvalue");
+					this.updateValue();
+				}
+				else {
+					if (this["_initcomplete"]) {
+						this.urlView.url.setValue("");
+						this.clickActionSelect.selectItem("predefined");
+					}
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Updates the selections and views of the widget based on the stored property value.
+			This method uses the values from {@link mktURLGenerator#getProductURL}, {@link mktURLGenerator#getCategoryURL}, {@link mktURLGenerator#getShopCartURL},
+			and {@link mktURLGenerator#getWishListURL}, {@link mktURLGenerator#getPromotionURL}, {@link mktURLGenerator#getCouponURL} and {@link mktURLGenerator#getAddItemURL}
+			to determine which pre-defined URL is used. If the URL doesn't match any of the pre-defined URL's, a custom URL entry is assumed.
+		-->
+		<method name="updateValue" args="e=null">
+			<![CDATA[
+			this["_updateObjectLock"] = true;
+			if (this["property"] && this["_initcomplete"]) {
+				var url = this.property.value;
+				this.urlView.url.setValue(url);
+				if (!this["_updateSelectionsLock"] && !this["_selectedValueLock"]) {
+					if(url == "" && this.clickActionSelect.selectedValue.value == "url") {
+						// do nothing
+					}
+					else if(url == this.getProductURL()) {
+						this.clickActionSelect.selectItem("predefined");
+						this.predefinedView.combobox.actionSelect.selectItem("product");
+					}
+					else if(url == this.getCategoryURL()) {
+						this.clickActionSelect.selectItem("predefined");
+						this.predefinedView.combobox.actionSelect.selectItem("category");
+					}
+					else if(url == this.getShopCartURL()) {
+						this.clickActionSelect.selectItem("predefined");
+						this.predefinedView.combobox.actionSelect.selectItem("shopcart");
+					}
+					else if((url == this.getWishListURL()) && this.showWishListOption) {
+						this.clickActionSelect.selectItem("predefined");
+						this.predefinedView.combobox.actionSelect.selectItem("wishlist");
+					}
+					else if(url == this.getPromotionURL()) {
+						this.clickActionSelect.selectItem("predefinedPromotion");
+						this.predefinedViewPromotion.combobox.actionSelect.selectItem("promotion");
+					}
+					else if(url == this.getCouponURL()) {
+						this.clickActionSelect.selectItem("predefinedPromotion");
+						this.predefinedViewPromotion.combobox.actionSelect.selectItem("coupon");
+					}
+					else if(url == this.getAddItemURL()) {
+						this.clickActionSelect.selectItem("predefinedPromotion");
+						this.predefinedViewPromotion.combobox.actionSelect.selectItem("addItem");
+					}
+					else {
+						this.clickActionSelect.selectItem("url");
+					}
+				}
+			}
+			this["_updateObjectLock"] = false;
+			this.validate();
+			]]>
+		</method>
+		
+		<!---
+			Based on the selections, this method may call {@link mktURLGenerator#getProductURL}, {@link mktURLGenerator#getCategoryURL},
+			{@link mktURLGenerator#getShopCartURL}, {@link mktURLGenerator#getWishListURL}, {@link mktURLGenerator#getPromotionURL}, {@link mktURLGenerator#getCouponURL}
+			or {@link mktURLGenerator#getAddItemURL} to generate a URL and saves the value to the property.
+			@param Array childObjects An array of child objects to the current associated model object. This value is only populated when this
+					method is called due to the onchildobjects event from the current object.
+			@keywords private
+		-->
+		<method name="storeValue" args="childObjects=null">
+			<![CDATA[
+			if (this.property && !this["_updateObjectLock"] && !this["_modelObjectLock"] && this["_initcomplete"]) {
+				var newValue = "";
+				var urlSelected = false;
+				
+				if(this.clickActionSelect.selectedValue) {
+					var selected = this.clickActionSelect.selectedValue.value;
+					if(selected == "none") {
+						newValue = "";
+					}
+					else if(selected == "url") {
+						urlSelected = true;
+						newValue = this.urlView.url.getValue();
+					}
+					else if((selected == "predefined") && this.predefinedView.combobox.actionSelect.selectedValue) {
+						var selectedSection = this.predefinedView.combobox.actionSelect.selectedValue.value;
+						
+						if(selectedSection == "product") {
+							newValue = this.getProductURL();
+						}
+						else if(selectedSection == "category") {
+							newValue = this.getCategoryURL();
+						}
+						else if(selectedSection == "shopcart") {
+							newValue = this.getShopCartURL();
+						}
+						else if(selectedSection == "wishlist") {
+							newValue = this.getWishListURL();
+						}
+					}
+					else if((selected == "predefinedPromotion") && this.predefinedViewPromotion.combobox.actionSelect.selectedValue) {
+						var selectedSection = this.predefinedViewPromotion.combobox.actionSelect.selectedValue.value;
+						
+						if(selectedSection == "promotion") {
+							newValue = this.getPromotionURL();
+						}
+						else if(selectedSection == "coupon") {
+							newValue = this.getCouponURL();
+						}
+						else if(selectedSection == "addItem") {
+							newValue = this.getAddItemURL();
+						}
+					}
+				}
+				
+				if(this.property.value != newValue && (this.o.openGroupObject.openGroupDirty || urlSelected)) {
+					this["_updateSelectionsLock"] = true;
+					this.property.change(newValue);
+					this["_updateSelectionsLock"] = false;
+				}
+				
+				// Update views only if the number of child objects have increased since the last time
+				// the onchildobjects was triggered or we were called because of direct user interaction.
+				// This ensures drag-and-drop remote/add doesn't change the current view.
+				if(childObjects == null || (childObjects.length >= this.childObjectsLength)) {
+					this.updateValue();
+				}
+				if(childObjects != null) {
+					this.childObjectsLength = childObjects.length;
+				}
+			}
+			this.validate();
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method updates the display of error messages on this widget. This method will show or hide the {@link wcfErrorMessage} on the
+			URL input box as appropriate.
+			@param string validationError The error message to display. If this is blank or <code>null</code> and the error message is already visible,
+				it will be hidden.
+		 -->
+		<method name="updateErrorDisplay" args="validationError=null">
+			<![CDATA[
+			if (validationError && (validationError != "")) {
+				wcfErrorMessage.setAttribute("attachTarget", this.urlView);
+				wcfErrorMessage.show(validationError);
+			}
+			else{
+				wcfErrorMessage.hide(this.urlView);
+			}
+			]]>
+		</method>
+
+		<!---
+			@keywords private
+			This method validates the input and shows/hides the validation background highlighting as well as the error message display.
+			URL values must not be blank and have a maximum length of 1024 characters.
+		-->
+		<method name="validate" args="e=null">
+			<![CDATA[
+				if(this["clickActionSelect"] && this.clickActionSelect.selectedValue) {
+					if(!this["updateActiveForErrorDel"]){
+						this.updateActiveForErrorDel = new lz.Delegate(this, "validate");
+					}
+					this.updateActiveForErrorDel.unregisterAll();
+					wcfViewUtil.registerVisibilityDelegate(this, this.updateActiveForErrorDel);
+					this.updateActiveForErrorDel.register(lz.Focus, "onfocus");
+				
+					var showError = (wcfViewUtil.getInvisibleAncestor(this) == null) && (lz.Focus.getFocus() == this.urlView.url.wrapper.input.inputText);
+					var urlValue = this.urlView.url.getValue();
+					var urlLength = wcfLangUtil.getUTF8ByteCount(urlValue);
+					var pDef = this.property != null ? this.property.o.objectDefinition.getPropertyDefinition(this.property.o, this.property.propertyName, this.updateActiveForErrorDel) : null;
+					if((pDef == null) || (this.clickActionSelect.selectedValue.value == "none") || ((urlValue != "") && (urlLength <= 1024))) {
+						this.updateErrorDisplay();
+						this.urlView.url.showError(false);
+						if(this.o) {
+							this.o.clearValidationError(this);
+						}
+					}
+					else if(this.property && this.o) {
+						var errorMessage = "";
+						
+						if(urlValue == "") {
+							errorMessage = foundationResources.replaceValues("requiredPropertyMissing", [pDef.displayName]);
+						}
+						else if(urlLength > 1024) {
+							errorMessage = foundationResources.replaceValues("propertySizeTooLarge", [pDef.displayName]);
+						}
+						if(showError) {
+							this.updateErrorDisplay(errorMessage);
+						}
+						else {
+							this.updateErrorDisplay();
+						}
+						this.urlView.url.showError(true);
+						if(this.o) {
+							this.o.addValidationError(this, errorMessage);
+						}
+					}
+				}
+			]]>
+		</method>
+
+		<!---
+			Generates the URL to display a product. The generated URL is in the form: <code>productURL?productId=X&catalogId=#catalogId#&storeId=#storeId#</code>
+			where <code>productURL</code> is the value stored in {@link mktURLGenerator#productURL} and <code>X</code> is the product id of the selected product.
+		-->
+		<method name="getProductURL">
+			<![CDATA[
+				var url = "";
+				
+				if(this.o && this.property) {
+					var products = this.o.getObjects("CatalogProducts/CatalogEntry");
+
+					if(products.length == 1) {
+						var productId = products[0].getPropertyValue("catentryId");
+
+						url += this.productURL;
+						url += "?productId=" + productId;
+						url += "&catalogId=#catalogId#&storeId=#storeId#";
+					}
+				}
+				
+				return url;
+			]]>
+		</method>
+
+		<!---
+			Generates the URL to display a category. The generated URL is in the form: <code>categoryURL?identifer=X&categoryId=Y&catalogId=#catalogId#&storeId=#storeId#</code>
+			where <code>categoryURL</code> is the value stored in {@link mktURLGenerator#categoryURL}, <code>X</code> is the identifer of the selected category,
+			and <code>Y</code> is the category ID.
+		-->
+		<method name="getCategoryURL">
+			<![CDATA[
+				var url = "";
+
+				if(this.o && this.property) {
+					var categories = this.o.getObjects("CatalogGroups/CatalogGroupAlias");
+					if(categories.length == 1) {
+						var identifier = categories[0].getPropertyValue("identifier");
+						var categoryId = categories[0].getPropertyValue("catgroupId");
+
+						url += this.categoryURL;
+						url += "?identifier=" + wcfStringUtil.encodeString(identifier);
+						url += "&categoryId=" + categoryId;
+						url += "&catalogId=#catalogId#&storeId=#storeId#";
+					}
+				}
+				
+				return url;
+			]]>
+		</method>
+		
+		<!---
+			Generates the URL to add a product to the shopping cart. The generated URL is in the form: <code>shopcartURL?partNumber=X&URL=OrderCalculate?URL=OrderItemDisplay&calculationUsageId=-1&quantity=1&catalogId=#catalogId#&storeId=#storeId#</code>
+			where <code>shopcartURL</code> is the value stored in {@link mktURLGenerator#shopcartURL} and <code>X</code> is the part number of the selected item.
+		-->
+		<method name="getShopCartURL">
+			<![CDATA[
+				var url = "";
+				
+				if(this.o && this.property) {
+					var products = this.o.getObjects("CatalogItems/CatalogEntry");
+					
+					if(products.length == 1) {
+						var partNumber = products[0].getPropertyValue("partnumber");
+
+						url += this.shopcartURL;
+						url += "?partNumber=" + wcfStringUtil.encodeString(partNumber);
+						url += "&URL=OrderCalculate?URL=OrderItemDisplay&calculationUsageId=-1&quantity=1&catalogId=#catalogId#&storeId=#storeId#";
+					}
+				}
+				
+				return url;
+			]]>
+		</method>
+
+		<!---
+			Generates the URL to add a product to the wishlist. The generated URL is in the form: <code>wishlistURL?partNumber=X&URL=InterestItemDisplay&catalogId=#catalogId#&storeId=#storeId#</code>
+			where <code>wishlistURL</code> is the value stored in {@link mktURLGenerator#wishlistURL} and <code>X</code> is the part number of the selected item.
+		-->
+		<method name="getWishListURL">
+			<![CDATA[
+				var url = "";
+				
+				if(this.o && this.property) {
+					var products = this.o.getObjects("CatalogItems/CatalogEntry");
+					if(products.length == 1) {
+						var partNumber = products[0].getPropertyValue("partnumber");
+						
+						url += this.wishlistURL;
+						url += "?partNumber=" + wcfStringUtil.encodeString(partNumber);
+						url += "&URL=InterestItemDisplay&catalogId=#catalogId#&storeId=#storeId#";
+					}
+				}
+				
+				return url;
+			]]>
+		</method>
+
+		<!---
+			Generates the URL to recommend a promotion. The generated URL is in the form: <code>promotionURL?code=#promoName#&catalogId=#catalogId#&storeId=#storeId#&pStoreId=#pStoreId#</code>
+			where <code>promotionURL</code> is the value stored in {@link mktURLGenerator#promotionURL}.
+		-->
+		<method name="getPromotionURL">
+			<![CDATA[
+				var url = "";
+				
+				if(this.o && this.property) {
+					url += this.promotionURL;
+					url += "?code=#promoName#&catalogId=#catalogId#&storeId=#storeId#&pStoreId=#pStoreId#";
+				}
+				
+				return url;
+			]]>
+		</method>
+
+		<!---
+			Generates the URL to issue a coupon. The generated URL is in the form: <code>couponURL?promotionName=#promoName#&catalogId=#catalogId#&storeId=#storeId#&URL=OrderCalculate?URL=OrderItemDisplay&calculationUsageId=#calUsageId#</code>
+			where <code>couponURL</code> is the value stored in {@link mktURLGenerator#couponURL}.
+		-->
+		<method name="getCouponURL">
+			<![CDATA[
+				var url = "";
+				
+				if(this.o && this.property) {
+					url += this.couponURL;
+					url += "?promotionName=#promoName#&catalogId=#catalogId#&storeId=#storeId#&URL=OrderCalculate?URL=OrderItemDisplay&calculationUsageId=#calUsageId#";
+				}
+				
+				return url;
+			]]>
+		</method>
+
+		<!---
+			Generates the URL to add an item to the cart with a promotion or coupon. The generated URL is in the form: <code>addItemURL?partNumber=X&promoCode=#promoCode#&catalogId=#catalogId#&storeId=#storeId#&quantity=1&URL=OrderCalculate?URL=OrderItemDisplay&calculationUsageId=#calUsageId#</code>
+			where <code>addItemURL</code> is the value stored in {@link mktURLGenerator#addItemURL} and <code>X</code> is the part number of the selected item.
+		-->
+		<method name="getAddItemURL">
+			<![CDATA[
+				var url = "";
+				
+				if(this.o && this.property) {
+					var products = this.o.getObjects("CatalogItems/CatalogEntry");
+					if(products.length == 1) {
+						var partNumber = products[0].getPropertyValue("partnumber");
+						
+						url += this.addItemURL;
+						url += "?partNumber=" + wcfStringUtil.encodeString(partNumber);
+						url += "&promoCode=#promoCode#&catalogId=#catalogId#&storeId=#storeId#&quantity=1&URL=OrderCalculate?URL=OrderItemDisplay&calculationUsageId=#calUsageId#";
+					}
+				}
+				
+				return url;
+			]]>
+		</method>
+
+		<simplelayout axis="y" spacing="13"/>
+
+		<wcfBaseComboBox name="clickActionSelect" enabled="${classroot.enabled}">
+			<handler name="onselectedValue">
+				<![CDATA[
+					if(!classroot["_updateObjectLock"] && classroot["_initcomplete"] && classroot.o && classroot.o["openGroupObject"]) {
+						classroot.o.openGroupObject.setAttribute("openGroupDirty", true);
+					}
+					classroot["_selectedValueLock"] = true;
+					classroot.storeValue();
+					classroot["_selectedValueLock"] = false;
+				]]>
+			</handler>
+
+			<mktTextlistitem value="predefined" displayName="${mktMarketingResources['selectPredefined'].string}" selected="true"/>
+			<mktTextlistitem value="predefinedPromotion" displayName="${mktMarketingResources['selectPredefinedPromotion'].string}" hide="${!classroot.enablePromotionURL}"/>
+			<mktTextlistitem value="url" displayName="${mktMarketingResources['selectURL'].string}"/>
+		</wcfBaseComboBox>
+		
+		<view name="predefinedView" visible="${parent.clickActionSelect.selectedValue &amp;&amp; parent.clickActionSelect.selectedValue.value == 'predefined'}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing}">
+				
+			<simplelayout axis="y" spacing="5"/>
+			<view name="combobox">
+				<text text="${mktMarketingResources['predefinedClickAction'].string}" multiline="true" width="${classroot.parent.promptWidth}" fgcolor="${classroot.parent.style.texthilitecolor}">
+					<setter name="text" args="t">
+						<![CDATA[
+							t = "<p align='right'>" + t + "</p>";
+							super.setAttribute("text", t);
+						]]>
+					</setter>
+				</text>
+				<wcfBaseComboBox name="actionSelect" x="${classroot.parent.promptWidth + classroot.parent.xspacing}" enabled="${classroot.enabled}">
+					<handler name="onselectedValue">
+						<![CDATA[
+							if(!classroot["_updateObjectLock"] && classroot["_initcomplete"] && classroot.o && classroot.o["openGroupObject"]) {
+								classroot.o.openGroupObject.setAttribute("openGroupDirty", true);
+							}
+							classroot["_selectedValueLock"] = true;
+							classroot.storeValue();
+							classroot["_selectedValueLock"] = false;
+						]]>
+					</handler>
+					<mktTextlistitem value="product" displayName="${mktMarketingResources['displayProduct'].string}" selected="true"/>
+					<mktTextlistitem value="category" displayName="${mktMarketingResources['displayCategory'].string}"/>
+					<mktTextlistitem value="shopcart" displayName="${mktMarketingResources['addShopCart'].string}"/>
+					<mktTextlistitem name="wishList" value="wishlist" displayName="${mktMarketingResources['addInterestList'].string}"/>
+				</wcfBaseComboBox>
+			</view>
+		</view>			
+		
+		<view name="predefinedViewPromotion" visible="${parent.clickActionSelect.selectedValue &amp;&amp; parent.clickActionSelect.selectedValue.value == 'predefinedPromotion'}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing}">
+				
+			<simplelayout axis="y" spacing="5"/>
+			<view name="combobox">
+				<text text="${mktMarketingResources['predefinedClickActionPromotion'].string}" multiline="true" width="${classroot.parent.promptWidth}" fgcolor="${classroot.parent.style.texthilitecolor}">
+					<setter name="text" args="t">
+						<![CDATA[
+							t = "<p align='right'>" + t + "</p>";
+							super.setAttribute("text", t);
+						]]>
+					</setter>
+				</text>
+				<wcfBaseComboBox name="actionSelect" x="${classroot.parent.promptWidth + classroot.parent.xspacing}" enabled="${classroot.enabled}">
+					<handler name="onselectedValue">
+						<![CDATA[
+							if(!classroot["_updateObjectLock"] && classroot["_initcomplete"] && classroot.o && classroot.o["openGroupObject"]) {
+								classroot.o.openGroupObject.setAttribute("openGroupDirty", true);
+							}
+							classroot["_selectedValueLock"] = true;
+							classroot.storeValue();
+							classroot["_selectedValueLock"] = false;
+						]]>
+					</handler>
+					<mktTextlistitem value="promotion" displayName="${mktMarketingResources['recommendPromotion'].string}" selected="true"/>
+					<mktTextlistitem value="coupon" displayName="${mktMarketingResources['issueCoupon'].string}"/>
+					<mktTextlistitem value="addItem" displayName="${mktMarketingResources['addItem'].string}"/>
+				</wcfBaseComboBox>
+			</view>
+		</view>
+		
+		<view name="predefinedViewEditor1" visible="${parent.clickActionSelect.selectedValue &amp;&amp; parent.clickActionSelect.selectedValue.value == 'predefined'}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing}">
+		
+			<view name="productView" visible="${classroot.predefinedView.combobox.actionSelect.selectedValue &amp;&amp; classroot.predefinedView.combobox.actionSelect.selectedValue.value == 'product'}">
+				<wcfPropertyChildListEditor name="product" objectTypes="ChildProducts,ChildInheritedProducts" listClass="mktProductGrid"
+					promptText="${mktMarketingResources.product.string}" required="true" singleChild="true" enabled="${classroot.enabled}"/>
+			</view>
+			<view name="categoryView" visible="${classroot.predefinedView.combobox.actionSelect.selectedValue &amp;&amp; classroot.predefinedView.combobox.actionSelect.selectedValue.value == 'category'}">
+				<wcfPropertyChildListEditor name="category" objectTypes="ChildCatalogGroup,ChildInheritedCatalogGroup" listClass="mktCategoryGrid"
+					promptText="${mktMarketingResources.category.string}" required="true" singleChild="true" enabled="${classroot.enabled}"/>
+			</view>
+		</view>
+		
+		<view name="predefinedViewEditor2" visible="${(parent.clickActionSelect.selectedValue &amp;&amp; parent.clickActionSelect.selectedValue.value == 'predefined' &amp;&amp; parent.predefinedView.combobox.actionSelect.selectedValue &amp;&amp; (parent.predefinedView.combobox.actionSelect.selectedValue.value == 'shopcart' || classroot.predefinedView.combobox.actionSelect.selectedValue.value == 'wishlist')) ||
+                                                      (parent.clickActionSelect.selectedValue &amp;&amp; parent.clickActionSelect.selectedValue.value == 'predefinedPromotion' &amp;&amp; parent.predefinedViewPromotion.combobox.actionSelect.selectedValue &amp;&amp; parent.predefinedViewPromotion.combobox.actionSelect.selectedValue.value == 'addItem')}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing}">
+		
+			<view name="skuView">
+				<wcfPropertyChildListEditor name="item" objectTypes="ChildItems,ChildInheritedItems" listClass="mktProductGrid"
+					promptText="${mktMarketingResources.sku.string}" required="true" singleChild="true" enabled="${classroot.enabled}"
+					helpText="${mktMarketingResources.help_searchSKU.string}"/>
+			</view>
+		</view>
+		
+		<view name="urlView" visible="${parent.clickActionSelect.selectedValue &amp;&amp; parent.clickActionSelect.selectedValue.value != 'none'}"
+				x="${0 - classroot.parent.promptWidth - classroot.parent.xspacing}">
+			<mktInputText name="url" promptText="${mktMarketingResources['url'].string}" helpText="${mktMarketingResources.help_content_url.string}"
+				enabled="${classroot.clickActionSelect.selectedValue &amp;&amp; classroot.clickActionSelect.selectedValue.value == 'url' &amp;&amp; classroot.enabled}" required="true"
+				width="${classroot.width}">
+				<handler name="onvalue">
+					<![CDATA[
+					classroot.storeValue();
+					]]>
+				</handler>
+				<handler name="onfocus">
+					<![CDATA[
+					classroot.validate();
+					]]>
+				</handler>
+			</mktInputText>
+		</view>
+	</class>
+
+ </library>

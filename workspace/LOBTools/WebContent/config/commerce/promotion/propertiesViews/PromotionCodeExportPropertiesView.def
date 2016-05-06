@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+
+<Definitions>
+
+	<ObjectGrid definitionName="proPromotionCodeExportDownloadHistoryGrid">
+		<GridText editable="false" name="userIdentifier"
+			propertyName="userIdentifier"
+			text="${promotionResources.promotionCodeExportDownloadHistory_user}"
+			visible="true" width="250" />
+		<GridDateTime editable="false" name="downloadTime"
+			propertyName="downloadTime"
+			text="${promotionResources.promotionCodeExportDownloadHistory_downloadTime}"
+			visible="true" width="150" />
+	</ObjectGrid>
+
+	<PropertyPane definitionName="proPromotionCodeExportPaneContent">
+		<PropertyGroup baseDefinitionName="wcfPropertyAssetInformationGroup"
+			name="assetGroup" />
+		<PropertyGroup groupTitle="${promotionResources.promotionCodeExportProperties}"
+			name="promotionCodeExportPropertiesGroup" open="true">
+			<PropertyInputText
+				helpText="${promotionResources.promotionCodeExport_promotionExportName_helpText}"
+				name="promotionExportName" promptText="${promotionResources.promotionCodeExport_name}"
+				propertyName="promotionExportName" required="true" />
+			<PropertyViewLongText
+				helpText="${promotionResources.promotionCodeExport_promotionName_helpText}"
+				name="promotionName" promptText="${promotionResources.promotionCodeExport_promotionName}"
+				propertyName="promotionName" />
+			<PropertyViewLongText
+				helpText="${promotionResources.promotionCodeExport_promotionId_helpText}"
+				name="promotionId" promptText="${promotionResources.promotionCodeExport_promotionId}"
+				propertyName="promotionId" />
+			<PropertyViewLongText
+				helpText="${promotionResources.promotionCodeExport_summary_helpText}"
+				name="summary" promptText="${promotionResources.promotionCodeExport_summary}"
+				propertyName="summary" />
+		</PropertyGroup>
+	</PropertyPane>
+
+	<PropertyPane definitionName="proPromotionCodeDownloadHistoryPaneContent">
+		<PropertyGroup collapsable="false"
+			name="promotionCodeDownloadHistory">
+			<ChildListViewer listDefinitionName="proPromotionCodeExportDownloadHistoryGrid"
+				objectTypes="PromotionCodeExportDownloadHistory" name="downloadHistory" 
+				promptText="${promotionResources.promotionCodeExportDownloadHistory}" />
+		</PropertyGroup>
+	</PropertyPane>
+
+	<ObjectProperties definitionName="proPromotionCodeExportProperties">
+		<PropertyTabs name="tabs">
+			<PropertyTabPane name="promotionCodeExportTab" text="${promotionResources.promotionCodeExportTab_promotionCodeExport}">
+				<PropertyPane baseDefinitionName="proPromotionCodeExportPaneContent"/>
+			</PropertyTabPane>
+			<PropertyTabPane name="downloadHistoryTab" text="${promotionResources.promotionCodeExportTab_downloadHistory}">
+				<PropertyPane baseDefinitionName="proPromotionCodeDownloadHistoryPaneContent"/>
+			</PropertyTabPane>
+		</PropertyTabs>
+	</ObjectProperties>
+
+</Definitions>

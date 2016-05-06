@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2011, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+
+	<!--- This definition defines the base object from which ProductPage and InheritedProductPage are derived.
+	-->
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseCatalogEntryPagePrimaryObjectDefinition"
+		definitionName="pglBaseProductPagePrimaryObjectDefinition"
+		detailsViewHeaderText="${catalogResources.UtilityPaneHeaderText}"
+		displayName="${catalogResources.product_DisplayName}"
+		helpLink="tasks/tpnaddpr.htm"
+		isBaseDefinition="true"
+		propertiesDefinitionName="pglProductPageProperties"> 
+		
+		<!--- 
+			Retrieves the {@link pglChildCatalogEntryPage}child objects.
+		-->
+		<GetChildrenService objectTypes="ChildCatalogEntryPage"
+			url="/cmc/GetProductSKUPages">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="assetStoreId"/>
+			<ServiceParam name="defaultLanguageId"/>
+		</GetChildrenService>
+			
+		<!--- This navigation list definition is used to display {@link pglChildCatalogEntryPage} child objects. 
+		-->
+		<NavigationListDefinition displayName="${pglPageLayoutResources.skuPagesList}"
+			isDefault="true"
+			listDefinitionName="pglCatalogEntryPageChildList"
+			listTitle="${pglPageLayoutResources.skuPagesList}"
+			name="CatalogEntryPageChildList"
+			toolbarIcon="skuListToolbarIcon"
+			helpLink="tasks/tpn_topskus.htm"/>
+			
+		<!---  
+		    Reference object definition between the product page and a child ProductSKUPage.
+		    This indicates that a product page can be a parent of a ProductSKUPage.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglChildCatalogEntryPage"/>
+		
+		<!---  
+		    Reference object definition between the product page and a product page layout.
+		    A product page can have multiple product page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglProductPageLayoutAssociationReferencedProductPageLayouts"/>
+		<!---  
+		    Reference object definition between the product page and an inherited product page layout.
+		    A product page can have multiple inherited product page layout associations.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglProductPageLayoutAssociationReferencedInheritedProductPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the inherited product page and an inherited product page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglInheritedProductPageLayoutAssociationReferencedInheritedProductPageLayouts"/>
+		
+		<!---  
+		    Reference object definition between the product page and the default page layout.
+		-->
+		<ReferenceObjectDefinition baseDefinitionName="pglProductPageReferenceDefaultProductPageLayout"/>
+		
+		<!---
+			Retrieves the {@link pglProductPageLayoutAssociationReferencedProductPageLayouts} and
+			{@link pglProductPageLayoutAssociationReferencedInheritedProductPageLayouts} references for this product page.
+		-->
+		<GetChildrenService objectTypes="ProductPageLayoutAssociationReferencedProductPageLayouts,ProductPageLayoutAssociationReferencedInheritedProductPageLayouts,InheritedProductPageLayoutAssociationReferencedInheritedProductPageLayouts" 
+			url="/cmc/GetCatalogEntryPage-PageLayoutAssociation">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ProductPage"/>
+		</GetChildrenService>
+		<!---
+			Retrieves the default page layout information for this product page.
+		-->
+		<GetChildrenService objectTypes="ProductPageReferenceDefaultProductPageLayout" 
+			url="/cmc/GetDefaultPageLayoutForCatalogPage">
+			<ServiceParam name="storeId"/>
+			<ServiceParam name="pageType" value="ProductPage"/>
+		</GetChildrenService>
+	</PrimaryObjectDefinition>
+	
+  	<!---		
+		This definition represents the primary object definition describing a ProductPage as a business object.
+	-->	
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseProductPagePrimaryObjectDefinition"
+		definitionName="ProductPage"
+		headerIcon="productPageHeaderIcon"
+		icon="productPageIcon"
+		objectType="ProductPage">	
+
+	</PrimaryObjectDefinition>
+
+  	<!---		
+		This definition represents the primary object definition describing an InheritedProductPage as a business object.
+	-->	
+	<PrimaryObjectDefinition baseDefinitionName="pglBaseProductPagePrimaryObjectDefinition"
+		definitionName="InheritedProductPage"
+		displayName="${catalogResources.inheritedProduct_DisplayName}"
+		headerIcon="inheritedProductPageHeaderIcon" 
+		icon="inheritedProductPageIcon" 
+		objectType="InheritedProductPage">
+	</PrimaryObjectDefinition>
+	
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalPageLayoutAssociation" definitionName="pglProductPageLayoutAssociationReferencedProductPageLayouts" objectType="ProductPageLayoutAssociationReferencedProductPageLayouts" referencedTypes="ProductPageLayout"/>
+	<ReferenceObjectDefinition baseDefinitionName="BaseLocalToInheritedPageLayoutAssociation" compatibleObjectTypes="InheritedProductPageLayoutAssociationReferencedInheritedProductPageLayouts" definitionName="pglProductPageLayoutAssociationReferencedInheritedProductPageLayouts" objectType="ProductPageLayoutAssociationReferencedInheritedProductPageLayouts" referencedTypes="InheritedProductPageLayout"/>
+	<ReferenceObjectDefinition allowCrossStoreReferences="false" baseDefinitionName="BaseInheritedPageLayoutAssociation" compatibleObjectTypes="PageLayoutAssociationReferencedInheritedProductPageLayouts" definitionName="pglInheritedProductPageLayoutAssociationReferencedInheritedProductPageLayouts" objectType="InheritedProductPageLayoutAssociationReferencedInheritedProductPageLayouts" referencedTypes="InheritedProductPageLayout"/>
+	
+	<ReferenceObjectDefinition definitionName="pglProductPageReferenceDefaultProductPageLayout" 
+		derivedId="true"
+		idProperty="refPageLayoutId"
+		objectType="ProductPageReferenceDefaultProductPageLayout" 
+		referencedTypes="ProductPageLayout,InheritedProductPageLayout">
+	</ReferenceObjectDefinition>
+</Definitions>

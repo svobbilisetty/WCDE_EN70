@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2010, 2012 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<Definitions>
+		
+	<PrimaryObjectDefinition definitionName="catBaseSearchTermAssociationsPrimaryObjectDefinition" displayName="${catalogResources.SearchTermAssociations}" displayNameProperty="name" headerIcon="searchTermAssociationsHeaderIcon" icon="searchTermAssociationsIcon" helpLink="concepts/cpnsearchass.htm" idProperty="catalogId" isBaseDefinition="true" propertiesDefinitionName="catSearchTermAssociationsProperties" writeUsage="IBM_ManageCatalog" searchType="FindSearchTermAssociations">
+
+		<!---
+			Search term associations language sensitive object
+		-->
+		<ChildObjectDefinition idProperty="languageId" languageSensitive="true" objectType="SearchTermAssociationsLanguageSensitiveObject">
+			<ChildObjectDefinition baseDefinitionName="catSynonymObjectDefinition"/>
+			<ChildObjectDefinition baseDefinitionName="catInheritedSynonymObjectDefinition"/>
+			<ChildObjectDefinition baseDefinitionName="catReplacementObjectDefinition"/>
+			<ChildObjectDefinition baseDefinitionName="catInheritedReplacementObjectDefinition"/>
+			<ChildObjectDefinition baseDefinitionName="catLandingPageObjectDefinition"/>
+			<ChildObjectDefinition baseDefinitionName="catInheritedLandingPageObjectDefinition"/>
+
+			<GetChildrenService objectTypes="Synonym,InheritedSynonym" url="/cmc/GetSynonyms">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="languageId" propertyName="languageId"/>
+			</GetChildrenService>
+			<GetChildrenService objectTypes="Replacement,InheritedReplacement" url="/cmc/GetReplacements">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="languageId" propertyName="languageId"/>
+			</GetChildrenService>
+			<GetChildrenService objectTypes="LandingPage,InheritedLandingPage" url="/cmc/GetLandingPages">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="languageId" propertyName="languageId"/>
+			</GetChildrenService>
+		</ChildObjectDefinition>
+		
+		<!---
+			Search term associations top search hits statistics object
+		-->
+		<ChildObjectDefinition objectType="SearchTermAssociationsTopSearchHitsStatisticsObject" singleInstance="true">
+			<ChildObjectDefinition baseDefinitionName="catTopSearchHitObjectDefinition"/>
+			<ChildObjectDefinition baseDefinitionName="catTopSearchHitTotalObjectDefinition"/>
+			
+			<GetChildrenService objectTypes="TopSearchHitTotal" url="/cmc/GetTopSearchHitTotal">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="datestart" propertyName="datestart"/>
+				<ServiceParam name="dateend" propertyName="dateend"/>
+				<ServiceParam name="reportLanguageId" propertyName="reportLanguageId"/>
+				<ServiceParam name="getReport" propertyName="getReport"/>
+			</GetChildrenService>
+			
+			<GetChildrenService objectTypes="TopSearchHit" url="/cmc/GetTopSearchHits" maxItemsToReturn="50">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="datestart" propertyName="datestart"/>
+				<ServiceParam name="dateend" propertyName="dateend"/>
+				<ServiceParam name="searchTerm" propertyName="searchTerm"/>
+				<ServiceParam name="reportLanguageId" propertyName="reportLanguageId"/>
+				<ServiceParam name="topkeywords" propertyName="topkeywords"/>
+				<ServiceParam name="getReport" propertyName="getReport"/>
+			</GetChildrenService>
+						
+			<PropertyDefinition propertyName="getReport" markDirtyOnChange="false"/>
+			
+			<PropertyDefinition propertyName="topkeywords" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchHitsReportOption_ShowTopKeywords}">
+				<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ShowTopKeywords_All}" value="-1" isDefault="true"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ShowTopKeywords_Top5}" value="5"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ShowTopKeywords_Top10}" value="10"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ShowTopKeywords_Top20}" value="20"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition propertyName="searchTerm" type="string" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchHitsReportOption_Keyword}"/>
+			
+			<LanguagePropertyDefinition propertyName="reportLanguageId" useLanguageId="true" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchHitsReportOption_Language}"/>
+			
+			<PropertyDefinition propertyName="reportRange" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod}">
+				<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_LastWeek}" value="1" isDefault="true"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_LastTwoWeeks}" value="2"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_LastMonth}" value="3"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_Custom}" value="4"/>
+			</PropertyDefinition>
+			<PropertyDefinition propertyName="datestart" type="date" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchReportOption_ReportingPeriod_From}"/>
+			<PropertyDefinition propertyName="dateend" type="date" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchReportOption_ReportingPeriod_to}"/>
+			
+			<StartDateEndDateValidator startDatePropertyName="datestart" endDatePropertyName="dateend"/>
+		</ChildObjectDefinition>
+		
+		<!---
+			Search term associations top search misses statistics object
+		-->
+		<ChildObjectDefinition objectType="SearchTermAssociationsTopSearchMissesStatisticsObject" singleInstance="true">
+			<ChildObjectDefinition baseDefinitionName="catTopSearchMissObjectDefinition"/>
+			<ChildObjectDefinition baseDefinitionName="catTopSearchMissTotalObjectDefinition"/>
+			
+			<GetChildrenService objectTypes="TopSearchMissTotal" url="/cmc/GetTopSearchMissTotal">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="datestart" propertyName="datestart"/>
+				<ServiceParam name="dateend" propertyName="dateend"/>
+				<ServiceParam name="reportLanguageId" propertyName="reportLanguageId"/>
+				<ServiceParam name="getReport" propertyName="getReport"/>
+			</GetChildrenService>
+			
+			<GetChildrenService objectTypes="TopSearchMiss" url="/cmc/GetTopSearchMisses" maxItemsToReturn="50">
+				<ServiceParam name="storeId"/>
+				<ServiceParam name="datestart" propertyName="datestart"/>
+				<ServiceParam name="dateend" propertyName="dateend"/>
+				<ServiceParam name="searchTerm" propertyName="searchTerm"/>
+				<ServiceParam name="reportLanguageId" propertyName="reportLanguageId"/>
+				<ServiceParam name="topkeywords" propertyName="topkeywords"/>
+				<ServiceParam name="suggestion" propertyName="suggestion"/>
+				<ServiceParam name="getReport" propertyName="getReport"/>
+			</GetChildrenService>
+			
+			<PropertyDefinition propertyName="getReport" markDirtyOnChange="false"/>
+			
+			<PropertyDefinition propertyName="suggestion" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchMissesReportOption_SuggestedKeywordResult}">
+				<PropertyValue displayName="${catalogResources.topSearchMissesReportOption_SuggestedKeywordResult_ShowAll}" value="KEYWORDS_ALL" isDefault="true"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchMissesReportOption_SuggestedKeywordResult_ShowAllWithoutSuggestedKeyword}" value="KEYWORDS_NOT_HAS_SUGGESTION"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchMissesReportOption_SuggestedKeywordResult_ShowAllWithSuggestedKeyword}" value="KEYWORDS_HAS_SUGGESTION"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition propertyName="topkeywords" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchMissesReportOption_ShowTopMissedKeywords}">
+				<PropertyValue displayName="${catalogResources.topSearchMissesReportOption_ShowTopMissedKeywords_All}" value="-1" isDefault="true"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchMissesReportOption_ShowTopMissedKeywords_Top20}" value="20"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchMissesReportOption_ShowTopMissedKeywords_Top10}" value="10"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchMissesReportOption_ShowTopMissedKeywords_Top5}" value="5"/>
+			</PropertyDefinition>
+			
+			<PropertyDefinition propertyName="searchTerm" type="string" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchMissesReportOption_Keyword}"/>
+				
+			<LanguagePropertyDefinition propertyName="reportLanguageId" useLanguageId="true" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchMissesReportOption_Language}"/>
+			
+			<PropertyDefinition propertyName="reportRange" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchMissesReportOption_ReportingPeriod}">
+				<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_LastWeek}" value="1" isDefault="true"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_LastTwoWeeks}" value="2"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_LastMonth}" value="3"/>
+	   			<PropertyValue displayName="${catalogResources.topSearchHitsReportOption_ReportingPeriod_Custom}" value="4"/>
+			</PropertyDefinition>
+			<PropertyDefinition propertyName="datestart" type="date" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchReportOption_ReportingPeriod_From}"/>
+			<PropertyDefinition propertyName="dateend" type="date" markDirtyOnChange="false"
+				displayName="${catalogResources.topSearchReportOption_ReportingPeriod_to}"/>
+			
+			<StartDateEndDateValidator startDatePropertyName="datestart" endDatePropertyName="dateend"/>
+		</ChildObjectDefinition>
+		
+		<!---
+			Refresh Service to retrieve the details of a STA from the server.
+		-->
+		<RefreshService url="/cmc/RefreshSearchTermAssociations">
+			<ServiceParam name="storeId"/>
+		</RefreshService>
+		
+		<!-- Comments out the following definition to prevent generating "synonyms.txt" for solr server.
+		<PostSaveService url="/cmc/PublishSearchTermAssociations">
+			<ServiceParam name="storeId"/>
+		</PostSaveService>
+		-->
+		
+		<OpenCoremetricsReportClientAction displayName="${catalogResources.viewOnSiteSearchReport}" reportUri="report:/onsitesearch/onsitesearch.ftl"/>
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="catBaseSearchTermAssociationsPrimaryObjectDefinition" definitionName="SearchTermAssociations" objectType="SearchTermAssociations" >
+	</PrimaryObjectDefinition>
+	
+	<PrimaryObjectDefinition baseDefinitionName="catBaseSearchTermAssociationsPrimaryObjectDefinition" definitionName="InheritedSearchTermAssociations" headerIcon="inheritedSearchTermAssociationsHeaderIcon" icon="inheritedSearchTermAssociationsIcon" objectType="InheritedSearchTermAssociations">
+	</PrimaryObjectDefinition>
+	
+</Definitions>

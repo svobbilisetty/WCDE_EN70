@@ -1,0 +1,319 @@
+<!--
+ =================================================================
+  Licensed Materials - Property of IBM
+
+  WebSphere Commerce
+
+  (C) Copyright IBM Corp. 2007, 2013 All Rights Reserved.
+
+  US Government Users Restricted Rights - Use, duplication or
+  disclosure restricted by GSA ADP Schedule Contract with
+  IBM Corp.
+ =================================================================
+-->
+<library>
+	
+	<!---
+		Context menu for the flow elements in the activity builder
+		@keywords private
+	-->
+	<class name="mktFlowElementContextMenu" extends="wcfFlowElementContextMenu">
+		<!---
+			Populate the context menu.
+			@keywords private
+	 	-->
+		<method name="createMenuItems">
+			<![CDATA[
+			if (this.flowElement instanceof lz.wcfStartElement) {
+				// details
+				this.addMenuItem(mktMarketingResources.details.string, this, "doDetails");				
+			}
+			else if (this.flowElement instanceof lz.wcfFlowPath) {
+				if (this.flowElement.parentFlow.editableFlow && !this.multiselected) {
+					if(this.flowElement.parentFlowElement.o["objectType"] == "branch") {
+						var o = this.flowElement.o.getParentPrimaryObject();
+						if((o.objectType == "WebActivity") || (o.objectType == "InheritedWebActivity") ||
+						   (o.objectType == "SearchActivity") || (o.objectType == "InheritedSearchActivity")) {
+							// mark path as winner
+							if(this.flowElement.o.getPropertyValue("winner") != "true") {
+								this.addMenuItem(mktMarketingResources.markAsWinner.string, this, "doMarkWinner", "true");
+							}
+							else if(this.flowElement.o.getPropertyValue("winner") == "true") {
+								this.addMenuItem(mktMarketingResources.unmarkAsWinner.string, this, "doMarkWinner", "false");
+							}
+						}
+					}
+					
+					// delete
+					var siblings = this.flowElement.parentFlowElement.o.getObjects("FlowElement");
+					if (siblings.length > 2) {
+						this.addMenuItem(foundationResources.contextMenuDelete.string, this, "doDeletePath");
+					}
+				}			
+			}
+			else {
+				// details
+				if (!this.multiselected) {
+					this.addMenuItem(mktMarketingResources.details.string, this, "doDetails");
+				}
+				
+				// delete
+				var doRemoveEnabled = this.flowElement.parentFlow.editableFlow;
+				if(doRemoveEnabled) {
+					if(this.multiselected) {
+						for (var i = 0; i < this.flowElement.parentFlow.selectedElements.length; i++) {
+							var e = this.flowElement.parentFlow.selectedElements[i];
+							if (e instanceof lz.wcfFlowElement) {
+								if(e.o && e.o["objectDefinition"] && e.o.objectDefinition.elemTemplateType == "Branch") {
+									continue;
+								}
+								if(e.fixedElement) {
+									doRemoveEnabled = false;
+									break;
+								}
+							}
+						}
+					}
+					else {
+						// if this is not a branch type, show delete unless it is a fixed element
+						if(this.flowElement.o.objectDefinition.elemTemplateType != "Branch") {
+							doRemoveEnabled = !this.flowElement.fixedElement;
+						}
+					}
+					
+					if(doRemoveEnabled) {
+						this.addMenuItem(foundationResources.contextMenuDelete.string, this, "doRemove");
+					}
+				}
+				
+				// branching
+				var doAddExperimentEnabled = this.flowElement.parentFlow.editableFlow && (this.flowElement.o["objectType"] != "branch");
+
+				if(doAddExperimentEnabled) {
+					var item;
+
+					// check if it's in dialog activity
+					var currentBuilderObjectType = wcfFlowUtils.getParentFlow(this.flowElement).o.objectType;
+					var isInDialogActivity = ((currentBuilderObjectType == "DialogActivity") 
+												|| (currentBuilderObjectType == "InheritedDialogActivity") 
+												|| (currentBuilderObjectType == "DialogActivityTemplate") 
+												|| (currentBuilderObjectType == "InheritedDialogActivityTemplate"));
+
+					// Dialog activity does not support the 'Experiment Branching' feature.				
+					if (isInDialogActivity==false)
+					{	
+						item = this.addMenuItem(mktMarketingResources.addToExperiment.string, this, "doBranch", "branch");
+						if (item != null) {
+							item.setAttribute('enabled', this.isEnabledExperiment());
+						}
+					}
+										
+					item = this.addMenuItem(mktMarketingResources.addToBranch.string, this, "doBranch", "simpleBranch");
+					if (item != null) {
+						item.setAttribute('enabled', this.isEnabledBranch());
+					}
+				}
+				
+				// only branch is selected
+				if(this.flowElement.parentFlow.editableFlow && !this.multiselected && (this.flowElement.o.objectDefinition["elemTemplateType"] == "Branch")) {
+					this.addMenuItem(mktMarketingResources.addPath.string, this, "doAddPath");
+				}
+				
+				// process winner
+				if (this.flowElement.parentFlow.editableFlow && !this.multiselected && (this.flowElement.o["objectType"] == "branch") && this.isDoProcessWinnerEnabled()) {
+					var o = this.flowElement.o.getParentPrimaryObject();
+					if((o.objectType == "SearchActivity") || (o.objectType == "InheritedSearchActivity")) {
+						this.addMenuItem(mktMarketingResources.createNewSearchRuleFromWinner.string, this, "doProcessWinner");
+					}
+					else{
+						this.addMenuItem(mktMarketingResources.createNewActivityFromWinner.string, this, "doProcessWinner");
+					}
+				}	
+			}
+			]]>
+		</method>
+		
+		<!---
+			Determines if the process winner action is enabled for the given WebActivity model object
+			@keywords private
+		-->
+		<method name="isDoProcessWinnerEnabled">
+			<![CDATA[
+			var o = this.flowElement.o.getParentPrimaryObject();
+			if((o.objectType == "WebActivity") || (o.objectType == "InheritedWebActivity") ||
+			   (o.objectType == "SearchActivity") || (o.objectType == "InheritedSearchActivity")) {
+				if(!o.hasUnsavedChanges()) {
+					var pathObjects = this.flowElement.o.getObjects("path");
+					for (var i = 0; i < pathObjects.length; i++) {
+						if (pathObjects[i].getPropertyValue("winner") == "true") {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+			]]>
+		</method>
+		
+		<!---
+			Invoke the process winner action
+			@keywords private
+		-->
+		<method name="doProcessWinner">
+			<![CDATA[
+			var o = this.flowElement.o.getParentPrimaryObject();
+			if((o.objectType == "WebActivity") || (o.objectType == "InheritedWebActivity") ||
+			   (o.objectType == "SearchActivity") || (o.objectType == "InheritedSearchActivity")) {
+				var service = null;
+				for (var i = 0; i < o.objectDefinition.customServices.length; i++) {
+					if (o.objectDefinition.customServices[i] instanceof lz.mktProcessWinnerService) {
+						service = o.objectDefinition.customServices[i];
+						break;
+					}
+				}
+				if (service != null) {
+					service.doRequest(o);
+				}
+			}
+			]]>
+		</method>
+		
+		<!---
+			Invoke the 'add to branch' action
+			@param string branchObjType the object type of the branch element to create - "branch" or "simpleBranch".
+			@keywords private
+		-->
+		<method name="doBranch" args="branchObjType">
+			<![CDATA[
+				var branchType = "";
+				var flow = wcfFlowUtils.getParentFlow(this.flowElement);
+				
+				// if in a web activity and branching on a trigger, force to random
+				if((flow.o.objectType == "WebActivity") || (flow.o.objectType == "InheritedWebActivity") ||
+				   (flow.o.objectType == "SearchActivity") || (flow.o.objectType == "InheritedSearchActivity") ||
+				   (flow.o.objectType == "WebActivityTemplate") || (flow.o.objectType == "InheritedWebActivityTemplate") ||
+				   (flow.o.objectType == "SearchActivityTemplate") || (flow.o.objectType == "InheritedSearchActivityTemplate")) {
+
+					if(this.flowElement.o && this.flowElement.o.objectDefinition["elemTemplateType"] == "Trigger" && branchObjType == "branch") {
+						branchType = "random";
+					}
+				}
+				
+		   		this.flowElement.addElementsToBranch(branchType, branchObjType);
+			]]>
+		</method>
+		
+		<!---
+			Sets or unsets the the path as a winner
+			@param string winner Either "true" or "false".
+			@keywords private
+		-->
+		<method name="doMarkWinner" args="winner">
+			<![CDATA[
+				if(this.flowElement instanceof lz.wcfFlowPath) {
+			   		this.flowElement.markAsWinner(winner);
+			   	}
+			]]>
+		</method>
+
+		<!--- @keywords private -->
+		<method name="isEnabledExperiment">
+			<![CDATA[
+				var flow = wcfFlowUtils.getParentFlow(this.flowElement);
+				if(flow) {
+					// over our depth limit
+					if(wcfFlowUtils.getElementDepth(this.flowElement) >= flow.flowBuilder.maxBranchDepth) {
+						return false;
+					}
+					
+					// has existing experiment
+					var experimentType = flow.o.getPropertyValue("experimentType");
+					if(experimentType == "Experiment") {
+						return false;
+					}
+					
+					// if trigger element is selected and in a web activity, make sure it is the only one
+					if(this.multiselected
+						&& ((flow.o.objectType == "WebActivity") || (flow.o.objectType == "InheritedWebActivity") ||
+							(flow.o.objectType == "WebActivityTemplate") || (flow.o.objectType == "InheritedWebActivityTemplate") ||
+							(flow.o.objectType == "SearchActivity") || (flow.o.objectType == "InheritedSearchActivity") ||
+							(flow.o.objectType == "SearchActivityTemplate") || (flow.o.objectType == "InheritedSearchActivityTemplate"))) {
+						for (var i = 0; i < this.flowElement.parentFlow.selectedElements.length; i++) {
+							var e = this.flowElement.parentFlow.selectedElements[i];
+							if (e.o && e.o.objectDefinition["elemTemplateType"] == "Trigger") {
+								return false;
+							}
+						}
+					}
+				}
+				return true;
+			]]>
+		</method>
+		
+		<!--- @keywords private -->
+		<method name="isEnabledBranch">
+			<![CDATA[
+				var flow = wcfFlowUtils.getParentFlow(this.flowElement);
+				if(flow) {
+					// over our depth limit
+					if(wcfFlowUtils.getElementDepth(this.flowElement) >= flow.flowBuilder.maxBranchDepth) {
+						return false;
+					}
+					
+					// make sure an experiment and in the case of a web activity, a trigger is not selected
+					if(this.multiselected) {
+						for (var i = 0; i < this.flowElement.parentFlow.selectedElements.length; i++) {
+							var e = this.flowElement.parentFlow.selectedElements[i];
+							if(e.o) {
+								if(e.o["objectType"] == "branch") {
+									return false;
+								}
+								
+								if((e.o.objectDefinition["elemTemplateType"] == "Trigger")
+										&& ((flow.o.objectType == "WebActivity") || (flow.o.objectType == "InheritedWebActivity") ||
+											(flow.o.objectType == "WebActivityTemplate") || (flow.o.objectType == "InheritedWebActivityTemplate") ||
+											(flow.o.objectType == "SearchActivity") || (flow.o.objectType == "InheritedSearchActivity") ||
+											(flow.o.objectType == "SearchActivityTemplate") || (flow.o.objectType == "InheritedSearchActivityTemplate"))) {
+									return false;
+								}
+							}
+						}
+					}
+					else if(this.flowElement.o) {
+						if(this.flowElement.o["objectType"] == "branch") {
+							return false;
+						}
+						if((this.flowElement.o.objectDefinition["elemTemplateType"] == "Trigger")
+								&& ((flow.o.objectType == "WebActivity") || (flow.o.objectType == "InheritedWebActivity") ||
+									(flow.o.objectType == "WebActivityTemplate") || (flow.o.objectType == "InheritedWebActivityTemplate") ||
+									(flow.o.objectType == "SearchActivity") || (flow.o.objectType == "InheritedSearchActivity") ||
+									(flow.o.objectType == "SearchActivityTemplate") || (flow.o.objectType == "InheritedSearchActivityTemplate"))) {
+							return false;
+						}
+					}
+				}
+				return true;
+			]]>
+		</method>
+		
+		<!---
+			@keywords private
+			Delete a flow path
+		-->
+		<method name="doDeletePath">
+			<![CDATA[
+				if(this.flowElement.o) {
+					var activity = this.flowElement.o.getParentPrimaryObject();
+					
+					this.flowElement.o.deleteObject();
+					
+					var exp = mktFlowUtils.hasExperiment(activity) ? "Experiment" : "";
+					if(exp != activity.getPropertyValue("experimentType")) {
+						activity.setPropertyValue("experimentType", null, exp);
+					}
+				}
+			]]>
+		</method>
+	</class>
+		
+</library>
